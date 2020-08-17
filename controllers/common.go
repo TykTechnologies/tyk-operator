@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -49,7 +50,7 @@ func (r *GatewayReconciler) ensureSecret(ctx context.Context, log logr.Logger, r
 	return nil, nil
 }
 
-func (r *GatewayReconciler) ensureDeployment(ctx context.Context, log logr.Logger, request reconcile.Request, instance *tykv1.Gateway, dep *appsv1.Deployment) (*reconcile.Result, error) {
+func (r *GatewayReconciler) ensureDeployment(ctx context.Context, log logr.Logger, request reconcile.Request, instance *tykv1.Gateway, dep *appsv1.Deployment, requiredReplicas int32) (*reconcile.Result, error) {
 	// See if deployment already exists and create if it doesn't
 	found := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{
@@ -73,6 +74,19 @@ func (r *GatewayReconciler) ensureDeployment(ctx context.Context, log logr.Logge
 		// Error that isn't due to the deployment not existing
 		log.Error(err, "Failed to get Deployment")
 		return &reconcile.Result{}, err
+	}
+
+	log.Info("checking spec matches status")
+	log.Info(fmt.Sprintf("spec: requiredReplicas: %d, replicas: %d", requiredReplicas, *found.Spec.Replicas))
+	if *found.Spec.Replicas != requiredReplicas {
+		found.Spec.Replicas = &requiredReplicas
+		err = r.Update(ctx, found)
+		if err != nil {
+			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+			return &ctrl.Result{}, err
+		}
+		// Spec updated - return and requeue
+		return &ctrl.Result{Requeue: true}, nil
 	}
 
 	return nil, nil

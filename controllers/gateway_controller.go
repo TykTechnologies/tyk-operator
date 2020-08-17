@@ -61,7 +61,7 @@ func (r *GatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	log.Info("ensuring deployment exists")
 	deployment := r.gatewayDeployment(gateway)
-	result, err = r.ensureDeployment(ctx, log, req, gateway, deployment)
+	result, err = r.ensureDeployment(ctx, log, req, gateway, deployment, gateway.Spec.Size)
 	if result != nil {
 		return *result, err
 	}
@@ -80,20 +80,6 @@ func (r *GatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{
 			RequeueAfter: delay,
 		}, nil
-	}
-
-	log.Info("checking spec matches status")
-	size := gateway.Spec.Size
-	log.Info(fmt.Sprintf("spec: size: %d, replicas: %d", size, *deployment.Spec.Replicas))
-	if *deployment.Spec.Replicas != size {
-		deployment.Spec.Replicas = &size
-		err = r.Update(ctx, deployment)
-		if err != nil {
-			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-			return ctrl.Result{}, err
-		}
-		// Spec updated - return and requeue
-		return ctrl.Result{Requeue: true}, nil
 	}
 
 	log.Info("updating gateway status")

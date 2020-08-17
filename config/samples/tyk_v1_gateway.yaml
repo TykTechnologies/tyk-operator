@@ -4,7 +4,7 @@ metadata:
   name: ahmets-gateway
 spec:
   # Add fields here
-  size: 2
+  size: 1
   config:
     listen_port: 8080
     control_api_hostname: "/"
