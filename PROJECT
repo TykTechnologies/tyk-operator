@@ -1,0 +1,11 @@
+domain: tyk.io
+layout: go.kubebuilder.io/v2
+projectName: tyk-operator
+repo: github.com/TykTechnologies/tyk-operator
+resources:
+- group: tyk
+  kind: Gateway
+  version: v1
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}

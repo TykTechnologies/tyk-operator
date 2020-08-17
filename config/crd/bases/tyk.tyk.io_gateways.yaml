@@ -1,0 +1,79 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: gateways.tyk.tyk.io
+spec:
+  group: tyk.tyk.io
+  names:
+    kind: Gateway
+    listKind: GatewayList
+    plural: gateways
+    singular: gateway
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: Gateway is the Schema for the gateways API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: GatewaySpec defines the desired state of Gateway
+          properties:
+            config:
+              properties:
+                listen_port:
+                  format: int32
+                  minimum: 0
+                  type: integer
+              required:
+              - listen_port
+              type: object
+            size:
+              description: Size is the size of the gateway deployment
+              format: int32
+              minimum: 0
+              type: integer
+          required:
+          - config
+          - size
+          type: object
+        status:
+          description: GatewayStatus defines the observed state of Gateway
+          properties:
+            nodes:
+              description: The names of the Tyk Gateway pods
+              items:
+                type: string
+              type: array
+          required:
+          - nodes
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
