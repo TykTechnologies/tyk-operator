@@ -25,8 +25,8 @@ func (r *GatewayReconciler) gatewaySecret(g *tykv1.Gateway) *corev1.Secret {
 		},
 		Type: "Opaque",
 		StringData: map[string]string{
-			"secret":      "secret",
-			"node_secret": "node-secret",
+			"secret":      g.Spec.Config.Secret,
+			"node_secret": g.Spec.Config.NodeSecret,
 		},
 	}
 	controllerutil.SetControllerReference(g, secret, r.Scheme)
@@ -129,7 +129,6 @@ func (r *GatewayReconciler) isGatewayUp(ctx context.Context, log logr.Logger, g 
 }
 
 func (r *GatewayReconciler) updateGatewayStatus(ctx context.Context, log logr.Logger, g *tykv1.Gateway) error {
-
 	// Update the Gateway status with the pod names
 	// List the pods for this memcached's deployment
 	podList := &corev1.PodList{}

@@ -6,9 +6,9 @@ spec:
   # Add fields here
   size: 1
   config:
-    listen_port: 8080
+    listen_port: 8000
     control_api_hostname: "/"
-    control_api_port: 8081
+    control_api_port: 8001
     hostname: ""
     listen_address: "0.0.0.0"
     node_secret: abc

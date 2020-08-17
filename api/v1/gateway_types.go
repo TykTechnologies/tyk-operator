@@ -33,9 +33,9 @@ type GatewaySpec struct {
 
 type Config struct {
 	// +kubebuilder:validation:Minimum=0
-	ListenPort int32 `json:"listen_port"`
-	//Secret     string `json:"secret"`
-	//NodeSecret string `json:"node_secret"`
+	ListenPort int32  `json:"listen_port"`
+	Secret     string `json:"secret"`
+	NodeSecret string `json:"node_secret"`
 	//AllowInsecureConfigs      bool                    `json:"allow_insecure_configs"`
 	//PublicKeyPath             string                  `json:"public_key_path"`
 	//AllowRemoteConfig         bool                    `bson:"allow_remote_config" json:"allow_remote_config"`

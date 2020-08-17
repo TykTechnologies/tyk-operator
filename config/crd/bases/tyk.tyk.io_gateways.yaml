@@ -42,8 +42,14 @@ spec:
                   format: int32
                   minimum: 0
                   type: integer
+                node_secret:
+                  type: string
+                secret:
+                  type: string
               required:
               - listen_port
+              - node_secret
+              - secret
               type: object
             size:
               description: Size is the size of the gateway deployment
