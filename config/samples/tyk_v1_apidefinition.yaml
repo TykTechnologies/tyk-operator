@@ -1,0 +1,7 @@
+apiVersion: tyk.tyk.io/v1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  listen_path: /foo
+  use_keyless: true
