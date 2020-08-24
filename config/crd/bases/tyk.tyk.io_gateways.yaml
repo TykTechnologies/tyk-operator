@@ -56,9 +56,20 @@ spec:
               format: int32
               minimum: 0
               type: integer
+            type:
+              description: Kind is the type of deployment
+              enum:
+              - Deployment
+              - DaemonSet
+              type: string
+            version:
+              description: Version is the version of the gateway docker image
+              type: string
           required:
           - config
           - size
+          - type
+          - version
           type: object
         status:
           description: GatewayStatus defines the observed state of Gateway

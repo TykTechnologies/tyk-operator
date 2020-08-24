@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1beta1
+
+kind: Ingress
+metadata:
+  name: tyk-ingress
+    #  annotations:
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /httpbin
+
+#        pathType
+#          ImplementationSpecific:  (default): With this path type, matching is up to the IngressClass. Implementations
+#            can treat this as a separate pathType or treat it identically to Prefix or Exact path types.
+#          Exact: Matches the URL path exactly and with case sensitivity.
+#          Prefix: Matches based on a URL path prefix split by /. Matching is case sensitive and done on a path element
+#            by element basis. A path element refers to the list of labels in the path split by the / separator. A
+#            request is a match for path p if every p is an element-wise prefix of p of the request path.
+        pathType: Prefix #
+        backend:
+          serviceName: httpbin
+          servicePort: 80
+      - path: /trevorblades
+        pathType: Prefix
+        backend:
+          serviceName: trevorblades
+          servicePort: 80
+    host: gateway.ahmet

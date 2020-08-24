@@ -27,8 +27,13 @@ import (
 type GatewaySpec struct {
 	// +kubebuilder:validation:Minimum=0
 	// Size is the size of the gateway deployment
-	Size   int32  `json:"size"`
-	Config Config `json:"config"`
+	Size int32 `json:"size"`
+	// +kubebuilder:validation:Enum=Deployment;DaemonSet
+	// Kind is the type of deployment
+	Kind string `json:"type"`
+	// Version is the version of the gateway docker image
+	Version string `json:"version"`
+	Config  Config `json:"config"`
 }
 
 type Config struct {

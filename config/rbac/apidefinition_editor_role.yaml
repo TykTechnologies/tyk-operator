@@ -1,0 +1,24 @@
+# permissions for end users to edit apidefinitions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: apidefinition-editor-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apidefinitions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apidefinitions/status
+  verbs:
+  - get

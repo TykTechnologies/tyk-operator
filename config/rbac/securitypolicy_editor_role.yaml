@@ -1,0 +1,24 @@
+# permissions for end users to edit securitypolicies.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: securitypolicy-editor-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - securitypolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - securitypolicies/status
+  verbs:
+  - get

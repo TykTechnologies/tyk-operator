@@ -22,6 +22,13 @@ func labelsForGateway(name string) map[string]string {
 	return map[string]string{"app": "gateway", "gateway_cr": name}
 }
 
+func annotationsForIngress() map[string]string {
+	return map[string]string{
+		"service.beta.kubernetes.io/aws-load-balancer-backend-protocol": "tcp",
+		"service.beta.kubernetes.io/aws-load-balancer-type":             "nlb",
+	}
+}
+
 func (r *GatewayReconciler) ensureSecret(ctx context.Context, log logr.Logger, request reconcile.Request, instance *tykv1.Gateway, s *corev1.Secret) (*reconcile.Result, error) {
 	found := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{

@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"reflect"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"k8s.io/api/networking/v1beta1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
@@ -31,6 +35,45 @@ func (r *GatewayReconciler) gatewaySecret(g *tykv1.Gateway) *corev1.Secret {
 	}
 	controllerutil.SetControllerReference(g, secret, r.Scheme)
 	return secret
+}
+
+func (r *GatewayReconciler) gatewayIngress(g *tykv1.Gateway) *v1beta1.Ingress {
+	_ = labelsForGateway("tyk")
+
+	ingress := &v1beta1.Ingress{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "",
+			APIVersion: "",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:                       "",
+			GenerateName:               "",
+			Namespace:                  "",
+			UID:                        "",
+			ResourceVersion:            "",
+			Generation:                 0,
+			CreationTimestamp:          metav1.Time{},
+			DeletionTimestamp:          nil,
+			DeletionGracePeriodSeconds: nil,
+			Labels:                     nil,
+			Annotations:                nil,
+			OwnerReferences:            nil,
+			Finalizers:                 nil,
+			ClusterName:                "",
+			ManagedFields:              nil,
+		},
+		Spec: v1beta1.IngressSpec{
+			IngressClassName: nil,
+			Backend:          nil,
+			TLS:              nil,
+			Rules:            nil,
+		},
+		Status: v1beta1.IngressStatus{
+			//LoadBalancer:
+		},
+	}
+
+	return ingress
 }
 
 func (r *GatewayReconciler) gatewayDeployment(g *tykv1.Gateway) *appsv1.Deployment {
@@ -84,26 +127,35 @@ func (r *GatewayReconciler) gatewayDeployment(g *tykv1.Gateway) *appsv1.Deployme
 	return dep
 }
 
-func (r *GatewayReconciler) gatewayService(v *tykv1.Gateway) *corev1.Service {
+func (r *GatewayReconciler) gatewayService(g *tykv1.Gateway) *corev1.Service {
 	ls := labelsForGateway("tyk")
+	annotations := annotationsForIngress()
 
 	s := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      tykGatewayServiceName,
-			Namespace: v.Namespace,
+			Name:        tykGatewayServiceName,
+			Namespace:   g.Namespace,
+			Annotations: annotations,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: ls,
+			Type:     corev1.ServiceTypeLoadBalancer,
 			Ports: []corev1.ServicePort{
 				{
-					Port: v.Spec.Config.ListenPort,
+					Name:       "proxy",
+					Port:       8000,
+					TargetPort: intstr.FromInt(8080),
+				},
+				{
+					Name:       "proxy-tls",
+					Port:       8443,
+					TargetPort: intstr.FromInt(8080),
 				},
 			},
-			ClusterIP: "None",
 		},
 	}
 
-	controllerutil.SetControllerReference(v, s, r.Scheme)
+	controllerutil.SetControllerReference(g, s, r.Scheme)
 	return s
 }
 
