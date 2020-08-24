@@ -42,8 +42,10 @@ spec:
                   format: int32
                   type: integer
                 node_secret:
+                  minLength: 5
                   type: string
                 secret:
+                  minLength: 5
                   type: string
                 storage:
                   description: "AllowInsecureConfigs      bool                    `json:\"allow_insecure_configs\"`

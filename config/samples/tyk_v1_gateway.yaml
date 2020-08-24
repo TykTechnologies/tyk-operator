@@ -8,12 +8,8 @@ spec:
   version: v3.0.0
   config:
     listen_port: 8000
-#    control_api_hostname: "/"
-#    control_api_port: 8001
-#    hostname: ""
-#    listen_address: "0.0.0.0"
-    node_secret: abc
-    secret: def
+    node_secret: abcde
+    secret: defgh
     storage:
       addrs:
         - redis.default.svc.cluster.local:6379
