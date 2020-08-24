@@ -28,3 +28,8 @@ Register the CRD
 make install
 ```
 
+Run the operator locally, outside the cluster
+
+```
+make run ENABLE_WEBHOOKS=false
+```
