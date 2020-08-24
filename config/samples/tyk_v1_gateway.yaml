@@ -3,7 +3,6 @@ kind: Gateway
 metadata:
   name: ingress-gateway
 spec:
-  # Add fields here
   size: 1
   type: Deployment
   version: v3.0.0
@@ -15,3 +14,6 @@ spec:
 #    listen_address: "0.0.0.0"
     node_secret: abc
     secret: def
+    storage:
+      addrs:
+        - redis.default.svc.cluster.local:6379
