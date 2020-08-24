@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -59,11 +61,16 @@ func (r *GatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return *result, err
 	}
 
-	log.Info("ensuring deployment exists")
-	deployment := r.gatewayDeployment(gateway)
-	result, err = r.ensureDeployment(ctx, log, req, gateway, deployment, gateway.Spec.Size)
-	if result != nil {
-		return *result, err
+	switch gateway.Spec.Kind {
+	case "Deployment":
+		deployment := r.gatewayDeployment(gateway)
+		log.Info("ensuring deployment exists")
+		result, err = r.ensureDeployment(ctx, log, req, gateway, deployment, gateway.Spec.Size)
+		if result != nil {
+			return *result, err
+		}
+	case "DaemonSet":
+		// TODO
 	}
 
 	log.Info("ensuring service exists")
@@ -88,6 +95,21 @@ func (r *GatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *GatewayReconciler) discoverServices(ctx context.Context, log logr.Logger) (*reconcile.Result, error) {
+	serviceList := &corev1.ServiceList{}
+
+	if err := r.List(ctx, serviceList, nil); err != nil {
+		log.Error(err, "unable to get service list")
+		return nil, err
+	}
+
+	for _, svc := range serviceList.Items {
+		log.Info("svc: ", svc.Name)
+	}
+
+	return nil, nil
 }
 
 // getPodNames returns the pod names of the array of pods passed in

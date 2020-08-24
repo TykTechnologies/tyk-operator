@@ -1,0 +1,63 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: apidefinitions.tyk.tyk.io
+spec:
+  group: tyk.tyk.io
+  names:
+    kind: ApiDefinition
+    listKind: ApiDefinitionList
+    plural: apidefinitions
+    singular: apidefinition
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ApiDefinition is the Schema for the apidefinitions API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ApiDefinitionSpec defines the desired state of ApiDefinition
+          properties:
+            listen_path:
+              description: Foo is an example field of ApiDefinition. Edit ApiDefinition_types.go
+                to remove/update
+              type: string
+            use_keyless:
+              type: boolean
+          required:
+          - listen_path
+          - use_keyless
+          type: object
+        status:
+          description: ApiDefinitionStatus defines the observed state of ApiDefinition
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
