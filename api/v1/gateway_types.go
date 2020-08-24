@@ -37,7 +37,6 @@ type GatewaySpec struct {
 }
 
 type Config struct {
-	// +kubebuilder:validation:Minimum=0
 	ListenPort int32  `json:"listen_port"`
 	Secret     string `json:"secret"`
 	NodeSecret string `json:"node_secret"`
@@ -70,7 +69,7 @@ type Config struct {
 	//// Dashboard Configurations
 	//UseDBAppConfigs          bool                   `json:"use_db_app_configs"`
 	//DBAppConfOptions         DBAppConfOptionsConfig `json:"db_app_conf_options"`
-	//Storage                  StorageOptionsConf     `json:"storage"`
+	Storage StorageOptionsConf `json:"storage"`
 	//DisableDashboardZeroConf bool                   `json:"disable_dashboard_zeroconf"`
 	//
 	//// Slave Configurations
@@ -209,24 +208,22 @@ type Config struct {
 //	NodeIsSegmented  bool     `json:"node_is_segmented"`
 //	Tags             []string `json:"tags"`
 //}
-//
-//type StorageOptionsConf struct {
-//	Type                  string            `json:"type"`
-//	Host                  string            `json:"host"`
-//	Port                  int               `json:"port"`
-//	Hosts                 map[string]string `json:"hosts"` // Deprecated: Addrs instead.
-//	Addrs                 []string          `json:"addrs"`
-//	MasterName            string            `json:"master_name"`
-//	Username              string            `json:"username"`
-//	Password              string            `json:"password"`
-//	Database              int               `json:"database"`
-//	MaxIdle               int               `json:"optimisation_max_idle"`
-//	MaxActive             int               `json:"optimisation_max_active"`
-//	Timeout               int               `json:"timeout"`
-//	EnableCluster         bool              `json:"enable_cluster"`
-//	UseSSL                bool              `json:"use_ssl"`
-//	SSLInsecureSkipVerify bool              `json:"ssl_insecure_skip_verify"`
-//}
+
+type StorageOptionsConf struct {
+	//Type  string   `json:"type"`
+	Addrs []string `json:"addrs"`
+	//MasterName            string            `json:"master_name"`
+	//Username              string            `json:"username"`
+	//Password              string            `json:"password"`
+	//Database              int               `json:"database"`
+	//MaxIdle               int               `json:"optimisation_max_idle"`
+	//MaxActive             int               `json:"optimisation_max_active"`
+	//Timeout               int               `json:"timeout"`
+	//EnableCluster         bool              `json:"enable_cluster"`
+	//UseSSL                bool              `json:"use_ssl"`
+	//SSLInsecureSkipVerify bool              `json:"ssl_insecure_skip_verify"`
+}
+
 //
 //type NormalisedURLConfig struct {
 //	Enabled            bool                 `json:"enabled"`

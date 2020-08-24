@@ -32,7 +32,6 @@ type GatewayReconciler struct {
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=gateways/status,verbs=get;update;patch
-
 func (r *GatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("gateway", req.NamespacedName)
