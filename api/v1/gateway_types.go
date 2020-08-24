@@ -37,8 +37,10 @@ type GatewaySpec struct {
 }
 
 type Config struct {
-	ListenPort int32  `json:"listen_port"`
-	Secret     string `json:"secret"`
+	ListenPort int32 `json:"listen_port"`
+	// +kubebuilder:validation:MinLength=5
+	Secret string `json:"secret"`
+	// +kubebuilder:validation:MinLength=5
 	NodeSecret string `json:"node_secret"`
 	//AllowInsecureConfigs      bool                    `json:"allow_insecure_configs"`
 	//PublicKeyPath             string                  `json:"public_key_path"`
