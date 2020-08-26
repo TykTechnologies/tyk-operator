@@ -41,7 +41,9 @@ type Config struct {
 	// +kubebuilder:validation:MinLength=5
 	Secret string `json:"secret"`
 	// +kubebuilder:validation:MinLength=5
-	NodeSecret string `json:"node_secret"`
+	NodeSecret         string `json:"node_secret"`
+	ControlAPIHostname string `json:"control_api_hostname"`
+	ControlAPIPort     int    `json:"control_api_port"`
 	//AllowInsecureConfigs      bool                    `json:"allow_insecure_configs"`
 	//PublicKeyPath             string                  `json:"public_key_path"`
 	//AllowRemoteConfig         bool                    `bson:"allow_remote_config" json:"allow_remote_config"`

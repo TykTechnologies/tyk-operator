@@ -37,8 +37,6 @@ spec:
           description: ApiDefinitionSpec defines the desired state of ApiDefinition
           properties:
             listen_path:
-              description: Foo is an example field of ApiDefinition. Edit ApiDefinition_types.go
-                to remove/update
               type: string
             use_keyless:
               type: boolean

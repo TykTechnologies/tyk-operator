@@ -5,19 +5,15 @@ import (
 	"fmt"
 	"reflect"
 
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"k8s.io/api/networking/v1beta1"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/types"
-
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -149,6 +145,33 @@ func (r *GatewayReconciler) gatewayService(g *tykv1.Gateway) *corev1.Service {
 				{
 					Name:       "proxy-tls",
 					Port:       8443,
+					TargetPort: intstr.FromInt(8080),
+				},
+			},
+		},
+	}
+
+	controllerutil.SetControllerReference(g, s, r.Scheme)
+	return s
+}
+
+func (r *GatewayReconciler) gatewayAdminService(g *tykv1.Gateway) *corev1.Service {
+	ls := labelsForGateway("tyk")
+	annotations := annotationsForIngress()
+
+	s := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        tykGatewayAdminServiceName,
+			Namespace:   g.Namespace,
+			Annotations: annotations,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: ls,
+			Type:     corev1.ServiceTypeClusterIP,
+			Ports: []corev1.ServicePort{
+				{
+					//Name:       "proxy",
+					Port:       8000,
 					TargetPort: intstr.FromInt(8080),
 				},
 			},
