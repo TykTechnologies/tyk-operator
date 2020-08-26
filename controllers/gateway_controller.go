@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	tykGatewayImageName      = "tykio/tyk-gateway:v3.0.0"
-	tykGatewaySecretName     = "tyk-gateway-secret"
-	tykGatewayDeploymentName = "tyk-gateway"
-	tykGatewayServiceName    = "tyk-service"
+	tykGatewayImageName        = "tykio/tyk-gateway:v3.0.0"
+	tykGatewaySecretName       = "tyk-gateway-secret"
+	tykGatewayDeploymentName   = "tyk-gateway"
+	tykGatewayServiceName      = "tyk-service"
+	tykGatewayAdminServiceName = "tyk-admin-service"
 )
 
 // GatewayReconciler reconciles a Gateway object
@@ -72,7 +73,13 @@ func (r *GatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// TODO
 	}
 
-	log.Info("ensuring service exists")
+	log.Info("ensuring admin exists")
+	result, err = r.ensureService(ctx, log, req, gateway, r.gatewayAdminService(gateway))
+	if result != nil {
+		return *result, err
+	}
+
+	log.Info("ensuring proxy service exists")
 	result, err = r.ensureService(ctx, log, req, gateway, r.gatewayService(gateway))
 	if result != nil {
 		return *result, err
