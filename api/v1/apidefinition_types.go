@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	"github.com/TykTechnologies/tyk-operator/api/apidef"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,14 +29,15 @@ type ApiDefinitionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ListenPath string `json:"listen_path"`
-	UseKeyless bool   `json:"use_keyless"`
+	//Foo string `json:"foo"`
+	Definition apidef.APIDefinition `json:"definition"`
 }
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition
 type ApiDefinitionStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
 }
 
 // +kubebuilder:object:root=true
