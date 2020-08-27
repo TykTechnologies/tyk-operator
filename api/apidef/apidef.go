@@ -305,14 +305,15 @@ type OpenIDOptions struct {
 //
 // swagger:model
 type APIDefinition struct {
-	Id                         string                `bson:"_id,omitempty" json:"id,omitempty"`
+	APIID string `bson:"api_id" json:"api_id"`
+	OrgID string `bson:"org_id" json:"org_id"`
+	//Id                         string                `bson:"_id,omitempty" json:"id,omitempty"`
 	Name                       string                `bson:"name" json:"name"`
 	Slug                       string                `bson:"slug" json:"slug"`
+	Proxy                      Proxy                 `bson:"proxy" json:"proxy"`
 	ListenPort                 int                   `bson:"listen_port" json:"listen_port"`
 	Protocol                   string                `bson:"protocol" json:"protocol"`
 	EnableProxyProtocol        bool                  `bson:"enable_proxy_protocol" json:"enable_proxy_protocol"`
-	APIID                      string                `bson:"api_id" json:"api_id"`
-	OrgID                      string                `bson:"org_id" json:"org_id"`
 	UseKeylessAccess           bool                  `bson:"use_keyless" json:"use_keyless"`
 	UseOauth2                  bool                  `bson:"use_oauth2" json:"use_oauth2"`
 	UseOpenID                  bool                  `bson:"use_openid" json:"use_openid"`
@@ -351,7 +352,7 @@ type APIDefinition struct {
 	VersionDefinition          VersionDefinition     `bson:"definition" json:"definition"`
 	VersionData                VersionData           `bson:"version_data" json:"version_data"`
 	//UptimeTests                UptimeTests           `bson:"uptime_tests" json:"uptime_tests"`
-	Proxy                  Proxy               `bson:"proxy" json:"proxy"`
+
 	DisableRateLimit       bool                `bson:"disable_rate_limit" json:"disable_rate_limit"`
 	DisableQuota           bool                `bson:"disable_quota" json:"disable_quota"`
 	CustomMiddleware       MiddlewareSection   `bson:"custom_middleware" json:"custom_middleware"`
@@ -363,20 +364,22 @@ type APIDefinition struct {
 	AuthProvider           AuthProviderMeta    `bson:"auth_provider" json:"auth_provider"`
 	SessionProvider        SessionProviderMeta `bson:"session_provider" json:"session_provider"`
 	//EventHandlers             EventHandlerMetaConfig `bson:"event_handlers" json:"event_handlers"`
-	EnableBatchRequestSupport bool                `bson:"enable_batch_request_support" json:"enable_batch_request_support"`
-	EnableIpWhiteListing      bool                `mapstructure:"enable_ip_whitelisting" bson:"enable_ip_whitelisting" json:"enable_ip_whitelisting"`
-	AllowedIPs                []string            `mapstructure:"allowed_ips" bson:"allowed_ips" json:"allowed_ips"`
-	EnableIpBlacklisting      bool                `mapstructure:"enable_ip_blacklisting" bson:"enable_ip_blacklisting" json:"enable_ip_blacklisting"`
-	BlacklistedIPs            []string            `mapstructure:"blacklisted_ips" bson:"blacklisted_ips" json:"blacklisted_ips"`
-	DontSetQuotasOnCreate     bool                `mapstructure:"dont_set_quota_on_create" bson:"dont_set_quota_on_create" json:"dont_set_quota_on_create"`
-	ExpireAnalyticsAfter      int64               `mapstructure:"expire_analytics_after" bson:"expire_analytics_after" json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
-	ResponseProcessors        []ResponseProcessor `bson:"response_processors" json:"response_processors"`
-	CORS                      CORS                `bson:"CORS" json:"CORS"`
-	Domain                    string              `bson:"domain" json:"domain"`
-	Certificates              []string            `bson:"certificates" json:"certificates"`
-	DoNotTrack                bool                `bson:"do_not_track" json:"do_not_track"`
-	Tags                      []string            `bson:"tags" json:"tags"`
-	EnableContextVars         bool                `bson:"enable_context_vars" json:"enable_context_vars"`
+	EnableBatchRequestSupport bool `bson:"enable_batch_request_support" json:"enable_batch_request_support"`
+	EnableIpWhiteListing      bool `mapstructure:"enable_ip_whitelisting" bson:"enable_ip_whitelisting" json:"enable_ip_whitelisting"`
+	// +optional
+	AllowedIPs            []string            `mapstructure:"allowed_ips" bson:"allowed_ips" json:"allowed_ips"`
+	EnableIpBlacklisting  bool                `mapstructure:"enable_ip_blacklisting" bson:"enable_ip_blacklisting" json:"enable_ip_blacklisting"`
+	BlacklistedIPs        []string            `mapstructure:"blacklisted_ips" bson:"blacklisted_ips" json:"blacklisted_ips"`
+	DontSetQuotasOnCreate bool                `mapstructure:"dont_set_quota_on_create" bson:"dont_set_quota_on_create" json:"dont_set_quota_on_create"`
+	ExpireAnalyticsAfter  int64               `mapstructure:"expire_analytics_after" bson:"expire_analytics_after" json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
+	ResponseProcessors    []ResponseProcessor `bson:"response_processors" json:"response_processors"`
+	// +optional
+	CORS              CORS     `bson:"CORS" json:"CORS"`
+	Domain            string   `bson:"domain" json:"domain"`
+	Certificates      []string `bson:"certificates" json:"certificates"`
+	DoNotTrack        bool     `bson:"do_not_track" json:"do_not_track"`
+	Tags              []string `bson:"tags" json:"tags"`
+	EnableContextVars bool     `bson:"enable_context_vars" json:"enable_context_vars"`
 	//ConfigData              map[string]interface{} `bson:"config_data" json:"config_data"`
 	TagHeaders              []string        `bson:"tag_headers" json:"tag_headers"`
 	GlobalRateLimit         GlobalRateLimit `bson:"global_rate_limit" json:"global_rate_limit"`

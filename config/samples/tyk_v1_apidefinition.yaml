@@ -3,5 +3,10 @@ kind: ApiDefinition
 metadata:
   name: httpbin
 spec:
-  listen_path: /foo
-  use_keyless: true
+  definition:
+    name: httpbin
+    slug: /httpbin
+    listen_port: 8080
+    protocol: http
+#    CORS: {}
+    active: false
