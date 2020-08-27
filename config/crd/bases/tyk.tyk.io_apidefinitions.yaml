@@ -1389,7 +1389,6 @@ spec:
                   - versions
                   type: object
               required:
-              - CORS
               - active
               - allowed_ips
               - api_id
