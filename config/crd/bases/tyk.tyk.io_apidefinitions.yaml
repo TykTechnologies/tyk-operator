@@ -417,8 +417,10 @@ spec:
             global_rate_limit:
               properties:
                 per:
+                  description: A Number represents a JSON number literal.
                   type: string
                 rate:
+                  description: A Number represents a JSON number literal.
                   type: string
               required:
               - per
@@ -508,6 +510,7 @@ spec:
                 type: string
               type: array
             hmac_allowed_clock_skew:
+              description: A Number represents a JSON number literal.
               type: string
             internal:
               type: boolean
