@@ -20,15 +20,14 @@ import (
 	"flag"
 	"os"
 
+	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -83,14 +82,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
 		os.Exit(1)
 	}
-	if err = (&controllers.SecurityPolicyReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
-		os.Exit(1)
-	}
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
