@@ -34,1440 +34,1439 @@ spec:
         metadata:
           type: object
         spec:
-          description: ApiDefinitionSpec defines the desired state of ApiDefinition
+          description: APIDefinition represents the configuration for a single proxied
+            API and it's versions.
           properties:
-            definition:
-              description: Foo string `json:"foo"`
+            CORS:
               properties:
-                CORS:
-                  properties:
-                    allow_credentials:
-                      type: boolean
-                    allowed_headers:
-                      items:
-                        type: string
-                      type: array
-                    allowed_methods:
-                      items:
-                        type: string
-                      type: array
-                    allowed_origins:
-                      items:
-                        type: string
-                      type: array
-                    debug:
-                      type: boolean
-                    enable:
-                      type: boolean
-                    exposed_headers:
-                      items:
-                        type: string
-                      type: array
-                    max_age:
-                      type: integer
-                    options_passthrough:
-                      type: boolean
-                  required:
-                  - allow_credentials
-                  - allowed_headers
-                  - allowed_methods
-                  - allowed_origins
-                  - debug
-                  - enable
-                  - exposed_headers
-                  - max_age
-                  - options_passthrough
-                  type: object
-                active:
+                allow_credentials:
                   type: boolean
-                allowed_ips:
+                allowed_headers:
                   items:
                     type: string
                   type: array
-                api_id:
-                  type: string
-                auth:
-                  properties:
-                    auth_header_name:
-                      type: string
-                    cookie_name:
-                      type: string
-                    param_name:
-                      type: string
-                    signature:
-                      properties:
-                        algorithm:
-                          type: string
-                        allowed_clock_skew:
-                          format: int64
-                          type: integer
-                        error_code:
-                          type: integer
-                        error_message:
-                          type: string
-                        header:
-                          type: string
-                        secret:
-                          type: string
-                      required:
-                      - algorithm
-                      - allowed_clock_skew
-                      - error_code
-                      - error_message
-                      - header
-                      - secret
-                      type: object
-                    use_certificate:
-                      type: boolean
-                    use_cookie:
-                      type: boolean
-                    use_param:
-                      type: boolean
-                    validate_signature:
-                      type: boolean
-                  required:
-                  - auth_header_name
-                  - cookie_name
-                  - param_name
-                  - use_certificate
-                  - use_cookie
-                  - use_param
-                  - validate_signature
-                  type: object
-                auth_configs:
-                  additionalProperties:
-                    properties:
-                      auth_header_name:
-                        type: string
-                      cookie_name:
-                        type: string
-                      param_name:
-                        type: string
-                      signature:
-                        properties:
-                          algorithm:
-                            type: string
-                          allowed_clock_skew:
-                            format: int64
-                            type: integer
-                          error_code:
-                            type: integer
-                          error_message:
-                            type: string
-                          header:
-                            type: string
-                          secret:
-                            type: string
-                        required:
-                        - algorithm
-                        - allowed_clock_skew
-                        - error_code
-                        - error_message
-                        - header
-                        - secret
-                        type: object
-                      use_certificate:
-                        type: boolean
-                      use_cookie:
-                        type: boolean
-                      use_param:
-                        type: boolean
-                      validate_signature:
-                        type: boolean
-                    required:
-                    - auth_header_name
-                    - cookie_name
-                    - param_name
-                    - use_certificate
-                    - use_cookie
-                    - use_param
-                    - validate_signature
-                    type: object
-                  type: object
-                auth_provider:
-                  properties:
-                    name:
-                      type: string
-                    storage_engine:
-                      type: string
-                  required:
-                  - name
-                  - storage_engine
-                  type: object
-                base_identity_provided_by:
-                  type: string
-                basic_auth:
-                  properties:
-                    body_password_regexp:
-                      type: string
-                    body_user_regexp:
-                      type: string
-                    cache_ttl:
-                      type: integer
-                    disable_caching:
-                      type: boolean
-                    extract_from_body:
-                      type: boolean
-                  required:
-                  - body_password_regexp
-                  - body_user_regexp
-                  - cache_ttl
-                  - disable_caching
-                  - extract_from_body
-                  type: object
-                blacklisted_ips:
+                allowed_methods:
                   items:
                     type: string
                   type: array
-                cache_options:
-                  properties:
-                    cache_all_safe_requests:
-                      type: boolean
-                    cache_by_headers:
-                      items:
-                        type: string
-                      type: array
-                    cache_control_ttl_header:
-                      type: string
-                    cache_response_codes:
-                      items:
-                        type: integer
-                      type: array
-                    cache_timeout:
-                      format: int64
-                      type: integer
-                    enable_cache:
-                      type: boolean
-                    enable_upstream_cache_control:
-                      type: boolean
-                  required:
-                  - cache_all_safe_requests
-                  - cache_by_headers
-                  - cache_control_ttl_header
-                  - cache_response_codes
-                  - cache_timeout
-                  - enable_cache
-                  - enable_upstream_cache_control
-                  type: object
-                certificates:
+                allowed_origins:
                   items:
                     type: string
                   type: array
-                client_certificates:
+                debug:
+                  type: boolean
+                enable:
+                  type: boolean
+                exposed_headers:
                   items:
                     type: string
                   type: array
-                custom_middleware:
-                  properties:
-                    auth_check:
-                      properties:
-                        name:
-                          type: string
-                        path:
-                          type: string
-                        raw_body_only:
-                          type: boolean
-                        require_session:
-                          type: boolean
-                      required:
-                      - name
-                      - path
-                      - raw_body_only
-                      - require_session
-                      type: object
-                    driver:
-                      type: string
-                    id_extractor:
-                      properties:
-                        extract_from:
-                          type: string
-                        extract_with:
-                          type: string
-                      required:
-                      - extract_from
-                      - extract_with
-                      type: object
-                    post:
-                      items:
-                        properties:
-                          name:
-                            type: string
-                          path:
-                            type: string
-                          raw_body_only:
-                            type: boolean
-                          require_session:
-                            type: boolean
-                        required:
-                        - name
-                        - path
-                        - raw_body_only
-                        - require_session
-                        type: object
-                      type: array
-                    post_key_auth:
-                      items:
-                        properties:
-                          name:
-                            type: string
-                          path:
-                            type: string
-                          raw_body_only:
-                            type: boolean
-                          require_session:
-                            type: boolean
-                        required:
-                        - name
-                        - path
-                        - raw_body_only
-                        - require_session
-                        type: object
-                      type: array
-                    pre:
-                      items:
-                        properties:
-                          name:
-                            type: string
-                          path:
-                            type: string
-                          raw_body_only:
-                            type: boolean
-                          require_session:
-                            type: boolean
-                        required:
-                        - name
-                        - path
-                        - raw_body_only
-                        - require_session
-                        type: object
-                      type: array
-                    response:
-                      items:
-                        properties:
-                          name:
-                            type: string
-                          path:
-                            type: string
-                          raw_body_only:
-                            type: boolean
-                          require_session:
-                            type: boolean
-                        required:
-                        - name
-                        - path
-                        - raw_body_only
-                        - require_session
-                        type: object
-                      type: array
-                  required:
-                  - auth_check
-                  - driver
-                  - id_extractor
-                  - post
-                  - post_key_auth
-                  - pre
-                  - response
-                  type: object
-                custom_middleware_bundle:
-                  type: string
-                definition:
-                  properties:
-                    key:
-                      type: string
-                    location:
-                      type: string
-                    strip_path:
-                      type: boolean
-                  required:
-                  - key
-                  - location
-                  - strip_path
-                  type: object
-                disable_quota:
-                  type: boolean
-                disable_rate_limit:
-                  type: boolean
-                do_not_track:
-                  type: boolean
-                domain:
-                  type: string
-                dont_set_quota_on_create:
-                  type: boolean
-                enable_batch_request_support:
-                  description: EventHandlers             EventHandlerMetaConfig `bson:"event_handlers"
-                    json:"event_handlers"`
-                  type: boolean
-                enable_context_vars:
-                  type: boolean
-                enable_coprocess_auth:
-                  type: boolean
-                enable_detailed_recording:
-                  type: boolean
-                enable_ip_blacklisting:
-                  type: boolean
-                enable_ip_whitelisting:
-                  type: boolean
-                enable_jwt:
-                  type: boolean
-                enable_proxy_protocol:
-                  type: boolean
-                enable_signature_checking:
-                  type: boolean
-                expire_analytics_after:
-                  format: int64
+                max_age:
                   type: integer
-                global_rate_limit:
-                  properties:
-                    per:
-                      type: string
-                    rate:
-                      type: string
-                  required:
-                  - per
-                  - rate
-                  type: object
-                graphql:
-                  description: GraphQLConfig is the root config object for a GraphQL
-                    API.
-                  properties:
-                    enabled:
-                      description: Enabled indicates if GraphQL should be enabled.
-                      type: boolean
-                    execution_mode:
-                      description: ExecutionMode is the mode to define how an api
-                        behaves.
-                      type: string
-                    playground:
-                      description: GraphQLPlayground is the Playground specific configuration.
-                      properties:
-                        enabled:
-                          description: Enabled indicates if the playground should
-                            be enabled.
-                          type: boolean
-                        path:
-                          description: Path sets the path on which the playground
-                            will be hosted if enabled.
-                          type: string
-                      required:
-                      - enabled
-                      - path
-                      type: object
-                    schema:
-                      description: Schema is the GraphQL Schema exposed by the GraphQL
-                        API/Upstream/Engine.
-                      type: string
-                    type_field_configurations:
-                      description: LastSchemaUpdate contains the date and time of
-                        the last triggered schema update to the upstream LastSchemaUpdate
-                        *time.Time `bson:"last_schema_update" json:"last_schema_update,omitempty"`
-                        TypeFieldConfigurations is a rule set of data source and mapping
-                        of a schema field.
-                      items:
-                        properties:
-                          data_source:
-                            properties:
-                              data_source_config:
-                                description: Config is the DataSource specific configuration
-                                  object Each Planner needs to make sure to parse
-                                  their Config Object correctly
-                                format: byte
-                                type: string
-                              kind:
-                                description: Kind defines the unique identifier of
-                                  the DataSource Kind needs to match to the Planner
-                                  "DataSourceName" name
-                                type: string
-                            required:
-                            - data_source_config
-                            - kind
-                            type: object
-                          field_name:
-                            type: string
-                          mapping:
-                            properties:
-                              disabled:
-                                type: boolean
-                              path:
-                                type: string
-                            required:
-                            - disabled
-                            - path
-                            type: object
-                          type_name:
-                            type: string
-                        required:
-                        - data_source
-                        - field_name
-                        - mapping
-                        - type_name
-                        type: object
-                      type: array
-                  required:
-                  - enabled
-                  - execution_mode
-                  - playground
-                  - schema
-                  - type_field_configurations
-                  type: object
-                hmac_allowed_algorithms:
-                  items:
-                    type: string
-                  type: array
-                hmac_allowed_clock_skew:
-                  type: string
-                id:
-                  type: string
-                internal:
+                options_passthrough:
                   type: boolean
-                jwt_client_base_field:
+              required:
+              - allow_credentials
+              - allowed_headers
+              - allowed_methods
+              - allowed_origins
+              - debug
+              - enable
+              - exposed_headers
+              - max_age
+              - options_passthrough
+              type: object
+            active:
+              type: boolean
+            allowed_ips:
+              items:
+                type: string
+              type: array
+            api_id:
+              type: string
+            auth:
+              properties:
+                auth_header_name:
                   type: string
-                jwt_default_policies:
-                  items:
-                    type: string
-                  type: array
-                jwt_expires_at_validation_skew:
-                  format: int64
-                  type: integer
-                jwt_identity_base_field:
+                cookie_name:
                   type: string
-                jwt_issued_at_validation_skew:
-                  format: int64
-                  type: integer
-                jwt_not_before_validation_skew:
-                  format: int64
-                  type: integer
-                jwt_policy_field_name:
+                param_name:
                   type: string
-                jwt_scope_claim_name:
-                  type: string
-                jwt_scope_to_policy_mapping:
-                  additionalProperties:
-                    type: string
-                  type: object
-                jwt_signing_method:
-                  type: string
-                jwt_skip_kid:
-                  type: boolean
-                jwt_source:
-                  type: string
-                listen_port:
-                  type: integer
-                name:
-                  type: string
-                notifications:
-                  properties:
-                    oauth_on_keychange_url:
-                      type: string
-                    shared_secret:
-                      type: string
-                  required:
-                  - oauth_on_keychange_url
-                  - shared_secret
-                  type: object
-                oauth_meta:
-                  properties:
-                    allowed_access_types:
-                      items:
-                        type: string
-                      type: array
-                    allowed_authorize_types:
-                      items:
-                        type: string
-                      type: array
-                    auth_login_redirect:
-                      type: string
-                  required:
-                  - allowed_access_types
-                  - allowed_authorize_types
-                  - auth_login_redirect
-                  type: object
-                openid_options:
-                  properties:
-                    providers:
-                      items:
-                        properties:
-                          client_ids:
-                            additionalProperties:
-                              type: string
-                            type: object
-                          issuer:
-                            type: string
-                        required:
-                        - client_ids
-                        - issuer
-                        type: object
-                      type: array
-                    segregate_by_client:
-                      type: boolean
-                  required:
-                  - providers
-                  - segregate_by_client
-                  type: object
-                org_id:
-                  type: string
-                pinned_public_keys:
-                  additionalProperties:
-                    type: string
-                  type: object
-                protocol:
-                  type: string
-                proxy:
-                  description: UptimeTests                UptimeTests           `bson:"uptime_tests"
-                    json:"uptime_tests"`
-                  properties:
-                    check_host_against_uptime_tests:
-                      type: boolean
-                    disable_strip_slash:
-                      type: boolean
-                    enable_load_balancing:
-                      type: boolean
-                    listen_path:
-                      type: string
-                    preserve_host_header:
-                      type: boolean
-                    service_discovery:
-                      properties:
-                        cache_timeout:
-                          format: int64
-                          type: integer
-                        data_path:
-                          type: string
-                        endpoint_returns_list:
-                          type: boolean
-                        parent_data_path:
-                          type: string
-                        port_data_path:
-                          type: string
-                        query_endpoint:
-                          type: string
-                        target_path:
-                          type: string
-                        use_discovery_service:
-                          type: boolean
-                        use_nested_query:
-                          type: boolean
-                        use_target_list:
-                          type: boolean
-                      required:
-                      - cache_timeout
-                      - data_path
-                      - endpoint_returns_list
-                      - parent_data_path
-                      - port_data_path
-                      - query_endpoint
-                      - target_path
-                      - use_discovery_service
-                      - use_nested_query
-                      - use_target_list
-                      type: object
-                    strip_listen_path:
-                      type: boolean
-                    target_list:
-                      items:
-                        type: string
-                      type: array
-                    target_url:
-                      type: string
-                    transport:
-                      properties:
-                        proxy_url:
-                          type: string
-                        ssl_ciphers:
-                          items:
-                            type: string
-                          type: array
-                        ssl_force_common_name_check:
-                          type: boolean
-                        ssl_insecure_skip_verify:
-                          type: boolean
-                        ssl_min_version:
-                          type: integer
-                      required:
-                      - proxy_url
-                      - ssl_ciphers
-                      - ssl_force_common_name_check
-                      - ssl_insecure_skip_verify
-                      - ssl_min_version
-                      type: object
-                  required:
-                  - check_host_against_uptime_tests
-                  - disable_strip_slash
-                  - enable_load_balancing
-                  - listen_path
-                  - preserve_host_header
-                  - service_discovery
-                  - strip_listen_path
-                  - target_list
-                  - target_url
-                  - transport
-                  type: object
-                request_signing:
+                signature:
                   properties:
                     algorithm:
                       type: string
-                    certificate_id:
+                    allowed_clock_skew:
+                      format: int64
+                      type: integer
+                    error_code:
+                      type: integer
+                    error_message:
                       type: string
-                    header_list:
-                      items:
-                        type: string
-                      type: array
-                    is_enabled:
-                      type: boolean
-                    key_id:
+                    header:
                       type: string
                     secret:
                       type: string
-                    signature_header:
-                      type: string
                   required:
                   - algorithm
-                  - certificate_id
-                  - header_list
-                  - is_enabled
-                  - key_id
+                  - allowed_clock_skew
+                  - error_code
+                  - error_message
+                  - header
                   - secret
-                  - signature_header
                   type: object
-                response_processors:
+                use_certificate:
+                  type: boolean
+                use_cookie:
+                  type: boolean
+                use_param:
+                  type: boolean
+                validate_signature:
+                  type: boolean
+              required:
+              - auth_header_name
+              - cookie_name
+              - param_name
+              - use_certificate
+              - use_cookie
+              - use_param
+              - validate_signature
+              type: object
+            auth_configs:
+              additionalProperties:
+                properties:
+                  auth_header_name:
+                    type: string
+                  cookie_name:
+                    type: string
+                  param_name:
+                    type: string
+                  signature:
+                    properties:
+                      algorithm:
+                        type: string
+                      allowed_clock_skew:
+                        format: int64
+                        type: integer
+                      error_code:
+                        type: integer
+                      error_message:
+                        type: string
+                      header:
+                        type: string
+                      secret:
+                        type: string
+                    required:
+                    - algorithm
+                    - allowed_clock_skew
+                    - error_code
+                    - error_message
+                    - header
+                    - secret
+                    type: object
+                  use_certificate:
+                    type: boolean
+                  use_cookie:
+                    type: boolean
+                  use_param:
+                    type: boolean
+                  validate_signature:
+                    type: boolean
+                required:
+                - auth_header_name
+                - cookie_name
+                - param_name
+                - use_certificate
+                - use_cookie
+                - use_param
+                - validate_signature
+                type: object
+              type: object
+            auth_provider:
+              properties:
+                name:
+                  description: ApiDefinitionSpec defines the desired state of ApiDefinition
+                  type: string
+                storage_engine:
+                  type: string
+              required:
+              - name
+              - storage_engine
+              type: object
+            base_identity_provided_by:
+              type: string
+            basic_auth:
+              properties:
+                body_password_regexp:
+                  type: string
+                body_user_regexp:
+                  type: string
+                cache_ttl:
+                  type: integer
+                disable_caching:
+                  type: boolean
+                extract_from_body:
+                  type: boolean
+              required:
+              - body_password_regexp
+              - body_user_regexp
+              - cache_ttl
+              - disable_caching
+              - extract_from_body
+              type: object
+            blacklisted_ips:
+              items:
+                type: string
+              type: array
+            cache_options:
+              properties:
+                cache_all_safe_requests:
+                  type: boolean
+                cache_by_headers:
+                  items:
+                    type: string
+                  type: array
+                cache_control_ttl_header:
+                  type: string
+                cache_response_codes:
+                  items:
+                    type: integer
+                  type: array
+                cache_timeout:
+                  format: int64
+                  type: integer
+                enable_cache:
+                  type: boolean
+                enable_upstream_cache_control:
+                  type: boolean
+              required:
+              - cache_all_safe_requests
+              - cache_by_headers
+              - cache_control_ttl_header
+              - cache_response_codes
+              - cache_timeout
+              - enable_cache
+              - enable_upstream_cache_control
+              type: object
+            certificates:
+              items:
+                type: string
+              type: array
+            client_certificates:
+              items:
+                type: string
+              type: array
+            custom_middleware:
+              properties:
+                auth_check:
+                  properties:
+                    name:
+                      type: string
+                    path:
+                      type: string
+                    raw_body_only:
+                      type: boolean
+                    require_session:
+                      type: boolean
+                  required:
+                  - name
+                  - path
+                  - raw_body_only
+                  - require_session
+                  type: object
+                driver:
+                  type: string
+                id_extractor:
+                  properties:
+                    extract_from:
+                      type: string
+                    extract_with:
+                      type: string
+                  required:
+                  - extract_from
+                  - extract_with
+                  type: object
+                post:
                   items:
                     properties:
                       name:
                         type: string
+                      path:
+                        type: string
+                      raw_body_only:
+                        type: boolean
+                      require_session:
+                        type: boolean
                     required:
                     - name
+                    - path
+                    - raw_body_only
+                    - require_session
                     type: object
                   type: array
-                session_lifetime:
-                  format: int64
-                  type: integer
-                session_provider:
-                  properties:
-                    name:
-                      type: string
-                    storage_engine:
-                      type: string
-                  required:
-                  - name
-                  - storage_engine
-                  type: object
-                slug:
+                post_key_auth:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                      path:
+                        type: string
+                      raw_body_only:
+                        type: boolean
+                      require_session:
+                        type: boolean
+                    required:
+                    - name
+                    - path
+                    - raw_body_only
+                    - require_session
+                    type: object
+                  type: array
+                pre:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                      path:
+                        type: string
+                      raw_body_only:
+                        type: boolean
+                      require_session:
+                        type: boolean
+                    required:
+                    - name
+                    - path
+                    - raw_body_only
+                    - require_session
+                    type: object
+                  type: array
+                response:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                      path:
+                        type: string
+                      raw_body_only:
+                        type: boolean
+                      require_session:
+                        type: boolean
+                    required:
+                    - name
+                    - path
+                    - raw_body_only
+                    - require_session
+                    type: object
+                  type: array
+              required:
+              - auth_check
+              - driver
+              - id_extractor
+              - post
+              - post_key_auth
+              - pre
+              - response
+              type: object
+            custom_middleware_bundle:
+              type: string
+            definition:
+              properties:
+                key:
                   type: string
-                strip_auth_data:
+                location:
+                  type: string
+                strip_path:
                   type: boolean
-                tag_headers:
-                  description: ConfigData              map[string]interface{} `bson:"config_data"
-                    json:"config_data"`
-                  items:
-                    type: string
-                  type: array
-                tags:
-                  items:
-                    type: string
-                  type: array
-                upstream_certificates:
-                  additionalProperties:
-                    type: string
-                  type: object
-                use_basic_auth:
+              required:
+              - key
+              - location
+              - strip_path
+              type: object
+            disable_quota:
+              type: boolean
+            disable_rate_limit:
+              type: boolean
+            do_not_track:
+              type: boolean
+            domain:
+              type: string
+            dont_set_quota_on_create:
+              type: boolean
+            enable_batch_request_support:
+              description: EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
+              type: boolean
+            enable_context_vars:
+              type: boolean
+            enable_coprocess_auth:
+              type: boolean
+            enable_detailed_recording:
+              type: boolean
+            enable_ip_blacklisting:
+              type: boolean
+            enable_ip_whitelisting:
+              type: boolean
+            enable_jwt:
+              type: boolean
+            enable_proxy_protocol:
+              type: boolean
+            enable_signature_checking:
+              type: boolean
+            expire_analytics_after:
+              format: int64
+              type: integer
+            global_rate_limit:
+              properties:
+                per:
+                  type: string
+                rate:
+                  type: string
+              required:
+              - per
+              - rate
+              type: object
+            graphql:
+              description: GraphQLConfig is the root config object for a GraphQL API.
+              properties:
+                enabled:
+                  description: Enabled indicates if GraphQL should be enabled.
                   type: boolean
-                use_go_plugin_auth:
-                  type: boolean
-                use_keyless:
-                  type: boolean
-                use_mutual_tls_auth:
-                  type: boolean
-                use_oauth2:
-                  type: boolean
-                use_openid:
-                  type: boolean
-                use_standard_auth:
-                  type: boolean
-                version_data:
+                execution_mode:
+                  description: ExecutionMode is the mode to define how an api behaves.
+                  type: string
+                playground:
+                  description: GraphQLPlayground is the Playground specific configuration.
                   properties:
-                    default_version:
-                      type: string
-                    not_versioned:
+                    enabled:
+                      description: Enabled indicates if the playground should be enabled.
                       type: boolean
-                    versions:
-                      additionalProperties:
-                        properties:
-                          expires:
-                            type: string
-                          extended_paths:
-                            properties:
-                              advance_cache_config:
-                                items:
-                                  properties:
-                                    cache_key_regex:
-                                      type: string
-                                    cache_response_codes:
-                                      items:
-                                        type: integer
-                                      type: array
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - cache_key_regex
-                                  - cache_response_codes
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              black_list:
-                                items:
-                                  properties:
-                                    ignore_case:
-                                      type: boolean
-                                    method_actions:
-                                      additionalProperties:
-                                        properties:
-                                          action:
-                                            type: string
-                                          code:
-                                            type: integer
-                                          data:
-                                            type: string
-                                          headers:
-                                            additionalProperties:
-                                              type: string
-                                            type: object
-                                        required:
-                                        - action
-                                        - code
-                                        - data
-                                        - headers
-                                        type: object
-                                      type: object
-                                    path:
-                                      type: string
-                                  required:
-                                  - ignore_case
-                                  - method_actions
-                                  - path
-                                  type: object
-                                type: array
-                              cache:
-                                items:
-                                  type: string
-                                type: array
-                              circuit_breakers:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    return_to_service_after:
-                                      type: integer
-                                    samples:
-                                      format: int64
-                                      type: integer
-                                    threshold_percent:
-                                      type: integer
-                                  required:
-                                  - method
-                                  - path
-                                  - return_to_service_after
-                                  - samples
-                                  - threshold_percent
-                                  type: object
-                                type: array
-                              do_not_track_endpoints:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              hard_timeouts:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    timeout:
-                                      type: integer
-                                  required:
-                                  - method
-                                  - path
-                                  - timeout
-                                  type: object
-                                type: array
-                              ignored:
-                                items:
-                                  properties:
-                                    ignore_case:
-                                      type: boolean
-                                    method_actions:
-                                      additionalProperties:
-                                        properties:
-                                          action:
-                                            type: string
-                                          code:
-                                            type: integer
-                                          data:
-                                            type: string
-                                          headers:
-                                            additionalProperties:
-                                              type: string
-                                            type: object
-                                        required:
-                                        - action
-                                        - code
-                                        - data
-                                        - headers
-                                        type: object
-                                      type: object
-                                    path:
-                                      type: string
-                                  required:
-                                  - ignore_case
-                                  - method_actions
-                                  - path
-                                  type: object
-                                type: array
-                              internal:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              method_transforms:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    to_method:
-                                      type: string
-                                  required:
-                                  - method
-                                  - path
-                                  - to_method
-                                  type: object
-                                type: array
-                              size_limits:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    size_limit:
-                                      format: int64
-                                      type: integer
-                                  required:
-                                  - method
-                                  - path
-                                  - size_limit
-                                  type: object
-                                type: array
-                              track_endpoints:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              transform:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    template_data:
-                                      properties:
-                                        enable_session:
-                                          type: boolean
-                                        input_type:
-                                          type: string
-                                        template_mode:
-                                          type: string
-                                        template_source:
-                                          type: string
-                                      required:
-                                      - enable_session
-                                      - input_type
-                                      - template_mode
-                                      - template_source
-                                      type: object
-                                  required:
-                                  - method
-                                  - path
-                                  - template_data
-                                  type: object
-                                type: array
-                              transform_headers:
-                                items:
-                                  properties:
-                                    act_on:
-                                      type: boolean
-                                    add_headers:
-                                      additionalProperties:
-                                        type: string
-                                      type: object
-                                    delete_headers:
-                                      items:
-                                        type: string
-                                      type: array
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - act_on
-                                  - add_headers
-                                  - delete_headers
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              transform_jq:
-                                items:
-                                  properties:
-                                    filter:
-                                      type: string
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - filter
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              transform_jq_response:
-                                items:
-                                  properties:
-                                    filter:
-                                      type: string
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - filter
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              transform_response:
-                                items:
-                                  properties:
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    template_data:
-                                      properties:
-                                        enable_session:
-                                          type: boolean
-                                        input_type:
-                                          type: string
-                                        template_mode:
-                                          type: string
-                                        template_source:
-                                          type: string
-                                      required:
-                                      - enable_session
-                                      - input_type
-                                      - template_mode
-                                      - template_source
-                                      type: object
-                                  required:
-                                  - method
-                                  - path
-                                  - template_data
-                                  type: object
-                                type: array
-                              transform_response_headers:
-                                items:
-                                  properties:
-                                    act_on:
-                                      type: boolean
-                                    add_headers:
-                                      additionalProperties:
-                                        type: string
-                                      type: object
-                                    delete_headers:
-                                      items:
-                                        type: string
-                                      type: array
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                  required:
-                                  - act_on
-                                  - add_headers
-                                  - delete_headers
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              url_rewrites:
-                                items:
-                                  properties:
-                                    match_pattern:
-                                      type: string
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    rewrite_to:
-                                      type: string
-                                    triggers:
-                                      items:
-                                        properties:
-                                          "on":
-                                            type: string
-                                          options:
-                                            properties:
-                                              header_matches:
-                                                additionalProperties:
-                                                  properties:
-                                                    match_rx:
-                                                      type: string
-                                                    reverse:
-                                                      type: boolean
-                                                  required:
-                                                  - match_rx
-                                                  - reverse
-                                                  type: object
-                                                type: object
-                                              path_part_matches:
-                                                additionalProperties:
-                                                  properties:
-                                                    match_rx:
-                                                      type: string
-                                                    reverse:
-                                                      type: boolean
-                                                  required:
-                                                  - match_rx
-                                                  - reverse
-                                                  type: object
-                                                type: object
-                                              payload_matches:
-                                                properties:
-                                                  match_rx:
-                                                    type: string
-                                                  reverse:
-                                                    type: boolean
-                                                required:
-                                                - match_rx
-                                                - reverse
-                                                type: object
-                                              query_val_matches:
-                                                additionalProperties:
-                                                  properties:
-                                                    match_rx:
-                                                      type: string
-                                                    reverse:
-                                                      type: boolean
-                                                  required:
-                                                  - match_rx
-                                                  - reverse
-                                                  type: object
-                                                type: object
-                                              request_context_matches:
-                                                additionalProperties:
-                                                  properties:
-                                                    match_rx:
-                                                      type: string
-                                                    reverse:
-                                                      type: boolean
-                                                  required:
-                                                  - match_rx
-                                                  - reverse
-                                                  type: object
-                                                type: object
-                                              session_meta_matches:
-                                                additionalProperties:
-                                                  properties:
-                                                    match_rx:
-                                                      type: string
-                                                    reverse:
-                                                      type: boolean
-                                                  required:
-                                                  - match_rx
-                                                  - reverse
-                                                  type: object
-                                                type: object
-                                            required:
-                                            - header_matches
-                                            - path_part_matches
-                                            - payload_matches
-                                            - query_val_matches
-                                            - request_context_matches
-                                            - session_meta_matches
-                                            type: object
-                                          rewrite_to:
-                                            type: string
-                                        required:
-                                        - "on"
-                                        - options
-                                        - rewrite_to
-                                        type: object
-                                      type: array
-                                  required:
-                                  - match_pattern
-                                  - method
-                                  - path
-                                  - rewrite_to
-                                  - triggers
-                                  type: object
-                                type: array
-                              validate_json:
-                                items:
-                                  properties:
-                                    error_response_code:
-                                      description: Allows override of default 422
-                                        Unprocessible Entity response code for validation
-                                        errors.
-                                      type: integer
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    schema_b64:
-                                      description: Schema    map[string]interface{}
-                                        `bson:"schema" json:"schema"`
-                                      type: string
-                                  required:
-                                  - error_response_code
-                                  - method
-                                  - path
-                                  type: object
-                                type: array
-                              virtual:
-                                items:
-                                  properties:
-                                    function_source_type:
-                                      type: string
-                                    function_source_uri:
-                                      type: string
-                                    method:
-                                      type: string
-                                    path:
-                                      type: string
-                                    proxy_on_error:
-                                      type: boolean
-                                    response_function_name:
-                                      type: string
-                                    use_session:
-                                      type: boolean
-                                  required:
-                                  - function_source_type
-                                  - function_source_uri
-                                  - method
-                                  - path
-                                  - proxy_on_error
-                                  - response_function_name
-                                  - use_session
-                                  type: object
-                                type: array
-                              white_list:
-                                items:
-                                  properties:
-                                    ignore_case:
-                                      type: boolean
-                                    method_actions:
-                                      additionalProperties:
-                                        properties:
-                                          action:
-                                            type: string
-                                          code:
-                                            type: integer
-                                          data:
-                                            type: string
-                                          headers:
-                                            additionalProperties:
-                                              type: string
-                                            type: object
-                                        required:
-                                        - action
-                                        - code
-                                        - data
-                                        - headers
-                                        type: object
-                                      type: object
-                                    path:
-                                      type: string
-                                  required:
-                                  - ignore_case
-                                  - method_actions
-                                  - path
-                                  type: object
-                                type: array
-                            type: object
-                          global_headers:
-                            additionalProperties:
-                              type: string
-                            type: object
-                          global_headers_remove:
-                            items:
-                              type: string
-                            type: array
-                          global_response_headers:
-                            additionalProperties:
-                              type: string
-                            type: object
-                          global_response_headers_remove:
-                            items:
-                              type: string
-                            type: array
-                          global_size_limit:
-                            format: int64
-                            type: integer
-                          ignore_endpoint_case:
-                            type: boolean
-                          name:
-                            type: string
-                          override_target:
-                            type: string
-                          paths:
-                            properties:
-                              black_list:
-                                items:
-                                  type: string
-                                type: array
-                              ignored:
-                                items:
-                                  type: string
-                                type: array
-                              white_list:
-                                items:
-                                  type: string
-                                type: array
-                            required:
-                            - black_list
-                            - ignored
-                            - white_list
-                            type: object
-                          use_extended_paths:
-                            type: boolean
-                        required:
-                        - expires
-                        - extended_paths
-                        - global_headers
-                        - global_headers_remove
-                        - global_response_headers
-                        - global_response_headers_remove
-                        - global_size_limit
-                        - ignore_endpoint_case
-                        - name
-                        - override_target
-                        - paths
-                        - use_extended_paths
-                        type: object
-                      type: object
+                    path:
+                      description: Path sets the path on which the playground will
+                        be hosted if enabled.
+                      type: string
                   required:
-                  - default_version
-                  - not_versioned
-                  - versions
+                  - enabled
+                  - path
+                  type: object
+                schema:
+                  description: Schema is the GraphQL Schema exposed by the GraphQL
+                    API/Upstream/Engine.
+                  type: string
+                type_field_configurations:
+                  description: LastSchemaUpdate contains the date and time of the
+                    last triggered schema update to the upstream LastSchemaUpdate
+                    *time.Time `json:"last_schema_update,omitempty"` TypeFieldConfigurations
+                    is a rule set of data source and mapping of a schema field.
+                  items:
+                    properties:
+                      data_source:
+                        properties:
+                          data_source_config:
+                            description: Config is the DataSource specific configuration
+                              object Each Planner needs to make sure to parse their
+                              Config Object correctly
+                            format: byte
+                            type: string
+                          kind:
+                            description: Kind defines the unique identifier of the
+                              DataSource Kind needs to match to the Planner "DataSourceName"
+                              name
+                            type: string
+                        required:
+                        - data_source_config
+                        - kind
+                        type: object
+                      field_name:
+                        type: string
+                      mapping:
+                        properties:
+                          disabled:
+                            type: boolean
+                          path:
+                            type: string
+                        required:
+                        - disabled
+                        - path
+                        type: object
+                      type_name:
+                        type: string
+                    required:
+                    - data_source
+                    - field_name
+                    - mapping
+                    - type_name
+                    type: object
+                  type: array
+              required:
+              - enabled
+              - execution_mode
+              - playground
+              - schema
+              - type_field_configurations
+              type: object
+            hmac_allowed_algorithms:
+              items:
+                type: string
+              type: array
+            hmac_allowed_clock_skew:
+              type: string
+            internal:
+              type: boolean
+            jwt_client_base_field:
+              type: string
+            jwt_default_policies:
+              items:
+                type: string
+              type: array
+            jwt_expires_at_validation_skew:
+              format: int64
+              type: integer
+            jwt_identity_base_field:
+              type: string
+            jwt_issued_at_validation_skew:
+              format: int64
+              type: integer
+            jwt_not_before_validation_skew:
+              format: int64
+              type: integer
+            jwt_policy_field_name:
+              type: string
+            jwt_scope_claim_name:
+              type: string
+            jwt_scope_to_policy_mapping:
+              additionalProperties:
+                type: string
+              type: object
+            jwt_signing_method:
+              type: string
+            jwt_skip_kid:
+              type: boolean
+            jwt_source:
+              type: string
+            listen_port:
+              type: integer
+            name:
+              description: Id                         string                `json:"id,omitempty"`
+              type: string
+            notifications:
+              properties:
+                oauth_on_keychange_url:
+                  type: string
+                shared_secret:
+                  type: string
+              required:
+              - oauth_on_keychange_url
+              - shared_secret
+              type: object
+            oauth_meta:
+              properties:
+                allowed_access_types:
+                  items:
+                    type: string
+                  type: array
+                allowed_authorize_types:
+                  items:
+                    type: string
+                  type: array
+                auth_login_redirect:
+                  type: string
+              required:
+              - allowed_access_types
+              - allowed_authorize_types
+              - auth_login_redirect
+              type: object
+            openid_options:
+              properties:
+                providers:
+                  items:
+                    properties:
+                      client_ids:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      issuer:
+                        type: string
+                    required:
+                    - client_ids
+                    - issuer
+                    type: object
+                  type: array
+                segregate_by_client:
+                  type: boolean
+              required:
+              - providers
+              - segregate_by_client
+              type: object
+            org_id:
+              type: string
+            pinned_public_keys:
+              additionalProperties:
+                type: string
+              type: object
+            protocol:
+              type: string
+            proxy:
+              properties:
+                check_host_against_uptime_tests:
+                  type: boolean
+                disable_strip_slash:
+                  type: boolean
+                enable_load_balancing:
+                  type: boolean
+                listen_path:
+                  type: string
+                preserve_host_header:
+                  type: boolean
+                service_discovery:
+                  properties:
+                    cache_timeout:
+                      format: int64
+                      type: integer
+                    data_path:
+                      type: string
+                    endpoint_returns_list:
+                      type: boolean
+                    parent_data_path:
+                      type: string
+                    port_data_path:
+                      type: string
+                    query_endpoint:
+                      type: string
+                    target_path:
+                      type: string
+                    use_discovery_service:
+                      type: boolean
+                    use_nested_query:
+                      type: boolean
+                    use_target_list:
+                      type: boolean
+                  required:
+                  - cache_timeout
+                  - data_path
+                  - endpoint_returns_list
+                  - parent_data_path
+                  - port_data_path
+                  - query_endpoint
+                  - target_path
+                  - use_discovery_service
+                  - use_nested_query
+                  - use_target_list
+                  type: object
+                strip_listen_path:
+                  type: boolean
+                target_list:
+                  items:
+                    type: string
+                  type: array
+                target_url:
+                  type: string
+                transport:
+                  properties:
+                    proxy_url:
+                      type: string
+                    ssl_ciphers:
+                      items:
+                        type: string
+                      type: array
+                    ssl_force_common_name_check:
+                      type: boolean
+                    ssl_insecure_skip_verify:
+                      type: boolean
+                    ssl_min_version:
+                      type: integer
+                  required:
+                  - proxy_url
+                  - ssl_ciphers
+                  - ssl_force_common_name_check
+                  - ssl_insecure_skip_verify
+                  - ssl_min_version
                   type: object
               required:
-              - active
-              - allowed_ips
-              - api_id
-              - auth
-              - auth_configs
-              - auth_provider
-              - base_identity_provided_by
-              - basic_auth
-              - blacklisted_ips
-              - cache_options
-              - certificates
-              - client_certificates
-              - custom_middleware
-              - custom_middleware_bundle
-              - definition
-              - disable_quota
-              - disable_rate_limit
-              - do_not_track
-              - domain
-              - dont_set_quota_on_create
-              - enable_batch_request_support
-              - enable_context_vars
-              - enable_coprocess_auth
-              - enable_detailed_recording
-              - enable_ip_blacklisting
-              - enable_ip_whitelisting
-              - enable_jwt
-              - enable_proxy_protocol
-              - enable_signature_checking
-              - expire_analytics_after
-              - global_rate_limit
-              - graphql
-              - hmac_allowed_algorithms
-              - hmac_allowed_clock_skew
-              - internal
-              - jwt_client_base_field
-              - jwt_default_policies
-              - jwt_expires_at_validation_skew
-              - jwt_identity_base_field
-              - jwt_issued_at_validation_skew
-              - jwt_not_before_validation_skew
-              - jwt_policy_field_name
-              - jwt_scope_claim_name
-              - jwt_scope_to_policy_mapping
-              - jwt_signing_method
-              - jwt_skip_kid
-              - jwt_source
-              - listen_port
+              - check_host_against_uptime_tests
+              - disable_strip_slash
+              - enable_load_balancing
+              - listen_path
+              - preserve_host_header
+              - service_discovery
+              - strip_listen_path
+              - target_list
+              - target_url
+              - transport
+              type: object
+            request_signing:
+              properties:
+                algorithm:
+                  type: string
+                certificate_id:
+                  type: string
+                header_list:
+                  items:
+                    type: string
+                  type: array
+                is_enabled:
+                  type: boolean
+                key_id:
+                  type: string
+                secret:
+                  type: string
+                signature_header:
+                  type: string
+              required:
+              - algorithm
+              - certificate_id
+              - header_list
+              - is_enabled
+              - key_id
+              - secret
+              - signature_header
+              type: object
+            response_processors:
+              items:
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              type: array
+            session_lifetime:
+              format: int64
+              type: integer
+            session_provider:
+              properties:
+                name:
+                  type: string
+                storage_engine:
+                  type: string
+              required:
               - name
-              - notifications
-              - oauth_meta
-              - openid_options
-              - org_id
-              - pinned_public_keys
-              - protocol
-              - proxy
-              - request_signing
-              - response_processors
-              - session_lifetime
-              - session_provider
-              - slug
-              - strip_auth_data
-              - tag_headers
-              - tags
-              - upstream_certificates
-              - use_basic_auth
-              - use_go_plugin_auth
-              - use_keyless
-              - use_mutual_tls_auth
-              - use_oauth2
-              - use_openid
-              - use_standard_auth
-              - version_data
+              - storage_engine
+              type: object
+            slug:
+              type: string
+            strip_auth_data:
+              type: boolean
+            tag_headers:
+              description: ConfigData              map[string]interface{} `json:"config_data"`
+              items:
+                type: string
+              type: array
+            tags:
+              items:
+                type: string
+              type: array
+            upstream_certificates:
+              additionalProperties:
+                type: string
+              type: object
+            use_basic_auth:
+              type: boolean
+            use_go_plugin_auth:
+              type: boolean
+            use_keyless:
+              type: boolean
+            use_mutual_tls_auth:
+              type: boolean
+            use_oauth2:
+              type: boolean
+            use_openid:
+              type: boolean
+            use_standard_auth:
+              type: boolean
+            version_data:
+              properties:
+                default_version:
+                  type: string
+                not_versioned:
+                  type: boolean
+                versions:
+                  additionalProperties:
+                    properties:
+                      expires:
+                        type: string
+                      extended_paths:
+                        properties:
+                          advance_cache_config:
+                            items:
+                              properties:
+                                cache_key_regex:
+                                  type: string
+                                cache_response_codes:
+                                  items:
+                                    type: integer
+                                  type: array
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - cache_key_regex
+                              - cache_response_codes
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          black_list:
+                            items:
+                              properties:
+                                ignore_case:
+                                  type: boolean
+                                method_actions:
+                                  additionalProperties:
+                                    properties:
+                                      action:
+                                        type: string
+                                      code:
+                                        type: integer
+                                      data:
+                                        type: string
+                                      headers:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                    required:
+                                    - action
+                                    - code
+                                    - data
+                                    - headers
+                                    type: object
+                                  type: object
+                                path:
+                                  type: string
+                              required:
+                              - ignore_case
+                              - method_actions
+                              - path
+                              type: object
+                            type: array
+                          cache:
+                            items:
+                              type: string
+                            type: array
+                          circuit_breakers:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                return_to_service_after:
+                                  type: integer
+                                samples:
+                                  format: int64
+                                  type: integer
+                                threshold_percent:
+                                  type: integer
+                              required:
+                              - method
+                              - path
+                              - return_to_service_after
+                              - samples
+                              - threshold_percent
+                              type: object
+                            type: array
+                          do_not_track_endpoints:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          hard_timeouts:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                timeout:
+                                  type: integer
+                              required:
+                              - method
+                              - path
+                              - timeout
+                              type: object
+                            type: array
+                          ignored:
+                            items:
+                              properties:
+                                ignore_case:
+                                  type: boolean
+                                method_actions:
+                                  additionalProperties:
+                                    properties:
+                                      action:
+                                        type: string
+                                      code:
+                                        type: integer
+                                      data:
+                                        type: string
+                                      headers:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                    required:
+                                    - action
+                                    - code
+                                    - data
+                                    - headers
+                                    type: object
+                                  type: object
+                                path:
+                                  type: string
+                              required:
+                              - ignore_case
+                              - method_actions
+                              - path
+                              type: object
+                            type: array
+                          internal:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          method_transforms:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                to_method:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              - to_method
+                              type: object
+                            type: array
+                          size_limits:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                size_limit:
+                                  format: int64
+                                  type: integer
+                              required:
+                              - method
+                              - path
+                              - size_limit
+                              type: object
+                            type: array
+                          track_endpoints:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                template_data:
+                                  properties:
+                                    enable_session:
+                                      type: boolean
+                                    input_type:
+                                      type: string
+                                    template_mode:
+                                      type: string
+                                    template_source:
+                                      type: string
+                                  required:
+                                  - enable_session
+                                  - input_type
+                                  - template_mode
+                                  - template_source
+                                  type: object
+                              required:
+                              - method
+                              - path
+                              - template_data
+                              type: object
+                            type: array
+                          transform_headers:
+                            items:
+                              properties:
+                                act_on:
+                                  type: boolean
+                                add_headers:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                delete_headers:
+                                  items:
+                                    type: string
+                                  type: array
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - act_on
+                              - add_headers
+                              - delete_headers
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform_jq:
+                            items:
+                              properties:
+                                filter:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - filter
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform_jq_response:
+                            items:
+                              properties:
+                                filter:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - filter
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform_response:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                template_data:
+                                  properties:
+                                    enable_session:
+                                      type: boolean
+                                    input_type:
+                                      type: string
+                                    template_mode:
+                                      type: string
+                                    template_source:
+                                      type: string
+                                  required:
+                                  - enable_session
+                                  - input_type
+                                  - template_mode
+                                  - template_source
+                                  type: object
+                              required:
+                              - method
+                              - path
+                              - template_data
+                              type: object
+                            type: array
+                          transform_response_headers:
+                            items:
+                              properties:
+                                act_on:
+                                  type: boolean
+                                add_headers:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                delete_headers:
+                                  items:
+                                    type: string
+                                  type: array
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - act_on
+                              - add_headers
+                              - delete_headers
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          url_rewrites:
+                            items:
+                              properties:
+                                match_pattern:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                rewrite_to:
+                                  type: string
+                                triggers:
+                                  items:
+                                    properties:
+                                      "on":
+                                        type: string
+                                      options:
+                                        properties:
+                                          header_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          path_part_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          payload_matches:
+                                            properties:
+                                              match_rx:
+                                                type: string
+                                              reverse:
+                                                type: boolean
+                                            required:
+                                            - match_rx
+                                            - reverse
+                                            type: object
+                                          query_val_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          request_context_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          session_meta_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                        required:
+                                        - header_matches
+                                        - path_part_matches
+                                        - payload_matches
+                                        - query_val_matches
+                                        - request_context_matches
+                                        - session_meta_matches
+                                        type: object
+                                      rewrite_to:
+                                        type: string
+                                    required:
+                                    - "on"
+                                    - options
+                                    - rewrite_to
+                                    type: object
+                                  type: array
+                              required:
+                              - match_pattern
+                              - method
+                              - path
+                              - rewrite_to
+                              - triggers
+                              type: object
+                            type: array
+                          validate_json:
+                            items:
+                              properties:
+                                error_response_code:
+                                  description: Allows override of default 422 Unprocessible
+                                    Entity response code for validation errors.
+                                  type: integer
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                schema_b64:
+                                  description: Schema    map[string]interface{} `json:"schema"`
+                                  type: string
+                              required:
+                              - error_response_code
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          virtual:
+                            items:
+                              properties:
+                                function_source_type:
+                                  type: string
+                                function_source_uri:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                proxy_on_error:
+                                  type: boolean
+                                response_function_name:
+                                  type: string
+                                use_session:
+                                  type: boolean
+                              required:
+                              - function_source_type
+                              - function_source_uri
+                              - method
+                              - path
+                              - proxy_on_error
+                              - response_function_name
+                              - use_session
+                              type: object
+                            type: array
+                          white_list:
+                            items:
+                              properties:
+                                ignore_case:
+                                  type: boolean
+                                method_actions:
+                                  additionalProperties:
+                                    properties:
+                                      action:
+                                        type: string
+                                      code:
+                                        type: integer
+                                      data:
+                                        type: string
+                                      headers:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                    required:
+                                    - action
+                                    - code
+                                    - data
+                                    - headers
+                                    type: object
+                                  type: object
+                                path:
+                                  type: string
+                              required:
+                              - ignore_case
+                              - method_actions
+                              - path
+                              type: object
+                            type: array
+                        type: object
+                      global_headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      global_headers_remove:
+                        items:
+                          type: string
+                        type: array
+                      global_response_headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      global_response_headers_remove:
+                        items:
+                          type: string
+                        type: array
+                      global_size_limit:
+                        format: int64
+                        type: integer
+                      ignore_endpoint_case:
+                        type: boolean
+                      name:
+                        type: string
+                      override_target:
+                        type: string
+                      paths:
+                        properties:
+                          black_list:
+                            items:
+                              type: string
+                            type: array
+                          ignored:
+                            items:
+                              type: string
+                            type: array
+                          white_list:
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - black_list
+                        - ignored
+                        - white_list
+                        type: object
+                      use_extended_paths:
+                        type: boolean
+                    required:
+                    - expires
+                    - extended_paths
+                    - global_headers
+                    - global_headers_remove
+                    - global_response_headers
+                    - global_response_headers_remove
+                    - global_size_limit
+                    - ignore_endpoint_case
+                    - name
+                    - override_target
+                    - paths
+                    - use_extended_paths
+                    type: object
+                  type: object
+              required:
+              - default_version
+              - not_versioned
+              - versions
               type: object
           required:
+          - active
+          - api_id
+          - auth
+          - auth_configs
+          - auth_provider
+          - base_identity_provided_by
+          - basic_auth
+          - blacklisted_ips
+          - cache_options
+          - certificates
+          - client_certificates
+          - custom_middleware
+          - custom_middleware_bundle
           - definition
+          - disable_quota
+          - disable_rate_limit
+          - do_not_track
+          - domain
+          - dont_set_quota_on_create
+          - enable_batch_request_support
+          - enable_context_vars
+          - enable_coprocess_auth
+          - enable_detailed_recording
+          - enable_ip_blacklisting
+          - enable_ip_whitelisting
+          - enable_jwt
+          - enable_proxy_protocol
+          - enable_signature_checking
+          - expire_analytics_after
+          - global_rate_limit
+          - graphql
+          - hmac_allowed_algorithms
+          - hmac_allowed_clock_skew
+          - internal
+          - jwt_client_base_field
+          - jwt_default_policies
+          - jwt_expires_at_validation_skew
+          - jwt_identity_base_field
+          - jwt_issued_at_validation_skew
+          - jwt_not_before_validation_skew
+          - jwt_policy_field_name
+          - jwt_scope_claim_name
+          - jwt_scope_to_policy_mapping
+          - jwt_signing_method
+          - jwt_skip_kid
+          - jwt_source
+          - listen_port
+          - name
+          - notifications
+          - oauth_meta
+          - openid_options
+          - org_id
+          - pinned_public_keys
+          - protocol
+          - proxy
+          - request_signing
+          - response_processors
+          - session_lifetime
+          - session_provider
+          - slug
+          - strip_auth_data
+          - tag_headers
+          - tags
+          - upstream_certificates
+          - use_basic_auth
+          - use_go_plugin_auth
+          - use_keyless
+          - use_mutual_tls_auth
+          - use_oauth2
+          - use_openid
+          - use_standard_auth
+          - version_data
           type: object
         status:
           description: ApiDefinitionStatus defines the observed state of ApiDefinition
+          properties:
+            hashes:
+              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                of cluster Important: Run "make" to regenerate code after modifying
+                this file'
+              items:
+                type: string
+              type: array
+            paths:
+              items:
+                type: string
+              type: array
+          required:
+          - hashes
+          - paths
           type: object
       type: object
   version: v1
