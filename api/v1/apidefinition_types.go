@@ -362,7 +362,7 @@ type APIDefinitionSpec struct {
 	JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
 	NotificationsDetails       NotificationsManager  `json:"notifications"`
 	EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
-	HmacAllowedClockSkew       string                `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
+	HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
 	HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
 	RequestSigning             RequestSigningMeta    `json:"request_signing"`
 	BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
@@ -496,8 +496,8 @@ type SignatureConfig struct {
 }
 
 type GlobalRateLimit struct {
-	Rate string `json:"rate"`
-	Per  string `json:"per"`
+	Rate json.Number `json:"rate"`
+	Per  json.Number `json:"per"`
 }
 
 type BundleManifest struct {
