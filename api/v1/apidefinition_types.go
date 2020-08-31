@@ -322,100 +322,110 @@ type OpenIDOptions struct {
 // APIDefinition represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
-	APIID string `json:"api_id"`
-	OrgID string `json:"org_id"`
-	//Id                         string                `json:"id,omitempty"`
-	Name                       string                `json:"name"`
-	Slug                       string                `json:"slug"`
-	Proxy                      Proxy                 `json:"proxy"`
-	ListenPort                 int                   `json:"listen_port"`
-	Protocol                   string                `json:"protocol"`
-	EnableProxyProtocol        bool                  `json:"enable_proxy_protocol"`
-	UseKeylessAccess           bool                  `json:"use_keyless"`
-	UseOauth2                  bool                  `json:"use_oauth2"`
-	UseOpenID                  bool                  `json:"use_openid"`
-	OpenIDOptions              OpenIDOptions         `json:"openid_options"`
-	Oauth2Meta                 OAuth2Meta            `json:"oauth_meta"`
-	Auth                       AuthConfig            `json:"auth"` // Deprecated: Use AuthConfigs instead.
-	AuthConfigs                map[string]AuthConfig `json:"auth_configs"`
-	UseBasicAuth               bool                  `json:"use_basic_auth"`
-	BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
-	UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
-	ClientCertificates         []string              `json:"client_certificates"`
-	UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
-	PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
-	EnableJWT                  bool                  `json:"enable_jwt"`
-	UseStandardAuth            bool                  `json:"use_standard_auth"`
-	UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
-	EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
-	JWTSigningMethod           string                `json:"jwt_signing_method"`
-	JWTSource                  string                `json:"jwt_source"`
-	JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
-	JWTClientIDBaseField       string                `json:"jwt_client_base_field"`
-	JWTPolicyFieldName         string                `json:"jwt_policy_field_name"`
-	JWTDefaultPolicies         []string              `json:"jwt_default_policies"`
-	JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"`
-	JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"`
-	JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"`
-	JWTSkipKid                 bool                  `json:"jwt_skip_kid"`
-	JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"`
-	JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
-	NotificationsDetails       NotificationsManager  `json:"notifications"`
-	EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
-	HmacAllowedClockSkew       string                `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
-	HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
-	RequestSigning             RequestSigningMeta    `json:"request_signing"`
-	BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
-	VersionDefinition          VersionDefinition     `json:"definition"`
-	VersionData                VersionData           `json:"version_data"`
-	//UptimeTests                UptimeTests           `json:"uptime_tests"`
-
-	DisableRateLimit       bool                `json:"disable_rate_limit"`
-	DisableQuota           bool                `json:"disable_quota"`
-	CustomMiddleware       MiddlewareSection   `json:"custom_middleware"`
-	CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
-	CacheOptions           CacheOptions        `json:"cache_options"`
-	SessionLifetime        int64               `json:"session_lifetime"`
-	Active                 bool                `json:"active"`
-	Internal               bool                `json:"internal"`
-	AuthProvider           AuthProviderMeta    `json:"auth_provider"`
-	SessionProvider        SessionProviderMeta `json:"session_provider"`
-	//EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
-	EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
-	EnableIpWhiteListing      bool `json:"enable_ip_whitelisting"`
+	APIID  string `json:"api_id"`
+	OrgID  string `json:"org_id"`
+	Active bool   `json:"active,omitempty"`
 	// +optional
-	AllowedIPs            []string            `json:"allowed_ips"`
-	EnableIpBlacklisting  bool                `json:"enable_ip_blacklisting"`
-	BlacklistedIPs        []string            `json:"blacklisted_ips"`
-	DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
-	ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
-	ResponseProcessors    []ResponseProcessor `json:"response_processors"`
+	Slug  string `json:"slug"`
+	Proxy Proxy  `json:"proxy"`
 	// +optional
-	CORS              CORS     `json:"CORS"`
-	Domain            string   `json:"domain"`
-	Certificates      []string `json:"certificates"`
-	DoNotTrack        bool     `json:"do_not_track"`
-	Tags              []string `json:"tags"`
-	EnableContextVars bool     `json:"enable_context_vars"`
-	//ConfigData              map[string]interface{} `json:"config_data"`
-	TagHeaders              []string        `json:"tag_headers"`
-	GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
-	StripAuthData           bool            `json:"strip_auth_data"`
-	EnableDetailedRecording bool            `json:"enable_detailed_recording"`
-	GraphQL                 GraphQLConfig   `json:"graphql"`
+	ListenPort int    `json:"listen_port"`
+	Protocol   string `json:"protocol"`
+	//EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
+	//UseKeylessAccess    bool          `json:"use_keyless"`
+	//UseOauth2           bool          `json:"use_oauth2"`
+	//UseOpenID           bool          `json:"use_openid"`
+	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
+	//Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+	//// +optional
+	//AuthConfigs                map[string]AuthConfig `json:"auth_configs"`
+	//UseBasicAuth               bool                  `json:"use_basic_auth"`
+	//BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
+	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
+	//ClientCertificates         []string              `json:"client_certificates"`
+	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
+	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
+	//EnableJWT                  bool                  `json:"enable_jwt"`
+	//UseStandardAuth            bool                  `json:"use_standard_auth"`
+	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
+	//EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
+	//JWTSigningMethod           string                `json:"jwt_signing_method"`
+	//JWTSource                  string                `json:"jwt_source"`
+	//JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
+	//JWTClientIDBaseField       string                `json:"jwt_client_base_field"`
+	//JWTPolicyFieldName         string                `json:"jwt_policy_field_name"`
+	//JWTDefaultPolicies         []string              `json:"jwt_default_policies"`
+	//JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"`
+	//JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"`
+	//JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"`
+	//JWTSkipKid                 bool                  `json:"jwt_skip_kid"`
+	//JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"`
+	//JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
+	//NotificationsDetails       NotificationsManager  `json:"notifications"`
+	//EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
+	//HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
+	//HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
+	//RequestSigning             RequestSigningMeta    `json:"request_signing"`
+	//BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
+	//VersionDefinition          VersionDefinition     `json:"definition"`
+	//VersionData                VersionData           `json:"version_data"`
+	////UptimeTests                UptimeTests           `json:"uptime_tests"`
+	//
+	//DisableRateLimit       bool                `json:"disable_rate_limit"`
+	//DisableQuota           bool                `json:"disable_quota"`
+	//CustomMiddleware       MiddlewareSection   `json:"custom_middleware"`
+	//CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
+	//CacheOptions           CacheOptions        `json:"cache_options"`
+	//SessionLifetime        int64               `json:"session_lifetime"`
+	//Internal               bool                `json:"internal"`
+	//AuthProvider           AuthProviderMeta    `json:"auth_provider"`
+	//SessionProvider        SessionProviderMeta `json:"session_provider"`
+	////EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
+	//EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
+	//EnableIpWhiteListing      bool `json:"enable_ip_whitelisting"`
+	//// +optional
+	//AllowedIPs            []string            `json:"allowed_ips"`
+	//EnableIpBlacklisting  bool                `json:"enable_ip_blacklisting"`
+	//BlacklistedIPs        []string            `json:"blacklisted_ips"`
+	//DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
+	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
+	//ResponseProcessors    []ResponseProcessor `json:"response_processors"`
+	//// +optional
+	//CORS              CORS     `json:"CORS"`
+	//Domain            string   `json:"domain"`
+	//Certificates      []string `json:"certificates"`
+	//DoNotTrack        bool     `json:"do_not_track"`
+	//Tags              []string `json:"tags"`
+	//EnableContextVars bool     `json:"enable_context_vars"`
+	////ConfigData              map[string]interface{} `json:"config_data"`
+	//TagHeaders              []string        `json:"tag_headers"`
+	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
+	//StripAuthData           bool            `json:"strip_auth_data"`
+	//EnableDetailedRecording bool            `json:"enable_detailed_recording"`
+	//GraphQL                 GraphQLConfig   `json:"graphql"`
 }
 
 type Proxy struct {
-	PreserveHostHeader          bool                          `json:"preserve_host_header"`
-	ListenPath                  string                        `json:"listen_path"`
-	TargetURL                   string                        `json:"target_url"`
-	DisableStripSlash           bool                          `json:"disable_strip_slash"`
-	StripListenPath             bool                          `json:"strip_listen_path"`
-	EnableLoadBalancing         bool                          `json:"enable_load_balancing"`
-	Targets                     []string                      `json:"target_list"`
-	CheckHostAgainstUptimeTests bool                          `json:"check_host_against_uptime_tests"`
-	ServiceDiscovery            ServiceDiscoveryConfiguration `json:"service_discovery"`
-	Transport                   ProxyTransport                `json:"transport"`
+	// +optional
+	PreserveHostHeader bool `json:"preserve_host_header"`
+	// +optional
+	ListenPath string `json:"listen_path"`
+	// +optional
+	TargetURL string `json:"target_url"`
+	// +optional
+	DisableStripSlash bool `json:"disable_strip_slash"`
+	// +optional
+	StripListenPath bool `json:"strip_listen_path"`
+	// +optional
+	EnableLoadBalancing bool `json:"enable_load_balancing"`
+	// +optional
+	Targets []string `json:"target_list"`
+	// +optional
+	CheckHostAgainstUptimeTests bool `json:"check_host_against_uptime_tests"`
+	// +optional
+	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery"`
+	// +optional
+	Transport ProxyTransport `json:"transport"`
 }
 
 type ProxyTransport struct {
@@ -496,8 +506,8 @@ type SignatureConfig struct {
 }
 
 type GlobalRateLimit struct {
-	Rate string `json:"rate"`
-	Per  string `json:"per"`
+	Rate json.Number `json:"rate"`
+	Per  json.Number `json:"per"`
 }
 
 type BundleManifest struct {
@@ -575,6 +585,8 @@ type ApiDefinitionStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ListenPath",type=string,JSONPath=`.spec.listen_path`
+// +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
 
 // ApiDefinition is the Schema for the apidefinitions API
 type ApiDefinition struct {
