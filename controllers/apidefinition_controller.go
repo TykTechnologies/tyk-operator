@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 
+	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -27,8 +27,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 )
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
@@ -76,7 +74,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		// The object is being deleted
 		if containsString(apiDef.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			// our finalizer is present, so lets handle our external dependency
-			if err := r.UniversalClient.Api.Delete(apiID.String()); err != nil {
+			if err := r.UniversalClient.Api.Delete(apiIDEncode(apiID.String())); err != nil {
 				return reconcile.Result{Requeue: true}, err
 			}
 
@@ -99,17 +97,49 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, err
 	}
 
-	log.Info("getting all apis from gateway")
-	jsBytes, _ := json.MarshalIndent(allAPIs, "", "  ")
-	log.Info(string(jsBytes))
+	newSpec := &apiDef.Spec
+	newSpec.APIID = apiIDEncode(apiID.String())
 
-	log.Info("getting api cr")
-	jsBytes, _ = json.MarshalIndent(apiDef, "", "  ")
-	log.Info(string(jsBytes))
+	// find the api definition object
+	found := &tykv1.APIDefinitionSpec{}
+	for _, api := range allAPIs {
+		if api.APIID == apiIDEncode(apiID.String()) {
+			found = &api
+		}
+	}
 
-	if err := r.UniversalClient.HotReload(); err != nil {
-		log.Error(err, "unable to hot reload")
-		return ctrl.Result{}, err
+	// we didn't find it, so let's create it
+	if found.APIID == "" {
+		log.Info("creating api", "decodedID", apiID.String(), "encodedID", apiIDEncode(apiID.String()))
+		_, err := r.UniversalClient.Api.Create(newSpec)
+		if err != nil {
+			log.Error(err, "unable to create API Definition")
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		err = r.UniversalClient.HotReload()
+		if err != nil {
+			// TODO: what should we actually do here?
+			log.Error(err, "unable to hotreload, but API created. Inconsistent state")
+			return ctrl.Result{Requeue: false}, err
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	// we found it, so let's update it
+	log.Info("updating api", "decoded", apiID.String(), "encoded", apiIDEncode(apiID.String()))
+	err = r.UniversalClient.Api.Update(newSpec)
+	if err != nil {
+		log.Error(err, "unable to update API Definition")
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	err = r.UniversalClient.HotReload()
+	if err != nil {
+		// TODO: what should we actually do here?
+		log.Error(err, "unable to hotreload, but API successfully updated. Inconsistent state")
+		return ctrl.Result{Requeue: false}, err
 	}
 
 	return ctrl.Result{}, nil
