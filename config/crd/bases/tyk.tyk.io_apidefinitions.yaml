@@ -178,11 +178,12 @@ spec:
                     ssl_min_version:
                       type: integer
                   type: object
+              required:
+              - listen_path
               type: object
             slug:
               type: string
           required:
-          - api_id
           - org_id
           - protocol
           - proxy
