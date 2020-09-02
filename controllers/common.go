@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
@@ -33,6 +34,15 @@ func removeString(slice []string, s string) (result []string) {
 		result = append(result, item)
 	}
 	return
+}
+
+func apiIDDecode(encoded string) string {
+	apiBytes, _ := base64.URLEncoding.DecodeString(encoded)
+	return string(apiBytes)
+}
+
+func apiIDEncode(decoded string) string {
+	return base64.URLEncoding.EncodeToString([]byte(decoded))
 }
 
 // labelsForGateway returns the labels for selecting the resources

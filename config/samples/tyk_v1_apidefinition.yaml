@@ -9,3 +9,7 @@ spec:
   proxy:
     target_url: http://httpbin.org
   protocol: http
+
+#  proxy:
+#    transport:
+#      ssl_ciphers: []
