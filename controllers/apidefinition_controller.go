@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
@@ -108,13 +110,15 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 	}
 
+	log.Info(fmt.Sprintf("FOUND %#v", found))
+
 	// we didn't find it, so let's create it
 	if found.APIID == "" {
 		log.Info("creating api", "decodedID", apiID.String(), "encodedID", apiIDEncode(apiID.String()))
 		_, err := r.UniversalClient.Api.Create(newSpec)
 		if err != nil {
 			log.Error(err, "unable to create API Definition")
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{RequeueAfter: time.Second * 5}, err
 		}
 
 		err = r.UniversalClient.HotReload()

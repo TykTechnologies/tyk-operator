@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	endpointAPIs     = "/tyk/apis/"
+	endpointAPIs     = "/tyk/apis"
 	endpointCerts    = "/tyk/certs"
 	endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/tyk/policies"
