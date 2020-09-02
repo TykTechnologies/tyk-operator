@@ -9,7 +9,7 @@ metadata:
   name: apidefinitions.tyk.tyk.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.listen_path
+  - JSONPath: .spec.proxy.listen_path
     name: ListenPath
     type: string
   - JSONPath: .spec.proxy.target_url

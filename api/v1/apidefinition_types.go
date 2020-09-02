@@ -604,7 +604,7 @@ type ApiDefinitionStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="ListenPath",type=string,JSONPath=`.spec.listen_path`
+// +kubebuilder:printcolumn:name="Proxy.ListenPath",type=string,JSONPath=`.spec.proxy.listen_path`
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
 // ApiDefinition is the Schema for the apidefinitions API
 type ApiDefinition struct {
