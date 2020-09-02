@@ -177,12 +177,6 @@ spec:
                       type: boolean
                     ssl_min_version:
                       type: integer
-                  required:
-                  - proxy_url
-                  - ssl_ciphers
-                  - ssl_force_common_name_check
-                  - ssl_insecure_skip_verify
-                  - ssl_min_version
                   type: object
               type: object
             slug:

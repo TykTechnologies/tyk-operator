@@ -358,7 +358,7 @@ type APIDefinitionSpec struct {
 	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
 	//Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
 	// +optional
-	AuthConfigs map[string]AuthConfig `json:"auth_configs"`
+	AuthConfigs map[string]AuthConfig `json:"auth_configs,omitempty"`
 	//UseBasicAuth               bool                  `json:"use_basic_auth"`
 	//BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
@@ -439,7 +439,7 @@ type Proxy struct {
 	// +optional
 	EnableLoadBalancing bool `json:"enable_load_balancing"`
 	// +optional
-	Targets []string `json:"target_list"`
+	Targets []string `json:"target_list,omitempty"`
 	// +optional
 	CheckHostAgainstUptimeTests bool `json:"check_host_against_uptime_tests"`
 	// +optional
@@ -449,11 +449,11 @@ type Proxy struct {
 }
 
 type ProxyTransport struct {
-	SSLInsecureSkipVerify   bool     `json:"ssl_insecure_skip_verify"`
-	SSLCipherSuites         []string `json:"ssl_ciphers"`
-	SSLMinVersion           uint16   `json:"ssl_min_version"`
-	SSLForceCommonNameCheck bool     `json:"ssl_force_common_name_check"`
-	ProxyURL                string   `json:"proxy_url"`
+	SSLInsecureSkipVerify   bool     `json:"ssl_insecure_skip_verify,omitempty"`
+	SSLCipherSuites         []string `json:"ssl_ciphers,omitempty"`
+	SSLMinVersion           uint16   `json:"ssl_min_version,omitempty"`
+	SSLForceCommonNameCheck bool     `json:"ssl_force_common_name_check,omitempty"`
+	ProxyURL                string   `json:"proxy_url,omitempty"`
 }
 
 type CORS struct {
