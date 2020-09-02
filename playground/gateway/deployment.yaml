@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tyk
+  labels:
+    app: tyk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tyk
+  template:
+    metadata:
+      labels:
+        app: tyk
+    spec:
+      containers:
+        - name: tyk
+          image: tykio/tyk-gateway:latest
+          imagePullPolicy: Always
+          command: ["/opt/tyk-gateway/tyk", "--conf=/etc/tyk-gateway/tyk.json"]
+          workingDir: /opt/tyk-gateway
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: tyk-conf
+              mountPath: /etc/tyk-gateway
+      volumes:
+        - name: tyk-conf
+          configMap:
+            name: tyk-conf
+            items:
+              - key: tyk.json
+                path: tyk.json

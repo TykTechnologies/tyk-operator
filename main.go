@@ -20,6 +20,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
+
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -74,10 +76,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Gateway")
 		os.Exit(1)
 	}
+
+	gatewayClient := gateway_client.NewClient("http://localhost:8000", "foo", true)
+
 	if err = (&controllers.ApiDefinitionReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
-		Scheme: mgr.GetScheme(),
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
+		Scheme:          mgr.GetScheme(),
+		UniversalClient: gatewayClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
 		os.Exit(1)

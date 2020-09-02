@@ -3,7 +3,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin
 spec:
-#  api_id: httpbin
+  api_id: httpbin
   org_id: acme
   listen_path: /httpbin
   proxy:

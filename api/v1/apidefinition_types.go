@@ -23,6 +23,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+//// +k8s:deepcopy-gen=false
+//type MapStringInterface map[string]interface{}
+//
+//func (in *MapStringInterface) DeepCopyInto(out *MapStringInterface) {
+//	if in == nil {
+//		*out = nil
+//	} else {
+//		*out = runtime.DeepCopyJSON(*in)
+//	}
+//}
+//
+//func (in *MapStringInterface) DeepCopy() *MapStringInterface {
+//	if in == nil {
+//		return nil
+//	}
+//	out := new(MapStringInterface)
+//	in.DeepCopyInto(out)
+//	return out
+//}
+
 // ApiDefinitionSpec defines the desired state of ApiDefinition
 type AuthProviderCode string
 type SessionProviderCode string
@@ -337,8 +357,8 @@ type APIDefinitionSpec struct {
 	//UseOpenID           bool          `json:"use_openid"`
 	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
 	//Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
-	//// +optional
-	//AuthConfigs                map[string]AuthConfig `json:"auth_configs"`
+	// +optional
+	AuthConfigs map[string]AuthConfig `json:"auth_configs"`
 	//UseBasicAuth               bool                  `json:"use_basic_auth"`
 	//BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
@@ -397,7 +417,7 @@ type APIDefinitionSpec struct {
 	//DoNotTrack        bool     `json:"do_not_track"`
 	//Tags              []string `json:"tags"`
 	//EnableContextVars bool     `json:"enable_context_vars"`
-	////ConfigData              map[string]interface{} `json:"config_data"`
+	//ConfigData MapStringInterface `json:"config_data"`
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
 	//StripAuthData           bool            `json:"strip_auth_data"`
@@ -587,7 +607,6 @@ type ApiDefinitionStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="ListenPath",type=string,JSONPath=`.spec.listen_path`
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
-
 // ApiDefinition is the Schema for the apidefinitions API
 type ApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -603,7 +622,7 @@ type ApiDefinition struct {
 type ApiDefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []APIDefinitionSpec `json:"items"`
+	Items           []ApiDefinition `json:"items"`
 }
 
 func init() {
