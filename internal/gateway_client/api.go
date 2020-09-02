@@ -137,9 +137,14 @@ func (a Api) Delete(id string) error {
 		return err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %s", res.String())
+	if res.StatusCode == http.StatusOK {
+		return nil
 	}
 
-	return nil
+	if res.StatusCode == http.StatusInternalServerError {
+		// Tyk returns internal server error if api is already deleted
+		return nil
+	}
+
+	return fmt.Errorf("API Returned error: %s", res.String())
 }

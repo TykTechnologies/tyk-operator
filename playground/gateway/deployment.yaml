@@ -16,11 +16,11 @@ spec:
     spec:
       containers:
         - name: tyk
-          image: tykio/tyk-gateway:latest
+          image: tykio/tyk-gateway:v3.0.0
           imagePullPolicy: Always
           env:
             - name: TYK_LOGLEVEL
-              value: debug
+              value: info
           command: ["/opt/tyk-gateway/tyk", "--conf=/etc/tyk-gateway/tyk.json"]
           workingDir: /opt/tyk-gateway
           ports:
