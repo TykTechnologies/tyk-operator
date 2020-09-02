@@ -342,7 +342,7 @@ type OpenIDOptions struct {
 // APIDefinition represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
-	APIID  string `json:"api_id"`
+	APIID  string `json:"api_id,omitempty"`
 	OrgID  string `json:"org_id"`
 	Active bool   `json:"active,omitempty"`
 	// +optional
@@ -427,9 +427,8 @@ type APIDefinitionSpec struct {
 
 type Proxy struct {
 	// +optional
-	PreserveHostHeader bool `json:"preserve_host_header"`
-	// +optional
-	ListenPath string `json:"listen_path"`
+	PreserveHostHeader bool   `json:"preserve_host_header"`
+	ListenPath         string `json:"listen_path"`
 	// +optional
 	TargetURL string `json:"target_url"`
 	// +optional
