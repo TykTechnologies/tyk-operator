@@ -48,6 +48,60 @@ spec:
               type: boolean
             api_id:
               type: string
+            auth_configs:
+              additionalProperties:
+                properties:
+                  auth_header_name:
+                    type: string
+                  cookie_name:
+                    type: string
+                  param_name:
+                    type: string
+                  signature:
+                    properties:
+                      algorithm:
+                        type: string
+                      allowed_clock_skew:
+                        format: int64
+                        type: integer
+                      error_code:
+                        type: integer
+                      error_message:
+                        type: string
+                      header:
+                        type: string
+                      secret:
+                        type: string
+                    required:
+                    - algorithm
+                    - allowed_clock_skew
+                    - error_code
+                    - error_message
+                    - header
+                    - secret
+                    type: object
+                  use_certificate:
+                    type: boolean
+                  use_cookie:
+                    type: boolean
+                  use_param:
+                    type: boolean
+                  validate_signature:
+                    type: boolean
+                required:
+                - auth_header_name
+                - cookie_name
+                - param_name
+                - use_certificate
+                - use_cookie
+                - use_param
+                - validate_signature
+                type: object
+              description: EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
+                UseKeylessAccess    bool          `json:"use_keyless"` UseOauth2           bool          `json:"use_oauth2"`
+                UseOpenID           bool          `json:"use_openid"` OpenIDOptions       OpenIDOptions
+                `json:"openid_options"` Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+              type: object
             listen_port:
               type: integer
             org_id:
