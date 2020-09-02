@@ -18,6 +18,9 @@ spec:
         - name: tyk
           image: tykio/tyk-gateway:latest
           imagePullPolicy: Always
+          env:
+            - name: TYK_LOGLEVEL
+              value: debug
           command: ["/opt/tyk-gateway/tyk", "--conf=/etc/tyk-gateway/tyk.json"]
           workingDir: /opt/tyk-gateway
           ports:
@@ -25,6 +28,8 @@ spec:
           volumeMounts:
             - name: tyk-conf
               mountPath: /etc/tyk-gateway
+            - name: tyk-app-dummy
+              mountPath: /opt/tyk-gateway/apps
       volumes:
         - name: tyk-conf
           configMap:
@@ -32,3 +37,5 @@ spec:
             items:
               - key: tyk.json
                 path: tyk.json
+        - name: tyk-app-dummy
+          emptyDir: {}
