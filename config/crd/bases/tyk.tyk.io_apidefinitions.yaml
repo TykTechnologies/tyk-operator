@@ -10,7 +10,7 @@ metadata:
 spec:
   additionalPrinterColumns:
   - JSONPath: .spec.proxy.listen_path
-    name: ListenPath
+    name: Proxy.ListenPath
     type: string
   - JSONPath: .spec.proxy.target_url
     name: Proxy.TargetURL
@@ -98,9 +98,8 @@ spec:
                 - validate_signature
                 type: object
               description: EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
-                UseKeylessAccess    bool          `json:"use_keyless"` UseOauth2           bool          `json:"use_oauth2"`
-                UseOpenID           bool          `json:"use_openid"` OpenIDOptions       OpenIDOptions
-                `json:"openid_options"` Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+                UseOauth2           bool          `json:"use_oauth2"` UseOpenID           bool          `json:"use_openid"`
+                OpenIDOptions       OpenIDOptions `json:"openid_options"` Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
               type: object
             listen_port:
               type: integer
@@ -179,10 +178,644 @@ spec:
                       type: integer
                   type: object
               required:
-              - listen_path
+              - target_url
               type: object
             slug:
               type: string
+            use_keyless:
+              type: boolean
+            version_data:
+              description: 'UseBasicAuth               bool                  `json:"use_basic_auth"`
+                BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
+                UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
+                ClientCertificates         []string              `json:"client_certificates"`
+                UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
+                PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
+                EnableJWT                  bool                  `json:"enable_jwt"`
+                UseStandardAuth            bool                  `json:"use_standard_auth"`
+                UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
+                EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
+                JWTSigningMethod           string                `json:"jwt_signing_method"`
+                JWTSource                  string                `json:"jwt_source"`
+                JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
+                JWTClientIDBaseField       string                `json:"jwt_client_base_field"`
+                JWTPolicyFieldName         string                `json:"jwt_policy_field_name"`
+                JWTDefaultPolicies         []string              `json:"jwt_default_policies"`
+                JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"`
+                JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"`
+                JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"`
+                JWTSkipKid                 bool                  `json:"jwt_skip_kid"`
+                JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"`
+                JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
+                NotificationsDetails       NotificationsManager  `json:"notifications"`
+                EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
+                HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"`
+                // TODO: convert to float64 HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
+                RequestSigning             RequestSigningMeta    `json:"request_signing"`
+                BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
+                VersionDefinition          VersionDefinition     `json:"definition"`'
+              properties:
+                default_version:
+                  type: string
+                not_versioned:
+                  type: boolean
+                versions:
+                  additionalProperties:
+                    properties:
+                      expires:
+                        type: string
+                      extended_paths:
+                        properties:
+                          advance_cache_config:
+                            items:
+                              properties:
+                                cache_key_regex:
+                                  type: string
+                                cache_response_codes:
+                                  items:
+                                    type: integer
+                                  type: array
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - cache_key_regex
+                              - cache_response_codes
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          black_list:
+                            items:
+                              properties:
+                                ignore_case:
+                                  type: boolean
+                                method_actions:
+                                  additionalProperties:
+                                    properties:
+                                      action:
+                                        type: string
+                                      code:
+                                        type: integer
+                                      data:
+                                        type: string
+                                      headers:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                    required:
+                                    - action
+                                    - code
+                                    - data
+                                    - headers
+                                    type: object
+                                  type: object
+                                path:
+                                  type: string
+                              required:
+                              - ignore_case
+                              - method_actions
+                              - path
+                              type: object
+                            type: array
+                          cache:
+                            items:
+                              type: string
+                            type: array
+                          circuit_breakers:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                return_to_service_after:
+                                  type: integer
+                                samples:
+                                  format: int64
+                                  type: integer
+                                threshold_percent:
+                                  type: integer
+                              required:
+                              - method
+                              - path
+                              - return_to_service_after
+                              - samples
+                              - threshold_percent
+                              type: object
+                            type: array
+                          do_not_track_endpoints:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          hard_timeouts:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                timeout:
+                                  type: integer
+                              required:
+                              - method
+                              - path
+                              - timeout
+                              type: object
+                            type: array
+                          ignored:
+                            items:
+                              properties:
+                                ignore_case:
+                                  type: boolean
+                                method_actions:
+                                  additionalProperties:
+                                    properties:
+                                      action:
+                                        type: string
+                                      code:
+                                        type: integer
+                                      data:
+                                        type: string
+                                      headers:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                    required:
+                                    - action
+                                    - code
+                                    - data
+                                    - headers
+                                    type: object
+                                  type: object
+                                path:
+                                  type: string
+                              required:
+                              - ignore_case
+                              - method_actions
+                              - path
+                              type: object
+                            type: array
+                          internal:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          method_transforms:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                to_method:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              - to_method
+                              type: object
+                            type: array
+                          size_limits:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                size_limit:
+                                  format: int64
+                                  type: integer
+                              required:
+                              - method
+                              - path
+                              - size_limit
+                              type: object
+                            type: array
+                          track_endpoints:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                template_data:
+                                  properties:
+                                    enable_session:
+                                      type: boolean
+                                    input_type:
+                                      type: string
+                                    template_mode:
+                                      type: string
+                                    template_source:
+                                      type: string
+                                  required:
+                                  - enable_session
+                                  - input_type
+                                  - template_mode
+                                  - template_source
+                                  type: object
+                              required:
+                              - method
+                              - path
+                              - template_data
+                              type: object
+                            type: array
+                          transform_headers:
+                            items:
+                              properties:
+                                act_on:
+                                  type: boolean
+                                add_headers:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                delete_headers:
+                                  items:
+                                    type: string
+                                  type: array
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - act_on
+                              - add_headers
+                              - delete_headers
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform_jq:
+                            items:
+                              properties:
+                                filter:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - filter
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform_jq_response:
+                            items:
+                              properties:
+                                filter:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - filter
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          transform_response:
+                            items:
+                              properties:
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                template_data:
+                                  properties:
+                                    enable_session:
+                                      type: boolean
+                                    input_type:
+                                      type: string
+                                    template_mode:
+                                      type: string
+                                    template_source:
+                                      type: string
+                                  required:
+                                  - enable_session
+                                  - input_type
+                                  - template_mode
+                                  - template_source
+                                  type: object
+                              required:
+                              - method
+                              - path
+                              - template_data
+                              type: object
+                            type: array
+                          transform_response_headers:
+                            items:
+                              properties:
+                                act_on:
+                                  type: boolean
+                                add_headers:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                delete_headers:
+                                  items:
+                                    type: string
+                                  type: array
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                              required:
+                              - act_on
+                              - add_headers
+                              - delete_headers
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          url_rewrites:
+                            items:
+                              properties:
+                                match_pattern:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                rewrite_to:
+                                  type: string
+                                triggers:
+                                  items:
+                                    properties:
+                                      "on":
+                                        type: string
+                                      options:
+                                        properties:
+                                          header_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          path_part_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          payload_matches:
+                                            properties:
+                                              match_rx:
+                                                type: string
+                                              reverse:
+                                                type: boolean
+                                            required:
+                                            - match_rx
+                                            - reverse
+                                            type: object
+                                          query_val_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          request_context_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                          session_meta_matches:
+                                            additionalProperties:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            type: object
+                                        required:
+                                        - header_matches
+                                        - path_part_matches
+                                        - payload_matches
+                                        - query_val_matches
+                                        - request_context_matches
+                                        - session_meta_matches
+                                        type: object
+                                      rewrite_to:
+                                        type: string
+                                    required:
+                                    - "on"
+                                    - options
+                                    - rewrite_to
+                                    type: object
+                                  type: array
+                              required:
+                              - match_pattern
+                              - method
+                              - path
+                              - rewrite_to
+                              - triggers
+                              type: object
+                            type: array
+                          validate_json:
+                            items:
+                              properties:
+                                error_response_code:
+                                  description: Allows override of default 422 Unprocessible
+                                    Entity response code for validation errors.
+                                  type: integer
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                schema_b64:
+                                  description: Schema    map[string]interface{} `json:"schema"`
+                                  type: string
+                              required:
+                              - error_response_code
+                              - method
+                              - path
+                              type: object
+                            type: array
+                          virtual:
+                            items:
+                              properties:
+                                function_source_type:
+                                  type: string
+                                function_source_uri:
+                                  type: string
+                                method:
+                                  type: string
+                                path:
+                                  type: string
+                                proxy_on_error:
+                                  type: boolean
+                                response_function_name:
+                                  type: string
+                                use_session:
+                                  type: boolean
+                              required:
+                              - function_source_type
+                              - function_source_uri
+                              - method
+                              - path
+                              - proxy_on_error
+                              - response_function_name
+                              - use_session
+                              type: object
+                            type: array
+                          white_list:
+                            items:
+                              properties:
+                                ignore_case:
+                                  type: boolean
+                                method_actions:
+                                  additionalProperties:
+                                    properties:
+                                      action:
+                                        type: string
+                                      code:
+                                        type: integer
+                                      data:
+                                        type: string
+                                      headers:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                    required:
+                                    - action
+                                    - code
+                                    - data
+                                    - headers
+                                    type: object
+                                  type: object
+                                path:
+                                  type: string
+                              required:
+                              - ignore_case
+                              - method_actions
+                              - path
+                              type: object
+                            type: array
+                        type: object
+                      global_headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      global_headers_remove:
+                        items:
+                          type: string
+                        type: array
+                      global_response_headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      global_response_headers_remove:
+                        items:
+                          type: string
+                        type: array
+                      global_size_limit:
+                        format: int64
+                        type: integer
+                      ignore_endpoint_case:
+                        type: boolean
+                      name:
+                        type: string
+                      override_target:
+                        type: string
+                      paths:
+                        properties:
+                          black_list:
+                            items:
+                              type: string
+                            type: array
+                          ignored:
+                            items:
+                              type: string
+                            type: array
+                          white_list:
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - black_list
+                        - ignored
+                        - white_list
+                        type: object
+                      use_extended_paths:
+                        type: boolean
+                    required:
+                    - expires
+                    - extended_paths
+                    - global_headers
+                    - global_headers_remove
+                    - global_response_headers
+                    - global_response_headers_remove
+                    - global_size_limit
+                    - ignore_endpoint_case
+                    - name
+                    - override_target
+                    - paths
+                    - use_extended_paths
+                    type: object
+                  type: object
+              required:
+              - default_version
+              - not_versioned
+              type: object
           required:
           - org_id
           - protocol

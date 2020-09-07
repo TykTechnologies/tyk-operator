@@ -38,9 +38,9 @@ type GatewaySpec struct {
 
 type Config struct {
 	ListenPort int32 `json:"listen_port"`
-	// +kubebuilder:validation:MinLength=5
+	// +kubebuilder:validation:MinLength=3
 	Secret string `json:"secret"`
-	// +kubebuilder:validation:MinLength=5
+	// +kubebuilder:validation:MinLength=3
 	NodeSecret         string `json:"node_secret"`
 	ControlAPIHostname string `json:"control_api_hostname"`
 	ControlAPIPort     int    `json:"control_api_port"`
