@@ -597,6 +597,8 @@ type ApiDefinitionStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Proxy.ListenPath",type=string,JSONPath=`.spec.proxy.listen_path`
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
+// +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.active`
+// +kubebuilder:resource:shortName=tykapis
 // ApiDefinition is the Schema for the apidefinitions API
 type ApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`

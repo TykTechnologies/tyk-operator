@@ -3,11 +3,10 @@ kind: ApiDefinition
 metadata:
   name: httpbin
 spec:
-  org_id: acme
-  api_name: httpbin
-  proxy:
-    listen_path: /httpbin
-    strip_listen_path: true
-    target_url: http://httpbin.org
-  protocol: http
   use_keyless: true
+  protocol: http
+  active: true
+  org_id: acme.com
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
