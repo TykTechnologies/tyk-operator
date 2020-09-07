@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
@@ -102,30 +101,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	newSpec := &apiDef.Spec
 	newSpec.APIID = apiIDEncode(apiID.String())
 
-	// TODO: this prob belongs in a mutating webhook
-	defaultVersionData := tykv1.VersionData{
-		NotVersioned:   false,
-		DefaultVersion: "Default",
-		Versions: map[string]tykv1.VersionInfo{
-			"Default": {
-				Name:                        "Default",
-				Expires:                     "",
-				Paths:                       tykv1.VersionInfoPaths{},
-				UseExtendedPaths:            false,
-				ExtendedPaths:               tykv1.ExtendedPathsSet{},
-				GlobalHeaders:               nil,
-				GlobalHeadersRemove:         nil,
-				GlobalResponseHeaders:       nil,
-				GlobalResponseHeadersRemove: nil,
-				IgnoreEndpointCase:          false,
-				GlobalSizeLimit:             0,
-				OverrideTarget:              "",
-			},
-		},
-	}
-
-	newSpec.VersionData = defaultVersionData
-
 	// find the api definition object
 	found := &tykv1.APIDefinitionSpec{}
 	for _, api := range allAPIs {
@@ -133,8 +108,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			found = &api
 		}
 	}
-
-	log.Info(fmt.Sprintf("FOUND %#v", found))
 
 	// we didn't find it, so let's create it
 	if found.APIID == "" {
