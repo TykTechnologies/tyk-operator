@@ -15,11 +15,16 @@ spec:
   - JSONPath: .spec.proxy.target_url
     name: Proxy.TargetURL
     type: string
+  - JSONPath: .spec.active
+    name: Enabled
+    type: boolean
   group: tyk.tyk.io
   names:
     kind: ApiDefinition
     listKind: ApiDefinitionList
     plural: apidefinitions
+    shortNames:
+    - tykapis
     singular: apidefinition
   scope: Namespaced
   subresources:

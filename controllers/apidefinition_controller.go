@@ -101,30 +101,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	newSpec := &apiDef.Spec
 	newSpec.APIID = apiIDEncode(apiID.String())
 
-	// TODO: this prob belongs in a mutating webhook
-	defaultVersionData := tykv1.VersionData{
-		NotVersioned:   true,
-		DefaultVersion: "Default",
-		Versions: map[string]tykv1.VersionInfo{
-			"Default": {
-				Name:                        "Default",
-				Expires:                     "",
-				Paths:                       tykv1.VersionInfoPaths{},
-				UseExtendedPaths:            false,
-				ExtendedPaths:               tykv1.ExtendedPathsSet{},
-				GlobalHeaders:               nil,
-				GlobalHeadersRemove:         nil,
-				GlobalResponseHeaders:       nil,
-				GlobalResponseHeadersRemove: nil,
-				IgnoreEndpointCase:          false,
-				GlobalSizeLimit:             0,
-				OverrideTarget:              "",
-			},
-		},
-	}
-
-	newSpec.VersionData = defaultVersionData
-
 	// find the api definition object
 	found := &tykv1.APIDefinitionSpec{}
 	for _, api := range allAPIs {
