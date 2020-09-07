@@ -349,10 +349,10 @@ type APIDefinitionSpec struct {
 	Slug  string `json:"slug"`
 	Proxy Proxy  `json:"proxy"`
 	// +optional
-	ListenPort int    `json:"listen_port"`
-	Protocol   string `json:"protocol"`
+	ListenPort       int    `json:"listen_port"`
+	Protocol         string `json:"protocol"`
+	UseKeylessAccess bool   `json:"use_keyless,omitempty"`
 	//EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
-	//UseKeylessAccess    bool          `json:"use_keyless"`
 	//UseOauth2           bool          `json:"use_oauth2"`
 	//UseOpenID           bool          `json:"use_openid"`
 	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
@@ -388,7 +388,7 @@ type APIDefinitionSpec struct {
 	//RequestSigning             RequestSigningMeta    `json:"request_signing"`
 	//BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
 	//VersionDefinition          VersionDefinition     `json:"definition"`
-	//VersionData                VersionData           `json:"version_data"`
+	VersionData VersionData `json:"version_data,omitempty"`
 	////UptimeTests                UptimeTests           `json:"uptime_tests"`
 	//
 	//DisableRateLimit       bool                `json:"disable_rate_limit"`
@@ -426,25 +426,16 @@ type APIDefinitionSpec struct {
 }
 
 type Proxy struct {
-	// +optional
-	PreserveHostHeader bool   `json:"preserve_host_header"`
-	ListenPath         string `json:"listen_path"`
-	// +optional
-	TargetURL string `json:"target_url"`
-	// +optional
-	DisableStripSlash bool `json:"disable_strip_slash"`
-	// +optional
-	StripListenPath bool `json:"strip_listen_path"`
-	// +optional
-	EnableLoadBalancing bool `json:"enable_load_balancing"`
-	// +optional
-	Targets []string `json:"target_list,omitempty"`
-	// +optional
-	CheckHostAgainstUptimeTests bool `json:"check_host_against_uptime_tests"`
-	// +optional
-	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery"`
-	// +optional
-	Transport ProxyTransport `json:"transport"`
+	PreserveHostHeader          bool                          `json:"preserve_host_header,omitempty"`
+	ListenPath                  string                        `json:"listen_path,omitempty"`
+	TargetURL                   string                        `json:"target_url"`
+	DisableStripSlash           bool                          `json:"disable_strip_slash,omitempty"`
+	StripListenPath             bool                          `json:"strip_listen_path,omitempty"`
+	EnableLoadBalancing         bool                          `json:"enable_load_balancing,omitempty"`
+	Targets                     []string                      `json:"target_list,omitempty"`
+	CheckHostAgainstUptimeTests bool                          `json:"check_host_against_uptime_tests,omitempty"`
+	ServiceDiscovery            ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
+	Transport                   ProxyTransport                `json:"transport,omitempty"`
 }
 
 type ProxyTransport struct {
@@ -481,7 +472,7 @@ type UptimeTestConfig struct {
 type VersionData struct {
 	NotVersioned   bool                   `json:"not_versioned"`
 	DefaultVersion string                 `json:"default_version"`
-	Versions       map[string]VersionInfo `json:"versions"`
+	Versions       map[string]VersionInfo `json:"versions,omitempty"`
 }
 
 type VersionDefinition struct {
