@@ -110,3 +110,26 @@ Run the operator locally, outside the cluster
 ```
 make run ENABLE_WEBHOOKS=false
 ```
+
+### Compile and load local docker image:
+
+Minikube:
+
+```
+# docker build with Docker daemon of minikube
+eval $(minikube docker-env)
+docker build . -t controller:latest
+```
+
+Kind:
+
+```
+docker build . -t controller:latest
+kind load docker-image controller:latest
+```
+
+Deploy it to the cluster:
+
+```
+make deploy IMG=controller:latest
+```
