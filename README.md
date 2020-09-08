@@ -68,6 +68,19 @@ B) Run the operator
 make run ENABLE_WEBHOOKS=false
 ```
 
+## 3. Add API definition through command line
+
+Add an API definition using the Kube CLI
+```bash
+$ kubectl apply -f config/samples/tyk_v1_apidefinition.yaml
+apidefinition.tyk.tyk.io/httpbin created
+
+$ curl localhost:8000/httpbin/get | python -m json.tool
+  {
+      "error": "This API version does not seem to exist"
+  }
+```
+
 ### Explanations of make commands
 After modifying the *_types.go file always run the following command to update the generated code for that resource type:
 ```
@@ -96,17 +109,4 @@ Run the operator locally, outside the cluster
 
 ```
 make run ENABLE_WEBHOOKS=false
-```
-
-## 3. Add API definition through command line
-
-Add an API definition using the Kube CLI
-```bash
-$ kubectl apply -f config/samples/tyk_v1_apidefinition.yaml
-apidefinition.tyk.tyk.io/httpbin created
-
-$ curl localhost:8000/httpbin/get | python -m json.tool
-  {
-      "error": "This API version does not seem to exist"
-  }
 ```
