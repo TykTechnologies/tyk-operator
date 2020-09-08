@@ -40,7 +40,7 @@ kubectl port-forward svc/tyk 8000:8080
 
 F) Test:
 ```bash
-$ curl localhost:8080/hello
+$ curl localhost:8000/hello
 {
     "description": "Tyk GW",
     "details": {
@@ -75,7 +75,7 @@ Add an API definition using the Kube CLI
 $ kubectl apply -f config/samples/tyk_v1_apidefinition.yaml
 apidefinition.tyk.tyk.io/httpbin created
 
-$ curl localhost:8000/httpbin/get | python -m json.tool
+$ curl localhost:8000/httpbin/get
   {
       "error": "This API version does not seem to exist"
   }
