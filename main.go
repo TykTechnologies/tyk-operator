@@ -90,12 +90,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	//if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-	//	if err = (&tykv1.ApiDefinition{}).SetupWebhookWithManager(mgr); err != nil {
-	//		setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
-	//		os.Exit(1)
-	//	}
-	//}
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&tykv1.ApiDefinition{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
+			os.Exit(1)
+		}
+	}
 	//// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
