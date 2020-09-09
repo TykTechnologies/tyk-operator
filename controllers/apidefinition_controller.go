@@ -99,7 +99,10 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 
 	newSpec := &apiDef.Spec
+
+	// TODO: this belongs in webhook or CR will be wrong
 	newSpec.APIID = apiIDEncode(apiID.String())
+	r.applyDefaults(newSpec)
 
 	// find the api definition object
 	found := &tykv1.APIDefinitionSpec{}
@@ -150,4 +153,31 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1.ApiDefinition{}).
 		Complete(r)
+}
+
+func (r *ApiDefinitionReconciler) applyDefaults(spec *tykv1.APIDefinitionSpec) {
+	if len(spec.VersionData.Versions) == 0 {
+		defaultVersionData := tykv1.VersionData{
+			NotVersioned:   true,
+			DefaultVersion: "Default",
+			Versions: map[string]tykv1.VersionInfo{
+				"Default": {
+					Name:                        "Default",
+					Expires:                     "",
+					Paths:                       tykv1.VersionInfoPaths{},
+					UseExtendedPaths:            false,
+					ExtendedPaths:               tykv1.ExtendedPathsSet{},
+					GlobalHeaders:               nil,
+					GlobalHeadersRemove:         nil,
+					GlobalResponseHeaders:       nil,
+					GlobalResponseHeadersRemove: nil,
+					IgnoreEndpointCase:          false,
+					GlobalSizeLimit:             0,
+					OverrideTarget:              "",
+				},
+			},
+		}
+
+		spec.VersionData = defaultVersionData
+	}
 }
