@@ -27,6 +27,7 @@ import (
 var apidefinitionlog = logf.Log.WithName("apidefinition-resource")
 
 func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	println("SetupWebhookWithManager")
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(in).
 		Complete()
@@ -41,6 +42,8 @@ var _ webhook.Defaulter = &ApiDefinition{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (in *ApiDefinition) Default() {
 	apidefinitionlog.Info("default", "name", in.Name)
+
+	apidefinitionlog.Info("This is a test message from default")
 
 	if len(in.Spec.VersionData.Versions) == 0 {
 		// TODO: this prob belongs in a mutating webhook

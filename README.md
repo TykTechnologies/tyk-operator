@@ -133,3 +133,21 @@ Deploy it to the cluster:
 ```
 make deploy IMG=controller:latest
 ```
+
+
+### ScrapBook
+
+These are just notes
+
+ns: tyk-operator-system
+csrName: csrName=tyk-operator-webhook-service.tyk-operator-system
+tmpdir=$(mktemp -d)
+
+openssl req -nodes -new -x509 -keyout /tmp/k8s-webhook-server/serving-certs/tls.key -out /tmp/k8s-webhook-server/serving-certs/tls.crt -subj "/CN=tyk-operator-webhook-service.tyk-operator-system"
+kubectl create secret tls webhook-certs --cert "/tmp/k8s-webhook-server/serving-certs/tls.crt" --key "/tmp/k8s-webhook-server/serving-certs/tls.key" --namespace tyk-operator-system
+
+brew install inlets
+brew install kurun
+
+kubectl create namespace tyk-operator-system
+kurun port-forward --namespace tyk-operator-system --servicename tyk-operator-webhook-service localhost:443
