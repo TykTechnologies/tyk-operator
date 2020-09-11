@@ -1,0 +1,12 @@
+
+#configuration for gateway or dashboard client
+Tyk:
+  url: "http://localhost:8000"
+  key: "foo"
+
+
+#configuration for the operator
+Operator:
+  disableWebhooks: true
+
+

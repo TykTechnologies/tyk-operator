@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/spf13/viper"
 	"os"
 
 	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
@@ -37,16 +38,48 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+	tykCfg   *TykConf
+	opCfg    *OpConf
 )
+
+type TykConf struct {
+	Url                string
+	Key                string
+	InsecureSkipVerify bool
+}
+
+type OpConf struct {
+	DisableWebhooks bool
+}
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(tykv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
+
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+}
+
+func initConfig() {
+	tykCfg = &TykConf{}
+	err := viper.UnmarshalKey("Tyk", tykCfg)
+	if err != nil {
+		setupLog.Error(err, "failed to load tyk config")
+		os.Exit(1)
+	}
+
+	opCfg = &OpConf{}
+	err = viper.UnmarshalKey("Operator", tykCfg)
+	if err != nil {
+		setupLog.Error(err, "failed to load operator config")
+		os.Exit(1)
+	}
 }
 
 func main() {
+	initConfig()
 	var metricsAddr string
 	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -54,8 +87,6 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
-
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -78,7 +109,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	gatewayClient := gateway_client.NewClient("http://localhost:8000", "foo", true)
+	gatewayClient := gateway_client.NewClient(tykCfg.Url, tykCfg.Key, tykCfg.InsecureSkipVerify)
 
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
@@ -90,7 +121,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if !opCfg.DisableWebhooks {
 		if err = (&tykv1.ApiDefinition{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
 			os.Exit(1)
