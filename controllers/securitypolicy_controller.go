@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
 	"log"
 
 	"github.com/go-logr/logr"
@@ -31,8 +32,9 @@ import (
 // SecurityPolicyReconciler reconciles a SecurityPolicy object
 type SecurityPolicyReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log             logr.Logger
+	Scheme          *runtime.Scheme
+	UniversalClient *gateway_client.Client
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=securitypolicies,verbs=get;list;watch;create;update;patch;delete

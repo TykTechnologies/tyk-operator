@@ -90,6 +90,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controllers.SecurityPolicyReconciler{
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
+		Scheme:          mgr.GetScheme(),
+		UniversalClient: gatewayClient,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
+		os.Exit(1)
+	}
+
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&tykv1.ApiDefinition{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
