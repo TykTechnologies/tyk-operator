@@ -24,7 +24,7 @@ func TestPol_GetOne(t *testing.T) {
 
 	newPol := createPolicy()
 	_, err := c.SecurityPolicy.Create(newPol)
-	if err != nil {
+	if err != nil && err.Error() != "policy id collision detected" {
 		t.Fatal(err.Error())
 	}
 
