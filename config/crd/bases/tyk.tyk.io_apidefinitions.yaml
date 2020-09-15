@@ -53,6 +53,57 @@ spec:
               type: boolean
             api_id:
               type: string
+            auth:
+              description: EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
+                UseOauth2           bool          `json:"use_oauth2"` UseOpenID           bool          `json:"use_openid"`
+                OpenIDOptions       OpenIDOptions `json:"openid_options"` Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+              properties:
+                auth_header_name:
+                  type: string
+                cookie_name:
+                  type: string
+                param_name:
+                  type: string
+                signature:
+                  properties:
+                    algorithm:
+                      type: string
+                    allowed_clock_skew:
+                      format: int64
+                      type: integer
+                    error_code:
+                      type: integer
+                    error_message:
+                      type: string
+                    header:
+                      type: string
+                    secret:
+                      type: string
+                  required:
+                  - algorithm
+                  - allowed_clock_skew
+                  - error_code
+                  - error_message
+                  - header
+                  - secret
+                  type: object
+                use_certificate:
+                  type: boolean
+                use_cookie:
+                  type: boolean
+                use_param:
+                  type: boolean
+                validate_signature:
+                  type: boolean
+              required:
+              - auth_header_name
+              - cookie_name
+              - param_name
+              - use_certificate
+              - use_cookie
+              - use_param
+              - validate_signature
+              type: object
             auth_configs:
               additionalProperties:
                 properties:
@@ -102,12 +153,52 @@ spec:
                 - use_param
                 - validate_signature
                 type: object
-              description: EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
-                UseOauth2           bool          `json:"use_oauth2"` UseOpenID           bool          `json:"use_openid"`
-                OpenIDOptions       OpenIDOptions `json:"openid_options"` Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+              type: object
+            definition:
+              description: 'UseBasicAuth               bool                  `json:"use_basic_auth"`
+                BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
+                UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
+                ClientCertificates         []string              `json:"client_certificates"`
+                UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
+                PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
+                EnableJWT                  bool                  `json:"enable_jwt"`
+                UseStandardAuth            bool                  `json:"use_standard_auth"`
+                UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
+                EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
+                JWTSigningMethod           string                `json:"jwt_signing_method"`
+                JWTSource                  string                `json:"jwt_source"`
+                JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
+                JWTClientIDBaseField       string                `json:"jwt_client_base_field"`
+                JWTPolicyFieldName         string                `json:"jwt_policy_field_name"`
+                JWTDefaultPolicies         []string              `json:"jwt_default_policies"`
+                JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"`
+                JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"`
+                JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"`
+                JWTSkipKid                 bool                  `json:"jwt_skip_kid"`
+                JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"`
+                JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
+                NotificationsDetails       NotificationsManager  `json:"notifications"`
+                EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
+                HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"`
+                // TODO: convert to float64 HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
+                RequestSigning             RequestSigningMeta    `json:"request_signing"`
+                BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`'
+              properties:
+                key:
+                  type: string
+                location:
+                  type: string
+                strip_path:
+                  type: boolean
+              required:
+              - key
+              - location
+              - strip_path
               type: object
             listen_port:
               type: integer
+            name:
+              type: string
             org_id:
               type: string
             protocol:
@@ -190,35 +281,6 @@ spec:
             use_keyless:
               type: boolean
             version_data:
-              description: 'UseBasicAuth               bool                  `json:"use_basic_auth"`
-                BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
-                UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
-                ClientCertificates         []string              `json:"client_certificates"`
-                UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
-                PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
-                EnableJWT                  bool                  `json:"enable_jwt"`
-                UseStandardAuth            bool                  `json:"use_standard_auth"`
-                UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
-                EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
-                JWTSigningMethod           string                `json:"jwt_signing_method"`
-                JWTSource                  string                `json:"jwt_source"`
-                JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
-                JWTClientIDBaseField       string                `json:"jwt_client_base_field"`
-                JWTPolicyFieldName         string                `json:"jwt_policy_field_name"`
-                JWTDefaultPolicies         []string              `json:"jwt_default_policies"`
-                JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"`
-                JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"`
-                JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"`
-                JWTSkipKid                 bool                  `json:"jwt_skip_kid"`
-                JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"`
-                JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
-                NotificationsDetails       NotificationsManager  `json:"notifications"`
-                EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
-                HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"`
-                // TODO: convert to float64 HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
-                RequestSigning             RequestSigningMeta    `json:"request_signing"`
-                BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
-                VersionDefinition          VersionDefinition     `json:"definition"`'
               properties:
                 default_version:
                   type: string
