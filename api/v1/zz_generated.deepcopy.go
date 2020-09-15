@@ -29,6 +29,7 @@ import (
 func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 	*out = *in
 	in.Proxy.DeepCopyInto(&out.Proxy)
+	out.Auth = in.Auth
 	if in.AuthConfigs != nil {
 		in, out := &in.AuthConfigs, &out.AuthConfigs
 		*out = make(map[string]AuthConfig, len(*in))
@@ -36,6 +37,7 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 			(*out)[key] = val
 		}
 	}
+	out.VersionDefinition = in.VersionDefinition
 	in.VersionData.DeepCopyInto(&out.VersionData)
 }
 

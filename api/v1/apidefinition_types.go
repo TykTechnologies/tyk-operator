@@ -343,6 +343,7 @@ type OpenIDOptions struct {
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
 	APIID  string `json:"api_id,omitempty"`
+	Name   string `json:"name,omitempty"`
 	OrgID  string `json:"org_id"`
 	Active bool   `json:"active,omitempty"`
 	// +optional
@@ -357,6 +358,7 @@ type APIDefinitionSpec struct {
 	//UseOpenID           bool          `json:"use_openid"`
 	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
 	//Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+	Auth AuthConfig `json:"auth,omitempty"`
 	// +optional
 	AuthConfigs map[string]AuthConfig `json:"auth_configs,omitempty"`
 	//UseBasicAuth               bool                  `json:"use_basic_auth"`
@@ -387,8 +389,8 @@ type APIDefinitionSpec struct {
 	//HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
 	//RequestSigning             RequestSigningMeta    `json:"request_signing"`
 	//BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
-	//VersionDefinition          VersionDefinition     `json:"definition"`
-	VersionData VersionData `json:"version_data,omitempty"`
+	VersionDefinition VersionDefinition `json:"definition,omitempty"`
+	VersionData       VersionData       `json:"version_data,omitempty"`
 	////UptimeTests                UptimeTests           `json:"uptime_tests"`
 	//
 	//DisableRateLimit       bool                `json:"disable_rate_limit"`
