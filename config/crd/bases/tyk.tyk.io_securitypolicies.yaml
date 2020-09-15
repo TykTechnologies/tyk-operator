@@ -36,10 +36,148 @@ spec:
         spec:
           description: SecurityPolicySpec defines the desired state of SecurityPolicy
           properties:
+            access_rights:
+              additionalProperties:
+                description: from tyk/session.go AccessDefinition defines which versions
+                  of an API a key has access to
+                properties:
+                  allowance_scope:
+                    type: string
+                  allowed_urls:
+                    items:
+                      description: from tyk/session.go AccessSpecs define what URLS
+                        a user has access to an what methods are enabled
+                      properties:
+                        methods:
+                          items:
+                            type: string
+                          type: array
+                        url:
+                          type: string
+                      required:
+                      - methods
+                      - url
+                      type: object
+                    type: array
+                  api_id:
+                    type: string
+                  api_name:
+                    type: string
+                  limit:
+                    description: RestrictedTypes []graphql.Type `json:"restricted_types"
+                      msg:"restricted_types"`
+                    properties:
+                      max_query_depth:
+                        type: integer
+                      per:
+                        format: int64
+                        type: integer
+                      quota_max:
+                        format: int64
+                        type: integer
+                      quota_remaining:
+                        format: int64
+                        type: integer
+                      quota_renewal_rate:
+                        format: int64
+                        type: integer
+                      quota_renews:
+                        format: int64
+                        type: integer
+                      rate:
+                        format: int64
+                        type: integer
+                      throttle_interval:
+                        format: int64
+                        type: integer
+                      throttle_retry_limit:
+                        type: integer
+                    required:
+                    - max_query_depth
+                    - per
+                    - quota_max
+                    - quota_remaining
+                    - quota_renewal_rate
+                    - quota_renews
+                    - rate
+                    - throttle_interval
+                    - throttle_retry_limit
+                    type: object
+                  versions:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - allowance_scope
+                - allowed_urls
+                - api_id
+                - api_name
+                - limit
+                - versions
+                type: object
+              type: object
+            active:
+              type: boolean
+            enable_http_signature_validation:
+              type: boolean
             foo:
               description: Foo is an example field of SecurityPolicy. Edit SecurityPolicy_types.go
                 to remove/update
               type: string
+            hmac_enabled:
+              type: boolean
+            id:
+              type: string
+            key_expires_in:
+              format: int64
+              type: integer
+            last_updated:
+              description: Partitions                    PolicyPartitions                 `json:"partitions"`
+              type: string
+            max_query_depth:
+              type: integer
+            name:
+              type: string
+            org_id:
+              type: string
+            per:
+              format: int64
+              type: integer
+            quota_max:
+              format: int64
+              type: integer
+            quota_renewal_rate:
+              format: int64
+              type: integer
+            rate:
+              format: int64
+              type: integer
+            tags:
+              description: IsInactive                    bool                             `json:"is_inactive"`
+              items:
+                type: string
+              type: array
+            throttle_interval:
+              format: int64
+              type: integer
+            throttle_retry_limit:
+              type: integer
+          required:
+          - access_rights
+          - active
+          - enable_http_signature_validation
+          - hmac_enabled
+          - key_expires_in
+          - last_updated
+          - max_query_depth
+          - name
+          - org_id
+          - per
+          - quota_max
+          - quota_renewal_rate
+          - tags
+          - throttle_interval
+          - throttle_retry_limit
           type: object
         status:
           description: SecurityPolicyStatus defines the observed state of SecurityPolicy

@@ -1,7 +1,7 @@
 package gateway_client
 
 import (
-	//"errors"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,7 +10,7 @@ import (
 )
 
 var (
-//policyCollisionError = errors.New("api id, listen path or slug collision")
+	policyCollisionError = errors.New("policy id collision detected")
 )
 
 type SecurityPolicy struct {
@@ -18,7 +18,7 @@ type SecurityPolicy struct {
 }
 
 func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
-	fullPath := JoinUrl(a.url, endpointAPIs)
+	fullPath := JoinUrl(a.url, endpointPolicies)
 
 	res, err := grequests.Get(fullPath, a.opts)
 	if err != nil {
@@ -37,32 +37,44 @@ func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	return list, nil
 }
 
-func (a SecurityPolicy) Create(def *v1.APIDefinitionSpec) (string, error) {
-	// get all apis
+// Not working because the Gateway returns broken JSON currently
+func (a SecurityPolicy) Get(polId string) (*v1.SecurityPolicySpec, error) {
+	fullPath := JoinUrl(a.url, endpointPolicies, polId)
+	res, err := grequests.Get(fullPath, a.opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
+	}
+
+	var retrievedPol v1.SecurityPolicySpec
+	if err := res.JSON(&retrievedPol); err != nil {
+		return nil, err
+	}
+
+	return &retrievedPol, nil
+}
+
+func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
+	// Replace this with a GET ONE once that is fixed
+	// get all policies
 	list, err := a.All()
 	if err != nil {
 		return "", err
 	}
-
 	// check exists / collisions
-	for _, api := range list {
-		if api.APIID == def.APIID {
-			return "", apiCollisionError
-		}
-
-		if api.Proxy.ListenPath == def.Proxy.ListenPath {
-			return "", apiCollisionError
-		}
-
-		if api.Slug == def.Slug {
-			return "", apiCollisionError
+	for _, pol := range list {
+		if pol.ID == def.ID {
+			return "", policyCollisionError
 		}
 	}
 
 	// Create
 	opts := a.opts
 	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointAPIs)
+	fullPath := JoinUrl(a.url, endpointPolicies)
 
 	res, err := grequests.Post(fullPath, opts)
 	if err != nil {
@@ -85,28 +97,29 @@ func (a SecurityPolicy) Create(def *v1.APIDefinitionSpec) (string, error) {
 	return resMsg.Key, nil
 }
 
-func (a SecurityPolicy) Update(def *v1.APIDefinitionSpec) error {
+func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
+	// Replace this with a GET ONE once that is fixed
 	list, err := a.All()
 	if err != nil {
 		return err
 	}
 
-	var apiToUpdate *v1.APIDefinitionSpec
-	for _, api := range list {
-		if api.APIID == def.APIID {
-			apiToUpdate = &api
+	var polToUpdate *v1.SecurityPolicySpec
+	for _, pol := range list {
+		if pol.ID == def.ID {
+			polToUpdate = &pol
 			break
 		}
 	}
 
-	if apiToUpdate == nil {
+	if polToUpdate == nil {
 		return notFoundError
 	}
 
 	// Update
 	opts := a.opts
 	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointAPIs, apiToUpdate.APIID)
+	fullPath := JoinUrl(a.url, endpointPolicies, polToUpdate.ID)
 
 	res, err := grequests.Put(fullPath, opts)
 	if err != nil {
@@ -130,7 +143,7 @@ func (a SecurityPolicy) Update(def *v1.APIDefinitionSpec) error {
 }
 
 func (a SecurityPolicy) Delete(id string) error {
-	delPath := JoinUrl(a.url, endpointAPIs, id)
+	delPath := JoinUrl(a.url, endpointPolicies, id)
 
 	res, err := grequests.Delete(delPath, a.opts)
 	if err != nil {
