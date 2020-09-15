@@ -1,12 +1,11 @@
-package gateway_client
+package dashboard_client
 
 import (
 	"testing"
 )
 
-// TODO: create a gateway deployment & implement cleanup function
 func getClient() *Client {
-	return NewClient("http://localhost:8000", "foo", true)
+	return NewClient("https://62cf8c685845.ngrok.io", "de2fc79499804c7072372b859e712b82", true)
 }
 
 func TestClient_HotReload(t *testing.T) {

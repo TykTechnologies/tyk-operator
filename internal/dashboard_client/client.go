@@ -1,4 +1,4 @@
-package gateway_client
+package dashboard_client
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	endpointAPIs     = "/tyk/apis"
+	endpointAPIs     = "/api/apis"
 	endpointCerts    = "/tyk/certs"
 	endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/tyk/policies"
@@ -21,10 +21,11 @@ var (
 )
 
 type ResponseMsg struct {
-	Key     string `json:"key"`
-	Status  string `json:"status"`
-	Action  string `json:"action"`
-	Message string `json:"message"`
+	Key     string `json:"Key,omitempty"`
+	Status  string `json:"Status,omitempty"`
+	Action  string `json:"Action,omitempty"`
+	Message string `json:"Message,omitempty"`
+	Meta    string `json:"Meta,omitempty"`
 }
 
 func JoinUrl(parts ...string) string {
@@ -49,8 +50,8 @@ func NewClient(url string, auth string, insecureSkipVerify bool) *Client {
 		insecureSkipVerify: false,
 		opts: &grequests.RequestOptions{
 			Headers: map[string]string{
-				"x-tyk-authorization": auth,
-				"content-type":        "application/json",
+				"authorization": auth,
+				"content-type":  "application/json",
 			},
 			InsecureSkipVerify: insecureSkipVerify,
 		},
@@ -67,6 +68,7 @@ type Client struct {
 	insecureSkipVerify bool
 	opts               *grequests.RequestOptions
 	Api                *Api
+	//Policy             *Policy
 }
 
 func (c Client) HotReload() error {
