@@ -1,4 +1,4 @@
-package gateway_client
+package dashboard_client
 
 import (
 	"errors"
@@ -20,6 +20,15 @@ type Api struct {
 func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	fullPath := JoinUrl(a.url, endpointAPIs)
 
+	// -2 means get all pages
+	queryStruct := struct {
+		Pages int `url:"p"`
+	}{
+		Pages: -2,
+	}
+	opts := a.opts
+	opts.QueryStruct = queryStruct
+
 	res, err := grequests.Get(fullPath, a.opts)
 	if err != nil {
 		return nil, err
@@ -29,36 +38,20 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
 	}
 
-	var list []v1.APIDefinitionSpec
-	if err := res.JSON(&list); err != nil {
+	var apisResponse ApisResponse
+	if err := res.JSON(&apisResponse); err != nil {
 		return nil, err
+	}
+
+	var list []v1.APIDefinitionSpec
+	for _, api := range apisResponse.Apis {
+		list = append(list, api.ApiDefinition)
 	}
 
 	return list, nil
 }
 
-func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
-	// get all apis
-	list, err := a.All()
-	if err != nil {
-		return "", err
-	}
-
-	// check exists / collisions
-	for _, api := range list {
-		if api.APIID == def.APIID {
-			return "", apiCollisionError
-		}
-
-		if api.Proxy.ListenPath == def.Proxy.ListenPath {
-			return "", apiCollisionError
-		}
-
-		if api.Slug == def.Slug {
-			return "", apiCollisionError
-		}
-	}
-
+func (a Api) Create(def *DashboardApi) (string, error) {
 	// Create
 	opts := a.opts
 	opts.JSON = def
@@ -78,35 +71,40 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 		return "", err
 	}
 
-	if resMsg.Status != "ok" {
+	if resMsg.Status != "OK" {
 		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
 
-	return resMsg.Key, nil
+	return resMsg.Meta, nil
 }
 
-func (a Api) Update(def *v1.APIDefinitionSpec) error {
-	list, err := a.All()
+func (a Api) Get(apiID string) (*DashboardApi, error) {
+	// Create
+	opts := a.opts
+	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
+
+	res, err := grequests.Get(fullPath, opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	var apiToUpdate *v1.APIDefinitionSpec
-	for _, api := range list {
-		if api.APIID == def.APIID {
-			apiToUpdate = &api
-			break
-		}
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
 	}
 
-	if apiToUpdate == nil {
-		return notFoundError
+	var resMsg DashboardApi
+	if err := res.JSON(&resMsg); err != nil {
+		return nil, err
 	}
 
+	return &resMsg, nil
+}
+
+func (a Api) Update(apiID string, def *DashboardApi) error {
 	// Update
 	opts := a.opts
 	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointAPIs, apiToUpdate.APIID)
+	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
 
 	res, err := grequests.Put(fullPath, opts)
 	if err != nil {
@@ -122,7 +120,7 @@ func (a Api) Update(def *v1.APIDefinitionSpec) error {
 		return err
 	}
 
-	if resMsg.Status != "ok" {
+	if resMsg.Status != "OK" {
 		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
 
