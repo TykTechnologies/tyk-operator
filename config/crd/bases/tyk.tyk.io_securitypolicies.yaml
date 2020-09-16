@@ -36,6 +36,10 @@ spec:
         spec:
           description: SecurityPolicySpec defines the desired state of SecurityPolicy
           properties:
+            _id:
+              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                Important: Run "make" to regenerate code after modifying this file'
+              type: string
             access_rights:
               additionalProperties:
                 description: from tyk/session.go AccessDefinition defines which versions
@@ -120,10 +124,6 @@ spec:
               type: boolean
             enable_http_signature_validation:
               type: boolean
-            foo:
-              description: Foo is an example field of SecurityPolicy. Edit SecurityPolicy_types.go
-                to remove/update
-              type: string
             hmac_enabled:
               type: boolean
             id:

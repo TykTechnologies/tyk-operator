@@ -27,6 +27,7 @@ import (
 type SecurityPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	MID                           string                      `json:"_id,omitempty"`
 	ID                            string                      `json:"id,omitempty"`
 	Name                          string                      `json:"name"`
 	OrgID                         string                      `json:"org_id"`

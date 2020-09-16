@@ -360,16 +360,14 @@ spec:
                                 return_to_service_after:
                                   type: integer
                                 samples:
+                                  description: ThresholdPercent     int64    `json:"threshold_percent"`
                                   format: int64
-                                  type: integer
-                                threshold_percent:
                                   type: integer
                               required:
                               - method
                               - path
                               - return_to_service_after
                               - samples
-                              - threshold_percent
                               type: object
                             type: array
                           do_not_track_endpoints:
