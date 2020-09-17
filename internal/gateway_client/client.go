@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/levigross/grequests"
 )
 
@@ -66,15 +67,15 @@ type Client struct {
 	opts               *grequests.RequestOptions
 }
 
-func (c Client) Api() *Api {
-	return &Api{Client: &c}
+func (c *Client) Api() universal_client.UniversalApi {
+	return Api{Client: c}
 }
 
-func (c Client) SecurityPolicy() *SecurityPolicy {
-	return &SecurityPolicy{Client: &c}
+func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
+	return SecurityPolicy{Client: c}
 }
 
-func (c Client) HotReload() error {
+func (c *Client) HotReload() error {
 	fullPath := JoinUrl(c.url, endpointReload)
 	res, err := grequests.Get(fullPath, c.opts)
 
