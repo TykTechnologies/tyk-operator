@@ -134,7 +134,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// we found it, so let's update it
 	log.Info("updating api", "decoded", apiID.String(), "encoded", apiIDEncode(apiID.String()))
-	err = r.UniversalClient.Api().Update(newSpec)
+	err = r.UniversalClient.Api().Update(apiID.String(), newSpec)
 	if err != nil {
 		log.Error(err, "unable to update API Definition")
 		return ctrl.Result{Requeue: true}, err

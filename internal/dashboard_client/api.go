@@ -18,8 +18,6 @@ type Api struct {
 }
 
 func (a Api) All() ([]v1.APIDefinitionSpec, error) {
-	_ = a.log.WithValues("Action", "All")
-
 	fullPath := JoinUrl(a.url, endpointAPIs)
 
 	// -2 means get all pages
@@ -53,11 +51,15 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-func (a Api) Create(def *DashboardApi) (string, error) {
-	_ = a.log.WithValues("Action", "Create")
+func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	// Create
 	opts := a.opts
-	opts.JSON = def
+
+	dashboardAPIRequest := DashboardApi{
+		ApiDefinition: *def,
+	}
+
+	opts.JSON = dashboardAPIRequest
 	fullPath := JoinUrl(a.url, endpointAPIs)
 
 	res, err := grequests.Post(fullPath, opts)
@@ -81,8 +83,7 @@ func (a Api) Create(def *DashboardApi) (string, error) {
 	return resMsg.Meta, nil
 }
 
-func (a Api) Get(apiID string) (*DashboardApi, error) {
-	_ = a.log.WithValues("Action", "Get")
+func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	// Create
 	opts := a.opts
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
@@ -101,12 +102,10 @@ func (a Api) Get(apiID string) (*DashboardApi, error) {
 		return nil, err
 	}
 
-	return &resMsg, nil
+	return &resMsg.ApiDefinition, nil
 }
 
-func (a Api) Update(apiID string, def *DashboardApi) error {
-	_ = a.log.WithValues("Action", "Update")
-
+func (a Api) Update(apiID string, def *v1.APIDefinitionSpec) error {
 	// Update
 	opts := a.opts
 	opts.JSON = def
@@ -134,8 +133,6 @@ func (a Api) Update(apiID string, def *DashboardApi) error {
 }
 
 func (a Api) Delete(id string) error {
-	_ = a.log.WithValues("Action", "Delete")
-
 	delPath := JoinUrl(a.url, endpointAPIs, id)
 
 	res, err := grequests.Delete(delPath, a.opts)

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+
 	"github.com/go-logr/logr"
 
 	"github.com/levigross/grequests"
@@ -68,15 +70,15 @@ type Client struct {
 	opts               *grequests.RequestOptions
 }
 
-func (c Client) Api() *Api {
-	return &Api{Client: &c}
+func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
+	return &SecurityPolicy{c}
 }
 
-func (c Client) SecurityPolicy() *SecurityPolicy {
-	return &SecurityPolicy{Client: &c}
+func (c *Client) Api() *Api {
+	return &Api{c}
 }
 
-func (c Client) HotReload() error {
+func (c *Client) HotReload() error {
 	c.log.WithValues("Action", "HotReload")
 	c.log.Info("not implemented")
 

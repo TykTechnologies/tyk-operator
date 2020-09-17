@@ -20,16 +20,15 @@ import (
 	"flag"
 	"os"
 
+	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -78,7 +77,7 @@ func main() {
 	}
 
 	client := gateway_client.NewClient("http://localhost:8000", "foo", true)
-	// client := dashboard_client.NewClient("http://localhost:8000", "foo", true)
+	//client := dashboard_client.NewClient("http://localhost:3000", "de2fc79499804c7072372b859e712b82", true)
 
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),

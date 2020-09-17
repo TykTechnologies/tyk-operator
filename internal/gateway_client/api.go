@@ -85,7 +85,7 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	return resMsg.Key, nil
 }
 
-func (a Api) Update(def *v1.APIDefinitionSpec) error {
+func (a Api) Update(_ string, def *v1.APIDefinitionSpec) error {
 	list, err := a.All()
 	if err != nil {
 		return err
