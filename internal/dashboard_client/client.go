@@ -2,9 +2,11 @@ package dashboard_client
 
 import (
 	"errors"
-	"fmt"
-	"net/http"
 	"strings"
+
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+
+	"github.com/go-logr/logr"
 
 	"github.com/levigross/grequests"
 )
@@ -57,9 +59,6 @@ func NewClient(url string, auth string, insecureSkipVerify bool) *Client {
 		},
 	}
 
-	c.Api = &Api{c}
-	c.SecurityPolicy = &SecurityPolicy{c}
-
 	return c
 }
 
@@ -67,31 +66,21 @@ type Client struct {
 	url                string
 	secret             string
 	insecureSkipVerify bool
+	log                logr.Logger
 	opts               *grequests.RequestOptions
-	Api                *Api
-	SecurityPolicy     *SecurityPolicy
 }
 
-func (c Client) HotReload() error {
-	fullPath := JoinUrl(c.url, endpointReload)
-	res, err := grequests.Get(fullPath, c.opts)
+func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
+	return &SecurityPolicy{c}
+}
 
-	if err != nil {
-		return err
-	}
+func (c *Client) Api() universal_client.UniversalApi {
+	return &Api{c}
+}
 
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
-	}
-
-	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
-		return err
-	}
-
-	if resMsg.Status != "ok" {
-		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
+func (c *Client) HotReload() error {
+	c.log.WithValues("Action", "HotReload")
+	c.log.Info("not implemented")
 
 	return nil
 }

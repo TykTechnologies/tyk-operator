@@ -6,7 +6,7 @@ import (
 
 func TestApi_All(t *testing.T) {
 	c := getClient()
-	apis, err := c.Api.All()
+	apis, err := c.Api().All()
 	if err != nil {
 		t.Fatal(err.Error())
 	}

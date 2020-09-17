@@ -1,13 +1,14 @@
 package gateway_client
 
 import (
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"testing"
+
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
 )
 
 func TestPol_All(t *testing.T) {
 	c := getClient()
-	pols, err := c.SecurityPolicy.All()
+	pols, err := c.SecurityPolicy().All()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -23,14 +24,14 @@ func TestPol_GetOne(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy.Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol)
 	if err != nil && err.Error() != "policy id collision detected" {
 		t.Fatal(err.Error())
 	}
 
 	_ = c.HotReload()
 
-	pol, err := c.SecurityPolicy.Get(newPol.ID)
+	pol, err := c.SecurityPolicy().Get(newPol.ID)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -44,14 +45,14 @@ func TestPol_GetOne(t *testing.T) {
 func TestPol_Create(t *testing.T) {
 	c := getClient()
 	_ = c.HotReload()
-	pols, err := c.SecurityPolicy.All()
+	pols, err := c.SecurityPolicy().All()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	numPols := len(pols)
 	newPol := createPolicy()
-	polId, err := c.SecurityPolicy.Create(newPol)
+	polId, err := c.SecurityPolicy().Create(newPol)
 
 	if err != nil {
 		t.Fatal(err.Error())
@@ -60,7 +61,7 @@ func TestPol_Create(t *testing.T) {
 	t.Logf("polId: %s", polId)
 
 	_ = c.HotReload()
-	newPols, err := c.SecurityPolicy.All()
+	newPols, err := c.SecurityPolicy().All()
 	if numPols+1 != len(newPols) {
 		t.Fatal("Should have 1 more policy")
 	}
@@ -71,7 +72,7 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 	_ = c.HotReload()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy.Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -79,7 +80,7 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 	_ = c.HotReload()
 
 	newPolTwo := createPolicy()
-	_, err = c.SecurityPolicy.Create(newPolTwo)
+	_, err = c.SecurityPolicy().Create(newPolTwo)
 	if err == nil {
 		// error out
 		t.Fatal("Should've thrown an error!")
@@ -90,13 +91,13 @@ func TestPol_Update(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy.Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	newPol.Rate = 123
-	err = c.SecurityPolicy.Update(newPol)
+	err = c.SecurityPolicy().Update(newPol)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -110,20 +111,20 @@ func TestPol_Delete(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	polId, err := c.SecurityPolicy.Create(createPolicy())
+	polId, err := c.SecurityPolicy().Create(createPolicy())
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	_ = c.HotReload()
 
-	err = c.SecurityPolicy.Delete(polId)
+	err = c.SecurityPolicy().Delete(polId)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	_ = c.HotReload()
-	pols, err := c.SecurityPolicy.SecurityPolicy.All()
+	pols, err := c.SecurityPolicy().All()
 	for index := range pols {
 		t.Log("index: ", index)
 		if pols[index].ID == polId {
@@ -137,7 +138,7 @@ func TestPol_DeleteNonexistentPolicy(t *testing.T) {
 
 	_ = c.HotReload()
 
-	err := c.SecurityPolicy.Delete("fake-pol-id")
+	err := c.SecurityPolicy().Delete("fake-pol-id")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
