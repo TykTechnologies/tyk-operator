@@ -20,17 +20,15 @@ import (
 	"flag"
 	"os"
 
+	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -78,13 +76,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	gatewayClient := gateway_client.NewClient("http://localhost:8000", "foo", true)
+	client := gateway_client.NewClient("http://localhost:8000", "foo", true)
+	//client := dashboard_client.NewClient("http://localhost:3000", "de2fc79499804c7072372b859e712b82", true)
 
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: gatewayClient,
+		UniversalClient: client,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
 		os.Exit(1)
@@ -94,7 +93,7 @@ func main() {
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: gatewayClient,
+		UniversalClient: client,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)

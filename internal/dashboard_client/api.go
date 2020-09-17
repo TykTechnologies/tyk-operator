@@ -51,10 +51,15 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-func (a Api) Create(def *DashboardApi) (string, error) {
+func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	// Create
 	opts := a.opts
-	opts.JSON = def
+
+	dashboardAPIRequest := DashboardApi{
+		ApiDefinition: *def,
+	}
+
+	opts.JSON = dashboardAPIRequest
 	fullPath := JoinUrl(a.url, endpointAPIs)
 
 	res, err := grequests.Post(fullPath, opts)
@@ -78,7 +83,7 @@ func (a Api) Create(def *DashboardApi) (string, error) {
 	return resMsg.Meta, nil
 }
 
-func (a Api) Get(apiID string) (*DashboardApi, error) {
+func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	// Create
 	opts := a.opts
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
@@ -97,10 +102,10 @@ func (a Api) Get(apiID string) (*DashboardApi, error) {
 		return nil, err
 	}
 
-	return &resMsg, nil
+	return &resMsg.ApiDefinition, nil
 }
 
-func (a Api) Update(apiID string, def *DashboardApi) error {
+func (a Api) Update(apiID string, def *v1.APIDefinitionSpec) error {
 	// Update
 	opts := a.opts
 	opts.JSON = def

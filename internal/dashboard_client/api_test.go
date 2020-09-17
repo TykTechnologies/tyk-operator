@@ -8,7 +8,7 @@ import (
 
 func TestApi_All(t *testing.T) {
 	c := getClient()
-	apis, err := c.Api.All()
+	apis, err := c.Api().All()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -46,20 +46,20 @@ func TestApi_Create(t *testing.T) {
 		},
 	}
 
-	apiId, err := c.Api.Create(&dashboardAPIRequest)
+	apiId, err := c.Api().Create(&dashboardAPIRequest.ApiDefinition)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	inserted, err := c.Api.Get(apiId)
+	inserted, err := c.Api().Get(apiId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf("orgID: %s, apiId: %s", inserted.ApiDefinition.OrgID, inserted.ApiDefinition.APIID)
+	t.Logf("orgID: %s, apiId: %s", inserted.OrgID, inserted.APIID)
 
 	t.Log("cleanup")
-	err = c.Api.Delete(apiId)
+	err = c.Api().Delete(apiId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,38 +93,38 @@ func TestApi_Update(t *testing.T) {
 		},
 	}
 
-	apiId, err := c.Api.Create(&dashboardAPIRequest)
+	apiId, err := c.Api().Create(&dashboardAPIRequest.ApiDefinition)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	inserted, err := c.Api.Get(apiId)
+	inserted, err := c.Api().Get(apiId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// try to update the ID
-	inserted.ApiDefinition.Name = "updated api"
-	inserted.ApiDefinition.Active = true
-	if err := c.Api.Update(apiId, inserted); err != nil {
+	// try to update the api
+	inserted.Name = "updated api"
+	inserted.Active = true
+	if err := c.Api().Update(apiId, inserted); err != nil {
 		t.Fatal(err)
 	}
 
-	updated, err := c.Api.Get(inserted.ApiDefinition.APIID)
+	updated, err := c.Api().Get(inserted.APIID)
 	if err != nil {
 		t.Fatal("well that sucks!")
 	}
 
-	if updated.ApiDefinition.Name != inserted.ApiDefinition.Name {
+	if updated.Name != inserted.Name {
 		t.Fatal("api name not updated")
 	}
 
-	if updated.ApiDefinition.Active != inserted.ApiDefinition.Active {
+	if updated.Active != inserted.Active {
 		t.Fatal("unable to activate api")
 	}
 
 	t.Log("cleanup")
-	err = c.Api.Delete(apiId)
+	err = c.Api().Delete(apiId)
 	if err != nil {
 		t.Fatal(err)
 	}
