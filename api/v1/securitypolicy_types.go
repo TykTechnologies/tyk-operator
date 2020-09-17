@@ -54,7 +54,7 @@ type AccessDefinition struct {
 	APIName     string       `json:"api_name" msg:"api_name"`
 	APIID       string       `json:"api_id" msg:"api_id"`
 	Versions    []string     `json:"versions" msg:"versions"`
-	AllowedURLs []AccessSpec `json:"allowed_urls",msg:"allowed_urls"` // mapped string MUST be a valid regex
+	AllowedURLs []AccessSpec `json:"allowed_urls" msg:"allowed_urls"` // mapped string MUST be a valid regex
 	//RestrictedTypes []graphql.Type `json:"restricted_types" msg:"restricted_types"`
 	Limit *APILimit `json:"limit" msg:"limit"`
 
