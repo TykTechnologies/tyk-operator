@@ -2,9 +2,9 @@ package dashboard_client
 
 import (
 	"errors"
-	"fmt"
-	"net/http"
 	"strings"
+
+	"github.com/go-logr/logr"
 
 	"github.com/levigross/grequests"
 )
@@ -57,8 +57,6 @@ func NewClient(url string, auth string, insecureSkipVerify bool) *Client {
 		},
 	}
 
-	c.Api = &Api{c}
-
 	return c
 }
 
@@ -66,31 +64,21 @@ type Client struct {
 	url                string
 	secret             string
 	insecureSkipVerify bool
+	log                logr.Logger
 	opts               *grequests.RequestOptions
-	Api                *Api
-	//Policy             *Policy
+}
+
+func (c Client) Api() *Api {
+	return &Api{Client: &c}
+}
+
+func (c Client) SecurityPolicy() *SecurityPolicy {
+	return &SecurityPolicy{Client: &c}
 }
 
 func (c Client) HotReload() error {
-	fullPath := JoinUrl(c.url, endpointReload)
-	res, err := grequests.Get(fullPath, c.opts)
-
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
-	}
-
-	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
-		return err
-	}
-
-	if resMsg.Status != "ok" {
-		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
+	c.log.WithValues("Action", "HotReload")
+	c.log.Info("not implemented")
 
 	return nil
 }

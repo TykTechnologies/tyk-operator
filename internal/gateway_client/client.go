@@ -56,9 +56,6 @@ func NewClient(url string, auth string, insecureSkipVerify bool) *Client {
 		},
 	}
 
-	c.Api = &Api{c}
-	c.SecurityPolicy = &SecurityPolicy{c}
-
 	return c
 }
 
@@ -67,8 +64,14 @@ type Client struct {
 	secret             string
 	insecureSkipVerify bool
 	opts               *grequests.RequestOptions
-	Api                *Api
-	SecurityPolicy     *SecurityPolicy
+}
+
+func (c Client) Api() *Api {
+	return &Api{Client: &c}
+}
+
+func (c Client) SecurityPolicy() *SecurityPolicy {
+	return &SecurityPolicy{Client: &c}
 }
 
 func (c Client) HotReload() error {

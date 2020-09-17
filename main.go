@@ -20,7 +20,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -78,13 +78,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	gatewayClient := gateway_client.NewClient("http://localhost:8000", "foo", true)
+	//client := gateway_client.NewClient("http://localhost:8000", "foo", true)
+	client := dashboard_client.NewClient("http://localhost:8000", "foo", true)
 
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: gatewayClient,
+		UniversalClient: client,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
 		os.Exit(1)
@@ -94,7 +95,7 @@ func main() {
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: gatewayClient,
+		UniversalClient: client,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)

@@ -21,7 +21,7 @@ import (
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
-	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +35,7 @@ type ApiDefinitionReconciler struct {
 	client.Client
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
-	UniversalClient *gateway_client.Client
+	UniversalClient universal_client.UniversalClient
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete
@@ -75,7 +75,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		// The object is being deleted
 		if containsString(apiDef.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			// our finalizer is present, so lets handle our external dependency
-			if err := r.UniversalClient.Api.Delete(apiIDEncode(apiID.String())); err != nil {
+
+			if err := r.UniversalClient.Api().Delete(apiIDEncode(apiID.String())); err != nil {
 				return reconcile.Result{Requeue: true}, err
 			}
 
@@ -92,7 +93,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, nil
 	}
 
-	allAPIs, err := r.UniversalClient.Api.All()
+	allAPIs, err := r.UniversalClient.Api().All()
 	if err != nil {
 		log.Error(err, "unable to get all apis")
 		return ctrl.Result{}, err
@@ -115,7 +116,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	// we didn't find it, so let's create it
 	if found.APIID == "" {
 		log.Info("creating api", "decodedID", apiID.String(), "encodedID", apiIDEncode(apiID.String()))
-		_, err := r.UniversalClient.Api.Create(newSpec)
+		_, err := r.UniversalClient.Api().Create(newSpec)
 		if err != nil {
 			log.Error(err, "unable to create API Definition")
 			return ctrl.Result{RequeueAfter: time.Second * 5}, err
@@ -133,7 +134,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// we found it, so let's update it
 	log.Info("updating api", "decoded", apiID.String(), "encoded", apiIDEncode(apiID.String()))
-	err = r.UniversalClient.Api.Update(newSpec)
+	err = r.UniversalClient.Api().Update(newSpec)
 	if err != nil {
 		log.Error(err, "unable to update API Definition")
 		return ctrl.Result{Requeue: true}, err
