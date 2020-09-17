@@ -57,27 +57,27 @@ func TestApi_Create(t *testing.T) {
 	}
 
 	t.Logf("orgID: %s, apiId: %s", inserted.ApiDefinition.OrgID, inserted.ApiDefinition.APIID)
+
+	t.Log("cleanup")
+	err = c.Api.Delete(apiId)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestApi_Create_API_ID_Override(t *testing.T) {
-	//t.Skip("PoC hook up with policies to see if overriding the API_ID sense.")
+func TestApi_Update(t *testing.T) {
 
 	c := getClient()
 
-	newID := "NEED_A_SENSIBLE_CUSTOM_NAME_HERE"
-	t.Log("creating API with ID", newID)
+	t.Log("creating api for update")
 
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: v1.APIDefinitionSpec{
-			APIID: newID,
-			Name:  "override api id",
-			//OrgID:            "5f5d48438e18ef0001fda615",
-			Active: true,
+			Name:   "api to update",
+			Active: false,
 			Proxy: v1.Proxy{
-				ListenPath: "/override_api_id",
+				ListenPath: "/api_to_update",
 			},
-			ListenPort:       0,
-			Protocol:         "",
 			UseKeylessAccess: true,
 			Auth: v1.AuthConfig{
 				AuthHeaderName: "Authorization",
@@ -104,25 +104,28 @@ func TestApi_Create_API_ID_Override(t *testing.T) {
 	}
 
 	// try to update the ID
-	inserted.ApiDefinition.APIID = newID
+	inserted.ApiDefinition.Name = "updated api"
+	inserted.ApiDefinition.Active = true
 	if err := c.Api.Update(apiId, inserted); err != nil {
 		t.Fatal(err)
 	}
 
-	updated, err := c.Api.Get(newID)
+	updated, err := c.Api.Get(inserted.ApiDefinition.APIID)
 	if err != nil {
-		t.Fatal("new api id doesn't appear to have been set properly")
+		t.Fatal("well that sucks!")
 	}
 
-	if updated.ApiDefinition.APIID != newID {
-		t.Fatalf("expected api_id: %s, got: %s", newID, updated.ApiDefinition.APIID)
+	if updated.ApiDefinition.Name != inserted.ApiDefinition.Name {
+		t.Fatal("api name not updated")
 	}
-}
 
-func TestApi_Update(t *testing.T) {
-	//t.Fatal("no test")
-}
+	if updated.ApiDefinition.Active != inserted.ApiDefinition.Active {
+		t.Fatal("unable to activate api")
+	}
 
-func TestApi_Delete(t *testing.T) {
-	//t.Fatal("no test")
+	t.Log("cleanup")
+	err = c.Api.Delete(apiId)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
