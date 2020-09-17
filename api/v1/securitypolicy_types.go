@@ -91,7 +91,7 @@ type SecurityPolicyStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-
+// +kubebuilder:resource:shortName=tykpolicies
 // SecurityPolicy is the Schema for the securitypolicies API
 type SecurityPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
