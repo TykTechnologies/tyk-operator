@@ -37,6 +37,25 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
+func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
+	fullPath := JoinUrl(a.url, endpointAPIs+"/", apiID)
+
+	res, err := grequests.Get(fullPath, a.opts)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
+	}
+
+	var spec v1.APIDefinitionSpec
+	if err := res.JSON(&spec); err != nil {
+		return nil, err
+	}
+
+	return &spec, nil
+}
+
 func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	// get all apis
 	list, err := a.All()
@@ -85,7 +104,7 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	return resMsg.Key, nil
 }
 
-func (a Api) Update(def *v1.APIDefinitionSpec) error {
+func (a Api) Update(_ string, def *v1.APIDefinitionSpec) error {
 	list, err := a.All()
 	if err != nil {
 		return err

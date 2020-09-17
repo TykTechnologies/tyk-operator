@@ -18,15 +18,14 @@ package controllers
 
 import (
 	"context"
-	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
 	"log"
 
+	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 )
 
 // SecurityPolicyReconciler reconciles a SecurityPolicy object
@@ -34,7 +33,7 @@ type SecurityPolicyReconciler struct {
 	client.Client
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
-	UniversalClient *gateway_client.Client
+	UniversalClient universal_client.UniversalClient
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=securitypolicies,verbs=get;list;watch;create;update;patch;delete
