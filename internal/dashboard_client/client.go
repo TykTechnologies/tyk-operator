@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	endpointAPIs     = "/api/apis"
-	endpointCerts    = "/tyk/certs"
-	endpointReload   = "/tyk/reload/group"
-	endpointPolicies = "/tyk/policies"
+	endpointAPIs = "/api/apis"
+	//endpointCerts    = "/tyk/certs"
+	//endpointReload   = "/tyk/reload/group"
+	endpointPolicies = "/api/portal/policies"
 )
 
 var (
@@ -74,13 +74,13 @@ func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
 	return &SecurityPolicy{c}
 }
 
-func (c *Client) Api() *Api {
+func (c *Client) Api() universal_client.UniversalApi {
 	return &Api{c}
 }
 
 func (c *Client) HotReload() error {
-	c.log.WithValues("Action", "HotReload")
-	c.log.Info("not implemented")
+	//c.log.WithValues("Action", "HotReload")
+	//c.log.Info("not implemented")
 
 	return nil
 }

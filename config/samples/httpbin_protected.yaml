@@ -3,7 +3,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin
 spec:
-  use_keyless: true
+  use_keyless: false
   protocol: http
   active: true
   org_id: acme.com

@@ -51,6 +51,7 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
+// TODO: logic to prevent create without an "api_id"
 func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	// Create
 	opts := a.opts
@@ -80,6 +81,17 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
 
+	inserted, err := a.Get(resMsg.Meta)
+	if err != nil {
+		return "", fmt.Errorf("API request (lookup) failed: %s", resMsg.Message)
+	}
+
+	def.OrgID = inserted.OrgID
+	err = a.Update(resMsg.Meta, def)
+	if resMsg.Status != "OK" {
+		return "", fmt.Errorf("API request (update name) failed: %s", resMsg.Message)
+	}
+
 	return resMsg.Meta, nil
 }
 
@@ -107,8 +119,12 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 
 func (a Api) Update(apiID string, def *v1.APIDefinitionSpec) error {
 	// Update
+	dashboardAPIRequest := DashboardApi{
+		ApiDefinition: *def,
+	}
+
 	opts := a.opts
-	opts.JSON = def
+	opts.JSON = dashboardAPIRequest
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
 
 	res, err := grequests.Put(fullPath, opts)
