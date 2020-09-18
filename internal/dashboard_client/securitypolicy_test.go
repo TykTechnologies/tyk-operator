@@ -85,7 +85,7 @@ func TestPol_Update(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	newRate := 888
+	newRate := 11
 
 	newPol.Rate = int64(newRate)
 	err = c.SecurityPolicy().Update(newPol)
@@ -140,11 +140,16 @@ func TestPol_DeleteNonexistentPolicy(t *testing.T) {
 func createPolicy() *v1.SecurityPolicySpec {
 	newPol := &v1.SecurityPolicySpec{}
 	newPol.Name = "my new pol"
-	newPol.Rate = 50
-	newPol.Per = 123
+	newPol.Rate = 10
+	newPol.Per = 60
 	newPol.OrgID = "5e9d9544a1dcd60001d0ed20"
 	newPol.ID = "myid"
 	newPol.Active = true
+	newPol.AccessRights = make(map[string]v1.AccessDefinition)
+	newPol.AccessRights["NEED_A_SENSIBLE_CUSTOM_NAME_HERE"] = v1.AccessDefinition{
+		APIName: "my Api",
+		APIID:   "NEED_A_SENSIBLE_CUSTOM_NAME_HERE",
+	}
 
 	return newPol
 }

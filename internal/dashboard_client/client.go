@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	endpointAPIs     = "/api/apis"
-	endpointCerts    = "/tyk/certs"
-	endpointReload   = "/tyk/reload/group"
+	endpointAPIs = "/api/apis"
+	//endpointCerts    = "/tyk/certs"
+	//endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"
 )
 
@@ -79,8 +79,8 @@ func (c *Client) Api() universal_client.UniversalApi {
 }
 
 func (c *Client) HotReload() error {
-	c.log.WithValues("Action", "HotReload")
-	c.log.Info("not implemented")
+	//c.log.WithValues("Action", "HotReload")
+	//c.log.Info("not implemented")
 
 	return nil
 }
