@@ -25,6 +25,7 @@ func TestApi_Create(t *testing.T) {
 
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: v1.APIDefinitionSpec{
+			APIID:  "friendlyID",
 			Name:   "sedky #k8s #ns:default #foo #bar #baz",
 			Active: true,
 			Proxy: v1.Proxy{
@@ -110,7 +111,7 @@ func TestApi_Update(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	updated, err := c.Api().Get(inserted.APIID)
+	updated, err := c.Api().Get(apiId)
 	if err != nil {
 		t.Fatal("well that sucks!")
 	}

@@ -13,3 +13,8 @@ type DashboardApi struct {
 	CreatedAt     string               `json:"created_at,omitempty"`
 	ApiDefinition v1.APIDefinitionSpec `json:"api_definition"`
 }
+
+type PoliciesResponse struct {
+	Policies []v1.SecurityPolicySpec `json:"data"`
+	Pages    int                     `json:"pages"`
+}

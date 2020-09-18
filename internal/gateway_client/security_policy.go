@@ -37,7 +37,6 @@ func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	return list, nil
 }
 
-// Not working because the Gateway returns broken JSON currently
 func (a SecurityPolicy) Get(polId string) (*v1.SecurityPolicySpec, error) {
 	fullPath := JoinUrl(a.url, endpointPolicies, polId)
 	res, err := grequests.Get(fullPath, a.opts)

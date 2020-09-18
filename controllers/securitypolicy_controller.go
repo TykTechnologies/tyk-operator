@@ -44,7 +44,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	_ = r.Log.WithValues("securitypolicy", req.NamespacedName)
 
 	// your logic here
-	log.Fatal("fuck yes")
+	log.Fatal("hello world")
 
 	return ctrl.Result{}, nil
 }

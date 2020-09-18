@@ -134,11 +134,11 @@ type RequestSizeMeta struct {
 }
 
 type CircuitBreakerMeta struct {
-	Path                 string `json:"path"`
-	Method               string `json:"method"`
-	ThresholdPercent     int    `json:"threshold_percent"`
-	Samples              int64  `json:"samples"`
-	ReturnToServiceAfter int    `json:"return_to_service_after"`
+	Path   string `json:"path"`
+	Method string `json:"method"`
+	//ThresholdPercent     int64    `json:"threshold_percent"`
+	Samples              int64 `json:"samples"`
+	ReturnToServiceAfter int   `json:"return_to_service_after"`
 }
 
 type StringRegexMap struct {

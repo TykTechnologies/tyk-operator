@@ -5,6 +5,7 @@ import (
 )
 
 type UniversalApi interface {
+	Get(apiID string) (*v1.APIDefinitionSpec, error)
 	All() ([]v1.APIDefinitionSpec, error)
 	Create(def *v1.APIDefinitionSpec) (string, error)
 	Update(apiID string, def *v1.APIDefinitionSpec) error
