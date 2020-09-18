@@ -361,6 +361,8 @@ type APIDefinitionSpec struct {
 	Auth AuthConfig `json:"auth,omitempty"`
 	// +optional
 	AuthConfigs map[string]AuthConfig `json:"auth_configs,omitempty"`
+	// UseStandardAuth enables simple bearer token authentication
+	UseStandardAuth bool `json:"use_standard_auth,omitempty"`
 	//UseBasicAuth               bool                  `json:"use_basic_auth"`
 	//BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
@@ -368,7 +370,6 @@ type APIDefinitionSpec struct {
 	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 	//EnableJWT                  bool                  `json:"enable_jwt"`
-	//UseStandardAuth            bool                  `json:"use_standard_auth"`
 	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
 	//EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
 	//JWTSigningMethod           string                `json:"jwt_signing_method"`
@@ -498,13 +499,13 @@ type OAuth2Meta struct {
 }
 
 type AuthConfig struct {
-	UseParam          bool            `json:"use_param"`
-	ParamName         string          `json:"param_name"`
-	UseCookie         bool            `json:"use_cookie"`
-	CookieName        string          `json:"cookie_name"`
+	UseParam          bool            `json:"use_param,omitempty"`
+	ParamName         string          `json:"param_name,omitempty"`
+	UseCookie         bool            `json:"use_cookie,omitempty"`
+	CookieName        string          `json:"cookie_name,omitempty"`
 	AuthHeaderName    string          `json:"auth_header_name"`
-	UseCertificate    bool            `json:"use_certificate"`
-	ValidateSignature bool            `json:"validate_signature"`
+	UseCertificate    bool            `json:"use_certificate,omitempty"`
+	ValidateSignature bool            `json:"validate_signature,omitempty"`
 	Signature         SignatureConfig `json:"signature,omitempty"`
 }
 

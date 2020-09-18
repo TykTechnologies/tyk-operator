@@ -97,12 +97,6 @@ spec:
                     type: boolean
                 required:
                 - auth_header_name
-                - cookie_name
-                - param_name
-                - use_certificate
-                - use_cookie
-                - use_param
-                - validate_signature
                 type: object
               auth_configs:
                 additionalProperties:
@@ -146,12 +140,6 @@ spec:
                       type: boolean
                   required:
                   - auth_header_name
-                  - cookie_name
-                  - param_name
-                  - use_certificate
-                  - use_cookie
-                  - use_param
-                  - validate_signature
                   type: object
                 type: object
               definition:
@@ -162,7 +150,6 @@ spec:
                   UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
                   PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
                   EnableJWT                  bool                  `json:"enable_jwt"`
-                  UseStandardAuth            bool                  `json:"use_standard_auth"`
                   UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
                   EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
                   JWTSigningMethod           string                `json:"jwt_signing_method"`
@@ -279,6 +266,9 @@ spec:
               slug:
                 type: string
               use_keyless:
+                type: boolean
+              use_standard_auth:
+                description: UseStandardAuth enables simple bearer token authentication
                 type: boolean
               version_data:
                 properties:

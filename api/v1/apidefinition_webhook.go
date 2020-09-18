@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	"errors"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,10 +45,9 @@ var _ webhook.Defaulter = &ApiDefinition{}
 func (in *ApiDefinition) Default() {
 	apidefinitionlog.Info("default", "name", in.Name)
 
-	apidefinitionlog.Info("This is a test message from default")
-
 	if len(in.Spec.VersionData.Versions) == 0 {
-		// TODO: this prob belongs in a mutating webhook
+		apidefinitionlog.Info("applying default version as not set")
+
 		defaultVersionData := VersionData{
 			NotVersioned:   true,
 			DefaultVersion: "Default",
@@ -70,6 +71,18 @@ func (in *ApiDefinition) Default() {
 
 		in.Spec.VersionData = defaultVersionData
 	}
+
+	if in.Spec.UseStandardAuth {
+		if in.Spec.AuthConfigs == nil {
+			in.Spec.AuthConfigs = make(map[string]AuthConfig)
+		}
+		if _, ok := in.Spec.AuthConfigs["authToken"]; !ok {
+			apidefinitionlog.Info("applying default auth_config as not set & use_standard_auth enabled")
+			in.Spec.AuthConfigs["authToken"] = AuthConfig{
+				AuthHeaderName: "Authorization",
+			}
+		}
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -81,7 +94,11 @@ var _ webhook.Validator = &ApiDefinition{}
 func (in *ApiDefinition) ValidateCreate() error {
 	apidefinitionlog.Info("validate create", "name", in.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
+	err := validateAuth(in)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -89,7 +106,20 @@ func (in *ApiDefinition) ValidateCreate() error {
 func (in *ApiDefinition) ValidateUpdate(old runtime.Object) error {
 	apidefinitionlog.Info("validate update", "name", in.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
+	err := validateAuth(in)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateAuth(in *ApiDefinition) error {
+	if in.Spec.UseKeylessAccess {
+		if in.Spec.UseStandardAuth {
+			return errors.New("conflict: cannot use_keyless_access & use_standard_auth")
+		}
+	}
 	return nil
 }
 
