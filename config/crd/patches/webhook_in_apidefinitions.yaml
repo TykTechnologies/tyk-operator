@@ -5,6 +5,7 @@ kind: CustomResourceDefinition
 metadata:
   name: apidefinitions.tyk.tyk.io
 spec:
+  preserveUnknownFields: false
   conversion:
     strategy: Webhook
     webhookClientConfig:
