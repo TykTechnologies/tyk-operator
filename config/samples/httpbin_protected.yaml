@@ -3,6 +3,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin
 spec:
+  name: httpbin
   protocol: http
   active: true
   org_id: acme.com

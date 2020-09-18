@@ -343,7 +343,7 @@ type OpenIDOptions struct {
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
 	APIID  string `json:"api_id,omitempty"`
-	Name   string `json:"name,omitempty"`
+	Name   string `json:"name"`
 	OrgID  string `json:"org_id"`
 	Active bool   `json:"active,omitempty"`
 	// +optional

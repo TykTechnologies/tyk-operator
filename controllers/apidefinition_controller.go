@@ -76,7 +76,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		if containsString(apiDef.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			// our finalizer is present, so lets handle our external dependency
 
-			if err := r.UniversalClient.Api().Delete(apiDef.Spec.APIID); err != nil {
+			if err := r.UniversalClient.Api().Delete(apiIDEncode(apiID.String())); err != nil {
+				// looks like it was already deleted
 				return reconcile.Result{Requeue: true}, err
 			}
 

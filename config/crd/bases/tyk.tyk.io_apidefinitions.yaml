@@ -873,6 +873,7 @@ spec:
                 - not_versioned
                 type: object
             required:
+            - name
             - org_id
             - protocol
             - proxy
