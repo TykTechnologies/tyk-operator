@@ -3,6 +3,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin
 spec:
+  name: httpbin
   use_keyless: true
   protocol: http
   active: true

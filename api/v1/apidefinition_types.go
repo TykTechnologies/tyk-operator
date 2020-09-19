@@ -590,10 +590,7 @@ type GraphQLPlayground struct {
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition
 type ApiDefinitionStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	Hashes []string `json:"hashes"`
-	Ids    []string `json:"paths"`
+	Id string `json:"id"`
 }
 
 // +kubebuilder:object:root=true

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
@@ -145,7 +146,17 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	if err != nil {
 		// TODO: what should we actually do here?
 		log.Error(err, "unable to hotreload, but API successfully updated. Inconsistent state")
-		return ctrl.Result{Requeue: false}, err
+		return ctrl.Result{}, err
+	}
+
+	// Update the ApiDefinition status with the id
+	if !reflect.DeepEqual(apiID.String(), apiDef.Status.Id) {
+		apiDef.Status.Id = apiID.String()
+		err := r.Status().Update(ctx, apiDef)
+		if err != nil {
+			log.Error(err, "Failed to update ApiDef status")
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
