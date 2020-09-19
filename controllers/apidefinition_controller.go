@@ -79,15 +79,15 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 			if err := r.UniversalClient.Api().Delete(desired.Status.Id); err != nil {
 				// looks like it was already deleted
-				//return reconcile.Result{Requeue: false}, err
+				return reconcile.Result{Requeue: false}, err
 			}
 
 			_ = r.UniversalClient.HotReload()
 
 			// remove our finalizer from the list and update it.
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
-			if err := r.Update(context.Background(), desired); err != nil {
-				return reconcile.Result{}, err
+			if err := r.Update(ctx, desired); err != nil {
+				return reconcile.Result{}, nil
 			}
 		}
 
@@ -102,39 +102,44 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	newSpec.APIID = apiIDEncode(apiID.String())
 	r.applyDefaults(newSpec)
 
-	var internalID string
+	if desired.Status.Id == "" {
+		// need to create
 
-	// find the api definition object
-	found, err := r.UniversalClient.Api().Get(newSpec.APIID)
-	if err != nil {
 		log.Info("creating api", "decodedID", apiID.String(), "encodedID", apiIDEncode(apiID.String()))
 
-		internalID, err = r.UniversalClient.Api().Create(newSpec)
+		internalID, err := r.UniversalClient.Api().Create(newSpec)
 		if err != nil {
 			log.Error(err, "unable to create API Definition")
 			return ctrl.Result{RequeueAfter: time.Second * 5}, err
 		}
-	} else {
-		// we found it, so let's update it
-		log.Info("updating api", "decoded", apiID.String(), "encoded", apiIDEncode(apiID.String()))
-		err = r.UniversalClient.Api().Update(found.APIID, newSpec)
-		if err != nil {
-			log.Error(err, "unable to update API Definition")
-			return ctrl.Result{Requeue: true}, err
-		}
-		internalID = found.APIID
-	}
 
-	_ = r.UniversalClient.HotReload()
+		_ = r.UniversalClient.HotReload()
 
-	// Update the ApiDefinition status with the id
-	if !reflect.DeepEqual(internalID, desired.Status.Id) {
 		desired.Status.Id = internalID
-		err := r.Status().Update(ctx, desired)
+		err = r.Status().Update(ctx, desired)
 		if err != nil {
 			log.Error(err, "Failed to update ApiDef status")
 			return ctrl.Result{}, err
 		}
+
+		return ctrl.Result{}, nil
+	}
+
+	// get the api def
+	actual, err := r.UniversalClient.Api().Get(desired.Status.Id)
+	if err != nil {
+		log.Error(err, "something fucked")
+		return ctrl.Result{Requeue: true}, err
+	}
+	if !reflect.DeepEqual(desired.Spec, actual) {
+		log.Info("updating api")
+		err := r.UniversalClient.Api().Update(desired.Status.Id, newSpec)
+		if err != nil {
+			log.Error(err, "unable to update API Definition")
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		_ = r.UniversalClient.HotReload()
 	}
 
 	return ctrl.Result{}, nil

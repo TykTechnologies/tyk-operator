@@ -883,8 +883,6 @@ spec:
             properties:
               id:
                 type: string
-            required:
-            - id
             type: object
         type: object
     served: true
