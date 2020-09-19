@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
@@ -44,11 +45,11 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	ctx := context.Background()
 	apiID := req.NamespacedName
 
-	log := r.Log.WithValues("apidefinition", apiID)
+	log := r.Log.WithValues("tykapi/id", apiID)
 
 	log.Info("fetching apidefinition instance")
-	apiDef := &tykv1.ApiDefinition{}
-	if err := r.Get(ctx, apiID, apiDef); err != nil {
+	desired := &tykv1.ApiDefinition{}
+	if err := r.Get(ctx, apiID, desired); err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
@@ -62,30 +63,31 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 
 	const apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
-	if apiDef.ObjectMeta.DeletionTimestamp.IsZero() {
+	if desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is not being deleted, if it does not have our finalizer,
 		// then lets add the finalizer and update the object.
-		if !containsString(apiDef.ObjectMeta.Finalizers, apiDefFinalizerName) {
-			apiDef.ObjectMeta.Finalizers = append(apiDef.ObjectMeta.Finalizers, apiDefFinalizerName)
-			if err := r.Update(ctx, apiDef); err != nil {
+		if !containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+			desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
 		}
 	} else {
 		// The object is being deleted
-		if containsString(apiDef.ObjectMeta.Finalizers, apiDefFinalizerName) {
+		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			// our finalizer is present, so lets handle our external dependency
 
-			if err := r.UniversalClient.Api().Delete(apiDef.Spec.APIID); err != nil {
-				return reconcile.Result{Requeue: true}, err
+			if err := r.UniversalClient.Api().Delete(desired.Status.Id); err != nil {
+				// looks like it was already deleted
+				return reconcile.Result{Requeue: false}, err
 			}
 
 			_ = r.UniversalClient.HotReload()
 
 			// remove our finalizer from the list and update it.
-			apiDef.ObjectMeta.Finalizers = removeString(apiDef.ObjectMeta.Finalizers, apiDefFinalizerName)
-			if err := r.Update(context.Background(), apiDef); err != nil {
-				return reconcile.Result{}, err
+			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+			if err := r.Update(ctx, desired); err != nil {
+				return reconcile.Result{}, nil
 			}
 		}
 
@@ -93,58 +95,51 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, nil
 	}
 
-	allAPIs, err := r.UniversalClient.Api().All()
-	if err != nil {
-		log.Error(err, "unable to get all apis")
-		return ctrl.Result{}, err
-	}
-
-	newSpec := &apiDef.Spec
+	newSpec := &desired.Spec
 
 	// TODO: this belongs in webhook or CR will be wrong
+	// we only care about this for OSS
 	newSpec.APIID = apiIDEncode(apiID.String())
 	r.applyDefaults(newSpec)
 
-	// find the api definition object
-	found := &tykv1.APIDefinitionSpec{}
-	for _, api := range allAPIs {
-		if api.APIID == apiIDEncode(apiID.String()) {
-			found = &api
-		}
-	}
+	if desired.Status.Id == "" {
+		// need to create
 
-	// we didn't find it, so let's create it
-	if found.APIID == "" {
 		log.Info("creating api", "decodedID", apiID.String(), "encodedID", apiIDEncode(apiID.String()))
-		_, err := r.UniversalClient.Api().Create(newSpec)
+
+		internalID, err := r.UniversalClient.Api().Create(newSpec)
 		if err != nil {
 			log.Error(err, "unable to create API Definition")
 			return ctrl.Result{RequeueAfter: time.Second * 5}, err
 		}
 
-		err = r.UniversalClient.HotReload()
+		_ = r.UniversalClient.HotReload()
+
+		desired.Status.Id = internalID
+		err = r.Status().Update(ctx, desired)
 		if err != nil {
-			// TODO: what should we actually do here?
-			log.Error(err, "unable to hotreload, but API created. Inconsistent state")
-			return ctrl.Result{Requeue: false}, err
+			log.Error(err, "Failed to update ApiDef status")
+			return ctrl.Result{}, err
 		}
 
 		return ctrl.Result{}, nil
 	}
 
-	// we found it, so let's update it
-	log.Info("updating api", "decoded", apiID.String(), "encoded", apiIDEncode(apiID.String()))
-	err = r.UniversalClient.Api().Update(apiID.String(), newSpec)
+	// get the api def
+	actual, err := r.UniversalClient.Api().Get(desired.Status.Id)
 	if err != nil {
-		log.Error(err, "unable to update API Definition")
+		log.Error(err, "something fucked")
 		return ctrl.Result{Requeue: true}, err
 	}
+	if !reflect.DeepEqual(desired.Spec, actual) {
+		log.Info("updating api")
+		err := r.UniversalClient.Api().Update(desired.Status.Id, newSpec)
+		if err != nil {
+			log.Error(err, "unable to update API Definition")
+			return ctrl.Result{Requeue: true}, err
+		}
 
-	err = r.UniversalClient.HotReload()
-	if err != nil {
-		// TODO: what should we actually do here?
-		log.Error(err, "unable to hotreload, but API successfully updated. Inconsistent state")
-		return ctrl.Result{Requeue: false}, err
+		_ = r.UniversalClient.HotReload()
 	}
 
 	return ctrl.Result{}, nil
