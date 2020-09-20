@@ -1,0 +1,69 @@
+apiVersion: tyk.tyk.io/v1
+kind: SecurityPolicy
+metadata:
+  name: httpbin
+spec:
+  name: MyPolicy
+  org_id: acme.com
+
+# TODO: WHAT IS THIS? STATE, ACTIVE, IS_INACTIVE
+  state: active
+#  state: draft
+#  state: deny
+  active: true
+  is_inactive: false
+
+# TODO: CAN WE DUMP THIS IN FAVOUR OF ACCESS_RIGHTS_ARRAY?
+#  access_rights:
+#    httpbin:
+#      api_name: httpbin
+#      api_id: httpbin
+#      versions:
+#        - Default
+#      allowance_scope: [ ]
+#      allowed_urls: [ ]
+#      limit: {}
+#        max_query_depth:
+#        per:
+#        quota_max:
+#        quota_remaining:
+#        quota_renewal_rate:
+#        quota_renews:
+#        rate:
+#        throttle_interval:
+#        throttle_retry_limit:
+  access_rights_array:
+    - api_name: httpbin
+      api_id: httpbin
+      versions:
+        - Default
+      allowance_scope: []
+      allowed_urls: []
+#      limit: {}
+#  enable_http_signature_validation:
+#  hmac_enabled:
+
+# TODO: WHAT IS THIS????
+#  auth_type: authToken
+#  auth_types:
+#    - authToken
+
+# TODO: Think about defaulting so we don't have to set these values to -1
+  per: -1
+  quota_max: -1
+  quota_renewal_rate: -1
+  rate: -1
+  throttle_interval: -1
+  throttle_retry_limit: -1
+  max_query_depth: -1
+
+  key_expires_in: 0
+  tags: []
+
+# TODO: can we set sensible defaults for partitions?
+  partitions:
+    quota: true
+    rate_limit: true
+    complexity: false
+    acl: true
+    per_api: false
