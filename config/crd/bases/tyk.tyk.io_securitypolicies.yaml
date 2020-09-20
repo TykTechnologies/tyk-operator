@@ -51,8 +51,8 @@ spec:
                       type: string
                     allowed_urls:
                       items:
-                        description: from tyk/session.go AccessSpecs define what URLS
-                          a user has access to an what methods are enabled
+                        description: AccessSpecs define what URLS a user has access
+                          to an what methods are enabled
                         properties:
                           methods:
                             items:
@@ -66,8 +66,12 @@ spec:
                         type: object
                       type: array
                     api_id:
+                      description: 'TODO: APIID should not really be needed, as is
+                        auto-set from the APIDefnition Resource'
                       type: string
                     api_name:
+                      description: 'TODO: APIName should not really be needed, as
+                        is auto-set from the APIDefnition Resource'
                       type: string
                     limit:
                       description: RestrictedTypes []graphql.Type `json:"restricted_types"`
@@ -109,18 +113,19 @@ spec:
                       - throttle_retry_limit
                       type: object
                     name:
+                      description: Name of the ApiDefinition resource to target
                       type: string
                     namespace:
-                      description: Proposal - Target an APIDefintion Resource inside
-                        a certain namespace, with given name
+                      description: Namespace of the ApiDefinition resource to target
                       type: string
                     versions:
+                      description: 'TODO: should we validate that a specific version
+                        exists in the APIDefinition resource? TODO: If Empty, should
+                        we grant access to the Default version by default?'
                       items:
                         type: string
                       type: array
                   required:
-                  - api_id
-                  - api_name
                   - name
                   - namespace
                   - versions
@@ -135,8 +140,8 @@ spec:
                       type: string
                     allowed_urls:
                       items:
-                        description: from tyk/session.go AccessSpecs define what URLS
-                          a user has access to an what methods are enabled
+                        description: AccessSpecs define what URLS a user has access
+                          to an what methods are enabled
                         properties:
                           methods:
                             items:
@@ -150,8 +155,12 @@ spec:
                         type: object
                       type: array
                     api_id:
+                      description: 'TODO: APIID should not really be needed, as is
+                        auto-set from the APIDefnition Resource'
                       type: string
                     api_name:
+                      description: 'TODO: APIName should not really be needed, as
+                        is auto-set from the APIDefnition Resource'
                       type: string
                     limit:
                       description: RestrictedTypes []graphql.Type `json:"restricted_types"`
@@ -193,18 +202,19 @@ spec:
                       - throttle_retry_limit
                       type: object
                     name:
+                      description: Name of the ApiDefinition resource to target
                       type: string
                     namespace:
-                      description: Proposal - Target an APIDefintion Resource inside
-                        a certain namespace, with given name
+                      description: Namespace of the ApiDefinition resource to target
                       type: string
                     versions:
+                      description: 'TODO: should we validate that a specific version
+                        exists in the APIDefinition resource? TODO: If Empty, should
+                        we grant access to the Default version by default?'
                       items:
                         type: string
                       type: array
                   required:
-                  - api_id
-                  - api_name
                   - name
                   - namespace
                   - versions
@@ -301,6 +311,11 @@ spec:
             type: object
           status:
             description: SecurityPolicyStatus defines the observed state of SecurityPolicy
+            properties:
+              id:
+                type: string
+            required:
+            - id
             type: object
         type: object
     served: true

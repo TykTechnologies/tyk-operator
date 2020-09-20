@@ -45,7 +45,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	ctx := context.Background()
 	apiID := req.NamespacedName
 
-	log := r.Log.WithValues("tykapi/id", apiID)
+	log := r.Log.WithValues("ApiDefinition", apiID.String())
 
 	log.Info("fetching apidefinition instance")
 	desired := &tykv1.ApiDefinition{}

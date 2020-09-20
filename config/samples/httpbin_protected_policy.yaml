@@ -22,8 +22,8 @@ spec:
 
 # PROPOSAL 3: Remove api_id & api_name from types. Then provide `namespace` & `name` instead?
 
-    - api_name: httpbin
-      api_id: httpbin.default
+    - namespace: default
+      name: httpbin
       versions:
         - Default
 #      allowance_scope: []

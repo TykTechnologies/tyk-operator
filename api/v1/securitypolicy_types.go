@@ -61,12 +61,17 @@ type SecurityPolicySpec struct {
 // from tyk/session.go
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {
-	// Proposal - Target an APIDefintion Resource inside a certain namespace, with given name
+	// Namespace of the ApiDefinition resource to target
 	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
+	// Name of the ApiDefinition resource to target
+	Name string `json:"name"`
 
-	APIName  string   `json:"api_name"`
-	APIID    string   `json:"api_id"`
+	// TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource
+	APIName string `json:"api_name,omitempty"`
+	// TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource
+	APIID string `json:"api_id,omitempty"`
+	// TODO: should we validate that a specific version exists in the APIDefinition resource?
+	// TODO: If Empty, should we grant access to the Default version by default?
 	Versions []string `json:"versions"`
 	//RestrictedTypes []graphql.Type `json:"restricted_types"`
 	Limit          APILimit     `json:"limit,omitempty"`
@@ -74,22 +79,19 @@ type AccessDefinition struct {
 	AllowedURLs    []AccessSpec `json:"allowed_urls,omitempty"` // mapped string MUST be a valid regex
 }
 
-// from tyk/session.go
 // APILimit stores quota and rate limit on ACL level (per API)
 type APILimit struct {
-	Rate               int64  `json:"rate"`
-	Per                int64  `json:"per"`
-	ThrottleInterval   int64  `json:"throttle_interval"`
-	ThrottleRetryLimit int    `json:"throttle_retry_limit"`
-	MaxQueryDepth      int    `json:"max_query_depth"`
-	QuotaMax           int64  `json:"quota_max"`
-	QuotaRenews        int64  `json:"quota_renews"`
-	QuotaRemaining     int64  `json:"quota_remaining"`
-	QuotaRenewalRate   int64  `json:"quota_renewal_rate"`
-	SetBy              string `json:"-"`
+	Rate               int64 `json:"rate"`
+	Per                int64 `json:"per"`
+	ThrottleInterval   int64 `json:"throttle_interval"`
+	ThrottleRetryLimit int   `json:"throttle_retry_limit"`
+	MaxQueryDepth      int   `json:"max_query_depth"`
+	QuotaMax           int64 `json:"quota_max"`
+	QuotaRenews        int64 `json:"quota_renews"`
+	QuotaRemaining     int64 `json:"quota_remaining"`
+	QuotaRenewalRate   int64 `json:"quota_renewal_rate"`
 }
 
-// from tyk/session.go
 // AccessSpecs define what URLS a user has access to an what methods are enabled
 type AccessSpec struct {
 	URL     string   `json:"url"`
@@ -106,7 +108,7 @@ type PolicyPartitions struct {
 
 // SecurityPolicyStatus defines the observed state of SecurityPolicy
 type SecurityPolicyStatus struct {
-	// TODO: add ID here which references the policy_id that was created in Tyk
+	ID string `json:"id"`
 }
 
 // +kubebuilder:object:root=true
