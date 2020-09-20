@@ -108,6 +108,12 @@ spec:
                       - throttle_interval
                       - throttle_retry_limit
                       type: object
+                    name:
+                      type: string
+                    namespace:
+                      description: Proposal - Target an APIDefintion Resource inside
+                        a certain namespace, with given name
+                      type: string
                     versions:
                       items:
                         type: string
@@ -115,6 +121,8 @@ spec:
                   required:
                   - api_id
                   - api_name
+                  - name
+                  - namespace
                   - versions
                   type: object
                 type: object
@@ -184,6 +192,12 @@ spec:
                       - throttle_interval
                       - throttle_retry_limit
                       type: object
+                    name:
+                      type: string
+                    namespace:
+                      description: Proposal - Target an APIDefintion Resource inside
+                        a certain namespace, with given name
+                      type: string
                     versions:
                       items:
                         type: string
@@ -191,6 +205,8 @@ spec:
                   required:
                   - api_id
                   - api_name
+                  - name
+                  - namespace
                   - versions
                   type: object
                 type: array

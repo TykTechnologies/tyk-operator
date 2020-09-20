@@ -61,6 +61,10 @@ type SecurityPolicySpec struct {
 // from tyk/session.go
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {
+	// Proposal - Target an APIDefintion Resource inside a certain namespace, with given name
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+
 	APIName  string   `json:"api_name"`
 	APIID    string   `json:"api_id"`
 	Versions []string `json:"versions"`
