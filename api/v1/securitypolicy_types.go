@@ -31,10 +31,16 @@ type SecurityPolicySpec struct {
 	ID    string `json:"id,omitempty"`
 	Name  string `json:"name"`
 	OrgID string `json:"org_id,omitempty"`
+	// +kubebuilder:validation:Enum=active;draft;deny
 	// State can be active, draft or deny
-	State                         string                      `json:"state"`
-	Active                        bool                        `json:"active"`
-	IsInactive                    bool                        `json:"is_inactive"`
+	// active: All keys are active and new keys can be created.
+	// draft: All keys are active but no new keys can be created.
+	// deny: All keys are deactivated and no keys can be created.
+	State string `json:"state"`
+	// Active must be set to `true` for Tyk to load the security policy into memory.
+	Active bool `json:"active"`
+	// IsInactive applies to the key itself. Allows enabling or disabling the policy without deleting it.
+	IsInactive                    bool                        `json:"is_inactive,omitempty"`
 	AccessRightsArray             []AccessDefinition          `json:"access_rights_array"`
 	AccessRights                  map[string]AccessDefinition `json:"access_rights,omitempty"`
 	Rate                          int64                       `json:"rate"`

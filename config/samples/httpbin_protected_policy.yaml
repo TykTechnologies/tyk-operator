@@ -3,19 +3,13 @@ kind: SecurityPolicy
 metadata:
   name: httpbin
 spec:
-
-# TODO: COULD WE / SHOULD WE USE ${METADATA.NAME}.${METADATA.NAMESPACE}?
+  # TODO: COULD WE / SHOULD WE USE ${METADATA.NAME}.${METADATA.NAMESPACE}?
   name: MyPolicy
-
-# TODO: DO WE HAVE TO SET THIS? IS IT ONLY APPLICABLE FOR TYK_PRO
+  # TODO: DO WE HAVE TO SET THIS? IS IT ONLY APPLICABLE FOR TYK_PRO
   org_id: acme.com
-
-# TODO: WHAT IS THIS? STATE, ACTIVE, IS_INACTIVE
-  state: active
-#  state: draft
-#  state: deny
   active: true
   is_inactive: false
+  state: active
 
 # TODO: CAN WE DUMP THIS IN FAVOUR OF ACCESS_RIGHTS_ARRAY?
 #  access_rights:

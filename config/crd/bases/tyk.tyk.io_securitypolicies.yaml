@@ -195,6 +195,8 @@ spec:
                   type: object
                 type: array
               active:
+                description: Active must be set to `true` for Tyk to load the security
+                  policy into memory.
                 type: boolean
               enable_http_signature_validation:
                 type: boolean
@@ -203,6 +205,8 @@ spec:
               id:
                 type: string
               is_inactive:
+                description: IsInactive applies to the key itself. Allows enabling
+                  or disabling the policy without deleting it.
                 type: boolean
               key_expires_in:
                 description: KeyExpiresIn is the number of seconds till key expiry.
@@ -247,7 +251,14 @@ spec:
                 format: int64
                 type: integer
               state:
-                description: State can be active, draft or deny
+                description: 'State can be active, draft or deny active: All keys
+                  are active and new keys can be created. draft: All keys are active
+                  but no new keys can be created. deny: All keys are deactivated and
+                  no keys can be created.'
+                enum:
+                - active
+                - draft
+                - deny
                 type: string
               tags:
                 items:
@@ -261,7 +272,6 @@ spec:
             required:
             - access_rights_array
             - active
-            - is_inactive
             - key_expires_in
             - max_query_depth
             - name
