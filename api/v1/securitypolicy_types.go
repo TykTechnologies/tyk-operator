@@ -55,13 +55,13 @@ type SecurityPolicySpec struct {
 // from tyk/session.go
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {
-	APIName     string       `json:"api_name"`
-	APIID       string       `json:"api_id"`
-	Versions    []string     `json:"versions"`
-	AllowedURLs []AccessSpec `json:"allowed_urls"` // mapped string MUST be a valid regex
+	APIName  string   `json:"api_name"`
+	APIID    string   `json:"api_id"`
+	Versions []string `json:"versions"`
 	//RestrictedTypes []graphql.Type `json:"restricted_types"`
-	Limit          APILimit `json:"limit,omitempty"`
-	AllowanceScope string   `json:"allowance_scope"`
+	Limit          APILimit     `json:"limit,omitempty"`
+	AllowanceScope string       `json:"allowance_scope,omitempty"`
+	AllowedURLs    []AccessSpec `json:"allowed_urls,omitempty"` // mapped string MUST be a valid regex
 }
 
 // from tyk/session.go

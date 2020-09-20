@@ -113,8 +113,6 @@ spec:
                         type: string
                       type: array
                   required:
-                  - allowance_scope
-                  - allowed_urls
                   - api_id
                   - api_name
                   - versions
@@ -191,8 +189,6 @@ spec:
                         type: string
                       type: array
                   required:
-                  - allowance_scope
-                  - allowed_urls
                   - api_id
                   - api_name
                   - versions
