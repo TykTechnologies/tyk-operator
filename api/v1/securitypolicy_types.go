@@ -27,67 +27,76 @@ import (
 type SecurityPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	MID                           string                      `json:"_id,omitempty"`
-	ID                            string                      `json:"id,omitempty"`
-	Name                          string                      `json:"name"`
-	OrgID                         string                      `json:"org_id"`
-	Rate                          int64                       `json:"rate,omitempty"`
+	MID   string `json:"_id,omitempty"`
+	ID    string `json:"id,omitempty"`
+	Name  string `json:"name"`
+	OrgID string `json:"org_id,omitempty"`
+	// State can be active, draft or deny
+	State                         string                      `json:"state"`
+	Active                        bool                        `json:"active"`
+	IsInactive                    bool                        `json:"is_inactive"`
+	AccessRightsArray             []AccessDefinition          `json:"access_rights_array"`
+	AccessRights                  map[string]AccessDefinition `json:"access_rights,omitempty"`
+	Rate                          int64                       `json:"rate"`
 	Per                           int64                       `json:"per"`
 	QuotaMax                      int64                       `json:"quota_max"`
 	QuotaRenewalRate              int64                       `json:"quota_renewal_rate"`
 	ThrottleInterval              int64                       `json:"throttle_interval"`
 	ThrottleRetryLimit            int                         `json:"throttle_retry_limit"`
 	MaxQueryDepth                 int                         `json:"max_query_depth"`
-	AccessRights                  map[string]AccessDefinition `json:"access_rights"`
-	HMACEnabled                   bool                        `json:"hmac_enabled"`
-	EnableHTTPSignatureValidation bool                        `json:"enable_http_signature_validation" msg:"enable_http_signature_validation"`
-	Active                        bool                        `json:"active"`
-	//IsInactive                    bool                             `json:"is_inactive"`
-	Tags         []string `json:"tags"`
-	KeyExpiresIn int64    `json:"key_expires_in"`
-	//Partitions                    PolicyPartitions                 `json:"partitions"`
-	LastUpdated string `json:"last_updated"`
+	HMACEnabled                   bool                        `json:"hmac_enabled,omitempty"`
+	EnableHTTPSignatureValidation bool                        `json:"enable_http_signature_validation,omitempty"`
+	Tags                          []string                    `json:"tags,omitempty"`
+	// KeyExpiresIn is the number of seconds till key expiry. For 1 hour is 3600. Default never expire or 0
+	KeyExpiresIn int64            `json:"key_expires_in"`
+	Partitions   PolicyPartitions `json:"partitions,omitempty"`
 }
 
 // from tyk/session.go
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {
-	APIName     string       `json:"api_name" msg:"api_name"`
-	APIID       string       `json:"api_id" msg:"api_id"`
-	Versions    []string     `json:"versions" msg:"versions"`
-	AllowedURLs []AccessSpec `json:"allowed_urls" msg:"allowed_urls"` // mapped string MUST be a valid regex
-	//RestrictedTypes []graphql.Type `json:"restricted_types" msg:"restricted_types"`
-	Limit *APILimit `json:"limit" msg:"limit"`
-
-	AllowanceScope string `json:"allowance_scope" msg:"allowance_scope"`
+	APIName     string       `json:"api_name"`
+	APIID       string       `json:"api_id"`
+	Versions    []string     `json:"versions"`
+	AllowedURLs []AccessSpec `json:"allowed_urls"` // mapped string MUST be a valid regex
+	//RestrictedTypes []graphql.Type `json:"restricted_types"`
+	Limit          APILimit `json:"limit,omitempty"`
+	AllowanceScope string   `json:"allowance_scope"`
 }
 
 // from tyk/session.go
 // APILimit stores quota and rate limit on ACL level (per API)
 type APILimit struct {
-	Rate               int64  `json:"rate" msg:"rate"`
-	Per                int64  `json:"per" msg:"per"`
-	ThrottleInterval   int64  `json:"throttle_interval" msg:"throttle_interval"`
-	ThrottleRetryLimit int    `json:"throttle_retry_limit" msg:"throttle_retry_limit"`
-	MaxQueryDepth      int    `json:"max_query_depth" msg:"max_query_depth"`
-	QuotaMax           int64  `json:"quota_max" msg:"quota_max"`
-	QuotaRenews        int64  `json:"quota_renews" msg:"quota_renews"`
-	QuotaRemaining     int64  `json:"quota_remaining" msg:"quota_remaining"`
-	QuotaRenewalRate   int64  `json:"quota_renewal_rate" msg:"quota_renewal_rate"`
-	SetBy              string `json:"-" msg:"-"`
+	Rate               int64  `json:"rate"`
+	Per                int64  `json:"per"`
+	ThrottleInterval   int64  `json:"throttle_interval"`
+	ThrottleRetryLimit int    `json:"throttle_retry_limit"`
+	MaxQueryDepth      int    `json:"max_query_depth"`
+	QuotaMax           int64  `json:"quota_max"`
+	QuotaRenews        int64  `json:"quota_renews"`
+	QuotaRemaining     int64  `json:"quota_remaining"`
+	QuotaRenewalRate   int64  `json:"quota_renewal_rate"`
+	SetBy              string `json:"-"`
 }
 
 // from tyk/session.go
 // AccessSpecs define what URLS a user has access to an what methods are enabled
 type AccessSpec struct {
-	URL     string   `json:"url" msg:"url"`
-	Methods []string `json:"methods" msg:"methods"`
+	URL     string   `json:"url"`
+	Methods []string `json:"methods"`
+}
+
+type PolicyPartitions struct {
+	Quota      bool `json:"quota"`
+	RateLimit  bool `json:"rate_limit"`
+	Complexity bool `json:"complexity"`
+	Acl        bool `json:"acl"`
+	PerAPI     bool `json:"per_api"`
 }
 
 // SecurityPolicyStatus defines the observed state of SecurityPolicy
 type SecurityPolicyStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// TODO: add ID here which references the policy_id that was created in Tyk
 }
 
 // +kubebuilder:object:root=true
