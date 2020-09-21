@@ -69,9 +69,7 @@ type AccessDefinition struct {
 	// TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource
 	APIName string `json:"api_name,omitempty"`
 	// TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource
-	APIID string `json:"api_id,omitempty"`
-	// TODO: should we validate that a specific version exists in the APIDefinition resource?
-	// TODO: If Empty, should we grant access to the Default version by default?
+	APIID    string   `json:"api_id,omitempty"`
 	Versions []string `json:"versions"`
 	//RestrictedTypes []graphql.Type `json:"restricted_types"`
 	Limit          APILimit     `json:"limit,omitempty"`

@@ -119,9 +119,6 @@ spec:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
                     versions:
-                      description: 'TODO: should we validate that a specific version
-                        exists in the APIDefinition resource? TODO: If Empty, should
-                        we grant access to the Default version by default?'
                       items:
                         type: string
                       type: array
@@ -208,9 +205,6 @@ spec:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
                     versions:
-                      description: 'TODO: should we validate that a specific version
-                        exists in the APIDefinition resource? TODO: If Empty, should
-                        we grant access to the Default version by default?'
                       items:
                         type: string
                       type: array

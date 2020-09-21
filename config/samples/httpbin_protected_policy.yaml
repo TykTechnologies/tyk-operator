@@ -3,25 +3,12 @@ kind: SecurityPolicy
 metadata:
   name: httpbin
 spec:
-  # TODO: COULD WE / SHOULD WE USE ${METADATA.NAME}.${METADATA.NAMESPACE}?
   name: MyPolicy
-  # TODO: DO WE HAVE TO SET THIS? IS IT ONLY APPLICABLE FOR TYK_PRO
   org_id: acme.com
   active: true
   is_inactive: false
   state: active
   access_rights_array:
-# TODO: HOW TO SENSIBLY TARGET ACCESS_RIGHTS_ARRAY for AN API DEFINITION?
-# WHAT IF K8s is being used to manage APIs outside of K8s?
-
-# PROPOSAL 1:
-# api_id: ${METADATA.NAME}.${METADATA.NAMESPACE}
-# api_name: we can pull this from the customresource
-
-# PROPOSAL 2: Use label selectors
-
-# PROPOSAL 3: Remove api_id & api_name from types. Then provide `namespace` & `name` instead?
-
     - namespace: default
       name: httpbin
       versions:
