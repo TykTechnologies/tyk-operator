@@ -21,6 +21,8 @@ import (
 	"reflect"
 	"time"
 
+	"k8s.io/client-go/tools/record"
+
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
@@ -37,6 +39,7 @@ type ApiDefinitionReconciler struct {
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
 	UniversalClient universal_client.UniversalClient
+	Recorder        record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete
@@ -116,6 +119,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 		log.Info("creating api", "decodedID", apiID.String())
 
+		r.Recorder.Event(desired, "Normal", "Create", "Creating API Definition Object")
+
 		internalID, err := r.UniversalClient.Api().Create(newSpec)
 		if err != nil {
 			log.Error(err, "unable to create API Definition")
@@ -143,6 +148,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			return ctrl.Result{}, err
 		}
 
+		r.Recorder.Event(desired, "Normal", "Create", "Done")
+
 		return ctrl.Result{}, nil
 	}
 
@@ -156,6 +163,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	newSpec.APIID = actual.APIID
 	if !reflect.DeepEqual(desired.Spec, actual) {
 		log.Info("updating api")
+		r.Recorder.Event(desired, "Normal", "Update", "Updating API Definition")
 		err := r.UniversalClient.Api().Update(actual.APIID, newSpec)
 		if err != nil {
 			log.Error(err, "unable to update API Definition")
@@ -164,6 +172,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 		_ = r.UniversalClient.HotReload()
 	}
+
+	r.Recorder.Event(desired, "Normal", "Update", "Done")
 
 	return ctrl.Result{}, nil
 }
