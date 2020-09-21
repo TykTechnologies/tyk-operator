@@ -1,0 +1,13 @@
+apiVersion: tyk.tyk.io/v1
+kind: ApiDefinition
+metadata:
+  name: swagger-petstore
+spec:
+  name: Swagger Petstore API
+  protocol: http
+  proxy:
+    listen_path: /petstore
+    target_url: https://petstore.swagger.io/v2
+    strip_listen_path: true
+  active: true
+  use_keyless: true
