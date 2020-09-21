@@ -27,14 +27,21 @@ import (
 type SecurityPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	MID   string `json:"_id,omitempty"`
-	ID    string `json:"id,omitempty"`
-	Name  string `json:"name"`
+	MID  string `json:"_id,omitempty"`
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name"`
+	// OrgID is overwritten - no point setting this
 	OrgID string `json:"org_id,omitempty"`
+	// +kubebuilder:validation:Enum=active;draft;deny
 	// State can be active, draft or deny
-	State                         string                      `json:"state"`
-	Active                        bool                        `json:"active"`
-	IsInactive                    bool                        `json:"is_inactive"`
+	// active: All keys are active and new keys can be created.
+	// draft: All keys are active but no new keys can be created.
+	// deny: All keys are deactivated and no keys can be created.
+	State string `json:"state"`
+	// Active must be set to `true` for Tyk to load the security policy into memory.
+	Active bool `json:"active"`
+	// IsInactive applies to the key itself. Allows enabling or disabling the policy without deleting it.
+	IsInactive                    bool                        `json:"is_inactive,omitempty"`
 	AccessRightsArray             []AccessDefinition          `json:"access_rights_array"`
 	AccessRights                  map[string]AccessDefinition `json:"access_rights,omitempty"`
 	Rate                          int64                       `json:"rate"`
@@ -55,8 +62,15 @@ type SecurityPolicySpec struct {
 // from tyk/session.go
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {
-	APIName  string   `json:"api_name"`
-	APIID    string   `json:"api_id"`
+	// Namespace of the ApiDefinition resource to target
+	Namespace string `json:"namespace"`
+	// Name of the ApiDefinition resource to target
+	Name string `json:"name"`
+
+	// TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource
+	APIName string `json:"api_name,omitempty"`
+	// TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource
+	APIID    string   `json:"api_id,omitempty"`
 	Versions []string `json:"versions"`
 	//RestrictedTypes []graphql.Type `json:"restricted_types"`
 	Limit          APILimit     `json:"limit,omitempty"`
@@ -64,22 +78,19 @@ type AccessDefinition struct {
 	AllowedURLs    []AccessSpec `json:"allowed_urls,omitempty"` // mapped string MUST be a valid regex
 }
 
-// from tyk/session.go
 // APILimit stores quota and rate limit on ACL level (per API)
 type APILimit struct {
-	Rate               int64  `json:"rate"`
-	Per                int64  `json:"per"`
-	ThrottleInterval   int64  `json:"throttle_interval"`
-	ThrottleRetryLimit int    `json:"throttle_retry_limit"`
-	MaxQueryDepth      int    `json:"max_query_depth"`
-	QuotaMax           int64  `json:"quota_max"`
-	QuotaRenews        int64  `json:"quota_renews"`
-	QuotaRemaining     int64  `json:"quota_remaining"`
-	QuotaRenewalRate   int64  `json:"quota_renewal_rate"`
-	SetBy              string `json:"-"`
+	Rate               int64 `json:"rate"`
+	Per                int64 `json:"per"`
+	ThrottleInterval   int64 `json:"throttle_interval"`
+	ThrottleRetryLimit int   `json:"throttle_retry_limit"`
+	MaxQueryDepth      int   `json:"max_query_depth"`
+	QuotaMax           int64 `json:"quota_max"`
+	QuotaRenews        int64 `json:"quota_renews"`
+	QuotaRemaining     int64 `json:"quota_remaining"`
+	QuotaRenewalRate   int64 `json:"quota_renewal_rate"`
 }
 
-// from tyk/session.go
 // AccessSpecs define what URLS a user has access to an what methods are enabled
 type AccessSpec struct {
 	URL     string   `json:"url"`
@@ -96,7 +107,7 @@ type PolicyPartitions struct {
 
 // SecurityPolicyStatus defines the observed state of SecurityPolicy
 type SecurityPolicyStatus struct {
-	// TODO: add ID here which references the policy_id that was created in Tyk
+	ID string `json:"id"`
 }
 
 // +kubebuilder:object:root=true

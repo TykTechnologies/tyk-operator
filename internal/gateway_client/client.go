@@ -44,9 +44,10 @@ func JoinUrl(parts ...string) string {
 	return strings.Join(ps, "/")
 }
 
-func NewClient(url string, auth string, insecureSkipVerify bool) *Client {
+func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *Client {
 	c := &Client{
 		url:                url,
+		orgID:              orgID,
 		insecureSkipVerify: false,
 		opts: &grequests.RequestOptions{
 			Headers: map[string]string{
@@ -63,6 +64,7 @@ func NewClient(url string, auth string, insecureSkipVerify bool) *Client {
 type Client struct {
 	url                string
 	secret             string
+	orgID              string
 	insecureSkipVerify bool
 	opts               *grequests.RequestOptions
 }

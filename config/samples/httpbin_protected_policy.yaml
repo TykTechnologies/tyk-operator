@@ -3,49 +3,14 @@ kind: SecurityPolicy
 metadata:
   name: httpbin
 spec:
-
-# TODO: COULD WE / SHOULD WE USE ${METADATA.NAME}.${METADATA.NAMESPACE}?
   name: MyPolicy
-
-# TODO: DO WE HAVE TO SET THIS? IS IT ONLY APPLICABLE FOR TYK_PRO
   org_id: acme.com
-
-# TODO: WHAT IS THIS? STATE, ACTIVE, IS_INACTIVE
-  state: active
-#  state: draft
-#  state: deny
   active: true
   is_inactive: false
-
-# TODO: CAN WE DUMP THIS IN FAVOUR OF ACCESS_RIGHTS_ARRAY?
-#  access_rights:
-#    httpbin:
-#      api_name: httpbin
-#      api_id: httpbin
-#      versions:
-#        - Default
-#      allowance_scope: [ ]
-#      allowed_urls: [ ]
-#      limit: {}
-#        max_query_depth:
-#        per:
-#        quota_max:
-#        quota_remaining:
-#        quota_renewal_rate:
-#        quota_renews:
-#        rate:
-#        throttle_interval:
-#        throttle_retry_limit:
+  state: active
   access_rights_array:
-# TODO: HOW TO SENSIBLY TARGET AN API?
-# PROPOSAL 1:
-# api_id: ${METADATA.NAME}.${METADATA.NAMESPACE}
-# api_name: we can pull this from the customresource
-
-# PROPOSAL 2: Use label selectors
-
-    - api_name: httpbin
-      api_id: httpbin.default
+    - namespace: default
+      name: httpbin
       versions:
         - Default
 #      allowance_scope: []

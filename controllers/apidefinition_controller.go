@@ -45,7 +45,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	ctx := context.Background()
 	apiID := req.NamespacedName
 
-	log := r.Log.WithValues("tykapi/id", apiID)
+	log := r.Log.WithValues("ApiDefinition", apiID.String())
 
 	log.Info("fetching apidefinition instance")
 	desired := &tykv1.ApiDefinition{}
@@ -77,12 +77,15 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			// our finalizer is present, so lets handle our external dependency
 
-			if err := r.UniversalClient.Api().Delete(desired.Status.Id); err != nil {
-				// looks like it was already deleted
-				return reconcile.Result{Requeue: false}, err
+			err := r.UniversalClient.Api().Delete(desired.Status.Id)
+			if err != nil {
+				log.Error(err, "unable to delete api", "api_id", desired.Status.Id)
 			}
 
-			_ = r.UniversalClient.HotReload()
+			err = r.UniversalClient.HotReload()
+			if err != nil {
+				log.Error(err, "unable to hot reload", "api_id", desired.Status.Id)
+			}
 
 			// remove our finalizer from the list and update it.
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
@@ -99,13 +102,13 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// TODO: this belongs in webhook or CR will be wrong
 	// we only care about this for OSS
-	newSpec.APIID = apiIDEncode(apiID.String())
+	//newSpec.APIID = apiIDEncode(apiID.String())
 	r.applyDefaults(newSpec)
 
 	if desired.Status.Id == "" {
 		// need to create
 
-		log.Info("creating api", "decodedID", apiID.String(), "encodedID", apiIDEncode(apiID.String()))
+		log.Info("creating api", "decodedID", apiID.String())
 
 		internalID, err := r.UniversalClient.Api().Create(newSpec)
 		if err != nil {
@@ -115,7 +118,19 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 		_ = r.UniversalClient.HotReload()
 
+		created, err := r.UniversalClient.Api().Get(internalID)
+		if err != nil {
+			log.Error(err, "something messed - we just created it")
+			return ctrl.Result{}, err
+		}
+
 		desired.Status.Id = internalID
+		desired.Spec.OrgID = created.OrgID
+		r.Update(ctx, desired)
+		if err != nil {
+			log.Error(err, "Failed to update ApiDef OrgID")
+			return ctrl.Result{}, err
+		}
 		err = r.Status().Update(ctx, desired)
 		if err != nil {
 			log.Error(err, "Failed to update ApiDef status")
@@ -131,9 +146,11 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		log.Error(err, "something fucked")
 		return ctrl.Result{Requeue: true}, err
 	}
+	newSpec.OrgID = actual.OrgID
+	newSpec.APIID = actual.APIID
 	if !reflect.DeepEqual(desired.Spec, actual) {
 		log.Info("updating api")
-		err := r.UniversalClient.Api().Update(desired.Status.Id, newSpec)
+		err := r.UniversalClient.Api().Update(actual.APIID, newSpec)
 		if err != nil {
 			log.Error(err, "unable to update API Definition")
 			return ctrl.Result{Requeue: true}, err
