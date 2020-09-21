@@ -77,6 +77,12 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			// our finalizer is present, so lets handle our external dependency
 
+			// TODO: check for any security policies that grant access to this API Definition.
+			// If any policies grant access to this resource, return error and requeue
+			// We need to keep doing this till:
+			// 1. the policy(ies) are deleted
+			// 2. the policy is edited and no longer grants access to this API
+
 			err := r.UniversalClient.Api().Delete(desired.Status.Id)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", desired.Status.Id)
