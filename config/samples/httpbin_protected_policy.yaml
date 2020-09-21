@@ -3,26 +3,15 @@ kind: SecurityPolicy
 metadata:
   name: httpbin
 spec:
-  name: MyPolicy
+  name: HttpBin
   org_id: acme.com
   active: true
-  is_inactive: false
   state: active
   access_rights_array:
     - namespace: default
       name: httpbin
       versions:
         - Default
-#      allowance_scope: []
-#      allowed_urls: []
-#      limit: {}
-#  enable_http_signature_validation:
-#  hmac_enabled:
-
-# TODO: WHAT IS THIS? Can it be inferred based on label selectors?
-#  auth_type: authToken
-#  auth_types:
-#    - authToken
 
 # TODO: Think about defaulting so we don't have to set these values to -1
   per: -1

@@ -5,13 +5,11 @@ metadata:
 spec:
   name: httpbin
   protocol: http
-  active: true
-  org_id: ""
+  active: false
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin
     strip_listen_path: true
-  use_keyless: false
   use_standard_auth: true
   auth_configs:
     authToken:
