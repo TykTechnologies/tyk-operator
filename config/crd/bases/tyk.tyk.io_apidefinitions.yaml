@@ -187,6 +187,7 @@ spec:
               name:
                 type: string
               org_id:
+                description: OrgID is overwritten - no point setting this
                 type: string
               protocol:
                 type: string
@@ -874,7 +875,6 @@ spec:
                 type: object
             required:
             - name
-            - org_id
             - protocol
             - proxy
             type: object

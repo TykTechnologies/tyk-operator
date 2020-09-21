@@ -80,6 +80,8 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 
 	// Create
 	opts := a.opts
+
+	def.OrgID = a.orgID
 	opts.JSON = def
 	fullPath := JoinUrl(a.url, endpointAPIs)
 

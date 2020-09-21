@@ -45,7 +45,7 @@ func (p SecurityPolicy) Get(polId string) (*v1.SecurityPolicySpec, error) {
 		return nil, err
 	}
 	for _, pol := range list {
-		if pol.ID == polId {
+		if pol.MID == polId {
 			return &pol, nil
 		}
 	}
@@ -89,7 +89,7 @@ func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 	}
 
 	// TODO: @Sedky - Check this is correct
-	return resMsg.Meta, nil
+	return resMsg.Message, nil
 }
 
 func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {

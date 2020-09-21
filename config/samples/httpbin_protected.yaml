@@ -6,7 +6,7 @@ spec:
   name: httpbin
   protocol: http
   active: true
-  org_id: acme.com
+  org_id: ""
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin
