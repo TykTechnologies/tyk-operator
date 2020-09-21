@@ -238,6 +238,7 @@ spec:
               name:
                 type: string
               org_id:
+                description: OrgID is overwritten - no point setting this
                 type: string
               partitions:
                 properties:

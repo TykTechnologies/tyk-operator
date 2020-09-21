@@ -48,7 +48,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 	policyID := req.NamespacedName
 
-	log.Info("fetching apidefinition instance")
+	log.Info("fetching SecurityPolicy instance")
 
 	desired := &tykv1.SecurityPolicy{}
 	if err := r.Get(ctx, policyID, desired); err != nil {
@@ -80,8 +80,9 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			// our finalizer is present, so lets handle our external dependency
 
 			if err := r.UniversalClient.SecurityPolicy().Delete(desired.Status.ID); err != nil {
-				// looks like it was already deleted
-				return reconcile.Result{Requeue: false}, err
+				if err.Error() != "API Returned error: Not Found" {
+					return reconcile.Result{Requeue: false}, err
+				}
 			}
 
 			_ = r.UniversalClient.HotReload()
@@ -102,21 +103,40 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		apiName := accessRight.Name
 
 		api := &tykv1.ApiDefinition{}
-		if err := r.Get(ctx, types.NamespacedName{Name: apiNamespace, Namespace: apiName}, api); err != nil {
+		if err := r.Get(ctx, types.NamespacedName{Name: apiName, Namespace: apiNamespace}, api); err != nil {
 			if errors.IsNotFound(err) {
 				// Request object not found, could have been deleted after reconcile request.
 				// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 				// Return and don't requeue
-				log.Info("SecurityPolicy resource not found. Ignoring since object must be deleted")
-				return ctrl.Result{}, nil
+				log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue")
+				return ctrl.Result{RequeueAfter: time.Second * 5}, err
 			}
 			// Error reading the access_right object - requeue the request.
 			log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
 			return ctrl.Result{RequeueAfter: time.Second * 5}, err
 		}
 
-		desired.Spec.AccessRightsArray[i].APIID = api.Spec.APIID
-		desired.Spec.AccessRightsArray[i].APIName = api.Spec.Name
+		// We have the apiDefinition resource
+		// if it doesn't match
+		if desired.Spec.AccessRightsArray[i].APIID == "" ||
+			desired.Spec.OrgID == "" ||
+			desired.Spec.AccessRightsArray[i].APIName != api.Spec.Name {
+
+			apiDef, err := r.UniversalClient.Api().Get(api.Status.Id)
+			if err != nil {
+				log.Error(err, "api doesnt exist")
+				return ctrl.Result{Requeue: true}, err
+			}
+
+			desired.Spec.AccessRightsArray[i].APIID = apiDef.APIID
+			desired.Spec.AccessRightsArray[i].APIName = apiDef.Name
+			desired.Spec.OrgID = apiDef.OrgID
+
+			if err := r.Update(ctx, desired); err != nil {
+				log.Error(err, "unable to update apiId in access rights array")
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
 	}
 
 	// CREATE

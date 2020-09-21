@@ -27,9 +27,10 @@ import (
 type SecurityPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	MID   string `json:"_id,omitempty"`
-	ID    string `json:"id,omitempty"`
-	Name  string `json:"name"`
+	MID  string `json:"_id,omitempty"`
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name"`
+	// OrgID is overwritten - no point setting this
 	OrgID string `json:"org_id,omitempty"`
 	// +kubebuilder:validation:Enum=active;draft;deny
 	// State can be active, draft or deny

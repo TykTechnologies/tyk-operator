@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -51,11 +52,11 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-// TODO: logic to prevent create without an "api_id"
 func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	// Create
 	opts := a.opts
 
+	def.OrgID = a.orgID
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: *def,
 	}
@@ -77,19 +78,11 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 		return "", err
 	}
 
+	jsBytes, _ := json.Marshal(resMsg)
+	println(string(jsBytes))
+
 	if resMsg.Status != "OK" {
 		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-
-	inserted, err := a.Get(resMsg.Meta)
-	if err != nil {
-		return "", fmt.Errorf("API request (lookup) failed: %s", resMsg.Message)
-	}
-
-	def.OrgID = inserted.OrgID
-	err = a.Update(resMsg.Meta, def)
-	if resMsg.Status != "OK" {
-		return "", fmt.Errorf("API request (update name) failed: %s", resMsg.Message)
 	}
 
 	return resMsg.Meta, nil
