@@ -5,7 +5,7 @@ metadata:
 spec:
   name: httpbin
   protocol: http
-  active: false
+  active: true
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin

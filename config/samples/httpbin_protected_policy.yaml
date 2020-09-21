@@ -8,8 +8,8 @@ spec:
   active: true
   state: active
   access_rights_array:
-    - namespace: default
-      name: httpbin
+    - name: httpbin
+      namespace: default
       versions:
         - Default
 
