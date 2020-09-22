@@ -17,18 +17,23 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
+	"strconv"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
 	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	//"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -67,23 +72,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.GatewayReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Gateway"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Gateway")
+	//if err = (&controllers.GatewayReconciler{
+	//	Client: mgr.GetClient(),
+	//	Log:    ctrl.Log.WithName("controllers").WithName("Gateway"),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Gateway")
+	//	os.Exit(1)
+	//}
+
+	tykClient, err := tykClient()
+	if err != nil {
+		setupLog.Error(err, "unable to configure Tyk Client")
 		os.Exit(1)
 	}
-
-	client := gateway_client.NewClient("http://localhost:8000", "foo", true)
-	//client := dashboard_client.NewClient("http://localhost:3000", "de2fc79499804c7072372b859e712b82", true)
 
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: client,
+		UniversalClient: tykClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
 		os.Exit(1)
@@ -93,7 +101,7 @@ func main() {
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: client,
+		UniversalClient: tykClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)
@@ -111,5 +119,46 @@ func main() {
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
+	}
+}
+
+func tykClient() (universal_client.UniversalClient, error) {
+	mode := os.Getenv("TYK_MODE")
+	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
+	if err != nil {
+		insecureSkipVerify = false
+	}
+	url := os.Getenv("TYK_URL")
+	if url == "" {
+		return nil, errors.New("missing TYK_URL")
+	}
+	auth := os.Getenv("TYK_AUTH")
+	if auth == "" {
+		return nil, errors.New("missing TYK_AUTH")
+	}
+	org := os.Getenv("TYK_ORG")
+	if org == "" {
+		return nil, errors.New("missing TYK_ORG")
+	}
+
+	switch mode {
+	case "pro":
+		return dashboard_client.NewClient(
+			url,
+			auth,
+			insecureSkipVerify,
+			org,
+		), nil
+	case "oss":
+		{
+			return gateway_client.NewClient(
+				url,
+				auth,
+				insecureSkipVerify,
+				org,
+			), nil
+		}
+	default:
+		return nil, errors.New("unknown TYK_MODE")
 	}
 }
