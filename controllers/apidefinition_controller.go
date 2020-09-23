@@ -21,13 +21,12 @@ import (
 	"reflect"
 	"time"
 
-	"k8s.io/client-go/tools/record"
-
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"

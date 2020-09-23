@@ -21,6 +21,8 @@ import (
 	"reflect"
 	"time"
 
+	"k8s.io/client-go/tools/record"
+
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
@@ -38,6 +40,7 @@ type SecurityPolicyReconciler struct {
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
 	UniversalClient universal_client.UniversalClient
+	Recorder        record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=securitypolicies,verbs=get;list;watch;create;update;patch;delete
