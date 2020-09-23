@@ -112,14 +112,14 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	newSpec.APIID = desired.Name + "." + desired.Namespace
 	r.applyDefaults(newSpec)
 
-	createdOrUpdated, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
+	_, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
 	if err != nil {
 		log.Error(err, "createOrUpdate failure")
 		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	desired.Status.Id = createdOrUpdated.APIID
+	desired.Status.Id = newSpec.APIID
 	err = r.Status().Update(ctx, desired)
 	if err != nil {
 		log.Error(err, "Failed to update ApiDefinition status")

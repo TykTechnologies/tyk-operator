@@ -27,8 +27,17 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create api")
 		}
-		// update the friendly-ID
-		err = c.Api().Update(insertedId, spec)
+		newSpec, err := c.Api().Get(insertedId)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to get inserted api")
+		}
+		oldAPIID := newSpec.APIID
+		newSpec.APIID = spec.APIID
+
+		err = c.Api().Update(oldAPIID, newSpec)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to update API ID")
+		}
 	} else {
 		// Update
 		err = c.Api().Update(api.APIID, spec)
@@ -39,7 +48,7 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 
 	_ = c.HotReload()
 
-	api, err = c.Api().Get(api.APIID)
+	api, err = c.Api().Get(spec.APIID)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get created api")
 	}
