@@ -142,6 +142,50 @@ spec:
                   - auth_header_name
                   type: object
                 type: object
+              cache_options:
+                description: "//UptimeTests                UptimeTests           `json:\"uptime_tests\"`
+                  \n DisableRateLimit       bool                `json:\"disable_rate_limit\"`
+                  DisableQuota           bool                `json:\"disable_quota\"`
+                  CustomMiddleware       MiddlewareSection   `json:\"custom_middleware\"`
+                  CustomMiddlewareBundle string              `json:\"custom_middleware_bundle\"`"
+                properties:
+                  cache_all_safe_requests:
+                    description: CacheAllSafeRequests caches responses to (GET, HEAD,
+                      OPTIONS) requests overrides per-path cache settings in versions,
+                      applies across versions
+                    type: boolean
+                  cache_by_headers:
+                    description: CacheByHeaders allows header values to be used as
+                      part of the cache key
+                    items:
+                      type: string
+                    type: array
+                  cache_control_ttl_header:
+                    description: CacheControlTTLHeader is the response header which
+                      tells Tyk how long it is safe to cache the response for
+                    type: string
+                  cache_response_codes:
+                    description: CacheOnlyResponseCodes is an array of response codes
+                      which are safe to cache. e.g. 404
+                    items:
+                      type: integer
+                    type: array
+                  cache_timeout:
+                    description: CacheTimeout is the TTL for a cached object in seconds
+                    format: int64
+                    type: integer
+                  enable_cache:
+                    description: EnableCache turns global cache middleware on or off.
+                      It is still possible to enable caching on a per-path basis by
+                      explicitly setting the endpoint cache middleware. see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
+                    type: boolean
+                  enable_upstream_cache_control:
+                    description: EnableUpstreamCacheControl instructs Tyk Cache to
+                      respect upstream cache control headers
+                    type: boolean
+                required:
+                - cache_timeout
+                type: object
               definition:
                 description: 'UseBasicAuth               bool                  `json:"use_basic_auth"`
                   BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
@@ -182,6 +226,8 @@ spec:
                 - location
                 - strip_path
                 type: object
+              id:
+                type: string
               listen_port:
                 type: integer
               name:
@@ -338,6 +384,8 @@ spec:
                                 type: object
                               type: array
                             cache:
+                              description: List of paths which cache middleware should
+                                be enabled on
                               items:
                                 type: string
                               type: array
@@ -855,18 +903,7 @@ spec:
                         use_extended_paths:
                           type: boolean
                       required:
-                      - expires
-                      - extended_paths
-                      - global_headers
-                      - global_headers_remove
-                      - global_response_headers
-                      - global_response_headers_remove
-                      - global_size_limit
-                      - ignore_endpoint_case
                       - name
-                      - override_target
-                      - paths
-                      - use_extended_paths
                       type: object
                     type: object
                 required:
