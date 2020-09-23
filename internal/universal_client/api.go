@@ -16,31 +16,32 @@ type UniversalApi interface {
 func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDefinitionSpec, error) {
 	var err error
 
-	allAPIs, err := c.Api().All()
+	api, err := c.Api().Get(spec.APIID)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get all apis")
-	}
-	apiID := ""
-	for _, api := range allAPIs {
-		if spec.Proxy.ListenPath == api.Proxy.ListenPath {
-			apiID = api.APIID
-
-			// Overwrite the ORGID if found
-			spec.OrgID = api.OrgID
-			spec.APIID = api.APIID
-			break
-		}
+		return nil, errors.Wrap(err, "Unable to communicate with Client")
 	}
 
-	if apiID == "" {
+	if api == nil {
 		// Create
-		apiID, err = c.Api().Create(spec)
+		insertedId, err := c.Api().Create(spec)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create api")
 		}
+		created, err := c.Api().Get(insertedId)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to get inserted api")
+		}
+		oldAPIID := created.APIID
+		created.APIID = spec.APIID
+		err = c.Api().Update(oldAPIID, created)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to update API ID")
+		}
 	} else {
 		// Update
-		err = c.Api().Update(apiID, spec)
+		spec.OrgID = api.OrgID
+		spec.ID = api.ID
+		err = c.Api().Update(api.APIID, spec)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update api")
 		}
@@ -48,7 +49,7 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 
 	_ = c.HotReload()
 
-	api, err := c.Api().Get(apiID)
+	api, err = c.Api().Get(spec.APIID)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get created api")
 	}

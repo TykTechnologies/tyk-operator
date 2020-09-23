@@ -98,6 +98,11 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 		return nil, err
 	}
 
+	// Todo, hacky because we dont know best way to show API not found
+	if res.StatusCode == http.StatusBadRequest {
+		return nil, nil
+	}
+
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
 	}
