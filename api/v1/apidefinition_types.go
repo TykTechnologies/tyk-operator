@@ -197,9 +197,10 @@ type ValidatePathMeta struct {
 }
 
 type ExtendedPathsSet struct {
-	Ignored                 []EndPointMeta        `json:"ignored,omitempty"`
-	WhiteList               []EndPointMeta        `json:"white_list,omitempty"`
-	BlackList               []EndPointMeta        `json:"black_list,omitempty"`
+	Ignored   []EndPointMeta `json:"ignored,omitempty"`
+	WhiteList []EndPointMeta `json:"white_list,omitempty"`
+	BlackList []EndPointMeta `json:"black_list,omitempty"`
+	// List of paths which cache middleware should be enabled on
 	Cached                  []string              `json:"cache,omitempty"`
 	AdvanceCacheConfig      []CacheMeta           `json:"advance_cache_config,omitempty"`
 	Transform               []TemplateMeta        `json:"transform,omitempty"`
@@ -222,17 +223,17 @@ type ExtendedPathsSet struct {
 
 type VersionInfo struct {
 	Name                        string            `json:"name"`
-	Expires                     string            `json:"expires"`
-	Paths                       VersionInfoPaths  `json:"paths"`
-	UseExtendedPaths            bool              `json:"use_extended_paths"`
-	ExtendedPaths               ExtendedPathsSet  `json:"extended_paths"`
-	GlobalHeaders               map[string]string `json:"global_headers"`
-	GlobalHeadersRemove         []string          `json:"global_headers_remove"`
-	GlobalResponseHeaders       map[string]string `json:"global_response_headers"`
-	GlobalResponseHeadersRemove []string          `json:"global_response_headers_remove"`
-	IgnoreEndpointCase          bool              `json:"ignore_endpoint_case"`
-	GlobalSizeLimit             int64             `json:"global_size_limit"`
-	OverrideTarget              string            `json:"override_target"`
+	Expires                     string            `json:"expires,omitempty"`
+	Paths                       VersionInfoPaths  `json:"paths,omitempty"`
+	UseExtendedPaths            bool              `json:"use_extended_paths,omitempty"`
+	ExtendedPaths               ExtendedPathsSet  `json:"extended_paths,omitempty"`
+	GlobalHeaders               map[string]string `json:"global_headers,omitempty"`
+	GlobalHeadersRemove         []string          `json:"global_headers_remove,omitempty"`
+	GlobalResponseHeaders       map[string]string `json:"global_response_headers,omitempty"`
+	GlobalResponseHeadersRemove []string          `json:"global_response_headers_remove,omitempty"`
+	IgnoreEndpointCase          bool              `json:"ignore_endpoint_case,omitempty"`
+	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
+	OverrideTarget              string            `json:"override_target,omitempty"`
 }
 
 type VersionInfoPaths struct {
@@ -286,13 +287,23 @@ type MiddlewareSection struct {
 }
 
 type CacheOptions struct {
-	CacheTimeout               int64    `json:"cache_timeout"`
-	EnableCache                bool     `json:"enable_cache"`
-	CacheAllSafeRequests       bool     `json:"cache_all_safe_requests"`
-	CacheOnlyResponseCodes     []int    `json:"cache_response_codes"`
-	EnableUpstreamCacheControl bool     `json:"enable_upstream_cache_control"`
-	CacheControlTTLHeader      string   `json:"cache_control_ttl_header"`
-	CacheByHeaders             []string `json:"cache_by_headers"`
+	// EnableCache turns global cache middleware on or off.
+	// It is still possible to enable caching on a per-path basis by explicitly setting the endpoint cache middleware.
+	// see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
+	EnableCache bool `json:"enable_cache,omitempty"`
+	// CacheTimeout is the TTL for a cached object in seconds
+	CacheTimeout int64 `json:"cache_timeout"`
+	// CacheAllSafeRequests caches responses to (GET, HEAD, OPTIONS) requests
+	// overrides per-path cache settings in versions, applies across versions
+	CacheAllSafeRequests bool `json:"cache_all_safe_requests,omitempty"`
+	// CacheOnlyResponseCodes is an array of response codes which are safe to cache. e.g. 404
+	CacheOnlyResponseCodes []int `json:"cache_response_codes,omitempty"`
+	// EnableUpstreamCacheControl instructs Tyk Cache to respect upstream cache control headers
+	EnableUpstreamCacheControl bool `json:"enable_upstream_cache_control,omitempty"`
+	// CacheControlTTLHeader is the response header which tells Tyk how long it is safe to cache the response for
+	CacheControlTTLHeader string `json:"cache_control_ttl_header,omitempty"`
+	// CacheByHeaders allows header values to be used as part of the cache key
+	CacheByHeaders []string `json:"cache_by_headers,omitempty"`
 }
 
 type ResponseProcessor struct {
@@ -342,7 +353,7 @@ type OpenIDOptions struct {
 // APIDefinition represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
-	ID    string `json:"id"`
+	ID    string `json:"id,omitempty"`
 	APIID string `json:"api_id,omitempty"`
 	Name  string `json:"name"`
 	// OrgID is overwritten - no point setting this
@@ -400,7 +411,7 @@ type APIDefinitionSpec struct {
 	//DisableQuota           bool                `json:"disable_quota"`
 	//CustomMiddleware       MiddlewareSection   `json:"custom_middleware"`
 	//CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
-	//CacheOptions           CacheOptions        `json:"cache_options"`
+	CacheOptions CacheOptions `json:"cache_options,omitempty"`
 	//SessionLifetime        int64               `json:"session_lifetime"`
 	//Internal               bool                `json:"internal"`
 	//AuthProvider           AuthProviderMeta    `json:"auth_provider"`
