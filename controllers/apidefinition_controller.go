@@ -18,8 +18,6 @@ package controllers
 
 import (
 	"context"
-	"reflect"
-	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
@@ -63,6 +61,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		log.Error(err, "Failed to get API Definition")
 		return ctrl.Result{}, err
 	}
+	r.Recorder.Event(desired, "Normal", "ApiDefinition", "Reconciling")
 
 	const apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
 	if desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -113,66 +112,22 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	//newSpec.APIID = apiIDEncode(apiID.String())
 	r.applyDefaults(newSpec)
 
-	if desired.Status.Id == "" {
-		// need to create
+	createdOrUpdated, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
+	if err != nil {
+		log.Error(err, "createOrUpdate failure")
+		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
+		return ctrl.Result{Requeue: true}, nil
+	}
 
-		log.Info("creating api", "decodedID", apiID.String())
-
-		r.Recorder.Event(desired, "Normal", "Create", "Creating API Definition Object")
-
-		internalID, err := r.UniversalClient.Api().Create(newSpec)
-		if err != nil {
-			log.Error(err, "unable to create API Definition")
-			return ctrl.Result{RequeueAfter: time.Second * 5}, err
-		}
-
-		_ = r.UniversalClient.HotReload()
-
-		created, err := r.UniversalClient.Api().Get(internalID)
-		if err != nil {
-			log.Error(err, "something messed - we just created it")
-			return ctrl.Result{}, err
-		}
-
-		desired.Status.Id = internalID
-		desired.Spec.OrgID = created.OrgID
-		r.Update(ctx, desired)
-		if err != nil {
-			log.Error(err, "Failed to update ApiDef OrgID")
-			return ctrl.Result{}, err
-		}
-		err = r.Status().Update(ctx, desired)
-		if err != nil {
-			log.Error(err, "Failed to update ApiDef status")
-			return ctrl.Result{}, err
-		}
-
-		r.Recorder.Event(desired, "Normal", "Create", "Done")
-
+	desired.Status.Id = createdOrUpdated.APIID
+	err = r.Status().Update(ctx, desired)
+	if err != nil {
+		log.Error(err, "Failed to update ApiDefinition status")
+		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Unable to update status")
 		return ctrl.Result{}, nil
 	}
 
-	// get the api def
-	actual, err := r.UniversalClient.Api().Get(desired.Status.Id)
-	if err != nil {
-		log.Error(err, "something fucked")
-		return ctrl.Result{Requeue: true}, err
-	}
-	newSpec.OrgID = actual.OrgID
-	newSpec.APIID = actual.APIID
-	if !reflect.DeepEqual(desired.Spec, actual) {
-		log.Info("updating api")
-		r.Recorder.Event(desired, "Normal", "Update", "Updating API Definition")
-		err := r.UniversalClient.Api().Update(actual.APIID, newSpec)
-		if err != nil {
-			log.Error(err, "unable to update API Definition")
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		_ = r.UniversalClient.HotReload()
-	}
-
-	r.Recorder.Event(desired, "Normal", "Update", "Done")
+	r.Recorder.Event(desired, "Normal", "ApiDefinition", "Done")
 
 	return ctrl.Result{}, nil
 }
