@@ -37,7 +37,6 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		time.Sleep(time.Second)
 		oldAPIID := created.APIID
 		created.APIID = spec.APIID
-
 		err = c.Api().Update(oldAPIID, created)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update API ID")
@@ -51,6 +50,7 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update api")
 		}
+		time.Sleep(time.Second)
 	}
 
 	_ = c.HotReload()
