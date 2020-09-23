@@ -44,6 +44,7 @@ type ApiDefinitionReconciler struct {
 func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	apiID := req.NamespacedName
+	apiIDEncoded := apiIDEncode(apiID.String())
 
 	log := r.Log.WithValues("ApiDefinition", apiID.String())
 
@@ -84,7 +85,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			// 1. the policy(ies) are deleted
 			// 2. the policy is edited and no longer grants access to this API
 
-			err := r.UniversalClient.Api().Delete(desired.Name + "." + desired.Namespace)
+			err := r.UniversalClient.Api().Delete(apiIDEncoded)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", desired.Status.Id)
 			}
@@ -109,7 +110,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// TODO: this belongs in webhook or CR will be wrong
 	// we only care about this for OSS
-	newSpec.APIID = desired.Name + "." + desired.Namespace
+	newSpec.APIID = apiIDEncoded
 	r.applyDefaults(newSpec)
 
 	_, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)

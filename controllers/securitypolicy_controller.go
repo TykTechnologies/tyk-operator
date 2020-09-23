@@ -125,7 +125,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			desired.Spec.OrgID == "" ||
 			desired.Spec.AccessRightsArray[i].APIName != api.Spec.Name {
 
-			apiDef, err := r.UniversalClient.Api().Get(api.Status.Id)
+			apiDef, err := r.UniversalClient.Api().Get(apiIDEncode(api.Namespace + "/" + api.Name))
 			if err != nil {
 				log.Error(err, "api doesnt exist")
 				return ctrl.Result{Requeue: true}, err
