@@ -84,7 +84,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			// 1. the policy(ies) are deleted
 			// 2. the policy is edited and no longer grants access to this API
 
-			err := r.UniversalClient.Api().Delete(desired.Status.Id)
+			err := r.UniversalClient.Api().Delete(desired.Name + "." + desired.Namespace)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", desired.Status.Id)
 			}
@@ -109,17 +109,17 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// TODO: this belongs in webhook or CR will be wrong
 	// we only care about this for OSS
-	//newSpec.APIID = apiIDEncode(apiID.String())
+	newSpec.APIID = desired.Name + "." + desired.Namespace
 	r.applyDefaults(newSpec)
 
-	createdOrUpdated, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
+	_, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
 	if err != nil {
 		log.Error(err, "createOrUpdate failure")
 		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	desired.Status.Id = createdOrUpdated.APIID
+	desired.Status.Id = newSpec.APIID
 	err = r.Status().Update(ctx, desired)
 	if err != nil {
 		log.Error(err, "Failed to update ApiDefinition status")
