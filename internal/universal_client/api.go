@@ -1,8 +1,6 @@
 package universal_client
 
 import (
-	"time"
-
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/pkg/errors"
 )
@@ -29,19 +27,16 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create api")
 		}
-		time.Sleep(time.Second)
 		created, err := c.Api().Get(insertedId)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get inserted api")
 		}
-		time.Sleep(time.Second)
 		oldAPIID := created.APIID
 		created.APIID = spec.APIID
 		err = c.Api().Update(oldAPIID, created)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update API ID")
 		}
-		time.Sleep(time.Second)
 	} else {
 		// Update
 		spec.OrgID = api.OrgID
@@ -50,7 +45,6 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update api")
 		}
-		time.Sleep(time.Second)
 	}
 
 	_ = c.HotReload()
