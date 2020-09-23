@@ -4,4 +4,5 @@
 
 ## Docs
 
+[Middleware](./docs/middleware.md)
 [Development Environment](./docs/development.md)
