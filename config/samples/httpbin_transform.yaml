@@ -33,7 +33,6 @@ spec:
                 template_mode: blob
                 # base64 encoded template
                 template_source: eyJvcmlnaW4iOiAie3sgLm9yaWdpbiB9fSJ9
-                from_dashboard: true
           transform_response:
             - method: GET
               path: /xml
@@ -43,4 +42,3 @@ spec:
                 template_mode: blob
                 # base64 encoded template
                 template_source: e3sgLiB8IGpzb25NYXJzaGFsIH19
-                from_dashboard: true
