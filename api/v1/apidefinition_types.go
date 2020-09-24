@@ -342,7 +342,7 @@ type OpenIDOptions struct {
 // APIDefinition represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
-	ID    string `json:"id"`
+	ID    string `json:"id,omitempty"`
 	APIID string `json:"api_id,omitempty"`
 	Name  string `json:"name"`
 	// OrgID is overwritten - no point setting this
