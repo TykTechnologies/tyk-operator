@@ -16,6 +16,7 @@ type UniversalApi interface {
 func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDefinitionSpec, error) {
 	var err error
 
+	// should return nil, nil http.BadRequest if api doesn't exist
 	api, err := c.Api().Get(spec.APIID)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to communicate with Client")

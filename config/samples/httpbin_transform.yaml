@@ -6,7 +6,7 @@ spec:
   name: httpbin-transform
   use_keyless: true
   protocol: http
-  active: true
+  active: false
   org_id: acme.com
   proxy:
     target_url: http://httpbin.org

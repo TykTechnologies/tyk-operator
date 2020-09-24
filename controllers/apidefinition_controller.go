@@ -87,12 +87,12 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 			err := r.UniversalClient.Api().Delete(apiIDEncoded)
 			if err != nil {
-				log.Error(err, "unable to delete api", "api_id", desired.Status.Id)
+				log.Error(err, "unable to delete api", "api_id", apiIDEncoded)
 			}
 
 			err = r.UniversalClient.HotReload()
 			if err != nil {
-				log.Error(err, "unable to hot reload", "api_id", desired.Status.Id)
+				log.Error(err, "unable to hot reload", "api_id", apiIDEncoded)
 			}
 
 			// remove our finalizer from the list and update it.
@@ -118,16 +118,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		log.Error(err, "createOrUpdate failure")
 		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if desired.Status.Id != newSpec.APIID {
-		desired.Status.Id = newSpec.APIID
-		err = r.Status().Update(ctx, desired)
-		if err != nil {
-			log.Error(err, "Failed to update ApiDefinition status")
-			//r.Recorder.Event(desired, "Warning", "ApiDefinition", "Unable to update status")
-			return ctrl.Result{}, nil
-		}
 	}
 
 	return ctrl.Result{}, nil
