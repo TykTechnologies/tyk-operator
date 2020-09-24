@@ -64,7 +64,6 @@ func (in *ApiDefinition) Default() {
 					GlobalResponseHeadersRemove: nil,
 					IgnoreEndpointCase:          false,
 					GlobalSizeLimit:             0,
-					OverrideTarget:              "",
 				},
 			},
 		}

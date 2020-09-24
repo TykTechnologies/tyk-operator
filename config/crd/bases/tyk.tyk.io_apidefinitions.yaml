@@ -879,8 +879,6 @@ spec:
                           type: boolean
                         name:
                           type: string
-                        override_target:
-                          type: string
                         paths:
                           properties:
                             black_list:

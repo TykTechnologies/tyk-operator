@@ -500,13 +500,6 @@ func (in *ExtendedPathsSet) DeepCopyInto(out *ExtendedPathsSet) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.AdvanceCacheConfig != nil {
-		in, out := &in.AdvanceCacheConfig, &out.AdvanceCacheConfig
-		*out = make([]CacheMeta, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
 	if in.Transform != nil {
 		in, out := &in.Transform, &out.Transform
 		*out = make([]TemplateMeta, len(*in))
@@ -537,6 +530,13 @@ func (in *ExtendedPathsSet) DeepCopyInto(out *ExtendedPathsSet) {
 	if in.TransformResponseHeader != nil {
 		in, out := &in.TransformResponseHeader, &out.TransformResponseHeader
 		*out = make([]HeaderInjectionMeta, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.AdvanceCacheConfig != nil {
+		in, out := &in.AdvanceCacheConfig, &out.AdvanceCacheConfig
+		*out = make([]CacheMeta, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

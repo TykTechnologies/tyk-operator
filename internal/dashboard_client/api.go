@@ -1,7 +1,6 @@
 package dashboard_client
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,6 +18,8 @@ type Api struct {
 }
 
 func (a Api) All() ([]v1.APIDefinitionSpec, error) {
+	sess := grequests.NewSession(a.opts)
+
 	fullPath := JoinUrl(a.url, endpointAPIs)
 
 	// -2 means get all pages
@@ -27,10 +28,10 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	}{
 		Pages: -2,
 	}
-	opts := a.opts
-	opts.QueryStruct = queryStruct
 
-	res, err := grequests.Get(fullPath, a.opts)
+	sess.RequestOptions.QueryStruct = queryStruct
+
+	res, err := sess.Get(fullPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -54,17 +55,16 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 
 func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	// Create
-	opts := a.opts
+	sess := grequests.NewSession(a.opts)
 
 	def.OrgID = a.orgID
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: *def,
 	}
 
-	opts.JSON = dashboardAPIRequest
 	fullPath := JoinUrl(a.url, endpointAPIs)
 
-	res, err := grequests.Post(fullPath, opts)
+	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: dashboardAPIRequest})
 	if err != nil {
 		return "", err
 	}
@@ -78,9 +78,6 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 		return "", err
 	}
 
-	jsBytes, _ := json.Marshal(resMsg)
-	println(string(jsBytes))
-
 	if resMsg.Status != "OK" {
 		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
@@ -90,10 +87,10 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 
 func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	// Create
-	opts := a.opts
+	sess := grequests.NewSession(a.opts)
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
 
-	res, err := grequests.Get(fullPath, opts)
+	res, err := sess.Get(fullPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -121,11 +118,11 @@ func (a Api) Update(apiID string, def *v1.APIDefinitionSpec) error {
 		ApiDefinition: *def,
 	}
 
-	opts := a.opts
-	opts.JSON = dashboardAPIRequest
+	sess := grequests.NewSession(a.opts)
+
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
 
-	res, err := grequests.Put(fullPath, opts)
+	res, err := sess.Put(fullPath, &grequests.RequestOptions{JSON: dashboardAPIRequest})
 	if err != nil {
 		return err
 	}
@@ -149,7 +146,8 @@ func (a Api) Update(apiID string, def *v1.APIDefinitionSpec) error {
 func (a Api) Delete(id string) error {
 	delPath := JoinUrl(a.url, endpointAPIs, id)
 
-	res, err := grequests.Delete(delPath, a.opts)
+	sess := grequests.NewSession(a.opts)
+	res, err := sess.Delete(delPath, nil)
 	if err != nil {
 		return err
 	}

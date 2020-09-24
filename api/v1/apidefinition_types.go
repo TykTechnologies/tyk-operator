@@ -89,6 +89,7 @@ type TemplateData struct {
 	Mode           TemplateMode     `json:"template_mode"`
 	EnableSession  bool             `json:"enable_session"`
 	TemplateSource string           `json:"template_source"`
+	//FromDashboard  bool             `json:"from_dashboard"`
 }
 
 type TemplateMeta struct {
@@ -202,13 +203,13 @@ type ExtendedPathsSet struct {
 	BlackList []EndPointMeta `json:"black_list,omitempty"`
 	// List of paths which cache middleware should be enabled on
 	Cached                  []string              `json:"cache,omitempty"`
-	AdvanceCacheConfig      []CacheMeta           `json:"advance_cache_config,omitempty"`
 	Transform               []TemplateMeta        `json:"transform,omitempty"`
 	TransformResponse       []TemplateMeta        `json:"transform_response,omitempty"`
 	TransformJQ             []TransformJQMeta     `json:"transform_jq,omitempty"`
 	TransformJQResponse     []TransformJQMeta     `json:"transform_jq_response,omitempty"`
 	TransformHeader         []HeaderInjectionMeta `json:"transform_headers,omitempty"`
 	TransformResponseHeader []HeaderInjectionMeta `json:"transform_response_headers,omitempty"`
+	AdvanceCacheConfig      []CacheMeta           `json:"advance_cache_config,omitempty"`
 	HardTimeouts            []HardTimeoutMeta     `json:"hard_timeouts,omitempty"`
 	CircuitBreaker          []CircuitBreakerMeta  `json:"circuit_breakers,omitempty"`
 	URLRewrite              []URLRewriteMeta      `json:"url_rewrites,omitempty"`
@@ -233,7 +234,7 @@ type VersionInfo struct {
 	GlobalResponseHeadersRemove []string          `json:"global_response_headers_remove,omitempty"`
 	IgnoreEndpointCase          bool              `json:"ignore_endpoint_case,omitempty"`
 	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
-	OverrideTarget              string            `json:"override_target,omitempty"`
+	//OverrideTarget              string            `json:"override_target,omitempty"`
 }
 
 type VersionInfoPaths struct {
