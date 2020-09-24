@@ -141,8 +141,8 @@ func (p SecurityPolicy) Delete(id string) error {
 		return nil
 	}
 
-	if res.StatusCode == http.StatusInternalServerError {
-		// Tyk returns internal server error if api is already deleted
+	if res.StatusCode == http.StatusNotFound {
+		// Tyk returns 404 if policy is not found
 		return nil
 	}
 
