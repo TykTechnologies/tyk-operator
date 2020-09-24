@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"k8s.io/client-go/tools/record"
