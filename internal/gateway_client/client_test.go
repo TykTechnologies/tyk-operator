@@ -6,7 +6,7 @@ import (
 
 // TODO: create a gateway deployment & implement cleanup function
 func getClient() *Client {
-	return NewClient("http://localhost:8000", "foo", true)
+	return NewClient("gateway-client-url", "api-key", true, "myorg")
 }
 
 func TestClient_HotReload(t *testing.T) {
