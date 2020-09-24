@@ -120,15 +120,15 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	desired.Status.Id = newSpec.APIID
-	err = r.Status().Update(ctx, desired)
-	if err != nil {
-		log.Error(err, "Failed to update ApiDefinition status")
-		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Unable to update status")
-		return ctrl.Result{}, nil
+	if desired.Status.Id != newSpec.APIID {
+		desired.Status.Id = newSpec.APIID
+		err = r.Status().Update(ctx, desired)
+		if err != nil {
+			log.Error(err, "Failed to update ApiDefinition status")
+			//r.Recorder.Event(desired, "Warning", "ApiDefinition", "Unable to update status")
+			return ctrl.Result{}, nil
+		}
 	}
-
-	r.Recorder.Event(desired, "Normal", "ApiDefinition", "Done")
 
 	return ctrl.Result{}, nil
 }
