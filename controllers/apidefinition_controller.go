@@ -157,7 +157,6 @@ func (r *ApiDefinitionReconciler) applyDefaults(spec *tykv1.APIDefinitionSpec) {
 					GlobalResponseHeadersRemove: nil,
 					IgnoreEndpointCase:          false,
 					GlobalSizeLimit:             0,
-					OverrideTarget:              "",
 				},
 			},
 		}
