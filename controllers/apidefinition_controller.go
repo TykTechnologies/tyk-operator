@@ -44,6 +44,7 @@ type ApiDefinitionReconciler struct {
 func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	apiID := req.NamespacedName
+	apiIDEncoded := apiIDEncode(apiID.String())
 
 	log := r.Log.WithValues("ApiDefinition", apiID.String())
 
@@ -84,14 +85,14 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			// 1. the policy(ies) are deleted
 			// 2. the policy is edited and no longer grants access to this API
 
-			err := r.UniversalClient.Api().Delete(desired.Name + "." + desired.Namespace)
+			err := r.UniversalClient.Api().Delete(apiIDEncoded)
 			if err != nil {
-				log.Error(err, "unable to delete api", "api_id", desired.Status.Id)
+				log.Error(err, "unable to delete api", "api_id", apiIDEncoded)
 			}
 
 			err = r.UniversalClient.HotReload()
 			if err != nil {
-				log.Error(err, "unable to hot reload", "api_id", desired.Status.Id)
+				log.Error(err, "unable to hot reload", "api_id", apiIDEncoded)
 			}
 
 			// remove our finalizer from the list and update it.
@@ -109,7 +110,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// TODO: this belongs in webhook or CR will be wrong
 	// we only care about this for OSS
-	newSpec.APIID = desired.Name + "." + desired.Namespace
+	newSpec.APIID = apiIDEncoded
 	r.applyDefaults(newSpec)
 
 	_, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
@@ -118,16 +119,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
 	}
-
-	desired.Status.Id = newSpec.APIID
-	err = r.Status().Update(ctx, desired)
-	if err != nil {
-		log.Error(err, "Failed to update ApiDefinition status")
-		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Unable to update status")
-		return ctrl.Result{}, nil
-	}
-
-	r.Recorder.Event(desired, "Normal", "ApiDefinition", "Done")
 
 	return ctrl.Result{}, nil
 }
@@ -156,7 +147,6 @@ func (r *ApiDefinitionReconciler) applyDefaults(spec *tykv1.APIDefinitionSpec) {
 					GlobalResponseHeadersRemove: nil,
 					IgnoreEndpointCase:          false,
 					GlobalSizeLimit:             0,
-					OverrideTarget:              "",
 				},
 			},
 		}
