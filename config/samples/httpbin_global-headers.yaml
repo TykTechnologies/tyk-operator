@@ -24,8 +24,8 @@ spec:
           ignored: []
           white_list: []
         global_headers:
-          foo-req: foo-req
-          bar-req: foo-req
+          foo-req: my-foo
+          bar-req: my-bar
         global_headers_remove:
           - hello
         global_response_headers:

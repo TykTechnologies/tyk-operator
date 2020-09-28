@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"k8s.io/client-go/tools/record"
@@ -50,6 +49,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
 
 	policyID := req.NamespacedName
+	policyIDEncoded := apiIDEncode(policyID.String())
 
 	log.Info("fetching SecurityPolicy instance")
 
@@ -66,6 +66,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		log.Error(err, "Failed to get SecurityPolicy")
 		return ctrl.Result{}, err
 	}
+	r.Recorder.Event(desired, "Normal", "SecurityPolicy", "Reconciling")
 
 	const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
 	if desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -82,13 +83,15 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		if containsString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName) {
 			// our finalizer is present, so lets handle our external dependency
 
-			if err := r.UniversalClient.SecurityPolicy().Delete(desired.Status.ID); err != nil {
-				if err.Error() != "API Returned error: Not Found" {
-					return reconcile.Result{Requeue: false}, err
-				}
+			if err := r.UniversalClient.SecurityPolicy().Delete(policyIDEncoded); err != nil {
+				log.Error(err, "unable to delete policy", "id", policyIDEncoded)
+				return reconcile.Result{Requeue: false}, err
 			}
 
-			_ = r.UniversalClient.HotReload()
+			err := r.UniversalClient.HotReload()
+			if err != nil {
+				log.Error(err, "unable to hot reload after policy delete", "id", policyIDEncoded)
+			}
 
 			// remove our finalizer from the list and update it.
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName)
@@ -125,8 +128,8 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			desired.Spec.OrgID == "" ||
 			desired.Spec.AccessRightsArray[i].APIName != api.Spec.Name {
 
-			apiDef, err := r.UniversalClient.Api().Get(apiIDEncode(api.Namespace + "/" + api.Name))
-			if err != nil {
+			apiDef, err := r.UniversalClient.Api().Get(apiIDEncode(apiNamespace + "/" + apiName))
+			if err != nil || apiDef == nil {
 				log.Error(err, "api doesnt exist")
 				return ctrl.Result{Requeue: true}, err
 			}
@@ -142,46 +145,12 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		}
 	}
 
-	// CREATE
-	if desired.Status.ID == "" {
-		// policy doesn't exist?
-		log.Info("creating policy", "policyID", policyID.String())
-
-		internalID, err := r.UniversalClient.SecurityPolicy().Create(&desired.Spec)
-		if err != nil {
-			log.Error(err, "unable to create SecurityPolicy")
-			return ctrl.Result{RequeueAfter: time.Second * 5}, err
-		}
-
-		_ = r.UniversalClient.HotReload()
-
-		desired.Status.ID = internalID
-		err = r.Status().Update(ctx, desired)
-		if err != nil {
-			log.Error(err, "Failed to update ApiDef status")
-			return ctrl.Result{}, err
-		}
-
-		return ctrl.Result{}, nil
-	}
-
-	// UPDATE
-	actual, err := r.UniversalClient.SecurityPolicy().Get(desired.Status.ID)
+	desired.Spec.ID = policyIDEncoded
+	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec)
 	if err != nil {
-		log.Error(err, "something fucked")
-		return ctrl.Result{Requeue: true}, err
-	}
-	if !reflect.DeepEqual(desired.Spec, actual) {
-		log.Info("updating SecurityPolicy")
-		desired.Spec.ID = desired.Status.ID
-		desired.Spec.MID = desired.Status.ID
-		err := r.UniversalClient.SecurityPolicy().Update(&desired.Spec)
-		if err != nil {
-			log.Error(err, "unable to update SecurityPolicy")
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		_ = r.UniversalClient.HotReload()
+		log.Error(err, "createOrUpdatePolicy failure")
+		r.Recorder.Event(desired, "Warning", "SecurityPolicy", "Create or Update Security Policy")
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	return ctrl.Result{}, nil
