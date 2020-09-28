@@ -13,22 +13,28 @@ type UniversalSecurityPolicy interface {
 	Delete(id string) error
 }
 
+var (
+	PolicyCollisionError = errors.New("policy id collision detected")
+	PolicyNotFoundError  = errors.New("policy not found")
+)
+
 func CreateOrUpdatePolicy(c UniversalClient, spec *v1.SecurityPolicySpec) (*v1.SecurityPolicySpec, error) {
 	var err error
 
-	// should return nil, nil http.BadRequest if api doesn't exist
 	pol, err := c.SecurityPolicy().Get(spec.ID)
-	if err != nil && err.Error() != errors.New("policy not found").Error() {
-		return nil, errors.Wrap(err, "Unable to communicate with Client")
+	if err != nil {
+		// should return nil, http.401 if policy doesn't exist
+		if err != PolicyNotFoundError {
+			return nil, errors.Wrap(err, "Unable to communicate with Client")
+		}
 	}
 
 	if pol == nil {
 		// Create
-		insertedId, err := c.SecurityPolicy().Create(spec)
+		_, err := c.SecurityPolicy().Create(spec)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create policy")
 		}
-		println("my id: " + insertedId)
 	} else {
 		// Update
 		spec.OrgID = pol.OrgID
