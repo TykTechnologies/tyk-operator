@@ -1,17 +1,13 @@
 package dashboard_client
 
 import (
-	"errors"
 	"fmt"
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+	"github.com/pkg/errors"
 	"net/http"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/levigross/grequests"
-)
-
-var (
-	policyCollisionError = errors.New("policy id collision detected")
-	policyNotFound       = errors.New("policy not found")
 )
 
 type SecurityPolicy struct {
@@ -45,12 +41,12 @@ func (p SecurityPolicy) Get(polId string) (*v1.SecurityPolicySpec, error) {
 		return nil, err
 	}
 	for _, pol := range list {
-		if pol.MID == polId {
+		if pol.ID == polId {
 			return &pol, nil
 		}
 	}
 
-	return nil, policyNotFound
+	return nil, universal_client.PolicyNotFoundError
 }
 
 func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
@@ -61,7 +57,7 @@ func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 	}
 	for _, pol := range list {
 		if pol.ID == def.ID {
-			return "", policyCollisionError
+			return "", universal_client.PolicyCollisionError
 		}
 	}
 
@@ -130,7 +126,15 @@ func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 }
 
 func (p SecurityPolicy) Delete(id string) error {
-	delPath := JoinUrl(p.url, endpointPolicies, id)
+	pol, err := p.Get(id)
+	if err == universal_client.PolicyNotFoundError {
+		return nil
+	}
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete policy.")
+	}
+
+	delPath := JoinUrl(p.url, endpointPolicies, pol.MID)
 
 	res, err := grequests.Delete(delPath, p.opts)
 	if err != nil {

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
@@ -78,14 +79,25 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		// The object is being deleted
 		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			// our finalizer is present, so lets handle our external dependency
+			policies, err := r.UniversalClient.SecurityPolicy().All()
+			if err != nil {
+				log.Info(err.Error())
+				return ctrl.Result{RequeueAfter: time.Second * 5}, err
+			}
 
-			// TODO: check for any security policies that grant access to this API Definition.
-			// If any policies grant access to this resource, return error and requeue
-			// We need to keep doing this till:
-			// 1. the policy(ies) are deleted
-			// 2. the policy is edited and no longer grants access to this API
+			for _, policy := range policies {
+				for _, right := range policy.AccessRightsArray {
+					if right.APIID == apiIDEncoded {
+						log.Info("unable to delete api due to security policy dependency",
+							"api", apiID.String(),
+							"policy", apiIDDecode(policy.ID),
+						)
+						return ctrl.Result{RequeueAfter: time.Second * 5}, err
+					}
+				}
+			}
 
-			err := r.UniversalClient.Api().Delete(apiIDEncoded)
+			err = r.UniversalClient.Api().Delete(apiIDEncoded)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", apiIDEncoded)
 			}

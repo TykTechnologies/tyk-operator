@@ -3,13 +3,12 @@ kind: SecurityPolicy
 metadata:
   name: httpbin-policy
 spec:
-  id: my-httpbin-policy
-  name: HttpBin
+  name: HttpBin-protected-pol
   org_id: acme.com
   active: true
   state: active
   access_rights_array:
-    - name: httpbin
+    - name: httpbin-protected
       namespace: default
       versions:
         - Default
