@@ -49,7 +49,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
 
 	policyID := req.NamespacedName
-	PolicyIDEncoded := apiIDEncode(policyID.String())
+	policyIDEncoded := apiIDEncode(policyID.String())
 
 	log.Info("fetching SecurityPolicy instance")
 
@@ -83,14 +83,14 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		if containsString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName) {
 			// our finalizer is present, so lets handle our external dependency
 
-			if err := r.UniversalClient.SecurityPolicy().Delete(PolicyIDEncoded); err != nil {
-				log.Error(err, "unable to delete policy", "id", PolicyIDEncoded)
+			if err := r.UniversalClient.SecurityPolicy().Delete(policyIDEncoded); err != nil {
+				log.Error(err, "unable to delete policy", "id", policyIDEncoded)
 				return reconcile.Result{Requeue: false}, err
 			}
 
 			err := r.UniversalClient.HotReload()
 			if err != nil {
-				log.Error(err, "unable to hot reload", "policy_id", PolicyIDEncoded)
+				log.Error(err, "unable to hot reload after policy delete", "id", policyIDEncoded)
 			}
 
 			// remove our finalizer from the list and update it.
@@ -145,7 +145,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		}
 	}
 
-	desired.Spec.ID = PolicyIDEncoded
+	desired.Spec.ID = policyIDEncoded
 	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec)
 	if err != nil {
 		log.Error(err, "createOrUpdatePolicy failure")
