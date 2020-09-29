@@ -1,7 +1,9 @@
 apiVersion: tyk.tyk.io/v1
 kind: ApiDefinition
 metadata:
-  name: httpbin-protected
+  name: httpbin
+  annotations:
+    ingress: "true"
 spec:
   name: httpbin protected
   protocol: http

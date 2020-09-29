@@ -1,22 +1,24 @@
 apiVersion: tyk.tyk.io/v1
 kind: SecurityPolicy
 metadata:
-  name: httpbin-policy
+  name: httpbin
 spec:
-  name: HttpBin-protected-pol
-  org_id: acme.com
-  active: true
+  name: Some other Security Policy
   state: active
   access_rights_array:
-    - name: httpbin-protected
+    - name: httpbin
       namespace: default
       versions:
         - Default
+    - name: petstore
+      namespace: default
+      versions:
+        - v1
 
 # TODO: Think about defaulting so we don't have to set these values to -1
-  per: -1
-  quota_max: -1
-  quota_renewal_rate: -1
+  per: 60
+  quota_max: 100
+  quota_renewal_rate: 3600
   rate: -1
   throttle_interval: -1
   throttle_retry_limit: -1
