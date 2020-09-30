@@ -9,11 +9,18 @@ jobs:
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
+#      - name: create kind cluster
+#        uses: helm/kind-action@v1.0.0
 
-      - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.0.0
+      - name: test and build the controller container
+        run: |
+          export USERNAME=tykio
+          make docker-build IMG=$USERNAME/tyk-operator:ci
+          kind load docker-image $USERNAME/tyk-operator:ci
 
       - name: Deploy HttpBin
         run: |
           kubectl apply -f ./playground/httpbin/httpbin.yaml
           while [[ $(kubectl get pods -l app=httpbin -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod..." && sleep 10; done
+
+
