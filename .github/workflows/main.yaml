@@ -35,8 +35,8 @@ jobs:
           export TYK_ORG=5d67b96d767e02015ea84a6f
           export TYK_MODE=pro
           export ENABLE_WEBHOOKS=false
-          go install
-          tyk-operator
+          go build -o tyk-operator .
+          ./tyk-operator
 #          export USERNAME=tykio
 #          make docker-build IMG=$USERNAME/tyk-operator:ci
 #          kind load docker-image $USERNAME/tyk-operator:ci
