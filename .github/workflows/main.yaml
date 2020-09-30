@@ -32,15 +32,16 @@ jobs:
         run: |
           make install
 
-      - name: start the operator
-        run: |
-          export TYK_URL=http://localhost:3000
-          export TYK_AUTH=30f83dc59a7b4bc86474fb371dd02557
-          export TYK_ORG=5d67b96d767e02015ea84a6f
-          export TYK_MODE=pro
-          export ENABLE_WEBHOOKS=false
-          go build -o tyk-operator .
-          ./tyk-operator
+#      - name: start the operator
+#        run: |
+#          export TYK_URL=http://localhost:3000
+#          export TYK_AUTH=30f83dc59a7b4bc86474fb371dd02557
+#          export TYK_ORG=5d67b96d767e02015ea84a6f
+#          export TYK_MODE=pro
+#          export ENABLE_WEBHOOKS=false
+#          go build -o tyk-operator .
+#          ./tyk-operator
+
 #          export USERNAME=tykio
 #          make docker-build IMG=$USERNAME/tyk-operator:ci
 #          kind load docker-image $USERNAME/tyk-operator:ci
