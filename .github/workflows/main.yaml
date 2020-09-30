@@ -28,6 +28,10 @@ jobs:
           # update your PATH to include /usr/local/kubebuilder/bin
           export PATH=$PATH:/usr/local/kubebuilder/bin
 
+      - name: install the custom resources
+        run: |
+          make install
+
       - name: start the operator
         run: |
           export TYK_URL=http://localhost:3000
