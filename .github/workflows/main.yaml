@@ -16,6 +16,4 @@ jobs:
       - name: Deploy HttpBin
         run: |
           kubectl apply -f ./playground/httpbin/httpbin.yaml
-          kubectl get services
-          kubectl get deployments
-          kubectl get pods
+          while [[ $(kubectl get pods -l app=httpbin -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod..." && sleep 10; done
