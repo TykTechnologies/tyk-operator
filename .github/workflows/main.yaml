@@ -13,11 +13,9 @@ jobs:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.0.0
 
-      - name: Test Stuff
+      - name: Deploy HttpBin
         run: |
-          pwd
-          ls -al
-          kubectl get nodes
-          kubectl get namespaces
+          kubectl apply -f ./playground/httpbin/httpbin.yaml
           kubectl get services
           kubectl get deployments
+          kubectl get pods
