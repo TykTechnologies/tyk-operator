@@ -9,8 +9,9 @@ jobs:
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
-#      - name: create kind cluster
-#        uses: helm/kind-action@v1.0.0
+
+      - name: create kind cluster
+        uses: helm/kind-action@v1.0.0
 
       - name: install kubebuilder
         run: |
@@ -27,11 +28,18 @@ jobs:
           # update your PATH to include /usr/local/kubebuilder/bin
           export PATH=$PATH:/usr/local/kubebuilder/bin
 
-      - name: test and build the controller container
+      - name: start the operator
         run: |
-          export USERNAME=tykio
-          make docker-build IMG=$USERNAME/tyk-operator:ci
-          kind load docker-image $USERNAME/tyk-operator:ci
+          export TYK_URL=http://localhost:3000
+          export TYK_AUTH=30f83dc59a7b4bc86474fb371dd02557
+          export TYK_ORG=5d67b96d767e02015ea84a6f
+          export TYK_MODE=pro
+          export ENABLE_WEBHOOKS=false
+          go install
+          tyk-operator
+#          export USERNAME=tykio
+#          make docker-build IMG=$USERNAME/tyk-operator:ci
+#          kind load docker-image $USERNAME/tyk-operator:ci
 
       - name: Deploy HttpBin
         run: |
