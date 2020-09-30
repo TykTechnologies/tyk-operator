@@ -1,0 +1,23 @@
+name: Tyk Operator
+
+on:
+  pull_request
+
+jobs:
+  create-cluster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout tyk-operator
+        uses: actions/checkout@v2
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.0.0
+
+      - name: Test Stuff
+        run: |
+          pwd
+          ls -al
+          kubectl get nodes
+          kubectl get namespaces
+          kubectl get services
+          kubectl get deployments
