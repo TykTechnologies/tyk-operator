@@ -10,7 +10,7 @@ func getClient() *Client {
 }
 
 func TestClient_HotReload(t *testing.T) {
-	t.Skip("need to find out how to hot reload in dashboard")
+	t.Skip("skip as we have no dash client")
 	c := getClient()
 	err := c.HotReload()
 	if err != nil {

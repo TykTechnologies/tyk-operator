@@ -7,6 +7,7 @@ import (
 )
 
 func TestApi_All(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	apis, err := c.Api().All()
 	if err != nil {
@@ -19,6 +20,7 @@ func TestApi_All(t *testing.T) {
 }
 
 func TestApi_Create(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 
 	t.Log("creating API")
@@ -67,7 +69,7 @@ func TestApi_Create(t *testing.T) {
 }
 
 func TestApi_Update(t *testing.T) {
-
+	t.SkipNow()
 	c := getClient()
 
 	t.Log("creating api for update")
