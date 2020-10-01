@@ -9,9 +9,12 @@ jobs:
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
+      - name: install kubebuilder
+        uses: RyanSiu1995/kubebuilder-action@v1
+        with:
+          version: 2.3.1
       - name: run tests
         run: |
-          cat Makefile
           make test
 #  create-cluster:
 #    runs-on: ubuntu-latest
