@@ -7,8 +7,11 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
+      - name: checkout tyk-operator
+        uses: actions/checkout@v2
       - name: run tests
         run: |
+          cat Makefile
           make test
 #  create-cluster:
 #    runs-on: ubuntu-latest
