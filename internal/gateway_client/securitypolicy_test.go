@@ -7,6 +7,7 @@ import (
 )
 
 func TestPol_All(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	pols, err := c.SecurityPolicy().All()
 	if err != nil {
@@ -20,7 +21,7 @@ func TestPol_All(t *testing.T) {
 }
 
 func TestPol_GetOne(t *testing.T) {
-
+	t.SkipNow()
 	c := getClient()
 
 	newPol := createPolicy()
@@ -43,6 +44,7 @@ func TestPol_GetOne(t *testing.T) {
 }
 
 func TestPol_Create(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	_ = c.HotReload()
 	pols, err := c.SecurityPolicy().All()
@@ -68,6 +70,7 @@ func TestPol_Create(t *testing.T) {
 }
 
 func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	_ = c.HotReload()
 
@@ -88,6 +91,7 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 }
 
 func TestPol_Update(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 
 	newPol := createPolicy()
@@ -105,6 +109,7 @@ func TestPol_Update(t *testing.T) {
 }
 
 func TestPol_Delete(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	err := c.HotReload()
 	if err != nil {
@@ -134,6 +139,7 @@ func TestPol_Delete(t *testing.T) {
 }
 
 func TestPol_DeleteNonexistentPolicy(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 
 	_ = c.HotReload()

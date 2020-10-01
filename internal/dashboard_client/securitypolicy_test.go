@@ -7,6 +7,7 @@ import (
 )
 
 func TestPol_All(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	pols, err := c.SecurityPolicy().All()
 	if err != nil {
@@ -20,7 +21,7 @@ func TestPol_All(t *testing.T) {
 }
 
 func TestPol_GetOne(t *testing.T) {
-
+	t.SkipNow()
 	c := getClient()
 
 	newPol := createPolicy()
@@ -40,6 +41,7 @@ func TestPol_GetOne(t *testing.T) {
 }
 
 func TestPol_Create(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	pols, err := c.SecurityPolicy().All()
 	if err != nil {
@@ -60,6 +62,7 @@ func TestPol_Create(t *testing.T) {
 }
 
 func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 
 	newPol := createPolicy()
@@ -77,6 +80,7 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 }
 
 func TestPol_Update(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 
 	newPol := createPolicy()
@@ -105,28 +109,17 @@ func TestPol_Update(t *testing.T) {
 }
 
 func TestPol_Delete(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 
 	_, err := c.SecurityPolicy().Create(createPolicy())
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-
-	//err = c.SecurityPolicy.Delete(polId)
-	//if err != nil {
-	//	t.Fatal(err.Error())
-	//}
-
-	//pols, err := c.SecurityPolicy.SecurityPolicy.All()
-	//for index := range pols {
-	//	t.Log("index: ", index)
-	//	if pols[index].ID == polId {
-	//		t.Fatal("Should have deleted this policy")
-	//	}
-	//}
 }
 
 func TestPol_DeleteNonexistentPolicy(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 
 	_ = c.HotReload()
@@ -142,7 +135,7 @@ func createPolicy() *v1.SecurityPolicySpec {
 	newPol.Name = "my new pol"
 	newPol.Rate = 10
 	newPol.Per = 60
-	newPol.OrgID = "5e9d9544a1dcd60001d0ed20"
+	//newPol.OrgID = "5e9d9544a1dcd60001d0ed20"
 	newPol.ID = "myid"
 	newPol.Active = true
 	newPol.AccessRights = make(map[string]v1.AccessDefinition)
