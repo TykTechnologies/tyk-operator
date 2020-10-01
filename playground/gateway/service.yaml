@@ -10,4 +10,4 @@ spec:
       port: 8080
   selector:
     app: tyk
-#  type: LoadBalancer
+  type: LoadBalancer

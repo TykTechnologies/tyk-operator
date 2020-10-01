@@ -46,7 +46,16 @@ jobs:
 #          make docker-build IMG=$USERNAME/tyk-operator:ci
 #          kind load docker-image $USERNAME/tyk-operator:ci
 
+      - name: deploy tyk & dependencies
+        run: |
+          kubectl create configmap tyk-conf --from-file ./playground/gateway/confs/tyk.json
+          kubectl apply -f ./playground/redis/redis.yaml
+          while [[ $(kubectl get pods -l app=redis -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for redis pod..." && sleep 10; done
+          kubectl apply -f ./playground/gateway/deployment.yaml
+          kubectl apply -f ./playground/gateway/service.yaml
+          while [[ $(kubectl get pods -l app=tyk -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for tyk gateway pod..." && sleep 10; done
+
       - name: Deploy HttpBin
         run: |
           kubectl apply -f ./playground/httpbin/httpbin.yaml
-          while [[ $(kubectl get pods -l app=httpbin -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod..." && sleep 10; done
+          while [[ $(kubectl get pods -l app=httpbin -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for httpbin pod..." && sleep 10; done
