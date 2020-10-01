@@ -4,58 +4,49 @@ on:
   pull_request
 
 jobs:
-  create-cluster:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout tyk-operator
-        uses: actions/checkout@v2
-
-      - name: create kind cluster
-        uses: helm/kind-action@v1.0.0
-
-      - name: install kubebuilder
+      - name: run tests
         run: |
-          export version=1.0.8 # latest stable version
-          export arch=amd64
-
-          # download the release
-          curl -L -O "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_darwin_${arch}.tar.gz"
-
-          # extract the archive
-          tar -zxvf kubebuilder_${version}_darwin_${arch}.tar.gz
-          mv kubebuilder_${version}_darwin_${arch} kubebuilder && sudo mv kubebuilder /usr/local/
-
-          # update your PATH to include /usr/local/kubebuilder/bin
-          export PATH=$PATH:/usr/local/kubebuilder/bin
-
-      - name: install the custom resources
-        run: |
-          make install
-
-#      - name: start the operator
+          make test
+#  create-cluster:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: checkout tyk-operator
+#        uses: actions/checkout@v2
+#      - name: create kind cluster
+#        uses: helm/kind-action@v1.0.0
+#
+#      - name: install kubebuilder
 #        run: |
-#          export TYK_URL=http://localhost:3000
-#          export TYK_AUTH=30f83dc59a7b4bc86474fb371dd02557
-#          export TYK_ORG=5d67b96d767e02015ea84a6f
-#          export TYK_MODE=pro
-#          export ENABLE_WEBHOOKS=false
-#          go build -o tyk-operator .
-#          ./tyk-operator
-
-#          export USERNAME=tykio
-#          make docker-build IMG=$USERNAME/tyk-operator:ci
-#          kind load docker-image $USERNAME/tyk-operator:ci
-
-      - name: deploy tyk & dependencies
-        run: |
-          kubectl create configmap tyk-conf --from-file ./playground/gateway/confs/tyk.json
-          kubectl apply -f ./playground/redis/redis.yaml
-          while [[ $(kubectl get pods -l app=redis -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for redis pod..." && sleep 10; done
-          kubectl apply -f ./playground/gateway/deployment.yaml
-          kubectl apply -f ./playground/gateway/service.yaml
-          while [[ $(kubectl get pods -l app=tyk -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for tyk gateway pod..." && sleep 10; done
-
-      - name: Deploy HttpBin
-        run: |
-          kubectl apply -f ./playground/httpbin/httpbin.yaml
-          while [[ $(kubectl get pods -l app=httpbin -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for httpbin pod..." && sleep 10; done
+#          export version=1.0.8 # latest stable version
+#          export arch=amd64
+#
+#          # download the release
+#          curl -L -O "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_darwin_${arch}.tar.gz"
+#
+#          # extract the archive
+#          tar -zxvf kubebuilder_${version}_darwin_${arch}.tar.gz
+#          mv kubebuilder_${version}_darwin_${arch} kubebuilder && sudo mv kubebuilder /usr/local/
+#
+#          # update your PATH to include /usr/local/kubebuilder/bin
+#          export PATH=$PATH:/usr/local/kubebuilder/bin
+#
+#      - name: install the custom resources
+#        run: |
+#          make install
+#
+#      - name: deploy tyk & dependencies
+#        run: |
+#          kubectl create configmap tyk-conf --from-file ./playground/gateway/confs/tyk.json
+#          kubectl apply -f ./playground/redis/redis.yaml
+#          while [[ $(kubectl get pods -l app=redis -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for redis pod..." && sleep 10; done
+#          kubectl apply -f ./playground/gateway/deployment.yaml
+#          kubectl apply -f ./playground/gateway/service.yaml
+#          while [[ $(kubectl get pods -l app=tyk -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for tyk gateway pod..." && sleep 10; done
+#
+#      - name: Deploy HttpBin
+#        run: |
+#          kubectl apply -f ./playground/httpbin/httpbin.yaml
+#          while [[ $(kubectl get pods -l app=httpbin -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for httpbin pod..." && sleep 10; done
