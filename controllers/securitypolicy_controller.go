@@ -48,13 +48,12 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	ctx := context.Background()
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
 
-	policyID := req.NamespacedName
-	policyIDEncoded := apiIDEncode(policyID.String())
+	policyNamespacedName := req.NamespacedName.String()
 
 	log.Info("fetching SecurityPolicy instance")
 
 	desired := &tykv1.SecurityPolicy{}
-	if err := r.Get(ctx, policyID, desired); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
@@ -83,14 +82,14 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		if containsString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName) {
 			// our finalizer is present, so lets handle our external dependency
 
-			if err := r.UniversalClient.SecurityPolicy().Delete(policyIDEncoded); err != nil {
-				log.Error(err, "unable to delete policy", "id", policyIDEncoded)
+			if err := r.UniversalClient.SecurityPolicy().Delete(policyNamespacedName); err != nil {
+				log.Error(err, "unable to delete policy", "nameSpacedName", policyNamespacedName)
 				return reconcile.Result{Requeue: false}, err
 			}
 
 			err := r.UniversalClient.HotReload()
 			if err != nil {
-				log.Error(err, "unable to hot reload after policy delete", "id", policyIDEncoded)
+				log.Error(err, "unable to hot reload after policy delete", "nameSpacedName", policyNamespacedName)
 			}
 
 			// remove our finalizer from the list and update it.
@@ -145,8 +144,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		}
 	}
 
-	desired.Spec.ID = policyIDEncoded
-	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec)
+	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec, policyNamespacedName)
 	if err != nil {
 		log.Error(err, "createOrUpdatePolicy failure")
 		r.Recorder.Event(desired, "Warning", "SecurityPolicy", "Create or Update Security Policy")
