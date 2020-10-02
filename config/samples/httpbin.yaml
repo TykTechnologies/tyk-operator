@@ -2,12 +2,14 @@ apiVersion: tyk.tyk.io/v1
 kind: ApiDefinition
 metadata:
   name: httpbin
+  annotations:
+    ingress: tyk
 spec:
   name: httpbin
   use_keyless: true
   protocol: http
-  active: true
-  org_id: acme.com
+#  active: true
+#  org_id: acme.com
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin

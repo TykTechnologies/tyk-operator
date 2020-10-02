@@ -18,14 +18,21 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
+	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -132,7 +139,75 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{Requeue: true}, nil
 	}
 
+	if name, ok := desired.Annotations["ingress"]; ok {
+		// this means that we should generate an ingress resource
+		prefixType := v1beta1.PathTypePrefix
+		ingress := &v1beta1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: desired.Namespace,
+			},
+			Spec: v1beta1.IngressSpec{
+				IngressClassName: pointer.StringPtr("tyk"),
+				TLS:              nil,
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path:     desired.Spec.Proxy.ListenPath,
+										PathType: &prefixType,
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "httpbin",
+											ServicePort: intstr.IntOrString{IntVal: 8080},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Status: v1beta1.IngressStatus{},
+		}
+		return r.ensureIngress(ctx, log, ingress)
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func (r *ApiDefinitionReconciler) ensureIngress(ctx context.Context, log logr.Logger, desired *v1beta1.Ingress) (reconcile.Result, error) {
+	actual := &v1beta1.Ingress{}
+	err := r.Get(ctx, types.NamespacedName{
+		Name:      desired.Name,
+		Namespace: desired.Namespace,
+	}, actual)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// create the ingress
+			err = r.Create(ctx, desired)
+
+			if err != nil {
+				// Ingress creation failed
+				log.Error(err, "Failed to create Ingress")
+				return ctrl.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
+		}
+		return reconcile.Result{}, err
+	}
+
+	if !reflect.DeepEqual(desired.Spec, actual.Spec) {
+		desired.ObjectMeta = actual.ObjectMeta
+		err = r.Update(context.TODO(), desired)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	return reconcile.Result{}, nil
 }
 
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
