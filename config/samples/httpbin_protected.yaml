@@ -3,7 +3,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin
   annotations:
-    ingress: "true"
+    ingress: tyk
 spec:
   name: httpbin protected
   protocol: http
