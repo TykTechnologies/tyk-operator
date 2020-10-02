@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.45.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-logr/logr v0.1.0
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
