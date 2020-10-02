@@ -46,16 +46,18 @@ func (in *ApiDefinition) Default() {
 	apidefinitionlog.Info("default", "name", in.Name)
 
 	if len(in.Spec.VersionData.Versions) == 0 {
-		apidefinitionlog.Info("applying default version as not set")
-
 		defaultVersionData := VersionData{
 			NotVersioned:   true,
 			DefaultVersion: "Default",
 			Versions: map[string]VersionInfo{
 				"Default": {
-					Name:                        "Default",
-					Expires:                     "",
-					Paths:                       VersionInfoPaths{},
+					Name:    "Default",
+					Expires: "",
+					Paths: VersionInfoPaths{
+						Ignored:   []string{},
+						WhiteList: []string{},
+						BlackList: []string{},
+					},
 					UseExtendedPaths:            false,
 					ExtendedPaths:               ExtendedPathsSet{},
 					GlobalHeaders:               nil,

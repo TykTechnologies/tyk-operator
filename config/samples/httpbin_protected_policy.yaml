@@ -5,6 +5,7 @@ metadata:
 spec:
   name: Some other Security Policy
   state: active
+  active: true
   access_rights_array:
     - name: httpbin
       namespace: default

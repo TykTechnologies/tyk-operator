@@ -29,6 +29,15 @@ spec:
         - --enable-leader-election
         image: controller:latest
         name: manager
+        env:
+          - name: TYK_URL
+            value: https://a1c97937597b.ngrok.io
+          - name: TYK_AUTH
+            value: b65037728c5642ac610a6fa06831441e
+          - name: TYK_ORG
+            value: 5d67b96d767e02015ea84a6f
+          - name: TYK_MODE
+            value: pro
         resources:
           limits:
             cpu: 100m

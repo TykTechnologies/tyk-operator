@@ -130,7 +130,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	// TODO: this belongs in webhook or CR will be wrong
 	// we only care about this for OSS
 	newSpec.APIID = apiIDEncoded
-	r.applyDefaults(newSpec)
 
 	_, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
 	if err != nil {
@@ -214,30 +213,4 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
 		Complete(r)
-}
-
-func (r *ApiDefinitionReconciler) applyDefaults(spec *tykv1alpha1.APIDefinitionSpec) {
-	if len(spec.VersionData.Versions) == 0 {
-		defaultVersionData := tykv1alpha1.VersionData{
-			NotVersioned:   true,
-			DefaultVersion: "Default",
-			Versions: map[string]tykv1alpha1.VersionInfo{
-				"Default": {
-					Name:                        "Default",
-					Expires:                     "",
-					Paths:                       tykv1alpha1.VersionInfoPaths{},
-					UseExtendedPaths:            false,
-					ExtendedPaths:               tykv1alpha1.ExtendedPathsSet{},
-					GlobalHeaders:               nil,
-					GlobalHeadersRemove:         nil,
-					GlobalResponseHeaders:       nil,
-					GlobalResponseHeadersRemove: nil,
-					IgnoreEndpointCase:          false,
-					GlobalSizeLimit:             0,
-				},
-			},
-		}
-
-		spec.VersionData = defaultVersionData
-	}
 }

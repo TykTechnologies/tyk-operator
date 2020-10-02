@@ -122,9 +122,8 @@ type SecurityPolicy struct {
 	Status SecurityPolicyStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:object:root=true
-
 // SecurityPolicyList contains a list of SecurityPolicy
+// +kubebuilder:object:root=true
 type SecurityPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
