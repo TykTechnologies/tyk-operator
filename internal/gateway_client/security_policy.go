@@ -17,6 +17,7 @@ type SecurityPolicy struct {
 	*Client
 }
 
+// todo: needs testing
 func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	fullPath := JoinUrl(a.url, endpointPolicies)
 
@@ -37,8 +38,10 @@ func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	return list, nil
 }
 
-func (a SecurityPolicy) Get(polId string) (*v1.SecurityPolicySpec, error) {
-	fullPath := JoinUrl(a.url, endpointPolicies, polId)
+// todo: needs testing
+func (a SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, error) {
+	// todo: check does this namespaced name work?
+	fullPath := JoinUrl(a.url, endpointPolicies, namespacedName)
 	res, err := grequests.Get(fullPath, a.opts)
 	if err != nil {
 		return nil, err
@@ -56,7 +59,8 @@ func (a SecurityPolicy) Get(polId string) (*v1.SecurityPolicySpec, error) {
 	return &retrievedPol, nil
 }
 
-func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
+// todo: needs testing
+func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec, namespacedName string) (string, error) {
 	// Replace this with a GET ONE once that is fixed
 	// get all policies
 	list, err := a.All()
@@ -96,7 +100,8 @@ func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 	return resMsg.Key, nil
 }
 
-func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
+// todo: needs testing
+func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec, namespacedName string) error {
 	// Replace this with a GET ONE once that is fixed
 	list, err := a.All()
 	if err != nil {
@@ -141,8 +146,10 @@ func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	return nil
 }
 
-func (a SecurityPolicy) Delete(id string) error {
-	delPath := JoinUrl(a.url, endpointPolicies, id)
+// todo: needs testing
+func (a SecurityPolicy) Delete(namespacedName string) error {
+	// todo: check does this namespaced name work?
+	delPath := JoinUrl(a.url, endpointPolicies, namespacedName)
 
 	res, err := grequests.Delete(delPath, a.opts)
 	if err != nil {
