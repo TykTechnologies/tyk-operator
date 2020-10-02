@@ -1,14 +1,12 @@
 apiVersion: tyk.tyk.io/v1
 kind: SecurityPolicy
 metadata:
-  name: httpbin-policy
+  name: httpbin
 spec:
-  name: HttpBin-protected-pol
-  org_id: acme.com
-  active: true
+  name: Some other Security Policy
   state: active
   access_rights_array:
-    - name: httpbin-protected
+    - name: httpbin
       namespace: default
       versions:
         - Default
