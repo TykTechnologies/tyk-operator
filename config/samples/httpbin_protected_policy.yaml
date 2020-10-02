@@ -10,15 +10,11 @@ spec:
       namespace: default
       versions:
         - Default
-    - name: petstore
-      namespace: default
-      versions:
-        - v1
 
 # TODO: Think about defaulting so we don't have to set these values to -1
-  per: 60
-  quota_max: 100
-  quota_renewal_rate: 3600
+  per: -1
+  quota_max: -1
+  quota_renewal_rate: -1
   rate: -1
   throttle_interval: -1
   throttle_retry_limit: -1
