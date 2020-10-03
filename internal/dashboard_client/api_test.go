@@ -3,7 +3,7 @@ package dashboard_client
 import (
 	"testing"
 
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 func TestApi_All(t *testing.T) {

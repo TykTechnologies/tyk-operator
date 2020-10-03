@@ -2,12 +2,12 @@ package dashboard_client
 
 import (
 	"fmt"
-	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
-	"github.com/pkg/errors"
 	"net/http"
 
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/levigross/grequests"
+	"github.com/pkg/errors"
 )
 
 type SecurityPolicy struct {

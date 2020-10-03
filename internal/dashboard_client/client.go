@@ -5,9 +5,7 @@ import (
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
-
 	"github.com/go-logr/logr"
-
 	"github.com/levigross/grequests"
 )
 

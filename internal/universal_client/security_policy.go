@@ -1,15 +1,15 @@
 package universal_client
 
 import (
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/pkg/errors"
 )
 
 type UniversalSecurityPolicy interface {
-	All() ([]v1.SecurityPolicySpec, error)
-	Get(polId string) (*v1.SecurityPolicySpec, error)
-	Create(def *v1.SecurityPolicySpec) (string, error)
-	Update(def *v1.SecurityPolicySpec) error
+	All() ([]tykv1alpha1.SecurityPolicySpec, error)
+	Get(polId string) (*tykv1alpha1.SecurityPolicySpec, error)
+	Create(def *tykv1alpha1.SecurityPolicySpec) (string, error)
+	Update(def *tykv1alpha1.SecurityPolicySpec) error
 	Delete(id string) error
 }
 
@@ -18,7 +18,7 @@ var (
 	PolicyNotFoundError  = errors.New("policy not found")
 )
 
-func CreateOrUpdatePolicy(c UniversalClient, spec *v1.SecurityPolicySpec) (*v1.SecurityPolicySpec, error) {
+func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec) (*tykv1alpha1.SecurityPolicySpec, error) {
 	var err error
 
 	pol, err := c.SecurityPolicy().Get(spec.ID)
