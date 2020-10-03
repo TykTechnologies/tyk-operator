@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1
+package v1alpha1
 
 import (
 	"encoding/json"
@@ -22,26 +22,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-//// +k8s:deepcopy-gen=false
-//type MapStringInterface map[string]interface{}
-//
-//func (in *MapStringInterface) DeepCopyInto(out *MapStringInterface) {
-//	if in == nil {
-//		*out = nil
-//	} else {
-//		*out = runtime.DeepCopyJSON(*in)
-//	}
-//}
-//
-//func (in *MapStringInterface) DeepCopy() *MapStringInterface {
-//	if in == nil {
-//		return nil
-//	}
-//	out := new(MapStringInterface)
-//	in.DeepCopyInto(out)
-//	return out
-//}
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
 type AuthProviderCode string

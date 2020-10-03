@@ -23,7 +23,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
@@ -57,7 +57,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	log := r.Log.WithValues("ApiDefinition", apiID.String())
 
 	log.Info("fetching apidefinition instance")
-	desired := &tykv1.ApiDefinition{}
+	desired := &tykv1alpha1.ApiDefinition{}
 	if err := r.Get(ctx, apiID, desired); err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -212,22 +212,22 @@ func (r *ApiDefinitionReconciler) ensureIngress(ctx context.Context, log logr.Lo
 
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&tykv1.ApiDefinition{}).
+		For(&tykv1alpha1.ApiDefinition{}).
 		Complete(r)
 }
 
-func (r *ApiDefinitionReconciler) applyDefaults(spec *tykv1.APIDefinitionSpec) {
+func (r *ApiDefinitionReconciler) applyDefaults(spec *tykv1alpha1.APIDefinitionSpec) {
 	if len(spec.VersionData.Versions) == 0 {
-		defaultVersionData := tykv1.VersionData{
+		defaultVersionData := tykv1alpha1.VersionData{
 			NotVersioned:   true,
 			DefaultVersion: "Default",
-			Versions: map[string]tykv1.VersionInfo{
+			Versions: map[string]tykv1alpha1.VersionInfo{
 				"Default": {
 					Name:                        "Default",
 					Expires:                     "",
-					Paths:                       tykv1.VersionInfoPaths{},
+					Paths:                       tykv1alpha1.VersionInfoPaths{},
 					UseExtendedPaths:            false,
-					ExtendedPaths:               tykv1.ExtendedPathsSet{},
+					ExtendedPaths:               tykv1alpha1.ExtendedPathsSet{},
 					GlobalHeaders:               nil,
 					GlobalHeadersRemove:         nil,
 					GlobalResponseHeaders:       nil,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/levigross/grequests"
 )
 
@@ -17,7 +17,7 @@ type Api struct {
 	*Client
 }
 
-func (a Api) All() ([]v1.APIDefinitionSpec, error) {
+func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
 	sess := grequests.NewSession(a.opts)
 
 	fullPath := JoinUrl(a.url, endpointAPIs)
@@ -45,7 +45,7 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 		return nil, err
 	}
 
-	var list []v1.APIDefinitionSpec
+	var list []tykv1alpha1.APIDefinitionSpec
 	for _, api := range apisResponse.Apis {
 		list = append(list, api.ApiDefinition)
 	}
@@ -53,7 +53,7 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
+func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) (string, error) {
 	// Create
 	sess := grequests.NewSession(a.opts)
 
@@ -85,7 +85,7 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	return resMsg.Meta, nil
 }
 
-func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
+func (a Api) Get(apiID string) (*tykv1alpha1.APIDefinitionSpec, error) {
 	// Create
 	sess := grequests.NewSession(a.opts)
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
@@ -112,7 +112,7 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	return &resMsg.ApiDefinition, nil
 }
 
-func (a Api) Update(apiID string, def *v1.APIDefinitionSpec) error {
+func (a Api) Update(apiID string, def *tykv1alpha1.APIDefinitionSpec) error {
 	// Update
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: *def,
