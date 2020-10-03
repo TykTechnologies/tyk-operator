@@ -3,7 +3,7 @@ package gateway_client
 import (
 	"testing"
 
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 func TestPol_All(t *testing.T) {
@@ -17,7 +17,6 @@ func TestPol_All(t *testing.T) {
 	for _, pol := range pols {
 		t.Logf("policy ID: %s, aName: %s, ratelimit per: %d per %d, accessRights api name: %s", pol.ID, pol.Name, pol.Rate, pol.Per, pol.AccessRights["41433797848f41a558c1573d3e55a410"].APIName)
 	}
-
 }
 
 func TestPol_GetOne(t *testing.T) {

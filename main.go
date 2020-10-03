@@ -22,7 +22,7 @@ import (
 	"os"
 	"strconv"
 
-	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
 	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
@@ -45,7 +45,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(tykv1.AddToScheme(scheme))
+	utilruntime.Must(tykv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -110,7 +110,7 @@ func main() {
 	}
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&tykv1.ApiDefinition{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&tykv1alpha1.ApiDefinition{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
 			os.Exit(1)
 		}

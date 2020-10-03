@@ -1,7 +1,7 @@
 package dashboard_client
 
 import (
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1"
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 type ApisResponse struct {
