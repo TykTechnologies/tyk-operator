@@ -8,7 +8,7 @@ spec:
   name: httpbin
   use_keyless: true
   protocol: http
-#  active: true
+  active: true
 #  org_id: acme.com
   proxy:
     target_url: http://httpbin.org
