@@ -4,7 +4,8 @@ The assumption is that your plugin is already developed and loaded on the Gatewa
 
 1. Javascript plugin
 We have a simple JS "pre" plugin loaded on the GW file system.
-```
+
+```javascript
 var exampleJavaScriptMiddlewarePreHook = new TykJS.TykMiddleware.NewMiddleware({});
 
 exampleJavaScriptMiddlewarePreHook.NewProcessRequest(function(request, session) {
@@ -42,4 +43,4 @@ $ curl http://localhost:8080/httpbin/headers
   }
 ```
 
-We see our header `"Hello:World"` being injected by the custom plugin.
+We see our header `"Hello: World"` being injected by the custom plugin.
