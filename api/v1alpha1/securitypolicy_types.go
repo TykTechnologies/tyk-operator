@@ -48,17 +48,18 @@ type SecurityPolicySpec struct {
 	IsInactive        bool                        `json:"is_inactive,omitempty"`
 	AccessRightsArray []AccessDefinition          `json:"access_rights_array"`
 	AccessRights      map[string]AccessDefinition `json:"access_rights,omitempty"`
-	// Rate limit per X seconds (x="Per")
+	// Rate limit per X seconds (x="Per"), omit or "-1" for unlimited
 	Rate int64 `json:"rate,omitempty"`
 	// To be used in conjunction with "Rate".  Per seconds. 1 minute=60.  1 hour=3600
+	// omit or "-1" for unlimited
 	Per int64 `json:"per,omitempty"`
-	// Value of Quota allowed
+	// Value of Quota allowed, omit or "-1" for unlimited
 	QuotaMax int64 `json:"quota_max,omitempty"`
-	// Value reset length, in seconds
+	// Value reset length, in seconds, omit or "-1" for unlimited
 	QuotaRenewalRate int64 `json:"quota_renewal_rate,omitempty"`
-	// If rate limited, how many seconds to retry a request for
+	// If rate limited, how many seconds to retry a request for.  omit or "-1" for unlimited
 	ThrottleInterval int64 `json:"throttle_interval,omitempty"`
-	// Number of retries before returning error
+	// Number of retries before returning error.   omit or "-1" for unlimited
 	ThrottleRetryLimit int `json:"throttle_retry_limit,omitempty"`
 	// Max depth of a GraphQL query
 	MaxQueryDepth                 int  `json:"max_query_depth,omitempty"`
