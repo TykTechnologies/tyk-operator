@@ -1,0 +1,51 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+  annotations:
+    ingress: tyk
+spec:
+  name: httpbin protected
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  use_standard_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: Authorization
+
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: httpbin
+spec:
+  name: Some other Security Policy
+  state: active
+  active: true
+  access_rights_array:
+    - name: httpbin
+      namespace: default
+      versions:
+        - Default
+
+  per: -1
+  quota_max: -1
+  quota_renewal_rate: -1
+  rate: -1
+  throttle_interval: -1
+  throttle_retry_limit: -1
+  max_query_depth: -1
+
+  key_expires_in: 0
+  tags: []
+
+  partitions:
+    quota: true
+    rate_limit: true
+    acl: true
+    complexity: false
+    per_api: false
