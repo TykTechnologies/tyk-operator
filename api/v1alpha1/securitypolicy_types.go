@@ -48,18 +48,18 @@ type SecurityPolicySpec struct {
 	IsInactive                    bool                        `json:"is_inactive,omitempty"`
 	AccessRightsArray             []AccessDefinition          `json:"access_rights_array"`
 	AccessRights                  map[string]AccessDefinition `json:"access_rights,omitempty"`
-	Rate                          int64                       `json:"rate"`
-	Per                           int64                       `json:"per"`
-	QuotaMax                      int64                       `json:"quota_max"`
-	QuotaRenewalRate              int64                       `json:"quota_renewal_rate"`
-	ThrottleInterval              int64                       `json:"throttle_interval"`
-	ThrottleRetryLimit            int                         `json:"throttle_retry_limit"`
-	MaxQueryDepth                 int                         `json:"max_query_depth"`
+	Rate                          int64                       `json:"rate,omitempty"`
+	Per                           int64                       `json:"per,omitempty"`
+	QuotaMax                      int64                       `json:"quota_max,omitempty"`
+	QuotaRenewalRate              int64                       `json:"quota_renewal_rate,omitempty"`
+	ThrottleInterval              int64                       `json:"throttle_interval,omitempty"`
+	ThrottleRetryLimit            int                         `json:"throttle_retry_limit,omitempty"`
+	MaxQueryDepth                 int                         `json:"max_query_depth,omitempty"`
 	HMACEnabled                   bool                        `json:"hmac_enabled,omitempty"`
 	EnableHTTPSignatureValidation bool                        `json:"enable_http_signature_validation,omitempty"`
 	Tags                          []string                    `json:"tags,omitempty"`
 	// KeyExpiresIn is the number of seconds till key expiry. For 1 hour is 3600. Default never expire or 0
-	KeyExpiresIn int64            `json:"key_expires_in"`
+	KeyExpiresIn int64            `json:"key_expires_in,omitempty"`
 	Partitions   PolicyPartitions `json:"partitions,omitempty"`
 }
 

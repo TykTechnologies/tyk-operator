@@ -18,6 +18,24 @@ var (
 	PolicyNotFoundError  = errors.New("policy not found")
 )
 
+func applyDefaults(spec *tykv1alpha1.SecurityPolicySpec) {
+	if spec.Rate == 0 || spec.Per == 0 {
+		spec.Rate = -1
+		spec.Per = -1
+	}
+	if spec.ThrottleInterval == 0 || spec.ThrottleRetryLimit == 0 {
+		spec.ThrottleInterval = -1
+		spec.ThrottleRetryLimit = -1
+	}
+	if spec.QuotaMax == 0 || spec.QuotaRenewalRate == 0 {
+		spec.QuotaMax = -1
+		spec.QuotaRenewalRate = -1
+	}
+	if spec.MaxQueryDepth == 0 {
+		spec.MaxQueryDepth = -1
+	}
+}
+
 func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec, namespacedName string) (*tykv1alpha1.SecurityPolicySpec, error) {
 	var err error
 
@@ -28,6 +46,8 @@ func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpe
 			return nil, errors.Wrap(err, "Unable to communicate with Client")
 		}
 	}
+
+	applyDefaults(spec)
 
 	if pol == nil {
 		// Create
