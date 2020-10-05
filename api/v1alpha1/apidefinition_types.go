@@ -601,9 +601,8 @@ type ApiDefinition struct {
 	Status ApiDefinitionStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:object:root=true
-
 // ApiDefinitionList contains a list of ApiDefinition
+// +kubebuilder:object:root=true
 type ApiDefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
