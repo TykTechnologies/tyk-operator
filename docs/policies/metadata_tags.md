@@ -1,8 +1,8 @@
-## Rate Limit
+## Meta Data & Tags
 
 This example deploys both an API and a Policy which protects that API.
 
-The Policy has meta data and tags being inserted.
+The Policy has metadata and tags applied through the CRD.
 
 ## 1. Deploy a protected API and the policy which protects it.
 
@@ -23,11 +23,14 @@ Here's the section we care about in the SecurityPolicy yaml:
     hello: world
 ```
 
+This injects two tags, `Hello` and `World`, as well as the following K:V pairs in meta data:
+
+-  `key:value`
+-  `hello:world`
+
 ## 2. Done!
 
-Create a key which grants access to the API and use it against the API.
-
-This key now inherits the tags and the meta data from the policy.
+We created a policy which has tags and meta data!
 
 ![img](./metadata_tags.png)
 
