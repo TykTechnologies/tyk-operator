@@ -6,6 +6,10 @@ import (
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
+var (
+	policyNamespacedName = "default/testPolicy"
+)
+
 func TestPol_All(t *testing.T) {
 	t.SkipNow()
 	c := getClient()
@@ -17,7 +21,6 @@ func TestPol_All(t *testing.T) {
 	for _, pol := range pols {
 		t.Logf("policy ID: %s, aName: %s, ratelimit per: %d per %d, accessRights api name: %s", pol.ID, pol.Name, pol.Rate, pol.Per, pol.AccessRights["41433797848f41a558c1573d3e55a410"].APIName)
 	}
-
 }
 
 func TestPol_GetOne(t *testing.T) {
@@ -25,18 +28,25 @@ func TestPol_GetOne(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
 	if err != nil && err.Error() != "policy id collision detected" {
 		t.Fatal(err.Error())
 	}
 
-	pol, err := c.SecurityPolicy().Get(newPol.ID)
+	pol, err := c.SecurityPolicy().Get(policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	if pol.ID != newPol.ID {
+	if pol == nil {
 		t.Fatal("Policy lookup failed.")
+	}
+
+	//cleanup
+	err = c.SecurityPolicy().Delete(policyNamespacedName)
+	if err != nil {
+		// error out
+		t.Fatal("Error cleanup up test, pol not deleted.")
 	}
 }
 
@@ -50,7 +60,8 @@ func TestPol_Create(t *testing.T) {
 
 	numPols := len(pols)
 	newPol := createPolicy()
-	_, err = c.SecurityPolicy().Create(newPol)
+
+	_, err = c.SecurityPolicy().Create(newPol, policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -59,6 +70,45 @@ func TestPol_Create(t *testing.T) {
 	if numPols+1 != len(newPols) {
 		t.Fatal("Should have 1 more policy")
 	}
+
+	//cleanup
+	err = c.SecurityPolicy().Delete(policyNamespacedName)
+	if err != nil {
+		// error out
+		t.Fatal("Error cleanup up test, pol not deleted.")
+	}
+}
+
+func TestPol_CreateIncludesUniqueTag(t *testing.T) {
+	t.SkipNow()
+	c := getClient()
+
+	newPol := createPolicy()
+	newPol.Tags = append(newPol.Tags, "hello-world", GetPolicyK8SName(policyNamespacedName))
+	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	pol, err := c.SecurityPolicy().Get(policyNamespacedName)
+	if pol == nil {
+		t.Fatal("Couldn't find policy")
+	}
+
+	if pol.Tags[0] != "hello-world" {
+		t.Fatal("Deleted an old tag, whoops!")
+	}
+
+	if pol.Tags[1] != GetPolicyK8SName(policyNamespacedName) {
+		t.Fatal("Didn't add the tag!")
+	}
+
+	//cleanup
+	err = c.SecurityPolicy().Delete(policyNamespacedName)
+	if err != nil {
+		// error out
+		t.Fatal("Error cleanup up test, pol not deleted.")
+	}
 }
 
 func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
@@ -66,16 +116,23 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	newPolTwo := createPolicy()
-	_, err = c.SecurityPolicy().Create(newPolTwo)
+	_, err = c.SecurityPolicy().Create(newPolTwo, policyNamespacedName)
 	if err == nil {
 		// error out
 		t.Fatal("Should've thrown an error!")
+	}
+
+	//cleanup
+	err = c.SecurityPolicy().Delete(policyNamespacedName)
+	if err != nil {
+		// error out
+		t.Fatal("Error cleanup up test, pol not deleted.")
 	}
 }
 
@@ -84,7 +141,9 @@ func TestPol_Update(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol)
+	newPol.Tags = append(newPol.Tags, "hello-world", GetPolicyK8SName(policyNamespacedName))
+
+	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
 	if err != nil && err.Error() != "policy id collision detected" {
 		t.Fatal(err.Error())
 	}
@@ -92,12 +151,12 @@ func TestPol_Update(t *testing.T) {
 	newRate := 11
 
 	newPol.Rate = int64(newRate)
-	err = c.SecurityPolicy().Update(newPol)
+	err = c.SecurityPolicy().Update(newPol, policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	fetchedPol, err := c.SecurityPolicy().Get(newPol.ID)
+	fetchedPol, err := c.SecurityPolicy().Get(policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -106,15 +165,19 @@ func TestPol_Update(t *testing.T) {
 		t.Fatal("Did not update the Rate Limit")
 	}
 
-}
+	if fetchedPol.Tags[0] != "hello-world" {
+		t.Fatal("Deleted an old tag, whoops!")
+	}
 
-func TestPol_Delete(t *testing.T) {
-	t.SkipNow()
-	c := getClient()
+	if fetchedPol.Tags[1] != GetPolicyK8SName(policyNamespacedName) {
+		t.Fatal("Didn't add the tag!")
+	}
 
-	_, err := c.SecurityPolicy().Create(createPolicy())
+	//cleanup
+	err = c.SecurityPolicy().Delete(policyNamespacedName)
 	if err != nil {
-		t.Fatal(err.Error())
+		// error out
+		t.Fatal("Error cleanup up test, pol not deleted.")
 	}
 }
 
@@ -135,7 +198,7 @@ func createPolicy() *v1.SecurityPolicySpec {
 	newPol.Name = "my new pol"
 	newPol.Rate = 10
 	newPol.Per = 60
-	//newPol.OrgID = "5e9d9544a1dcd60001d0ed20"
+
 	newPol.ID = "myid"
 	newPol.Active = true
 	newPol.AccessRights = make(map[string]v1.AccessDefinition)

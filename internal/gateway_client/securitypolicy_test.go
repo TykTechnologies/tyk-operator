@@ -6,6 +6,10 @@ import (
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
+var (
+	policyNamespacedName = "default/testPolicy"
+)
+
 func TestPol_All(t *testing.T) {
 	t.SkipNow()
 	c := getClient()
@@ -24,7 +28,7 @@ func TestPol_GetOne(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
 	if err != nil && err.Error() != "policy id collision detected" {
 		t.Fatal(err.Error())
 	}
@@ -53,7 +57,7 @@ func TestPol_Create(t *testing.T) {
 
 	numPols := len(pols)
 	newPol := createPolicy()
-	polId, err := c.SecurityPolicy().Create(newPol)
+	polId, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
 
 	if err != nil {
 		t.Fatal(err.Error())
@@ -74,7 +78,7 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 	_ = c.HotReload()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -82,7 +86,7 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 	_ = c.HotReload()
 
 	newPolTwo := createPolicy()
-	_, err = c.SecurityPolicy().Create(newPolTwo)
+	_, err = c.SecurityPolicy().Create(newPolTwo, policyNamespacedName)
 	if err == nil {
 		// error out
 		t.Fatal("Should've thrown an error!")
@@ -94,13 +98,13 @@ func TestPol_Update(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol)
+	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	newPol.Rate = 123
-	err = c.SecurityPolicy().Update(newPol)
+	err = c.SecurityPolicy().Update(newPol, policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -115,7 +119,7 @@ func TestPol_Delete(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	polId, err := c.SecurityPolicy().Create(createPolicy())
+	polId, err := c.SecurityPolicy().Create(createPolicy(), policyNamespacedName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
