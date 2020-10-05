@@ -6,7 +6,7 @@ Visit here to read more about Tyk security [policies](https://tyk.io/getting-sta
 | Feature  | Supported |
 | ----------- | --------- |
 | [API Access](./policies/api_access.md) | [⚠️](# "Requires testing") |
-| [Rate Limit, Throttling, Quotas](./config/samples/httpbin_global-headers.yaml) | ✅ |
+| [Rate Limit, Throttling, Quotas](./config/samples/httpbin_global-headers.yaml) | [⚠️](# "Requires testing") |
 | [Per API limit](./policies/per_api_limit.md) | [❌](# "Not yet supported") |
 | [Path based permissions](./policies/path_based_permissions.md) | [❌](# "Not yet supported") |
 | [Partitions](./policies/partitions.md) | [❌](# "Not yet supported") |

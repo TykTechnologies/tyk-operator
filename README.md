@@ -1,5 +1,10 @@
 # Tyk Operator
 
+## Docs
+
+[Middleware](./docs/middleware.md)
+[Security Policies](./docs/policies.md)
+
 ![Demo](./docs/img/demo.svg)
 
 ## Sample Configurations
@@ -38,9 +43,5 @@ spec:
   proxy:
     target_url: tcp://localhost:6379
 ```
-
-## Docs
-
-[Middleware](./docs/middleware.md)
 
 [Development Environment](./docs/development.md)
