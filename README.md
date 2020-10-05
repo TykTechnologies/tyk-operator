@@ -1,5 +1,11 @@
 # Tyk Operator
 
+The Tyk Operator is the [operator-sdk](https://github.com/operator-framework/operator-sdk) pattern for managing your Tyk environment via k8s native tooling.
+
+Tyk objects available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/):
+- [API definitions](./docs/api-definitions.md)
+- [Security Policies](./docs/policies.md)
+
 ![Demo](./docs/img/demo.svg)
 
 ## Sample Configurations
@@ -7,7 +13,7 @@
 ### HTTP Proxy
 
 ```yaml
-apiVersion: tyk.tyk.io/v1
+apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: httpbin
@@ -26,7 +32,7 @@ spec:
 ### TCP Proxy
 
 ```yaml
-apiVersion: tyk.tyk.io/v1
+apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: redis-tcp
@@ -39,8 +45,6 @@ spec:
     target_url: tcp://localhost:6379
 ```
 
-## Docs
-
-[Middleware](./docs/middleware.md)
+## Dev
 
 [Development Environment](./docs/development.md)

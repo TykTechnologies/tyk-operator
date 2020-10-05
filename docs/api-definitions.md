@@ -1,4 +1,8 @@
-# Middleware
+# API Definitions
+
+An [API Definitions](https://tyk.io/docs/getting-started/key-concepts/what-is-an-api-definition/) is a reverse proxy definition in the world of Tyk.
+
+Here is the list of currently supported plugins/middleware that you can apply in an [API definition](https://tyk.io/docs/getting-started/key-concepts/what-is-an-api-definition/).
 
 | Middleware  | Supported |
 | ----------- | --------- |
