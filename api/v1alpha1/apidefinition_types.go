@@ -168,13 +168,18 @@ type MethodTransformMeta struct {
 	ToMethod string `json:"to_method"`
 }
 
+type GenericField struct {
+	Interface interface{} `json:"schema"`
+}
+
 type ValidatePathMeta struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
-	//Schema    map[string]interface{} `json:"schema"`
-	SchemaB64 string `json:"schema_b64,omitempty"`
 	// Allows override of default 422 Unprocessible Entity response code for validation errors.
-	ErrorResponseCode int `json:"error_response_code"`
+	ErrorResponseCode int    `json:"error_response_code"`
+	Path              string `json:"path"`
+	Method            string `json:"method"`
+	SchemaB64         string `json:"schema_b64,omitempty"`
+
+	//Schema    ExtraFields `json:"schema,omitempty"`
 }
 
 type ExtendedPathsSet struct {

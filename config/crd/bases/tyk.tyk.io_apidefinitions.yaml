@@ -901,8 +901,6 @@ spec:
                                   path:
                                     type: string
                                   schema_b64:
-                                    description: Schema    map[string]interface{}
-                                      `json:"schema"`
                                     type: string
                                 required:
                                 - error_response_code
