@@ -404,6 +404,27 @@ spec:
                 required:
                 - target_url
                 type: object
+              response_processors:
+                description: SessionLifetime        int64               `json:"session_lifetime"`
+                  Internal               bool                `json:"internal"` AuthProvider           AuthProviderMeta    `json:"auth_provider"`
+                  SessionProvider        SessionProviderMeta `json:"session_provider"`
+                  //EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
+                  EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
+                  EnableIpWhiteListing      bool `json:"enable_ip_whitelisting"` //
+                  +optional AllowedIPs            []string            `json:"allowed_ips"`
+                  EnableIpBlacklisting  bool                `json:"enable_ip_blacklisting"`
+                  BlacklistedIPs        []string            `json:"blacklisted_ips"`
+                  DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
+                  ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"`
+                  // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
+                items:
+                  properties:
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               slug:
                 type: string
               use_keyless:

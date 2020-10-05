@@ -406,7 +406,7 @@ type APIDefinitionSpec struct {
 	//BlacklistedIPs        []string            `json:"blacklisted_ips"`
 	//DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
-	//ResponseProcessors    []ResponseProcessor `json:"response_processors"`
+	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
 	//// +optional
 	//CORS              CORS     `json:"CORS"`
 	//Domain            string   `json:"domain"`
