@@ -29,7 +29,6 @@ import (
 var apidefinitionlog = logf.Log.WithName("apidefinition-resource")
 
 func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	println("SetupWebhookWithManager")
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(in).
 		Complete()
@@ -37,8 +36,7 @@ func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1-apidefinition,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,verbs=create;update,versions=v1,name=mapidefinition.kb.io
-
+// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-apidefinition,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,verbs=create;update,versions=v1alpha1,name=mapidefinition.kb.io
 var _ webhook.Defaulter = &ApiDefinition{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
@@ -86,8 +84,7 @@ func (in *ApiDefinition) Default() {
 	}
 }
 
-// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-tyk-tyk-io-v1-apidefinition,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,versions=v1,name=vapidefinition.kb.io
+// +kubebuilder:webhook:verbs=create;update,path=/validate-tyk-tyk-io-v1alpha1-apidefinition,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,versions=v1alpha1,name=vapidefinition.kb.io
 
 var _ webhook.Validator = &ApiDefinition{}
 
