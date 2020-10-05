@@ -31,9 +31,9 @@ spec:
         name: manager
         env:
           - name: TYK_URL
-            value: https://2e72f1d49eac.ngrok.io
+            value: https://7e5b143565e9.ngrok.io
           - name: TYK_AUTH
-            value: b65037728c5642ac610a6fa06831441e
+            value: d91bd150ff5d42a74fe1f8cf981fbfe8
           - name: TYK_ORG
             value: 5d67b96d767e02015ea84a6f
           - name: TYK_MODE
