@@ -2,32 +2,36 @@
 
 This example deploys both an API and a Policy which protects that API.
 
-The Policy has rate limiting, quotas, and throttling turned on.
+The Policy has meta data and tags being inserted.
 
 ## 1. Deploy a protected API and the policy which protects it.
 
 ```curl
-$ kubectl apply -f ratelimit.yaml
+$ kubectl apply -f metadata_tags.yaml
 apidefinition.tyk.tyk.io/httpbin created
 securitypolicy.tyk.tyk.io/httpbin created
 ```
 
 Here's the section we care about in the SecurityPolicy yaml:
 ```
-  quota_max: 10
-  quota_renewal_rate: 60
-  rate: 5
-  per: 5
-  throttle_interval: 2
-  throttle_retry_limit: 2
+  tags:
+    - Hello
+    - World
+
+  meta_data:
+    key: value
+    hello: world
 ```
 
 ## 2. Done!
 
 Create a key which grants access to the API and use it against the API.
 
-This key now inherits the rate limit values from the poolicy.
+This key now inherits the tags and the meta data from the policy.
 
+![img](./metadata_tags.png)
+
+Note: Ignore the `SecurityPolicy-default/httpbin` tag, that is automatically added by the operator and required.
 
 ## cleanup
 Delete both the policy & httpbin CRDs:

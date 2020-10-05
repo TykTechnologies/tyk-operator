@@ -1,0 +1,41 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+  annotations:
+    ingress: tyk
+spec:
+  name: httpbin protected
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  use_standard_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: Authorization
+
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: httpbin
+spec:
+  name: Metadata Tags Pol
+  state: active
+  active: true
+  access_rights_array:
+    - name: httpbin
+      namespace: default
+      versions:
+        - Default
+
+  tags:
+    - Hello
+    - World
+
+  meta_data:
+    key: value
+    hello: world

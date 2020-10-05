@@ -20,9 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // SecurityPolicySpec defines the desired state of SecurityPolicy
 type SecurityPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -71,7 +68,7 @@ type SecurityPolicySpec struct {
 	KeyExpiresIn int64            `json:"key_expires_in,omitempty"`
 	Partitions   PolicyPartitions `json:"partitions,omitempty"`
 	//LastUpdated                   string                           `json:"last_updated"`
-	//MetaData                      map[string]interface{}           `json:"meta_data"`
+	MetaData map[string]string `json:"meta_data,omitempty"`
 	//GraphQL                       map[string]GraphAccessDefinition `json:"graphql_access_rights"`
 }
 
