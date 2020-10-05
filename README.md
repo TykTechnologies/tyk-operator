@@ -13,7 +13,7 @@ Tyk objects available as [CRDs](https://kubernetes.io/docs/concepts/extend-kuber
 ### HTTP Proxy
 
 ```yaml
-apiVersion: tyk.tyk.io/v1
+apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: httpbin
@@ -32,7 +32,7 @@ spec:
 ### TCP Proxy
 
 ```yaml
-apiVersion: tyk.tyk.io/v1
+apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: redis-tcp

@@ -10,13 +10,6 @@ apidefinition.tyk.tyk.io/httpbin created
 securitypolicy.tyk.tyk.io/httpbin created
 ```
 
-## 2. Deploy the [policy](./api_access.md) which protects it. 
-
-```
-$ kubectl apply -f httpbin_protected_policy.yaml
-apidefinition.tyk.tyk.io/httpbin created
-```
-
-## 3. Done!
+## 2. Done!
 
 Create a key which grants access to the API and use it against the API.
