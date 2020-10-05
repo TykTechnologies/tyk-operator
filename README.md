@@ -1,5 +1,11 @@
 # Tyk Operator
 
+The Tyk Operator is the [operator-sdk](https://github.com/operator-framework/operator-sdk) pattern managing your Tyk environment via k8s native tooling.
+
+Tyk objects available as CRDs:
+- [API Definitions](https://tyk.io/docs/getting-started/key-concepts/what-is-an-api-definition/)
+- [Security Policies](https://tyk.io/getting-started/key-concepts/what-is-a-security-policy/)
+
 ![Demo](./docs/img/demo.svg)
 
 ## Sample Configurations
