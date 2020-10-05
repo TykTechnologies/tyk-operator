@@ -5,13 +5,10 @@ repo: github.com/TykTechnologies/tyk-operator
 resources:
 - group: tyk
   kind: Gateway
-  version: v1
-- group: tyk
-  kind: Middleware
-  version: v1
+  version: v1alpha1
 - group: tyk
   kind: ApiDefinition
-  version: v1
+  version: v1alpha1
 - group: tyk
   kind: SecurityPolicy
   version: v1
