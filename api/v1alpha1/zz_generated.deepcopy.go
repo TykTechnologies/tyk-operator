@@ -76,7 +76,6 @@ func (in *AccessDefinition) DeepCopyInto(out *AccessDefinition) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	out.Limit = in.Limit
 	if in.AllowedURLs != nil {
 		in, out := &in.AllowedURLs, &out.AllowedURLs
 		*out = make([]AccessSpec, len(*in))
