@@ -1,4 +1,4 @@
-apiVersion: tyk.tyk.io/v1
+apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: httpbin
@@ -16,13 +16,3 @@ spec:
     pre:
       - name: "exampleJavaScriptMiddlewarePreHook"
         path: "middleware/example-javascript-middleware.js"
-  version_data:
-    default_version: Default
-    not_versioned: true
-    versions:
-      Default:
-        name: Default
-        paths:
-          black_list: [ ]
-          ignored: [ ]
-          white_list: [ ]
