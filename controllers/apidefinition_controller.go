@@ -129,6 +129,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	// TODO: this belongs in webhook or CR will be wrong
 	// we only care about this for OSS
 	newSpec.APIID = apiIDEncoded
+	r.applyDefaults(newSpec)
 
 	_, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
 	if err != nil {
