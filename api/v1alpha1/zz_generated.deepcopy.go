@@ -39,6 +39,7 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 	}
 	out.VersionDefinition = in.VersionDefinition
 	in.VersionData.DeepCopyInto(&out.VersionData)
+	in.CustomMiddleware.DeepCopyInto(&out.CustomMiddleware)
 	in.CacheOptions.DeepCopyInto(&out.CacheOptions)
 }
 

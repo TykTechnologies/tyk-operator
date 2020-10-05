@@ -247,8 +247,8 @@ type EventHandlerMetaConfig struct {
 type MiddlewareDefinition struct {
 	Name           string `json:"name"`
 	Path           string `json:"path"`
-	RequireSession bool   `json:"require_session"`
-	RawBodyOnly    bool   `json:"raw_body_only"`
+	RequireSession bool   `json:"require_session,omitempty"`
+	RawBodyOnly    bool   `json:"raw_body_only,omitempty"`
 }
 
 type MiddlewareIdExtractor struct {
@@ -258,13 +258,13 @@ type MiddlewareIdExtractor struct {
 }
 
 type MiddlewareSection struct {
-	Pre         []MiddlewareDefinition `json:"pre"`
-	Post        []MiddlewareDefinition `json:"post"`
-	PostKeyAuth []MiddlewareDefinition `json:"post_key_auth"`
-	AuthCheck   MiddlewareDefinition   `json:"auth_check"`
-	Response    []MiddlewareDefinition `json:"response"`
+	Pre         []MiddlewareDefinition `json:"pre,omitempty"`
+	Post        []MiddlewareDefinition `json:"post,omitempty"`
+	PostKeyAuth []MiddlewareDefinition `json:"post_key_auth,omitempty"`
+	AuthCheck   MiddlewareDefinition   `json:"auth_check,omitempty"`
+	Response    []MiddlewareDefinition `json:"response,omitempty"`
 	Driver      MiddlewareDriver       `json:"driver"`
-	IdExtractor MiddlewareIdExtractor  `json:"id_extractor"`
+	IdExtractor MiddlewareIdExtractor  `json:"id_extractor,omitempty"`
 }
 
 type CacheOptions struct {
@@ -390,7 +390,7 @@ type APIDefinitionSpec struct {
 	//
 	//DisableRateLimit       bool                `json:"disable_rate_limit"`
 	//DisableQuota           bool                `json:"disable_quota"`
-	//CustomMiddleware       MiddlewareSection   `json:"custom_middleware"`
+	CustomMiddleware MiddlewareSection `json:"custom_middleware,omitempty"`
 	//CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
 	CacheOptions CacheOptions `json:"cache_options,omitempty"`
 	//SessionLifetime        int64               `json:"session_lifetime"`

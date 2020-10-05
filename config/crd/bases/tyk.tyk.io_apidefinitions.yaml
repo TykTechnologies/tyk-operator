@@ -143,11 +143,7 @@ spec:
                   type: object
                 type: object
               cache_options:
-                description: "//UptimeTests                UptimeTests           `json:\"uptime_tests\"`
-                  \n DisableRateLimit       bool                `json:\"disable_rate_limit\"`
-                  DisableQuota           bool                `json:\"disable_quota\"`
-                  CustomMiddleware       MiddlewareSection   `json:\"custom_middleware\"`
-                  CustomMiddlewareBundle string              `json:\"custom_middleware_bundle\"`"
+                description: CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
                 properties:
                   cache_all_safe_requests:
                     description: CacheAllSafeRequests caches responses to (GET, HEAD,
@@ -185,6 +181,104 @@ spec:
                     type: boolean
                 required:
                 - cache_timeout
+                type: object
+              custom_middleware:
+                description: "//UptimeTests                UptimeTests           `json:\"uptime_tests\"`
+                  \n DisableRateLimit       bool                `json:\"disable_rate_limit\"`
+                  DisableQuota           bool                `json:\"disable_quota\"`"
+                properties:
+                  auth_check:
+                    properties:
+                      name:
+                        type: string
+                      path:
+                        type: string
+                      raw_body_only:
+                        type: boolean
+                      require_session:
+                        type: boolean
+                    required:
+                    - name
+                    - path
+                    type: object
+                  driver:
+                    type: string
+                  id_extractor:
+                    properties:
+                      extract_from:
+                        type: string
+                      extract_with:
+                        type: string
+                    required:
+                    - extract_from
+                    - extract_with
+                    type: object
+                  post:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                  post_key_auth:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                  pre:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                  response:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                required:
+                - driver
                 type: object
               definition:
                 description: 'UseBasicAuth               bool                  `json:"use_basic_auth"`
