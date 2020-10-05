@@ -12,18 +12,18 @@ func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	return nil, nil
 }
 
-func (p SecurityPolicy) Get(polId string) (*v1.SecurityPolicySpec, error) {
+func (p SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, error) {
 	return nil, nil
 }
 
-func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
+func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec, namespacedName string) (string, error) {
 	return "", nil
 }
 
-func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
+func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec, namespacedName string) error {
 	return nil
 }
 
-func (p SecurityPolicy) Delete(id string) error {
+func (p SecurityPolicy) Delete(namespacedName string) error {
 	return nil
 }

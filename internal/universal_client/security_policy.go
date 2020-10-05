@@ -7,23 +7,23 @@ import (
 
 type UniversalSecurityPolicy interface {
 	All() ([]tykv1alpha1.SecurityPolicySpec, error)
-	Get(polId string) (*tykv1alpha1.SecurityPolicySpec, error)
-	Create(def *tykv1alpha1.SecurityPolicySpec) (string, error)
-	Update(def *tykv1alpha1.SecurityPolicySpec) error
-	Delete(id string) error
+	Get(namespacedName string) (*tykv1alpha1.SecurityPolicySpec, error)
+	Create(def *tykv1alpha1.SecurityPolicySpec, namespacedName string) (string, error)
+	Update(def *tykv1alpha1.SecurityPolicySpec, namespacedName string) error
+	Delete(namespacedName string) error
 }
 
 var (
-	PolicyCollisionError = errors.New("policy id collision detected")
+	PolicyCollisionError = errors.New("policy already exists")
 	PolicyNotFoundError  = errors.New("policy not found")
 )
 
-func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec) (*tykv1alpha1.SecurityPolicySpec, error) {
+func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec, namespacedName string) (*tykv1alpha1.SecurityPolicySpec, error) {
 	var err error
 
-	pol, err := c.SecurityPolicy().Get(spec.ID)
+	pol, err := c.SecurityPolicy().Get(namespacedName)
 	if err != nil {
-		// should return nil, http.401 if policy doesn't exist
+		// should return "nil, http.401" if policy doesn't exist
 		if err != PolicyNotFoundError {
 			return nil, errors.Wrap(err, "Unable to communicate with Client")
 		}
@@ -31,15 +31,14 @@ func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpe
 
 	if pol == nil {
 		// Create
-		_, err := c.SecurityPolicy().Create(spec)
+		_, err := c.SecurityPolicy().Create(spec, namespacedName)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create policy")
 		}
 	} else {
 		// Update
-		spec.OrgID = pol.OrgID
-		err = c.SecurityPolicy().Update(spec)
-		pol, err = c.SecurityPolicy().Get(spec.ID)
+		err = c.SecurityPolicy().Update(spec, namespacedName)
+		pol, err = c.SecurityPolicy().Get(namespacedName)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update api")
 		}
