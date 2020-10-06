@@ -198,8 +198,8 @@ type ExtendedPathsSet struct {
 	MethodTransforms        []MethodTransformMeta `json:"method_transforms,omitempty"`
 	TrackEndpoints          []TrackEndpointMeta   `json:"track_endpoints,omitempty"`
 	DoNotTrackEndpoints     []TrackEndpointMeta   `json:"do_not_track_endpoints,omitempty"`
-	ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
-	Internal                []InternalMeta        `json:"internal,omitempty"`
+	//ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"` //  Breaking integration test?
+	Internal []InternalMeta `json:"internal,omitempty"`
 }
 
 type VersionInfo struct {
