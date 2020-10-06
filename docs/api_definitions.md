@@ -3,7 +3,9 @@
 An API Definition describes the configuration of an API. It instructs Tyk Gateway how to configure the API.
 
 ✅ - Fully supported
+
 ⚠️ - Requires documentation / testing
+
 ❌️ - Not currently supported
 
 ## API Level
@@ -24,7 +26,7 @@ TBA
 
 ### API Webhooks
 
-| [Webhooks](./api_definitions/webhooks.md) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/62) |
+- [Webhooks](./api_definitions/webhooks.md) - [❌️](https://github.com/TykTechnologies/tyk-operator/issues/62) 
 
 ### Custom Plugins
 
