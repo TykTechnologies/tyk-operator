@@ -23,7 +23,7 @@ kind: SecurityPolicy
 metadata:
   name: httpbin
 spec:
-  name: Httpbin Security Policy
+  name: Rate Limit, Quota and Throttling policy
   state: active
   active: true
   access_rights_array:
@@ -31,3 +31,10 @@ spec:
       namespace: default
       versions:
         - Default
+
+  quota_max: 10
+  quota_renewal_rate: 60
+  rate: 5
+  per: 5
+  throttle_interval: 2
+  throttle_retry_limit: 2

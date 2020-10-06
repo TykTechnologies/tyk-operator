@@ -20,9 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // SecurityPolicySpec defines the desired state of SecurityPolicy
 type SecurityPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -45,22 +42,34 @@ type SecurityPolicySpec struct {
 	// Active must be set to `true` for Tyk to load the security policy into memory.
 	Active bool `json:"active"`
 	// IsInactive applies to the key itself. Allows enabling or disabling the policy without deleting it.
-	IsInactive                    bool                        `json:"is_inactive,omitempty"`
-	AccessRightsArray             []AccessDefinition          `json:"access_rights_array"`
-	AccessRights                  map[string]AccessDefinition `json:"access_rights,omitempty"`
-	Rate                          int64                       `json:"rate"`
-	Per                           int64                       `json:"per"`
-	QuotaMax                      int64                       `json:"quota_max"`
-	QuotaRenewalRate              int64                       `json:"quota_renewal_rate"`
-	ThrottleInterval              int64                       `json:"throttle_interval"`
-	ThrottleRetryLimit            int                         `json:"throttle_retry_limit"`
-	MaxQueryDepth                 int                         `json:"max_query_depth"`
-	HMACEnabled                   bool                        `json:"hmac_enabled,omitempty"`
-	EnableHTTPSignatureValidation bool                        `json:"enable_http_signature_validation,omitempty"`
-	Tags                          []string                    `json:"tags,omitempty"`
+	IsInactive        bool                        `json:"is_inactive,omitempty"`
+	AccessRightsArray []AccessDefinition          `json:"access_rights_array"`
+	AccessRights      map[string]AccessDefinition `json:"access_rights,omitempty"`
+	// Rate limit per X seconds (x="Per"), omit or "-1" for unlimited
+	Rate int64 `json:"rate,omitempty"`
+	// To be used in conjunction with "Rate".  Per seconds. 1 minute=60.  1 hour=3600
+	// omit or "-1" for unlimited
+	Per int64 `json:"per,omitempty"`
+	// Value of Quota allowed, omit or "-1" for unlimited
+	QuotaMax int64 `json:"quota_max,omitempty"`
+	// Value reset length, in seconds, omit or "-1" for unlimited
+	QuotaRenewalRate int64 `json:"quota_renewal_rate,omitempty"`
+	// If rate limited, how many seconds to retry a request for.  omit or "-1" for unlimited
+	ThrottleInterval int64 `json:"throttle_interval,omitempty"`
+	// Number of retries before returning error.   omit or "-1" for unlimited
+	ThrottleRetryLimit int `json:"throttle_retry_limit,omitempty"`
+	// Max depth of a GraphQL query
+	MaxQueryDepth                 int  `json:"max_query_depth,omitempty"`
+	HMACEnabled                   bool `json:"hmac_enabled,omitempty"`
+	EnableHTTPSignatureValidation bool `json:"enable_http_signature_validation,omitempty"`
+	// Custom tags to apply to the key, get transfered to the analytics
+	Tags []string `json:"tags,omitempty"`
 	// KeyExpiresIn is the number of seconds till key expiry. For 1 hour is 3600. Default never expire or 0
-	KeyExpiresIn int64            `json:"key_expires_in"`
+	KeyExpiresIn int64            `json:"key_expires_in,omitempty"`
 	Partitions   PolicyPartitions `json:"partitions,omitempty"`
+	//LastUpdated                   string                           `json:"last_updated"`
+	MetaData map[string]string `json:"meta_data,omitempty"`
+	//GraphQL                       map[string]GraphAccessDefinition `json:"graphql_access_rights"`
 }
 
 // from tyk/session.go

@@ -23,7 +23,7 @@ kind: SecurityPolicy
 metadata:
   name: httpbin
 spec:
-  name: Httpbin Security Policy
+  name: Metadata Tags Pol
   state: active
   active: true
   access_rights_array:
@@ -31,3 +31,11 @@ spec:
       namespace: default
       versions:
         - Default
+
+  tags:
+    - Hello
+    - World
+
+  meta_data:
+    key: value
+    hello: world

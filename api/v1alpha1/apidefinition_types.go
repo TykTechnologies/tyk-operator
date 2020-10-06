@@ -168,9 +168,9 @@ type MethodTransformMeta struct {
 	ToMethod string `json:"to_method"`
 }
 
-type GenericField struct {
-	Interface interface{} `json:"schema"`
-}
+//type GenericField struct {
+//	Interface interface{} `json:"schema"`
+//}
 
 type ValidatePathMeta struct {
 	// Allows override of default 422 Unprocessible Entity response code for validation errors.
@@ -203,8 +203,8 @@ type ExtendedPathsSet struct {
 	MethodTransforms        []MethodTransformMeta `json:"method_transforms,omitempty"`
 	TrackEndpoints          []TrackEndpointMeta   `json:"track_endpoints,omitempty"`
 	DoNotTrackEndpoints     []TrackEndpointMeta   `json:"do_not_track_endpoints,omitempty"`
-	ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
-	Internal                []InternalMeta        `json:"internal,omitempty"`
+	//ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"` //  Breaking integration test?
+	Internal []InternalMeta `json:"internal,omitempty"`
 }
 
 type VersionInfo struct {
