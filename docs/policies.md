@@ -10,4 +10,4 @@ Visit here to read more about Tyk security [policies](https://tyk.io/getting-sta
 | [Meta Data & Tags](./policies/metadata_tags.md) | ✅ |
 | [Path based permissions](./policies/path_based_permissions.md) | [⚠️](# "Requires testing") |
 | [Partitions](./policies/partitions.md) | [⚠️](# "Requires testing") |
-| [Per API limit](./policies/per_api_limit.md) | [❌](# "Not yet supported") |
+| [Per API limit](./policies/per_api_limit.md) | [❌](https://github.com/TykTechnologies/tyk-operator/issues/66) |
