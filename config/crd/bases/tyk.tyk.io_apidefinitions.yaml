@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.3.0
+    controller-gen.kubebuilder.io/version: (devel)
   creationTimestamp: null
   name: apidefinitions.tyk.tyk.io
 spec:
@@ -507,21 +507,31 @@ spec:
                             circuit_breakers:
                               items:
                                 properties:
+                                  disable_half_open_state:
+                                    type: boolean
                                   method:
                                     type: string
                                   path:
                                     type: string
                                   return_to_service_after:
+                                    description: ReturnToServiceAfter represents the
+                                      time in seconds to return back to the service
                                     type: integer
                                   samples:
-                                    description: ThresholdPercent     int64    `json:"threshold_percent"`
+                                    description: Samples defines the number of requests
+                                      to base the ThresholdPercent on
                                     format: int64
                                     type: integer
+                                  threshold_percent:
+                                    description: ThresholdPercent is the percentage
+                                      of requests that fail before breaker is tripped
+                                    type: float64
                                 required:
                                 - method
                                 - path
                                 - return_to_service_after
                                 - samples
+                                - threshold_percent
                                 type: object
                               type: array
                             do_not_track_endpoints:

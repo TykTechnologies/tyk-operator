@@ -7,7 +7,9 @@ Here is the list of currently supported plugins/middleware that you can apply in
 | Middleware  | Supported |
 | ----------- | --------- |
 | [Cache](./../config/samples/httpbin_cache.yaml) | ✅ |
+| [Circuit Breaker](./../config/samples/httpbin_timeout.yaml) | [❌️](# "Incompatible types string vs float64") |
 | [Custom Plugins](./api_definitions/custom_plugin.md) | ✅ |
+| [Enforced Timeouts](./../config/samples/httpbin_timeout.yaml) | ✅ |
 | [Headers - Global Request Add](../config/samples/httpbin_global-headers.yaml) | ✅ |
 | [Headers - Global Request Remove](../config/samples/httpbin_global-headers.yaml) | ✅ |
 | [Headers - Global Response Add](../config/samples/httpbin_global-headers.yaml) | ✅ |
