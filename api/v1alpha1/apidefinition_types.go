@@ -117,9 +117,14 @@ type RequestSizeMeta struct {
 type CircuitBreakerMeta struct {
 	Path   string `json:"path"`
 	Method string `json:"method"`
-	//ThresholdPercent     int64    `json:"threshold_percent"`
-	Samples              int64 `json:"samples"`
-	ReturnToServiceAfter int   `json:"return_to_service_after"`
+
+	// ThresholdPercent is the percentage of requests that fail before breaker is tripped
+	ThresholdPercent string `json:"threshold_percent"`
+	// Samples defines the number of requests to base the ThresholdPercent on
+	Samples int64 `json:"samples"`
+	// ReturnToServiceAfter represents the time in seconds to return back to the service
+	ReturnToServiceAfter int  `json:"return_to_service_after"`
+	DisableHalfOpenState bool `json:"disable_half_open_state,omitempty"`
 }
 
 type StringRegexMap struct {
@@ -167,10 +172,6 @@ type MethodTransformMeta struct {
 	Method   string `json:"method"`
 	ToMethod string `json:"to_method"`
 }
-
-//type GenericField struct {
-//	Interface interface{} `json:"schema"`
-//}
 
 type ValidatePathMeta struct {
 	// Allows override of default 422 Unprocessible Entity response code for validation errors.
