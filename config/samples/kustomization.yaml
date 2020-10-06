@@ -3,4 +3,5 @@ resources:
 - tyk_v1_gateway.yaml
 - tyk_v1_apidefinition.yaml
 - tyk_v1_securitypolicy.yaml
+- tyk_v1alpha1_webhook.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

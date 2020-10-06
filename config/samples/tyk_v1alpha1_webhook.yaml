@@ -1,0 +1,6 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: Webhook
+metadata:
+  name: webhook-sample
+spec:
+  foo: bar

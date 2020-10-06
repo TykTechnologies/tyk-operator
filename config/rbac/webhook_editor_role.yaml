@@ -1,10 +1,8 @@
-
----
+# permissions for end users to edit webhooks.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
-  name: manager-role
+  name: webhook-editor-role
 rules:
 - apiGroups:
   - tyk.tyk.io
@@ -24,5 +22,3 @@ rules:
   - webhooks/status
   verbs:
   - get
-  - patch
-  - update
