@@ -14,7 +14,7 @@ Here is the list of currently supported plugins/middleware that you can apply in
 | [Headers - Global Request Remove](../config/samples/httpbin_global-headers.yaml) | ✅ |
 | [Headers - Global Response Add](../config/samples/httpbin_global-headers.yaml) | ✅ |
 | [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml) | ✅ |
-| [JSON Schema Validation](../config/samples/httpbin_validate.yaml) | [❌️](# "Unable to convert JSON Schema map[string]interface{} to CRD") |
+| [JSON Schema Validation](../config/samples/httpbin_validate.yaml) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/59) |
 | [Transform - Request Body](../config/samples/httpbin_transform.yaml) | ✅ |
 | [Transform - Response Body](../config/samples/httpbin_transform.yaml) | ✅ |
 | [Transform - Request Body JQ](../config/samples/httpbin_transform.yaml) | [⚠️](# "Requires JQ on Gateway Host & Testing") |
