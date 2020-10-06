@@ -6,7 +6,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 ⚠️ - Requires documentation / testing
 ❌️ - Not currently supported
 
-## API Security
+## API Level
 
 ### Authentication
 
@@ -22,7 +22,11 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 TBA
 
-## Custom Plugins
+### API Webhooks
+
+| [Webhooks](./api_definitions/webhooks.md) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/62) |
+
+### Custom Plugins
 
 | Type | Supported |
 | ----------- | --------- |
@@ -32,7 +36,7 @@ TBA
 | [Lua](./api_definitions/custom_plugin.md) | ⚠️ |
 | [Python](./api_definitions/custom_plugin.md) | ⚠️ |
 
-## Middleware
+## Endpoint level
 
 Here is the list of supported middleware that you can apply at the endpoint level.
 
