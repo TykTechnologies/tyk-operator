@@ -164,7 +164,13 @@ spec:
                 format: int64
                 type: integer
               max_query_depth:
+                description: Max depth of a GraphQL query
                 type: integer
+              meta_data:
+                additionalProperties:
+                  type: string
+                description: LastUpdated                   string                           `json:"last_updated"`
+                type: object
               name:
                 type: string
               org_id:
@@ -190,15 +196,21 @@ spec:
                 - rate_limit
                 type: object
               per:
+                description: To be used in conjunction with "Rate".  Per seconds.
+                  1 minute=60.  1 hour=3600 omit or "-1" for unlimited
                 format: int64
                 type: integer
               quota_max:
+                description: Value of Quota allowed, omit or "-1" for unlimited
                 format: int64
                 type: integer
               quota_renewal_rate:
+                description: Value reset length, in seconds, omit or "-1" for unlimited
                 format: int64
                 type: integer
               rate:
+                description: Rate limit per X seconds (x="Per"), omit or "-1" for
+                  unlimited
                 format: int64
                 type: integer
               state:
@@ -212,27 +224,25 @@ spec:
                 - deny
                 type: string
               tags:
+                description: Custom tags to apply to the key, get transfered to the
+                  analytics
                 items:
                   type: string
                 type: array
               throttle_interval:
+                description: If rate limited, how many seconds to retry a request
+                  for.  omit or "-1" for unlimited
                 format: int64
                 type: integer
               throttle_retry_limit:
+                description: Number of retries before returning error.   omit or "-1"
+                  for unlimited
                 type: integer
             required:
             - access_rights_array
             - active
-            - key_expires_in
-            - max_query_depth
             - name
-            - per
-            - quota_max
-            - quota_renewal_rate
-            - rate
             - state
-            - throttle_interval
-            - throttle_retry_limit
             type: object
           status:
             description: SecurityPolicyStatus defines the observed state of SecurityPolicy
