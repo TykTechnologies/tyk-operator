@@ -588,11 +588,6 @@ func (in *ExtendedPathsSet) DeepCopyInto(out *ExtendedPathsSet) {
 		*out = make([]TrackEndpointMeta, len(*in))
 		copy(*out, *in)
 	}
-	if in.ValidateJSON != nil {
-		in, out := &in.ValidateJSON, &out.ValidateJSON
-		*out = make([]ValidatePathMeta, len(*in))
-		copy(*out, *in)
-	}
 	if in.Internal != nil {
 		in, out := &in.Internal, &out.Internal
 		*out = make([]InternalMeta, len(*in))
