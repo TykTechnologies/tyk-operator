@@ -24,7 +24,7 @@ TBA
 
 ### API Webhooks
 
-| [Webhooks](./api_definitions/webhooks.md) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/60) |
+| [Webhooks](./api_definitions/webhooks.md) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
 ### Custom Plugins
 
