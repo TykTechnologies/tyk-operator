@@ -1,9 +1,10 @@
 # Tyk Operator
 
-The Tyk Operator is the [operator-sdk](https://github.com/operator-framework/operator-sdk) pattern for managing your Tyk environment via k8s native tooling.
+The Tyk Operator is the [operator-sdk](https://github.com/operator-framework/operator-sdk) pattern for managing your Tyk 
+environment via k8s native tooling.
 
 Tyk objects available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/):
-- [API definitions](./docs/api-definitions.md)
+- [API definitions](./docs/api_definitions.md)
 - [Security Policies](./docs/policies.md)
 
 ![Demo](./docs/img/demo.svg)
