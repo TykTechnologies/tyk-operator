@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.5
+    controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
   name: apidefinitions.tyk.tyk.io
 spec:
@@ -585,6 +585,8 @@ spec:
                                 type: object
                               type: array
                             internal:
+                              description: ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
+                                //  Breaking integration test?
                               items:
                                 properties:
                                   method:
@@ -887,25 +889,6 @@ spec:
                                 - path
                                 - rewrite_to
                                 - triggers
-                                type: object
-                              type: array
-                            validate_json:
-                              items:
-                                properties:
-                                  error_response_code:
-                                    description: Allows override of default 422 Unprocessible
-                                      Entity response code for validation errors.
-                                    type: integer
-                                  method:
-                                    type: string
-                                  path:
-                                    type: string
-                                  schema_b64:
-                                    type: string
-                                required:
-                                - error_response_code
-                                - method
-                                - path
                                 type: object
                               type: array
                             virtual:

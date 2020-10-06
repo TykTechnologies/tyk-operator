@@ -168,9 +168,9 @@ type MethodTransformMeta struct {
 	ToMethod string `json:"to_method"`
 }
 
-type GenericField struct {
-	Interface interface{} `json:"schema"`
-}
+//type GenericField struct {
+//	Interface interface{} `json:"schema"`
+//}
 
 type ValidatePathMeta struct {
 	// Allows override of default 422 Unprocessible Entity response code for validation errors.
