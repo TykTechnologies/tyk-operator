@@ -11,12 +11,12 @@ spec:
   selector:
     name: mongo
 ---
-apiVersion: v1
-kind: ReplicationController
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   labels:
     name: mongo
-  name: mongo-controller
+  name: mongo
 spec:
   replicas: 1
   template:
@@ -25,9 +25,12 @@ spec:
         name: mongo
     spec:
       containers:
-        - image: mongo
+        - image: mongo:latest
           name: mongo
           ports:
             - name: mongo
               containerPort: 27017
               hostPort: 27017
+  selector:
+    matchLabels:
+      name: mongo
