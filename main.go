@@ -22,17 +22,18 @@ import (
 	"os"
 	"strconv"
 
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
-	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
-	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
+	"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
+	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	//"github.com/TykTechnologies/tyk-operator/internal/gateway_client"
 	// +kubebuilder:scaffold:imports
 )
