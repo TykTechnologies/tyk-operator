@@ -525,7 +525,7 @@ spec:
                                   threshold_percent:
                                     description: ThresholdPercent is the percentage
                                       of requests that fail before breaker is tripped
-                                    type: float64
+                                    type: string
                                 required:
                                 - method
                                 - path
