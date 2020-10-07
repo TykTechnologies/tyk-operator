@@ -21,7 +21,7 @@ kubectl create configmap -n ${NAMESPACE} tyk-conf --from-file "${PRODIR}/gateway
 
 echo "getting dash license key"
 echo -n "${TYK_DB_LICENSEKEY}" > ./license.txt
-kubectl create secret generic dashboard -n ${NAMESPACE} --from-file=./license.txt
+kubectl create secret -n ${NAMESPACE} generic dashboard --from-file=./license.txt
 
 echo "deploying dashboard & gateway"
 kubectl apply -f "${PRODIR}/dashboard/dashboard.yaml" -n ${NAMESPACE}
@@ -33,3 +33,4 @@ echo "waiting for gateway"
 while [[ $(kubectl get pods -l name=tyk -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...gateway starting" && sleep 10; done
 
 kubectl logs svc/dashboard -n ${NAMESPACE}
+echo "${TYK_DB_LICENSEKEY}"
