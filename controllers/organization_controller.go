@@ -19,19 +19,20 @@ package controllers
 import (
 	"context"
 
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 // OrganizationReconciler reconciles a Organization object
 type OrganizationReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log                 logr.Logger
+	Scheme              *runtime.Scheme
+	AdminDashboardCient *dashboard_admin_client.Client
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=organizations,verbs=get;list;watch;create;update;patch;delete
@@ -39,9 +40,17 @@ type OrganizationReconciler struct {
 
 func (r *OrganizationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
-	_ = r.Log.WithValues("organization", req.NamespacedName)
+	log := r.Log.WithValues("organization", req.NamespacedName)
 
-	// your logic here
+	orgs, err := r.AdminDashboardCient.OrganizationAll()
+	if err != nil {
+		log.Error(err, "unable to list all orgs")
+		return ctrl.Result{}, err
+	}
+
+	for _, org := range orgs {
+		log.Info("org", "id", org.ID, "nane", org.OwnerName)
+	}
 
 	return ctrl.Result{}, nil
 }
