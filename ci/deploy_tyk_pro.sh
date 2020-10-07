@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 NAMESPACE=tykpro-control-plane
 PRODIR=${PWD}/ci/tyk-pro
 
@@ -11,9 +13,9 @@ kubectl apply -f "${PRODIR}/mongo/mongo.yaml" -n ${NAMESPACE}
 kubectl apply -f "${PRODIR}/redis" -n ${NAMESPACE}
 
 echo "waiting for redis"
-kubectl wait deployment/redis -n ${NAMESPACE} --for condition=available
+kubectl wait deployment/redis -n ${NAMESPACE} --for condition=available --timeout=60s
 echo "waiting for mongo"
-kubectl wait deployment/mongo -n ${NAMESPACE} --for condition=available
+kubectl wait deployment/mongo -n ${NAMESPACE} --for condition=available --timeout=60s
 
 echo "creating configmaps"
 kubectl create configmap -n ${NAMESPACE} dash-conf --from-file "${PRODIR}/dashboard/confs/dash.json"
