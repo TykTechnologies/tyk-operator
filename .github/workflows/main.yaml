@@ -4,6 +4,18 @@ on:
   pull_request
 
 jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout tyk-operator
+        uses: actions/checkout@v2
+      - name: install kubebuilder
+        uses: RyanSiu1995/kubebuilder-action@v1
+        with:
+          version: 2.3.1
+      - name: run tests
+        run: |
+          make test
   integration-tests:
     runs-on: ubuntu-latest
     steps:
@@ -17,46 +29,3 @@ jobs:
         shell: bash
         run: |
           sh ./ci/deploy_tyk_pro.sh
-#  unit-tests:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: checkout tyk-operator
-#        uses: actions/checkout@v2
-#      - name: install kubebuilder
-#        uses: RyanSiu1995/kubebuilder-action@v1
-#        with:
-#          version: 2.3.1
-#      - name: run tests
-#        run: |
-#          make test
-#  create-cluster:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: checkout tyk-operator
-#        uses: actions/checkout@v2
-#      - name: create kind cluster
-#        uses: helm/kind-action@v1.0.0
-#
-#      - name: install kubebuilder
-#        run: |
-#          export version=1.0.8 # latest stable version
-#          export arch=amd64
-#
-#          # download the release
-#          curl -L -O "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_darwin_${arch}.tar.gz"
-#
-#          # extract the archive
-#          tar -zxvf kubebuilder_${version}_darwin_${arch}.tar.gz
-#          mv kubebuilder_${version}_darwin_${arch} kubebuilder && sudo mv kubebuilder /usr/local/
-#
-#          # update your PATH to include /usr/local/kubebuilder/bin
-#          export PATH=$PATH:/usr/local/kubebuilder/bin
-#
-#      - name: install the custom resources
-#        run: |
-#          make install
-#
-#      - name: Deploy HttpBin
-#        run: |
-#          kubectl apply -f ./playground/httpbin/httpbin.yaml
-#          while [[ $(kubectl get pods -l app=httpbin -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for httpbin pod..." && sleep 10; done
