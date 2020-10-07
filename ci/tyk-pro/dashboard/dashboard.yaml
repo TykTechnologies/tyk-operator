@@ -8,8 +8,9 @@ spec:
   ports:
     - targetPort: 3000
       port: 3000
+      protocol: TCP
   selector:
-    app: dashboard
+    name: dashboard
   type: LoadBalancer
 ---
 apiVersion: apps/v1
@@ -32,14 +33,20 @@ spec:
         - name: dashboard
           image: tykio/tyk-dashboard:v3.0.1
           imagePullPolicy: Always
-          env:
-            - name: TYK_DB_LICENSEKEY
-              value: TYK_DB_LICENSEKEY
           command: [ "/opt/tyk-dashboard/tyk-analytics", "--conf=/etc/tyk-dashboard/dash.json" ]
           workingDir: /opt/tyk-dashboard
+          env:
+            - name: TYK_DB_LICENSEKEY
+              valueFrom:
+                secretKeyRef:
+                  name: dashboard
+                  key: license.txt
           volumeMounts:
             - name: dash-conf
               mountPath: /etc/tyk-dashboard
+#            - name: dashboard
+#              mountPath: "/etc/secrets"
+#              readOnly: true
           ports:
             - containerPort: 3000
       volumes:
@@ -49,5 +56,8 @@ spec:
             items:
               - key: dash.json
                 path: dash.json
+#        - name: dashboard
+#          secret:
+#            secretName: dashboard
         - name: tyk-app-dummy
           emptyDir: { }

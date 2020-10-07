@@ -4,18 +4,31 @@ on:
   pull_request
 
 jobs:
-  unit-tests:
+  integration-tests:
     runs-on: ubuntu-latest
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
-      - name: install kubebuilder
-        uses: RyanSiu1995/kubebuilder-action@v1
-        with:
-          version: 2.3.1
-      - name: run tests
+      - name: create kind cluster
+        uses: helm/kind-action@v1.0.0
+      - name: deploy tyk
+        env:
+          TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
+        shell: bash
         run: |
-          make test
+          sh ./ci/deploy_tyk_pro.sh
+#  unit-tests:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: checkout tyk-operator
+#        uses: actions/checkout@v2
+#      - name: install kubebuilder
+#        uses: RyanSiu1995/kubebuilder-action@v1
+#        with:
+#          version: 2.3.1
+#      - name: run tests
+#        run: |
+#          make test
 #  create-cluster:
 #    runs-on: ubuntu-latest
 #    steps:
@@ -42,15 +55,6 @@ jobs:
 #      - name: install the custom resources
 #        run: |
 #          make install
-#
-#      - name: deploy tyk & dependencies
-#        run: |
-#          kubectl create configmap tyk-conf --from-file ./playground/gateway/confs/tyk.json
-#          kubectl apply -f ./playground/redis/redis.yaml
-#          while [[ $(kubectl get pods -l app=redis -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for redis pod..." && sleep 10; done
-#          kubectl apply -f ./playground/gateway/deployment.yaml
-#          kubectl apply -f ./playground/gateway/service.yaml
-#          while [[ $(kubectl get pods -l app=tyk -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for tyk gateway pod..." && sleep 10; done
 #
 #      - name: Deploy HttpBin
 #        run: |

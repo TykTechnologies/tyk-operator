@@ -1,0 +1,115 @@
+{
+  "oauth_redirect_uri_separator": ";",
+  "enable_http_profiler": false,
+  "memory_ballast_gb": 5,
+  "listen_address": "",
+  "listen_port": 8081,
+  "secret": "foo",
+  "node_secret": "foo",
+  "template_path": "templates",
+  "tyk_js_path": "./middleware/sha256sum.js",
+  "middleware_path": "middleware",
+  "disable_ports_whitelist": true,
+  "policies": {
+    "policy_source": "service",
+    "policy_connection_string": "http://dashboard.tykpro-controlpane.svc.cluster.local:3000",
+    "policy_record_name": "tyk_policies",
+    "allow_explicit_policy_id": true
+  },
+  "use_db_app_configs": true,
+  "db_app_conf_options": {
+    "connection_string": "http://dashboard.tykpro-controlpane.svc.cluster.local:3000",
+    "node_is_segmented": false,
+    "tags": [
+      "private"
+    ]
+  },
+  "disable_dashboard_zeroconf": true,
+  "app_path": "apps/",
+  "storage": {
+    "type": "redis",
+    "host": "redis.tykpro-control-plane.svc.cluster.local",
+    "port": 6379,
+    "hosts": null,
+    "username": "",
+    "password": "",
+    "database": 0,
+    "optimisation_max_idle": 2000,
+    "optimisation_max_active": 4000,
+    "enable_cluster": false,
+    "use_ssl": false,
+    "ssl_insecure_skip_verify": true
+  },
+  "enable_analytics": false,
+  "analytics_config": {
+    "type": "",
+    "ignored_ips": null,
+    "enable_detailed_recording": true,
+    "enable_geo_ip": false,
+    "geo_ip_db_path": "./geoip/GeoLite2-Country.mmdb",
+    "normalise_urls": {
+      "enabled": false,
+      "normalise_uuids": true,
+      "normalise_numbers": true,
+      "custom_patterns": []
+    },
+    "pool_size": 0,
+    "records_buffer_size": 0,
+    "storage_expiration_time": 60
+  },
+  "optimisations_use_async_session_write": false,
+  "session_update_pool_size": 0,
+  "session_update_buffer_size": 0,
+  "allow_master_keys": false,
+  "hash_keys": false,
+  "enforce_org_data_age": true,
+  "enforce_org_data_detail_logging": true,
+  "experimental_process_org_off_thread": true,
+  "enable_non_transactional_rate_limiter": true,
+  "http_server_options": {
+    "override_defaults": false,
+    "read_timeout": 0,
+    "write_timeout": 0,
+    "use_ssl": false,
+    "use_ssl_le": false,
+    "enable_http2": true,
+    "ssl_insecure_skip_verify": true,
+    "enable_websockets": true,
+    "ssl_certificates": null,
+    "server_name": "gateway.ahmet",
+    "min_version": 772,
+    "flush_interval": 1,
+    "skip_url_cleaning": false,
+    "skip_target_path_escaping": false,
+    "ssl_ciphers": null
+  },
+  "proxy_enable_http2": true,
+  "uptime_tests": {
+    "disable": false,
+    "config": {
+      "failure_trigger_sample_size": 0,
+      "time_wait": 0,
+      "checker_pool_size": 0,
+      "enable_uptime_analytics": true
+    }
+  },
+  "hostname": "",
+  "enable_api_segregation": false,
+  "control_api_hostname": "",
+  "control_api_port": 8081,
+  "enable_custom_domains": true,
+  "enable_jsvm": true,
+  "coprocess_options": {
+    "enable_coprocess": false,
+    "coprocess_grpc_server": "tcp://:9111"
+  },
+  "pid_file_location": "./tyk-gateway.pid",
+  "allow_insecure_configs": true,
+  "bundle_base_url": "http://localhost:8888/",
+  "allow_remote_config": true,
+  "max_idle_connections": 500,
+  "max_idle_connections_per_host": 6000,
+  "reload_wait_time": 0,
+  "proxy_ssl_insecure_skip_verify": true,
+  "enable_key_logging": true
+}
