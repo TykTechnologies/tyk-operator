@@ -85,33 +85,24 @@ func (c Client) OrganizationAll() ([]v1alpha1.OrganizationSpec, error) {
 	return orgsResponse.Organizations, nil
 }
 
-func (c Client) OrganizationCreate() ([]v1alpha1.OrganizationSpec, error) {
+func (c Client) OrganizationCreate(spec *v1alpha1.OrganizationSpec) (string, error) {
 	sess := grequests.NewSession(c.opts)
 
 	fullPath := JoinUrl(c.url, endpointOrganizations)
 
-	// -2 means get all pages
-	queryStruct := struct {
-		Pages int `url:"p"`
-	}{
-		Pages: -2,
-	}
-
-	sess.RequestOptions.QueryStruct = queryStruct
-
-	res, err := sess.Get(fullPath, nil)
+	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: spec})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
+		return "", fmt.Errorf("error creating org: %d", res.StatusCode)
 	}
 
-	var orgsResponse OrganizationsResponse
-	if err := res.JSON(&orgsResponse); err != nil {
-		return nil, err
+	var createOrgResponse CreateOrganizationResponse
+	if err := res.JSON(&createOrgResponse); err != nil {
+		return "", err
 	}
 
-	return orgsResponse.Organizations, nil
+	return createOrgResponse.Meta, nil
 }

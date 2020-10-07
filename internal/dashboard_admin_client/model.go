@@ -7,3 +7,9 @@ import (
 type OrganizationsResponse struct {
 	Organizations []v1alpha1.OrganizationSpec `json:"organisations"`
 }
+
+type CreateOrganizationResponse struct {
+	Status  string `json:"Status"`
+	Message string `json:"message"`
+	Meta    string `json:"meta"`
+}
