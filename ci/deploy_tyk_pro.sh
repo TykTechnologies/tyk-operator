@@ -11,9 +11,11 @@ kubectl apply -f "${PRODIR}/mongo/mongo.yaml" -n ${NAMESPACE}
 kubectl apply -f "${PRODIR}/redis" -n ${NAMESPACE}
 
 echo "waiting for redis"
-while [[ $(kubectl get pods -l name=redis -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...redis starting" && sleep 10; done
+kubectl wait deployment/redis -n ${NAMESPACE} --for condition=available
+#while [[ $(kubectl get pods -l name=redis -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...redis starting" && sleep 10; done
 echo "waiting for mongo"
-while [[ $(kubectl get pods -l name=mongo -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...mongo starting" && sleep 10; done
+kubectl wait deployment/mongo -n ${NAMESPACE} --for condition=available
+#while [[ $(kubectl get pods -l name=mongo -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...mongo starting" && sleep 10; done
 
 echo "creating configmaps"
 kubectl create configmap -n ${NAMESPACE} dash-conf --from-file "${PRODIR}/dashboard/confs/dash.json"
@@ -28,9 +30,10 @@ kubectl apply -f "${PRODIR}/dashboard/dashboard.yaml" -n ${NAMESPACE}
 kubectl apply -f "${PRODIR}/gateway/gateway.yaml" -n ${NAMESPACE}
 
 echo "waiting for dashboard"
-while [[ $(kubectl get pods -l name=dashboard -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...dashboard starting" && sleep 10; done
+#while [[ $(kubectl get pods -l name=dashboard -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...dashboard starting" && sleep 10; done
+kubectl wait deployment/dashboard -n ${NAMESPACE} --for condition=available
 echo "waiting for gateway"
-while [[ $(kubectl get pods -l name=tyk -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...gateway starting" && sleep 10; done
+kubectl wait deployment/tyk -n ${NAMESPACE} --for condition=available
+#while [[ $(kubectl get pods -l name=tyk -n ${NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "  ...gateway starting" && sleep 10; done
 
 kubectl logs svc/dashboard -n ${NAMESPACE}
-echo "${TYK_DB_LICENSEKEY}"
