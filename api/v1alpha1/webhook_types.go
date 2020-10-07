@@ -25,17 +25,22 @@ import (
 
 // WebhookSpec defines the desired state of Webhook
 type WebhookSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Webhook. Edit Webhook_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	//ApiModel     `bson:"api_model,omitempty" json:"api_model,omitempty"`
+	// System generated resource. represents the ID to use in API  calls
+	ID string `json:"id,omitempty"`
+	// The org ID to which this webhook belongs to
+	OrgID string `bson:"org_id" json:"org_id,omitempty"`
+	// System generated resource, will be set to the {namespace/name} of the CRD
+	Name         string            `bson:"name" json:"name"`
+	Method       string            `bson:"method" json:"method"`
+	TargetPath   string            `bson:"target_path" json:"target_path"`
+	TemplatePath string            `bson:"template_path" json:"template_path,omitempty"`
+	HeaderList   map[string]string `bson:"header_map" json:"header_map,omitempty"`
+	EventTimeout int64             `bson:"event_timeout" json:"event_timeout,omitempty"`
 }
 
 // WebhookStatus defines the observed state of Webhook
 type WebhookStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true

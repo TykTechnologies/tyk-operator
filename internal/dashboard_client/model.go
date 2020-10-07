@@ -18,3 +18,8 @@ type PoliciesResponse struct {
 	Policies []v1.SecurityPolicySpec `json:"data"`
 	Pages    int                     `json:"pages"`
 }
+
+type WebhookResponse struct {
+	Webhooks []v1.WebhookSpec `json:"hooks"`
+	Pages    int              `json:"pages"`
+}

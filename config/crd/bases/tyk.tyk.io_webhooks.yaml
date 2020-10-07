@@ -36,10 +36,34 @@ spec:
           spec:
             description: WebhookSpec defines the desired state of Webhook
             properties:
-              foo:
-                description: Foo is an example field of Webhook. Edit Webhook_types.go
-                  to remove/update
+              event_timeout:
+                format: int64
+                type: integer
+              header_map:
+                additionalProperties:
+                  type: string
+                type: object
+              id:
+                description: ApiModel     `bson:"api_model,omitempty" json:"api_model,omitempty"`
+                  System generated resource. represents the ID to use in API  calls
                 type: string
+              method:
+                type: string
+              name:
+                description: System generated resource, will be set to the {namespace/name}
+                  of the CRD
+                type: string
+              org_id:
+                description: The org ID to which this webhook belongs to
+                type: string
+              target_path:
+                type: string
+              template_path:
+                type: string
+            required:
+            - method
+            - name
+            - target_path
             type: object
           status:
             description: WebhookStatus defines the observed state of Webhook

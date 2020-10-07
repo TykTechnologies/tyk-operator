@@ -6,7 +6,7 @@ import (
 
 // TODO: this needs to be pulled from K8s secrets
 func getClient() *Client {
-	return NewClient("dash-client-url", "api-key", true, "myorg")
+	return NewClient("http://localhost:3000", "80f26e6383ae4eda63048f64ff37ae1e", true, "5e9d9544a1dcd60001d0ed20")
 }
 
 func TestClient_HotReload(t *testing.T) {

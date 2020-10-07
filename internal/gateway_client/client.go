@@ -69,6 +69,10 @@ type Client struct {
 	opts               *grequests.RequestOptions
 }
 
+func (c *Client) Webhook() universal_client.UniversalWebhook {
+	panic("implement me")
+}
+
 func (c *Client) Api() universal_client.UniversalApi {
 	return Api{Client: c}
 }
