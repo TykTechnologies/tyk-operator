@@ -8,8 +8,8 @@ import (
 type UniversalWebhook interface {
 	All() ([]tykv1alpha1.WebhookSpec, error)
 	Get(namespacedName string) (*tykv1alpha1.WebhookSpec, error)
-	Create(def *tykv1alpha1.WebhookSpec, namespacedName string) (string, error)
-	Update(def *tykv1alpha1.WebhookSpec, namespacedName string) error
+	Create(namespacedName string, def *tykv1alpha1.WebhookSpec) (string, error)
+	Update(namespacedName string, def *tykv1alpha1.WebhookSpec) error
 	Delete(namespacedName string) error
 }
 

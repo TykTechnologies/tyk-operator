@@ -39,10 +39,10 @@ func (p Webhook) All() ([]v1.WebhookSpec, error) {
 
 /**
   Attempts to find the webhook by the namespaced name combo.
-  When creating a webhook, this is stored as the policy's "name"
+  When creating a webhook, this is stored as the webhook's "name"
 */
 func (w Webhook) Get(namespacedName string) (*v1.WebhookSpec, error) {
-	//Returns error if there was a mistake getting all the policies
+	//Returns error if there was a mistake getting all the webhook
 	list, err := w.All()
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (w Webhook) Get(namespacedName string) (*v1.WebhookSpec, error) {
 /*
 	Creates a webhook.  Overwrites the Webhook "name" with the CRD's namespaced name
 */
-func (p Webhook) Create(def *v1.WebhookSpec, namespacedName string) (string, error) {
+func (p Webhook) Create(namespacedName string, def *v1.WebhookSpec) (string, error) {
 	// Check if this webhook exists
 	webhook, err := p.Get(namespacedName)
 	// if webhook find gives "not found error", great, skip and create!
@@ -101,10 +101,10 @@ func (p Webhook) Create(def *v1.WebhookSpec, namespacedName string) (string, err
 }
 
 /**
-Updates a Policy.  Adds the unique identifier namespaced-Name to the
-policy's tags so subsequent CRUD opps are possible.
+Updates a Webhook.  Adds the unique identifier namespaced-Name to the
+webhook's "name" so subsequent CRUD opps are possible.
 */
-func (p Webhook) Update(def *v1.WebhookSpec, namespacedName string) error {
+func (p Webhook) Update(namespacedName string, def *v1.WebhookSpec) error {
 	webhookToUpdate, err := p.Get(namespacedName)
 	if err != nil {
 		return err
@@ -170,5 +170,5 @@ func (w Webhook) Delete(namespacedName string) error {
 		return nil
 	}
 
-	return fmt.Errorf("delete policy API Returned error: %s", res.String())
+	return fmt.Errorf("delete webhook API Returned error: %s", res.String())
 }
