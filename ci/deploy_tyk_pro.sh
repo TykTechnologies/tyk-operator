@@ -1,9 +1,10 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
 
 NAMESPACE=tykpro-control-plane
 PRODIR=${PWD}/ci/tyk-pro
+echo -n "$TYK_DB_LICENSEKEY" | jq -e -R 'split(".") | .[1] | @base64d | fromjson | .exp > now'
 
 echo "creating namespace ${NAMESPACE}"
 kubectl create namespace ${NAMESPACE}
