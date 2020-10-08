@@ -3,7 +3,7 @@
   "enable_http_profiler": false,
   "memory_ballast_gb": 5,
   "listen_address": "",
-  "listen_port": 8081,
+  "listen_port": 8080,
   "secret": "foo",
   "node_secret": "foo",
   "template_path": "templates",
@@ -12,7 +12,7 @@
   "disable_ports_whitelist": true,
   "policies": {
     "policy_source": "service",
-    "policy_connection_string": "http://dashboard.tykpro-controlpane.svc.cluster.local:3000",
+    "policy_connection_string": "http://dashboard.tykpro-control-plane.svc.cluster.local:3000",
     "policy_record_name": "tyk_policies",
     "allow_explicit_policy_id": true
   },
