@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eo pipefail
+set -xeo pipefail
 
 NAMESPACE=tykpro-control-plane
 PRODIR=${PWD}/ci/tyk-pro
