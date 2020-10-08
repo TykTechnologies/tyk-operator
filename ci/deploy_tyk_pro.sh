@@ -36,7 +36,5 @@ kubectl wait deployment/tyk -n ${NAMESPACE} --for condition=available
 
 kubectl logs svc/dashboard -n ${NAMESPACE}
 
-kubectl port-forward -n ${NAMESPACE} svc/dashboard 3000:3000 &>/dev/null &
 echo "creating an organization"
-
-curl http://localhost:3000/admin/organisations -d '{"owner_name":"foo","cname":"bar","cname_enabled":true}' -H 'admin-auth: 12345'
+kubectl exec -n ${NAMESPACE} svc/dashboard -- /opt/tyk-dashboard/tyk-analytics bootstrap --conf=/etc/tyk-dashboard/dash.json --create-org
