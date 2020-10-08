@@ -106,17 +106,19 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			err = r.UniversalClient.Api().Delete(apiIDEncoded)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", apiIDEncoded)
+				return ctrl.Result{}, err
 			}
 
 			err = r.UniversalClient.HotReload()
 			if err != nil {
 				log.Error(err, "unable to hot reload", "api_id", apiIDEncoded)
+				return ctrl.Result{}, err
 			}
 
 			// remove our finalizer from the list and update it.
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, nil
+				return reconcile.Result{}, err
 			}
 		}
 

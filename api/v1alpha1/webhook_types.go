@@ -31,7 +31,7 @@ type WebhookSpec struct {
 	// The org ID to which this webhook belongs to
 	OrgID string `bson:"org_id" json:"org_id,omitempty"`
 	// System generated resource, will be set to the {namespace/name} of the CRD
-	Name         string            `bson:"name" json:"name"`
+	Name         string            `bson:"name" json:"name,omitempty"`
 	Method       string            `bson:"method" json:"method"`
 	TargetPath   string            `bson:"target_path" json:"target_path"`
 	TemplatePath string            `bson:"template_path" json:"template_path,omitempty"`

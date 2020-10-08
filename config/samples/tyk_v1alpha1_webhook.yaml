@@ -3,4 +3,5 @@ kind: Webhook
 metadata:
   name: webhook-sample
 spec:
-  foo: bar
+  method: POST
+  target_path: http://localhost:8080/webhook-LOL/

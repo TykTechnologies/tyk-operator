@@ -40,15 +40,17 @@ func (p Webhook) All() ([]v1.WebhookSpec, error) {
 /**
   Attempts to find the webhook by the namespaced name combo.
   When creating a webhook, this is stored as the webhook's "name"
+
+  If no webhook found, return "universal_client.WebhookNotFoundError"
 */
 func (w Webhook) Get(namespacedName string) (*v1.WebhookSpec, error) {
-	//Returns error if there was a mistake getting all the webhook
+	// Returns error if there was a problem fetching webhooks
 	list, err := w.All()
 	if err != nil {
 		return nil, err
 	}
 
-	//Iterate through webhooks to find this hook
+	// Iterate through webhooks to find this hook
 	for _, hook := range list {
 		if hook.Name == namespacedName {
 			return &hook, nil
@@ -61,14 +63,14 @@ func (w Webhook) Get(namespacedName string) (*v1.WebhookSpec, error) {
 /*
 	Creates a webhook.  Overwrites the Webhook "name" with the CRD's namespaced name
 */
-func (p Webhook) Create(namespacedName string, def *v1.WebhookSpec) (string, error) {
+func (p Webhook) Create(namespacedName string, def *v1.WebhookSpec) error {
 	// Check if this webhook exists
 	webhook, err := p.Get(namespacedName)
 	// if webhook find gives "not found error", great, skip and create!
 	if err != nil && err != universal_client.WebhookNotFoundError {
-		return "", err
+		return err
 	} else if webhook != nil {
-		return "", universal_client.WebhookCollisionError
+		return universal_client.WebhookCollisionError
 	}
 
 	def.Name = namespacedName
@@ -81,23 +83,23 @@ func (p Webhook) Create(namespacedName string, def *v1.WebhookSpec) (string, err
 
 	res, err := grequests.Post(fullPath, opts)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
+		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
 	}
 
 	var resMsg ResponseMsg
 	if err := res.JSON(&resMsg); err != nil {
-		return "", err
+		return err
 	}
 
 	if resMsg.Status != "OK" {
-		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
+		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
 
-	return "", nil
+	return nil
 }
 
 /**
