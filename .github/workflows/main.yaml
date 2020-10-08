@@ -21,8 +21,8 @@ jobs:
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
-      - name: create kind cluster
-        uses: helm/kind-action@v1.0.0
+#      - name: create kind cluster
+#        uses: helm/kind-action@v1.0.0
       - name: deploy tyk
         env:
           TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
