@@ -5,7 +5,6 @@ on:
 
 jobs:
   unit-tests:
-    if: 1 == 0 
     runs-on: ubuntu-latest
     steps:
       - name: checkout tyk-operator
@@ -24,11 +23,9 @@ jobs:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
       - name: create kind cluster
-        if: 1 == 0
         uses: helm/kind-action@v1.0.0
       - name: deploy tyk
         shell: bash
         run: |
-          jq --version
           jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
-          #sh ./ci/deploy_tyk_pro.sh
+          sh ./ci/deploy_tyk_pro.sh
