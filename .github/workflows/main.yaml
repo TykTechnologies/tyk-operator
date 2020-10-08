@@ -4,18 +4,18 @@ on:
   pull_request
 
 jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout tyk-operator
-        uses: actions/checkout@v2
-      - name: install kubebuilder
-        uses: RyanSiu1995/kubebuilder-action@v1
-        with:
-          version: 2.3.1
-      - name: run tests
-        run: |
-          make test
+#  unit-tests:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: checkout tyk-operator
+#        uses: actions/checkout@v2
+#      - name: install kubebuilder
+#        uses: RyanSiu1995/kubebuilder-action@v1
+#        with:
+#          version: 2.3.1
+#      - name: run tests
+#        run: |
+#          make test
   integration-tests:
     runs-on: ubuntu-latest
     steps:
@@ -28,4 +28,4 @@ jobs:
           TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
         shell: bash
         run: |
-          sh ./ci/deploy_tyk_pro.sh
+          bash ./ci/deploy_tyk_pro.sh
