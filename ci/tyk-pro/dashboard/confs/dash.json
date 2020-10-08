@@ -22,7 +22,7 @@
   "host_config": {
     "enable_host_names": true,
     "disable_org_slug_prefix": true,
-    "hostname": "dashboard.ahmet",
+    "hostname": "localhost",
     "override_hostname": "gateway.tykpro-control-plane.svc.cluster.local:8080",
     "portal_root_path": "/portal"
   },
