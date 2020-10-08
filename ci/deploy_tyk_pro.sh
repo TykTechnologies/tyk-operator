@@ -4,7 +4,7 @@ set -xeo pipefail
 
 NAMESPACE=tykpro-control-plane
 PRODIR=${PWD}/ci/tyk-pro
-echo -n "$TYK_DB_LICENSEKEY" | jq -e -R 'split(".") | .[1]' | base64 -d -i | jq -e '.exp > now'
+echo -n "$TYK_DB_LICENSEKEY" | jq -e 'split(".") | .[1]' | base64 -d -i | jq -e '.exp > now'
 
 echo "creating namespace ${NAMESPACE}"
 kubectl create namespace ${NAMESPACE}
