@@ -18,7 +18,7 @@
   },
   "use_db_app_configs": true,
   "db_app_conf_options": {
-    "connection_string": "http://dashboard.tykpro-controlpane.svc.cluster.local:3000",
+    "connection_string": "http://dashboard.tykpro-control-plane.svc.cluster.local:3000",
     "node_is_segmented": false,
     "tags": [
       "private"
