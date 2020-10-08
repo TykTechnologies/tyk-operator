@@ -1,6 +1,7 @@
 package dashboard_admin_client
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -11,7 +12,9 @@ import (
 )
 
 const (
-	endpointOrganizations = "/admin/organisations"
+	endpointOrganizations                    = "/admin/organisations"
+	endpointUsers                            = "/admin/users"
+	endpointDashboardUserPasswordResetFormat = "/api/users/%s/actions/reset"
 )
 
 type Client struct {
@@ -105,4 +108,47 @@ func (c Client) OrganizationCreate(spec *v1alpha1.OrganizationSpec) (string, err
 	}
 
 	return createOrgResponse.Meta, nil
+}
+
+func (c Client) UserCreate(reqBody CreateUserRequest) error {
+	sess := grequests.NewSession(c.opts)
+
+	fullPath := JoinUrl(c.url, endpointUsers)
+
+	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: reqBody})
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("error creating user: %d", res.StatusCode)
+	}
+
+	var createUserResponse CreateUserResponse
+	if err := res.JSON(&createUserResponse); err != nil {
+		return err
+	}
+
+	passwordReqBody := SetPasswordRequest{NewPassword: reqBody.Password}
+
+	// use the user's API key to set their password, calling the dashboard api
+	sess = grequests.NewSession(&grequests.RequestOptions{
+		Headers: map[string]string{
+			"authorization": createUserResponse.Meta.AccessKey,
+			"content-type":  "application/json",
+		},
+	})
+
+	fullPath = JoinUrl(c.url, fmt.Sprintf(endpointDashboardUserPasswordResetFormat, createUserResponse.Meta.ID))
+
+	res, err = sess.Post(fullPath, &grequests.RequestOptions{JSON: passwordReqBody})
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return errors.New("unexpected status code setting password")
+	}
+
+	return nil
 }
