@@ -37,6 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
+
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {
 	client.Client
@@ -57,34 +59,17 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	log.Info("fetching apidefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
-	if err := r.Get(ctx, apiID, desired); err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			log.Info("Tyk API Definition resource not found. Ignoring since object must be deleted")
-			return ctrl.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get API Definition")
-		return ctrl.Result{}, err
+	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	r.Recorder.Event(desired, "Normal", "ApiDefinition", "Reconciling")
 
-	const apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
-	if desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		// The object is not being deleted, if it does not have our finalizer,
-		// then lets add the finalizer and update the object.
-		if !containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
-			desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
-			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, err
-			}
-		}
-	} else {
-		// The object is being deleted
+	// If object is being deleted
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+
+		// If our finalizer is present, need to delete from Tyk still
 		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
-			// our finalizer is present, so lets handle our external dependency
+
 			policies, err := r.UniversalClient.SecurityPolicy().All()
 			if err != nil {
 				log.Info(err.Error())
@@ -106,22 +91,32 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			err = r.UniversalClient.Api().Delete(apiIDEncoded)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", apiIDEncoded)
+				return ctrl.Result{}, err
 			}
 
 			err = r.UniversalClient.HotReload()
 			if err != nil {
 				log.Error(err, "unable to hot reload", "api_id", apiIDEncoded)
+				return ctrl.Result{}, err
 			}
 
 			// remove our finalizer from the list and update it.
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, nil
+				return reconcile.Result{}, err
 			}
 		}
 
-		// Our finalizer has finished, so the reconciler can do nothing.
 		return reconcile.Result{}, nil
+	}
+
+	// If finalizer not present, add it; This is a new object
+	if !containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+		err := r.Update(ctx, desired)
+		// Return either way because the update will
+		// issue a requeue anyway
+		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
 	newSpec := &desired.Spec

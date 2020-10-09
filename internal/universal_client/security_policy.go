@@ -58,9 +58,8 @@ func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpe
 	} else {
 		// Update
 		err = c.SecurityPolicy().Update(spec, namespacedName)
-		pol, err = c.SecurityPolicy().Get(namespacedName)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to update api")
+			return nil, errors.Wrap(err, "unable to update policy")
 		}
 	}
 

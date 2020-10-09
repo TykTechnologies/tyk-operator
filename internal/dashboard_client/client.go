@@ -14,6 +14,7 @@ const (
 	//endpointCerts    = "/tyk/certs"
 	//endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"
+	endpointWebhooks = "/api/hooks"
 )
 
 var (
@@ -67,6 +68,10 @@ type Client struct {
 	insecureSkipVerify bool
 	log                logr.Logger
 	opts               *grequests.RequestOptions
+}
+
+func (c *Client) Webhook() universal_client.UniversalWebhook {
+	return &Webhook{c}
 }
 
 func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
