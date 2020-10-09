@@ -175,3 +175,8 @@ Deploy it to the cluster:
 ```
 make deploy IMG=controller:latest
 ```
+
+
+### Highlights
+
+1. The Tyk-Operator uses the [finalizer](https://book.kubebuilder.io/reference/using-finalizers.html) pattern for deleting CRs from the cluster.
