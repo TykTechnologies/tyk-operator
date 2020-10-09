@@ -45,7 +45,7 @@ type WebhookStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-
+// +kubebuilder:resource:shortName=tykhooks
 // Webhook is the Schema for the webhooks API
 type Webhook struct {
 	metav1.TypeMeta   `json:",inline"`

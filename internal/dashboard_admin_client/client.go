@@ -14,6 +14,7 @@ import (
 const (
 	endpointOrganizations                    = "/admin/organisations"
 	endpointUsers                            = "/admin/users"
+	endpointUsersNonAdmin                    = "/users"
 	endpointDashboardUserPasswordResetFormat = "/api/users/%s/actions/reset"
 )
 
@@ -147,23 +148,53 @@ func (c Client) OrganizationCreate(spec *v1alpha1.OrganizationSpec) (string, err
 	return createOrgResponse.Meta, nil
 }
 
-func (c Client) UserAdminCreate(reqBody CreateUserRequest) error {
+func (c Client) OrganizationDelete(orgId string) error {
+	delPath := JoinUrl(c.url, endpointOrganizations, orgId)
+
+	res, err := grequests.Delete(delPath, c.opts)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	return fmt.Errorf("delete org API Returned error: %s", res.String())
+}
+
+func (c Client) UserAdminDelete(userId string) error {
+	fullPath := JoinUrl(c.url, endpointUsersNonAdmin, userId)
+
+	res, err := grequests.Delete(fullPath, c.opts)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	return fmt.Errorf("delete org API Returned error: %s", res.String())
+}
+
+func (c Client) UserAdminCreate(reqBody CreateUserRequest) (*CreateUserMeta, error) {
 	sess := grequests.NewSession(c.opts)
 
 	fullPath := JoinUrl(c.url, endpointUsers)
 
 	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: reqBody})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error creating user: %d", res.StatusCode)
+		return nil, fmt.Errorf("error creating user: %d", res.StatusCode)
 	}
 
 	var createUserResponse CreateUserResponse
 	if err := res.JSON(&createUserResponse); err != nil {
-		return err
+		return nil, err
 	}
 
 	passwordReqBody := SetPasswordRequest{NewPassword: reqBody.Password}
@@ -180,12 +211,12 @@ func (c Client) UserAdminCreate(reqBody CreateUserRequest) error {
 
 	res, err = sess.Post(fullPath, &grequests.RequestOptions{JSON: passwordReqBody})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return errors.New("unexpected status code setting password")
+		return nil, errors.New("unexpected status code setting password")
 	}
 
-	return nil
+	return &createUserResponse.Meta, nil
 }

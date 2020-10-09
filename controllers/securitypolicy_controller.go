@@ -32,8 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
-
 // SecurityPolicyReconciler reconciles a SecurityPolicy object
 type SecurityPolicyReconciler struct {
 	client.Client
@@ -59,6 +57,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	r.Recorder.Event(desired, "Normal", "SecurityPolicy", "Reconciling")
+	const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -68,7 +67,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 			if err := r.UniversalClient.SecurityPolicy().Delete(policyNamespacedName); err != nil {
 				log.Error(err, "unable to delete policy", "nameSpacedName", policyNamespacedName)
-				return reconcile.Result{Requeue: false}, err
+				return reconcile.Result{Requeue: true}, err
 			}
 
 			err := r.UniversalClient.HotReload()
