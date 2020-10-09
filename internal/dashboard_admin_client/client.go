@@ -1,7 +1,6 @@
 package dashboard_admin_client
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/levigross/grequests"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -16,6 +16,8 @@ const (
 	endpointUsers                            = "/admin/users"
 	endpointDashboardUserPasswordResetFormat = "/api/users/%s/actions/reset"
 )
+
+var ErrNotFound = errors.New("NotFound")
 
 type Client struct {
 	url                string
@@ -86,6 +88,41 @@ func (c Client) OrganizationAll() ([]v1alpha1.OrganizationSpec, error) {
 	}
 
 	return orgsResponse.Organizations, nil
+}
+
+func (c Client) OrganizationGet(id string) (*v1alpha1.OrganizationSpec, error) {
+	sess := grequests.NewSession(c.opts)
+
+	fullPath := JoinUrl(c.url, endpointOrganizations, id)
+
+	res, err := sess.Get(fullPath, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		return nil, ErrNotFound
+	}
+
+	var resMsg v1alpha1.OrganizationSpec
+	if err := res.JSON(&resMsg); err != nil {
+		return nil, err
+	}
+
+	return &resMsg, nil
+}
+
+func (c Client) OrganizationUpdate(id string, spec *v1alpha1.OrganizationSpec) (*v1alpha1.OrganizationSpec, error) {
+	sess := grequests.NewSession(c.opts)
+
+	fullPath := JoinUrl(c.url, endpointOrganizations, id)
+
+	_, err := sess.Put(fullPath, &grequests.RequestOptions{JSON: spec})
+	if err != nil {
+		return nil, err
+	}
+
+	return spec, nil
 }
 
 func (c Client) OrganizationCreate(spec *v1alpha1.OrganizationSpec) (string, error) {
