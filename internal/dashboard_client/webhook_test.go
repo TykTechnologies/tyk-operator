@@ -29,7 +29,7 @@ func TestWebhook_GetOne_Create_Delete(t *testing.T) {
 	c := getClient()
 
 	newHook := createWebhook()
-	_, err := c.Webhook().Create(newHook, webhookNamespacedName)
+	err := c.Webhook().Create(webhookNamespacedName, newHook)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -56,13 +56,13 @@ func TestWebhook_FailsWhenCreatingExistingWebhookID(t *testing.T) {
 	c := getClient()
 
 	webhook := createWebhook()
-	_, err := c.Webhook().Create(webhook, webhookNamespacedName)
+	err := c.Webhook().Create(webhookNamespacedName, webhook)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	webhookTwo := createWebhook()
-	_, err = c.Webhook().Create(webhookTwo, webhookNamespacedName)
+	err = c.Webhook().Create(webhookNamespacedName, webhookTwo)
 	if err == nil {
 		// error out
 		t.Fatal("Should've thrown an error!")
@@ -81,7 +81,7 @@ func TestWebhook_Update(t *testing.T) {
 	c := getClient()
 
 	newWebhook := createWebhook()
-	_, err := c.Webhook().Create(newWebhook, webhookNamespacedName)
+	err := c.Webhook().Create(webhookNamespacedName, newWebhook)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -89,7 +89,7 @@ func TestWebhook_Update(t *testing.T) {
 	// Do the update
 	methodName := "DELETE"
 	newWebhook.Method = methodName
-	err = c.Webhook().Update(newWebhook, webhookNamespacedName)
+	err = c.Webhook().Update(webhookNamespacedName, newWebhook)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

@@ -79,9 +79,10 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// If finalizer not present, add it; This is a new object
 	if !containsString(des.ObjectMeta.Finalizers, webhookDefFinalizerName) {
 		des.ObjectMeta.Finalizers = append(des.ObjectMeta.Finalizers, webhookDefFinalizerName)
-		if err := r.Update(ctx, des); err != nil {
-			return reconcile.Result{}, err
-		}
+		err := r.Update(ctx, des)
+		// Return either way because the update with finalizer will
+		// issue a requeue due to change anyway
+		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
 	// Create
