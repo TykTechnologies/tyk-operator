@@ -23,7 +23,6 @@ import (
 	"strconv"
 
 	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -122,6 +121,17 @@ func main() {
 		UniversalClient: tykClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.WebhookReconciler{
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("Webhook"),
+		Scheme:          mgr.GetScheme(),
+		UniversalClient: tykClient,
+		Recorder:        mgr.GetEventRecorderFor("webhook-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Webhook")
 		os.Exit(1)
 	}
 
