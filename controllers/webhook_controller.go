@@ -55,6 +55,7 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.Get(ctx, req.NamespacedName, des); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
+	r.Recorder.Event(des, "Normal", "Webhook", "Reconciling")
 
 	// If object is being deleted
 	if !des.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -80,12 +81,12 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if !containsString(des.ObjectMeta.Finalizers, webhookDefFinalizerName) {
 		des.ObjectMeta.Finalizers = append(des.ObjectMeta.Finalizers, webhookDefFinalizerName)
 		err := r.Update(ctx, des)
-		// Return either way because the update with finalizer will
-		// issue a requeue due to change anyway
+		// Return either way because the update will
+		// issue a requeue anyway
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Create
+	// Create or Update
 	if err := universal_client.CreateOrUpdateWebhook(r.UniversalClient, &des.Spec, req.NamespacedName.String()); err != nil {
 		r.Log.Error(err, "CreateOrUpdateWebhook failure")
 		r.Recorder.Event(des, "Error", "Webhook", "Create or Update Webhook")

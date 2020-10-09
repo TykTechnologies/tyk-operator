@@ -32,6 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
+
 // SecurityPolicyReconciler reconciles a SecurityPolicy object
 type SecurityPolicyReconciler struct {
 	client.Client
@@ -51,32 +53,15 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 	log.Info("fetching SecurityPolicy instance")
 
+	// Lookup policy object
 	desired := &tykv1.SecurityPolicy{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			log.Info("SecurityPolicy resource not found. Ignoring since object must be deleted")
-			return ctrl.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get SecurityPolicy")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	r.Recorder.Event(desired, "Normal", "SecurityPolicy", "Reconciling")
 
-	const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
-	if desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		// The object is not being deleted, if it does not have our finalizer,
-		// then lets add the finalizer and update the object.
-		if !containsString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName) {
-			desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName)
-			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, err
-			}
-		}
-	} else {
+	// If object is being deleted
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is being deleted
 		if containsString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName) {
 			// our finalizer is present, so lets handle our external dependency
@@ -100,6 +85,15 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 		// Our finalizer has finished, so the reconciler can do nothing.
 		return reconcile.Result{}, nil
+	}
+
+	// If finalizer not present, add it; This is a new object
+	if !containsString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName) {
+		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName)
+		err := r.Update(ctx, desired)
+		// Return either way because the update will
+		// issue a requeue anyway
+		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
 	for i, accessRight := range desired.Spec.AccessRightsArray {
