@@ -132,8 +132,8 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 			if err := r.Update(ctx, desired); err != nil {
 				log.Error(err, "unable to update apiId in access rights array")
-				return ctrl.Result{Requeue: true}, err
 			}
+			return ctrl.Result{Requeue: true}, client.IgnoreNotFound(err)
 		}
 	}
 
