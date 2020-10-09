@@ -7,15 +7,31 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/go-chi/chi"
 )
 
 func adminServerMock() *httptest.Server {
 	r := chi.NewMux()
+	r.Post(endpointOrganizations, mockOrganizationCreateHandler)
 	r.Post(endpointUsers, mockUserCreateHandler)
 	r.Post(fmt.Sprintf(endpointDashboardUserPasswordResetFormat, `{user_id}`), mockPasswordResetHandler)
 
 	return httptest.NewServer(r)
+}
+
+func mockOrganizationCreateHandler(w http.ResponseWriter, r *http.Request) {
+	svr := adminServerMock()
+	defer svr.Close()
+
+	resBody := CreateOrganizationResponse{
+		Status:  "OK",
+		Message: "ORG CREATED",
+		Meta:    "MYORGID",
+	}
+
+	bodyBytes, _ := json.Marshal(resBody)
+	w.Write(bodyBytes)
 }
 
 func mockUserCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +61,23 @@ func mockUserCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 func mockPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
+}
+
+func TestClient_OrganizationCreate(t *testing.T) {
+	svr := adminServerMock()
+	defer svr.Close()
+
+	c := NewClient(svr.URL, "12345", true)
+	createdOrgID, err := c.OrganizationCreate(&v1alpha1.OrganizationSpec{
+		OwnerName:    "",
+		OwnerSlug:    "",
+		CNAMEEnabled: false,
+		CNAME:        "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(createdOrgID)
 }
 
 func TestClient_UserCreate(t *testing.T) {
