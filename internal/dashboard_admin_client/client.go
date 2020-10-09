@@ -110,7 +110,7 @@ func (c Client) OrganizationCreate(spec *v1alpha1.OrganizationSpec) (string, err
 	return createOrgResponse.Meta, nil
 }
 
-func (c Client) UserCreate(reqBody CreateUserRequest) error {
+func (c Client) UserAdminCreate(reqBody CreateUserRequest) error {
 	sess := grequests.NewSession(c.opts)
 
 	fullPath := JoinUrl(c.url, endpointUsers)
