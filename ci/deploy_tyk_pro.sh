@@ -22,7 +22,8 @@ kubectl create configmap -n ${NAMESPACE} dash-conf --from-file "${PRODIR}/dashbo
 kubectl create configmap -n ${NAMESPACE} tyk-conf --from-file "${PRODIR}/gateway/confs/tyk.json"
 
 echo "getting dash license key"
-echo -n "${TYK_DB_LICENSEKEY}" > ./license.txt
+# sed & tr is for osx hack
+echo -n "${TYK_DB_LICENSEKEY}" | sed 's/^-n //' | tr -d '\n' > ./license.txt
 kubectl create secret -n ${NAMESPACE} generic dashboard --from-file=./license.txt
 
 echo "deploying dashboard & gateway"
@@ -36,5 +37,5 @@ kubectl wait deployment/tyk -n ${NAMESPACE} --for condition=available
 
 kubectl logs svc/dashboard -n ${NAMESPACE}
 
-echo "creating an organization"
-kubectl exec -n ${NAMESPACE} svc/dashboard -- /opt/tyk-dashboard/tyk-analytics bootstrap --conf=/etc/tyk-dashboard/dash.json --create-org
+#echo "creating an organization"
+#kubectl exec -n ${NAMESPACE} svc/dashboard -- /opt/tyk-dashboard/tyk-analytics bootstrap --conf=/etc/tyk-dashboard/dash.json --create-org
