@@ -41,5 +41,12 @@ kubectl logs svc/dashboard -n ${NAMESPACE}
 echo "gateway logs"
 kubectl logs svc/tyk -n ${NAMESPACE}
 
+echo "installing custom resources"
+make install
+
+echo "deploying httpbin as mock upstream to default ns"
+kubectl apply -f "${PWD}/ci/upstreams"
+kubectl wait deployment/httpbin --for condition=available
+
 #echo "creating an organization"
 #kubectl exec -n ${NAMESPACE} svc/dashboard -- /opt/tyk-dashboard/tyk-analytics bootstrap --conf=/etc/tyk-dashboard/dash.json --create-org
