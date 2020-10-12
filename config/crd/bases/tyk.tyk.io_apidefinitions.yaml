@@ -34,29 +34,22 @@ spec:
         description: ApiDefinition is the Schema for the apidefinitions API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: APIDefinition represents the configuration for a single proxied
-              API and it's versions.
+            description: APIDefinition represents the configuration for a single proxied API and it's versions.
             properties:
               active:
                 type: boolean
               api_id:
                 type: string
               auth:
-                description: EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
-                  UseOauth2           bool          `json:"use_oauth2"` UseOpenID           bool          `json:"use_openid"`
-                  OpenIDOptions       OpenIDOptions `json:"openid_options"` Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+                description: EnableProxyProtocol bool          `json:"enable_proxy_protocol"` UseOauth2           bool          `json:"use_oauth2"` UseOpenID           bool          `json:"use_openid"` OpenIDOptions       OpenIDOptions `json:"openid_options"` Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
                 properties:
                   auth_header_name:
                     type: string
@@ -146,23 +139,18 @@ spec:
                 description: CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
                 properties:
                   cache_all_safe_requests:
-                    description: CacheAllSafeRequests caches responses to (GET, HEAD,
-                      OPTIONS) requests overrides per-path cache settings in versions,
-                      applies across versions
+                    description: CacheAllSafeRequests caches responses to (GET, HEAD, OPTIONS) requests overrides per-path cache settings in versions, applies across versions
                     type: boolean
                   cache_by_headers:
-                    description: CacheByHeaders allows header values to be used as
-                      part of the cache key
+                    description: CacheByHeaders allows header values to be used as part of the cache key
                     items:
                       type: string
                     type: array
                   cache_control_ttl_header:
-                    description: CacheControlTTLHeader is the response header which
-                      tells Tyk how long it is safe to cache the response for
+                    description: CacheControlTTLHeader is the response header which tells Tyk how long it is safe to cache the response for
                     type: string
                   cache_response_codes:
-                    description: CacheOnlyResponseCodes is an array of response codes
-                      which are safe to cache. e.g. 404
+                    description: CacheOnlyResponseCodes is an array of response codes which are safe to cache. e.g. 404
                     items:
                       type: integer
                     type: array
@@ -171,21 +159,16 @@ spec:
                     format: int64
                     type: integer
                   enable_cache:
-                    description: EnableCache turns global cache middleware on or off.
-                      It is still possible to enable caching on a per-path basis by
-                      explicitly setting the endpoint cache middleware. see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
+                    description: EnableCache turns global cache middleware on or off. It is still possible to enable caching on a per-path basis by explicitly setting the endpoint cache middleware. see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
                     type: boolean
                   enable_upstream_cache_control:
-                    description: EnableUpstreamCacheControl instructs Tyk Cache to
-                      respect upstream cache control headers
+                    description: EnableUpstreamCacheControl instructs Tyk Cache to respect upstream cache control headers
                     type: boolean
                 required:
                 - cache_timeout
                 type: object
               custom_middleware:
-                description: "//UptimeTests                UptimeTests           `json:\"uptime_tests\"`
-                  \n DisableRateLimit       bool                `json:\"disable_rate_limit\"`
-                  DisableQuota           bool                `json:\"disable_quota\"`"
+                description: "//UptimeTests                UptimeTests           `json:\"uptime_tests\"` \n DisableRateLimit       bool                `json:\"disable_rate_limit\"` DisableQuota           bool                `json:\"disable_quota\"`"
                 properties:
                   auth_check:
                     properties:
@@ -281,33 +264,7 @@ spec:
                 - driver
                 type: object
               definition:
-                description: 'UseBasicAuth               bool                  `json:"use_basic_auth"`
-                  BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
-                  UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
-                  ClientCertificates         []string              `json:"client_certificates"`
-                  UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
-                  PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
-                  EnableJWT                  bool                  `json:"enable_jwt"`
-                  UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
-                  EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
-                  JWTSigningMethod           string                `json:"jwt_signing_method"`
-                  JWTSource                  string                `json:"jwt_source"`
-                  JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
-                  JWTClientIDBaseField       string                `json:"jwt_client_base_field"`
-                  JWTPolicyFieldName         string                `json:"jwt_policy_field_name"`
-                  JWTDefaultPolicies         []string              `json:"jwt_default_policies"`
-                  JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"`
-                  JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"`
-                  JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"`
-                  JWTSkipKid                 bool                  `json:"jwt_skip_kid"`
-                  JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"`
-                  JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
-                  NotificationsDetails       NotificationsManager  `json:"notifications"`
-                  EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
-                  HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"`
-                  // TODO: convert to float64 HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
-                  RequestSigning             RequestSigningMeta    `json:"request_signing"`
-                  BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`'
+                description: 'UseBasicAuth               bool                  `json:"use_basic_auth"` BasicAuth                  BasicAuthMeta         `json:"basic_auth"` UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"` ClientCertificates         []string              `json:"client_certificates"` UpstreamCertificates       map[string]string     `json:"upstream_certificates"` PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"` EnableJWT                  bool                  `json:"enable_jwt"` UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"` EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"` JWTSigningMethod           string                `json:"jwt_signing_method"` JWTSource                  string                `json:"jwt_source"` JWTIdentityBaseField       string                `json:"jwt_identity_base_field"` JWTClientIDBaseField       string                `json:"jwt_client_base_field"` JWTPolicyFieldName         string                `json:"jwt_policy_field_name"` JWTDefaultPolicies         []string              `json:"jwt_default_policies"` JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"` JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"` JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"` JWTSkipKid                 bool                  `json:"jwt_skip_kid"` JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"` JWTScopeClaimName          string                `json:"jwt_scope_claim_name"` NotificationsDetails       NotificationsManager  `json:"notifications"` EnableSignatureChecking    bool                  `json:"enable_signature_checking"` HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64 HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"` RequestSigning             RequestSigningMeta    `json:"request_signing"` BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`'
                 properties:
                   key:
                     type: string
@@ -405,18 +362,7 @@ spec:
                 - target_url
                 type: object
               response_processors:
-                description: SessionLifetime        int64               `json:"session_lifetime"`
-                  Internal               bool                `json:"internal"` AuthProvider           AuthProviderMeta    `json:"auth_provider"`
-                  SessionProvider        SessionProviderMeta `json:"session_provider"`
-                  //EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
-                  EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
-                  EnableIpWhiteListing      bool `json:"enable_ip_whitelisting"` //
-                  +optional AllowedIPs            []string            `json:"allowed_ips"`
-                  EnableIpBlacklisting  bool                `json:"enable_ip_blacklisting"`
-                  BlacklistedIPs        []string            `json:"blacklisted_ips"`
-                  DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
-                  ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"`
-                  // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
+                description: SessionLifetime        int64               `json:"session_lifetime"` Internal               bool                `json:"internal"` AuthProvider           AuthProviderMeta    `json:"auth_provider"` SessionProvider        SessionProviderMeta `json:"session_provider"` //EventHandlers             EventHandlerMetaConfig `json:"event_handlers"` EnableBatchRequestSupport bool `json:"enable_batch_request_support"` EnableIpWhiteListing      bool `json:"enable_ip_whitelisting"` // +optional AllowedIPs            []string            `json:"allowed_ips"` EnableIpBlacklisting  bool                `json:"enable_ip_blacklisting"` BlacklistedIPs        []string            `json:"blacklisted_ips"` DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"` ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
                 items:
                   properties:
                     name:
@@ -499,8 +445,7 @@ spec:
                                 type: object
                               type: array
                             cache:
-                              description: List of paths which cache middleware should
-                                be enabled on
+                              description: List of paths which cache middleware should be enabled on
                               items:
                                 type: string
                               type: array
@@ -514,17 +459,14 @@ spec:
                                   path:
                                     type: string
                                   return_to_service_after:
-                                    description: ReturnToServiceAfter represents the
-                                      time in seconds to return back to the service
+                                    description: ReturnToServiceAfter represents the time in seconds to return back to the service
                                     type: integer
                                   samples:
-                                    description: Samples defines the number of requests
-                                      to base the ThresholdPercent on
+                                    description: Samples defines the number of requests to base the ThresholdPercent on
                                     format: int64
                                     type: integer
                                   threshold_percent:
-                                    description: ThresholdPercent is the percentage
-                                      of requests that fail before breaker is tripped
+                                    description: ThresholdPercent is the percentage of requests that fail before breaker is tripped
                                     type: string
                                 required:
                                 - method
@@ -595,8 +537,7 @@ spec:
                                 type: object
                               type: array
                             internal:
-                              description: ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
-                                //  Breaking integration test?
+                              description: ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"` //  Breaking integration test?
                               items:
                                 properties:
                                   method:

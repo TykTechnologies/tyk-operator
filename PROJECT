@@ -7,11 +7,14 @@ resources:
   kind: Gateway
   version: v1alpha1
 - group: tyk
+  kind: Organization
+  version: v1alpha1
+- group: tyk
   kind: ApiDefinition
   version: v1alpha1
 - group: tyk
   kind: SecurityPolicy
-  version: v1
+  version: v1alpha1
 - group: tyk
   kind: Webhook
   version: v1alpha1

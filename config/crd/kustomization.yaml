@@ -5,6 +5,7 @@ resources:
 #- bases/tyk.tyk.io_gateways.yaml
 - bases/tyk.tyk.io_apidefinitions.yaml
 - bases/tyk.tyk.io_securitypolicies.yaml
+- bases/tyk.tyk.io_organizations.yaml
 - bases/tyk.tyk.io_webhooks.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
@@ -14,6 +15,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_gateways.yaml
 #- patches/webhook_in_apidefinitions.yaml
 #- patches/webhook_in_securitypolicies.yaml
+#- patches/webhook_in_organizations.yaml
 #- patches/webhook_in_webhooks.yaml
 # +kubebuilder:scaffold:crdkustomizewebhookpatch
 
@@ -22,6 +24,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_gateways.yaml
 #- patches/cainjection_in_apidefinitions.yaml
 #- patches/cainjection_in_securitypolicies.yaml
+#- patches/cainjection_in_organizations.yaml
 #- patches/cainjection_in_webhooks.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
