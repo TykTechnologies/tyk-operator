@@ -29,6 +29,7 @@ jobs:
         run: |
           echo "checking CI license expiry"
           jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
+          export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
           sh ./ci/deploy_tyk_pro.sh
           echo "installing custom resources"
           make install

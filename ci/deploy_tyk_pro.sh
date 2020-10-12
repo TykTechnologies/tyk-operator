@@ -25,7 +25,7 @@ echo "getting dash license key"
 # sed & tr is for osx hack
 echo -n "${TYK_DB_LICENSEKEY}" | sed 's/^-n //' | tr -d '\n' > ./license
 kubectl create secret -n ${NAMESPACE} generic dashboard --from-file=./license
-kubectl describe secret -n ${NAMESPACE} dashboard
+kubectl get secret/dashboard -n tykpro-control-plane -o json | jq '.data.license'
 
 echo "deploying dashboard"
 kubectl apply -f "${PRODIR}/dashboard/dashboard.yaml" -n ${NAMESPACE}
@@ -41,15 +41,6 @@ kubectl logs svc/dashboard -n ${NAMESPACE}
 echo "gateway logs"
 kubectl logs svc/tyk -n ${NAMESPACE}
 
-echo "installing custom resources"
-make install
-kubectl get customresourcedefinitions
-
 echo "deploying httpbin as mock upstream to default ns"
 kubectl apply -f "${PWD}/ci/upstreams"
 kubectl wait deployment/httpbin --for condition=available
-
-
-
-#echo "creating an organization"
-#kubectl exec -n ${NAMESPACE} svc/dashboard -- /opt/tyk-dashboard/tyk-analytics bootstrap --conf=/etc/tyk-dashboard/dash.json --create-org
