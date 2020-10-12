@@ -40,7 +40,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: dashboard
-                  key: license.txt
+                  key: license
           volumeMounts:
             - name: dash-conf
               mountPath: /etc/tyk-dashboard

@@ -22,6 +22,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -81,6 +82,19 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Gateway")
 	//	os.Exit(1)
 	//}
+
+	adminClient := dashboard_admin_client.NewClient("http://localhost:3000", "12345", false)
+
+	if err = (&controllers.OrganizationReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Organization"),
+		Scheme: mgr.GetScheme(),
+		//Recorder:        mgr.GetEventRecorderFor("organization-controller"),
+		AdminDashboardCient: adminClient,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Organization")
+		os.Exit(1)
+	}
 
 	tykClient, err := tykClient()
 	if err != nil {

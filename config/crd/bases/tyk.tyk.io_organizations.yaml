@@ -6,22 +6,22 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: webhooks.tyk.tyk.io
+  name: organizations.tyk.tyk.io
 spec:
   group: tyk.tyk.io
   names:
-    kind: Webhook
-    listKind: WebhookList
-    plural: webhooks
+    kind: Organization
+    listKind: OrganizationList
+    plural: organizations
     shortNames:
-    - tykhooks
-    singular: webhook
+    - tykorgs
+    singular: organization
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Webhook is the Schema for the webhooks API
+        description: Organization is the Schema for the organizations API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -32,36 +32,25 @@ spec:
           metadata:
             type: object
           spec:
-            description: WebhookSpec defines the desired state of Webhook
+            description: OrganizationSpec defines the desired state of Organization
             properties:
-              event_timeout:
-                format: int64
-                type: integer
-              header_map:
-                additionalProperties:
-                  type: string
-                type: object
+              cname:
+                type: string
+              cname_enabled:
+                type: boolean
               id:
-                description: ApiModel     `bson:"api_model,omitempty" json:"api_model,omitempty"` System generated resource. represents the ID to use in API  calls
                 type: string
-              method:
+              owner_name:
                 type: string
-              name:
-                description: System generated resource, will be set to the {namespace/name} of the CRD
-                type: string
-              org_id:
-                description: The org ID to which this webhook belongs to
-                type: string
-              target_path:
-                type: string
-              template_path:
+              owner_slug:
                 type: string
             required:
-            - method
-            - target_path
+            - cname
+            - cname_enabled
+            - owner_name
             type: object
           status:
-            description: WebhookStatus defines the observed state of Webhook
+            description: OrganizationStatus defines the observed state of Organization
             type: object
         type: object
     served: true
