@@ -41,6 +41,11 @@ spec:
                 secretKeyRef:
                   name: dashboard
                   key: license
+            - name: TYK_DB_ADMINSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: dashboard
+                  key: adminSecret
           volumeMounts:
             - name: dash-conf
               mountPath: /etc/tyk-dashboard

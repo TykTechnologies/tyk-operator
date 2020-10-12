@@ -4,6 +4,7 @@ set -e
 
 NAMESPACE=tykpro-control-plane
 PRODIR=${PWD}/ci/tyk-pro
+ADMINSECRET="54321"
 
 echo "creating namespace ${NAMESPACE}"
 kubectl create namespace ${NAMESPACE}
@@ -21,10 +22,8 @@ echo "creating configmaps"
 kubectl create configmap -n ${NAMESPACE} dash-conf --from-file "${PRODIR}/dashboard/confs/dash.json"
 kubectl create configmap -n ${NAMESPACE} tyk-conf --from-file "${PRODIR}/gateway/confs/tyk.json"
 
-echo "getting dash license key"
-# sed & tr is for osx hack
-echo -n "${TYK_DB_LICENSEKEY}" | sed 's/^-n //' | tr -d '\n' > ./license
-kubectl create secret -n ${NAMESPACE} generic dashboard --from-file=./license
+echo "setting dashboard secrets"
+kubectl create secret -n ${NAMESPACE} generic dashboard --from-literal "license=${TYK_DB_LICENSEKEY}" --from-literal "adminSecret=${ADMINSECRET}"
 kubectl get secret/dashboard -n tykpro-control-plane -o json | jq '.data.license'
 
 echo "deploying dashboard"
