@@ -35,7 +35,11 @@ kubectl wait deployment/dashboard -n ${NAMESPACE} --for condition=available
 echo "waiting for gateway"
 kubectl wait deployment/tyk -n ${NAMESPACE} --for condition=available
 
+echo "dashboard logs"
 kubectl logs svc/dashboard -n ${NAMESPACE}
+
+echo "gateway logs"
+kubectl logs svc/tyk -n ${NAMESPACE}
 
 #echo "creating an organization"
 #kubectl exec -n ${NAMESPACE} svc/dashboard -- /opt/tyk-dashboard/tyk-analytics bootstrap --conf=/etc/tyk-dashboard/dash.json --create-org
