@@ -26,13 +26,12 @@ echo "getting dash license key"
 echo -n "${TYK_DB_LICENSEKEY}" | sed 's/^-n //' | tr -d '\n' > ./license.txt
 kubectl create secret -n ${NAMESPACE} generic dashboard --from-file=./license.txt
 
-echo "deploying dashboard & gateway"
+echo "deploying dashboard"
 kubectl apply -f "${PRODIR}/dashboard/dashboard.yaml" -n ${NAMESPACE}
-kubectl apply -f "${PRODIR}/gateway/gateway.yaml" -n ${NAMESPACE}
-
-echo "waiting for dashboard"
 kubectl wait deployment/dashboard -n ${NAMESPACE} --for condition=available
-echo "waiting for gateway"
+
+echo "deploying gateway"
+kubectl apply -f "${PRODIR}/gateway/gateway.yaml" -n ${NAMESPACE}
 kubectl wait deployment/tyk -n ${NAMESPACE} --for condition=available
 
 echo "dashboard logs"
