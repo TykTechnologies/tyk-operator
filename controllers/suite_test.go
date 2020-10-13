@@ -17,8 +17,12 @@ limitations under the License.
 package controllers
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -80,8 +84,32 @@ var _ = BeforeSuite(func(done Done) {
 
 	// +kubebuilder:scaffold:scheme
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
 	Expect(err).ToNot(HaveOccurred())
+
+	tykClient := dashboard_client.NewClient(
+		os.Getenv("TYK_URL"),
+		os.Getenv("TYK_AUTH"),
+		false,
+		os.Getenv("TYK_ORG"),
+	)
+	err = (&ApiDefinitionReconciler{
+		Client:          k8sManager.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
+		Scheme:          k8sManager.GetScheme(),
+		UniversalClient: tykClient,
+		Recorder:        k8sManager.GetEventRecorderFor("apidefinition-controller"),
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		err = k8sManager.Start(ctrl.SetupSignalHandler())
+		Expect(err).ToNot(HaveOccurred())
+	}()
+
+	k8sClient = k8sManager.GetClient()
 	Expect(k8sClient).ToNot(BeNil())
 
 	close(done)
