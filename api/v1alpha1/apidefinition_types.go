@@ -590,6 +590,7 @@ type GraphQLPlayground struct {
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition
 type ApiDefinitionStatus struct {
+	ApiID string
 }
 
 // +kubebuilder:object:root=true
