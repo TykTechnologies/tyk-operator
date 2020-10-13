@@ -37,5 +37,7 @@ jobs:
           echo "bootstrapping tyk dashboard (initial org + user)"
           sh ./ci/bootstrap_org.sh
           cat bootstrapped
+          export TYK_AUTH=$(awk '/USER AUTHENTICATION CODE: /{print $NF}' bootstrapped)
+          export TYK_ORG=$(awk '/ORG ID: /{print $NF}' bootstrapped)
           echo "ORG: ${TYK_ORG}"
           echo "AUTH: ${TYK_AUTH}"

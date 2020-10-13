@@ -3,8 +3,6 @@
 set -e
 
 kubectl exec -it -n tykpro-control-plane svc/dashboard -- ./tyk-analytics bootstrap --conf=/etc/tyk-dashboard/dash.json > bootstrapped
-TYK_AUTH=$(awk '/USER AUTHENTICATION CODE: /{print $NF}' bootstrapped)
-TYK_ORG=$(awk '/ORG ID: /{print $NF}' bootstrapped)
 
 #Loading configuration from /etc/tyk-dashboard/dash.json
 #
