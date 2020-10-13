@@ -34,6 +34,7 @@ jobs:
           echo "installing custom resources"
           make install
           kubectl get crds
+          echo "bootstrapping tyk dashboard (initial org + user)"
           sh ./ci/bootstrap_org.sh
           cat bootstrapped
           echo "ORG: ${TYK_ORG}"
