@@ -28,7 +28,8 @@ import (
 )
 
 var _ = Describe("ApiDefinition controller", func() {
-	return
+	Skip("integration test skipped")
+
 	// Define utility constants for object names.
 	const (
 		ApiDefinitionName      = "httpbin"
