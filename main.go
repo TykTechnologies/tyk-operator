@@ -83,7 +83,11 @@ func main() {
 	//	os.Exit(1)
 	//}
 
-	adminClient := dashboard_admin_client.NewClient("http://localhost:3000", "12345", false)
+	adminClient, err := adminClient()
+	if err != nil {
+		setupLog.Error(err, "unable to configure admin client")
+		os.Exit(1)
+	}
 
 	if err = (&controllers.OrganizationReconciler{
 		Client: mgr.GetClient(),
@@ -141,12 +145,44 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	//// +kubebuilder:scaffold:builder
+	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
+	}
+}
+
+func adminClient() (*dashboard_admin_client.Client, error) {
+	mode := os.Getenv("TYK_MODE")
+	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
+	if err != nil {
+		insecureSkipVerify = false
+	}
+	url := os.Getenv("TYK_URL")
+	if url == "" {
+		return nil, errors.New("missing TYK_URL")
+	}
+	// ADMIN AUTH NOT MANDATORY - AS WE ARE NOT MANAGING ORGS YET
+	auth := os.Getenv("TYK_ADMIN_AUTH")
+	if auth == "" {
+		return nil, nil
+	}
+
+	switch mode {
+	case "pro":
+		return dashboard_admin_client.NewClient(
+			url,
+			auth,
+			insecureSkipVerify,
+		), nil
+	case "oss":
+		{
+			return nil, nil
+		}
+	default:
+		return nil, errors.New("unknown TYK_MODE")
 	}
 }
 

@@ -85,7 +85,7 @@ func TestClient_UserCreate(t *testing.T) {
 	defer svr.Close()
 
 	c := NewClient(svr.URL, "12345", true)
-	if err := c.UserAdminCreate(CreateUserRequest{
+	if _, err := c.UserAdminCreate(CreateUserRequest{
 		FirstName:    "Joe",
 		LastName:     "Bloggs",
 		EmailAddress: "joe@bloggs.com",
