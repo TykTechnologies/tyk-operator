@@ -164,9 +164,10 @@ func adminClient() (*dashboard_admin_client.Client, error) {
 	if url == "" {
 		return nil, errors.New("missing TYK_URL")
 	}
+	// ADMIN AUTH NOT MANDATORY - AS WE ARE NOT MANAGING ORGS YET
 	auth := os.Getenv("TYK_ADMIN_AUTH")
 	if auth == "" {
-		return nil, errors.New("missing TYK_ADMIN_AUTH")
+		return nil, nil
 	}
 
 	switch mode {

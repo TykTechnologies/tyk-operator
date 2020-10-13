@@ -34,3 +34,6 @@ jobs:
           echo "installing custom resources"
           make install
           kubectl get crds
+          sh ./ci/bootstrap_org.sh
+          echo "ORG: ${TYK_ORG}"
+          echo "AUTH: ${TYK_AUTH}"
