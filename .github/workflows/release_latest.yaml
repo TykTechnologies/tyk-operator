@@ -19,3 +19,4 @@ jobs:
           export USERNAME=tykio
           make docker-build IMG=${USERNAME}/tyk-operator:latest
           make docker-push IMG=${USERNAME}/tyk-operator:latest
+          
