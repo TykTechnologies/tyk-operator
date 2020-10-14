@@ -120,7 +120,7 @@ type PolicyPartitions struct {
 
 // SecurityPolicyStatus defines the observed state of SecurityPolicy
 type SecurityPolicyStatus struct {
-	ID string `json:"id"`
+	PolID string `json:"pol_id"`
 }
 
 // +kubebuilder:object:root=true
