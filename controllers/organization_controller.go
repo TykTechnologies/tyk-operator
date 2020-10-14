@@ -115,7 +115,7 @@ func (r *OrganizationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			// remove our finalizer from the list and update it.
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, organizationFinalzerName)
 			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, nil
+				return reconcile.Result{}, err
 			}
 		}
 
