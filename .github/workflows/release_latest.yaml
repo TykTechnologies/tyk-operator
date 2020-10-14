@@ -11,8 +11,8 @@ jobs:
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
-#      - name: create kind cluster
-#        uses: helm/kind-action@v1.0.0
+      - name: create kind cluster
+        uses: helm/kind-action@v1.0.0
       - name: install kubebuilder
         uses: RyanSiu1995/kubebuilder-action@v1
       - name: build
