@@ -87,10 +87,20 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Create or Update
-	if err := universal_client.CreateOrUpdateWebhook(r.UniversalClient, &des.Spec, req.NamespacedName.String()); err != nil {
+	tykHook, err := universal_client.CreateOrUpdateWebhook(r.UniversalClient, &des.Spec, req.NamespacedName.String())
+	if err != nil {
 		r.Log.Error(err, "CreateOrUpdateWebhook failure")
 		r.Recorder.Event(des, "Error", "Webhook", "Create or Update Webhook")
 		return ctrl.Result{Requeue: true}, err
+	}
+
+	// if webhook_id not there, add it, this is new object.
+	if des.Status.WebhookID == "" {
+		des.Status.WebhookID = tykHook.ID
+		if err := r.Status().Update(ctx, des); err != nil {
+			r.Log.Error(err, "Could not update ID")
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
