@@ -962,6 +962,11 @@ spec:
             type: object
           status:
             description: ApiDefinitionStatus defines the observed state of ApiDefinition
+            properties:
+              api_id:
+                type: string
+            required:
+            - api_id
             type: object
         type: object
     served: true
