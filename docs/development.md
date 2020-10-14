@@ -31,7 +31,7 @@ kubectl apply -f playground/httpbin/httpbin.yaml
 C) Create ConfigMap
 
 ```kubernetes
-kubectl create configmap tyk-conf --from-file ./playground/gateway/tyk.json
+kubectl create configmap tyk-conf --from-file ./playground/gateway/confs/tyk.json
 ```
 
 D) Deploy GW and create Service
