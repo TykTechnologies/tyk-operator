@@ -41,6 +41,7 @@ type WebhookSpec struct {
 
 // WebhookStatus defines the observed state of Webhook
 type WebhookStatus struct {
+	WebhookID string `json:"webhook_id"`
 }
 
 // +kubebuilder:object:root=true
