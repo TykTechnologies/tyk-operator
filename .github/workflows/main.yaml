@@ -1,4 +1,4 @@
-name: Tyk Operator
+name: Tyk Tests
 
 on:
   pull_request

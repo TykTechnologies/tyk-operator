@@ -11,6 +11,10 @@ jobs:
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
+      - name: create kind cluster
+        uses: helm/kind-action@v1.0.0
+      - name: install kubebuilder
+        uses: RyanSiu1995/kubebuilder-action@v1
       - name: build
         run: |
           echo "DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}"
@@ -19,4 +23,3 @@ jobs:
           export USERNAME=tykio
           make docker-build IMG=${USERNAME}/tyk-operator:latest
           make docker-push IMG=${USERNAME}/tyk-operator:latest
-          
