@@ -218,10 +218,10 @@ spec:
           status:
             description: SecurityPolicyStatus defines the observed state of SecurityPolicy
             properties:
-              id:
+              pol_id:
                 type: string
             required:
-            - id
+            - pol_id
             type: object
         type: object
     served: true

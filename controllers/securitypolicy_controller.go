@@ -137,11 +137,20 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		}
 	}
 
-	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec, policyNamespacedName)
+	createdPol, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec, policyNamespacedName)
 	if err != nil {
 		log.Error(err, "createOrUpdatePolicy failure")
 		r.Recorder.Event(desired, "Warning", "SecurityPolicy", "Create or Update Security Policy")
 		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// if pol_id not there, add it, this is new object.
+	if desired.Status.PolID == "" {
+		desired.Status.PolID = createdPol.MID
+		if err = r.Status().Update(ctx, desired); err != nil {
+			log.Error(err, "Could not update ID")
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
