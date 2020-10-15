@@ -21,6 +21,7 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -155,17 +156,17 @@ func main() {
 }
 
 func adminClient() (*dashboard_admin_client.Client, error) {
-	mode := os.Getenv("TYK_MODE")
+	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
 	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
 	if err != nil {
 		insecureSkipVerify = false
 	}
-	url := os.Getenv("TYK_URL")
+	url := strings.TrimSpace(os.Getenv("TYK_URL"))
 	if url == "" {
 		return nil, errors.New("missing TYK_URL")
 	}
 	// ADMIN AUTH NOT MANDATORY - AS WE ARE NOT MANAGING ORGS YET
-	auth := os.Getenv("TYK_ADMIN_AUTH")
+	auth := strings.TrimSpace(os.Getenv("TYK_ADMIN_AUTH"))
 	if auth == "" {
 		return nil, nil
 	}
@@ -187,20 +188,20 @@ func adminClient() (*dashboard_admin_client.Client, error) {
 }
 
 func tykClient() (universal_client.UniversalClient, error) {
-	mode := os.Getenv("TYK_MODE")
+	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
 	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
 	if err != nil {
 		insecureSkipVerify = false
 	}
-	url := os.Getenv("TYK_URL")
+	url := strings.TrimSpace(os.Getenv("TYK_URL"))
 	if url == "" {
 		return nil, errors.New("missing TYK_URL")
 	}
-	auth := os.Getenv("TYK_AUTH")
+	auth := strings.TrimSpace(os.Getenv("TYK_AUTH"))
 	if auth == "" {
 		return nil, errors.New("missing TYK_AUTH")
 	}
-	org := os.Getenv("TYK_ORG")
+	org := strings.TrimSpace(os.Getenv("TYK_ORG"))
 	if org == "" {
 		return nil, errors.New("missing TYK_ORG")
 	}
