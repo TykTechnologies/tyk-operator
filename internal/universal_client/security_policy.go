@@ -42,7 +42,7 @@ func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpe
 	pol, err := c.SecurityPolicy().Get(namespacedName)
 	if err != nil {
 		// should return "nil, http.401" if policy doesn't exist
-		if err != PolicyNotFoundError {
+		if !errors.Is(err, PolicyNotFoundError) {
 			return nil, errors.Wrap(err, "Unable to communicate with Client")
 		}
 	}
