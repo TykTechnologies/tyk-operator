@@ -55,11 +55,22 @@ func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create policy")
 		}
+
+		pol, err = c.SecurityPolicy().Get(namespacedName)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to create fetch new policy")
+		}
+
 	} else {
 		// Update
 		err = c.SecurityPolicy().Update(spec, namespacedName)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update policy")
+		}
+
+		pol, err = c.SecurityPolicy().Get(namespacedName)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to create fetch updated policy")
 		}
 	}
 
