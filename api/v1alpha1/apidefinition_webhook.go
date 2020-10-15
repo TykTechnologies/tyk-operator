@@ -37,6 +37,7 @@ func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 // +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-apidefinition,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,verbs=create;update,versions=v1alpha1,name=mapidefinition.kb.io
+
 var _ webhook.Defaulter = &ApiDefinition{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
