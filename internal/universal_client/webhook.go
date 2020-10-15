@@ -21,12 +21,12 @@ var (
 func applyDefaultsWebhooks(spec *tykv1alpha1.WebhookSpec) {
 }
 
-func CreateOrUpdateWebhook(c UniversalClient, spec *tykv1alpha1.WebhookSpec, namespacedName string) error {
+func CreateOrUpdateWebhook(c UniversalClient, spec *tykv1alpha1.WebhookSpec, namespacedName string) (*tykv1alpha1.WebhookSpec, error) {
 	var err error
 
 	webhook, err := c.Webhook().Get(namespacedName)
 	if err != nil && err != WebhookNotFoundError {
-		return errors.Wrap(err, "Unable to communicate with Client")
+		return nil, errors.Wrap(err, "Unable to communicate with Client")
 	}
 
 	// Create
@@ -34,19 +34,29 @@ func CreateOrUpdateWebhook(c UniversalClient, spec *tykv1alpha1.WebhookSpec, nam
 
 		err = c.Webhook().Create(namespacedName, spec)
 		if err != nil {
-			return errors.Wrap(err, "unable to create webhook")
+			return nil, errors.Wrap(err, "unable to create webhook")
+		}
+
+		webhook, err = c.Webhook().Get(namespacedName)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to create webhook")
 		}
 
 	} else { // Update
 
 		err = c.Webhook().Update(namespacedName, spec)
 		if err != nil {
-			return errors.Wrap(err, "unable to update webhook")
+			return nil, errors.Wrap(err, "unable to update webhook")
+		}
+
+		webhook, err = c.Webhook().Get(namespacedName)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to create webhook")
 		}
 
 	}
 
 	_ = c.HotReload()
 
-	return nil
+	return webhook, nil
 }

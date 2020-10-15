@@ -127,11 +127,20 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	newSpec.APIID = apiIDEncoded
 	r.applyDefaults(newSpec)
 
-	_, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
+	api, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
 	if err != nil {
 		log.Error(err, "createOrUpdate failure")
 		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// if api_id not there, add it, this is new object.
+	if desired.Status.ApiID == "" {
+		desired.Status.ApiID = api.ID
+		if err = r.Status().Update(ctx, desired); err != nil {
+			log.Error(err, "Could not update ID")
+			return ctrl.Result{}, err
+		}
 	}
 
 	if name, ok := desired.Annotations["ingress"]; ok {
