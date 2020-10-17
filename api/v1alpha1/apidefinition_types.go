@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -571,11 +573,38 @@ type TypeFieldConfiguration struct {
 type SourceConfig struct {
 	// Kind defines the unique identifier of the DataSource
 	// Kind needs to match to the Planner "DataSourceName" name
+	// +kubebuilder:validation:Enum=GraphQLDataSource;HTTPJSONDataSource
 	Name string `json:"kind"`
 
 	// Config is the DataSource specific configuration object
 	// Each Planner needs to make sure to parse their Config Object correctly
-	//Config json.RawMessage `json:"data_source_config"`
+	Config             runtime.RawExtension `json:"data_source_config,omitempty"`
+	GraphQLDataSource  SourceConfigGraphQL  `json:"graphql_data_source,omitempty"`
+	HTTPJsonDataSource HTTPJsonDataSource   `json:"http_json_data_source,omitempty"`
+}
+
+type SourceConfigGraphQL struct {
+	// URL is the URL of the GraphQL data source
+	URL string `json:"url"`
+	// Method represents the HTTP method used
+
+	// +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE
+	Method string `json:"method"`
+}
+
+type HTTPJsonDataSource struct {
+	URL string `json:"url"`
+	// +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE
+	Method          string `json:"method"`
+	Body            string `json:"body,omitempty"`
+	DefaultTypeName string `json:"default_type_name"`
+	//Headers []string `json:"headers"`
+	StatusCodeTypeNameMappings []StatusCodeTypeNameMapping `json:"status_code_type_name_mappings"`
+}
+
+type StatusCodeTypeNameMapping struct {
+	StatusCode int    `json:"status_code"`
+	TypeName   string `json:"type_name,omitempty"`
 }
 
 type MappingConfiguration struct {

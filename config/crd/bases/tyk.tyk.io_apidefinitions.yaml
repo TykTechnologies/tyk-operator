@@ -359,10 +359,70 @@ spec:
                       properties:
                         data_source:
                           properties:
+                            data_source_config:
+                              description: Config is the DataSource specific configuration
+                                object Each Planner needs to make sure to parse their
+                                Config Object correctly
+                              type: object
+                            graphql_data_source:
+                              properties:
+                                method:
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  type: string
+                                url:
+                                  description: URL is the URL of the GraphQL data
+                                    source
+                                  type: string
+                              required:
+                              - method
+                              - url
+                              type: object
+                            http_json_data_source:
+                              properties:
+                                body:
+                                  type: string
+                                default_type_name:
+                                  type: string
+                                method:
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  type: string
+                                status_code_type_name_mappings:
+                                  description: Headers []string `json:"headers"`
+                                  items:
+                                    properties:
+                                      status_code:
+                                        type: integer
+                                      type_name:
+                                        type: string
+                                    required:
+                                    - status_code
+                                    type: object
+                                  type: array
+                                url:
+                                  type: string
+                              required:
+                              - default_type_name
+                              - method
+                              - status_code_type_name_mappings
+                              - url
+                              type: object
                             kind:
                               description: Kind defines the unique identifier of the
                                 DataSource Kind needs to match to the Planner "DataSourceName"
                                 name
+                              enum:
+                              - GraphQLDataSource
+                              - HTTPJSONDataSource
                               type: string
                           required:
                           - kind

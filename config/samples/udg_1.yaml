@@ -1,0 +1,58 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: composed
+spec:
+  name: composed
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: https://countries.trevorblades.com
+    listen_path: /composed
+    strip_listen_path: true
+  graphql:
+    enabled: true
+    execution_mode: executionEngine
+    schema: |
+      type Country {
+        name: String
+        code: String
+        enriched: RESTCountry
+      }
+
+      type Query {
+        countries: [Country]
+      }
+
+      type RESTCountry {
+        subregion: String
+        population: Int
+      }
+    type_field_configurations:
+      - type_name: Query
+        field_name: countries
+        data_source:
+          kind: GraphQLDataSource
+          graphql_data_source:
+            method: POST
+            url: https://countries.trevorblades.com
+        mapping:
+          disabled: true
+          path: ""
+      - type_name: Country
+        field_name: enriched
+        data_source:
+          kind: HTTPJSONDataSource
+          http_json_data_source:
+            default_type_name: "RESTCountry"
+            method: GET
+            status_code_type_name_mappings:
+              - status_code: 200
+            url: https://restcountries.eu/rest/v2/alpha/{{ .object.code }}
+        mapping:
+          disabled: true
+          path: ""
+    playground:
+      enabled: true
+      path: /playground
