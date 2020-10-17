@@ -425,7 +425,8 @@ type APIDefinitionSpec struct {
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
 	//StripAuthData           bool            `json:"strip_auth_data"`
 	//EnableDetailedRecording bool            `json:"enable_detailed_recording"`
-	//GraphQL                 GraphQLConfig   `json:"graphql"`
+
+	GraphQL GraphQLConfig `json:"graphql,omitempty"`
 }
 
 type Proxy struct {
@@ -542,18 +543,22 @@ type RequestSigningMeta struct {
 
 // GraphQLConfig is the root config object for a GraphQL API.
 type GraphQLConfig struct {
-	// Enabled indicates if GraphQL should be enabled.
+
+	// Enabled indicates if GraphQL proxy should be enabled.
 	Enabled bool `json:"enabled"`
+
 	// ExecutionMode is the mode to define how an api behaves.
+	// +kubebuilder:validation:Enum=proxyOnly;executionEngine
 	ExecutionMode GraphQLExecutionMode `json:"execution_mode"`
+
 	// Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
 	Schema string `json:"schema"`
-	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream
-	//LastSchemaUpdate *time.Time `json:"last_schema_update,omitempty"`
+
 	// TypeFieldConfigurations is a rule set of data source and mapping of a schema field.
-	TypeFieldConfigurations []TypeFieldConfiguration `json:"type_field_configurations"`
+	TypeFieldConfigurations []TypeFieldConfiguration `json:"type_field_configurations,omitempty"`
+
 	// GraphQLPlayground is the Playground specific configuration.
-	GraphQLPlayground GraphQLPlayground `json:"playground"`
+	GraphQLPlayground GraphQLPlayground `json:"playground,omitempty"`
 }
 
 type TypeFieldConfiguration struct {
@@ -567,9 +572,10 @@ type SourceConfig struct {
 	// Kind defines the unique identifier of the DataSource
 	// Kind needs to match to the Planner "DataSourceName" name
 	Name string `json:"kind"`
+
 	// Config is the DataSource specific configuration object
 	// Each Planner needs to make sure to parse their Config Object correctly
-	Config json.RawMessage `json:"data_source_config"`
+	//Config json.RawMessage `json:"data_source_config"`
 }
 
 type MappingConfiguration struct {
