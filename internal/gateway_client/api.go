@@ -73,9 +73,9 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 			return "", apiCollisionError
 		}
 
-		if api.Slug == def.Slug {
-			return "", apiCollisionError
-		}
+		//if api.Slug == def.Slug {
+		//	return "", apiCollisionError
+		//}
 	}
 
 	// Create
