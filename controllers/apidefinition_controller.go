@@ -127,10 +127,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	r.applyDefaults(newSpec)
 
 	// If directly specified in the spec, this refers to an existing API definition
-	// Otherwise,  grab it from the Status value from an API already stored as a CRD
-	// If the Status ID is empty, that's fine, this is new API, we create new
+	// Otherwise, we use the B64 encoded namespace name as the custom API ID
 	if desired.Spec.APIID == "" {
-		desired.Spec.APIID = desired.Status.ApiID
+		desired.Spec.APIID = apiIDEncode(req.NamespacedName.String())
 	}
 	api, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
 	if err != nil {
