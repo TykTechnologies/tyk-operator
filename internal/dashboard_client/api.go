@@ -157,7 +157,7 @@ func (a Api) Delete(id string) error {
 	}
 
 	if res.StatusCode == http.StatusNotFound {
-		// Tyk returns internal server error if api is already deleted
+		// Tyk returns 404 if api is already deleted
 		return nil
 	}
 
