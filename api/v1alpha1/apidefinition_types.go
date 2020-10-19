@@ -346,21 +346,26 @@ type APIDefinitionSpec struct {
 	// OrgID is overwritten - no point setting this
 	OrgID  string `json:"org_id,omitempty"`
 	Active bool   `json:"active,omitempty"`
+	// Proxy
+	Proxy Proxy `json:"proxy"`
 	// +optional
-	Slug  string `json:"slug,omitempty"`
-	Proxy Proxy  `json:"proxy"`
-	// +optional
-	ListenPort       int    `json:"listen_port"`
-	Protocol         string `json:"protocol"`
-	UseKeylessAccess bool   `json:"use_keyless,omitempty"`
+	ListenPort int    `json:"listen_port"`
+	Protocol   string `json:"protocol"`
+
+	// use_keyless will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
+	// quotas and security policies will not be possible (there is no session to attach requests to).
+	UseKeylessAccess bool `json:"use_keyless,omitempty"`
 	//EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
 	//UseOauth2           bool          `json:"use_oauth2"`
 	//UseOpenID           bool          `json:"use_openid"`
 	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
 	//Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
+
 	Auth AuthConfig `json:"auth,omitempty"`
+
 	// +optional
 	AuthConfigs map[string]AuthConfig `json:"auth_configs,omitempty"`
+
 	// UseStandardAuth enables simple bearer token authentication
 	UseStandardAuth bool `json:"use_standard_auth,omitempty"`
 	//UseBasicAuth               bool                  `json:"use_basic_auth"`
@@ -390,14 +395,18 @@ type APIDefinitionSpec struct {
 	//HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
 	//RequestSigning             RequestSigningMeta    `json:"request_signing"`
 	//BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
+
 	VersionDefinition VersionDefinition `json:"definition,omitempty"`
-	VersionData       VersionData       `json:"version_data,omitempty"`
+
+	VersionData VersionData `json:"version_data,omitempty"`
 	////UptimeTests                UptimeTests           `json:"uptime_tests"`
 	//
 	//DisableRateLimit       bool                `json:"disable_rate_limit"`
 	//DisableQuota           bool                `json:"disable_quota"`
+
 	CustomMiddleware MiddlewareSection `json:"custom_middleware,omitempty"`
 	//CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
+
 	CacheOptions CacheOptions `json:"cache_options,omitempty"`
 	//SessionLifetime        int64               `json:"session_lifetime"`
 	//Internal               bool                `json:"internal"`
@@ -412,6 +421,7 @@ type APIDefinitionSpec struct {
 	//BlacklistedIPs        []string            `json:"blacklisted_ips"`
 	//DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
+
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
 	//// +optional
 	//CORS              CORS     `json:"CORS"`
@@ -428,25 +438,59 @@ type APIDefinitionSpec struct {
 	//GraphQL                 GraphQLConfig   `json:"graphql"`
 }
 
+// Proxy outlines the API proxying functionality.
 type Proxy struct {
-	PreserveHostHeader          bool                          `json:"preserve_host_header,omitempty"`
-	ListenPath                  string                        `json:"listen_path,omitempty"`
-	TargetURL                   string                        `json:"target_url"`
-	DisableStripSlash           bool                          `json:"disable_strip_slash,omitempty"`
-	StripListenPath             bool                          `json:"strip_listen_path,omitempty"`
-	EnableLoadBalancing         bool                          `json:"enable_load_balancing,omitempty"`
-	Targets                     []string                      `json:"target_list,omitempty"`
-	CheckHostAgainstUptimeTests bool                          `json:"check_host_against_uptime_tests,omitempty"`
-	ServiceDiscovery            ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
-	Transport                   ProxyTransport                `json:"transport,omitempty"`
+	// If PreserveHostHeader is set to true then the host header in the outbound request is retained to be the
+	// inbound hostname of the proxy.
+	PreserveHostHeader bool `json:"preserve_host_header,omitempty"`
+	// ListenPath represents the path to listen on. e.g. `/api` or `/` or `/httpbin`.
+	// Any requests coming into the host, on the port that Tyk is configured to run on, that match this path will
+	// have the rules defined in the API Definition applied. Versioning assumes that different versions of an API
+	// will live on the same URL structure. If you are using URL-based versioning (e.g. /v1/function, /v2/function)
+	// then it is recommended to set up a separate non-versioned definition for each version as they are essentially
+	// separate APIs.
+	ListenPath string `json:"listen_path,omitempty"`
+	// TargetURL defines the target URL that the request should be proxied to.
+	TargetURL string `json:"target_url"`
+	// DisableStripSlash disables the stripping of the slash suffix from a URL.
+	// when `true` a request to http://foo.bar/baz/ will be retained.
+	// when `false` a request to http://foo.bar/baz/ will be matched to http://foo.bar/baz
+	DisableStripSlash bool `json:"disable_strip_slash,omitempty"`
+	// StripListenPath removes the inbound listen path in the outgoing request.
+	// e.g. http://acme.com/httpbin/get where `httpbin` is the listen path. The `httpbin` listen path which is used
+	// to identify the API loaded in Tyk is removed, and the outbound request would be http://httpbin.org/get
+	StripListenPath bool `json:"strip_listen_path,omitempty"`
+	// EnableLoadBalancing enables Tyk's round-robin loadbalancer. Tyk will ignore the TargetURL field, and rely on
+	// the hosts in the Targets list
+	EnableLoadBalancing bool `json:"enable_load_balancing,omitempty"`
+	// Targets defines a list of upstream host targets. Tyk will then round-robin load balance between these targets.
+	// EnableLoadBalancing must be set to true in order to take advantage of this feature.
+	Targets []string `json:"target_list,omitempty"`
+	// CheckHostAgainstUptimeTests will check the hostname of the outbound request against the downtime list generated
+	// by the uptime test host checker. If the host is found, then it is skipped or removed from the load balancer.
+	// This is only valid if uptime tests for the api are enabled.
+	CheckHostAgainstUptimeTests bool `json:"check_host_against_uptime_tests,omitempty"`
+	// Transport section exposes advanced transport level configurations such as minimum TLS version.
+	Transport ProxyTransport `json:"transport,omitempty"`
+	// TODO: Untested. Is there a use-case for SD inside a K8s environment?
+	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
 }
 
 type ProxyTransport struct {
-	SSLInsecureSkipVerify   bool     `json:"ssl_insecure_skip_verify,omitempty"`
-	SSLCipherSuites         []string `json:"ssl_ciphers,omitempty"`
-	SSLMinVersion           uint16   `json:"ssl_min_version,omitempty"`
-	SSLForceCommonNameCheck bool     `json:"ssl_force_common_name_check,omitempty"`
-	ProxyURL                string   `json:"proxy_url,omitempty"`
+	// SSLInsecureSkipVerify controls whether it is possible to use self-signed certificates when connecting to the
+	// upstream. This is applied to `TykMakeHttpRequest` & `TykMakeBatchRequest` in virtual endpoint middleware.
+	SSLInsecureSkipVerify bool `json:"ssl_insecure_skip_verify,omitempty"`
+	// SSLCipherSuites is an array of acceptable cipher suites. A list of allowed cipher suites can be found in the
+	// Go Crypto TLS package constants documentation https://golang.org/pkg/crypto/tls/#pkg-constants
+	SSLCipherSuites []string `json:"ssl_ciphers,omitempty"`
+	// SSLMinVersion defines the minimum TLS version the gateway will use to establish a connection to the upstream.
+	// 1.0: 769; 1.1: 770; 1.2: 771; 1.3: 772.
+	// +kubebuilder:validation:Enum=769;770;771;772
+	SSLMinVersion uint16 `json:"ssl_min_version,omitempty"`
+	// SSLForceCommonNameCheck forces hostname validation against the certificate Common Name
+	SSLForceCommonNameCheck bool `json:"ssl_force_common_name_check,omitempty"`
+	// ProxyURL specifies custom forward proxy & port. e.g. `http(s)://proxy.url:1234`
+	ProxyURL string `json:"proxy_url,omitempty"`
 }
 
 type CORS struct {
