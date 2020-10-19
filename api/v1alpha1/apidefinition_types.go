@@ -340,7 +340,12 @@ type OpenIDOptions struct {
 // APIDefinition represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
-	ID    string `json:"id,omitempty"`
+	// For server use only, do not use
+	ID string `json:"id,omitempty"`
+	// Only set this field if you are referring
+	// To an existing API in def.
+	// The Operator will use this API ID to link the CRD with the API in Tyk
+	// Note the values in the CRD will become the new source of truth, overriding the existing API Definition
 	APIID string `json:"api_id,omitempty"`
 	Name  string `json:"name"`
 	// OrgID is overwritten - no point setting this

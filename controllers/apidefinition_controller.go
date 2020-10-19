@@ -53,10 +53,9 @@ type ApiDefinitionReconciler struct {
 
 func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	apiID := req.NamespacedName
-	apiIDEncoded := apiIDEncode(apiID.String())
+	namespacedName := req.NamespacedName
 
-	log := r.Log.WithValues("ApiDefinition", apiID.String())
+	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
 
 	log.Info("fetching apidefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
@@ -79,9 +78,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 			for _, policy := range policies {
 				for _, right := range policy.AccessRightsArray {
-					if right.APIID == apiIDEncoded {
+					if right.APIID == desired.Status.ApiID {
 						log.Info("unable to delete api due to security policy dependency",
-							"api", apiID.String(),
+							"api", namespacedName.String(),
 							"policy", apiIDDecode(policy.ID),
 						)
 						return ctrl.Result{RequeueAfter: time.Second * 5}, err
@@ -89,15 +88,15 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				}
 			}
 
-			err = r.UniversalClient.Api().Delete(apiIDEncoded)
+			err = r.UniversalClient.Api().Delete(desired.Status.ApiID)
 			if err != nil {
-				log.Error(err, "unable to delete api", "api_id", apiIDEncoded)
+				log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 				return ctrl.Result{}, err
 			}
 
 			err = r.UniversalClient.HotReload()
 			if err != nil {
-				log.Error(err, "unable to hot reload", "api_id", apiIDEncoded)
+				log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 				return ctrl.Result{}, err
 			}
 
@@ -124,9 +123,15 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// TODO: this belongs in webhook or CR will be wrong
 	// we only care about this for OSS
-	newSpec.APIID = apiIDEncoded
+	//newSpec.APIID = apiIDEncoded
 	r.applyDefaults(newSpec)
 
+	// If directly specified in the spec, this refers to an existing API definition
+	// Otherwise,  grab it from the Status value from an API already stored as a CRD
+	// If the Status ID is empty, that's fine, this is new API, we create new
+	if desired.Spec.APIID == "" {
+		desired.Spec.APIID = desired.Status.ApiID
+	}
 	api, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
 	if err != nil {
 		log.Error(err, "createOrUpdate failure")
@@ -136,7 +141,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// if api_id not there, add it, this is new object.
 	if desired.Status.ApiID == "" {
-		desired.Status.ApiID = api.ID
+		desired.Status.ApiID = api.APIID
 		if err = r.Status().Update(ctx, desired); err != nil {
 			log.Error(err, "Could not update ID")
 			return ctrl.Result{}, err

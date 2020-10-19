@@ -28,32 +28,26 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create api")
 		}
-		created, err := c.Api().Get(insertedId)
+		api, err = c.Api().Get(insertedId)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get inserted api")
-		}
-		oldAPIID := created.APIID
-		created.APIID = spec.APIID
-		err = c.Api().Update(oldAPIID, created)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to update API ID")
 		}
 	} else {
 		// Update
 		spec.OrgID = api.OrgID
 		spec.ID = api.ID
+		spec.APIID = api.APIID
 		err = c.Api().Update(api.APIID, spec)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update api")
 		}
+		api, err = c.Api().Get(api.APIID)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to get inserted api")
+		}
 	}
 
 	_ = c.HotReload()
-
-	api, err = c.Api().Get(spec.APIID)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get created api")
-	}
 
 	return api, nil
 }
