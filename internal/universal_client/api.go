@@ -33,7 +33,8 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 			return nil, errors.Wrap(err, "unable to get inserted api")
 		}
 
-		// if api id does not match between the two APIs, the new one was deleted and needs to be resync'd
+		// if this is an existing CRD and the "api_id" does not match between the two APIs, that means
+		// the newly created one was unintentionally deleted.  The next action updates the "api_id" to the old one in order to resync
 		if api.APIID != spec.APIID {
 			spec.OrgID = api.OrgID
 			err = c.Api().Update(api.APIID, spec)
@@ -51,10 +52,11 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update api")
 		}
-		api, err = c.Api().Get(api.APIID)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to get inserted api")
-		}
+	}
+
+	api, err = c.Api().Get(spec.APIID)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get final api form")
 	}
 
 	_ = c.HotReload()
