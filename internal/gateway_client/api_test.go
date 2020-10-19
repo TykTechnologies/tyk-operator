@@ -13,7 +13,7 @@ func TestApi_All(t *testing.T) {
 	}
 
 	for _, a := range apis {
-		t.Log("api:", a.APIID, a.Slug, a.Proxy.ListenPath)
+		t.Log("api:", a.APIID, a.Proxy.ListenPath)
 	}
 }
 
