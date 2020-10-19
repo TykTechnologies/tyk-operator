@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.0
+    controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
   name: apidefinitions.tyk.tyk.io
 spec:
@@ -52,6 +52,10 @@ spec:
               active:
                 type: boolean
               api_id:
+                description: Only set this field if you are referring To an existing
+                  API in def. The Operator will use this API ID to link the CRD with
+                  the API in Tyk Note the values in the CRD will become the new source
+                  of truth, overriding the existing API Definition
                 type: string
               auth:
                 properties:
@@ -287,6 +291,7 @@ spec:
                 - strip_path
                 type: object
               id:
+                description: For server use only, do not use
                 type: string
               listen_port:
                 type: integer
