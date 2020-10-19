@@ -32,6 +32,16 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) (*v1.APIDe
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get inserted api")
 		}
+
+		// if api id does not match between the two APIs, the new one was deleted and needs to be resync'd
+		if api.APIID != spec.APIID {
+			spec.OrgID = api.OrgID
+			err = c.Api().Update(api.APIID, spec)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to update api")
+			}
+		}
+
 	} else {
 		// Update
 		spec.OrgID = api.OrgID
