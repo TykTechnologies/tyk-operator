@@ -7,7 +7,7 @@ import (
 
 type UniversalSecurityPolicy interface {
 	All() ([]tykv1alpha1.SecurityPolicySpec, error)
-	Get(namespacedName string) (*tykv1alpha1.SecurityPolicySpec, error)
+	Get(policyId string) (*tykv1alpha1.SecurityPolicySpec, error)
 	Create(def *tykv1alpha1.SecurityPolicySpec) (string, error)
 	Update(def *tykv1alpha1.SecurityPolicySpec) error
 	Delete(policyId string) error
