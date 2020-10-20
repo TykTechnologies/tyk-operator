@@ -16,14 +16,14 @@ func (p SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, erro
 	return nil, nil
 }
 
-func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec, namespacedName string) (string, error) {
+func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 	return "", nil
 }
 
-func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec, namespacedName string) error {
+func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	return nil
 }
 
-func (p SecurityPolicy) Delete(namespacedName string) error {
+func (p SecurityPolicy) Delete(policyId string) error {
 	return nil
 }
