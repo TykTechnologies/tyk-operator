@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -65,15 +66,14 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		// The object is being deleted
 		if containsString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName) {
 			// our finalizer is present, so lets handle our external dependency
-
-			if err := r.UniversalClient.SecurityPolicy().Delete(policyNamespacedName); err != nil {
-				log.Error(err, "unable to delete policy", "nameSpacedName", policyNamespacedName)
+			if err := r.UniversalClient.SecurityPolicy().Delete(desired.Status.PolID); err != nil {
+				log.Error(err, "unable to delete policy", "nameSpacedName", policyNamespacedName, "polId", desired.Status.PolID)
 				return reconcile.Result{Requeue: true}, err
 			}
 
 			err := r.UniversalClient.HotReload()
 			if err != nil {
-				log.Error(err, "unable to hot reload after policy delete", "nameSpacedName", policyNamespacedName)
+				log.Error(err, "unable to hot reload after policy delete", "nameSpacedName", policyNamespacedName, "polId", desired.Status.PolID)
 			}
 
 			// remove our finalizer from the list and update it.
@@ -96,6 +96,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Convert the API name/namespace to the Tyk API ID
 	for i, accessRight := range desired.Spec.AccessRightsArray {
 		apiNamespace := accessRight.Namespace
 		apiName := accessRight.Name
@@ -137,20 +138,30 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		}
 	}
 
-	createdPol, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec, policyNamespacedName)
+	// if "Status.PolID" not there, add and save it, this is new object.
+	if desired.Status.PolID == "" {
+		// If the spec is NOT included, means we use the B64 encoded namespaced name
+		// as the Policy ID.
+		if desired.Spec.ID != "" {
+			desired.Status.PolID = desired.Spec.ID
+		} else {
+			desired.Status.PolID = base64.URLEncoding.EncodeToString([]byte(policyNamespacedName))
+		}
+
+		err := r.Status().Update(ctx, desired)
+		if err != nil {
+			log.Error(err, "Could not update Status ID")
+		}
+
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	desired.Spec.ID = desired.Status.PolID
+	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec)
 	if err != nil {
 		log.Error(err, "createOrUpdatePolicy failure")
 		r.Recorder.Event(desired, "Warning", "SecurityPolicy", "Create or Update Security Policy")
 		return ctrl.Result{Requeue: true}, nil
-	}
-
-	// if pol_id not there, add it, this is new object.
-	if desired.Status.PolID == "" {
-		desired.Status.PolID = createdPol.MID
-		if err = r.Status().Update(ctx, desired); err != nil {
-			log.Error(err, "Could not update ID")
-			return ctrl.Result{}, err
-		}
 	}
 
 	return ctrl.Result{}, nil

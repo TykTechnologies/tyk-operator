@@ -60,7 +60,7 @@ func (a SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, erro
 }
 
 // todo: needs testing
-func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec, namespacedName string) (string, error) {
+func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 	// Replace this with a GET ONE once that is fixed
 	// get all policies
 	list, err := a.All()
@@ -101,7 +101,7 @@ func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec, namespacedName string
 }
 
 // todo: needs testing
-func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec, namespacedName string) error {
+func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	// Replace this with a GET ONE once that is fixed
 	list, err := a.All()
 	if err != nil {
