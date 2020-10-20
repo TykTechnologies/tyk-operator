@@ -18,6 +18,9 @@ package controllers
 
 import (
 	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"reflect"
 	"time"
 
@@ -26,12 +29,9 @@ import (
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -53,10 +53,9 @@ type ApiDefinitionReconciler struct {
 
 func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	apiID := req.NamespacedName
-	apiIDEncoded := apiIDEncode(apiID.String())
+	namespacedName := req.NamespacedName
 
-	log := r.Log.WithValues("ApiDefinition", apiID.String())
+	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
 
 	log.Info("fetching apidefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
@@ -79,9 +78,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 			for _, policy := range policies {
 				for _, right := range policy.AccessRightsArray {
-					if right.APIID == apiIDEncoded {
+					if right.APIID == desired.Status.ApiID {
 						log.Info("unable to delete api due to security policy dependency",
-							"api", apiID.String(),
+							"api", namespacedName.String(),
 							"policy", apiIDDecode(policy.ID),
 						)
 						return ctrl.Result{RequeueAfter: time.Second * 5}, err
@@ -89,15 +88,15 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				}
 			}
 
-			err = r.UniversalClient.Api().Delete(apiIDEncoded)
+			err = r.UniversalClient.Api().Delete(desired.Status.ApiID)
 			if err != nil {
-				log.Error(err, "unable to delete api", "api_id", apiIDEncoded)
+				log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 				return ctrl.Result{}, err
 			}
 
 			err = r.UniversalClient.HotReload()
 			if err != nil {
-				log.Error(err, "unable to hot reload", "api_id", apiIDEncoded)
+				log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 				return ctrl.Result{}, err
 			}
 
@@ -120,27 +119,32 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	newSpec := &desired.Spec
+	r.applyDefaults(&desired.Spec)
 
-	// TODO: this belongs in webhook or CR will be wrong
-	// we only care about this for OSS
-	newSpec.APIID = apiIDEncoded
-	r.applyDefaults(newSpec)
+	//  If this is not set, means it is a new object, set it first
+	if desired.Status.ApiID == "" {
 
-	api, err := universal_client.CreateOrUpdateAPI(r.UniversalClient, newSpec)
-	if err != nil {
+		// If directly specified in the spec, this refers to an existing API definition
+		// Otherwise, we use the B64 encoded namespace name as the custom API ID
+		if desired.Spec.APIID != "" {
+			desired.Status.ApiID = desired.Spec.APIID
+		} else {
+			desired.Status.ApiID = apiIDEncode(req.NamespacedName.String())
+		}
+
+		err := r.Status().Update(ctx, desired)
+		if err != nil {
+			log.Error(err, "Could not update Status ID")
+		}
+
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	desired.Spec.APIID = desired.Status.ApiID
+	if err := universal_client.CreateOrUpdateAPI(r.UniversalClient, &desired.Spec); err != nil {
 		log.Error(err, "createOrUpdate failure")
 		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
-	}
-
-	// if api_id not there, add it, this is new object.
-	if desired.Status.ApiID == "" {
-		desired.Status.ApiID = api.ID
-		if err = r.Status().Update(ctx, desired); err != nil {
-			log.Error(err, "Could not update ID")
-			return ctrl.Result{}, err
-		}
 	}
 
 	if name, ok := desired.Annotations["ingress"]; ok {

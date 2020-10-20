@@ -86,6 +86,10 @@ func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) (string, error) {
 }
 
 func (a Api) Get(apiID string) (*tykv1alpha1.APIDefinitionSpec, error) {
+	if apiID == "" {
+		return nil, nil
+	}
+
 	// Create
 	sess := grequests.NewSession(a.opts)
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
