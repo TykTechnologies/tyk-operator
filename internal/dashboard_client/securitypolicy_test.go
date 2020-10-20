@@ -28,7 +28,7 @@ func TestPol_GetOne(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
+	_, err := c.SecurityPolicy().Create(newPol)
 	if err != nil && err.Error() != "policy id collision detected" {
 		t.Fatal(err.Error())
 	}
@@ -61,7 +61,7 @@ func TestPol_Create(t *testing.T) {
 	numPols := len(pols)
 	newPol := createPolicy()
 
-	_, err = c.SecurityPolicy().Create(newPol, policyNamespacedName)
+	_, err = c.SecurityPolicy().Create(newPol)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -85,7 +85,7 @@ func TestPol_CreateIncludesUniqueTag(t *testing.T) {
 
 	newPol := createPolicy()
 	newPol.Tags = append(newPol.Tags, "hello-world", GetPolicyK8SName(policyNamespacedName))
-	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
+	_, err := c.SecurityPolicy().Create(newPol)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -116,13 +116,13 @@ func TestPol_FailsWhenCreatingExistingPolicyID(t *testing.T) {
 	c := getClient()
 
 	newPol := createPolicy()
-	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
+	_, err := c.SecurityPolicy().Create(newPol)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	newPolTwo := createPolicy()
-	_, err = c.SecurityPolicy().Create(newPolTwo, policyNamespacedName)
+	_, err = c.SecurityPolicy().Create(newPolTwo)
 	if err == nil {
 		// error out
 		t.Fatal("Should've thrown an error!")
@@ -143,7 +143,7 @@ func TestPol_Update(t *testing.T) {
 	newPol := createPolicy()
 	newPol.Tags = append(newPol.Tags, "hello-world", GetPolicyK8SName(policyNamespacedName))
 
-	_, err := c.SecurityPolicy().Create(newPol, policyNamespacedName)
+	_, err := c.SecurityPolicy().Create(newPol)
 	if err != nil && err.Error() != "policy id collision detected" {
 		t.Fatal(err.Error())
 	}
@@ -151,7 +151,7 @@ func TestPol_Update(t *testing.T) {
 	newRate := 11
 
 	newPol.Rate = int64(newRate)
-	err = c.SecurityPolicy().Update(newPol, policyNamespacedName)
+	err = c.SecurityPolicy().Update(newPol)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
