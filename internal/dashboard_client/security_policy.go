@@ -55,7 +55,7 @@ func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
   When creating an API, we store this unique combination in the
   policy's tags.
 */
-func (p SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, error) {
+func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
 	// Returns error if there was a mistake getting all the policies
 	list, err := p.All()
 	if err != nil {
@@ -63,13 +63,10 @@ func (p SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, erro
 	}
 
 	// Iterate through policies to find the policy that stores this
-	// unique identifier in its' tags
-	policyName := GetPolicyK8SName(namespacedName)
+	// unique identifier as the "id"
 	for _, pol := range list {
-		for _, tag := range pol.Tags {
-			if tag == policyName {
-				return &pol, nil
-			}
+		if id == pol.ID {
+			return &pol, nil
 		}
 	}
 
@@ -77,23 +74,13 @@ func (p SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, erro
 }
 
 /*
-	Creates a policy.  Adds the namespaced name to the Policy's tags in order to
-	uniquely identify it.  This allows us to do CRUDs without having to store
-	the mongo BSON ID after creating.
+	Creates a policy.  Creates it with a custom "id" field.
+	Valid payload needs to include that.
+
+	1.  If this is an existing policy, will look it up via the "id" field OR
+	2.  create a policy and preserves the "id" field.
 */
-func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec, namespacedName string) (string, error) {
-	// Check if this policy exists and check exists/collisions
-	pol, err := p.Get(namespacedName)
-	// if policy not found error, great, skip and create!
-	if err != nil && err != universal_client.PolicyNotFoundError {
-		return "", err
-	} else if pol != nil {
-		return "", universal_client.PolicyCollisionError
-	}
-
-	// Add the unique policy identifier
-	def.Tags = append(def.Tags, GetPolicyK8SName(namespacedName))
-
+func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 	// Create
 	opts := p.opts
 	opts.JSON = def
@@ -121,28 +108,17 @@ func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec, namespacedName string
 }
 
 /**
-Updates a Policy.  Adds the unique identifier namespaced-Name to the
-policy's tags so subsequent CRUD opps are possible.
+Updates a Policy.  The Dashboard requires that the "MID"
+is included in both the Payload as well as the endpoint,
+so be sure to pass a valid Policy that includes a "MID" (looked up) and "ID" (the custom one used)
 */
-func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec, namespacedName string) error {
-	polToUpdate, err := p.Get(namespacedName)
-	if err != nil {
-		return err
-	}
-
-	if polToUpdate == nil {
-		return notFoundError
-	}
+func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 
 	// Update
 	opts := p.opts
 	opts.JSON = def
-	def.MID = polToUpdate.MID
 
-	// Add the unique policy identifier
-	def.Tags = append(def.Tags, GetPolicyK8SName(namespacedName))
-
-	fullPath := JoinUrl(p.url, endpointPolicies, polToUpdate.MID)
+	fullPath := JoinUrl(p.url, endpointPolicies, def.MID)
 	res, err := grequests.Put(fullPath, opts)
 	if err != nil {
 		return err
@@ -165,11 +141,15 @@ func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec, namespacedName string
 }
 
 /**
-Tries to delete a Policy by first attempting to do a lookup on it.
-If policy does not exist, move on, nothing to delete
+Tries to delete a Policy by first attempting to do a lookup on it
+with the Operator friendly "id" field.
+If found, will be used to lookup the mongo id "_id", which is used to do the
+delete.
+
+If policy does not exist, move on, nothing to delete.
 */
-func (p SecurityPolicy) Delete(namespacedName string) error {
-	pol, err := p.Get(namespacedName)
+func (p SecurityPolicy) Delete(policyId string) error {
+	pol, err := p.Get(policyId)
 	if err == universal_client.PolicyNotFoundError {
 		return nil
 	}
