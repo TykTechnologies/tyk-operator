@@ -1,12 +1,13 @@
-# policies
+# Policies
 
 Visit here to read more about Tyk security [policies](https://tyk.io/getting-started/key-concepts/what-is-a-security-policy/).
 
-### Known Issues
+### Known Issues w/ Tyk Dashboard
 
-- Created `SecurityPolicy` types will not allow you to create Keys through the UI.  That is a bug addressed by a Dashboard ticket.  Will be fixed
-by version `v3.x.y` .  In the meantime, generate keys through API Calls or through the Portal.
-- Created `SecurityPolicy` types will not be publishable to the Developer Portal.  Fixed in version `v3.x.y` 
+- Created `SecurityPolicy` types will not allow you to create Keys through the UI.  That is a bug addressed by a Dashboard ticket.  In the meantime, generate keys through API Calls.
+- Created `SecurityPolicy` types will not be publishable to the Developer Portal.  
+
+Both above are being addressed in an internal Tyk Dashboard ticket.  please wait for an official release date.
 
 ### Supported Features
 
