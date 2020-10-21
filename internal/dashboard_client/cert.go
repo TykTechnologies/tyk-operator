@@ -18,6 +18,22 @@ type Cert struct {
 	*Client
 }
 
+func (c *Cert) Get(id string) (string, error) {
+	sess := grequests.NewSession(c.opts)
+
+	fullPath := JoinUrl(c.url, endpointCerts, id)
+
+	res, err := sess.Get(fullPath, nil)
+	if err != nil {
+		return "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
+	}
+	return "", nil
+}
+
 func (c *Cert) Delete(id string) error {
 	sess := grequests.NewSession(c.opts)
 

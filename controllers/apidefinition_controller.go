@@ -18,12 +18,19 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"reflect"
 	"time"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -114,6 +121,29 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
+	for _, certID := range desired.Spec.CertificateSecretNames {
+		secret := v1.Secret{}
+		err := r.Get(ctx, types.NamespacedName{Name: certID, Namespace: namespacedName.Namespace}, &secret)
+		if err != nil {
+			log.Error(err, "requeueing because secret not found")
+			return reconcile.Result{}, err
+		}
+
+		cert, ok := secret.Data["tls.crt"]
+		println(string(cert))
+		if !ok {
+			log.Error(err, "requeueing because cert not found in secret")
+			return reconcile.Result{}, err
+		}
+
+		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + r.generateCertId(cert)
+		_, err = universal_client.GetCertificate(r.UniversalClient, tykCertID)
+
+		desired.Spec.Certificates = append(desired.Spec.Certificates, tykCertID)
+	}
+
+	desired.Spec.CertificateSecretNames = nil
+
 	r.applyDefaults(&desired.Spec)
 
 	//  If this is not set, means it is a new object, set it first
@@ -143,6 +173,43 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *ApiDefinitionReconciler) generateCertId(cert []byte) string {
+	certSHA := sha256.Sum256(cert)
+	return hex.EncodeToString(certSHA[:])
+}
+
+func (r *ApiDefinitionReconciler) ensureIngress(ctx context.Context, log logr.Logger, desired *v1beta1.Ingress) (reconcile.Result, error) {
+	actual := &v1beta1.Ingress{}
+	err := r.Get(ctx, types.NamespacedName{
+		Name:      desired.Name,
+		Namespace: desired.Namespace,
+	}, actual)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// create the ingress
+			err = r.Create(ctx, desired)
+
+			if err != nil {
+				// Ingress creation failed
+				log.Error(err, "Failed to create Ingress")
+				return ctrl.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
+		}
+		return reconcile.Result{}, err
+	}
+
+	if !reflect.DeepEqual(desired.Spec, actual.Spec) {
+		desired.ObjectMeta = actual.ObjectMeta
+		err = r.Update(context.TODO(), desired)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	return reconcile.Result{}, nil
 }
 
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {

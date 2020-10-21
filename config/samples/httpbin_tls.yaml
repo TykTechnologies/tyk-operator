@@ -8,7 +8,7 @@ spec:
   protocol: http
   active: true
   # secret names must match secret names as defined in the ingress object
-  # or certs which have been manially inserted in similar manner to that which would have been inserted by cert-manager
+  # or certs which have been manually inserted in similar manner to that which would have been inserted by cert-manager
 
   # example
   #  k describe secrets/tls-httpbin

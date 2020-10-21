@@ -6,4 +6,5 @@ type UniversalClient interface {
 	SecurityPolicy() UniversalSecurityPolicy
 	Webhook() UniversalWebhook
 	Certificate() UniversalCertificate
+	Organization() UniversalOrganization
 }

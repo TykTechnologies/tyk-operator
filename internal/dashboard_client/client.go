@@ -50,6 +50,7 @@ func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *
 		url:                url,
 		secret:             auth,
 		insecureSkipVerify: false,
+		orgID:              orgID,
 		opts: &grequests.RequestOptions{
 			Headers: map[string]string{
 				"authorization": auth,
@@ -69,6 +70,10 @@ type Client struct {
 	insecureSkipVerify bool
 	log                logr.Logger
 	opts               *grequests.RequestOptions
+}
+
+func (c *Client) Organization() universal_client.UniversalOrganization {
+	return &Organization{c}
 }
 
 func (c *Client) Certificate() universal_client.UniversalCertificate {
