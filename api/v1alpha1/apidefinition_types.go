@@ -463,7 +463,7 @@ type APIDefinitionSpec struct {
 	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
 	//Domain            string   `json:"domain"`
-	// Certificates is a list of Tyk Certificate IDs. e.g. mongo id. Use CertificateNames if using cert-manager
+	// Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint. Use CertificateSecretNames if using cert-manager
 	Certificates []string `json:"certificates,omitempty"`
 	// CertificateSecretNames represents the names of the secrets that the controller should look for in the in the current
 	// namespace which contain the certificates.

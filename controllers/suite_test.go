@@ -21,8 +21,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -77,6 +78,9 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = tykv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = tykv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = tykv1alpha1.AddToScheme(scheme.Scheme)

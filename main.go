@@ -23,13 +23,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
@@ -137,6 +138,16 @@ func main() {
 		Recorder:        mgr.GetEventRecorderFor("webhook-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Webhook")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.CertReconciler{
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("Cert"),
+		Scheme:          mgr.GetScheme(),
+		UniversalClient: tykClient,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Cert")
 		os.Exit(1)
 	}
 
