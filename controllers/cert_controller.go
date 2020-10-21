@@ -180,7 +180,9 @@ func (r *CertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 			return isTLSType(eBytes)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
+			// TODO: THIS IS BUGGED. Need to find out if it is a secret being deleted that we care about
 			eBytes, _ := json.Marshal(e)
+
 			return isTLSType(eBytes)
 		},
 	}
