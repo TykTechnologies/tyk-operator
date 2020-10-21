@@ -150,7 +150,7 @@ type mySecretType struct {
 	} `json:"Meta"`
 	MetaNew struct {
 		Type string `json:"type"`
-	} `json:"MetalNew"`
+	} `json:"MetaNew"`
 }
 
 func (r *CertReconciler) ignoreNonTLSPredicate() predicate.Predicate {

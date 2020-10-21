@@ -92,15 +92,15 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 		errStruct := CertErrorResponse{}
 		json.Unmarshal(rBody, &errStruct)
 
-		reg := regexp.MustCompile(`Could not create certificate: Certificate with (?P<ID>) id already exists`)
+		reg := regexp.MustCompile(`Could not create certificate: Certificate with (?P<ID>.*) id already exists`)
 
 		matches := reg.FindStringSubmatch(errStruct.Message)
 
-		if len(matches) == 0 {
+		if len(matches) != 2 {
 			return "", fmt.Errorf("api returned error: %v", string(rBody))
 		}
 
-		return matches[0], nil
+		return matches[1], nil
 	}
 
 	dbResp := CertResponse{}
