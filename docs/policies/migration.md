@@ -11,7 +11,7 @@ Note that the YAML becomes the source of truth and will overwrite any changes be
 
 1. You have an existing Policy
 
-![Demo](./img/policy_migration_step1.png)
+![Demo](../img/policy_migration_step1.png)
 
 2. Stick the policy ID `5f8f3933f56e1a5ffe2cd58c` into the YAML's `spec.id` field like below
 

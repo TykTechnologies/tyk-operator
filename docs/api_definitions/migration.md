@@ -43,4 +43,4 @@ Any keys, policies and analytics linked to this API will continue to operate the
 
 Because of the ability to declaretively define the `api_id`, this gives us the ability to preserve Keys that are tied to APIs or policiies which are tied to APIs.  
 
-Read the [policy section on idempotency](./policies.md#idempotency) for more information.
+Read the [section on idempotency](../concepts.md) for more information.
