@@ -29,6 +29,26 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - certs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - certs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - organizations
   verbs:
   - create

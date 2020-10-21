@@ -30,7 +30,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
+const (
+	apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
+)
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {

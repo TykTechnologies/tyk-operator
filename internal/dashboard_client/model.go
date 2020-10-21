@@ -24,6 +24,11 @@ type WebhookResponse struct {
 	Pages    int              `json:"pages"`
 }
 
+type CertErrorResponse struct {
+	Status  string `json:"Status"`
+	Message string `json:"Message"`
+}
+
 type CertResponse struct {
 	Id      string `json:"id"`
 	Message string `json:"message"`
