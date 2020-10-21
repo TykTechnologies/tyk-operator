@@ -9,6 +9,8 @@ Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/e
 - [WebHooks](./docs/webhooks.md)
 - [Security Policies](./docs/policies.md)
 
+Read more about the [concepts here](./docs/concepts.md).
+
 ![Demo](./docs/img/demo.svg)
 
 ## Sample Gateway Proxy Configurations
