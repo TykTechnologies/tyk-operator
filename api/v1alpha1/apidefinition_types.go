@@ -441,7 +441,7 @@ type APIDefinitionSpec struct {
 	//StripAuthData           bool            `json:"strip_auth_data"`
 	//EnableDetailedRecording bool            `json:"enable_detailed_recording"`
 
-	GraphQL GraphQLConfig `json:"graphql,omitempty"`
+	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 }
 
 // Proxy outlines the API proxying functionality.

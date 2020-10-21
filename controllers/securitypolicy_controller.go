@@ -79,7 +79,8 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			// remove our finalizer from the list and update it.
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, securityPolicyFinalzerName)
 			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, nil
+				log.Error(err, "Error deleting finalizer from Policy")
+				return reconcile.Result{}, err
 			}
 		}
 
