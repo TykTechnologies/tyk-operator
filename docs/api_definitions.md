@@ -102,6 +102,10 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | ❌️ | [Issue #59](https://github.com/TykTechnologies/tyk-operator/issues/59) |
 | [Validate - Limit Request Size](../config/samples/httpbin_validate.yaml) | ✅️ | - |
 
-## APIDefinition - Migrating Existing APIs
+## TLS & Certificate Management
+
+[TLS Configuration & Integration with Cert Manager](./api_definitions/tls.md)
+
+## Migrating Existing APIs
 
 Please visit the [API migration page](./api_definitions/migration.md) for more info
