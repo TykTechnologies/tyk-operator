@@ -107,4 +107,10 @@ apidefinition.tyk.tyk.io/my-existing-api created
 
 Note, the source of truth for the API definition is now the CRD, meaning it will override any differences in your existing API definition.
 
-Any keys, policies and analytics linked to this API will continue to operate the same. 
+Any keys, policies and analytics linked to this API will continue to operate the same. This is great for idempotency.
+
+### Idempotency
+
+Because of the ability to declaretively define the `api_id`, this gives us the ability to preserve Keys that are tied to APIs or policiies which are tied to APIs.  
+
+Read the [policy section on idempotency](./policies.md#idempotency) for more information.
