@@ -25,25 +25,23 @@ spec:
 
 ---
 apiVersion: tyk.tyk.io/v1alpha1
-kind: SecurityPolicy
+kind: SecurityPolicy            # SecurityPolicy CRD
 metadata:
-  name: httpbin
+  name: httpbin                 # Unique k8s name
 spec:
-  name: Httpbin Security Policy
-  state: active
-  active: true
-  access_rights_array:
-    - name: httpbin
+  name: Httpbin Security Policy # Generic Name
+  state: active                 # View securitypolicy_types for more info
+  active: true                  # View securitypolicy_types for more info
+  access_rights_array:          # Adding APIs to the Policy. More info just below
+    - name: httpbin             # Metadata name of API
       namespace: default
       versions:
-        - Default
+        - Default               # Mandatory, Default is created automatically
 ```
-
-Note that the link happens in the policies' `access_rights_array`.  What we do is declare the unique metadata `name` of the API to the `access_rights.array[].name` field as well as which namespace it's in.
 
 ## 1. Deploy the protected API and the policy which protects it.
 
-```curl
+```bash
 $ kubectl apply -f api_access.yaml
 apidefinition.tyk.tyk.io/httpbin created
 securitypolicy.tyk.tyk.io/httpbin created
