@@ -15,6 +15,11 @@ type Cert struct {
 	*Client
 }
 
+// TODO: implement Delete method
+func (c *Cert) Delete(id string) error {
+	panic("implement me")
+}
+
 func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 	combined := make([]byte, 0)
 	combined = append(combined, key...)

@@ -18,7 +18,10 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"time"
 
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -33,12 +36,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	certFinalizerName = "finalizers.tyk.io/certs"
+)
+
 // CertReconciler reconciles a Cert object
 type CertReconciler struct {
 	client.Client
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
 	UniversalClient universal_client.UniversalClient
+}
+
+func (r *CertReconciler) generateCertId(cert []byte) string {
+	certSHA := sha256.Sum256(cert)
+	return "" + hex.EncodeToString(certSHA[:])
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=certs,verbs=get;list;watch;create;update;patch;delete
@@ -55,8 +67,50 @@ func (r *CertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 
-	if desired.Type != "kubernetes.io/tls" {
-		return ctrl.Result{}, nil
+	// If object is being deleted
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		// If our finalizer is present, need to delete from Tyk still
+		if containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
+
+			cert, ok := desired.Data["tls.crt"]
+			if !ok {
+				// remove our finalizer from the list and update it because cert didnt exist anyway.
+				desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, certFinalizerName)
+				if err := r.Update(ctx, desired); err != nil {
+					return reconcile.Result{}, err
+				}
+			}
+
+			certID := r.generateCertId(cert)
+
+			err := r.UniversalClient.Certificate().Delete(certID)
+			if err != nil {
+				log.Info(err.Error())
+				return ctrl.Result{RequeueAfter: time.Second * 5}, err
+			}
+
+			err = r.UniversalClient.HotReload()
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+			if err := r.Update(ctx, desired); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+
+		return reconcile.Result{}, nil
+	}
+
+	// If finalizer not present, add it; This is a new object
+	if !containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
+		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, certFinalizerName)
+		err := r.Update(ctx, desired)
+		// Return either way because the update will
+		// issue a requeue anyway
+		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
 	tlsKey, ok := desired.Data["tls.key"]
