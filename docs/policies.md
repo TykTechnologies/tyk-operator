@@ -1,6 +1,6 @@
 # Policies
 
-Visit here to read more about Tyk security [policies](https://tyk.io/getting-started/key-concepts/what-is-a-security-policy/).
+Visit here to read more about Tyk security [policies](https://tyk.io/docs/getting-started/key-concepts/what-is-a-security-policy/).
 
 ### Known Issues w/ Tyk Dashboard
 
