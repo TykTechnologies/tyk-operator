@@ -23,3 +23,9 @@ type WebhookResponse struct {
 	Webhooks []v1.WebhookSpec `json:"hooks"`
 	Pages    int              `json:"pages"`
 }
+
+type CertResponse struct {
+	Id      string `json:"id"`
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}

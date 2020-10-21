@@ -1,0 +1,46 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: true
+  protocol: http
+  active: true
+  # secret names must match secret names as defined in the ingress object
+  # or certs which have been manially inserted in similar manner to that which would have been inserted by cert-manager
+
+  # example
+  #  k describe secrets/tls-httpbin
+  #  Name: tls-httpbin
+  #  Namespace: default
+  #  Labels: <none>
+  #  Annotations: cert-manager.io/alt-names: httpbin.local
+  #                 cert-manager.io/certificate-name: tls-httpbin
+  #                 cert-manager.io/common-name:
+  #                 cert-manager.io/ip-sans:
+  #                 cert-manager.io/issuer-group: cert-manager.io
+  #                 cert-manager.io/issuer-kind: Issuer
+  #                 cert-manager.io/issuer-name: selfsigned-issuer
+  #                 cert-manager.io/uri-sans:
+  #
+  #  Type: kubernetes.io/tls
+  #
+  #  Data
+  #  ====
+  #  ca.crt: 1025 bytes
+  #  tls.crt: 1025 bytes
+  #  tls.key: 1675 bytes
+  certificate_secret_names:
+    - tls-httpbin
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}

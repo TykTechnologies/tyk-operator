@@ -69,6 +69,12 @@ type Client struct {
 	opts               *grequests.RequestOptions
 }
 
+// TODO: Certificate Requires implementation
+func (c *Client) Certificate() universal_client.UniversalCertificate {
+	panic("implement me")
+}
+
+// TODO: Webhook Requires implementation
 func (c *Client) Webhook() universal_client.UniversalWebhook {
 	panic("implement me")
 }

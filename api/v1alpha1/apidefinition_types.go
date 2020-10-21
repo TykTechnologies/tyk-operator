@@ -453,8 +453,6 @@ type APIDefinitionSpec struct {
 	// +optional
 	//CORS              CORS     `json:"CORS"`
 
-	//Certificates      []string `json:"certificates"`
-
 	// Tags are named gateway nodes which tell gateway clusters whether to load an API or not.
 	// for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
 	Tags []string `json:"tags,omitempty"`
@@ -464,13 +462,18 @@ type APIDefinitionSpec struct {
 	// Context Variables are available in the url rewriter, modify headers and body transforms.
 	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
+	//Domain            string   `json:"domain"`
+	// Certificates is a list of Tyk Certificate IDs. e.g. mongo id. Use CertificateNames if using cert-manager
+	Certificates []string `json:"certificates,omitempty"`
+	// CertificateSecretNames represents the names of the secrets that the controller should look for in the in the current
+	// namespace which contain the certificates.
+	CertificateSecretNames []string `json:"certificate_secret_names,omitempty"`
 	//ConfigData MapStringInterface `json:"config_data"`
 
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
 	//StripAuthData           bool            `json:"strip_auth_data"`
 	//EnableDetailedRecording bool            `json:"enable_detailed_recording"`
-
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 }
 

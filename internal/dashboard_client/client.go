@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	endpointAPIs = "/api/apis"
-	//endpointCerts    = "/tyk/certs"
+	endpointAPIs  = "/api/apis"
+	endpointCerts = "/api/certs"
 	//endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"
 	endpointWebhooks = "/api/hooks"
@@ -48,6 +48,7 @@ func JoinUrl(parts ...string) string {
 func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *Client {
 	c := &Client{
 		url:                url,
+		secret:             auth,
 		insecureSkipVerify: false,
 		opts: &grequests.RequestOptions{
 			Headers: map[string]string{
@@ -68,6 +69,10 @@ type Client struct {
 	insecureSkipVerify bool
 	log                logr.Logger
 	opts               *grequests.RequestOptions
+}
+
+func (c *Client) Certificate() universal_client.UniversalCertificate {
+	return &Cert{c}
 }
 
 func (c *Client) Webhook() universal_client.UniversalWebhook {

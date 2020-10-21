@@ -55,6 +55,16 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Certificates != nil {
+		in, out := &in.Certificates, &out.Certificates
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.CertificateSecretNames != nil {
+		in, out := &in.CertificateSecretNames, &out.CertificateSecretNames
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.GraphQL != nil {
 		in, out := &in.GraphQL, &out.GraphQL
 		*out = new(GraphQLConfig)

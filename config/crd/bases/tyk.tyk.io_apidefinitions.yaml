@@ -182,6 +182,20 @@ spec:
               required:
               - cache_timeout
               type: object
+            certificate_secret_names:
+              description: CertificateSecretNames represents the names of the secrets
+                that the controller should look for in the in the current namespace
+                which contain the certificates.
+              items:
+                type: string
+              type: array
+            certificates:
+              description: Domain            string   `json:"domain"` Certificates
+                is a list of Tyk Certificate IDs. e.g. mongo id. Use CertificateNames
+                if using cert-manager
+              items:
+                type: string
+              type: array
             custom_middleware:
               properties:
                 auth_check:
@@ -319,7 +333,10 @@ spec:
             enable_coprocess_auth:
               type: boolean
             graphql:
-              description: GraphQLConfig is the root config object for a GraphQL API.
+              description: TagHeaders              []string        `json:"tag_headers"`
+                GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
+                StripAuthData           bool            `json:"strip_auth_data"` EnableDetailedRecording
+                bool            `json:"enable_detailed_recording"`
               properties:
                 enabled:
                   description: Enabled indicates if GraphQL proxy should be enabled.

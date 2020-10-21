@@ -5,4 +5,5 @@ type UniversalClient interface {
 	Api() UniversalApi
 	SecurityPolicy() UniversalSecurityPolicy
 	Webhook() UniversalWebhook
+	Certificate() UniversalCertificate
 }

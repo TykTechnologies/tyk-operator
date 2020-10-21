@@ -23,7 +23,9 @@ import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -113,6 +115,36 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 
 	r.applyDefaults(&desired.Spec)
+
+	// TODO: This logic belongs in a secret / cert controller
+	for _, name := range desired.Spec.CertificateSecretNames {
+		certSecret := &v1.Secret{}
+		if err := r.Get(ctx, types.NamespacedName{
+			Namespace: namespacedName.Namespace,
+			Name:      name,
+		}, certSecret); err != nil {
+			// cert doesn't exist yet
+			log.Error(err, "cant read secret with certificate")
+			return reconcile.Result{}, client.IgnoreNotFound(err)
+		}
+		tlsKey, ok := certSecret.Data["tls.key"]
+		if !ok {
+			// cert doesn't exist yet
+			log.Info("missing key")
+			return reconcile.Result{Requeue: true}, nil
+		}
+		tlsCrt, ok := certSecret.Data["tls.crt"]
+		if !ok {
+			// cert doesn't exist yet
+			log.Info("missing cert")
+			return reconcile.Result{Requeue: true}, nil
+		}
+		certID, err := universal_client.UploadCertificate(r.UniversalClient, tlsKey, tlsCrt)
+		if err != nil {
+			return reconcile.Result{Requeue: true}, err
+		}
+		log.Info("certificate uploaded", "id", certID)
+	}
 
 	//  If this is not set, means it is a new object, set it first
 	if desired.Status.ApiID == "" {
