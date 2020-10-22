@@ -55,9 +55,11 @@ jobs:
           echo "DASH URL: ${TYK_URL}"
           echo "TYK MODE: ${TYK_MODE}"
 
+          export TYK_IMAGE=test/tyk-operator:ci
+
           # build docker image
           echo "Creating the Operator Docker image"
-          make docker-build IMG=test/tyk-operator:ci \
+          make docker-build IMG=${TYK_IMAGE} \
             TYK_URL=${TYK_URL} \
             TYK_AUTH=${TYK_AUTH} \
             TYK_ORG=${TYK_ORG} \
@@ -71,10 +73,10 @@ jobs:
           kubectl wait deployment/cert-manager-webhook  -n ${NAMESPACE} --for condition=available --timeout=60s
           kubectl get deployments -n ${NAMESPACE}
           echo "loading image into kind"
-          kind load docker-image tyk-operator:latest --name chart-testing
+          kind load docker-image ${TYK_IMAGE} --name chart-testing
 
           # deploy docker image into Kind cluster
-          make deploy IMG=test/tyk-operator:ci
+          make deploy IMG=${TYK_IMAGE}
           export NAMESPACE=tyk-operator-system
           kubectl wait deployment/tyk-operator-controller-manager  -n ${NAMESPACE} --for condition=available --timeout=60s
           kubectl logs deployment.apps/tyk-operator-controller-manager manager -n ${NAMESPACE}
