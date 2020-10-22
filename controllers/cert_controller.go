@@ -172,10 +172,6 @@ func (r *CertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			return true
-			// TODO: THIS IS BUGGED. Need to find out if it is a secret being deleted that we care about
-			eBytes, _ := json.Marshal(e)
-
-			return isTLSType(eBytes)
 		},
 	}
 }
