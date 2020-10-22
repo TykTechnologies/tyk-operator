@@ -41,3 +41,10 @@ jobs:
           export TYK_ORG=$(awk '/ORG ID: /{print $NF}' bootstrapped)
           echo "ORG: ${TYK_ORG}"
           echo "AUTH: ${TYK_AUTH}"
+
+          # set rest of tyk envs necessary
+
+          # build docker image
+
+          # deploy docker image into Kind cluster
+
