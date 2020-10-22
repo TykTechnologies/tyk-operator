@@ -86,7 +86,7 @@ func (r *CertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			}
 
 			// remove our finalizer from the list and update it.
-			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, certFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
@@ -171,6 +171,7 @@ func (r *CertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 			return isTLSType(eBytes)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
+			return true
 			// TODO: THIS IS BUGGED. Need to find out if it is a secret being deleted that we care about
 			eBytes, _ := json.Marshal(e)
 
