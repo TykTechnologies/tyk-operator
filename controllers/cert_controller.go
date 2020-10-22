@@ -21,9 +21,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -38,6 +37,7 @@ import (
 
 const (
 	certFinalizerName = "finalizers.tyk.io/certs"
+	secretType        = "kubernetes.io/tls"
 )
 
 // CertReconciler reconciles a Cert object
@@ -62,6 +62,24 @@ func (r *CertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 
+	if desired.Type != secretType {
+		// it's not for us
+		return ctrl.Result{}, nil
+	}
+
+	tlsKey, ok := desired.Data["tls.key"]
+	if !ok {
+		// cert doesn't exist yet
+		log.Info("missing key, we don't care about it")
+		return reconcile.Result{}, nil
+	}
+	tlsCrt, ok := desired.Data["tls.crt"]
+	if !ok {
+		// cert doesn't exist yet
+		log.Info("missing cert, we don't care about it")
+		return reconcile.Result{}, nil
+	}
+
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		// If our finalizer is present, need to delete from Tyk still
@@ -72,9 +90,12 @@ func (r *CertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				return ctrl.Result{}, nil
 			}
 
-			certFingerPrint := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(certPemBytes)
+			orgID := universal_client.GetOrganizationID(r.UniversalClient)
+			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
-			err := r.UniversalClient.Certificate().Delete(certFingerPrint)
+			certID := orgID + certFingerPrint
+
+			err := r.UniversalClient.Certificate().Delete(certID)
 			if err != nil {
 				log.Info(err.Error())
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
@@ -102,19 +123,6 @@ func (r *CertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// Return either way because the update will
 		// issue a requeue anyway
 		return reconcile.Result{}, client.IgnoreNotFound(err)
-	}
-
-	tlsKey, ok := desired.Data["tls.key"]
-	if !ok {
-		// cert doesn't exist yet
-		log.Info("missing key, requeue as maybe it's being created")
-		return reconcile.Result{Requeue: true}, nil
-	}
-	tlsCrt, ok := desired.Data["tls.crt"]
-	if !ok {
-		// cert doesn't exist yet
-		log.Info("missing cert, requeue as maybe it's being created")
-		return reconcile.Result{Requeue: true}, nil
 	}
 
 	certID, err := universal_client.UploadCertificate(r.UniversalClient, tlsKey, tlsCrt)
@@ -147,16 +155,15 @@ type mySecretType struct {
 func (r *CertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 
 	isTLSType := func(jsBytes []byte) bool {
-		tlsType := "kubernetes.io/tls"
 		secret := mySecretType{}
 		json.Unmarshal(jsBytes, &secret)
 
 		// if Update
 		if secret.MetaNew.Type != "" {
-			return secret.MetaNew.Type == tlsType
+			return secret.MetaNew.Type == secretType
 		}
 		// then it's a create / delete op
-		return secret.Meta.Type == tlsType
+		return secret.Meta.Type == secretType
 	}
 
 	return predicate.Funcs{
