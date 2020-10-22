@@ -18,13 +18,12 @@ package controllers
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"reflect"
 	"time"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
@@ -129,14 +128,13 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			return reconcile.Result{}, err
 		}
 
-		cert, ok := secret.Data["tls.crt"]
-		println(string(cert))
+		pemCrtBytes, ok := secret.Data["tls.crt"]
 		if !ok {
 			log.Error(err, "requeueing because cert not found in secret")
 			return reconcile.Result{}, err
 		}
 
-		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + r.generateCertId(cert)
+		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(pemCrtBytes)
 		_, err = universal_client.GetCertificate(r.UniversalClient, tykCertID)
 
 		desired.Spec.Certificates = append(desired.Spec.Certificates, tykCertID)
@@ -173,11 +171,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *ApiDefinitionReconciler) generateCertId(cert []byte) string {
-	certSHA := sha256.Sum256(cert)
-	return hex.EncodeToString(certSHA[:])
 }
 
 func (r *ApiDefinitionReconciler) ensureIngress(ctx context.Context, log logr.Logger, desired *v1beta1.Ingress) (reconcile.Result, error) {

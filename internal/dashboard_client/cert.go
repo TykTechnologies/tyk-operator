@@ -39,14 +39,14 @@ func (c *Cert) Delete(id string) error {
 
 	fullPath := JoinUrl(c.url, endpointCerts, id)
 
-	res, err := sess.Delete(fullPath, nil)
+	_, err := sess.Delete(fullPath, nil)
 	if err != nil {
 		return err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
-	}
+	//if res.StatusCode != http.StatusOK {
+	//	return fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
+	//}
 	return nil
 }
 

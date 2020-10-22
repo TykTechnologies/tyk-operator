@@ -18,10 +18,10 @@ package controllers
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"time"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -48,11 +48,6 @@ type CertReconciler struct {
 	UniversalClient universal_client.UniversalClient
 }
 
-func (r *CertReconciler) generateCertId(cert []byte) string {
-	certSHA := sha256.Sum256(cert)
-	return "" + hex.EncodeToString(certSHA[:])
-}
-
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=certs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=certs/status,verbs=get;update;patch
 
@@ -72,18 +67,14 @@ func (r *CertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// If our finalizer is present, need to delete from Tyk still
 		if containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
 
-			cert, ok := desired.Data["tls.crt"]
+			certPemBytes, ok := desired.Data["tls.crt"]
 			if !ok {
-				// remove our finalizer from the list and update it because cert didnt exist anyway.
-				desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, certFinalizerName)
-				if err := r.Update(ctx, desired); err != nil {
-					return reconcile.Result{}, err
-				}
+				return ctrl.Result{}, nil
 			}
 
-			certID := r.generateCertId(cert)
+			certFingerPrint := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(certPemBytes)
 
-			err := r.UniversalClient.Certificate().Delete(certID)
+			err := r.UniversalClient.Certificate().Delete(certFingerPrint)
 			if err != nil {
 				log.Info(err.Error())
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
