@@ -26,4 +26,18 @@ WORKDIR /
 COPY --from=builder /workspace/manager .
 USER nonroot:nonroot
 
+ARG TYK_URL
+ENV TYK_URL ${TYK_URL}
+
+ARG TYK_AUTH
+ENV TYK_AUTH ${TYK_AUTH}
+
+ARG TYK_ORG
+ENV TYK_ORG ${TYK_ORG}
+
+ARG TYK_MODE
+ENV TYK_MODE ${TYK_MODE}
+
+ENV ENABLE_WEBHOOKS=false
+
 ENTRYPOINT ["/manager"]

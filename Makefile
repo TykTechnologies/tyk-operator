@@ -74,7 +74,12 @@ generate: controller-gen
 
 # Build the docker image
 docker-build:
-	docker build . -t ${IMG}
+	docker build \
+	--build-arg TYK_URL=$(TYK_URL) \
+	--build-arg TYK_AUTH=$(TYK_AUTH) \
+	--build-arg TYK_ORG=$(TYK_ORG) \
+	--build-arg TYK_MODE=$(TYK_MODE) \
+	. -t ${IMG}
 
 # Push the docker image
 docker-push:
