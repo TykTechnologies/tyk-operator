@@ -47,7 +47,7 @@ jobs:
           export TYK_AUTH=$(awk '/USER AUTHENTICATION CODE: /{print $NF}' bootstrapped)
           export TYK_ORG=$(awk '/ORG ID: /{print $NF}' bootstrapped)
           export TYK_MODE=pro
-          export ENABLE_WEBHOOKS=false
+          export ENABLE_WEBHOOKS=true
           export TYK_URL=dashboard.tykpro-control-plane.svc
 
           echo "ORG: ${TYK_ORG}"
