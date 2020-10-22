@@ -67,7 +67,7 @@ jobs:
           kubectl wait deployment/cert-manager-webhook  -n ${NAMESPACE} --for condition=available --timeout=60s
           kubectl get deployments -n ${NAMESPACE}
           echo "loading image into kind"
-          kind load docker-image tyk-operator:latest
+          kind load docker-image tyk-operator:latest --name chart-testing
 
           # deploy docker image into Kind cluster
           make deploy IMG=tyk-operator:latest
