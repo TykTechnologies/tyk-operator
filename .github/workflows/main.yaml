@@ -60,7 +60,7 @@ jobs:
           make docker-build
 
           echo "Installing cert-manage prerequisites"
-          export NAMESPACE=tykpro-control-plane
+          export NAMESPACE=cert-manager
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
           kubectl wait deployment/cert-manager -n ${NAMESPACE} --for condition=available --timeout=60s
           kubectl wait deployment/cert-manager-cainjector -n ${NAMESPACE} --for condition=available --timeout=60s
