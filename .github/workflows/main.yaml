@@ -29,22 +29,35 @@ jobs:
         run: |
           echo "checking CI license expiry"
           jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
+
+          ## Deploy Tyk Pro
+          echo "Deploying Tyk Pro"
           export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
           sh ./ci/deploy_tyk_pro.sh
-          echo "installing custom resources"
-          make install
-          kubectl get crds
           echo "bootstrapping tyk dashboard (initial org + user)"
           sh ./ci/bootstrap_org.sh
           cat bootstrapped
+
+          ## Deploying CRDs
+          echo "installing custom resources"
+          make install
+          kubectl get crds
+
+          ## Export Env variables for Tyk Pro
           export TYK_AUTH=$(awk '/USER AUTHENTICATION CODE: /{print $NF}' bootstrapped)
           export TYK_ORG=$(awk '/ORG ID: /{print $NF}' bootstrapped)
+          export TYK_MODE=pro
+          export ENABLE_WEBHOOKS=false
+          export TYK_URL=dashboard.tykpro-control-plane.svc
+
           echo "ORG: ${TYK_ORG}"
           echo "AUTH: ${TYK_AUTH}"
-
-          # set rest of tyk envs necessary
+          echo "DASH URL: ${TYK_URL}"
+          echo "TYK MODE: ${TYK_MODE}"
 
           # build docker image
+          make docker-build
 
           # deploy docker image into Kind cluster
+          make deploy IMG=tyk-operator:latest
 
