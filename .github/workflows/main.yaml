@@ -69,7 +69,7 @@ jobs:
           # deploy docker image into Kind cluster
           make deploy IMG=tyk-operator:latest
           export NAMESPACE=tyk-operator-system
+          sleep 5
+          kubectl logs deployment.apps/tyk-operator-controller-manager -n ${NAMESPACE}
           kubectl wait deployment/tyk-operator-controller-manager  -n ${NAMESPACE} --for condition=available --timeout=60s
           kubectl get deployments -n ${NAMESPACE}
-          kubectl logs deployment.apps/tyk-operator-controller-manager -n ${NAMESPACE}
-
