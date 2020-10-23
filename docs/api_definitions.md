@@ -23,7 +23,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 API Definition Features
 
-| Type | Supported | Comments |
+| Feature | Supported | Comments |
 | ----------- | --------- | --------- |
 | Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
 | [Custom Plugins - Go](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
