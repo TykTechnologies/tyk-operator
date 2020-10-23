@@ -57,7 +57,7 @@ API Definition Features
 | Transform - Request Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
 | Transform - Response Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
 | Transform - URL Rewrite | ⚠️ | Untested |
-| [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/59) |
+| [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | ❌️ | [Issue #59](https://github.com/TykTechnologies/tyk-operator/issues/59) |
 | [Validate - Limit Request Size](../config/samples/httpbin_validate.yaml) | ✅️ | - |
 
 ## APIDefinition - Migrating Existing APIs
