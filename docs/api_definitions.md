@@ -28,7 +28,7 @@ API Definition Features
 | Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
 | [Custom Plugins - Go](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
 | [Custom Plugins - gRPC](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
-| [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ |
+| [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
 | [Custom Plugins - Lua](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
 | [Custom Plugins - Python](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
 | [Webhooks](./api_definitions/webhooks.md) | ❌ | [See issue](https://github.com/TykTechnologies/tyk-operator/issues/62) |
