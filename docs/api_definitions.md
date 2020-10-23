@@ -31,7 +31,7 @@ API Definition Features
 | [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
 | Custom Plugins - Lua | ⚠️ | Untested |
 | Custom Plugins - Python | ⚠️ | Untested |
-| [Webhooks](./api_definitions/webhooks.md) | ❌ | [See issue](https://github.com/TykTechnologies/tyk-operator/issues/62) |
+| [Webhooks](./webhooks.md) | ❌ | [See issue](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
 ## APIDefinition - Endpoint Middleware
 
@@ -46,12 +46,12 @@ API Definition Features
 | [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
 | [Performance - Cache](./../config/samples/httpbin_cache.yaml) | ✅ | - |
 | [Plugin - Virtual Endpoint](./api_definitions/custom_plugin.md) | ✅ | - |
-| Security - Allow list | ⚠️ | #92 |
-| Security - Block list | ⚠️ | #92 |
-| Security - Ignore list | ⚠️ | #92 |
-| Transform - Internal | ⚠️ | #93 |
-| Transform - Method | ⚠️ | #93 |
-| Transform - Mock | ⚠️ | #93 |
+| Security - Allow list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Security - Block list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Security - Ignore list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Transform - Internal | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Transform - Method | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Transform - Mock | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
 | [Transform - Request Body](../config/samples/httpbin_transform.yaml) | ✅ | - |
 | [Transform - Response Body](../config/samples/httpbin_transform.yaml) | ✅ | - |
 | Transform - Request Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
