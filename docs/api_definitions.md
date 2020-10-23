@@ -24,7 +24,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 API Definition Features
 
 | Type | Supported | Comments |
-| ----------- | --------- |
+| ----------- | --------- | --------- |
 | Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
 | [Custom Plugins - Go](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
 | [Custom Plugins - gRPC](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
@@ -36,7 +36,7 @@ API Definition Features
 ## APIDefinition - Endpoint Middleware
 
 | Endpoint Middleware  | Supported | Comments |
-| ----------- | --------- |
+| ----------- | --------- | --------- |
 | Analytics - Endpoint Tracking | ⚠️ | Untested |
 | [Availability - Circuit Breaker](./../config/samples/httpbin_timeout.yaml) | ❌ | Incompatible types string vs float64 |
 | [Availability - Enforced Timeouts](./../config/samples/httpbin_timeout.yaml) | ✅ | - |
