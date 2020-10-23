@@ -26,11 +26,11 @@ API Definition Features
 | Feature | Supported | Comments |
 | ----------- | --------- | --------- |
 | Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
-| [Custom Plugins - Go](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
-| [Custom Plugins - gRPC](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
+| Custom Plugins - Go | ⚠️ | Untested |
+| Custom Plugins - gRPC | ⚠️ | Untested |
 | [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
-| [Custom Plugins - Lua](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
-| [Custom Plugins - Python](./api_definitions/custom_plugin.md) | ⚠️ | Untested |
+| Custom Plugins - Lua | ⚠️ | Untested |
+| Custom Plugins - Python | ⚠️ | Untested |
 | [Webhooks](./api_definitions/webhooks.md) | ❌ | [See issue](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
 ## APIDefinition - Endpoint Middleware
@@ -46,9 +46,9 @@ API Definition Features
 | [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
 | [Performance - Cache](./../config/samples/httpbin_cache.yaml) | ✅ | - |
 | [Plugin - Virtual Endpoint](./api_definitions/custom_plugin.md) | ✅ | - |
-| [Security - Allow list](#) | ⚠️ | #92 |
-| [Security - Block list](#) | ⚠️ | #92 |
-| [Security - Ignore list](#) | ⚠️ | #92 |
+| Security - Allow list | ⚠️ | #92 |
+| Security - Block list | ⚠️ | #92 |
+| Security - Ignore list | ⚠️ | #92 |
 | Transform - Internal | ⚠️ | #93 |
 | Transform - Method | ⚠️ | #93 |
 | Transform - Mock | ⚠️ | #93 |
