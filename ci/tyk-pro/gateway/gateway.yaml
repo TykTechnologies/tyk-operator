@@ -6,11 +6,12 @@ metadata:
     name: tyk
 spec:
   ports:
-    - targetPort: 8080
-      port: 8080
+    - name: http
+      targetPort: 8001
+      port: 8001
   selector:
     name: tyk
-  type: LoadBalancer
+  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,7 +42,12 @@ spec:
             - name: tyk-conf
               mountPath: /etc/tyk-gateway
           ports:
-            - containerPort: 8080
+            - containerPort: 8001
+              name: control
+            - containerPort: 8000
+              name: http
+            - containerPort: 8443
+              name: https
       volumes:
         - name: tyk-conf
           configMap:
