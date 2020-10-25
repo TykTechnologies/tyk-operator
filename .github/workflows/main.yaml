@@ -1,0 +1,43 @@
+name: Tyk Tests
+
+on:
+  pull_request
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout tyk-operator
+        uses: actions/checkout@v2
+      - name: install kubebuilder
+        uses: RyanSiu1995/kubebuilder-action@v1
+        with:
+          version: 2.3.1
+      - name: run tests
+        run: |
+          make test
+
+  integration-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout tyk-operator
+        uses: actions/checkout@v2
+      - name: create kind cluster
+        uses: helm/kind-action@v1.0.0
+      - name: deploy tyk
+        shell: bash
+        run: |
+          echo "checking CI license expiry"
+          jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
+          export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
+          sh ./ci/deploy_tyk_pro.sh
+          echo "installing custom resources"
+          make install
+          kubectl get crds
+          echo "bootstrapping tyk dashboard (initial org + user)"
+          sh ./ci/bootstrap_org.sh
+          cat bootstrapped
+          export TYK_AUTH=$(awk -F ':' '/USER AUTHENTICATION CODE: /{ print $2 }' bootstrapped | tr -d '[:space:]')
+          export TYK_ORG=$(awk '/ORG ID: /{ print $2 }' bootstrapped | tr -d '[:space:]')
+          echo "ORG: ${TYK_ORG}"
+          echo "AUTH: ${TYK_AUTH}"
