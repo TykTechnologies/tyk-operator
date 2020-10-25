@@ -31,13 +31,25 @@ spec:
         name: manager
         env:
           - name: TYK_URL
-            value: https://7e5b143565e9.ngrok.io
+            valueFrom:
+              secretKeyRef:
+                name: tyk-operator-conf
+                key: tykURL
           - name: TYK_AUTH
-            value: d91bd150ff5d42a74fe1f8cf981fbfe8
+            valueFrom:
+              secretKeyRef:
+                name: tyk-operator-conf
+                key: tykAuth
           - name: TYK_ORG
-            value: 5d67b96d767e02015ea84a6f
+            valueFrom:
+              secretKeyRef:
+                name: tyk-operator-conf
+                key: tykOrg
           - name: TYK_MODE
-            value: pro
+            valueFrom:
+              secretKeyRef:
+                name: tyk-operator-conf
+                key: tykMode
         resources:
           limits:
             cpu: 100m

@@ -1,8 +1,8 @@
 {
   "listen_port": 3000,
   "tyk_api_config": {
-    "Host": "http://gateway.tykpro-control-plane.svc.cluster.local",
-    "Port": "8080",
+    "Host": "http://tyk.tykpro-control-plane.svc.cluster.local",
+    "Port": "8001",
     "Secret": "foo"
   },
   "enable_ownership": true,
@@ -23,7 +23,7 @@
     "enable_host_names": true,
     "disable_org_slug_prefix": true,
     "hostname": "localhost",
-    "override_hostname": "gateway.tykpro-control-plane.svc.cluster.local:8080",
+    "override_hostname": "tyk.tykpro-control-plane.svc.cluster.local",
     "portal_root_path": "/portal"
   },
   "home_dir": "/opt/tyk-dashboard",
