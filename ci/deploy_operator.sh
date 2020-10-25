@@ -12,7 +12,7 @@ else
 fi
 
 TYK_AUTH=$(awk -F ':' '/USER AUTHENTICATION CODE: /{ print $2 }' bootstrapped | tr -d '[:space:]')
-TYK_ORG=$(awk '/ORG ID: /{ print $2 }' bootstrapped | tr -d '[:space:]')
+TYK_ORG=$(awk -F ':' '/ORG ID: /{ print $2 }' bootstrapped | tr -d '[:space:]')
 TYK_MODE=pro
 TYK_URL=http://dashboard.tykpro-control-plane.svc.cluster.local:3000
 
