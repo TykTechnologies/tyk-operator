@@ -13,6 +13,24 @@ spec:
     name: tyk
   type: ClusterIP
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gw
+  labels:
+    name: tyk
+spec:
+  ports:
+    - name: http
+      targetPort: 8000
+      port: 8000
+    - name: https
+      targetPort: 8443
+      port: 8443
+  selector:
+    name: tyk
+  type: ClusterIP
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
