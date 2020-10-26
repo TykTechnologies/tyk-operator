@@ -5,7 +5,7 @@ resources:
 #- bases/tyk.tyk.io_gateways.yaml
 - bases/tyk.tyk.io_apidefinitions.yaml
 - bases/tyk.tyk.io_securitypolicies.yaml
-- bases/tyk.tyk.io_organizations.yaml
+#- bases/tyk.tyk.io_organizations.yaml
 - bases/tyk.tyk.io_webhooks.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
