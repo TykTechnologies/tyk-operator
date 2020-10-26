@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: mangomm/tyk-operator
-  newTag: bar
+  newTag: a
