@@ -15,11 +15,10 @@ jobs:
 #      - name: install kubebuilder
 #        uses: RyanSiu1995/kubebuilder-action@v1
       - name: Branch name
-          id: branch_name
-          run: |
-            echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-            echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-            echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+        run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
       - name: Build image
         run: |
           echo SOURCE_NAME: ${SOURCE_NAME}
