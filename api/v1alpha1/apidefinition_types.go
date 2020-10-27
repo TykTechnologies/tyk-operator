@@ -436,12 +436,12 @@ type APIDefinitionSpec struct {
 
 	// Tags are named gateway nodes which tell gateway clusters whether to load an API or not.
 	// for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
-	Tags []string `json:"tags"`
+	Tags []string `json:"tags,omitempty"`
 
 	// EnableContextVars extracts request context variables from the start of the middleware chain.
 	// Set this to true to make them available to your transforms.
 	// Context Variables are available in the url rewriter, modify headers and body transforms.
-	EnableContextVars bool `json:"enable_context_vars"`
+	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
 	//ConfigData MapStringInterface `json:"config_data"`
 

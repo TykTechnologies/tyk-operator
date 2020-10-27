@@ -1116,7 +1116,6 @@ spec:
               - not_versioned
               type: object
           required:
-          - enable_context_vars
           - name
           - protocol
           - proxy
