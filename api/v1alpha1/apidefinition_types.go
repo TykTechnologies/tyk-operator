@@ -404,8 +404,8 @@ type APIDefinitionSpec struct {
 	VersionDefinition VersionDefinition `json:"definition,omitempty"`
 
 	VersionData VersionData `json:"version_data,omitempty"`
-	////UptimeTests                UptimeTests           `json:"uptime_tests"`
-	//
+
+	//UptimeTests                UptimeTests           `json:"uptime_tests"`
 	//DisableRateLimit       bool                `json:"disable_rate_limit"`
 	//DisableQuota           bool                `json:"disable_quota"`
 
@@ -428,14 +428,23 @@ type APIDefinitionSpec struct {
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
 
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
-	//// +optional
+	// +optional
 	//CORS              CORS     `json:"CORS"`
 	//Domain            string   `json:"domain"`
 	//Certificates      []string `json:"certificates"`
 	//DoNotTrack        bool     `json:"do_not_track"`
-	//Tags              []string `json:"tags"`
-	//EnableContextVars bool     `json:"enable_context_vars"`
+
+	// Tags are named gateway nodes which tell gateway clusters whether to load an API or not.
+	// for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
+	Tags []string `json:"tags,omitempty"`
+
+	// EnableContextVars extracts request context variables from the start of the middleware chain.
+	// Set this to true to make them available to your transforms.
+	// Context Variables are available in the url rewriter, modify headers and body transforms.
+	EnableContextVars bool `json:"enable_context_vars,omitempty"`
+
 	//ConfigData MapStringInterface `json:"config_data"`
+
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
 	//StripAuthData           bool            `json:"strip_auth_data"`
