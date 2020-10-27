@@ -45,6 +45,11 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		*out = make([]ResponseProcessor, len(*in))
 		copy(*out, *in)
 	}
+	if in.Tags != nil {
+		in, out := &in.Tags, &out.Tags
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.GraphQL != nil {
 		in, out := &in.GraphQL, &out.GraphQL
 		*out = new(GraphQLConfig)

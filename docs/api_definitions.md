@@ -43,6 +43,7 @@ API Definition Features
 | [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
 | Custom Plugins - Lua | ⚠️ | Untested |
 | Custom Plugins - Python | ⚠️ | Untested |
+| [Segment Tags](./../config/samples/httpbin_tagged.yaml) | ✅ | - |
 | [Webhooks](./webhooks.md) | ❌ | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
 ## APIDefinition - Endpoint Middleware

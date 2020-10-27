@@ -290,6 +290,12 @@ spec:
               - location
               - strip_path
               type: object
+            enable_context_vars:
+              description: EnableContextVars extracts request context variables from
+                the start of the middleware chain. Set this to true to make them available
+                to your transforms. Context Variables are available in the url rewriter,
+                modify headers and body transforms.
+              type: boolean
             graphql:
               description: GraphQLConfig is the root config object for a GraphQL API.
               properties:
@@ -511,6 +517,13 @@ spec:
                 required:
                 - name
                 type: object
+              type: array
+            tags:
+              description: Tags are named gateway nodes which tell gateway clusters
+                whether to load an API or not. for example, to load the API in an
+                ARA gateway, you might want to include an `edge` tag.
+              items:
+                type: string
               type: array
             use_keyless:
               description: use_keyless will switch off all key checking. Some analytics

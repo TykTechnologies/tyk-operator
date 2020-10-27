@@ -5,6 +5,8 @@ metadata:
 spec:
   name: httpbin
   use_keyless: true
+  tags:
+    - edge
   protocol: http
   active: true
   proxy:
