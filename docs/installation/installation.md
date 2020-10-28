@@ -41,10 +41,10 @@ kubectl get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
 ```
 k get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
 {
-  "tykAuth": "NWFhOTIyMTQwMTA0NGYxYzcwZDFjOTUwMDhkMzllZGE=",
-  "tykMode": "cHJv",
-  "tykOrg": "NWY5MmQ5YWQyZGFiMWMwMDAxM2M3NDlm",
-  "tykURL": "aHR0cDovL2Rhc2hib2FyZC50eWtwcm8tY29udHJvbC1wbGFuZS5zdmMuY2x1c3Rlci5sb2NhbDozMDAw"
+  "TYK_AUTH": "NWFhOTIyMTQwMTA0NGYxYzcwZDFjOTUwMDhkMzllZGE=",
+  "TYK_MODE": "cHJv",
+  "TYK_ORG": "NWY5MmQ5YWQyZGFiMWMwMDAxM2M3NDlm",
+  "TYK_URL": "aHR0cDovL2Rhc2hib2FyZC50eWtwcm8tY29udHJvbC1wbGFuZS5zdmMuY2x1c3Rlci5sb2NhbDozMDAw"
 }
 ```
 
