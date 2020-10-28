@@ -1787,7 +1787,7 @@ spec:
         - secretRef:
             name: tyk-operator-conf
         image: {{ .Values.repository }}:{{ .Values.tag }}
-        {{ .Values.image.pullPolicy }}
+        imagePullPolicy: Always
         name: manager
         ports:
         - containerPort: 9443

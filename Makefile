@@ -60,6 +60,8 @@ deploy: manifests kustomize
 helm-generate: kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > helm-tyk-operator/templates/kustomized.yaml
+	sed -i.bak 's#'"${IMG}"'#{{ .Values.repository }}:{{ .Values.tag }}#' helm-tyk-operator/templates/kustomized.yaml
+	sed -i.bak 's#imagePullPolicy: Always#{{ .Values.image.pullPolicy }}#' helm-tyk-operator/templates/kustomized.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
