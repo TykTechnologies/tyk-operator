@@ -30,10 +30,10 @@ tyk-operator needs to connect to a Tyk Pro deployment.
 
 ```bash
 kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
-  --from-literal "tykAuth=${TYK_AUTH}" \
-  --from-literal "tykOrg=${TYK_ORG}" \
-  --from-literal "tykMode=${TYK_MODE}" \
-  --from-literal "tykURL=${TYK_URL}"
+  --from-literal "TYK_AUTH=${TYK_AUTH}" \
+  --from-literal "TYK_ORG=${TYK_ORG}" \
+  --from-literal "TYK_MODE=${TYK_MODE}" \
+  --from-literal "TYK_URL=${TYK_URL}"
 
 kubectl get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
 ```
