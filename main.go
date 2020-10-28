@@ -84,22 +84,22 @@ func main() {
 	//	os.Exit(1)
 	//}
 
-	adminClient, err := adminClient()
-	if err != nil {
-		setupLog.Error(err, "unable to configure admin client")
-		os.Exit(1)
-	}
+	//_, err := adminClient()
+	//if err != nil {
+	//	setupLog.Error(err, "unable to configure admin client")
+	//	os.Exit(1)
+	//}
 
-	if err = (&controllers.OrganizationReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Organization"),
-		Scheme: mgr.GetScheme(),
-		//Recorder:        mgr.GetEventRecorderFor("organization-controller"),
-		AdminDashboardCient: adminClient,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Organization")
-		os.Exit(1)
-	}
+	//if err = (&controllers.OrganizationReconciler{
+	//	Client: mgr.GetClient(),
+	//	Log:    ctrl.Log.WithName("controllers").WithName("Organization"),
+	//	Scheme: mgr.GetScheme(),
+	//	//Recorder:        mgr.GetEventRecorderFor("organization-controller"),
+	//	AdminDashboardCient: adminClient,
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "Organization")
+	//	os.Exit(1)
+	//}
 
 	tykClient, err := tykClient()
 	if err != nil {
