@@ -29,13 +29,15 @@ By default, the operator deploys to the `tyk-operator-system` namespace. This ex
 tyk-operator needs to connect to a Tyk Pro deployment.
 
 ```bash
+
+kubectl create namespace tyk-operator-system
+
 kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "TYK_AUTH=${TYK_AUTH}" \
   --from-literal "TYK_ORG=${TYK_ORG}" \
   --from-literal "TYK_MODE=${TYK_MODE}" \
   --from-literal "TYK_URL=${TYK_URL}"
 
-kubectl get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
 ```
 
 ```
@@ -75,7 +77,7 @@ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/relea
 Please wait for cert-manager to become available.
 
 ```
-k get all
+k get all -n cert-manager
 NAME                                           READY   STATUS    RESTARTS   AGE
 pod/cert-manager-79c5f9946-d5hfv               1/1     Running   0          14s
 pod/cert-manager-cainjector-76c9d55b6f-qmpmv   1/1     Running   0          14s
