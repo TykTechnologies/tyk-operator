@@ -290,6 +290,14 @@ spec:
               - location
               - strip_path
               type: object
+            do_not_track:
+              description: DoNotTrack disables endpoint tracking for this API. Default
+                is true, you need to explicitly set it to false
+              type: boolean
+            domain:
+              description: Domain represents a custom host header that the gateway
+                will listen on for this API
+              type: string
             enable_context_vars:
               description: EnableContextVars extracts request context variables from
                 the start of the middleware chain. Set this to true to make them available
@@ -378,6 +386,11 @@ spec:
               description: OrgID is overwritten - no point setting this
               type: string
             protocol:
+              enum:
+              - http
+              - https
+              - tcp
+              - tls
               type: string
             proxy:
               description: Proxy
@@ -526,9 +539,10 @@ spec:
                 type: string
               type: array
             use_keyless:
-              description: use_keyless will switch off all key checking. Some analytics
-                will still be recorded, but rate-limiting, quotas and security policies
-                will not be possible (there is no session to attach requests to).
+              description: UseKeylessAccess will switch off all key checking. Some
+                analytics will still be recorded, but rate-limiting, quotas and security
+                policies will not be possible (there is no session to attach requests
+                to).
               type: boolean
             use_standard_auth:
               description: UseStandardAuth enables simple bearer token authentication
@@ -1085,6 +1099,8 @@ spec:
                       ignore_endpoint_case:
                         type: boolean
                       name:
+                        type: string
+                      override_target:
                         type: string
                       paths:
                         properties:

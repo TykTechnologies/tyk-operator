@@ -20,6 +20,7 @@ import (
 	"errors"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -34,8 +35,6 @@ func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
 // +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-apidefinition,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,verbs=create;update,versions=v1alpha1,name=mapidefinition.kb.io,sideEffects=None
 
 var _ webhook.Defaulter = &ApiDefinition{}
@@ -43,6 +42,11 @@ var _ webhook.Defaulter = &ApiDefinition{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (in *ApiDefinition) Default() {
 	apidefinitionlog.Info("default", "name", in.Name)
+
+	// We disable tracking by default
+	if in.Spec.DoNotTrack == nil {
+		in.Spec.DoNotTrack = pointer.BoolPtr(true)
+	}
 
 	if len(in.Spec.VersionData.Versions) == 0 {
 		defaultVersionData := VersionData{
