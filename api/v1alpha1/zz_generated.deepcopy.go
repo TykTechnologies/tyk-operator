@@ -28,6 +28,11 @@ import (
 func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 	*out = *in
 	in.Proxy.DeepCopyInto(&out.Proxy)
+	if in.DoNotTrack != nil {
+		in, out := &in.DoNotTrack, &out.DoNotTrack
+		*out = new(bool)
+		**out = **in
+	}
 	out.Auth = in.Auth
 	if in.AuthConfigs != nil {
 		in, out := &in.AuthConfigs, &out.AuthConfigs
