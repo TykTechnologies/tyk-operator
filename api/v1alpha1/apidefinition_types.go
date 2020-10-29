@@ -220,7 +220,7 @@ type VersionInfo struct {
 	GlobalResponseHeadersRemove []string          `json:"global_response_headers_remove,omitempty"`
 	IgnoreEndpointCase          bool              `json:"ignore_endpoint_case,omitempty"`
 	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
-	//OverrideTarget              string            `json:"override_target,omitempty"`
+	OverrideTarget              string            `json:"override_target,omitempty"`
 }
 
 type VersionInfoPaths struct {
@@ -354,10 +354,14 @@ type APIDefinitionSpec struct {
 	// Proxy
 	Proxy Proxy `json:"proxy"`
 	// +optional
-	ListenPort int    `json:"listen_port"`
-	Protocol   string `json:"protocol"`
-
-	// use_keyless will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
+	ListenPort int `json:"listen_port"`
+	// +kubebuilder:validation:Enum=http;https;tcp;tls
+	Protocol string `json:"protocol"`
+	// Domain represents a custom host header that the gateway will listen on for this API
+	Domain string `json:"domain,omitempty"`
+	// DoNotTrack disables endpoint tracking for this API. Default is true, you need to explicitly set it to false
+	DoNotTrack *bool `json:"do_not_track,omitempty"`
+	// UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
 	// quotas and security policies will not be possible (there is no session to attach requests to).
 	UseKeylessAccess bool `json:"use_keyless,omitempty"`
 	//EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
@@ -430,9 +434,8 @@ type APIDefinitionSpec struct {
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
 	// +optional
 	//CORS              CORS     `json:"CORS"`
-	//Domain            string   `json:"domain"`
+
 	//Certificates      []string `json:"certificates"`
-	//DoNotTrack        bool     `json:"do_not_track"`
 
 	// Tags are named gateway nodes which tell gateway clusters whether to load an API or not.
 	// for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
