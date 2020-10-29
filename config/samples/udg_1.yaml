@@ -5,8 +5,6 @@ metadata:
 spec:
   name: Universal Data Graph Example
   use_keyless: true
-  tags:
-    - edge
   protocol: http
   active: true
   proxy:
@@ -40,26 +38,23 @@ spec:
           path: countries
         data_source:
           kind: GraphQLDataSource
-          graphql_data_source:
+          data_source_config:
             url: "https://countries.trevorblades.com"
             method: POST
-      - type_name: Query
+            status_code_type_name_mappings: []
+      - type_name: Country
         field_name: restCountry
         mapping:
           disabled: true
           path: ""
         data_source:
           kind: HTTPJSONDataSource
-          http_json_data_source:
+          data_source_config:
             url: "https://restcountries.eu/rest/v2/alpha/{{ .object.code }}"
             method: GET
-            body: ""
-            headers: []
             default_type_name: RestCountry
             status_code_type_name_mappings:
               - status_code: 200
-                type_name: ""
-                data_source_config: ""
     playground:
       enabled: true
       path: /playground

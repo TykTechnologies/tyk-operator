@@ -345,30 +345,6 @@ spec:
                             description: Config is the DataSource specific configuration
                               object Each Planner needs to make sure to parse their
                               Config Object correctly
-                            type: object
-                          graphql_data_source:
-                            properties:
-                              method:
-                                description: Method represents the HTTP method used
-                                enum:
-                                - GET
-                                - POST
-                                - PUT
-                                - PATCH
-                                - DELETE
-                                - OPTIONS
-                                - HEAD
-                                - CONNECT
-                                - TRACE
-                                type: string
-                              url:
-                                description: URL is the URL of the GraphQL data source
-                                type: string
-                            required:
-                            - method
-                            - url
-                            type: object
-                          http_json_data_source:
                             properties:
                               body:
                                 type: string
@@ -394,28 +370,18 @@ spec:
                               status_code_type_name_mappings:
                                 items:
                                   properties:
-                                    data_source_config:
-                                      description: RawMessage is a raw encoded JSON
-                                        value. It implements Marshaler and Unmarshaler
-                                        and can be used to delay JSON decoding or
-                                        precompute a JSON encoding.
-                                      format: byte
-                                      type: string
                                     status_code:
                                       type: integer
                                     type_name:
                                       type: string
                                   required:
-                                  - data_source_config
                                   - status_code
                                   type: object
                                 type: array
                               url:
                                 type: string
                             required:
-                            - default_type_name
                             - method
-                            - status_code_type_name_mappings
                             - url
                             type: object
                           kind:
