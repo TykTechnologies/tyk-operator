@@ -160,6 +160,75 @@ spec:
 </p>
 </details>
 
+<details><summary>Universal Data Graph - Stitching REST with GraphQL</summary>
+<p>
+
+```yaml
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: udg
+spec:
+  name: Universal Data Graph Example
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: ""
+    listen_path: /udg
+    strip_listen_path: true
+  graphql:
+    enabled: true
+    execution_mode: executionEngine
+    schema: |
+      type Country {
+        name: String
+        code: String
+        restCountry: RestCountry
+      }
+
+      type Query {
+        countries: [Country]
+      }
+
+      type RestCountry {
+        altSpellings: [String]
+        subregion: String
+        population: String
+      }
+    type_field_configurations:
+      - type_name: Query
+        field_name: countries
+        mapping:
+          disabled: false
+          path: countries
+        data_source:
+          kind: GraphQLDataSource
+          data_source_config:
+            url: "https://countries.trevorblades.com"
+            method: POST
+            status_code_type_name_mappings: []
+      - type_name: Country
+        field_name: restCountry
+        mapping:
+          disabled: true
+          path: ""
+        data_source:
+          kind: HTTPJSONDataSource
+          data_source_config:
+            url: "https://restcountries.eu/rest/v2/alpha/{{ .object.code }}"
+            method: GET
+            default_type_name: RestCountry
+            status_code_type_name_mappings:
+              - status_code: 200
+    playground:
+      enabled: true
+      path: /playground
+```
+
+</p>
+</details>
+
 ## Installation
 
 [Installing the tyk-operator](./docs/installation/installation.md)

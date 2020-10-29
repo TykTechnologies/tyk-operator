@@ -341,10 +341,56 @@ spec:
                     properties:
                       data_source:
                         properties:
+                          data_source_config:
+                            description: Config is the DataSource specific configuration
+                              object Each Planner needs to make sure to parse their
+                              Config Object correctly
+                            properties:
+                              body:
+                                type: string
+                              default_type_name:
+                                type: string
+                              headers:
+                                items:
+                                  type: string
+                                type: array
+                              method:
+                                description: Method represents HTTP request method
+                                enum:
+                                - GET
+                                - POST
+                                - PUT
+                                - PATCH
+                                - DELETE
+                                - OPTIONS
+                                - HEAD
+                                - CONNECT
+                                - TRACE
+                                type: string
+                              status_code_type_name_mappings:
+                                items:
+                                  properties:
+                                    status_code:
+                                      type: integer
+                                    type_name:
+                                      type: string
+                                  required:
+                                  - status_code
+                                  type: object
+                                type: array
+                              url:
+                                type: string
+                            required:
+                            - method
+                            - url
+                            type: object
                           kind:
                             description: Kind defines the unique identifier of the
                               DataSource Kind needs to match to the Planner "DataSourceName"
                               name
+                            enum:
+                            - GraphQLDataSource
+                            - HTTPJSONDataSource
                             type: string
                         required:
                         - kind
@@ -570,6 +616,17 @@ spec:
                                     type: integer
                                   type: array
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
