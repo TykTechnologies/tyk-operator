@@ -37,6 +37,10 @@ type IdExtractorType string
 type AuthTypeEnum string
 type RoutingTriggerOnType string
 
+// Method represents HTTP request method
+// +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE;OPTIONS;HEAD;CONNECT;TRACE
+type HttpMethod string
+
 type NotificationsManager struct {
 	SharedSecret      string `json:"shared_secret"`
 	OAuthKeyChangeURL string `json:"oauth_on_keychange_url"`
@@ -75,48 +79,48 @@ type TemplateData struct {
 type TemplateMeta struct {
 	TemplateData TemplateData `json:"template_data"`
 	Path         string       `json:"path"`
-	Method       string       `json:"method"`
+	Method       HttpMethod   `json:"method"`
 }
 
 type TransformJQMeta struct {
-	Filter string `json:"filter"`
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Filter string     `json:"filter"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 }
 
 type HeaderInjectionMeta struct {
 	DeleteHeaders []string          `json:"delete_headers"`
 	AddHeaders    map[string]string `json:"add_headers"`
 	Path          string            `json:"path"`
-	Method        string            `json:"method"`
+	Method        HttpMethod        `json:"method"`
 	ActOnResponse bool              `json:"act_on"`
 }
 
 type HardTimeoutMeta struct {
-	Path    string `json:"path"`
-	Method  string `json:"method"`
-	TimeOut int    `json:"timeout"`
+	Path    string     `json:"path"`
+	Method  HttpMethod `json:"method"`
+	TimeOut int        `json:"timeout"`
 }
 
 type TrackEndpointMeta struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 }
 
 type InternalMeta struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 }
 
 type RequestSizeMeta struct {
-	Path      string `json:"path"`
-	Method    string `json:"method"`
-	SizeLimit int64  `json:"size_limit"`
+	Path      string     `json:"path"`
+	Method    HttpMethod `json:"method"`
+	SizeLimit int64      `json:"size_limit"`
 }
 
 type CircuitBreakerMeta struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 
 	// ThresholdPercent is the percentage of requests that fail before breaker is tripped
 	ThresholdPercent string `json:"threshold_percent"`
@@ -149,36 +153,38 @@ type RoutingTrigger struct {
 }
 
 type URLRewriteMeta struct {
-	Path         string           `json:"path"`
-	Method       string           `json:"method"`
-	MatchPattern string           `json:"match_pattern"`
-	RewriteTo    string           `json:"rewrite_to"`
-	Triggers     []RoutingTrigger `json:"triggers"`
-	//MatchRegexp  *regexp.Regexp   `json:"-"`
+	// Path represents the endpoint listen path
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
+	// MatchPattern is a regular expression pattern to match the path
+	MatchPattern string `json:"match_pattern"`
+	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
+	RewriteTo string           `json:"rewrite_to"`
+	Triggers  []RoutingTrigger `json:"triggers"`
 }
 
 type VirtualMeta struct {
-	ResponseFunctionName string `json:"response_function_name"`
-	FunctionSourceType   string `json:"function_source_type"`
-	FunctionSourceURI    string `json:"function_source_uri"`
-	Path                 string `json:"path"`
-	Method               string `json:"method"`
-	UseSession           bool   `json:"use_session"`
-	ProxyOnError         bool   `json:"proxy_on_error"`
+	ResponseFunctionName string     `json:"response_function_name"`
+	FunctionSourceType   string     `json:"function_source_type"`
+	FunctionSourceURI    string     `json:"function_source_uri"`
+	Path                 string     `json:"path"`
+	Method               HttpMethod `json:"method"`
+	UseSession           bool       `json:"use_session"`
+	ProxyOnError         bool       `json:"proxy_on_error"`
 }
 
 type MethodTransformMeta struct {
-	Path     string `json:"path"`
-	Method   string `json:"method"`
-	ToMethod string `json:"to_method"`
+	Path     string     `json:"path"`
+	Method   HttpMethod `json:"method"`
+	ToMethod HttpMethod `json:"to_method"`
 }
 
 type ValidatePathMeta struct {
 	// Allows override of default 422 Unprocessible Entity response code for validation errors.
-	ErrorResponseCode int    `json:"error_response_code"`
-	Path              string `json:"path"`
-	Method            string `json:"method"`
-	SchemaB64         string `json:"schema_b64,omitempty"`
+	ErrorResponseCode int        `json:"error_response_code"`
+	Path              string     `json:"path"`
+	Method            HttpMethod `json:"method"`
+	SchemaB64         string     `json:"schema_b64,omitempty"`
 
 	//Schema    ExtraFields `json:"schema,omitempty"`
 }
@@ -304,7 +310,7 @@ type HostCheckObject struct {
 	Timeout             time.Duration     `json:"timeout"`
 	EnableProxyProtocol bool              `json:"enable_proxy_protocol"`
 	Commands            []CheckCommand    `json:"commands"`
-	Method              string            `json:"method"`
+	Method              HttpMethod        `json:"method"`
 	Headers             map[string]string `json:"headers"`
 	Body                string            `json:"body"`
 }
@@ -512,15 +518,15 @@ type ProxyTransport struct {
 }
 
 type CORS struct {
-	Enable             bool     `json:"enable"`
-	AllowedOrigins     []string `json:"allowed_origins"`
-	AllowedMethods     []string `json:"allowed_methods"`
-	AllowedHeaders     []string `json:"allowed_headers"`
-	ExposedHeaders     []string `json:"exposed_headers"`
-	AllowCredentials   bool     `json:"allow_credentials"`
-	MaxAge             int      `json:"max_age"`
-	OptionsPassthrough bool     `json:"options_passthrough"`
-	Debug              bool     `json:"debug"`
+	Enable             bool         `json:"enable"`
+	AllowedOrigins     []string     `json:"allowed_origins"`
+	AllowedMethods     []HttpMethod `json:"allowed_methods"`
+	AllowedHeaders     []string     `json:"allowed_headers"`
+	ExposedHeaders     []string     `json:"exposed_headers"`
+	AllowCredentials   bool         `json:"allow_credentials"`
+	MaxAge             int          `json:"max_age"`
+	OptionsPassthrough bool         `json:"options_passthrough"`
+	Debug              bool         `json:"debug"`
 }
 
 type UptimeTests struct {

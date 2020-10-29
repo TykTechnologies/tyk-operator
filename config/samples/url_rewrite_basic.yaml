@@ -1,0 +1,32 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: url-rewrite
+spec:
+  name: URL Rewrite
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /url-rewrite
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        use_extended_paths: true
+        paths:
+          black_list: [ ]
+          ignored: [ ]
+          white_list: [ ]
+        extended_paths:
+          url_rewrites:
+            # any request to the /get endpoint, will be re-written to /xml
+            - path: /get
+              match_pattern: /get
+              method: GET
+              rewrite_to: /xml
+              triggers: []
