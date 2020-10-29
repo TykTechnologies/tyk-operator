@@ -521,7 +521,8 @@ type APIDefinitionSpec struct {
 	//+optional
 	SessionLifetime int64 `json:"session_lifetime,omitempty"`
 
-	//Internal    	           bool                `json:"internal"`
+	// Internal tells Tyk Gateway that this is a virtual API. It can only be routed to from other APIs.
+	Internal bool `json:"internal,omitempty"`
 	//AuthProvider           AuthProviderMeta    `json:"auth_provider"`
 	//SessionProvider        SessionProviderMeta `json:"session_provider"`
 	////EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
