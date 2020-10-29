@@ -160,14 +160,10 @@ spec:
 </p>
 </details>
 
-<<<<<<< HEAD
-## Dev
-=======
 ## Installation
 
 [Installing the tyk-operator](./docs/installation/installation.md)
 
 ## Contributing
->>>>>>> 7c8a6aad2b22dbdf22116d9174c97e93cd4381ba
 
 [Setting up your development environment](./docs/development.md)
