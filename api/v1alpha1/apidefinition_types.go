@@ -41,6 +41,10 @@ type RoutingTriggerOnType string
 // +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE;OPTIONS;HEAD;CONNECT;TRACE
 type HttpMethod string
 
+// ExecutionMode is the mode to define how an api behaves.
+// +kubebuilder:validation:Enum=proxyOnly;executionEngine
+type GraphQLExecutionMode string
+
 type NotificationsManager struct {
 	SharedSecret      string `json:"shared_secret"`
 	OAuthKeyChangeURL string `json:"oauth_on_keychange_url"`
@@ -60,10 +64,10 @@ type EndPointMeta struct {
 }
 
 type CacheMeta struct {
-	Method                 string `json:"method"`
-	Path                   string `json:"path"`
-	CacheKeyRegex          string `json:"cache_key_regex"`
-	CacheOnlyResponseCodes []int  `json:"cache_response_codes"`
+	Method                 HttpMethod `json:"method"`
+	Path                   string     `json:"path"`
+	CacheKeyRegex          string     `json:"cache_key_regex"`
+	CacheOnlyResponseCodes []int      `json:"cache_response_codes"`
 }
 
 type RequestInputType string
@@ -614,8 +618,6 @@ type GraphQLConfig struct {
 	// Enabled indicates if GraphQL proxy should be enabled.
 	Enabled bool `json:"enabled"`
 
-	// ExecutionMode is the mode to define how an api behaves.
-	// +kubebuilder:validation:Enum=proxyOnly;executionEngine
 	ExecutionMode GraphQLExecutionMode `json:"execution_mode"`
 
 	// Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
@@ -638,20 +640,31 @@ type TypeFieldConfiguration struct {
 type SourceConfig struct {
 	// Kind defines the unique identifier of the DataSource
 	// Kind needs to match to the Planner "DataSourceName" name
-	Name string `json:"kind"`
-
+	// +kubebuilder:validation:Enum=GraphQLDataSource;HTTPJSONDataSource
+	Kind string `json:"kind"`
 	// Config is the DataSource specific configuration object
 	// Each Planner needs to make sure to parse their Config Object correctly
-	//Config json.RawMessage `json:"data_source_config"`
+	Config DataSourceConfig `json:"data_source_config,omitempty"`
+}
+
+type DataSourceConfig struct {
+	URL                        string                      `json:"url"`
+	Method                     HttpMethod                  `json:"method"`
+	Body                       string                      `json:"body,omitempty"`
+	DefaultTypeName            string                      `json:"default_type_name,omitempty"`
+	Headers                    []string                    `json:"headers,omitempty"`
+	StatusCodeTypeNameMappings []StatusCodeTypeNameMapping `json:"status_code_type_name_mappings,omitempty"`
+}
+
+type StatusCodeTypeNameMapping struct {
+	StatusCode int    `json:"status_code"`
+	TypeName   string `json:"type_name,omitempty"`
 }
 
 type MappingConfiguration struct {
 	Disabled bool   `json:"disabled"`
 	Path     string `json:"path"`
 }
-
-// GraphQLExecutionMode is the mode in which the GraphQL Middleware should operate.
-type GraphQLExecutionMode string
 
 // GraphQLPlayground represents the configuration for the public playground which will be hosted alongside the api.
 type GraphQLPlayground struct {

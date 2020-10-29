@@ -26,9 +26,11 @@ type SecurityPolicySpec struct {
 	// Do NOT fill this in.
 	MID string `json:"_id,omitempty"`
 	// If you are linking an existing Policy ID to a new YAML CRD, then
-	// fill in this ID field with the "_id" field.  View Policies.md
-	// Read me for more info
-	ID   string `json:"id,omitempty"`
+	// fill in this ID field with the "_id" field.
+	// See policies.md readme for more info
+	ID string `json:"id,omitempty"`
+
+	// Name represents the name of the security policy as displayed in the Dashboard
 	Name string `json:"name"`
 
 	// OrgID is overwritten - no point setting this

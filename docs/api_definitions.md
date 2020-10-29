@@ -14,8 +14,8 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 | Type | Support | Comments |
 | --------- | --------- | --------- |
-| GraphQL - Proxy | ✅ | - |
-| GraphQL - Universal Data Graph | ❌ | WIP |
+| [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅ | - |
+| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml) | ✅ | - |
 | HTTP | ✅ | - |
 | HTTPS️ | ⚠️ | Partial Support - WIP integration with cert-manager & ingress |
 | TCP | ✅ | - |

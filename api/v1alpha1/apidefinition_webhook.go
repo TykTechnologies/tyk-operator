@@ -102,6 +102,11 @@ func (in *ApiDefinition) ValidateCreate() error {
 		return err
 	}
 
+	err = validateUDG(in)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -114,6 +119,11 @@ func (in *ApiDefinition) ValidateUpdate(old runtime.Object) error {
 		return err
 	}
 
+	err = validateUDG(in)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -121,6 +131,31 @@ func validateAuth(in *ApiDefinition) error {
 	if in.Spec.UseKeylessAccess {
 		if in.Spec.UseStandardAuth {
 			return errors.New("conflict: cannot use_keyless_access & use_standard_auth")
+		}
+	}
+	return nil
+}
+
+// TODO: proper udg validation required here
+func validateUDG(in *ApiDefinition) error {
+	if in.Spec.GraphQL == nil {
+		return nil
+	}
+
+	if in.Spec.GraphQL.Enabled && in.Spec.GraphQL.ExecutionMode == "executionEngine" {
+		for _, typeFieldConfig := range in.Spec.GraphQL.TypeFieldConfigurations {
+			switch typeFieldConfig.DataSource.Kind {
+			case "HTTPJsonDataSource":
+				if typeFieldConfig.DataSource.Config.URL == "" ||
+					typeFieldConfig.DataSource.Config.Method == "" {
+					return errors.New("URL or Method missing for HTTPJsonDataSource")
+				}
+			case "GraphQLDataSource":
+				if typeFieldConfig.DataSource.Config.URL == "" ||
+					typeFieldConfig.DataSource.Config.Method == "" {
+					return errors.New("URL or Method missing for GraphQLDataSource")
+				}
+			}
 		}
 	}
 	return nil
