@@ -86,6 +86,10 @@ func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) (string, error) {
 }
 
 func (a Api) Get(apiID string) (*tykv1alpha1.APIDefinitionSpec, error) {
+	if apiID == "" {
+		return nil, nil
+	}
+
 	// Create
 	sess := grequests.NewSession(a.opts)
 	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
@@ -156,8 +160,8 @@ func (a Api) Delete(id string) error {
 		return nil
 	}
 
-	if res.StatusCode == http.StatusInternalServerError {
-		// Tyk returns internal server error if api is already deleted
+	if res.StatusCode == http.StatusNotFound {
+		// Tyk returns 404 if api is already deleted
 		return nil
 	}
 

@@ -7,7 +7,8 @@ spec:
   use_keyless: true
   protocol: http
   active: true
+  domain: httpbin.tyk.io
   proxy:
     target_url: http://httpbin.org
-    listen_path: /httpbin
+    listen_path: /
     strip_listen_path: true

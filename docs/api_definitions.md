@@ -2,67 +2,88 @@
 
 An API Definition describes the configuration of an API. It instructs Tyk Gateway how to configure the API.
 
-✅ - Fully supported
+## Implemented Capabilities / Support Status
 
-⚠️ - Requires documentation / testing
+| Symbol | Description |
+| --------- | --------- |
+| ✅ | Fully supported |
+| ⚠️ | Untested / Requires Documentation |
+| ❌️ | Not currently supported |
 
-❌️ - Not currently supported
+## API Types
 
-## API Level
+| Type | Support | Comments |
+| --------- | --------- | --------- |
+| GraphQL - Proxy | ✅ | - |
+| GraphQL - Universal Data Graph | ❌ | WIP |
+| HTTP | ✅ | - |
+| HTTPS️ | ⚠️ | Partial Support - WIP integration with cert-manager & ingress |
+| TCP | ✅ | - |
+| TLS | ✅ | - |
 
-### Authentication
+## APIDefinition
 
-| Type | Supported |
-| ----------- | --------- |
-| [Static Bearer Token](#) | ✅ |
-| [Keyless (open)](#) | ✅ |
-| [JWT](#) | ⚠️ |
-| [OpenID Connect](#) | ⚠️ |
-| [OAuth2](#) | ⚠️ |
+### APIDefinition - Routing
 
-### Cross Origin Resource Sharing (CORS)
+| Type | Supported | Comments |
+| ----------- | --------- | --------- |
+| [Path-Based](./../config/samples/httpbin.yaml) | ✅ | - |
+| [Host-Based](./../config/samples/httpbin_routing_by_hostname.yaml) | ⚠️ | Implemented - Untested |
+| Version-Based (Header) | ⚠️ | Untested |
+| Version-Based (QueryString) | ⚠️ | Untested |
+| Version-Based (Subdomain) | ⚠️ | Untested |
 
-TBA
+### APIDefinition - Authentication
 
-### API Webhooks
+| Type | Supported | Comments |
+| ----------- | --------- | --------- |
+| [Keyless (open)](./../config/samples/httpbin.yaml) | ✅ | - |
+| [Static Bearer Token](./../config/samples/httpbin_protected.yaml) | ✅ | - |
+| JWT | ❌️ | Not implemented |
+| OpenID Connect | ❌ | Not implemented |
+| OAuth2 | ❌ | Not implemented |
 
-- [Webhooks](./api_definitions/webhooks.md) - [❌️](https://github.com/TykTechnologies/tyk-operator/issues/62) 
+API Definition Features
 
-### Custom Plugins
+| Feature | Supported | Comments |
+| ----------- | --------- | --------- |
+| Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
+| Custom Plugins - Go | ⚠️ | Untested |
+| Custom Plugins - gRPC | ⚠️ | Untested |
+| [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
+| Custom Plugins - Lua | ⚠️ | Untested |
+| Custom Plugins - Python | ⚠️ | Untested |
+| [Segment Tags](./../config/samples/httpbin_tagged.yaml) | ✅ | - |
+| [Webhooks](./webhooks.md) | ❌ | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
-| Type | Supported |
-| ----------- | --------- |
-| [Go](./api_definitions/custom_plugin.md) | ⚠️ |
-| [gRPC](./api_definitions/custom_plugin.md) | ⚠️ |
-| [Javascript](./api_definitions/custom_plugin.md) | ✅ |
-| [Lua](./api_definitions/custom_plugin.md) | ⚠️ |
-| [Python](./api_definitions/custom_plugin.md) | ⚠️ |
+## APIDefinition - Endpoint Middleware
 
-## Endpoint level
+| Endpoint Middleware  | Supported | Comments |
+| ----------- | --------- | --------- |
+| Analytics - Endpoint Tracking | ⚠️ | Untested |
+| [Availability - Circuit Breaker](./../config/samples/httpbin_timeout.yaml) | ❌ | Incompatible types string vs float64 |
+| [Availability - Enforced Timeouts](./../config/samples/httpbin_timeout.yaml) | ✅ | - |
+| [Headers - Global Request Add](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
+| [Headers - Global Request Remove](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
+| [Headers - Global Response Add](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
+| [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
+| [Performance - Cache](./../config/samples/httpbin_cache.yaml) | ✅ | - |
+| [Plugin - Virtual Endpoint](./api_definitions/custom_plugin.md) | ✅ | - |
+| Security - Allow list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Security - Block list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Security - Ignore list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Transform - Internal | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Transform - Method | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Transform - Mock | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| [Transform - Request Body](../config/samples/httpbin_transform.yaml) | ✅ | - |
+| [Transform - Response Body](../config/samples/httpbin_transform.yaml) | ✅ | - |
+| Transform - Request Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
+| Transform - Response Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
+| [Transform - URL Rewrite Basic](../config/samples/url_rewrite_basic.yaml) | ✅️ | - |
+| Transform - URL Rewrite Advanced | ⚠️ | Untested |
+| [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | ❌️ | [Issue #59](https://github.com/TykTechnologies/tyk-operator/issues/59) |
+| [Validate - Limit Request Size](../config/samples/httpbin_validate.yaml) | ✅️ | - |
 
-Here is the list of supported middleware that you can apply at the endpoint level.
+## APIDefinition - Migrating Existing APIs
 
-| Endpoint Middleware  | Supported |
-| ----------- | --------- |
-| [Analytics - Endpoint Tracking](#) | ⚠️ |
-| [Availability - Circuit Breaker](./../config/samples/httpbin_timeout.yaml) | [❌️](# "Incompatible types string vs float64") |
-| [Availability - Enforced Timeouts](./../config/samples/httpbin_timeout.yaml) | ✅ |
-| [Headers - Global Request Add](../config/samples/httpbin_global-headers.yaml) | ✅ |
-| [Headers - Global Request Remove](../config/samples/httpbin_global-headers.yaml) | ✅ |
-| [Headers - Global Response Add](../config/samples/httpbin_global-headers.yaml) | ✅ |
-| [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml) | ✅ |
-| [Performance - Cache](./../config/samples/httpbin_cache.yaml) | ✅ |
-| [Plugin - Virtual Endpoint](./api_definitions/custom_plugin.md) | ✅ |
-| [Security - Allow list](#) | ⚠️ |
-| [Security - Block list](#) | ⚠️ |
-| [Security - Ignore list](#) | ⚠️ |
-| [Transform - Internal](#) | ⚠️ |
-| [Transform - Method](#) | ⚠️ |
-| [Transform - Mock](#) | ⚠️ |
-| [Transform - Request Body](../config/samples/httpbin_transform.yaml) | ✅ |
-| [Transform - Response Body](../config/samples/httpbin_transform.yaml) | ✅ |
-| [Transform - Request Body JQ](../config/samples/httpbin_transform.yaml) | [⚠️](# "Requires JQ on Gateway Host & Testing") |
-| [Transform - Response Body JQ](../config/samples/httpbin_transform.yaml) | [⚠️](# "Requires JQ on Gateway Host & Testing") |
-| [Transform - URL Rewrite](#) | ⚠️ |
-| [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/59) |
-| [Validate - Limit Request Size](../config/samples/httpbin_validate.yaml) | [❌️](https://github.com/TykTechnologies/tyk-operator/issues/59) |
+Please visit the [API migration page](./api_definitions/migration.md) for more info

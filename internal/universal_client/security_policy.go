@@ -7,10 +7,10 @@ import (
 
 type UniversalSecurityPolicy interface {
 	All() ([]tykv1alpha1.SecurityPolicySpec, error)
-	Get(namespacedName string) (*tykv1alpha1.SecurityPolicySpec, error)
-	Create(def *tykv1alpha1.SecurityPolicySpec, namespacedName string) (string, error)
-	Update(def *tykv1alpha1.SecurityPolicySpec, namespacedName string) error
-	Delete(namespacedName string) error
+	Get(policyId string) (*tykv1alpha1.SecurityPolicySpec, error)
+	Create(def *tykv1alpha1.SecurityPolicySpec) (string, error)
+	Update(def *tykv1alpha1.SecurityPolicySpec) error
+	Delete(policyId string) error
 }
 
 var (
@@ -36,10 +36,10 @@ func applyDefaults(spec *tykv1alpha1.SecurityPolicySpec) {
 	}
 }
 
-func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec, namespacedName string) (*tykv1alpha1.SecurityPolicySpec, error) {
+func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec) (*tykv1alpha1.SecurityPolicySpec, error) {
 	var err error
 
-	pol, err := c.SecurityPolicy().Get(namespacedName)
+	pol, err := c.SecurityPolicy().Get(spec.ID)
 	if err != nil {
 		// should return "nil, http.401" if policy doesn't exist
 		if !errors.Is(err, PolicyNotFoundError) {
@@ -51,26 +51,18 @@ func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpe
 
 	if pol == nil {
 		// Create
-		_, err := c.SecurityPolicy().Create(spec, namespacedName)
+		_, err := c.SecurityPolicy().Create(spec)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create policy")
 		}
 
-		pol, err = c.SecurityPolicy().Get(namespacedName)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to create fetch new policy")
-		}
-
 	} else {
 		// Update
-		err = c.SecurityPolicy().Update(spec, namespacedName)
+		spec.MID = pol.MID
+		spec.OrgID = pol.OrgID
+		err = c.SecurityPolicy().Update(spec)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update policy")
-		}
-
-		pol, err = c.SecurityPolicy().Get(namespacedName)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to create fetch updated policy")
 		}
 	}
 
