@@ -285,7 +285,7 @@ func (in *CORS) DeepCopyInto(out *CORS) {
 	}
 	if in.AllowedMethods != nil {
 		in, out := &in.AllowedMethods, &out.AllowedMethods
-		*out = make([]string, len(*in))
+		*out = make([]HttpMethod, len(*in))
 		copy(*out, *in)
 	}
 	if in.AllowedHeaders != nil {

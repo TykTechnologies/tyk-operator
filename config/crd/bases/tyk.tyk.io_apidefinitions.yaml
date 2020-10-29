@@ -625,6 +625,17 @@ spec:
                                 disable_half_open_state:
                                   type: boolean
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -653,6 +664,17 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -665,6 +687,17 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -715,6 +748,17 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -727,10 +771,32 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
                                 to_method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                               required:
                               - method
@@ -742,6 +808,17 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -758,6 +835,17 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -770,6 +858,17 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -809,6 +908,17 @@ spec:
                                     type: string
                                   type: array
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -826,6 +936,17 @@ spec:
                                 filter:
                                   type: string
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -841,6 +962,17 @@ spec:
                                 filter:
                                   type: string
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -854,6 +986,17 @@ spec:
                             items:
                               properties:
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -893,6 +1036,17 @@ spec:
                                     type: string
                                   type: array
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
@@ -908,12 +1062,29 @@ spec:
                             items:
                               properties:
                                 match_pattern:
+                                  description: MatchPattern is a regular expression
+                                    pattern to match the path
                                   type: string
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
+                                  description: Path represents the endpoint listen
+                                    path
                                   type: string
                                 rewrite_to:
+                                  description: RewriteTo is the target path on the
+                                    upstream, or target URL we wish to rewrite to
                                   type: string
                                 triggers:
                                   items:
@@ -1024,6 +1195,17 @@ spec:
                                 function_source_uri:
                                   type: string
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string
