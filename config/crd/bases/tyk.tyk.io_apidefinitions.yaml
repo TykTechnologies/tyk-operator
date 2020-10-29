@@ -349,12 +349,17 @@ spec:
                           graphql_data_source:
                             properties:
                               method:
+                                description: Method represents the HTTP method used
                                 enum:
                                 - GET
                                 - POST
                                 - PUT
                                 - PATCH
                                 - DELETE
+                                - OPTIONS
+                                - HEAD
+                                - CONNECT
+                                - TRACE
                                 type: string
                               url:
                                 description: URL is the URL of the GraphQL data source
@@ -369,16 +374,24 @@ spec:
                                 type: string
                               default_type_name:
                                 type: string
+                              headers:
+                                items:
+                                  type: string
+                                type: array
                               method:
+                                description: Method represents HTTP request method
                                 enum:
                                 - GET
                                 - POST
                                 - PUT
                                 - PATCH
                                 - DELETE
+                                - OPTIONS
+                                - HEAD
+                                - CONNECT
+                                - TRACE
                                 type: string
                               status_code_type_name_mappings:
-                                description: Headers []string `json:"headers"`
                                 items:
                                   properties:
                                     data_source_config:
@@ -637,6 +650,17 @@ spec:
                                     type: integer
                                   type: array
                                 method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
                                   type: string
                                 path:
                                   type: string

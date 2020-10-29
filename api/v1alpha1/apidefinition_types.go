@@ -20,8 +20,9 @@ import (
 	"encoding/json"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
@@ -65,10 +66,10 @@ type EndPointMeta struct {
 }
 
 type CacheMeta struct {
-	Method                 string `json:"method"`
-	Path                   string `json:"path"`
-	CacheKeyRegex          string `json:"cache_key_regex"`
-	CacheOnlyResponseCodes []int  `json:"cache_response_codes"`
+	Method                 HttpMethod `json:"method"`
+	Path                   string     `json:"path"`
+	CacheKeyRegex          string     `json:"cache_key_regex"`
+	CacheOnlyResponseCodes []int      `json:"cache_response_codes"`
 }
 
 type RequestInputType string
@@ -655,18 +656,15 @@ type SourceConfigGraphQL struct {
 	// URL is the URL of the GraphQL data source
 	URL string `json:"url"`
 	// Method represents the HTTP method used
-
-	// +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE
-	Method string `json:"method"`
+	Method HttpMethod `json:"method"`
 }
 
 type HTTPJsonDataSource struct {
-	URL string `json:"url"`
-	// +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE
-	Method          string `json:"method"`
-	Body            string `json:"body,omitempty"`
-	DefaultTypeName string `json:"default_type_name"`
-	//Headers []string `json:"headers"`
+	URL                        string                      `json:"url"`
+	Method                     HttpMethod                  `json:"method"`
+	Body                       string                      `json:"body,omitempty"`
+	DefaultTypeName            string                      `json:"default_type_name"`
+	Headers                    []string                    `json:"headers,omitempty"`
 	StatusCodeTypeNameMappings []StatusCodeTypeNameMapping `json:"status_code_type_name_mappings"`
 }
 
