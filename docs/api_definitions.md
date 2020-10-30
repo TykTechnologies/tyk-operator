@@ -15,15 +15,13 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Type | Support | Comments |
 | --------- | --------- | --------- |
 | [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅ | - |
-| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml) | ✅ | - |
+| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml) | ⚠️ | API Change ETA December 2020 |
 | HTTP | ✅ | - |
 | HTTPS️ | ⚠️ | Partial Support - WIP integration with cert-manager & ingress |
 | TCP | ✅ | - |
 | TLS | ✅ | - |
 
-## APIDefinition
-
-### APIDefinition - Routing
+## Routing
 
 | Type | Supported | Comments |
 | ----------- | --------- | --------- |
@@ -33,7 +31,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Version-Based (QueryString) | ⚠️ | Untested |
 | Version-Based (Subdomain) | ⚠️ | Untested |
 
-### APIDefinition - Authentication
+## Client to Gateway Authentication
 
 | Type | Supported | Comments |
 | ----------- | --------- | --------- |
@@ -42,18 +40,38 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | JWT | ❌️ | Not implemented |
 | OpenID Connect | ❌ | Not implemented |
 | OAuth2 | ❌ | Not implemented |
+| mTLS | ❌ | Not implemented |
+| HMAC | ❌ | Not implemented |
+| Basic Authentication | ❌ | Not implemented |
+| Plugin Auth - Go | ❌ | Not implemented |
+| Plugin Auth - co-process | ❌ | Not implemented |
+| IP Whitelisting | ❌ | Not implemented |
+| IP Blacklisting | ❌ | Not implemented |
 
-API Definition Features
+## Gateway to Upstream Authentication
+
+| Type | Supported | Comments |
+| ----------- | --------- | --------- |
+| Public Key Certificate Pinning | ❌ | Not implemented |
+| Upstream Certificates mTLS | ❌ | Not implemented |
+| Request Signing | ❌ | Not implemented |
+
+## Features
 
 | Feature | Supported | Comments |
 | ----------- | --------- | --------- |
+| API Tagging | ✅ | - |
+| Config Data | ❌ | Not Implemented |
+| Context Variables | ✅ | - |
 | Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
 | Custom Plugins - Go | ⚠️ | Untested |
 | Custom Plugins - gRPC | ⚠️ | Untested |
 | [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
 | Custom Plugins - Lua | ⚠️ | Untested |
 | Custom Plugins - Python | ⚠️ | Untested |
+| Global Rate Limit | ❌ | Not Implemented |
 | [Segment Tags](./../config/samples/httpbin_tagged.yaml) | ✅ | - |
+| Tag Headers | ❌ | Not Implemented |
 | [Webhooks](./webhooks.md) | ❌ | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
 ## APIDefinition - Endpoint Middleware
