@@ -1,10 +1,11 @@
 package universal_client
 
 import (
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/pkg/errors"
 	"os"
 	"strings"
+
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/pkg/errors"
 )
 
 type UniversalApi interface {
@@ -31,6 +32,7 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) error {
 			return errors.Wrap(err, "unable to create api")
 		}
 
+		_ = c.HotReload()
 		// todo: replace this once we replace it in main.go
 		spec.OrgID = strings.TrimSpace(os.Getenv("TYK_ORG"))
 
@@ -40,6 +42,7 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) error {
 			return errors.Wrap(err, "unable to update api")
 		}
 
+		_ = c.HotReload()
 	} else {
 		// Update
 		spec.OrgID = api.OrgID
@@ -47,9 +50,9 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to update api")
 		}
-	}
 
-	_ = c.HotReload()
+		_ = c.HotReload()
+	}
 
 	return nil
 }
