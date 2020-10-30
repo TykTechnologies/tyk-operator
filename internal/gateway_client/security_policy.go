@@ -19,14 +19,18 @@ type SecurityPolicy struct {
 
 // todo: needs testing
 func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
+	sess := grequests.NewSession(a.opts)
 	fullPath := JoinUrl(a.url, endpointPolicies)
 
-	res, err := grequests.Get(fullPath, a.opts)
+	res, err := sess.Get(fullPath, a.opts)
 	if err != nil {
 		return nil, err
 	}
 
 	if res.StatusCode != http.StatusOK {
+		if res.StatusCode == http.StatusNotFound {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
 	}
 
@@ -40,9 +44,9 @@ func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 
 // todo: needs testing
 func (a SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, error) {
-	// todo: check does this namespaced name work?
+	sess := grequests.NewSession(a.opts)
 	fullPath := JoinUrl(a.url, endpointPolicies, namespacedName)
-	res, err := grequests.Get(fullPath, a.opts)
+	res, err := sess.Get(fullPath, a.opts)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +65,7 @@ func (a SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, erro
 
 // todo: needs testing
 func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
+	sess := grequests.NewSession(a.opts)
 	// Replace this with a GET ONE once that is fixed
 	// get all policies
 	list, err := a.All()
@@ -79,7 +84,7 @@ func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 	opts.JSON = def
 	fullPath := JoinUrl(a.url, endpointPolicies)
 
-	res, err := grequests.Post(fullPath, opts)
+	res, err := sess.Post(fullPath, opts)
 	if err != nil {
 		return "", err
 	}
@@ -102,6 +107,7 @@ func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
 
 // todo: needs testing
 func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
+	sess := grequests.NewSession(a.opts)
 	// Replace this with a GET ONE once that is fixed
 	list, err := a.All()
 	if err != nil {
@@ -125,7 +131,7 @@ func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	opts.JSON = def
 	fullPath := JoinUrl(a.url, endpointPolicies, polToUpdate.ID)
 
-	res, err := grequests.Put(fullPath, opts)
+	res, err := sess.Put(fullPath, opts)
 	if err != nil {
 		return err
 	}
@@ -148,10 +154,11 @@ func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 
 // todo: needs testing
 func (a SecurityPolicy) Delete(namespacedName string) error {
+	sess := grequests.NewSession(a.opts)
 	// todo: check does this namespaced name work?
 	delPath := JoinUrl(a.url, endpointPolicies, namespacedName)
 
-	res, err := grequests.Delete(delPath, a.opts)
+	res, err := sess.Delete(delPath, a.opts)
 	if err != nil {
 		return err
 	}

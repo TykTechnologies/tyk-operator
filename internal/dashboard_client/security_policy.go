@@ -33,7 +33,7 @@ Returns all policies from the Dashboard
 func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	fullPath := JoinUrl(p.url, endpointPolicies)
 
-	res, err := grequests.Get(fullPath, p.opts)
+	res, err := grequests.Get(fullPath, nil)
 	if err != nil {
 		return nil, err
 	}
