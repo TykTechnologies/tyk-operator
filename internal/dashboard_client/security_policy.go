@@ -31,9 +31,10 @@ func GetPolicyK8SName(nameSpacedName string) string {
 Returns all policies from the Dashboard
 */
 func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
+	sess := grequests.NewSession(p.opts)
 	fullPath := JoinUrl(p.url, endpointPolicies)
 
-	res, err := grequests.Get(fullPath, nil)
+	res, err := sess.Get(fullPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,12 +82,10 @@ func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
 	2.  create a policy and preserves the "id" field.
 */
 func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
-	// Create
-	opts := p.opts
-	opts.JSON = def
+	sess := grequests.NewSession(p.opts)
 	fullPath := JoinUrl(p.url, endpointPolicies)
 
-	res, err := grequests.Post(fullPath, opts)
+	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: def})
 	if err != nil {
 		return "", err
 	}
@@ -113,13 +112,10 @@ is included in both the Payload as well as the endpoint,
 so be sure to pass a valid Policy that includes a "MID" (looked up) and "ID" (the custom one used)
 */
 func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
-
-	// Update
-	opts := p.opts
-	opts.JSON = def
+	sess := grequests.NewSession(p.opts)
 
 	fullPath := JoinUrl(p.url, endpointPolicies, def.MID)
-	res, err := grequests.Put(fullPath, opts)
+	res, err := sess.Put(fullPath, &grequests.RequestOptions{JSON: def})
 	if err != nil {
 		return err
 	}
@@ -149,6 +145,8 @@ delete.
 If policy does not exist, move on, nothing to delete.
 */
 func (p SecurityPolicy) Delete(policyId string) error {
+	sess := grequests.NewSession(p.opts)
+
 	pol, err := p.Get(policyId)
 	if err == universal_client.PolicyNotFoundError {
 		return nil
@@ -159,7 +157,7 @@ func (p SecurityPolicy) Delete(policyId string) error {
 
 	delPath := JoinUrl(p.url, endpointPolicies, pol.MID)
 
-	res, err := grequests.Delete(delPath, p.opts)
+	res, err := sess.Delete(delPath, p.opts)
 	if err != nil {
 		return err
 	}
