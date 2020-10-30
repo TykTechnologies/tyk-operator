@@ -233,6 +233,23 @@ spec:
 
 [Installing the tyk-operator](./docs/installation/installation.md)
 
+tyk-operator is under active development. 
+
+We are building the operator to enable you to build and ship your APIs faster and more safely. We are actively working
+on improving & stabilising our v1alpha1 custom resources, whilst also working on a helm chart so that you can 
+manage your tyk-operator deployment. 
+
+If you find any bugs, please raise an issue. 
+We welcome code contributions as well. 
+If you require any features that we have not yet implemented, please take the time to write a GH issue detailing your
+use-case so that we may prioritise accordingly. 
+
 ## Contributing
 
 [Setting up your development environment](./docs/development.md)
+
+## We are hiring! 
+
+Like what you see so far? Passionate about Open Source? Can you think of a ton of ways to make tyk-operator 
+or some of our other projects better? We want to hear from you.
+Head over to our [careers page](https://tyk.io/current-vacancies/senior-software-engineer-kubernetes/) for further details.
