@@ -2,8 +2,9 @@ package dashboard_client
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
@@ -17,10 +18,12 @@ type Webhook struct {
 /**
 Returns all webhooks from the Dashboard for this org
 */
-func (p Webhook) All() ([]v1.WebhookSpec, error) {
-	fullPath := JoinUrl(p.url, endpointWebhooks)
+func (w Webhook) All() ([]v1.WebhookSpec, error) {
+	sess := grequests.NewSession(w.opts)
 
-	res, err := grequests.Get(fullPath, p.opts)
+	fullPath := JoinUrl(w.url, endpointWebhooks)
+
+	res, err := sess.Get(fullPath, w.opts)
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +66,9 @@ func (w Webhook) Get(namespacedName string) (*v1.WebhookSpec, error) {
 /*
 	Creates a webhook.  Overwrites the Webhook "name" with the CRD's namespaced name
 */
-func (p Webhook) Create(namespacedName string, def *v1.WebhookSpec) error {
+func (w Webhook) Create(namespacedName string, def *v1.WebhookSpec) error {
 	// Check if this webhook exists
-	webhook, err := p.Get(namespacedName)
+	webhook, err := w.Get(namespacedName)
 	// if webhook find gives "not found error", great, skip and create!
 	if err != nil && err != universal_client.WebhookNotFoundError {
 		return err
@@ -76,12 +79,11 @@ func (p Webhook) Create(namespacedName string, def *v1.WebhookSpec) error {
 	def.Name = namespacedName
 	def.ID = ""
 
-	// Create
-	opts := p.opts
-	opts.JSON = def
-	fullPath := JoinUrl(p.url, endpointWebhooks)
+	fullPath := JoinUrl(w.url, endpointWebhooks)
 
-	res, err := grequests.Post(fullPath, opts)
+	sess := grequests.NewSession(w.opts)
+
+	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: def})
 	if err != nil {
 		return err
 	}
@@ -106,8 +108,8 @@ func (p Webhook) Create(namespacedName string, def *v1.WebhookSpec) error {
 Updates a Webhook.  Adds the unique identifier namespaced-Name to the
 webhook's "name" so subsequent CRUD opps are possible.
 */
-func (p Webhook) Update(namespacedName string, def *v1.WebhookSpec) error {
-	webhookToUpdate, err := p.Get(namespacedName)
+func (w Webhook) Update(namespacedName string, def *v1.WebhookSpec) error {
+	webhookToUpdate, err := w.Get(namespacedName)
 	if err != nil {
 		return err
 	}
@@ -121,12 +123,10 @@ func (p Webhook) Update(namespacedName string, def *v1.WebhookSpec) error {
 	def.ID = webhookToUpdate.ID       // Needed
 	def.OrgID = webhookToUpdate.OrgID // Needed
 
-	// Update
-	opts := p.opts
-	opts.JSON = def
+	sess := grequests.NewSession(w.opts)
 
-	fullPath := JoinUrl(p.url, endpointWebhooks, webhookToUpdate.ID)
-	res, err := grequests.Put(fullPath, opts)
+	fullPath := JoinUrl(w.url, endpointWebhooks, webhookToUpdate.ID)
+	res, err := sess.Put(fullPath, &grequests.RequestOptions{JSON: def})
 	if err != nil {
 		return err
 	}
@@ -152,6 +152,8 @@ Tries to delete a Webhook by first attempting to do a lookup on it.
 If webhook does not exist, move on, nothing to delete
 */
 func (w Webhook) Delete(namespacedName string) error {
+	sess := grequests.NewSession(w.opts)
+
 	webhook, err := w.Get(namespacedName)
 	if err == universal_client.WebhookNotFoundError {
 		return nil
@@ -162,7 +164,7 @@ func (w Webhook) Delete(namespacedName string) error {
 
 	delPath := JoinUrl(w.url, endpointWebhooks, webhook.ID)
 
-	res, err := grequests.Delete(delPath, w.opts)
+	res, err := sess.Delete(delPath, nil)
 	if err != nil {
 		return err
 	}
