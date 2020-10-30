@@ -73,6 +73,7 @@ func (s *store) iRequestEndpoint(path string) error {
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
 	s.responseCode = res.StatusCode
 
