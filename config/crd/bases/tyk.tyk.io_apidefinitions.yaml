@@ -206,9 +206,21 @@ spec:
                       type: string
                     extract_with:
                       type: string
+                    extractor_config:
+                      properties:
+                        header_name:
+                          type: string
+                        param_name:
+                          type: string
+                        regex_expression:
+                          type: string
+                        regex_match_index:
+                          type: integer
+                      type: object
                   required:
                   - extract_from
                   - extract_with
+                  - extractor_config
                   type: object
                 post:
                   items:
@@ -303,6 +315,8 @@ spec:
                 the start of the middleware chain. Set this to true to make them available
                 to your transforms. Context Variables are available in the url rewriter,
                 modify headers and body transforms.
+              type: boolean
+            enable_coprocess_auth:
               type: boolean
             graphql:
               description: GraphQLConfig is the root config object for a GraphQL API.
