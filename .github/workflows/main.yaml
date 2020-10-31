@@ -4,19 +4,6 @@ on:
   pull_request
 
 jobs:
-#  unit-tests:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: checkout tyk-operator
-#        uses: actions/checkout@v2
-#      - name: install kubebuilder
-#        uses: RyanSiu1995/kubebuilder-action@v1
-#        with:
-#          version: 2.3.1
-#      - name: run tests
-#        run: |
-#          make test
-
   integration-tests:
     runs-on: ubuntu-20.04
     steps:
@@ -28,11 +15,23 @@ jobs:
         uses: RyanSiu1995/kubebuilder-action@v1
         with:
           version: 2.3.1
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15.x
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - name: deploy tyk
         shell: bash
         run: |
           echo "checking CI license expiry"
           jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
+          echo "installing cert-manager"
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
           export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
           sh ./ci/deploy_tyk_pro.sh
           echo "installing custom resources"
@@ -42,5 +41,7 @@ jobs:
           sh ./ci/bootstrap_org.sh
           cat bootstrapped
           echo "setting operator dash secrets"
-          sh ./ci/deploy_operator.sh
-          make test
+          sh ./ci/operator_secrets.sh
+          make deploy IMG=tykio/tyk-operator:latest
+          go get github.com/cucumber/godog/cmd/godog@v0.10.0
+          cd bdd && godog
