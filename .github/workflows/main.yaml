@@ -30,6 +30,8 @@ jobs:
         run: |
           echo "checking CI license expiry"
           jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
+          echo "installing cert-manager"
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
           export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
           sh ./ci/deploy_tyk_pro.sh
           echo "installing custom resources"
