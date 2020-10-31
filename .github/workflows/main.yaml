@@ -4,19 +4,6 @@ on:
   pull_request
 
 jobs:
-#  unit-tests:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: checkout tyk-operator
-#        uses: actions/checkout@v2
-#      - name: install kubebuilder
-#        uses: RyanSiu1995/kubebuilder-action@v1
-#        with:
-#          version: 2.3.1
-#      - name: run tests
-#        run: |
-#          make test
-
   integration-tests:
     runs-on: ubuntu-20.04
     steps:
@@ -28,6 +15,10 @@ jobs:
         uses: RyanSiu1995/kubebuilder-action@v1
         with:
           version: 2.3.1
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15.x
       - name: deploy tyk
         shell: bash
         run: |
@@ -44,3 +35,5 @@ jobs:
           echo "setting operator dash secrets"
           sh ./ci/deploy_operator.sh
           make test
+          go get github.com/cucumber/godog/cmd/godog@v0.10.0
+          cd bdd && godog
