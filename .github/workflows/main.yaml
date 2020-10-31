@@ -40,6 +40,6 @@ jobs:
           cat bootstrapped
           echo "setting operator dash secrets"
           sh ./ci/operator_secrets.sh
-          make install IMG=tykio/tyk-operator:latest
+          make deploy IMG=tykio/tyk-operator:latest
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
           cd bdd && godog
