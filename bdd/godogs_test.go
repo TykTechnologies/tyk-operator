@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -57,17 +58,63 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^there should be a (\d+) http response code$`, s.thereShouldBeHttpResponseCode)
 }
 
+// waitForServices tests and waits on the availability of a TCP host and port
+func waitForServices(services []string, timeOut time.Duration) error {
+	var depChan = make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(len(services))
+	go func() {
+		for _, s := range services {
+			go func(s string) {
+				defer wg.Done()
+				for {
+					_, err := net.Dial("tcp", s)
+					if err == nil {
+						return
+					}
+					time.Sleep(1 * time.Second)
+				}
+			}(s)
+		}
+		wg.Wait()
+		close(depChan)
+	}()
+
+	select {
+	case <-depChan: // services are ready
+		return nil
+	case <-time.After(timeOut):
+		return fmt.Errorf("services aren't ready in %s", timeOut)
+	}
+}
+
 func (s *store) iRequestEndpoint(path string) error {
-	cmd := exec.Command("kubectl", "port-forward", "-n", "default", "svc/httpbin", "8000:8000")
+	cmd := exec.Command("kubectl", "port-forward", "-n", "tykpro-control-plane", "svc/gw", "8000:8000")
 	err := cmd.Start()
 	if err != nil {
 		return err
 	}
-
 	defer cmd.Process.Kill()
 
-	// Bit flaky, but it works
-	time.Sleep(time.Second * 2)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		for {
+			conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second*3)
+			if err != nil {
+				time.Sleep(time.Millisecond * 500)
+				continue
+			}
+			if conn != nil {
+				conn.Close()
+				wg.Done()
+				return
+			}
+		}
+	}()
+
+	wg.Wait()
 
 	res, err := http.Get(fmt.Sprintf("http://localhost:8000%s", path))
 	if err != nil {
@@ -118,7 +165,7 @@ func (s *store) kubectlFile(action string, fileName string, expected string, tim
 
 func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {
 	if expectedCode != s.responseCode {
-		return errors.New("unexpected response code")
+		return fmt.Errorf("expected http status %d, got http %d", expectedCode, s.responseCode)
 	}
 
 	return nil
