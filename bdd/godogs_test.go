@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -18,8 +19,9 @@ const (
 )
 
 type store struct {
-	responseCode int
-	cleanupK8s   []string
+	gatewayNamespace string
+	responseCode     int
+	cleanupK8s       []string
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
@@ -27,6 +29,8 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 
 	ctx.BeforeScenario(func(sc *godog.Scenario) {
 		app := "kubectl"
+
+		s.gatewayNamespace = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
 
 		cmd := exec.Command(app, "create", "ns", namespace)
 		output, err := cmd.Output()
@@ -89,7 +93,7 @@ func waitForServices(services []string, timeOut time.Duration) error {
 }
 
 func (s *store) iRequestEndpoint(path string) error {
-	cmd := exec.Command("kubectl", "port-forward", "-n", "tykpro-control-plane", "svc/gw", "8000:8000")
+	cmd := exec.Command("kubectl", "port-forward", "-n", s.gatewayNamespace, "svc/gw", "8000:8000")
 	err := cmd.Start()
 	if err != nil {
 		return err
