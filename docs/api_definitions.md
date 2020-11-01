@@ -44,7 +44,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | HMAC | ❌ | Not implemented |
 | Basic Authentication | ❌ | Not implemented |
 | Plugin Auth - Go | ❌ | Not implemented |
-| Plugin Auth - co-process | ❌ | Not implemented |
+| Plugin Auth - co-process | ⚠️ | Untested |
 | IP Whitelisting | ❌ | Not implemented |
 | IP Blacklisting | ❌ | Not implemented |
 

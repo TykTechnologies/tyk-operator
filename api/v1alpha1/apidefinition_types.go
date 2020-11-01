@@ -267,10 +267,17 @@ type MiddlewareDefinition struct {
 	RawBodyOnly    bool   `json:"raw_body_only,omitempty"`
 }
 
+type IdExtractorConfig struct {
+	HeaderName      string `json:"header_name,omitempty"`
+	FormParamName   string `json:"param_name,omitempty"`
+	RegexExpression string `json:"regex_expression,omitempty"`
+	RegexMatchIndex int    `json:"regex_match_index,omitempty"`
+}
+
 type MiddlewareIdExtractor struct {
-	ExtractFrom IdExtractorSource `json:"extract_from"`
-	ExtractWith IdExtractorType   `json:"extract_with"`
-	//ExtractorConfig map[string]interface{} `json:"extractor_config"`
+	ExtractFrom     IdExtractorSource `json:"extract_from"`
+	ExtractWith     IdExtractorType   `json:"extract_with"`
+	ExtractorConfig IdExtractorConfig `json:"extractor_config"`
 }
 
 type MiddlewareSection struct {
@@ -395,7 +402,8 @@ type APIDefinitionSpec struct {
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 	//EnableJWT                  bool                  `json:"enable_jwt"`
 	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
-	//EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
+
+	EnableCoProcessAuth bool `json:"enable_coprocess_auth,omitempty"`
 	//JWTSigningMethod           string                `json:"jwt_signing_method"`
 	//JWTSource                  string                `json:"jwt_source"`
 	//JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
