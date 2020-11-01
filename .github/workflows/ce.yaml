@@ -43,11 +43,11 @@ jobs:
           sh ./ci/deploy_tyk_ce.sh
 
           echo "setting operator secrets"
-          sh ./ci/operator_secrets.sh
+          sh ./ci/operator_ce_secrets.sh
 
           echo "deploying operator"
           make deploy IMG=tykio/tyk-operator:test
 
           echo "bdd"
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && godog
+          cd bdd && TYK_MODE=ce godog
