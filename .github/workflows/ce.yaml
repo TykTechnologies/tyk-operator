@@ -50,4 +50,4 @@ jobs:
 
           echo "bdd"
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && TYK_MODE=ce godog --strict
+          cd bdd && TYK_MODE=ce godog --strict -t ~@undone
