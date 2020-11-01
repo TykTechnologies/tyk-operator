@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tyk
+  labels:
+    name: tyk
+spec:
+  ports:
+    - name: http
+      targetPort: 8001
+      port: 8001
+  selector:
+    name: tyk
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gw
+  labels:
+    name: tyk
+spec:
+  ports:
+    - name: http
+      targetPort: 8000
+      port: 8000
+    - name: https
+      targetPort: 8443
+      port: 8443
+  selector:
+    name: tyk
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tyk
+  labels:
+    name: tyk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: tyk
+  template:
+    metadata:
+      labels:
+        name: tyk
+    spec:
+      containers:
+        - name: tyk
+          image: tykio/tyk-gateway:v3.0.0
+          imagePullPolicy: Always
+          env:
+            - name: TYK_LOGLEVEL
+              value: info
+          command: [ "/opt/tyk-gateway/tyk", "--conf=/etc/tyk-gateway/tyk.json" ]
+          workingDir: /opt/tyk-gateway
+          volumeMounts:
+            - name: tyk-conf
+              mountPath: /etc/tyk-gateway
+          ports:
+            - containerPort: 8001
+              name: control
+            - containerPort: 8000
+              name: http
+            - containerPort: 8443
+              name: https
+      volumes:
+        - name: tyk-conf
+          configMap:
+            name: tyk-conf
+            items:
+              - key: tyk.json
+                path: tyk.json
