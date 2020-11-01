@@ -58,4 +58,4 @@ jobs:
 
           echo "bdd"
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && TYK_MODE=pro godog
+          cd bdd && TYK_MODE=pro godog --strict
