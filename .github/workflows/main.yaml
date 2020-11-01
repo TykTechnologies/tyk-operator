@@ -33,7 +33,7 @@ jobs:
 
           echo "building operator"
           make docker-build IMG=tykio/tyk-operator:test
-          kind load-image tykio/tyk-operator:test
+          kind load docker-image tykio/tyk-operator:test
 
           echo "installing cert-manager"
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
