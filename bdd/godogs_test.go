@@ -55,9 +55,10 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 		}
 	})
 
-	ctx.Step(`^there is a (\S+) resource`, s.thereIsAResource)
-	ctx.Step(`^i create a (\S+) resource`, s.iCreateAResource)
-	ctx.Step(`^i update a (\S+) resource`, s.iUpdateAResource)
+	ctx.Step(`^there is a (\S+) resource$`, s.thereIsAResource)
+	ctx.Step(`^i create a (\S+) resource$`, s.iCreateAResource)
+	ctx.Step(`^i update a (\S+) resource$`, s.iUpdateAResource)
+	ctx.Step(`^i delete a (\S+) endpoint$`, s.iRequestEndpoint)
 	ctx.Step(`^i request (\S+) endpoint$`, s.iRequestEndpoint)
 	ctx.Step(`^there should be a (\d+) http response code$`, s.thereShouldBeHttpResponseCode)
 }

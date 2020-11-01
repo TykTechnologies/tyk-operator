@@ -13,3 +13,9 @@ Feature: Managing http APIs
     When i update a ./custom_resources/httpbin.apikey.apidefinition.yaml resource
       And i request /httpbin/get endpoint
     Then there should be a 401 http response code
+
+  Scenario: Delete an API
+    Given there is a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
+    When i delete a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
+      And i request /httpbin/get endpoint
+    Then there should be a 404 http response code
