@@ -28,20 +28,28 @@ jobs:
       - name: deploy tyk
         shell: bash
         run: |
-          echo "checking CI license expiry"
+          echo "\n\nchecking CI license expiry"
           jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
-          echo "installing cert-manager"
+          echo "\n\ninstalling cert-manager"
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
           export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
           sh ./ci/deploy_tyk_pro.sh
-          echo "installing custom resources"
+          echo "\n\ninstalling custom resources"
           make install
           kubectl get crds
-          echo "bootstrapping tyk dashboard (initial org + user)"
+          echo "\n\nbootstrapping tyk dashboard (initial org + user)"
           sh ./ci/bootstrap_org.sh
           cat bootstrapped
-          echo "setting operator dash secrets"
+          echo "\n\nsetting operator dash secrets"
           sh ./ci/operator_secrets.sh
+
+          echo "\n\nbuilding operator"
+          make docker-build IMG=tykio/tyk-operator:test
+          kind load-image tykio/tyk-operator:test
+
+          echo "\n\ndeploying operator"
           make deploy IMG=tykio/tyk-operator:latest
+
+          echo "\n\nbdd"
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
           cd bdd && godog
