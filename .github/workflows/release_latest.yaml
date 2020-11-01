@@ -15,7 +15,7 @@ jobs:
 #        uses: helm/kind-action@v1.0.0
 #      - name: install kubebuilder
 #        uses: RyanSiu1995/kubebuilder-action@v1
-#      - name: build
+      - name: build-push
         run: |
           echo "DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}"
           echo "DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}"
