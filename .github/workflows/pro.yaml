@@ -1,10 +1,10 @@
-name: Tyk Tests
+name: Tyk Pro Tests
 
 on:
   pull_request
 
 jobs:
-  integration-tests:
+  pro-tests:
     runs-on: ubuntu-20.04
     steps:
       - name: checkout tyk-operator
@@ -58,4 +58,4 @@ jobs:
 
           echo "bdd"
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && godog
+          cd bdd && TYK_MODE=pro godog
