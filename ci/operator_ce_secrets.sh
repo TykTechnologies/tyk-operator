@@ -13,7 +13,7 @@ fi
 
 TYK_AUTH=foo
 TYK_ORG=myorg
-TYK_MODE=ce
+TYK_MODE=oss
 TYK_URL=http://tyk.tykce-control-plane.svc.cluster.local:8001
 
 kubectl create secret -n ${NAMESPACE} generic tyk-operator-conf \
