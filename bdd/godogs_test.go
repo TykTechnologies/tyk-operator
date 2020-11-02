@@ -22,6 +22,7 @@ type store struct {
 	gatewayNamespace string
 	responseCode     int
 	cleanupK8s       []string
+	responseHeaders  map[string]string
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
@@ -61,6 +62,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^i delete a (\S+) resource$`, s.iDeleteAResource)
 	ctx.Step(`^i request (\S+) endpoint$`, s.iRequestEndpoint)
 	ctx.Step(`^there should be a (\d+) http response code$`, s.thereShouldBeHttpResponseCode)
+	ctx.Step(`^there should be a "(\S+): (\S+)" response header$`, s.thereShouldBeAResponseHeader)
 }
 
 // waitForServices tests and waits on the availability of a TCP host and port
@@ -135,6 +137,16 @@ func (s *store) iRequestEndpoint(path string) error {
 
 	s.responseCode = res.StatusCode
 
+	for h, v := range res.Header {
+		if s.responseHeaders == nil {
+			s.responseHeaders = make(map[string]string, len(res.Header))
+		}
+		s.responseHeaders[h] = v[0]
+	}
+
+	//bodyBytes, _ := httputil.DumpResponse(res, true)
+	//println(string(bodyBytes))
+
 	return nil
 }
 
@@ -178,5 +190,16 @@ func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {
 		return fmt.Errorf("expected http status %d, got http %d", expectedCode, s.responseCode)
 	}
 
+	return nil
+}
+
+func (s *store) thereShouldBeAResponseHeader(key string, value string) error {
+	headerVal, ok := s.responseHeaders[key]
+	if !ok {
+		return fmt.Errorf("response header (%s) not set", key)
+	}
+	if headerVal != value {
+		return fmt.Errorf("expected response header (%s), got (%s)", value, headerVal)
+	}
 	return nil
 }

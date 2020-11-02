@@ -19,3 +19,8 @@ Feature: Managing http APIs
     When i delete a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
       And i request /httpbin/get endpoint
     Then there should be a 404 http response code
+
+  Scenario: Transform xml to json
+    Given there is a ./../config/samples/httpbin_transform.yaml resource
+    When i request /httpbin-transform/xml endpoint
+    Then there should be a "Content-Type: application/json" response header
