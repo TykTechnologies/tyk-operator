@@ -20,15 +20,12 @@ import (
 	"context"
 	"fmt"
 
-	v1 "k8s.io/api/core/v1"
-
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/types"
-
-	"k8s.io/api/networking/v1beta1"
-
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -98,8 +95,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			svc := &v1.Service{}
 			// TODO: handle error
 			_ = r.Get(ctx, svcNamespacedName, svc)
-			svc.Spec.
-				apiDefDesired.Spec.Proxy.TargetURL = fmt.Sprintf("%s.%s.svc:%s", path.Backend.ServiceName, namespacedName.Namespace, path.Backend.ServicePort.String())
+			apiDefDesired.Spec.Proxy.TargetURL = fmt.Sprintf("%s.%s.svc:%s", path.Backend.ServiceName, namespacedName.Namespace, path.Backend.ServicePort.String())
 			apiDefDesired.Spec.Proxy.ListenPath = path.Path
 			apiDefDesired.Spec.Proxy.StripListenPath = true
 		}
