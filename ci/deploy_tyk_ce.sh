@@ -10,7 +10,7 @@ kubectl create namespace ${NAMESPACE}
 
 echo "deploying gRPC plugin server"
 kubectl apply -f "${PRODIR}/../grpc-plugin" -n ${NAMESPACE}
-kubectl wait deployment/grpc_plugin -n ${NAMESPACE} --for condition=available --timeout=10s
+kubectl wait deployment/grpc-plugin -n ${NAMESPACE} --for condition=available --timeout=10s
 
 echo "deploying databases"
 kubectl apply -f "${PRODIR}/redis" -n ${NAMESPACE}

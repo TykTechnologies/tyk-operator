@@ -7,21 +7,31 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
     Given there is a ./custom_resources/httpbin.keyless.grpc-pre.apidefinition.yaml resource
     When i request /httpbin/headers endpoint
     Then there should be a 200 http response code
-      And the response should match json:
-      """
-      {
-        "Pre": "HelloFromPre",
-      }
-      """
+      And the response should match JSON:
+        """
+        {
+          "headers": {
+            "Accept-Encoding": "gzip",
+            "Host": "httpbin.default.svc:8000",
+            "Pre": "HelloFromPre",
+            "User-Agent": "Go-http-client/1.1"
+          }
+        }
+        """
 
   Scenario: Post middleware hook
     Given there is a ./custom_resources/httpbin.keyless.grpc-post.apidefinition.yaml resource
     When i request /httpbin/headers endpoint
     Then there should be a 200 http response code
-    And the response should match json:
+    And the response should match JSON:
       """
       {
-        "Pre": "HelloFromPre",
+        "headers": {
+          "Accept-Encoding": "gzip",
+          "Host": "httpbin.default.svc:8000",
+          "Post": "HelloFromPost",
+          "User-Agent": "Go-http-client/1.1"
+        }
       }
       """
 
