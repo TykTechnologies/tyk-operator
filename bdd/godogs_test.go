@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -21,6 +24,7 @@ const (
 type store struct {
 	gatewayNamespace string
 	responseCode     int
+	responseBody     []byte
 	cleanupK8s       []string
 	responseHeaders  map[string]string
 }
@@ -63,6 +67,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^i request (\S+) endpoint$`, s.iRequestEndpoint)
 	ctx.Step(`^there should be a (\d+) http response code$`, s.thereShouldBeHttpResponseCode)
 	ctx.Step(`^there should be a "(\S+): (\S+)" response header$`, s.thereShouldBeAResponseHeader)
+	ctx.Step(`the response should contain json key: (\S+) value: (\S+)$`, s.theResponseShouldContainJSONKeyValue)
 }
 
 // waitForServices tests and waits on the availability of a TCP host and port
@@ -144,8 +149,7 @@ func (s *store) iRequestEndpoint(path string) error {
 		s.responseHeaders[h] = v[0]
 	}
 
-	//bodyBytes, _ := httputil.DumpResponse(res, true)
-	//println(string(bodyBytes))
+	s.responseBody, err = ioutil.ReadAll(res.Body)
 
 	return nil
 }
@@ -191,6 +195,50 @@ func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {
 	}
 
 	return nil
+}
+
+func (s *store) theResponseShouldContainJSONKeyValue(key string, expVal interface{}) error {
+	if s.responseBody == nil {
+		return errors.New("response body is nil")
+	}
+
+	var myJsonRes map[string]interface{}
+
+	if err := json.Unmarshal(s.responseBody, &myJsonRes); err != nil {
+		return err
+	}
+
+	actualVal, ok := myJsonRes[key]
+	if !ok {
+		return fmt.Errorf("expected key `%s` not in JSON response body", key)
+	}
+
+	if actualVal != expVal {
+		return fmt.Errorf("expected val `%#v` != actual val `%#v`", expVal, actualVal)
+	}
+
+	return nil
+}
+
+func (s *store) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
+	panic("not implemented")
+	//var expected, actual interface{}
+	//
+	//// re-encode expected response
+	//if err = json.Unmarshal([]byte(body.Content), &expected); err != nil {
+	//	return
+	//}
+	//
+	//// re-encode actual response too
+	//if err = json.Unmarshal(s.resp.Body.Bytes(), &actual); err != nil {
+	//	return
+	//}
+	//
+	//// the matching may be adapted per different requirements.
+	//if !reflect.DeepEqual(expected, actual) {
+	//	return fmt.Errorf("expected JSON does not match actual, %v vs. %v", expected, actual)
+	//}
+	//return nil
 }
 
 func (s *store) thereShouldBeAResponseHeader(key string, value string) error {

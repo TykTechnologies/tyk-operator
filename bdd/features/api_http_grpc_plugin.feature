@@ -3,15 +3,25 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
   As a developer
   I need to be able to configure an api to use gRPC plugins
 
-  @undone
   Scenario: Pre middleware hook
-    Given there is a "TODO: KEYLESS WITH PRE HOOK" resource
+    Given there is a ./custom_resources/httpbin.keyless.grpc-pre.apidefinition.yaml resource
     When i request /httpbin/headers endpoint
-    Then there should be a 404 http response code
+    Then there should be a 200 http response code
       And the response should match json:
       """
       {
-        "todo": "something which shows gRPC plugin short-circuited at the pre hook"
+        "Pre": "HelloFromPre",
+      }
+      """
+
+  Scenario: Post middleware hook
+    Given there is a ./custom_resources/httpbin.keyless.grpc-post.apidefinition.yaml resource
+    When i request /httpbin/headers endpoint
+    Then there should be a 200 http response code
+    And the response should match json:
+      """
+      {
+        "Pre": "HelloFromPre",
       }
       """
 
@@ -44,17 +54,5 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
       """
       {
         "todo": "something which shows gRPC plugin short-circuited at the post auth hook"
-      }
-      """
-
-  @undone
-  Scenario: Post middleware or pre-proxy hook
-    Given there is a "keyless" resource
-    When i request "/httpbin/get" endpoint with authorization header "SOMESTATICAUTHTOKEN"
-    Then there should be a 200 http response code
-    And the response should match json:
-      """
-      {
-        "todo": "something which shows gRPC plugin short-circuited at the post hook"
       }
       """
