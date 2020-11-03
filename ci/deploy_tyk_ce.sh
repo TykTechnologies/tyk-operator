@@ -8,6 +8,10 @@ PRODIR=${PWD}/ci/tyk-ce
 echo "creating namespace ${NAMESPACE}"
 kubectl create namespace ${NAMESPACE}
 
+echo "deploying gRPC plugin server"
+kubectl apply -f "${PRODIR}/grpc-plugin" -n ${NAMESPACE}
+kubectl wait deployment/grpc_plugin -n ${NAMESPACE} --for condition=available --timeout=10s
+
 echo "deploying databases"
 kubectl apply -f "${PRODIR}/redis" -n ${NAMESPACE}
 
