@@ -100,8 +100,8 @@
   "enable_custom_domains": true,
   "enable_jsvm": true,
   "coprocess_options": {
-    "enable_coprocess": false,
-    "coprocess_grpc_server": "tcp://:9111"
+    "enable_coprocess": true,
+    "coprocess_grpc_server": "tcp://grpc-plugin.tykpro-control-plane.svc.cluster.local:9999"
   },
   "pid_file_location": "./tyk-gateway.pid",
   "allow_insecure_configs": true,

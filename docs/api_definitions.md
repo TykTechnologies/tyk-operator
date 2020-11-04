@@ -65,7 +65,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Context Variables | ✅ | - |
 | Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
 | Custom Plugins - Go | ⚠️ | Untested |
-| Custom Plugins - gRPC | ⚠️ | Untested |
+| [Custom Plugins - gRPC](./../bdd/features/api_http_grpc_plugin.feature) | ✅ | - |
 | [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
 | Custom Plugins - Lua | ⚠️ | Untested |
 | Custom Plugins - Python | ⚠️ | Untested |
