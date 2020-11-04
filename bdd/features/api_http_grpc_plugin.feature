@@ -38,10 +38,10 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
       """
 
   @grpc
-  Scenario: Auth middleware hook unauthenticated
+  Scenario: Auth middleware hook auth missing
     Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
     When i request /httpbin/headers endpoint
-    Then there should be a 401 http response code
+    Then there should be a 400 http response code
 
   @grpc
   Scenario: Auth middleware hook authentic
@@ -49,22 +49,27 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
     When i request /httpbin/headers endpoint with header Authorization: foobarbaz
     Then there should be a 200 http response code
 
-  @undone
+  @grpc
   Scenario: Auth middleware with ID Extractor
-    Given there is a "TODO: gRPC AUTH" resource
-    When i request /httpbin/get endpoint with authorization header "SOMESTATICAUTHTOKEN"
-      And i request /httpbin/get endpoint with authorization header "SOMESTATICAUTHTOKEN"
+    Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
+    When i request /httpbin/headers endpoint with header Authorization: foobarbaz 2 times
     Then there should be a 200 http response code
-      And the second response should be quicker than the first response
+      And the first response should be slowest
 
-  @undone
+  @grpc @wip
   Scenario: Post auth middleware hook
-    Given there is a "AuthToken" resource
-    When i request "/httpbin/get" endpoint with authorization header "SOMESTATICAUTHTOKEN"
+    Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
+    When i request /httpbin/headers endpoint with header Authorization: foobarbaz
     Then there should be a 200 http response code
-      And the response should match json:
+    And the response should match JSON:
       """
       {
-        "todo": "something which shows gRPC plugin short-circuited at the post auth hook"
+        "headers": {
+          "Accept-Encoding": "gzip",
+          "Host": "httpbin.default.svc:8000",
+          "Authorization": "foobarbaz",
+          "Postkeyauth": "HelloFromPostKeyAuth",
+          "User-Agent": "Go-http-client/1.1"
+        }
       }
       """

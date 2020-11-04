@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"os/exec"
 	"reflect"
@@ -26,6 +26,7 @@ type store struct {
 	gatewayNamespace string
 	responseCode     int
 	responseBody     []byte
+	responseTimes    []time.Duration
 	cleanupK8s       []string
 	responseHeaders  map[string]string
 }
@@ -67,6 +68,8 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^i delete a (\S+) resource$`, s.iDeleteAResource)
 	ctx.Step(`^i request (\S+) endpoint$`, s.iRequestEndpoint)
 	ctx.Step(`^i request (\S+) endpoint with header (\S+): (\S+)$`, s.iRequestEndpointWithHeader)
+	ctx.Step(`^i request (\S+) endpoint with header (\S+): (\S+) (\d+) times$`, s.iRequestEndpointWithHeaderTimes)
+	ctx.Step(`^the first response should be slowest$`, s.theFirstResponseShouldBeSlowest)
 	ctx.Step(`^there should be a (\d+) http response code$`, s.thereShouldBeHttpResponseCode)
 	ctx.Step(`^there should be a "(\S+): (\S+)" response header$`, s.thereShouldBeAResponseHeader)
 	ctx.Step(`^the response should contain json key: (\S+) value: (\S+)$`, s.theResponseShouldContainJSONKeyValue)
@@ -101,6 +104,37 @@ func waitForServices(services []string, timeOut time.Duration) error {
 	case <-time.After(timeOut):
 		return fmt.Errorf("services aren't ready in %s", timeOut)
 	}
+}
+
+func (s *store) iRequestEndpointWithHeaderTimes(path string, headerKey string, headerValue string, times int) error {
+	for i := 0; i < times; i++ {
+		t1 := time.Now()
+		_ = s.iRequestEndpointWithHeader(path, headerKey, headerValue)
+		t2 := time.Now()
+
+		duration := t2.Sub(t1)
+		s.responseTimes = append(s.responseTimes, duration)
+	}
+	return nil
+}
+
+func (s *store) theFirstResponseShouldBeSlowest() error {
+	var firstResponse time.Duration
+
+	if len(s.responseTimes) < 2 {
+		return errors.New("cannot compare response times, not enough items")
+	}
+
+	for i, duration := range s.responseTimes {
+		if i == 0 {
+			firstResponse = duration
+			continue
+		}
+		if duration > firstResponse {
+			return fmt.Errorf("first response was faster %d", i)
+		}
+	}
+	return nil
 }
 
 func (s *store) iRequestEndpointWithHeader(path string, headerKey string, headerValue string) error {
@@ -149,8 +183,8 @@ func (s *store) iRequestEndpointWithHeader(path string, headerKey string, header
 	}
 	defer res.Body.Close()
 
-	bodyBytes, _ := httputil.DumpResponse(res, true)
-	println(string(bodyBytes))
+	//bodyBytes, _ := httputil.DumpResponse(res, true)
+	//println(string(bodyBytes))
 
 	s.responseCode = res.StatusCode
 
@@ -257,6 +291,7 @@ func (s *store) kubectlFile(action string, fileName string, expected string, tim
 
 func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {
 	if expectedCode != s.responseCode {
+		println(string(s.responseBody))
 		return fmt.Errorf("expected http status %d, got http %d", expectedCode, s.responseCode)
 	}
 
@@ -282,6 +317,10 @@ func (s *store) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
 
 	// the matching may be adapted per different requirements.
 	if !reflect.DeepEqual(expected, actual) {
+		println("ACTUAL")
+		println(string(s.responseBody))
+		println("EXPECTED")
+		println(body.Content)
 		return fmt.Errorf("expected JSON does not match actual, %v vs. %v", expected, actual)
 	}
 	return nil

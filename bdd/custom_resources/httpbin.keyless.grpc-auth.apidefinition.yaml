@@ -13,6 +13,9 @@ spec:
     strip_listen_path: true
   custom_middleware:
     driver: grpc
+    post_key_auth:
+      - name: "HelloFromPostKeyAuth"
+        path: ""
     auth_check:
       name: foo
       path: ""
