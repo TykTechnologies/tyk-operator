@@ -19,7 +19,7 @@ echo "deploying databases"
 kubectl apply -f "${PRODIR}/mongo/mongo.yaml" -n ${NAMESPACE}
 kubectl apply -f "${PRODIR}/redis" -n ${NAMESPACE}
 
-echo "waiting for redis and redis"
+echo "waiting for mongo and redis"
 kubectl wait --for=condition=available --all deployments -n ${NAMESPACE}
 
 echo "creating configmaps"
@@ -32,11 +32,12 @@ kubectl get secret/dashboard -n tykpro-control-plane -o jsonpath='{.data.license
 
 echo "deploying dashboard"
 kubectl apply -f "${PRODIR}/dashboard/dashboard.yaml" -n ${NAMESPACE}
-kubectl wait deployment/dashboard -n ${NAMESPACE} --for condition=available  --all
 
 echo "deploying gateway"
 kubectl apply -f "${PRODIR}/gateway/gateway.yaml" -n ${NAMESPACE}
-kubectl wait deployment/tyk -n ${NAMESPACE} --for condition=available --all
+
+echo "waiting for gateway and dashboard"
+kubectl wait  -n ${NAMESPACE} --for condition=available --all deployments
 
 echo "dashboard logs"
 kubectl logs svc/dashboard -n ${NAMESPACE}
