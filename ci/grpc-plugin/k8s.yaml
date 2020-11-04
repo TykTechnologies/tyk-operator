@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grpc-plugin
+  labels:
+    name: grpc-plugin
+spec:
+  ports:
+    - targetPort: 9999
+      port: 9999
+  selector:
+    name: grpc-plugin
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-plugin
+  labels:
+    name: grpc-plugin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: grpc-plugin
+  template:
+    metadata:
+      labels:
+        name: grpc-plugin
+    spec:
+      containers:
+        - name: tyk-grpc-plugin
+          image: mangomm/tyk-grpc-plugin:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9999
