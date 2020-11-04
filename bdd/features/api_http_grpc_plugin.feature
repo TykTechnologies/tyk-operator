@@ -3,6 +3,7 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
   As a developer
   I need to be able to configure an api to use gRPC plugins
 
+  @grpc
   Scenario: Pre middleware hook
     Given there is a ./custom_resources/httpbin.keyless.grpc-pre.apidefinition.yaml resource
     When i request /httpbin/headers endpoint
@@ -19,6 +20,7 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
         }
         """
 
+  @grpc
   Scenario: Post middleware hook
     Given there is a ./custom_resources/httpbin.keyless.grpc-post.apidefinition.yaml resource
     When i request /httpbin/headers endpoint
@@ -35,16 +37,16 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
       }
       """
 
-  @undone
+  @grpc
   Scenario: Auth middleware hook unauthenticated
-    Given there is a "TODO: gRPC AUTH" resource
-    When i request /httpbin/get endpoint
+    Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
+    When i request /httpbin/headers endpoint
     Then there should be a 401 http response code
 
-  @undone
+  @grpc
   Scenario: Auth middleware hook authentic
-    Given there is a "TODO: gRPC AUTH" resource
-    When i request /httpbin/get endpoint with authorization header "SOMEAUTHTOKEN"
+    Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
+    When i request /httpbin/headers endpoint with header Authorization: foobarbaz
     Then there should be a 200 http response code
 
   @undone
