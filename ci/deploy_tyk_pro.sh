@@ -5,6 +5,7 @@ set -e
 NAMESPACE=tykpro-control-plane
 PRODIR=${PWD}/ci/tyk-pro
 ADMINSECRET="54321"
+TIMEOUT=60s
 
 
 
@@ -19,8 +20,8 @@ echo "deploying databases"
 kubectl apply -f "${PRODIR}/mongo/mongo.yaml" -n ${NAMESPACE}
 kubectl apply -f "${PRODIR}/redis" -n ${NAMESPACE}
 
-echo "waiting for mongo and redis"
-kubectl wait --for=condition=available --all deployments -n ${NAMESPACE}
+echo "waiting for redis and redis"
+kubectl wait --for=condition=available --all deployments --timeout=${TIMEOUT}
 
 echo "creating configmaps"
 kubectl create configmap -n ${NAMESPACE} dash-conf --dry-run=client --from-file "${PRODIR}/dashboard/confs/dash.json" -o yaml | kubectl apply -f -
@@ -37,7 +38,7 @@ echo "deploying gateway"
 kubectl apply -f "${PRODIR}/gateway/gateway.yaml" -n ${NAMESPACE}
 
 echo "waiting for gateway and dashboard"
-kubectl wait  -n ${NAMESPACE} --for condition=available --all deployments
+kubectl wait --for=condition=available --all deployments --timeout=${TIMEOUT}
 
 echo "dashboard logs"
 kubectl logs svc/dashboard -n ${NAMESPACE}
@@ -47,4 +48,4 @@ kubectl logs svc/tyk -n ${NAMESPACE}
 
 echo "deploying httpbin as mock upstream to default ns"
 kubectl apply -f "${PWD}/ci/upstreams"
-kubectl wait deployment/httpbin --for condition=available --all
+kubectl wait deployment/httpbin --for condition=available --timeout=${TIMEOUT}
