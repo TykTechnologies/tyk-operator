@@ -11,7 +11,7 @@ checksum:
 
 # https://goreleaser.com/customization/build/
 builds:
-  - skip: true
+  - skip: false
 
 # https://goreleaser.com/customization/docker/
 dockers:
