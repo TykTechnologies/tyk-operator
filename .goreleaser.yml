@@ -6,7 +6,7 @@ changelog:
       - '^test:'
 
 dockers:
-  image_templates:
+  - image_templates:
     - "tykio/tyk-operator:latest"
     - "tykio/tyk-operator:v{{ .Major }}"
     - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
