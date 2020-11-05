@@ -7,7 +7,7 @@ changelog:
 
 # https://goreleaser.com/customization/checksum/
 checksum:
-  disable: true
+  disable: false
 
 # https://goreleaser.com/customization/build/
 builds:
