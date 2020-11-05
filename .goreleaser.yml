@@ -5,9 +5,19 @@ changelog:
       - '^docs:'
       - '^test:'
 
+# https://goreleaser.com/customization/checksum/
+checksum:
+  disable: true
+
+# https://goreleaser.com/customization/archive/
 archives:
   - format: binary
 
+# https://goreleaser.com/customization/build/
+builds:
+  - skip: true
+
+# https://goreleaser.com/customization/docker/
 dockers:
   - image_templates:
     - "tykio/tyk-operator:latest"
