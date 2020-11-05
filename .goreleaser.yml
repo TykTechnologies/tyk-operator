@@ -1,0 +1,13 @@
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+dockers:
+  image_templates:
+    - "tykio/tyk-operator:latest"
+    - "tykio/tyk-operator:v{{ .Major }}"
+    - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
+    - "tykio/tyk-operator:{{ .Tag }}"
