@@ -13,7 +13,7 @@ dockers:
     - "tykio/tyk-operator:{{ .Tag }}"
     extra_files:
     - go.mod
-    - go.sum go.sum
+    - go.sum
     - main.go
     - api/
     - controllers/
