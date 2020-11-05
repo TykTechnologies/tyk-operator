@@ -1,31 +1,31 @@
-name: Release
-
-on:
-  push:
-    branches:
-      - master
-
-jobs:
-  build-publish-latest:
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout tyk-operator
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: '0'
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.26.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
-          RELEASE_BRANCHES: master
-          DEFAULT_BUMP: minor
-      - name: build-push
-        run: |
-          echo "DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}"
-          echo "DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}"
-          echo -n ${{secrets.DOCKER_PASSWORD}} | docker login --username ${{secrets.DOCKER_USERNAME}} --password-stdin
-          export USERNAME=tykio
-          make docker-build-notest IMG=${USERNAME}/tyk-operator:latest
-          make docker-push IMG=${USERNAME}/tyk-operator:latest
-          echo TAGNAME: ${{ github.event.release.tag_name }}
+#name: Release
+#
+#on:
+#  push:
+#    branches:
+#      - master
+#
+#jobs:
+#  build-publish-latest:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: checkout tyk-operator
+#        uses: actions/checkout@v2
+#        with:
+#          fetch-depth: '0'
+#      - name: Bump version and push tag
+#        uses: anothrNick/github-tag-action@1.26.0
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          WITH_V: true
+#          RELEASE_BRANCHES: master
+#          DEFAULT_BUMP: minor
+#      - name: build-push
+#        run: |
+#          echo "DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}"
+#          echo "DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}"
+#          echo -n ${{secrets.DOCKER_PASSWORD}} | docker login --username ${{secrets.DOCKER_USERNAME}} --password-stdin
+#          export USERNAME=tykio
+#          make docker-build-notest IMG=${USERNAME}/tyk-operator:latest
+#          make docker-push IMG=${USERNAME}/tyk-operator:latest
+#          echo TAGNAME: ${{ github.event.release.tag_name }}
