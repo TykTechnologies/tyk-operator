@@ -9,10 +9,6 @@ changelog:
 checksum:
   disable: true
 
-# https://goreleaser.com/customization/archive/
-archives:
-  - format: binary
-
 # https://goreleaser.com/customization/build/
 builds:
   - skip: true
