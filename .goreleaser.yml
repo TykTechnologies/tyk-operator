@@ -11,3 +11,11 @@ dockers:
     - "tykio/tyk-operator:v{{ .Major }}"
     - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
     - "tykio/tyk-operator:{{ .Tag }}"
+    extra_files:
+    - go.mod
+    - go.sum go.sum
+    - main.go
+    - api/
+    - controllers/
+    - internal/
+    - vendor
