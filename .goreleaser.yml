@@ -5,6 +5,9 @@ changelog:
       - '^docs:'
       - '^test:'
 
+archives:
+  - format: binary
+
 dockers:
   - image_templates:
     - "tykio/tyk-operator:latest"
@@ -15,7 +18,7 @@ dockers:
     - go.mod
     - go.sum
     - main.go
-    - api/
-    - controllers/
-    - internal/
+    - api
+    - controllers
+    - internal
     - vendor
