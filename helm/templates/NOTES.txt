@@ -1,0 +1,1 @@
+You have deployed the tyk-operator! See https://github.com/TykTechnologies/tyk-operator for more information.

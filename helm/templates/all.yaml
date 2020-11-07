@@ -1,0 +1,285 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: '{{ include "tyk-operator-helm.fullname" . }}-leader-election-role'
+  namespace: '{{ .Release.Namespace }}'
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: '{{ include "tyk-operator-helm.fullname" . }}-manager-role'
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apidefinitions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apidefinitions/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - organizations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - organizations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - securitypolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - securitypolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - webhooks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - webhooks/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: '{{ include "tyk-operator-helm.fullname" . }}-leader-election-rolebinding'
+  namespace: '{{ .Release.Namespace }}'
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: '{{ include "tyk-operator-helm.fullname" . }}-leader-election-role'
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: '{{ .Release.Namespace }}'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: '{{ include "tyk-operator-helm.fullname" . }}-manager-rolebinding'
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: '{{ include "tyk-operator-helm.fullname" . }}-manager-role'
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: '{{ .Release.Namespace }}'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "tyk-operator-helm.fullname" . }}-webhook-service'
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: '{{ include "tyk-operator-helm.fullname" . }}-controller-manager'
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --enable-leader-election
+        command:
+        - /manager
+        envFrom:
+        - secretRef:
+            name: {{ .Values.confSecretName }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: '{{ include "tyk-operator-helm.fullname" . }}-serving-cert'
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  dnsNames:
+  - '{{ include "tyk-operator-helm.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc'
+  - '{{ include "tyk-operator-helm.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc.cluster.local'
+  issuerRef:
+    kind: Issuer
+    name: '{{ include "tyk-operator-helm.fullname" . }}-selfsigned-issuer'
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: '{{ include "tyk-operator-helm.fullname" . }}-selfsigned-issuer'
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "tyk-operator-helm.fullname" . }}-serving-cert'
+  name: '{{ include "tyk-operator-helm.fullname" . }}-mutating-webhook-configuration'
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: '{{ include "tyk-operator-helm.fullname" . }}-webhook-service'
+      namespace: '{{ .Release.Namespace }}'
+      path: /mutate-tyk-tyk-io-v1alpha1-apidefinition
+  failurePolicy: Fail
+  name: mapidefinition.kb.io
+  rules:
+  - apiGroups:
+    - tyk.tyk.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - apidefinitions
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "tyk-operator-helm.fullname" . }}-serving-cert'
+  name: '{{ include "tyk-operator-helm.fullname" . }}-validating-webhook-configuration'
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: '{{ include "tyk-operator-helm.fullname" . }}-webhook-service'
+      namespace: '{{ .Release.Namespace }}'
+      path: /validate-tyk-tyk-io-v1alpha1-apidefinition
+  failurePolicy: Fail
+  name: vapidefinition.kb.io
+  rules:
+  - apiGroups:
+    - tyk.tyk.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - apidefinitions
+  sideEffects: None
