@@ -13,9 +13,11 @@ require (
 	github.com/stretchr/testify v1.5.1 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
-	golang.org/x/sys v0.0.0-20200814200057-3d37ad5750ed // indirect
+	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.18.6
-	k8s.io/apimachinery v0.18.6
+	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v0.18.6
+	k8s.io/utils v0.0.0-20200603063816-c1c6865ac451
 	sigs.k8s.io/controller-runtime v0.6.2
+	sigs.k8s.io/kind v0.9.0
 )
