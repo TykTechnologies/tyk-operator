@@ -1,7 +1,7 @@
 package mock_client
 
 import (
-	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 func NewClient() *Client {

@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/levigross/grequests"
 )
 

@@ -18,8 +18,9 @@ package controllers
 
 import (
 	"context"
+
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_admin_client"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

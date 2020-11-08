@@ -286,6 +286,14 @@ func (s *store) kubectlFile(action string, fileName string, expected string, tim
 		return fmt.Errorf("unexpected output (%s)", string(output))
 	}
 
+	cmd = exec.CommandContext(ctx, app, "get", "tykapis", "-n", namespace)
+	output, err = cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	println("tykapis:\n", string(output))
+
 	return nil
 }
 

@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/internal/dashboard_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo"
