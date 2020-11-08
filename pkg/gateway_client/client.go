@@ -82,8 +82,10 @@ func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
 }
 
 func (c *Client) HotReload() error {
+	sess := grequests.NewSession(c.opts)
+
 	fullPath := JoinUrl(c.url, endpointReload)
-	res, err := grequests.Get(fullPath, c.opts)
+	res, err := sess.Get(fullPath, c.opts)
 
 	if err != nil {
 		return err
