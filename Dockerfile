@@ -10,7 +10,7 @@ COPY go.sum go.sum
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
-COPY internal/ internal/
+COPY pkg internal/
 COPY vendor/ vendor/
 
 # cache deps before building and copying source so that we don't need to re-download as much
