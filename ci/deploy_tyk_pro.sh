@@ -7,7 +7,12 @@ PRODIR=${PWD}/ci/tyk-pro
 ADMINSECRET="54321"
 
 echo "creating namespace ${NAMESPACE}"
-kubectl create namespace ${NAMESPACE}
+if OUTPUT=$(kubectl get namespaces 2> /dev/null | grep "${NAMESPACE}") ; then
+   echo "namespace ${NAMESPACE} already exists"
+else
+  echo "creating namespace ${NAMESPACE}"
+  kubectl create namespace ${NAMESPACE}
+fi
 
 echo "deploying gRPC plugin server"
 kubectl apply -f "${PRODIR}/../grpc-plugin" -n ${NAMESPACE}

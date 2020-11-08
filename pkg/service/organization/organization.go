@@ -2,7 +2,7 @@ package organization
 
 import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/internal/dashboard_admin_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_admin_client"
 	"github.com/pkg/errors"
 )
 
