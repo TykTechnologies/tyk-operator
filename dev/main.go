@@ -33,7 +33,7 @@ const registryPort = 5000
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	o := UpOpts{}
+	o := opts{}
 	flag.StringVar(&o.RegistryContainer.Name, "r", registry, "The name of the registry container")
 	flag.IntVar(&o.RegistryContainer.Port, "p", registryPort, "The port on which registry is exposed")
 	flag.StringVar(&o.Cluster.Name, "c", clusterName, "The name of the developent cluster")
@@ -47,7 +47,7 @@ func main() {
 	flag.Parse()
 	switch flag.Arg(0) {
 	case "up":
-		err := configure(context.Background(), o)
+		err := up(context.Background(), o)
 		if err != nil {
 			log.Fatalf("Failed to boot with :%v", err)
 		}
@@ -59,7 +59,7 @@ func main() {
 	}
 }
 
-type UpOpts struct {
+type opts struct {
 	RegistryContainer struct {
 		Name string
 		Port int
@@ -71,7 +71,7 @@ type UpOpts struct {
 	WorkDir string
 }
 
-func (o UpOpts) patch() string {
+func (o opts) patch() string {
 	return fmt.Sprintf(patchTpl, o.RegistryContainer.Port,
 		o.RegistryContainer.Name, o.RegistryContainer.Port)
 }
@@ -84,14 +84,14 @@ func down(name string) error {
 	return cmd.Run()
 }
 
-// configure setup directory to be mounted on kind nodes and returns cluster
+// up setup directory to be mounted on kind nodes and returns cluster
 // configuration.
 //
 // We create a 4 node cluster named node-{0,1,2,3} we mount work/node-{0,1,2,3}
 // to respective node.
 //
 // node-0 is the control plane node
-func configure(ctx context.Context, o UpOpts) error {
+func up(ctx context.Context, o opts) error {
 	_, err := exec.LookPath("kind")
 	if err != nil {
 		return errors.New("kind binary not in $PATH")
