@@ -48,4 +48,4 @@ jobs:
           make deploy IMG=tykio/tyk-operator:test
 
           echo "bdd"
-          TYK_MODE=ce go test -v ./bdd/ --godog.strict true --godog.tags ~@undone
+          TYK_MODE=ce go test -v ./bdd/ --godog.strict=true --godog.tags=~@undone
