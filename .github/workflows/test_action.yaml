@@ -1,0 +1,26 @@
+#name: Test Action
+#
+#on:
+#  push:
+#    branches:
+#      - feat/tags
+#
+#jobs:
+#  build-publish-latest:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: checkout tyk-operator
+#        uses: actions/checkout@v2
+##        with:
+##          fetch-depth: '0'
+#      - name: Bump version and push tag
+#        uses: anothrNick/github-tag-action@1.26.0
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          WITH_V: true
+#          RELEASE_BRANCHES: master
+#          DEFAULT_BUMP: minor
+#          INITIAL_VERSION: 0.0.0
+#      - name: print tag
+#        run: |
+#          echo TAGNAME: ${{ github.event.release.tag_name }}

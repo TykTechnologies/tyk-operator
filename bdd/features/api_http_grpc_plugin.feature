@@ -49,14 +49,14 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
     When i request /httpbin/headers endpoint with header Authorization: foobarbaz
     Then there should be a 200 http response code
 
-  @grpc
+  @grpc @undone
   Scenario: Auth middleware with ID Extractor
     Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
     When i request /httpbin/headers endpoint with header Authorization: foobarbaz 2 times
     Then there should be a 200 http response code
       And the first response should be slowest
 
-  @grpc @wip
+  @grpc @undone
   Scenario: Post auth middleware hook
     Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
     When i request /httpbin/headers endpoint with header Authorization: foobarbaz

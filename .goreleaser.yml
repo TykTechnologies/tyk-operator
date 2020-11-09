@@ -1,0 +1,30 @@
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+# https://goreleaser.com/customization/checksum/
+checksum:
+  disable: false
+
+# https://goreleaser.com/customization/build/
+builds:
+  - skip: false
+
+# https://goreleaser.com/customization/docker/
+dockers:
+  - image_templates:
+    - "tykio/tyk-operator:latest"
+    - "tykio/tyk-operator:v{{ .Major }}"
+    - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
+    - "tykio/tyk-operator:{{ .Tag }}"
+    extra_files:
+    - go.mod
+    - go.sum
+    - main.go
+    - api
+    - controllers
+    - internal
+    - vendor

@@ -21,7 +21,7 @@ import (
 	"time"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/internal/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
