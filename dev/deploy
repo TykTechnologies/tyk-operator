@@ -1,0 +1,11 @@
+echo "building operator image"
+IMG=localhost:5000/tyk-operator:latest make cross-build-image
+echo "pushing operator image to local registry"
+IMG=localhost:5000/tyk-operator:latest make docker-push
+
+echo "installing custom resources"
+make install
+kubectl get crds
+
+echo "deploying operator"
+IMG=localhost:5000/tyk-operator:latest make deploy

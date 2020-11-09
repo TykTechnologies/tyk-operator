@@ -1,10 +1,11 @@
 # development environment
 
 Prerequisites
-
+- `go1.15+`
 - `docker`
 - `kubectl`
 - [kind](https://kind.sigs.k8s.io/)
+- [godog](https://github.com/cucumber/godog)
 
 We use local registry to publish and consume our operator images in development.
 
@@ -12,8 +13,16 @@ All commands on this guide must be executed at the root of the operator project.
 
 ## Setup the cluster
 
+community edition
+
 ```
-go run dev/main.go up
+./dev/up-ce
+```
+
+pro edition
+
+```
+./dev/up-pro
 ```
 
 This will create a 4 node cluster with one control plane node and 3 worker nodes.
@@ -23,9 +32,17 @@ publishing our development images.
 ## Deleting the cluster
 
 ```
-go run dev/main.go down
+./dev/down
 ```
 
 This will delete the development cluster. Be aware of directories mounted on nodes
 They will not be deleted because you might want to inspect/persist the data after
 shutting down the cluster. They are all in `tmp/{clusterName}/node-{0..3}`
+
+## Running integration tests
+
+```
+./dev/test
+```
+
+_NOTE_: you need to have `godog` tool already installed

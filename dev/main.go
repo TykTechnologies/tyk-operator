@@ -56,6 +56,11 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to tear down cluster with :%v", err)
 		}
+	case "cert":
+		err := certManager()
+		if err != nil {
+			log.Fatalf("Failed to install cert manager with :%v", err)
+		}
 	}
 }
 
@@ -147,7 +152,11 @@ func up(ctx context.Context, o opts) error {
 			return err
 		}
 	}
-	return annotate(ctx)
+	err = annotate(ctx)
+	if err != nil {
+		return err
+	}
+	return certManager()
 }
 
 // const patch = `
@@ -356,4 +365,14 @@ func CheckDir(with string) error {
 		return err
 	}
 	return os.Remove(check)
+}
+
+func certManager() error {
+	cmd := exec.Command("kubectl", "apply", "--validate=false", "-f",
+		"https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml",
+	)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	command(cmd)
+	return cmd.Run()
 }

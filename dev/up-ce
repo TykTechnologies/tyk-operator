@@ -1,0 +1,6 @@
+go run dev/main.go up
+echo "==> installing tyk-ce"
+sh ./ci/deploy_tyk_ce.sh
+
+echo "==> setting operator secrets"
+sh ./ci/operator_ce_secrets.sh

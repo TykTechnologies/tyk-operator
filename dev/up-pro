@@ -1,0 +1,13 @@
+go run dev/main.go up
+echo "installing tyk-pro"
+sh ./ci/deploy_tyk_pro.sh
+
+echo "bootstrapping tyk dashboard (initial org + user)"
+sh ./ci/bootstrap_org.sh
+cat bootstrapped
+
+echo "setting operator dash secrets"
+sh ./ci/operator_secrets.sh
+
+
+
