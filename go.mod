@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	cloud.google.com/go v0.45.1 // indirect
-	github.com/cucumber/godog v0.10.0 // indirect
+	github.com/cucumber/godog v0.10.0
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-logr/logr v0.1.0
 	github.com/levigross/grequests v0.0.0-20190908174114-253788527a1a

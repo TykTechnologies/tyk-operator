@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -40,9 +42,12 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 		s.gatewayNamespace = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
 
 		cmd := exec.Command(app, "create", "ns", namespace)
-		output, err := cmd.Output()
+		output, err := cmd.CombinedOutput()
 		if err != nil {
-			panic(err)
+			if strings.Contains(string(output), "AlreadyExists") {
+				return
+			}
+			panic(fmt.Sprintf("failed to run command %v %v", err, string(output)))
 		}
 		if !strings.Contains(string(output), fmt.Sprintf("namespace/%s created", namespace)) {
 			panic(string(output))
@@ -55,7 +60,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 		cmd := exec.Command(app, "delete", "ns", namespace)
 		output, err := cmd.Output()
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("failed to run command %v %v", err, string(output)))
 		}
 		if !strings.Contains(string(output), fmt.Sprintf(`namespace "%s" deleted`, namespace)) {
 			panic(string(output))
@@ -335,4 +340,30 @@ func (s *store) thereShouldBeAResponseHeader(key string, value string) error {
 		return fmt.Errorf("expected response header (%s), got (%s)", value, headerVal)
 	}
 	return nil
+}
+
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {}
+
+var opts = godog.Options{
+	StopOnFailure: true,
+	Format:        "pretty",
+}
+
+func init() {
+	godog.BindFlags("godog.", flag.CommandLine, &opts)
+}
+
+func TestMain(t *testing.M) {
+	flag.Parse()
+	opts.Paths = flag.Args()
+	status := godog.TestSuite{
+		Name:                 "godogs",
+		TestSuiteInitializer: InitializeTestSuite,
+		ScenarioInitializer:  InitializeScenario,
+		Options:              &opts,
+	}.Run()
+	if st := t.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
 }
