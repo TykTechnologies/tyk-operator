@@ -282,9 +282,9 @@ func (s *store) kubectlFile(action string, fileName string, expected string, tim
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, app, action, "-f", fileName, "-n", namespace)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("%v: %v", err, string(output))
 	}
 
 	if !strings.Contains(string(output), expected) {
