@@ -1,7 +1,6 @@
 name: Tyk CE Tests
 
-on:
-  pull_request
+on: pull_request
 
 jobs:
   ce-tests:
@@ -49,5 +48,4 @@ jobs:
           make deploy IMG=tykio/tyk-operator:test
 
           echo "bdd"
-          go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && TYK_MODE=ce godog --strict -t ~@undone
+          TYK_MODE=ce go test -v ./bdd/ --godog.strict true --godog.tags ~@undone
