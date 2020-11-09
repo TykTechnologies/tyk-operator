@@ -44,5 +44,3 @@ shutting down the cluster. They are all in `tmp/{clusterName}/node-{0..3}`
 ```
 ./dev/test
 ```
-
-_NOTE_: you need to have `godog` tool already installed
