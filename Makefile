@@ -62,7 +62,8 @@ helm: kustomize
 	sed -i '' 's#tyk-operator-conf#{{ \.Values\.confSecretName }}#' helm/templates/all.yaml
 	sed -i '' 's#tykio/tyk-operator:latest#{{ \.Values\.image\.repository }}:{{ \.Values\.image\.tag }}#' helm/templates/all.yaml
 	sed -i '' 's#imagePullPolicy: IfNotPresent#imagePullPolicy: {{ .Values.image.pullPolicy }}#' helm/templates/all.yaml
-	#sed -i '' 's#name: default#name: {{ include "tyk-operator-helm\.serviceAccountName" . }}#' helm/templates/all.yaml
+	sed -i '' 's#name: default#name: {{ include "tyk-operator-helm\.serviceAccountName" \. }}#' helm/templates/all.yaml
+	sed -i '' 's#serviceAccountName: default#serviceAccountName: {{ include "tyk-operator-helm\.serviceAccountName" \. }}#' helm/templates/all.yaml
 
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases

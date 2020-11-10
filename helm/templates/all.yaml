@@ -130,7 +130,7 @@ roleRef:
   name: '{{ include "tyk-operator-helm.fullname" . }}-leader-election-role'
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: {{ include "tyk-operator-helm.serviceAccountName" . }}
   namespace: '{{ .Release.Namespace }}'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -143,7 +143,7 @@ roleRef:
   name: '{{ include "tyk-operator-helm.fullname" . }}-manager-role'
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: {{ include "tyk-operator-helm.serviceAccountName" . }}
   namespace: '{{ .Release.Namespace }}'
 ---
 apiVersion: v1
@@ -201,6 +201,7 @@ spec:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
+      serviceAccountName: {{ include "tyk-operator-helm.serviceAccountName" . }}
       terminationGracePeriodSeconds: 10
       volumes:
       - name: cert
