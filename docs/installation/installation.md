@@ -43,8 +43,9 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
 Examples of these values:
 |         | TYK_ORG     | TYK_AUTH       | TYK_URL            | TYK_MODE |
 |---------|-------------|----------------|--------------------|----------|
-| Tyk Pro / Hybrid | User Org ID, ie "5e9d9544a1dcd60001d0ed20" | User API Key, ie "2d095c2155774fe36d77e5cbe3ac963b"   | Dashboard Base URL, ie "http://localhost:3000" | "pro"    |
-| Tyk OSS |      n/a       | Gateway secret | Gateway Base URL   | "oss"    |
+| Tyk Pro | User Org ID, ie "5e9d9544a1dcd60001d0ed20" | User API Key, ie "2d095c2155774fe36d77e5cbe3ac963b"   | Dashboard Base URL, ie "http://localhost:3000" | "pro"    |
+| Tyk Hybrid | User Org ID | User API Key   | "https://admin.cloud.tyk.io/" | "pro"    |
+| Tyk OSS |      "foo"       | Gateway secret | Gateway Base URL   | "oss"    |
 
 
 And after you run the command
