@@ -450,8 +450,7 @@ type APIDefinitionSpec struct {
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
 
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
-	// +optional
-	//CORS              CORS     `json:"CORS"`
+	CORS               CORS                `json:"CORS,omitempty"`
 
 	//Certificates      []string `json:"certificates"`
 
@@ -529,16 +528,17 @@ type ProxyTransport struct {
 	ProxyURL string `json:"proxy_url,omitempty"`
 }
 
+// CORS cors settings
 type CORS struct {
-	Enable             bool         `json:"enable"`
-	AllowedOrigins     []string     `json:"allowed_origins"`
-	AllowedMethods     []HttpMethod `json:"allowed_methods"`
-	AllowedHeaders     []string     `json:"allowed_headers"`
-	ExposedHeaders     []string     `json:"exposed_headers"`
-	AllowCredentials   bool         `json:"allow_credentials"`
-	MaxAge             int          `json:"max_age"`
-	OptionsPassthrough bool         `json:"options_passthrough"`
-	Debug              bool         `json:"debug"`
+	Enable             bool         `json:"enable,omitempty"`
+	AllowedOrigins     []string     `json:"allowed_origins,omitempty"`
+	AllowedMethods     []HttpMethod `json:"allowed_methods,omitempty"`
+	AllowedHeaders     []string     `json:"allowed_headers,omitempty"`
+	ExposedHeaders     []string     `json:"exposed_headers,omitempty"`
+	AllowCredentials   bool         `json:"allow_credentials,omitempty"`
+	MaxAge             int          `json:"max_age,omitempty"`
+	OptionsPassthrough bool         `json:"options_passthrough,omitempty"`
+	Debug              bool         `json:"debug,omitempty"`
 }
 
 type UptimeTests struct {

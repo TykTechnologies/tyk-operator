@@ -49,6 +49,47 @@ spec:
           description: APIDefinition represents the configuration for a single proxied
             API and it's versions.
           properties:
+            CORS:
+              description: CORS cors settings
+              properties:
+                allow_credentials:
+                  type: boolean
+                allowed_headers:
+                  items:
+                    type: string
+                  type: array
+                allowed_methods:
+                  items:
+                    description: Method represents HTTP request method
+                    enum:
+                    - GET
+                    - POST
+                    - PUT
+                    - PATCH
+                    - DELETE
+                    - OPTIONS
+                    - HEAD
+                    - CONNECT
+                    - TRACE
+                    type: string
+                  type: array
+                allowed_origins:
+                  items:
+                    type: string
+                  type: array
+                debug:
+                  type: boolean
+                enable:
+                  type: boolean
+                exposed_headers:
+                  items:
+                    type: string
+                  type: array
+                max_age:
+                  type: integer
+                options_passthrough:
+                  type: boolean
+              type: object
             active:
               type: boolean
             api_id:
