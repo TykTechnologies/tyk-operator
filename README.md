@@ -160,6 +160,96 @@ spec:
 </p>
 </details>
 
-## Dev
+<details><summary>Universal Data Graph - Stitching REST with GraphQL</summary>
+<p>
 
-[Development Environment](./docs/development.md)
+```yaml
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: udg
+spec:
+  name: Universal Data Graph Example
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: ""
+    listen_path: /udg
+    strip_listen_path: true
+  graphql:
+    enabled: true
+    execution_mode: executionEngine
+    schema: |
+      type Country {
+        name: String
+        code: String
+        restCountry: RestCountry
+      }
+
+      type Query {
+        countries: [Country]
+      }
+
+      type RestCountry {
+        altSpellings: [String]
+        subregion: String
+        population: String
+      }
+    type_field_configurations:
+      - type_name: Query
+        field_name: countries
+        mapping:
+          disabled: false
+          path: countries
+        data_source:
+          kind: GraphQLDataSource
+          data_source_config:
+            url: "https://countries.trevorblades.com"
+            method: POST
+            status_code_type_name_mappings: []
+      - type_name: Country
+        field_name: restCountry
+        mapping:
+          disabled: true
+          path: ""
+        data_source:
+          kind: HTTPJSONDataSource
+          data_source_config:
+            url: "https://restcountries.eu/rest/v2/alpha/{{ .object.code }}"
+            method: GET
+            default_type_name: RestCountry
+            status_code_type_name_mappings:
+              - status_code: 200
+    playground:
+      enabled: true
+      path: /playground
+```
+
+</p>
+</details>
+
+## Installation
+
+[Installing the tyk-operator](./docs/installation/installation.md)
+
+tyk-operator is under active development. 
+
+We are building the operator to enable you to build and ship your APIs faster and more safely. We are actively working
+on improving & stabilising our v1alpha1 custom resources, whilst also working on a helm chart so that you can 
+manage your tyk-operator deployment. 
+
+If you find any bugs, please raise an issue. 
+We welcome code contributions as well. 
+If you require any features that we have not yet implemented, please take the time to write a GH issue detailing your
+use-case so that we may prioritise accordingly. 
+
+## Contributing
+
+[Setting up your development environment](./docs/development.md)
+
+## We are hiring! 
+
+Like what you see so far? Passionate about Open Source? Can you think of a ton of ways to make tyk-operator 
+or some of our other projects better? We want to hear from you.
+Head over to our [careers page](https://tyk.io/current-vacancies/senior-software-engineer-kubernetes/) for further details.

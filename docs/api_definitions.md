@@ -14,16 +14,24 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 | Type | Support | Comments |
 | --------- | --------- | --------- |
-| GraphQL - Proxy | ✅ | - |
-| GraphQL - Universal Data Graph | ❌ | WIP |
+| [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅ | - |
+| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml) | ⚠️ | API Change ETA December 2020 |
 | HTTP | ✅ | - |
 | HTTPS️ | ⚠️ | Partial Support - WIP integration with cert-manager & ingress |
 | TCP | ✅ | - |
 | TLS | ✅ | - |
 
-## APIDefinition
+## Routing
 
-### APIDefinition - Authentication
+| Type | Supported | Comments |
+| ----------- | --------- | --------- |
+| [Path-Based](./../config/samples/httpbin.yaml) | ✅ | - |
+| [Host-Based](./../config/samples/httpbin_routing_by_hostname.yaml) | ⚠️ | Implemented - Untested |
+| Version-Based (Header) | ⚠️ | Untested |
+| Version-Based (QueryString) | ⚠️ | Untested |
+| Version-Based (Subdomain) | ⚠️ | Untested |
+
+## Client to Gateway Authentication
 
 | Type | Supported | Comments |
 | ----------- | --------- | --------- |
@@ -32,17 +40,38 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | JWT | ❌️ | Not implemented |
 | OpenID Connect | ❌ | Not implemented |
 | OAuth2 | ❌ | Not implemented |
+| mTLS | ❌ | Not implemented |
+| HMAC | ❌ | Not implemented |
+| Basic Authentication | ❌ | Not implemented |
+| Plugin Auth - Go | ❌ | Not implemented |
+| [Plugin Auth - gRPC](./../bdd/features/api_http_grpc_plugin.feature) | ✅ | - |
+| IP Whitelisting | ❌ | Not implemented |
+| IP Blacklisting | ❌ | Not implemented |
 
-API Definition Features
+## Gateway to Upstream Authentication
+
+| Type | Supported | Comments |
+| ----------- | --------- | --------- |
+| Public Key Certificate Pinning | ❌ | Not implemented |
+| Upstream Certificates mTLS | ❌ | Not implemented |
+| Request Signing | ❌ | Not implemented |
+
+## Features
 
 | Feature | Supported | Comments |
 | ----------- | --------- | --------- |
+| API Tagging | ✅ | - |
+| Config Data | ❌ | Not Implemented |
+| Context Variables | ✅ | - |
 | Cross Origin Resource Sharing (CORS) | ❌ | Not implemented |
 | Custom Plugins - Go | ⚠️ | Untested |
-| Custom Plugins - gRPC | ⚠️ | Untested |
+| [Custom Plugins - gRPC](./../bdd/features/api_http_grpc_plugin.feature) | ✅ | - |
 | [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
 | Custom Plugins - Lua | ⚠️ | Untested |
 | Custom Plugins - Python | ⚠️ | Untested |
+| Global Rate Limit | ❌ | Not Implemented |
+| [Segment Tags](./../config/samples/httpbin_tagged.yaml) | ✅ | - |
+| Tag Headers | ❌ | Not Implemented |
 | [Webhooks](./webhooks.md) | ❌ | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
 ## APIDefinition - Endpoint Middleware
@@ -68,7 +97,8 @@ API Definition Features
 | [Transform - Response Body](../config/samples/httpbin_transform.yaml) | ✅ | - |
 | Transform - Request Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
 | Transform - Response Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
-| Transform - URL Rewrite | ⚠️ | Untested |
+| [Transform - URL Rewrite Basic](../config/samples/url_rewrite_basic.yaml) | ✅️ | - |
+| Transform - URL Rewrite Advanced | ⚠️ | Untested |
 | [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | ❌️ | [Issue #59](https://github.com/TykTechnologies/tyk-operator/issues/59) |
 | [Validate - Limit Request Size](../config/samples/httpbin_validate.yaml) | ✅️ | - |
 

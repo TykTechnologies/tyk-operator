@@ -14,7 +14,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # Image URL to use all building/pushing image targets
 IMG ?= tyk-operator:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
+CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -56,7 +56,16 @@ deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
-# Generate manifests e.g. CRD, RBAC etc.
+helm: kustomize
+	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
+	$(KUSTOMIZE) build config/helm > ./helm/templates/all.yaml
+	sed -i '' 's#replicas: 1#replicas: {{ \.Values.replicaCount }}#' helm/templates/all.yaml
+	sed -i '' 's#tyk-operator-conf#{{ \.Values\.confSecretName }}#' helm/templates/all.yaml
+	sed -i '' 's#tykio/tyk-operator:latest#{{ \.Values\.image\.repository }}:{{ \.Values\.image\.tag }}#' helm/templates/all.yaml
+	sed -i '' 's#imagePullPolicy: IfNotPresent#imagePullPolicy: {{ .Values.image.pullPolicy }}#' helm/templates/all.yaml
+	sed -i '' 's#name: default#name: {{ include "tyk-operator-helm\.serviceAccountName" \. }}#' helm/templates/all.yaml
+	sed -i '' 's#serviceAccountName: default#serviceAccountName: {{ include "tyk-operator-helm\.serviceAccountName" \. }}#' helm/templates/all.yaml
+
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
@@ -76,6 +85,10 @@ generate: controller-gen
 docker-build: test
 	docker build . -t ${IMG}
 
+# Build the docker image
+docker-build-notest:
+	docker build . -t ${IMG}
+
 # Push the docker image
 docker-push:
 	docker push ${IMG}
@@ -89,7 +102,7 @@ ifeq (, $(shell which controller-gen))
 	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$CONTROLLER_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0 ;\
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0 ;\
 	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
 	}
 CONTROLLER_GEN=$(GOBIN)/controller-gen
@@ -104,7 +117,7 @@ ifeq (, $(shell which kustomize))
 	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4 ;\
+	go get sigs.k8s.io/kustomize/kustomize/v3@v3.8.6 ;\
 	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
 	}
 KUSTOMIZE=$(GOBIN)/kustomize

@@ -20,6 +20,7 @@ import (
 	"errors"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -34,8 +35,6 @@ func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
 // +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-apidefinition,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,verbs=create;update,versions=v1alpha1,name=mapidefinition.kb.io,sideEffects=None
 
 var _ webhook.Defaulter = &ApiDefinition{}
@@ -43,6 +42,11 @@ var _ webhook.Defaulter = &ApiDefinition{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (in *ApiDefinition) Default() {
 	apidefinitionlog.Info("default", "name", in.Name)
+
+	// We disable tracking by default
+	if in.Spec.DoNotTrack == nil {
+		in.Spec.DoNotTrack = pointer.BoolPtr(true)
+	}
 
 	if len(in.Spec.VersionData.Versions) == 0 {
 		defaultVersionData := VersionData{
@@ -98,6 +102,11 @@ func (in *ApiDefinition) ValidateCreate() error {
 		return err
 	}
 
+	err = validateUDG(in)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -110,6 +119,11 @@ func (in *ApiDefinition) ValidateUpdate(old runtime.Object) error {
 		return err
 	}
 
+	err = validateUDG(in)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -117,6 +131,31 @@ func validateAuth(in *ApiDefinition) error {
 	if in.Spec.UseKeylessAccess {
 		if in.Spec.UseStandardAuth {
 			return errors.New("conflict: cannot use_keyless_access & use_standard_auth")
+		}
+	}
+	return nil
+}
+
+// TODO: proper udg validation required here
+func validateUDG(in *ApiDefinition) error {
+	if in.Spec.GraphQL == nil {
+		return nil
+	}
+
+	if in.Spec.GraphQL.Enabled && in.Spec.GraphQL.ExecutionMode == "executionEngine" {
+		for _, typeFieldConfig := range in.Spec.GraphQL.TypeFieldConfigurations {
+			switch typeFieldConfig.DataSource.Kind {
+			case "HTTPJsonDataSource":
+				if typeFieldConfig.DataSource.Config.URL == "" ||
+					typeFieldConfig.DataSource.Config.Method == "" {
+					return errors.New("URL or Method missing for HTTPJsonDataSource")
+				}
+			case "GraphQLDataSource":
+				if typeFieldConfig.DataSource.Config.URL == "" ||
+					typeFieldConfig.DataSource.Config.Method == "" {
+					return errors.New("URL or Method missing for GraphQLDataSource")
+				}
+			}
 		}
 	}
 	return nil

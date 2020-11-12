@@ -1,0 +1,53 @@
+name: Tyk CE Tests
+
+on:
+  pull_request
+
+jobs:
+  ce-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout tyk-operator
+        uses: actions/checkout@v2
+      - name: create kind cluster
+        uses: helm/kind-action@v1.0.0
+      - name: install kubebuilder
+        uses: RyanSiu1995/kubebuilder-action@v1
+        with:
+          version: 2.3.1
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15.x
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: deploy tyk
+        shell: bash
+        run: |
+          echo "building operator"
+          make docker-build IMG=tykio/tyk-operator:test
+          kind load docker-image tykio/tyk-operator:test --name chart-testing
+
+          echo "installing custom resources"
+          make install
+          kubectl get crds
+
+          echo "installing cert-manager"
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
+
+          echo "installing tyk-ce"
+          sh ./ci/deploy_tyk_ce.sh
+
+          echo "setting operator secrets"
+          sh ./ci/operator_ce_secrets.sh
+
+          echo "deploying operator"
+          make deploy IMG=tykio/tyk-operator:test
+
+          echo "bdd"
+          go get github.com/cucumber/godog/cmd/godog@v0.10.0
+          cd bdd && TYK_MODE=ce godog --strict -t ~@undone

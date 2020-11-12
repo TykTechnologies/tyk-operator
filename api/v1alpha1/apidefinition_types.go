@@ -37,6 +37,14 @@ type IdExtractorType string
 type AuthTypeEnum string
 type RoutingTriggerOnType string
 
+// Method represents HTTP request method
+// +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE;OPTIONS;HEAD;CONNECT;TRACE
+type HttpMethod string
+
+// ExecutionMode is the mode to define how an api behaves.
+// +kubebuilder:validation:Enum=proxyOnly;executionEngine
+type GraphQLExecutionMode string
+
 type NotificationsManager struct {
 	SharedSecret      string `json:"shared_secret"`
 	OAuthKeyChangeURL string `json:"oauth_on_keychange_url"`
@@ -56,10 +64,10 @@ type EndPointMeta struct {
 }
 
 type CacheMeta struct {
-	Method                 string `json:"method"`
-	Path                   string `json:"path"`
-	CacheKeyRegex          string `json:"cache_key_regex"`
-	CacheOnlyResponseCodes []int  `json:"cache_response_codes"`
+	Method                 HttpMethod `json:"method"`
+	Path                   string     `json:"path"`
+	CacheKeyRegex          string     `json:"cache_key_regex"`
+	CacheOnlyResponseCodes []int      `json:"cache_response_codes"`
 }
 
 type RequestInputType string
@@ -75,48 +83,48 @@ type TemplateData struct {
 type TemplateMeta struct {
 	TemplateData TemplateData `json:"template_data"`
 	Path         string       `json:"path"`
-	Method       string       `json:"method"`
+	Method       HttpMethod   `json:"method"`
 }
 
 type TransformJQMeta struct {
-	Filter string `json:"filter"`
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Filter string     `json:"filter"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 }
 
 type HeaderInjectionMeta struct {
 	DeleteHeaders []string          `json:"delete_headers"`
 	AddHeaders    map[string]string `json:"add_headers"`
 	Path          string            `json:"path"`
-	Method        string            `json:"method"`
+	Method        HttpMethod        `json:"method"`
 	ActOnResponse bool              `json:"act_on"`
 }
 
 type HardTimeoutMeta struct {
-	Path    string `json:"path"`
-	Method  string `json:"method"`
-	TimeOut int    `json:"timeout"`
+	Path    string     `json:"path"`
+	Method  HttpMethod `json:"method"`
+	TimeOut int        `json:"timeout"`
 }
 
 type TrackEndpointMeta struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 }
 
 type InternalMeta struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 }
 
 type RequestSizeMeta struct {
-	Path      string `json:"path"`
-	Method    string `json:"method"`
-	SizeLimit int64  `json:"size_limit"`
+	Path      string     `json:"path"`
+	Method    HttpMethod `json:"method"`
+	SizeLimit int64      `json:"size_limit"`
 }
 
 type CircuitBreakerMeta struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
 
 	// ThresholdPercent is the percentage of requests that fail before breaker is tripped
 	ThresholdPercent string `json:"threshold_percent"`
@@ -149,36 +157,38 @@ type RoutingTrigger struct {
 }
 
 type URLRewriteMeta struct {
-	Path         string           `json:"path"`
-	Method       string           `json:"method"`
-	MatchPattern string           `json:"match_pattern"`
-	RewriteTo    string           `json:"rewrite_to"`
-	Triggers     []RoutingTrigger `json:"triggers"`
-	//MatchRegexp  *regexp.Regexp   `json:"-"`
+	// Path represents the endpoint listen path
+	Path   string     `json:"path"`
+	Method HttpMethod `json:"method"`
+	// MatchPattern is a regular expression pattern to match the path
+	MatchPattern string `json:"match_pattern"`
+	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
+	RewriteTo string           `json:"rewrite_to"`
+	Triggers  []RoutingTrigger `json:"triggers"`
 }
 
 type VirtualMeta struct {
-	ResponseFunctionName string `json:"response_function_name"`
-	FunctionSourceType   string `json:"function_source_type"`
-	FunctionSourceURI    string `json:"function_source_uri"`
-	Path                 string `json:"path"`
-	Method               string `json:"method"`
-	UseSession           bool   `json:"use_session"`
-	ProxyOnError         bool   `json:"proxy_on_error"`
+	ResponseFunctionName string     `json:"response_function_name"`
+	FunctionSourceType   string     `json:"function_source_type"`
+	FunctionSourceURI    string     `json:"function_source_uri"`
+	Path                 string     `json:"path"`
+	Method               HttpMethod `json:"method"`
+	UseSession           bool       `json:"use_session"`
+	ProxyOnError         bool       `json:"proxy_on_error"`
 }
 
 type MethodTransformMeta struct {
-	Path     string `json:"path"`
-	Method   string `json:"method"`
-	ToMethod string `json:"to_method"`
+	Path     string     `json:"path"`
+	Method   HttpMethod `json:"method"`
+	ToMethod HttpMethod `json:"to_method"`
 }
 
 type ValidatePathMeta struct {
 	// Allows override of default 422 Unprocessible Entity response code for validation errors.
-	ErrorResponseCode int    `json:"error_response_code"`
-	Path              string `json:"path"`
-	Method            string `json:"method"`
-	SchemaB64         string `json:"schema_b64,omitempty"`
+	ErrorResponseCode int        `json:"error_response_code"`
+	Path              string     `json:"path"`
+	Method            HttpMethod `json:"method"`
+	SchemaB64         string     `json:"schema_b64,omitempty"`
 
 	//Schema    ExtraFields `json:"schema,omitempty"`
 }
@@ -220,7 +230,7 @@ type VersionInfo struct {
 	GlobalResponseHeadersRemove []string          `json:"global_response_headers_remove,omitempty"`
 	IgnoreEndpointCase          bool              `json:"ignore_endpoint_case,omitempty"`
 	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
-	//OverrideTarget              string            `json:"override_target,omitempty"`
+	OverrideTarget              string            `json:"override_target,omitempty"`
 }
 
 type VersionInfoPaths struct {
@@ -257,10 +267,17 @@ type MiddlewareDefinition struct {
 	RawBodyOnly    bool   `json:"raw_body_only,omitempty"`
 }
 
+type IdExtractorConfig struct {
+	HeaderName      string `json:"header_name,omitempty"`
+	FormParamName   string `json:"param_name,omitempty"`
+	RegexExpression string `json:"regex_expression,omitempty"`
+	RegexMatchIndex int    `json:"regex_match_index,omitempty"`
+}
+
 type MiddlewareIdExtractor struct {
-	ExtractFrom IdExtractorSource `json:"extract_from"`
-	ExtractWith IdExtractorType   `json:"extract_with"`
-	//ExtractorConfig map[string]interface{} `json:"extractor_config"`
+	ExtractFrom     IdExtractorSource `json:"extract_from"`
+	ExtractWith     IdExtractorType   `json:"extract_with"`
+	ExtractorConfig IdExtractorConfig `json:"extractor_config"`
 }
 
 type MiddlewareSection struct {
@@ -304,7 +321,7 @@ type HostCheckObject struct {
 	Timeout             time.Duration     `json:"timeout"`
 	EnableProxyProtocol bool              `json:"enable_proxy_protocol"`
 	Commands            []CheckCommand    `json:"commands"`
-	Method              string            `json:"method"`
+	Method              HttpMethod        `json:"method"`
 	Headers             map[string]string `json:"headers"`
 	Body                string            `json:"body"`
 }
@@ -354,10 +371,14 @@ type APIDefinitionSpec struct {
 	// Proxy
 	Proxy Proxy `json:"proxy"`
 	// +optional
-	ListenPort int    `json:"listen_port"`
-	Protocol   string `json:"protocol"`
-
-	// use_keyless will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
+	ListenPort int `json:"listen_port"`
+	// +kubebuilder:validation:Enum=http;https;tcp;tls
+	Protocol string `json:"protocol"`
+	// Domain represents a custom host header that the gateway will listen on for this API
+	Domain string `json:"domain,omitempty"`
+	// DoNotTrack disables endpoint tracking for this API. Default is true, you need to explicitly set it to false
+	DoNotTrack *bool `json:"do_not_track,omitempty"`
+	// UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
 	// quotas and security policies will not be possible (there is no session to attach requests to).
 	UseKeylessAccess bool `json:"use_keyless,omitempty"`
 	//EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
@@ -381,7 +402,8 @@ type APIDefinitionSpec struct {
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 	//EnableJWT                  bool                  `json:"enable_jwt"`
 	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
-	//EnableCoProcessAuth        bool                  `json:"enable_coprocess_auth"`
+
+	EnableCoProcessAuth bool `json:"enable_coprocess_auth,omitempty"`
 	//JWTSigningMethod           string                `json:"jwt_signing_method"`
 	//JWTSource                  string                `json:"jwt_source"`
 	//JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
@@ -404,8 +426,8 @@ type APIDefinitionSpec struct {
 	VersionDefinition VersionDefinition `json:"definition,omitempty"`
 
 	VersionData VersionData `json:"version_data,omitempty"`
-	////UptimeTests                UptimeTests           `json:"uptime_tests"`
-	//
+
+	//UptimeTests                UptimeTests           `json:"uptime_tests"`
 	//DisableRateLimit       bool                `json:"disable_rate_limit"`
 	//DisableQuota           bool                `json:"disable_quota"`
 
@@ -428,14 +450,22 @@ type APIDefinitionSpec struct {
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
 
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
-	//// +optional
+	// +optional
 	//CORS              CORS     `json:"CORS"`
-	//Domain            string   `json:"domain"`
+
 	//Certificates      []string `json:"certificates"`
-	//DoNotTrack        bool     `json:"do_not_track"`
-	//Tags              []string `json:"tags"`
-	//EnableContextVars bool     `json:"enable_context_vars"`
+
+	// Tags are named gateway nodes which tell gateway clusters whether to load an API or not.
+	// for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
+	Tags []string `json:"tags,omitempty"`
+
+	// EnableContextVars extracts request context variables from the start of the middleware chain.
+	// Set this to true to make them available to your transforms.
+	// Context Variables are available in the url rewriter, modify headers and body transforms.
+	EnableContextVars bool `json:"enable_context_vars,omitempty"`
+
 	//ConfigData MapStringInterface `json:"config_data"`
+
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
 	//StripAuthData           bool            `json:"strip_auth_data"`
@@ -500,15 +530,15 @@ type ProxyTransport struct {
 }
 
 type CORS struct {
-	Enable             bool     `json:"enable"`
-	AllowedOrigins     []string `json:"allowed_origins"`
-	AllowedMethods     []string `json:"allowed_methods"`
-	AllowedHeaders     []string `json:"allowed_headers"`
-	ExposedHeaders     []string `json:"exposed_headers"`
-	AllowCredentials   bool     `json:"allow_credentials"`
-	MaxAge             int      `json:"max_age"`
-	OptionsPassthrough bool     `json:"options_passthrough"`
-	Debug              bool     `json:"debug"`
+	Enable             bool         `json:"enable"`
+	AllowedOrigins     []string     `json:"allowed_origins"`
+	AllowedMethods     []HttpMethod `json:"allowed_methods"`
+	AllowedHeaders     []string     `json:"allowed_headers"`
+	ExposedHeaders     []string     `json:"exposed_headers"`
+	AllowCredentials   bool         `json:"allow_credentials"`
+	MaxAge             int          `json:"max_age"`
+	OptionsPassthrough bool         `json:"options_passthrough"`
+	Debug              bool         `json:"debug"`
 }
 
 type UptimeTests struct {
@@ -596,8 +626,6 @@ type GraphQLConfig struct {
 	// Enabled indicates if GraphQL proxy should be enabled.
 	Enabled bool `json:"enabled"`
 
-	// ExecutionMode is the mode to define how an api behaves.
-	// +kubebuilder:validation:Enum=proxyOnly;executionEngine
 	ExecutionMode GraphQLExecutionMode `json:"execution_mode"`
 
 	// Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
@@ -620,20 +648,31 @@ type TypeFieldConfiguration struct {
 type SourceConfig struct {
 	// Kind defines the unique identifier of the DataSource
 	// Kind needs to match to the Planner "DataSourceName" name
-	Name string `json:"kind"`
-
+	// +kubebuilder:validation:Enum=GraphQLDataSource;HTTPJSONDataSource
+	Kind string `json:"kind"`
 	// Config is the DataSource specific configuration object
 	// Each Planner needs to make sure to parse their Config Object correctly
-	//Config json.RawMessage `json:"data_source_config"`
+	Config DataSourceConfig `json:"data_source_config,omitempty"`
+}
+
+type DataSourceConfig struct {
+	URL                        string                      `json:"url"`
+	Method                     HttpMethod                  `json:"method"`
+	Body                       string                      `json:"body,omitempty"`
+	DefaultTypeName            string                      `json:"default_type_name,omitempty"`
+	Headers                    []string                    `json:"headers,omitempty"`
+	StatusCodeTypeNameMappings []StatusCodeTypeNameMapping `json:"status_code_type_name_mappings,omitempty"`
+}
+
+type StatusCodeTypeNameMapping struct {
+	StatusCode int    `json:"status_code"`
+	TypeName   string `json:"type_name,omitempty"`
 }
 
 type MappingConfiguration struct {
 	Disabled bool   `json:"disabled"`
 	Path     string `json:"path"`
 }
-
-// GraphQLExecutionMode is the mode in which the GraphQL Middleware should operate.
-type GraphQLExecutionMode string
 
 // GraphQLPlayground represents the configuration for the public playground which will be hosted alongside the api.
 type GraphQLPlayground struct {
