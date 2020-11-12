@@ -23,7 +23,7 @@ echo "deploying databases"
 kubectl apply -f "${PRODIR}/mongo/mongo.yaml" -n ${NAMESPACE}
 kubectl apply -f "${PRODIR}/redis" -n ${NAMESPACE}
 
-echo "waiting for redis and redis"
+echo "waiting for redis and mongo"
 kubectl wait --for=condition=available --all deployments --timeout=${TIMEOUT}
 
 echo "creating configmaps"
