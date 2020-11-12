@@ -1,6 +1,14 @@
 # tyk-operator installation
 
-## prerequisites
+- [Prerequisites](#prerequisites)
+- [Installing Tyk](#installing-tyk)
+- [Configuring Tyk Operator Secrets](#configuring-tyk-operator-secrets)
+- [Installing CRDs](#installing-crds)
+- [Installing cert-manager](#installing-cert-manager)
+- [Installing tyk-operator](#installing-tyk-operator)
+- [Uninstall](#uninstall)
+
+### prerequisites
 
 Before running the operator
 
@@ -14,22 +22,19 @@ Before running the operator
 We shall assume you already have a deployed and bootstrapped Tyk installation. If not, head over to 
 [tyk-helm-chart](https://github.com/TykTechnologies/tyk-helm-chart/), to install Tyk.
 
-{{box op="start" cssClass="boxed tipBox"}}
-**Tip!**
-
 The Tyk Installation does not need to be deployed inside K8s. You may already have a fully-functioning Tyk installation.
 
 Using Tyk Operator, you can manage APIs in any Tyk installation whether self-hosted, K8s or Tyk Cloud. As long as the 
 management URL is accessible by the operator.
-{{box op="end"}}
 
 ### Configuring tyk-operator secrets
 
-By default, the operator deploys to the `tyk-operator-system` namespace. This example sets the appropriate secrets 
-tyk-operator needs to connect to a Tyk Pro deployment.
+tyk-operator needs to connect to a Tyk Pro deployment. And it needs to know whether it is talking to a Community
+ Edition Gateway or Pro installation.
+
+`TYK_MODE` can be `oss` or `pro`.
 
 ```bash
-
 kubectl create namespace tyk-operator-system
 
 kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
@@ -37,8 +42,17 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "TYK_ORG=${TYK_ORG}" \
   --from-literal "TYK_MODE=${TYK_MODE}" \
   --from-literal "TYK_URL=${TYK_URL}"
-
 ```
+Examples of these values:
+
+|         | TYK_ORG     | TYK_AUTH       | TYK_URL            | TYK_MODE |
+|---------|-------------|----------------|--------------------|----------|
+| Tyk Pro | User Org ID, ie "5e9d9544a1dcd60001d0ed20" | User API Key, ie "2d095c2155774fe36d77e5cbe3ac963b"   | Dashboard Base URL, ie "http://localhost:3000" | "pro"    |
+| Tyk Hybrid | User Org ID | User API Key   | "https://admin.cloud.tyk.io/" | "pro"    |
+| Tyk OSS |      "foo"       | Gateway secret | Gateway Base URL   | "oss"    |
+
+
+And after you run the command, the values get automatically Base64 encoded:
 
 ```
 k get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
@@ -66,7 +80,7 @@ customresourcedefinition.apiextensions.k8s.io/webhooks.tyk.tyk.io configured
 
 ### Installing cert-manager
 
-Quick install
+If you don't have cert-manager installed: Quick install
 
 ```bash
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
@@ -100,32 +114,19 @@ replicaset.apps/cert-manager-webhook-6d4c5c44bb      1         1         0      
 
 ## Installing tyk-operator
 
-If you wish to change the namespace that tyk-operator is deployed from the default `tyk-operator-system`:
+Run the following to deploy tyk-operator. 
 
-```bash
-cd config/default/ && kustomize edit set namespace "yournamespace" && cd ../..
 ```
+$ helm install foo ./helm -n tyk-operator-system
 
-Run the following to deploy tyk-operator. This will also install the RBAC manifests from config/rbac. 
-
-```bash
-make deploy IMG=tykio/tyk-operator:latest
-```
-
-```bash
-k get all -n tyk-operator-system
-NAME                                                   READY   STATUS    RESTARTS   AGE
-pod/tyk-operator-controller-manager-6f554ffb59-244tj   2/2     Running   1          2m14s
-
-NAME                                                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-service/tyk-operator-controller-manager-metrics-service   ClusterIP   10.245.198.147   <none>        8443/TCP   2m22s
-service/tyk-operator-webhook-service                      ClusterIP   10.245.143.252   <none>        443/TCP    2m21s
-
-NAME                                              READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/tyk-operator-controller-manager   1/1     1            1           2m18s
-
-NAME                                                         DESIRED   CURRENT   READY   AGE
-replicaset.apps/tyk-operator-controller-manager-6f554ffb59   1         1         1       2m17s
+NAME: foo
+LAST DEPLOYED: Tue Nov 10 18:38:32 2020
+NAMESPACE: tyk-operator-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+You have deployed the tyk-operator! See https://github.com/TykTechnologies/tyk-operator for more information.
 ```
 
 ## Uninstall
@@ -134,5 +135,5 @@ Did we do something wrong? Create a [GH issue](https://github.com/TykTechnologie
 maybe we can try to improve your experience, or that of others. 
 
 ```
-make uninstall
+helm delete foo
 ```

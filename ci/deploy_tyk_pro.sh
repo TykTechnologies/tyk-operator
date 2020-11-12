@@ -16,7 +16,7 @@ fi
 
 echo "deploying gRPC plugin server"
 kubectl apply -f "${PRODIR}/../grpc-plugin" -n ${NAMESPACE}
-kubectl wait deployment/grpc-plugin -n ${NAMESPACE} --for condition=available --timeout=10s
+kubectl wait deployment/grpc-plugin -n ${NAMESPACE} --for condition=available --timeout=30s
 
 echo "deploying databases"
 kubectl apply -f "${PRODIR}/mongo/mongo.yaml" -n ${NAMESPACE}
