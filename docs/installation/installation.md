@@ -69,7 +69,7 @@ k get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
 Installing CRDs is as simple as checking out this repo & running `kubectl apply`.
 
 ```bash
-kubectl apply -f ./helm/crd
+kubectl apply -f ./helm/crds
 customresourcedefinition.apiextensions.k8s.io/apidefinitions.tyk.tyk.io configured
 customresourcedefinition.apiextensions.k8s.io/organizations.tyk.tyk.io configured
 customresourcedefinition.apiextensions.k8s.io/securitypolicies.tyk.tyk.io configured
