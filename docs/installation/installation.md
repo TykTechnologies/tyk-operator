@@ -66,12 +66,10 @@ k get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
 
 ### Installing CRDs
 
-Installing CRDs is as simple as checking out this repo & running `make install`.
+Installing CRDs is as simple as checking out this repo & running `kubectl apply`.
 
 ```bash
-make install
-/Users/ahmet/go/bin/controller-gen "crd:trivialVersions=true,crdVersions=v1" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-/Users/ahmet/go/bin/kustomize build config/crd | kubectl apply -f -
+kubectl apply -f ./helm/crd
 customresourcedefinition.apiextensions.k8s.io/apidefinitions.tyk.tyk.io configured
 customresourcedefinition.apiextensions.k8s.io/organizations.tyk.tyk.io configured
 customresourcedefinition.apiextensions.k8s.io/securitypolicies.tyk.tyk.io configured
