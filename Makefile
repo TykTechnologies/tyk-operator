@@ -57,6 +57,7 @@ deploy: manifests kustomize
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 helm: kustomize
+	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
 	$(KUSTOMIZE) build config/helm > ./helm/templates/all.yaml
 	sed -i '' 's#replicas: 1#replicas: {{ \.Values.replicaCount }}#' helm/templates/all.yaml
 	sed -i '' 's#tyk-operator-conf#{{ \.Values\.confSecretName }}#' helm/templates/all.yaml
