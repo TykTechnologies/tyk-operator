@@ -19,9 +19,12 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_admin_client"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,15 +64,32 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	watchNamespace, found := getWatchNamespace()
+	if !found {
+		setupLog.Info("unable to get WatchNamespace, " +
+			"the manager will watch and manage resources in all Namespaces")
+	}
+
+	options := ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "91ad8c6e.tyk.io",
-	})
+		Namespace:          watchNamespace,
+	}
+
+	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
+	if strings.Contains(watchNamespace, ",") {
+		setupLog.Info(fmt.Sprintf("manager will be watching namespace %q", watchNamespace))
+		// configure cluster-scoped with MultiNamespacedCacheBuilder
+		options.Namespace = ""
+		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(watchNamespace, ","))
+	}
+
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
@@ -153,6 +173,16 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+// getWatchNamespace returns the Namespace the operator should be watching for changes
+func getWatchNamespace() (string, bool) {
+	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
+	// which specifies the Namespace to watch.
+	// An empty value means the operator is running with cluster scope.
+	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
+
+	return os.LookupEnv(watchNamespaceEnvVar)
 }
 
 func adminClient() (*dashboard_admin_client.Client, error) {

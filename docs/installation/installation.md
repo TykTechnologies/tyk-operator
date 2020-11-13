@@ -2,7 +2,7 @@
 
 - [Prerequisites](#prerequisites)
 - [Installing Tyk](#installing-tyk)
-- [Configuring Tyk Operator Secrets](#configuring-tyk-operator-secrets)
+- [Operator Configuration](#tyk-operator-configuration)
 - [Installing CRDs](#installing-crds)
 - [Installing cert-manager](#installing-cert-manager)
 - [Installing tyk-operator](#installing-tyk-operator)
@@ -27,7 +27,22 @@ The Tyk Installation does not need to be deployed inside K8s. You may already ha
 Using Tyk Operator, you can manage APIs in any Tyk installation whether self-hosted, K8s or Tyk Cloud. As long as the 
 management URL is accessible by the operator.
 
-### Configuring tyk-operator secrets
+### tyk-operator configuration
+
+Operator configurations are all stored in the secret `tyk-operator-conf`.
+
+#### Watching Namespaces
+
+Tyk Operator installs with cluster permissions, however you can optionally control which namespaces it watches by
+ by setting the `WATCH_NAMESPACE` environment variable.
+ 
+`WATCH_NAMESPACE` can be omitted entirely, or a comma separated list of k8s namespaces.
+
+- `WATCH_NAMESPACE=""` will watch for resources across the entire cluster.
+- `WATCH_NAMESPACE="foo"` will watch for resources in the `foo` namespace.
+- `WATCH_NAMESPACE="foo,bar"` will watch for resources in the `foo` and `bar` namespace. 
+
+#### connecting to Tyk
 
 tyk-operator needs to connect to a Tyk Pro deployment. And it needs to know whether it is talking to a Community
  Edition Gateway or Pro installation.
@@ -43,6 +58,7 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "TYK_MODE=${TYK_MODE}" \
   --from-literal "TYK_URL=${TYK_URL}"
 ```
+
 Examples of these values:
 
 |         | TYK_ORG     | TYK_AUTH       | TYK_URL            | TYK_MODE |
@@ -50,7 +66,6 @@ Examples of these values:
 | Tyk Pro | User Org ID, ie "5e9d9544a1dcd60001d0ed20" | User API Key, ie "2d095c2155774fe36d77e5cbe3ac963b"   | Dashboard Base URL, ie "http://localhost:3000" | "pro"    |
 | Tyk Hybrid | User Org ID | User API Key   | "https://admin.cloud.tyk.io/" | "pro"    |
 | Tyk OSS |      "foo"       | Gateway secret | Gateway Base URL   | "oss"    |
-
 
 And after you run the command, the values get automatically Base64 encoded:
 
@@ -71,7 +86,6 @@ Installing CRDs is as simple as checking out this repo & running `kubectl apply`
 ```bash
 kubectl apply -f ./helm/crds
 customresourcedefinition.apiextensions.k8s.io/apidefinitions.tyk.tyk.io configured
-customresourcedefinition.apiextensions.k8s.io/organizations.tyk.tyk.io configured
 customresourcedefinition.apiextensions.k8s.io/securitypolicies.tyk.tyk.io configured
 customresourcedefinition.apiextensions.k8s.io/webhooks.tyk.tyk.io configured
 ```
