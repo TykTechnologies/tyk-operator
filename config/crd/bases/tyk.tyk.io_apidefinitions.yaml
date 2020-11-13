@@ -53,12 +53,17 @@ spec:
               description: CORS cors settings
               properties:
                 allow_credentials:
+                  description: AllowCredentials if true will allow cookies
                   type: boolean
                 allowed_headers:
+                  description: AllowedHeaders are headers that are allowed within
+                    a request.
                   items:
                     type: string
                   type: array
                 allowed_methods:
+                  description: AllowedMethods is a list of methods to allow access
+                    via.
                   items:
                     description: Method represents HTTP request method
                     enum:
@@ -74,20 +79,35 @@ spec:
                     type: string
                   type: array
                 allowed_origins:
+                  description: AllowedOrigins is a list of origin domains to allow
+                    access from.
                   items:
                     type: string
                   type: array
                 debug:
+                  description: Debug if true, this option produces log files for the
+                    CORS middleware
                   type: boolean
                 enable:
+                  description: Enable when set to true it enables the cors middleware
+                    for the api
                   type: boolean
                 exposed_headers:
+                  description: ExposedHeaders is a list of headers that are exposed
+                    back in the response.
                   items:
                     type: string
                   type: array
                 max_age:
+                  description: MaxAge is the maximum age of credentials
                   type: integer
                 options_passthrough:
+                  description: OptionsPassthrough allow CORS OPTIONS preflight request
+                    to be proxied directly to upstream, without authentication and
+                    rest of checks. This means that pre-flight requests generated
+                    by web-clients such as SwaggerUI or the Tyk Portal documentation
+                    system will be able to test the API using trial keys. If your
+                    service handles CORS natively, then enable this option.
                   type: boolean
               type: object
             active:
