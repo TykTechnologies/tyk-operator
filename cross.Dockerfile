@@ -3,4 +3,4 @@ WORKDIR /
 COPY manager.exe manager
 USER nonroot:nonroot
 
-ENTRYPOINT ["/manager"] 
+ENTRYPOINT ["/manager"]
