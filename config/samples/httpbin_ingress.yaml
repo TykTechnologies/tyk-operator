@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: httpbin-ingress
+  annotations:
+    apiid: httpbin
+spec:
+#  tls:
+#    - secretName: foo
+#      hosts:
+#        - example.com
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /httpbin
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000

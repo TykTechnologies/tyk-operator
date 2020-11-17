@@ -138,6 +138,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controllers.IngressReconciler{
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("Ingress"),
+		Scheme:          mgr.GetScheme(),
+		UniversalClient: tykClient,
+		Recorder:        mgr.GetEventRecorderFor("ingress-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Ingress")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.SecurityPolicyReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
@@ -174,11 +185,6 @@ func main() {
 		os.Exit(1)
 	}
 }
-
-// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-// which specifies the Namespace to watch.
-// An empty value means the operator is running with cluster scope.
-const watchNamespaceEnvVar = "WATCH_NAMESPACE"
 
 // getWatchNamespace returns the Namespace the operator should be watching for changes
 func getWatchNamespace() (string, bool) {
