@@ -35,14 +35,10 @@ jobs:
           make cross-build-image IMG=tykio/tyk-operator:test
           kind load docker-image tykio/tyk-operator:test --name chart-testing
 
-          echo "installing custom resources"
-          make install
-          kubectl get crds
-
           echo "installing cert-manager"
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
-          export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
 
+          export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
           echo "installing tyk-pro"
           sh ./ci/deploy_tyk_pro.sh
 
@@ -54,7 +50,7 @@ jobs:
           sh ./ci/operator_secrets.sh
 
           echo "deploying operator"
-          make deploy IMG=tykio/tyk-operator:test
+          helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system
 
           echo "bdd"
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
