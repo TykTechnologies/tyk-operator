@@ -50,6 +50,7 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		*out = make([]ResponseProcessor, len(*in))
 		copy(*out, *in)
 	}
+	in.CORS.DeepCopyInto(&out.CORS)
 	if in.Tags != nil {
 		in, out := &in.Tags, &out.Tags
 		*out = make([]string, len(*in))

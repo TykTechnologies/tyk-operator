@@ -1,0 +1,24 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-cors-sample
+spec:
+  name: httpbin-cors-sample
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /cors
+    strip_listen_path: true
+  CORS:
+    enable: true
+    allowed_origins:
+      - "http://foo.com"
+    allowed_methods: null
+    allowed_headers: null
+    exposed_headers: null
+    allow_credentials: false
+    max_age: 24
+    options_passthrough: false
+    debug: false
