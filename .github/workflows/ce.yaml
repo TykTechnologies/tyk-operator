@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           echo "building operator"
-          make docker-build IMG=tykio/tyk-operator:test
+          make cross-build-image IMG=tykio/tyk-operator:test
           kind load docker-image tykio/tyk-operator:test --name chart-testing
 
           echo "installing custom resources"
