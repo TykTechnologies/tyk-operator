@@ -20,6 +20,9 @@ import (
 	"context"
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -97,32 +100,68 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
+	for _, tls := range desired.Spec.TLS {
+		desiredSecret := &v1.Secret{}
+		secretNamespacedName := types.NamespacedName{
+			Namespace: namespacedName.Namespace,
+			Name:      tls.SecretName,
+		}
+		if err := r.Get(ctx, secretNamespacedName, desiredSecret); err != nil {
+			log.Error(err, "secret doesnt exist yet")
+			return ctrl.Result{}, err
+		}
+		log.Info("storing secret in certificate storage", "name", secretNamespacedName.String())
+	}
+
 	for _, rule := range desired.Spec.Rules {
 		hostName := rule.Host
 
 		for _, p := range rule.HTTP.Paths {
-			apiDef := &v1alpha1.ApiDefinition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      namespacedName.Name,
-					Namespace: namespacedName.Namespace,
-				},
-				Spec: v1alpha1.APIDefinitionSpec{
-					Name:   namespacedName.Name,
-					Active: true,
-					Proxy: v1alpha1.Proxy{
-						StripListenPath: true,
-						ListenPath:      p.Path,
-						TargetURL:       fmt.Sprintf("http://%s.svc.cluster.local:%s", p.Backend.ServiceName, p.Backend.ServicePort.StrVal),
-					},
-					Protocol:         "http",
-					Domain:           hostName,
-					UseKeylessAccess: true,
-				},
+			if p.Path == "dummy" {
+				// This is a hack in case we only want to create apis to handle ingress resources
+				// for the acme challenge
+				continue
 			}
-			err := r.Client.Create(ctx, apiDef)
-			if err != nil {
-				log.Error(err, "unable to create api definition")
-				return ctrl.Result{}, err
+			apiDefNamespacedName := types.NamespacedName{
+				Name:      namespacedName.Name,
+				Namespace: namespacedName.Namespace,
+			}
+			apiDef := &v1alpha1.ApiDefinition{}
+			spec := v1alpha1.APIDefinitionSpec{
+				Name:   namespacedName.Name,
+				Active: true,
+				Proxy: v1alpha1.Proxy{
+					StripListenPath: true,
+					ListenPath:      p.Path,
+					TargetURL:       fmt.Sprintf("http://%s.svc.cluster.local:%s", p.Backend.ServiceName, p.Backend.ServicePort.StrVal),
+				},
+				Protocol:         "http",
+				Domain:           hostName,
+				UseKeylessAccess: true,
+			}
+
+			if err := r.Get(ctx, apiDefNamespacedName, apiDef); err != nil {
+				// doesn't exist
+				desiredApiDef := &v1alpha1.ApiDefinition{
+					ObjectMeta: ctrl.ObjectMeta{
+						Name:      namespacedName.Name,
+						Namespace: namespacedName.Namespace,
+					},
+					Spec: spec,
+				}
+				err := r.Client.Create(ctx, desiredApiDef)
+				if err != nil {
+					log.Error(err, "unable to create api definition")
+					return ctrl.Result{}, err
+				}
+			} else {
+				// update
+				apiDef.Spec = spec
+				err := r.Client.Update(ctx, apiDef)
+				if err != nil {
+					log.Error(err, "unable to create api definition")
+					return ctrl.Result{}, err
+				}
 			}
 		}
 	}

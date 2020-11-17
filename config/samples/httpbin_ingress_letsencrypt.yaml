@@ -3,18 +3,14 @@ kind: Ingress
 metadata:
   name: httpbin-ingress
   annotations:
-    cert-manager.io/issuer: selfsigned-issuer
+    #    cert-manager.io/issuer: selfsigned-issuer
+    cert-manager.io/issuer: letsencrypt
 spec:
   ingressClassName: "ingress.tyk.io"
   tls:
-    - secretName: foo
+    - secretName: tyk-technology-tls
       hosts:
-        - example.com
-        - example2.com
-        - example3.com
-    - secretName: bar
-      hosts:
-        - abc.com
+        - httpbin.asoorm.do.poc.tyk.technology
   rules:
     - http:
         paths:
