@@ -5,6 +5,7 @@ metadata:
   annotations:
     apiid: httpbin
 spec:
+  ingressClassName: "ingress.tyk.io"
 #  tls:
 #    - secretName: foo
 #      hosts:

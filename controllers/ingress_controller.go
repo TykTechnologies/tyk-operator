@@ -55,8 +55,12 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
-		log.Error(err, "unable to get ingress resource")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if *desired.Spec.IngressClassName != "ingress.tyk.io" {
+		// it's not for us
+		return ctrl.Result{}, nil
 	}
 
 	// If object is being deleted
@@ -107,6 +111,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 					Active: true,
 					Proxy: v1alpha1.Proxy{
 						StripListenPath: true,
+						ListenPath:      p.Path,
 						TargetURL:       fmt.Sprintf("http://%s.svc.cluster.local:%s", p.Backend.ServiceName, p.Backend.ServicePort.StrVal),
 					},
 					Protocol:         "http",
