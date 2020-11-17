@@ -1,6 +1,6 @@
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY manager.exe manager
+COPY manager.linux manager
 USER nonroot:nonroot
 
 ENTRYPOINT ["/manager"]

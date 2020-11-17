@@ -25,4 +25,5 @@ bin
 
 testbin/*
 bootstrapped
+*.linux
 
