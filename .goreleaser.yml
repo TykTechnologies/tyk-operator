@@ -26,5 +26,5 @@ dockers:
     - main.go
     - api
     - controllers
-    - internal
+    - pkg
     - vendor
