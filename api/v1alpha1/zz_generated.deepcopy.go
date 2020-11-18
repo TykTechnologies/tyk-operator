@@ -51,6 +51,16 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		copy(*out, *in)
 	}
 	in.CORS.DeepCopyInto(&out.CORS)
+	if in.Certificates != nil {
+		in, out := &in.Certificates, &out.Certificates
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.CertificateSecretNames != nil {
+		in, out := &in.CertificateSecretNames, &out.CertificateSecretNames
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Tags != nil {
 		in, out := &in.Tags, &out.Tags
 		*out = make([]string, len(*in))

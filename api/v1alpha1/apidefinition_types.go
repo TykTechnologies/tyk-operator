@@ -452,7 +452,12 @@ type APIDefinitionSpec struct {
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
 	CORS               CORS                `json:"CORS,omitempty"`
 
-	//Certificates      []string `json:"certificates"`
+	// Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint. Use CertificateSecretNames if using cert-manager
+	Certificates []string `json:"certificates,omitempty"`
+
+	// CertificateSecretNames represents the names of the secrets that the controller should look for in the in the current
+	// namespace which contain the certificates.
+	CertificateSecretNames []string `json:"certificate_secret_names,omitempty"`
 
 	// Tags are named gateway nodes which tell gateway clusters whether to load an API or not.
 	// for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
