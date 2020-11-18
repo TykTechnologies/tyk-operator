@@ -110,6 +110,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			log.Error(err, "secret doesnt exist yet")
 			return ctrl.Result{}, err
 		}
+		// TODO: store certs in Tyk cert storage
 		log.Info("storing secret in certificate storage", "name", secretNamespacedName.String())
 	}
 
@@ -133,7 +134,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				Proxy: v1alpha1.Proxy{
 					StripListenPath: true,
 					ListenPath:      p.Path,
-					TargetURL:       fmt.Sprintf("http://%s.svc.cluster.local:%s", p.Backend.ServiceName, p.Backend.ServicePort.StrVal),
+					TargetURL:       fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue()),
 				},
 				Protocol:         "http",
 				Domain:           hostName,
