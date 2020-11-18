@@ -20,6 +20,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
@@ -111,6 +116,28 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		// issue a requeue anyway
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
+
+	for _, certID := range desired.Spec.CertificateSecretNames {
+		secret := v1.Secret{}
+		err := r.Get(ctx, types.NamespacedName{Name: certID, Namespace: namespacedName.Namespace}, &secret)
+		if err != nil {
+			log.Error(err, "requeueing because secret not found")
+			return reconcile.Result{}, err
+		}
+
+		pemCrtBytes, ok := secret.Data["tls.crt"]
+		if !ok {
+			log.Error(err, "requeueing because cert not found in secret")
+			return reconcile.Result{}, err
+		}
+
+		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(pemCrtBytes)
+		_, err = universal_client.GetCertificate(r.UniversalClient, tykCertID)
+
+		desired.Spec.Certificates = append(desired.Spec.Certificates, tykCertID)
+	}
+
+	desired.Spec.CertificateSecretNames = nil
 
 	r.applyDefaults(&desired.Spec)
 
