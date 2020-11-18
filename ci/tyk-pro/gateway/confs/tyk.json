@@ -78,7 +78,7 @@
     "enable_websockets": true,
     "ssl_certificates": null,
     "server_name": "gateway.ahmet",
-    "min_version": 772,
+    "min_version": 771,
     "flush_interval": 1,
     "skip_url_cleaning": false,
     "skip_target_path_escaping": false,
