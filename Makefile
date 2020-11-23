@@ -147,3 +147,7 @@ install-cert-manager:
 	kubectl rollout status  deployment/cert-manager -n cert-manager
 	kubectl rollout status  deployment/cert-manager-cainjector -n cert-manager
 	kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
+
+install-operator-helm: cross-build-image
+	kind load docker-image tykio/tyk-operator:test
+	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system
