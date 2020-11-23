@@ -141,3 +141,9 @@ bundle-build:
 cross-build-image:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o manager.linux main.go
 	docker build -f cross.Dockerfile . -t ${IMG}
+
+install-cert-manager:
+	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
+	kubectl rollout status  deployment/cert-manager -n cert-manager
+	kubectl rollout status  deployment/cert-manager-cainjector -n cert-manager
+	kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
