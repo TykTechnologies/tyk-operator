@@ -143,11 +143,27 @@ cross-build-image:
 	docker build -f cross.Dockerfile . -t ${IMG}
 
 install-cert-manager:
+	@echo "===> installing cert-manager"
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
 	kubectl rollout status  deployment/cert-manager -n cert-manager
 	kubectl rollout status  deployment/cert-manager-cainjector -n cert-manager
 	kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
 
 install-operator-helm: cross-build-image
+	@echo "===> installing operator with helmr"
 	kind load docker-image tykio/tyk-operator:test
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system
+
+setup-pro:
+	@echo "===> installing tyk-pro"
+	sh ./ci/deploy_tyk_pro.sh
+	@echo "===> bootstrapping tyk dashboard (initial org + user)"
+	sh ./ci/bootstrap_org.sh
+	cat bootstrapped
+	@echo "===> setting operator dash secrets"
+	sh ./ci/operator_secrets.sh
+
+boot-pro: install-cert-manager setup-pro install-operator-helm
+	@echo "******** Successful boot strapped pro dev env ************"
+
+
