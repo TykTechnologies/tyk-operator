@@ -17,9 +17,12 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"errors"
+	"net/url"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -96,69 +99,109 @@ var _ webhook.Validator = &ApiDefinition{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (in *ApiDefinition) ValidateCreate() error {
 	apidefinitionlog.Info("validate create", "name", in.Name)
+	return in.validate()
+}
 
-	err := validateAuth(in)
-	if err != nil {
-		return err
+func (in *ApiDefinition) validate() error {
+	var all field.ErrorList
+	var _ APIDefinitionSpec
+
+	path := func(n ...string) *field.Path {
+		x := field.NewPath("spec")
+		for _, v := range n {
+			x = x.Child(v)
+		}
+		return x
 	}
 
-	err = validateUDG(in)
-	if err != nil {
-		return err
+	spec := in.Spec
+	// protocol
+	switch spec.Protocol {
+	case "", "h2c", "tcp", "tls", "http", "https":
+	default:
+		all = append(all,
+			field.NotSupported(path("protocol"), spec.Protocol, []string{"", "h2c", "tcp", "tls", "http", "https"}),
+		)
 	}
 
-	return nil
+	// auth
+	if spec.UseKeylessAccess {
+		if spec.UseStandardAuth {
+			all = append(all,
+				field.Forbidden(path("use_standard_auth"), "use_keyless_access & use_standard_auth"),
+			)
+		}
+	} else {
+		if spec.UseStandardAuth {
+			if len(spec.AuthConfigs) > 0 {
+				_, ok := spec.AuthConfigs["authToken"]
+				if !ok {
+					all = append(all,
+						field.NotFound(path("auth_configs", "authToken"), nil),
+					)
+				}
+			} else {
+				all = append(all,
+					field.NotFound(path("auth_configs"), nil),
+				)
+			}
+		}
+	}
+
+	// graphql
+	if spec.GraphQL != nil {
+		if spec.GraphQL.Enabled && spec.GraphQL.ExecutionMode == "executionEngine" {
+			for _, typeFieldConfig := range spec.GraphQL.TypeFieldConfigurations {
+				switch typeFieldConfig.DataSource.Kind {
+				case "HTTPJsonDataSource", "GraphQLDataSource":
+					src := typeFieldConfig.DataSource
+					if src.Config.URL == "" {
+						all = append(all,
+							field.Invalid(path("graphql", "type_field_configurations", "data_source", "url"),
+								"",
+								"can't be emptry",
+							),
+						)
+					} else {
+						_, err := url.Parse(src.Config.URL)
+						if err != nil {
+							all = append(all,
+								field.Invalid(path("graphql", "type_field_configurations", "data_source", "url"),
+									src.Config.URL,
+									err.Error(),
+								),
+							)
+						}
+					}
+
+					if src.Config.Method == "" {
+						all = append(all,
+							field.Invalid(path("graphql", "type_field_configurations", "data_source", "method"),
+								string(src.Config.Method),
+								"can't be emptry",
+							),
+						)
+					}
+				}
+			}
+		}
+	}
+	if len(all) == 0 {
+		return nil
+	}
+	return apierrors.NewInvalid(
+		schema.GroupKind{
+			Group: "tyk.tyk.io",
+			Kind:  "ApiDefinition",
+		},
+		in.Name, all,
+	)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (in *ApiDefinition) ValidateUpdate(old runtime.Object) error {
 	apidefinitionlog.Info("validate update", "name", in.Name)
-
-	err := validateAuth(in)
-	if err != nil {
-		return err
-	}
-
-	err = validateUDG(in)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func validateAuth(in *ApiDefinition) error {
-	if in.Spec.UseKeylessAccess {
-		if in.Spec.UseStandardAuth {
-			return errors.New("conflict: cannot use_keyless_access & use_standard_auth")
-		}
-	}
-	return nil
-}
-
-// TODO: proper udg validation required here
-func validateUDG(in *ApiDefinition) error {
-	if in.Spec.GraphQL == nil {
-		return nil
-	}
-
-	if in.Spec.GraphQL.Enabled && in.Spec.GraphQL.ExecutionMode == "executionEngine" {
-		for _, typeFieldConfig := range in.Spec.GraphQL.TypeFieldConfigurations {
-			switch typeFieldConfig.DataSource.Kind {
-			case "HTTPJsonDataSource":
-				if typeFieldConfig.DataSource.Config.URL == "" ||
-					typeFieldConfig.DataSource.Config.Method == "" {
-					return errors.New("URL or Method missing for HTTPJsonDataSource")
-				}
-			case "GraphQLDataSource":
-				if typeFieldConfig.DataSource.Config.URL == "" ||
-					typeFieldConfig.DataSource.Config.Method == "" {
-					return errors.New("URL or Method missing for GraphQLDataSource")
-				}
-			}
-		}
-	}
-	return nil
+	return in.validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
