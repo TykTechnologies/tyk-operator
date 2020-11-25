@@ -62,8 +62,21 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, errors.New("IngressClassName should not be nil")
 	}
 
+	ingressClassList := &v1beta1.IngressClassList{}
+	opts := []client.ListOption{
+		client.InNamespace(req.Namespace),
+	}
+	err := r.List(ctx, ingressClassList, opts...)
+	if err != nil {
+		println(err.Error())
+		return ctrl.Result{}, err
+	}
+
+	println(ingressClassList.Kind)
+
 	ingressClass := &v1beta1.IngressClass{}
 	if err := r.Get(ctx, types.NamespacedName{Name: *desired.Spec.IngressClassName, Namespace: req.Namespace}, ingressClass); err != nil {
+		println(err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -111,14 +124,14 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// we have parameters - as such, we should ensure that there is an api definition resource
 	template := &v1alpha1.ApiDefinition{}
-	err := r.Get(ctx, types.NamespacedName{Name: ingressClass.Spec.Parameters.Name, Namespace: req.Namespace}, template)
+	err = r.Get(ctx, types.NamespacedName{Name: ingressClass.Spec.Parameters.Name, Namespace: req.Namespace}, template)
 	if err != nil {
 		log.Error(err, "error getting api definition to use as a template", "name", ingressClass.Spec.Parameters.Name)
 		return ctrl.Result{}, err
 	}
 
 	ingressInNS := &v1beta1.IngressList{}
-	opts := []client.ListOption{
+	opts = []client.ListOption{
 		client.InNamespace(req.NamespacedName.Namespace),
 	}
 	if err := r.List(ctx, ingressInNS, opts...); err != nil {
