@@ -4,7 +4,7 @@ Feature: Creating IngressClass templates
   The ApiDefinition reconciler should then ignore this resource so that it
   is only stored as a custom resource for later consumption by IngressResources.
 
-  @wip
+  @undone
   Scenario: Create an ApiDefinition ingress template resource
     Given there is a "./custom_resources/ingress_template.yaml" resource
     When i request /httpbin/get endpoint
