@@ -20,21 +20,18 @@ import (
 	"context"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
-	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -58,19 +55,17 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
 
-	log.Info("fetching apidefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
-	r.Recorder.Event(desired, "Normal", "ApiDefinition", "Reconciling")
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-
+		log.Info("resource being deleted")
 		// If our finalizer is present, need to delete from Tyk still
 		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
-
+			log.Info("checking linked security policies")
 			policies, err := r.UniversalClient.SecurityPolicy().All()
 			if err != nil {
 				log.Info(err.Error())
@@ -89,6 +84,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				}
 			}
 
+			log.Info("deleting api")
 			err = r.UniversalClient.Api().Delete(desired.Status.ApiID)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
@@ -101,18 +97,18 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				return ctrl.Result{}, err
 			}
 
-			// remove our finalizer from the list and update it.
+			log.Info("removing finalizer")
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
 		}
-
+		log.Info("done")
 		return reconcile.Result{}, nil
 	}
 
-	// If finalizer not present, add it; This is a new object
 	if !containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+		log.Info("adding finalizer")
 		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
 		err := r.Update(ctx, desired)
 		// Return either way because the update will
@@ -163,13 +159,14 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	log.Info("createOrUpdate api")
 	desired.Spec.APIID = desired.Status.ApiID
 	if err := universal_client.CreateOrUpdateAPI(r.UniversalClient, &desired.Spec); err != nil {
 		log.Error(err, "createOrUpdate failure")
-		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
 	}
 
+	log.Info("done")
 	return ctrl.Result{}, nil
 }
 
