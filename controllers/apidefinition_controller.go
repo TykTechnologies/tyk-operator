@@ -20,6 +20,9 @@ import (
 	"context"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 
 	v1 "k8s.io/api/core/v1"
@@ -170,9 +173,32 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	return ctrl.Result{}, nil
 }
 
+func ignoreIngressTemplatePredicate() predicate.Predicate {
+	labelFilter := func(labels map[string]string) bool {
+		if isIngressTemplate, ok := labels["isIngressTemplate"]; ok {
+			return isIngressTemplate == "true"
+		}
+		return false
+	}
+
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return labelFilter(e.Meta.GetLabels())
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return labelFilter(e.MetaNew.GetLabels())
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been confirmed deleted.
+			return labelFilter(e.Meta.GetLabels())
+		},
+	}
+}
+
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
+		WithEventFilter(ignoreIngressTemplatePredicate()).
 		Complete(r)
 }
 
