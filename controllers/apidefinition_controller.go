@@ -21,12 +21,17 @@ import (
 	"time"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -43,6 +48,7 @@ type ApiDefinitionReconciler struct {
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get
 
 func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
@@ -50,19 +56,17 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
 
-	log.Info("fetching apidefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
-	r.Recorder.Event(desired, "Normal", "ApiDefinition", "Reconciling")
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-
+		log.Info("resource being deleted")
 		// If our finalizer is present, need to delete from Tyk still
 		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
-
+			log.Info("checking linked security policies")
 			policies, err := r.UniversalClient.SecurityPolicy().All()
 			if err != nil {
 				log.Info(err.Error())
@@ -81,6 +85,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				}
 			}
 
+			log.Info("deleting api")
 			err = r.UniversalClient.Api().Delete(desired.Status.ApiID)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
@@ -93,24 +98,46 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				return ctrl.Result{}, err
 			}
 
-			// remove our finalizer from the list and update it.
+			log.Info("removing finalizer")
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
 		}
-
+		log.Info("done")
 		return reconcile.Result{}, nil
 	}
 
-	// If finalizer not present, add it; This is a new object
 	if !containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+		log.Info("adding finalizer")
 		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
 		err := r.Update(ctx, desired)
 		// Return either way because the update will
 		// issue a requeue anyway
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
+
+	for _, certID := range desired.Spec.CertificateSecretNames {
+		secret := v1.Secret{}
+		err := r.Get(ctx, types.NamespacedName{Name: certID, Namespace: namespacedName.Namespace}, &secret)
+		if err != nil {
+			log.Error(err, "requeueing because secret not found")
+			return reconcile.Result{}, err
+		}
+
+		pemCrtBytes, ok := secret.Data["tls.crt"]
+		if !ok {
+			log.Error(err, "requeueing because cert not found in secret")
+			return reconcile.Result{}, err
+		}
+
+		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(pemCrtBytes)
+		_, err = universal_client.GetCertificate(r.UniversalClient, tykCertID)
+
+		desired.Spec.Certificates = append(desired.Spec.Certificates, tykCertID)
+	}
+
+	desired.Spec.CertificateSecretNames = nil
 
 	r.applyDefaults(&desired.Spec)
 
@@ -133,19 +160,43 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	log.Info("createOrUpdate api")
 	desired.Spec.APIID = desired.Status.ApiID
 	if err := universal_client.CreateOrUpdateAPI(r.UniversalClient, &desired.Spec); err != nil {
 		log.Error(err, "createOrUpdate failure")
-		r.Recorder.Event(desired, "Warning", "ApiDefinition", "Create or Update API Definition")
 		return ctrl.Result{Requeue: true}, nil
 	}
 
+	log.Info("done")
 	return ctrl.Result{}, nil
+}
+
+func ignoreIngressTemplatePredicate() predicate.Predicate {
+	labelFilter := func(labels map[string]string) bool {
+		if isIngressTemplate, ok := labels["isIngressTemplate"]; ok {
+			return isIngressTemplate != "true"
+		}
+		return true
+	}
+
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return labelFilter(e.Meta.GetLabels())
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return labelFilter(e.MetaNew.GetLabels())
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been confirmed deleted.
+			return labelFilter(e.Meta.GetLabels())
+		},
+	}
 }
 
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
+		WithEventFilter(ignoreIngressTemplatePredicate()).
 		Complete(r)
 }
 

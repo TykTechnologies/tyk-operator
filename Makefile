@@ -58,13 +58,7 @@ deploy: manifests kustomize
 
 helm: kustomize
 	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
-	$(KUSTOMIZE) build config/helm > ./helm/templates/all.yaml
-	sed -i '' 's#replicas: 1#replicas: {{ \.Values.replicaCount }}#' helm/templates/all.yaml
-	sed -i '' 's#tyk-operator-conf#{{ \.Values\.confSecretName }}#' helm/templates/all.yaml
-	sed -i '' 's#tykio/tyk-operator:latest#{{ \.Values\.image\.repository }}:{{ \.Values\.image\.tag }}#' helm/templates/all.yaml
-	sed -i '' 's#imagePullPolicy: IfNotPresent#imagePullPolicy: {{ .Values.image.pullPolicy }}#' helm/templates/all.yaml
-	sed -i '' 's#name: default#name: {{ include "tyk-operator-helm\.serviceAccountName" \. }}#' helm/templates/all.yaml
-	sed -i '' 's#serviceAccountName: default#serviceAccountName: {{ include "tyk-operator-helm\.serviceAccountName" \. }}#' helm/templates/all.yaml
+	$(KUSTOMIZE) build config/helm |go run hack/pre_helm.go > ./helm/templates/all.yaml
 
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
@@ -127,7 +121,7 @@ endif
 
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
-bundle: manifests
+bundle: manifests kustomize
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)

@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	endpointAPIs = "/api/apis"
-	//endpointCerts    = "/tyk/certs"
+	endpointAPIs  = "/api/apis"
+	endpointCerts = "/api/certs"
 	//endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"
 	endpointWebhooks = "/api/hooks"
@@ -68,6 +68,14 @@ type Client struct {
 	insecureSkipVerify bool
 	log                logr.Logger
 	opts               *grequests.RequestOptions
+}
+
+func (c *Client) Organization() universal_client.UniversalOrganization {
+	return &Organization{c}
+}
+
+func (c *Client) Certificate() universal_client.UniversalCertificate {
+	return &Cert{c}
 }
 
 func (c *Client) Webhook() universal_client.UniversalWebhook {

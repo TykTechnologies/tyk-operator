@@ -69,10 +69,6 @@ type Client struct {
 	opts               *grequests.RequestOptions
 }
 
-func (c *Client) Webhook() universal_client.UniversalWebhook {
-	panic("implement me")
-}
-
 func (c *Client) Api() universal_client.UniversalApi {
 	return Api{Client: c}
 }
@@ -105,4 +101,19 @@ func (c *Client) HotReload() error {
 	}
 
 	return nil
+}
+
+// TODO: Webhook Requires implementation
+func (c *Client) Webhook() universal_client.UniversalWebhook {
+	panic("implement me")
+}
+
+// TODO: Organization requires implementation
+func (c *Client) Organization() universal_client.UniversalOrganization {
+	panic("implement me")
+}
+
+// TODO: Certificate Requires implementation
+func (c *Client) Certificate() universal_client.UniversalCertificate {
+	panic("implement me")
 }

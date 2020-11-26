@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: httpbin-ingress
+  annotations:
+    cert-manager.io/issuer: selfsigned-issuer
+spec:
+  ingressClassName: "ingress.tyk.io"
+  tls:
+    - secretName: foo
+      hosts:
+        - example.com
+        - example2.com
+        - example3.com
+    - secretName: bar
+      hosts:
+        - abc.com
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dummy
