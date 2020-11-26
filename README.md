@@ -247,7 +247,7 @@ use-case so that we may prioritise accordingly.
 ## IDE Integration
 This section details the steps required to add K8s extensions to popular IDEs.
 
-<details><summary>VS Code</summary>
+**VS Code**
 <p>
  
   [Watch video tutorial here](http://www.youtube.com/watch?v=Kdrfp6aAZEU)
@@ -262,7 +262,7 @@ This section details the steps required to add K8s extensions to popular IDEs.
   
   
 </p>
-</detail>
+
 
 ## Contributing
 
