@@ -132,10 +132,12 @@ bundle: manifests kustomize
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
+.PHONY: cross-build-image
 cross-build-image:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o manager.linux main.go
 	docker build -f cross.Dockerfile . -t ${IMG}
 
+.PHONY: cross-build-image
 install-cert-manager:
 	@echo "===> installing cert-manager"
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
@@ -143,11 +145,13 @@ install-cert-manager:
 	kubectl rollout status  deployment/cert-manager-cainjector -n cert-manager
 	kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
 
+.PHONY: install-operator-helm
 install-operator-helm: cross-build-image manifests helm
 	@echo "===> installing operator with helmr"
-	kind load docker-image tykio/tyk-operator:test
+	kind load docker-image ${IMG}
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
+.PHONY: setup-pro
 setup-pro:
 	@echo "===> installing tyk-pro"
 	sh ./ci/deploy_tyk_pro.sh
@@ -157,7 +161,19 @@ setup-pro:
 	@echo "===> setting operator dash secrets"
 	sh ./ci/operator_secrets.sh
 
+.PHONY: setup-ce
+setup-ce:
+	@echo "===> installing tyk-ce"
+	sh ./ci/deploy_tyk_ce.sh
+	@echo "setting operator secrets"
+	sh ./ci/operator_ce_secrets.sh
+
+.PHONY: boot-pro
 boot-pro: install-cert-manager setup-pro install-operator-helm
 	@echo "******** Successful boot strapped pro dev env ************"
+
+.PHONY: boot-ce
+boot-ce: install-cert-manager setup-ce install-operator-helm
+	@echo "******** Successful boot strapped ce dev env ************"
 
 
