@@ -48,4 +48,4 @@ jobs:
         shell: bash
         run: |
           go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && TYK_MODE=pro godog --strict -t ~@undone
+          cd bdd && TYK_MODE=ce godog --strict -t ~@undone
