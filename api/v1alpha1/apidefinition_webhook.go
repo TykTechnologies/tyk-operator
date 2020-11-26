@@ -128,7 +128,7 @@ func (in *ApiDefinition) validate() error {
 	if spec.UseKeylessAccess {
 		if spec.UseStandardAuth {
 			all = append(all,
-				field.Forbidden(path("use_standard_auth"), "use_keyless_access & use_standard_auth"),
+				field.Forbidden(path("use_standard_auth"), "use_keyless_access and use_standard_auth cannot be set together"),
 			)
 		}
 	} else {
