@@ -1,8 +1,9 @@
 package dashboard_client
 
 import (
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"testing"
+
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 
 	_ "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
@@ -87,7 +88,7 @@ func TestWebhook_Update(t *testing.T) {
 	}
 
 	// Do the update
-	methodName := "DELETE"
+	methodName := v1.WebhookMethod("DELETE")
 	newWebhook.Method = methodName
 	err = c.Webhook().Update(webhookNamespacedName, newWebhook)
 	if err != nil {

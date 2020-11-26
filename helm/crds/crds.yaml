@@ -1673,6 +1673,13 @@ spec:
               description: ApiModel     `bson:"api_model,omitempty" json:"api_model,omitempty"` System generated resource. represents the ID to use in API  calls
               type: string
             method:
+              description: WebhookMethod supported webhook methods  used in webhook
+              enum:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
               type: string
             name:
               description: System generated resource, will be set to the {namespace/name} of the CRD

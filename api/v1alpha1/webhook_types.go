@@ -23,6 +23,10 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// WebhookMethod supported webhook methods  used in webhook
+// +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE
+type WebhookMethod string
+
 // WebhookSpec defines the desired state of Webhook
 type WebhookSpec struct {
 	//ApiModel     `bson:"api_model,omitempty" json:"api_model,omitempty"`
@@ -32,7 +36,7 @@ type WebhookSpec struct {
 	OrgID string `bson:"org_id" json:"org_id,omitempty"`
 	// System generated resource, will be set to the {namespace/name} of the CRD
 	Name         string            `bson:"name" json:"name,omitempty"`
-	Method       string            `bson:"method" json:"method"`
+	Method       WebhookMethod     `bson:"method" json:"method"`
 	TargetPath   string            `bson:"target_path" json:"target_path"`
 	TemplatePath string            `bson:"template_path" json:"template_path,omitempty"`
 	HeaderList   map[string]string `bson:"header_map" json:"header_map,omitempty"`
