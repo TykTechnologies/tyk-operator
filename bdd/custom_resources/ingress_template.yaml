@@ -1,0 +1,14 @@
+# Example ingress template.
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: https-ingress-template
+  labels:
+    # this ensures that the API is not loaded into Tyk & is only
+    isIngressTemplate: "true"
+spec:
+  name: https-ingress-template
+  protocol: http
+  proxy:
+    listen_path: /dummy
+    target_url: http://dummy.com

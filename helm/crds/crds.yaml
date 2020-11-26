@@ -214,6 +214,16 @@ spec:
               required:
               - cache_timeout
               type: object
+            certificate_secret_names:
+              description: CertificateSecretNames represents the names of the secrets that the controller should look for in the in the current namespace which contain the certificates.
+              items:
+                type: string
+              type: array
+            certificates:
+              description: Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint. Use CertificateSecretNames if using cert-manager
+              items:
+                type: string
+              type: array
             custom_middleware:
               properties:
                 auth_check:

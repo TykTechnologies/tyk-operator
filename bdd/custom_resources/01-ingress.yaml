@@ -1,0 +1,90 @@
+# example ingress resource
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test.01.ingress
+spec:
+  ingressClassName: "test.01.ingress.class"
+  rules:
+    - http:
+        paths:
+          # creates 2 APIDefinitions to configure the Gateway, using the template acquired from IngressClass: test.01.ingress.class
+          - path: /httpbin
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
+          - path: /petstore
+            pathType: Prefix
+            backend:
+              service:
+                name: petstore
+                port:
+                  number: 8000
+---
+
+# example 2nd ingress resource
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test.02.ingress
+spec:
+  # multiple ingress resources can share the same ingress class
+  ingressClassName: "test.01.ingress.class"
+  rules:
+    - http:
+        paths:
+          - path: /trevorblades
+            pathType: Prefix
+            backend:
+              service:
+                name: trevorblades
+                port:
+                  number: 8000
+---
+# example ingress class resource
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: test.01.ingressclass
+spec:
+  # this ingress class is managed by tyk-operator
+  controller: tyk.tyk.io/tyk-operator
+  parameters:
+    apiGroup: tyk
+    kind: ApiDefinition
+    name: http-ingress-template
+---
+# example template apidef for http
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: http-ingress-template
+  labels:
+    isIngressTemplate: "true"
+spec:
+  name: http-ingress-template
+  protocol: http
+  listen_port: 80
+  proxy:
+    # placeholder stuff here
+    listen_path: /dummy
+    target_url: http://dummy.com
+---
+# example template apidef for https
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: https-ingress-template
+  labels:
+    isIngressTemplate: "true"
+spec:
+  name: https-ingress-template
+  protocol: http
+  listen_port: 443
+  proxy:
+    # placeholder stuff here
+    listen_path: /dummy
+    target_url: http://dummy.com
