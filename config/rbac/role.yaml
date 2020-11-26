@@ -7,7 +7,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - kubernetes.io
+  - ""
   resources:
   - secrets
   verbs:

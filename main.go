@@ -146,15 +146,15 @@ func main() {
 	//	os.Exit(1)
 	//}
 
-	if err = (&controllers.SecretCertReconciler{
-		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("SecretCert"),
-		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
-		os.Exit(1)
-	}
+	//if err = (&controllers.SecretCertReconciler{
+	//	Client:          mgr.GetClient(),
+	//	Log:             ctrl.Log.WithName("controllers").WithName("SecretCert"),
+	//	Scheme:          mgr.GetScheme(),
+	//	UniversalClient: tykClient,
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
+	//	os.Exit(1)
+	//}
 
 	if err = (&controllers.SecurityPolicyReconciler{
 		Client:          mgr.GetClient(),

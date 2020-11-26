@@ -42,7 +42,7 @@ type SecretCertReconciler struct {
 	UniversalClient universal_client.UniversalClient
 }
 
-// +kubebuilder:rbac:groups=kubernetes.io,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()

@@ -39,7 +39,7 @@ metadata:
   name: '{{ include "tyk-operator-helm.fullname" . }}-manager-role'
 rules:
 - apiGroups:
-  - kubernetes.io
+  - ""
   resources:
   - secrets
   verbs:
