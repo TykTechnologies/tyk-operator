@@ -1,16 +1,11 @@
 package dashboard_client
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/levigross/grequests"
-)
-
-var (
-	apiCollisionError = errors.New("api id, listen path or slug collision")
 )
 
 type Api struct {

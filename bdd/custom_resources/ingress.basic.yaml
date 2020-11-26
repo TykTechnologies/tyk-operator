@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-basic
+spec:
+  ingressClassName: "test.01.ingressclass"
+  rules:
+    - http:
+        paths:
+          - path: /foo
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
+---
+# example ingress class resource
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: test.01.ingressclass
+spec:
+  # this ingress class is managed by tyk-operator
+  controller: tyk.io/tyk-operator
+  parameters:
+    apiGroup: tyk.tyk.io
+    kind: ApiDefinition
+    name: http-ingress-template
+---
+# example template apidef for http
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: http-ingress-template
+  labels:
+    isIngressTemplate: "true"
+spec:
+  name: http-ingress-template
+  protocol: http
+  listen_port: 80
+  proxy:
+    # placeholder stuff here
+    listen_path: /dummy
+    target_url: http://dummy.com
