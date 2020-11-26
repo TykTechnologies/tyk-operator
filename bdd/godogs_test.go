@@ -183,9 +183,6 @@ func (s *store) iRequestEndpointWithHeader(path string, headerKey string, header
 	}
 	defer res.Body.Close()
 
-	//bodyBytes, _ := httputil.DumpResponse(res, true)
-	//println(string(bodyBytes))
-
 	s.responseCode = res.StatusCode
 
 	for h, v := range res.Header {
@@ -289,10 +286,12 @@ func (s *store) kubectlFile(action string, fileName string, expected string, tim
 	cmd = exec.CommandContext(ctx, app, "get", "tykapis", "-n", namespace)
 	output, err = cmd.Output()
 	if err != nil {
+		println(string(output))
 		return err
 	}
 
-	println("tykapis:\n", string(output))
+	// TODO: need to wait for a bit for the reconciler to kick in
+	time.Sleep(time.Second * 5)
 
 	return nil
 }
