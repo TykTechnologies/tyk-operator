@@ -153,7 +153,7 @@ install-operator-helm: cross-build-image manifests helm
 
 .PHONY: scrap
 scrap: cross-build-image manifests helm
-	@echo "===> re installing operator with helmr"
+	@echo "===> re installing operator with helm"
 	kind load docker-image ${IMG}
 	helm uninstall ci -n tyk-operator-system
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
