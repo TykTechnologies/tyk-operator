@@ -560,7 +560,7 @@ curl http://localhost:8000/httpbin/headers
 Run this in a separate terminal
 
 ```
-kubectl port-forward svc/gw 8000:8000  -n ykce-control-plane
+kubectl port-forward svc/gw 8000:8000  -n tykce-control-plane
 ```
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
