@@ -152,28 +152,28 @@ install-operator-helm: cross-build-image manifests helm
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: setup-pro
-setup-pro:
+setup-pro:  install-cert-manager
 	@echo "===> installing tyk-pro"
 	sh ./ci/deploy_tyk_pro.sh
 	@echo "===> bootstrapping tyk dashboard (initial org + user)"
 	sh ./ci/bootstrap_org.sh
 	cat bootstrapped
 	@echo "===> setting operator dash secrets"
-	sh ./ci/operator_secrets.sh
+	sh ./ci/operator_pro_secrets.sh
 
 .PHONY: setup-ce
-setup-ce:
+setup-ce: install-cert-manager
 	@echo "===> installing tyk-ce"
 	sh ./ci/deploy_tyk_ce.sh
 	@echo "setting operator secrets"
 	sh ./ci/operator_ce_secrets.sh
 
 .PHONY: boot-pro
-boot-pro: install-cert-manager setup-pro install-operator-helm
+boot-pro: setup-pro install-operator-helm
 	@echo "******** Successful boot strapped pro dev env ************"
 
 .PHONY: boot-ce
-boot-ce: install-cert-manager setup-ce install-operator-helm
+boot-ce:setup-ce install-operator-helm
 	@echo "******** Successful boot strapped ce dev env ************"
 
 

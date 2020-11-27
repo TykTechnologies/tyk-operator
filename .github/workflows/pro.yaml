@@ -1,7 +1,6 @@
 name: Tyk Pro Tests
 
-on:
-  pull_request
+on: pull_request
 
 jobs:
   pro-tests:
@@ -48,7 +47,7 @@ jobs:
           cat bootstrapped
 
           echo "setting operator dash secrets"
-          sh ./ci/operator_secrets.sh
+          sh ./ci/operator_pro_secrets.sh
       - name: deploying tyk-operator
         shell: bash
         run: helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system
