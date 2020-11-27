@@ -634,3 +634,26 @@ curl http://localhost:8000/httpbin/headers
 </pre>
 </p>
 </details>
+
+---
+
+## Scrapbook
+
+After making changes to the controller
+
+```
+make scrap IMG=tykio/tyk-operator:test
+```
+This will 
+
+- generate manifests
+- build and tag the new changes into a docker image
+- load the image to kind cluster
+- uninstall the previous controller deployment
+- install the new controller  deployment
+
+
+
+### Highlights
+
+1. The Tyk-Operator uses the [finalizer](https://book.kubebuilder.io/reference/using-finalizers.html) pattern for deleting CRs from the cluster.
