@@ -34,7 +34,8 @@ jobs:
         shell: bash
         run: |
           make cross-build-image IMG=tykio/tyk-operator:test
-          kind load docker-image tykio/tyk-operator:test --name chart-testing
+          docker save --output tyk-operator-test.tar tykio/tyk-operator:test
+          k3s ctr images import tyk-operator-test.tar
       - name: installing cert-manager
         shell: bash
         run: kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
