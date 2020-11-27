@@ -1,210 +1,300 @@
 # Local Development Environment
 
-## Prerequisites
+__NOTE__: These instructions are for kind clusters which is the recommended way
+for development
 
-- Have a Kubernetes (v.18.0+) cluster running locally
+## Prerequisites
+- [kind](https://kind.sigs.k8s.io/)
+- [helm](https://helm.sh/)
+- [Docker](https://www.docker.com/) or [podman](https://podman.io/)
 - Golang (1.15.0+)
 
-## Helpful
+### 0 Create cluster
 
-- https://ngrok.com/
-- yq https://mikefarah.gitbook.io/yq/
+```shell
+kind create cluster --config hack/kind.yml
+```
 
-### 1. Start or Connect to Tyk
+This will create a 3 node cluster. 1 control-plane and 2 worker nodes.
 
-Decide whether you wish to run against a Pro or OSS installation.
-You may use **any** existing Tyk installation. Whether running in-cluster or on host machine, or in Tyk Cloud.
+### 1. boot strap the dev environment
 
 The operator needs a couple of env vars so that it knows how to speak to the Tyk apis.
 
-```
+```shell
 export TYK_AUTH=REPLACE_WITH_DASH_USER_KEY_OR_FOR_OSS_GW_SECRET
 export TYK_ORG=REPLACE_WITH_ORG_ID
 export TYK_MODE=pro|oss
 export TYK_URL=REPLACE_WITH_DASHBOARD_URL_OR_GATEWAY_ADMIN_URL
 ```
 
-#### Pro inside cluster
+#### Booting tyk community edition
+
+```shell
+make boot-ce IMG=tykio/tyk-operator:test
+```
+This will 
+- deploy cert-manager
+- deploy tyk-ce
+- setup secret that will be used by the operator to access the deployed gateway
+
+
+#### Booting tyk Pro editio
 
 Set your license key inside an env var.
 ```
 export TYK_DB_LICENSEKEY=REPLACE.WITH.YOUR.LICENSE
 ```
 
-Deploy tyk using the CI script.
-```
-sh ./ci/deploy_tyk_pro.sh
+```shell
+make boot-pro IMG=tykio/tyk-operator:test
 ```
 
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
-
-```
+<pre>
+===> installing cert-manager
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
+customresourcedefinition.apiextensions.k8s.io/certificaterequests.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/certificates.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/challenges.acme.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/clusterissuers.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/issuers.cert-manager.io created
+customresourcedefinition.apiextensions.k8s.io/orders.acme.cert-manager.io created
+namespace/cert-manager created
+serviceaccount/cert-manager-cainjector created
+serviceaccount/cert-manager created
+serviceaccount/cert-manager-webhook created
+clusterrole.rbac.authorization.k8s.io/cert-manager-cainjector created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-issuers created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-certificates created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-orders created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-challenges created
+clusterrole.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
+clusterrole.rbac.authorization.k8s.io/cert-manager-view created
+clusterrole.rbac.authorization.k8s.io/cert-manager-edit created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-cainjector created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-issuers created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-clusterissuers created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-certificates created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-orders created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-challenges created
+clusterrolebinding.rbac.authorization.k8s.io/cert-manager-controller-ingress-shim created
+role.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
+role.rbac.authorization.k8s.io/cert-manager:leaderelection created
+role.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
+rolebinding.rbac.authorization.k8s.io/cert-manager-cainjector:leaderelection created
+rolebinding.rbac.authorization.k8s.io/cert-manager:leaderelection created
+rolebinding.rbac.authorization.k8s.io/cert-manager-webhook:dynamic-serving created
+service/cert-manager created
+service/cert-manager-webhook created
+deployment.apps/cert-manager-cainjector created
+deployment.apps/cert-manager created
+deployment.apps/cert-manager-webhook created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
+validatingwebhookconfiguration.admissionregistration.k8s.io/cert-manager-webhook created
+kubectl rollout status  deployment/cert-manager -n cert-manager
+Waiting for deployment "cert-manager" rollout to finish: 0 of 1 updated replicas are available...
+deployment "cert-manager" successfully rolled out
+kubectl rollout status  deployment/cert-manager-cainjector -n cert-manager
+Waiting for deployment "cert-manager-cainjector" rollout to finish: 0 of 1 updated replicas are available...
+deployment "cert-manager-cainjector" successfully rolled out
+kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
+deployment "cert-manager-webhook" successfully rolled out
+===> installing tyk-pro
 sh ./ci/deploy_tyk_pro.sh
 creating namespace tykpro-control-plane
+creating namespace tykpro-control-plane
 namespace/tykpro-control-plane created
+deploying gRPC plugin server
+service/grpc-plugin created
+deployment.apps/grpc-plugin created
+Waiting for deployment spec update to be observed...
+Waiting for deployment "grpc-plugin" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "grpc-plugin" rollout to finish: 0 of 1 updated replicas are available...
+deployment "grpc-plugin" successfully rolled out
 deploying databases
 service/mongo created
 deployment.apps/mongo created
 deployment.apps/redis created
 service/redis created
 waiting for redis
-deployment.apps/redis condition met
+Waiting for deployment "redis" rollout to finish: 0 of 1 updated replicas are available...
+deployment "redis" successfully rolled out
 waiting for mongo
-deployment.apps/mongo condition met
+Waiting for deployment "mongo" rollout to finish: 0 of 1 updated replicas are available...
+deployment "mongo" successfully rolled out
 creating configmaps
 configmap/dash-conf created
 configmap/tyk-conf created
 setting dashboard secrets
 secret/dashboard created
-"OBFUSCATED"
-deploying dashboard
+ZXlKaGJHY2lPaUpTVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmhiR3h2ZDJWa1gyNXZaR1Z6SWpvaU1USmlZek5tTkRJdFltSmxOeTAwWkRWaExUUXlORGd0TlRBMk1XTXhZV1V5TjJZd0xERmpPVFprWVRZMUxXVmhOVEF0TkdVM01TMDNNVFJtTFdFMlpUZ3dOVGcxWXpNMlpDd3pNR013TVdJM05DMWhPREF5TFRReU56TXRORGMzWlMxak0ySmtOREU0T0daaE5tSXNNRFl3TXpZd00yRXRNRGxtWVMwME1HRm1MVFkwWmpRdE56VTNabVE0TWpRNFkySTVMR0V5TVdKaE1UaGxMVGMwWVdRdE5HVXhZeTAwTkdJMkxXSmlNamswWXpVeU9EazBaU3hpWVRObU1UazJOaTB4TURWbUxUUmxOV010Tm1FM1pDMDBNV015TnpobU5UZzJOMlFzTkRkaU56RTJORGt0TkRBNVpDMDBNMkk1TFRZNVltTXROR0V3WmpVNVl6VTNOakl5TERVeE9UUXpOR0V6TFRZeE9XRXRORGRsWmkwMlpqZGpMVFUyTlRGaE1qZGtPV1kzTlN3M09UTTVNRGN5TkMxbE56TTFMVFJoTlRZdE5qWXhOQzFoWmpBMlpEYzVPV0ZrTXpNc1lqRmxOemN4WXpRdE1XRTJaUzAwWkdaa0xUWTFORGt0WXpKbFlUaGtOV0l6WWpJMElpd2laWGh3SWpveE5qQTROekEyTURjeExDSnBZWFFpT2pFMk1EWXhNVFF3TnpFc0ltOTNibVZ5SWpvaU5UYzNPVGN4TVRrME5XWTVNbVUyTmpnNU1EQXdNVEkzSWl3aWMyTnZjR1VpT2lKdGRXeDBhVjkwWldGdExISmlZV01zWjNKaGNHZ2lMQ0oySWpvaU1pSjkuZ2VsUC1YRmFqUVNxOGxGSUFvU0pfQWZLU1QwTm9MNnNEdUdMd056d1NSS1Z6bHJOUTFLWmFBU045UlAycjR4Mm5nNk1uYWhFdUZYamxOQW95Z1lxWENRdWpoYi1PWlVQWmMtVmZaYThYNVM3eTUtNGZMNi1ISUxnWlphczUxMEJxcjlsMXhobFh1WkM0WTA0TWdvVkRkVzBzV05mTUtEOWE3cXU1X3A4T3d5ZzRzODgtRmV5bE9hbWVaNnZCVXBmV2pZVnlzaUZIeEpRNkYzemoxV0ZjcFNkZWxVMU9GVHNmRUFjaENEeXh5Z0U3OTA4SGQ3eW5nb3ItZlg5UnVxdjFsLW9MS1VLZGJLYnhfQm9kaTRtQUdWbmVQQVVFTWlnbHZ4VkM5aFdRenNPQ1NtbEpQY05FX2c3U2k1Z2NCNkR6SGVQcFFsYzRTN1JqT3lEcTNIdUFndeploying dashboard
 service/dashboard created
 deployment.apps/dashboard created
-deployment.apps/dashboard condition met
+Waiting for deployment "dashboard" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "dashboard" rollout to finish: 0 of 1 updated replicas are available...
+deployment "dashboard" successfully rolled out
 deploying gateway
 service/tyk created
+service/gw created
 deployment.apps/tyk created
-deployment.apps/tyk condition met
+Waiting for deployment "tyk" rollout to finish: 0 of 1 updated replicas are available...
+deployment "tyk" successfully rolled out
 dashboard logs
-time="Oct 15 09:47:15" level=warning msg="toth/tothic: no TYK_IB_SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store."
+time="Nov 27 09:04:45" level=warning msg="toth/tothic: no TYK_IB_SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store."
 
-time="Oct 15 09:47:15" level=info msg="Tyk Analytics Dashboard v3.0.1"
-time="Oct 15 09:47:15" level=info msg="Copyright Tyk Technologies Ltd 2020"
-time="Oct 15 09:47:15" level=info msg="https://www.tyk.io"
-time="Oct 15 09:47:15" level=info msg="Using /etc/tyk-dashboard/dash.json for configuration"
-time="Oct 15 09:47:15" level=info msg="Listening on port: 3000"
-time="Oct 15 09:47:15" level=info msg="Connecting to MongoDB: [mongo.tykpro-control-plane.svc.cluster.local:27017]"
-time="Oct 15 09:47:15" level=info msg="Mongo connection established"
-time="Oct 15 09:47:15" level=info msg="Creating new Redis connection pool"
-time="Oct 15 09:47:15" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:15" level=info msg="Creating new Redis connection pool"
-time="Oct 15 09:47:15" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:15" level=info msg="Creating new Redis connection pool"
-time="Oct 15 09:47:15" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:15" level=info msg="Creating new Redis connection pool"
-time="Oct 15 09:47:15" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:15" level=info msg="Licensing: Setting new license"
-time="Oct 15 09:47:15" level=info msg="Licensing: Registering nodes..."
-time="Oct 15 09:47:15" level=info msg="Adding available nodes..."
-time="Oct 15 09:47:15" level=info msg="Licensing: Checking capabilities"
-time="Oct 15 09:47:15" level=info msg="Audit log is disabled in config"
-time="Oct 15 09:47:15" level=info msg="Creating new Redis connection pool"
-time="Oct 15 09:47:15" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:15" level=info msg="--> Standard listener (http) for dashboard and API"
-time="Oct 15 09:47:15" level=info msg="Creating new Redis connection pool"
-time="Oct 15 09:47:15" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:15" level=info msg="Starting zeroconf heartbeat"
-time="Oct 15 09:47:15" level=info msg="Starting notification handler for gateway cluster"
-time="Oct 15 09:47:15" level=info msg="Loading routes..."
-time="Oct 15 09:47:15" level=info msg="Initializing Internal TIB"
-time="Oct 15 09:47:15" level=info msg="Initializing Identity Cache" prefix="TIB INITIALIZER"
-time="Oct 15 09:47:15" level=info msg="Set DB" prefix="TIB REDIS STORE"
-time="Oct 15 09:47:15" level=info msg="Using internal Identity Broker. Routes are loaded and available."
+time="Nov 27 09:04:45" level=info msg="Tyk Analytics Dashboard v3.0.1"
+time="Nov 27 09:04:45" level=info msg="Copyright Tyk Technologies Ltd 2020"
+time="Nov 27 09:04:45" level=info msg="https://www.tyk.io"
+time="Nov 27 09:04:45" level=info msg="Using /etc/tyk-dashboard/dash.json for configuration"
+time="Nov 27 09:04:45" level=info msg="Listening on port: 3000"
+time="Nov 27 09:04:45" level=info msg="Connecting to MongoDB: [mongo.tykpro-control-plane.svc.cluster.local:27017]"
+time="Nov 27 09:04:45" level=info msg="Mongo connection established"
+time="Nov 27 09:04:45" level=info msg="Creating new Redis connection pool"
+time="Nov 27 09:04:45" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:04:45" level=info msg="Creating new Redis connection pool"
+time="Nov 27 09:04:45" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:04:45" level=info msg="Creating new Redis connection pool"
+time="Nov 27 09:04:45" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:04:45" level=info msg="Creating new Redis connection pool"
+time="Nov 27 09:04:45" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:04:45" level=info msg="Licensing: Setting new license"
+time="Nov 27 09:04:45" level=info msg="Licensing: Registering nodes..."
+time="Nov 27 09:04:45" level=info msg="Adding available nodes..."
+time="Nov 27 09:04:45" level=info msg="Licensing: Checking capabilities"
+time="Nov 27 09:04:45" level=info msg="Audit log is disabled in config"
+time="Nov 27 09:04:45" level=info msg="Creating new Redis connection pool"
+time="Nov 27 09:04:45" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:04:45" level=info msg="--> Standard listener (http) for dashboard and API"
+time="Nov 27 09:04:45" level=info msg="Starting zeroconf heartbeat"
+time="Nov 27 09:04:45" level=info msg="Starting notification handler for gateway cluster"
+time="Nov 27 09:04:45" level=info msg="Loading routes..."
+time="Nov 27 09:04:45" level=info msg="Creating new Redis connection pool"
+time="Nov 27 09:04:45" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:04:45" level=info msg="Initializing Internal TIB"
+time="Nov 27 09:04:45" level=info msg="Initializing Identity Cache" prefix="TIB INITIALIZER"
+time="Nov 27 09:04:45" level=info msg="Set DB" prefix="TIB REDIS STORE"
+time="Nov 27 09:04:45" level=info msg="Using internal Identity Broker. Routes are loaded and available."
 gateway logs
-time="Oct 15 09:47:18" level=info msg="Tyk API Gateway v3.0.0" prefix=main
-time="Oct 15 09:47:18" level=warning msg="Insecure configuration allowed" config.allow_insecure_configs=true prefix=checkup
-time="Oct 15 09:47:18" level=info msg="Rich plugins are disabled" prefix=coprocess
-time="Oct 15 09:47:18" level=info msg="Starting Poller" prefix=host-check-mgr
-time="Oct 15 09:47:18" level=info msg="PIDFile location set to: ./tyk-gateway.pid" prefix=main
-time="Oct 15 09:47:18" level=info msg="Initialising Tyk REST API Endpoints" prefix=main
-time="Oct 15 09:47:18" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:18" level=info msg="--> Standard listener (http)" port=":8081" prefix=main
-time="Oct 15 09:47:18" level=warning msg="Starting HTTP server on:[::]:8081" prefix=main
-time="Oct 15 09:47:18" level=info msg="--> Standard listener (http)" port=":8080" prefix=main
-time="Oct 15 09:47:18" level=warning msg="Starting HTTP server on:[::]:8080" prefix=main
-time="Oct 15 09:47:18" level=info msg="Registering gateway node with Dashboard" prefix=dashboard
-time="Oct 15 09:47:18" level=info msg="--> [REDIS] Creating single-node client"
-time="Oct 15 09:47:18" level=info msg="Node Registered" id=1290bd4f-baca-4a42-4ab1-b7f96c80d85c prefix=dashboard
-time="Oct 15 09:47:18" level=info msg="Initialising distributed rate limiter" prefix=main
-time="Oct 15 09:47:18" level=info msg="Tyk Gateway started (v3.0.0)" prefix=main
-time="Oct 15 09:47:18" level=info msg="--> Listening on address: (open interface)" prefix=main
-time="Oct 15 09:47:18" level=info msg="--> Listening on port: 8080" prefix=main
-time="Oct 15 09:47:18" level=info msg="--> PID: 1" prefix=main
-time="Oct 15 09:47:18" level=info msg="Starting gateway rate limiter notifications..."
-time="Oct 15 09:47:18" level=info msg="Loading policies" prefix=main
-time="Oct 15 09:47:18" level=info msg="Using Policies from Dashboard Service" prefix=main
-time="Oct 15 09:47:18" level=info msg="Mutex lock acquired... calling" prefix=policy
-time="Oct 15 09:47:18" level=info msg="Calling dashboard service for policy list" prefix=policy
-time="Oct 15 09:47:18" level=info msg="Processing policy list" prefix=policy
-time="Oct 15 09:47:18" level=info msg="Policies found (0 total):" prefix=main
-time="Oct 15 09:47:18" level=info msg="Detected 0 APIs" prefix=main
-time="Oct 15 09:47:18" level=warning msg="No API Definitions found, not reloading" prefix=main
+time="Nov 27 09:06:01" level=info msg="Tyk API Gateway v3.0.0" prefix=main
+time="Nov 27 09:06:01" level=warning msg="Insecure configuration allowed" config.allow_insecure_configs=true prefix=checkup
+time="Nov 27 09:06:01" level=info msg="gRPC dispatcher was initialized" prefix=coprocess
+time="Nov 27 09:06:01" level=info msg="PIDFile location set to: ./tyk-gateway.pid" prefix=main
+time="Nov 27 09:06:01" level=info msg="Initialising Tyk REST API Endpoints" prefix=main
+time="Nov 27 09:06:01" level=info msg="--> Standard listener (http)" port=":8001" prefix=main
+time="Nov 27 09:06:01" level=warning msg="Starting HTTP server on:[::]:8001" prefix=main
+time="Nov 27 09:06:01" level=info msg="--> Standard listener (http)" port=":8000" prefix=main
+time="Nov 27 09:06:01" level=warning msg="Starting HTTP server on:[::]:8000" prefix=main
+time="Nov 27 09:06:01" level=info msg="Registering gateway node with Dashboard" prefix=dashboard
+time="Nov 27 09:06:01" level=info msg="Starting Poller" prefix=host-check-mgr
+time="Nov 27 09:06:01" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:06:01" level=info msg="--> [REDIS] Creating single-node client"
+time="Nov 27 09:06:01" level=info msg="Node Registered" id=0603603a-09fa-40af-64f4-757fd8248cb9 prefix=dashboard
+time="Nov 27 09:06:01" level=info msg="Initialising distributed rate limiter" prefix=main
+time="Nov 27 09:06:01" level=info msg="Tyk Gateway started (v3.0.0)" prefix=main
+time="Nov 27 09:06:01" level=info msg="--> Listening on address: (open interface)" prefix=main
+time="Nov 27 09:06:01" level=info msg="--> Listening on port: 8000" prefix=main
+time="Nov 27 09:06:01" level=info msg="--> PID: 1" prefix=main
+time="Nov 27 09:06:01" level=info msg="Starting gateway rate limiter notifications..."
+time="Nov 27 09:06:01" level=info msg="Loading policies" prefix=main
+time="Nov 27 09:06:01" level=info msg="Using Policies from Dashboard Service" prefix=main
+time="Nov 27 09:06:01" level=info msg="Mutex lock acquired... calling" prefix=policy
+time="Nov 27 09:06:01" level=info msg="Calling dashboard service for policy list" prefix=policy
+time="Nov 27 09:06:01" level=info msg="Processing policy list" prefix=policy
+time="Nov 27 09:06:01" level=info msg="Policies found (0 total):" prefix=main
+time="Nov 27 09:06:01" level=info msg="Detected 0 APIs" prefix=main
+time="Nov 27 09:06:01" level=warning msg="No API Definitions found, not reloading" prefix=main
 deploying httpbin as mock upstream to default ns
-service/httpbin unchanged
+service/httpbin created
 deployment.apps/httpbin created
-deployment.apps/httpbin condition met
-```
-
-</p>
-</details>
-
-Tyk Pro will be installed into the `tykpro-control-plane` namespace.
-
-```
-kubectl get all -n tykpro-control-plane
-NAME                             READY   STATUS    RESTARTS   AGE
-pod/dashboard-854554d94d-w6m8d   1/1     Running   0          3m55s
-pod/mongo-57d77d59-4k8qt         1/1     Running   0          3m58s
-pod/redis-7f7887fd75-smmfs       1/1     Running   0          3m58s
-pod/tyk-5b78db8687-ddhw8         1/1     Running   0          3m52s
-
-NAME                TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
-service/dashboard   LoadBalancer   10.107.79.160    <pending>     3000:31458/TCP   3m55s
-service/mongo       ClusterIP      10.103.163.183   <none>        27017/TCP        3m58s
-service/redis       ClusterIP      10.103.92.28     <none>        6379/TCP         3m58s
-service/tyk         LoadBalancer   10.103.134.195   <pending>     8080:31228/TCP   3m52s
-
-NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/dashboard   1/1     1            1           3m55s
-deployment.apps/mongo       1/1     1            1           3m58s
-deployment.apps/redis       1/1     1            1           3m58s
-deployment.apps/tyk         1/1     1            1           3m52s
-
-NAME                                   DESIRED   CURRENT   READY   AGE
-replicaset.apps/dashboard-854554d94d   1         1         1       3m55s
-replicaset.apps/mongo-57d77d59         1         1         1       3m58s
-replicaset.apps/redis-7f7887fd75       1         1         1       3m58s
-replicaset.apps/tyk-5b78db8687         1         1         1       3m52s
-```
-
-Bootstrap Tyk Dashboard
-
-```
+Waiting for deployment "httpbin" rollout to finish: 0 of 1 updated replicas are available...
+deployment "httpbin" successfully rolled out
+===> bootstrapping tyk dashboard (initial org + user)
 sh ./ci/bootstrap_org.sh
-```
-
-A file will be created `./bootstrapped`
-
-```
-sh ./ci/bootstrap_org.sh 
-pop-os% cat ./bootstrapped 
-[Oct 15 09:52:24]  WARN toth/tothic: no TYK_IB_SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store.
+cat bootstrapped
+[Nov 27 09:08:31]  WARN toth/tothic: no TYK_IB_SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store.
 
 Loading configuration from /etc/tyk-dashboard/dash.json
 
 *************** ORGANISATIONS ***************
-ORG NAME        ORG ID
+ORG NAME	ORG ID
 *********************************************
 No organisation is found.
 
 Creating New Organisation
-ORG DATA: {"Status":"OK","Message":"Org created","Meta":"5f881bd8286b600001d56a4d"}
-ORG ID: 5f881bd8286b600001d56a4d
+ORG DATA: {"Status":"OK","Message":"Org created","Meta":"5fc0c2103d490400019647fd"}
+ORG ID: 5fc0c2103d490400019647fd
 
 Adding New User
-USER AUTHENTICATION CODE: 2dcc0707f5ff42764ecf2fb84ea23cd6
-NEW ID: 5f881bd8940c098198080ef4
+USER AUTHENTICATION CODE: 138053dc3fb9414658a3e0d49cd12410
+NEW ID: 5fc0c2103d7d1c87e44f14f4
 
 DONE
 ************************************
 Login at http://localhost:3000/
-User: hc2khpjytf@default.com
-Pass: 8qnz6tiz
+User: crvhlecz9x@default.com
+Pass: b3m3vrfb
 ************************************
-```
+===> setting operator dash secrets
+sh ./ci/operator_pro_secrets.sh
+creating namespace tyk-operator-system
+namespace/tyk-operator-system created
+secret/tyk-operator-conf created
+{
+  "TYK_AUTH": "MTM4MDUzZGMzZmI5NDE0NjU4YTNlMGQ0OWNkMTI0MTA=",
+  "TYK_MODE": "cHJv",
+  "TYK_ORG": "NWZjMGMyMTAzZDQ5MDQwMDAxOTY0N2Zk",
+  "TYK_URL": "aHR0cDovL2Rhc2hib2FyZC50eWtwcm8tY29udHJvbC1wbGFuZS5zdmMuY2x1c3Rlci5sb2NhbDozMDAw"
+}
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o manager.linux main.go
+docker build -f cross.Dockerfile . -t tykio/tyk-operator:test
+Sending build context to Docker daemon  370.3MB
+Step 1/5 : FROM gcr.io/distroless/static:nonroot
+ ---> aa99000bc55d
+Step 2/5 : WORKDIR /
+ ---> Using cache
+ ---> 2877cb3cb6fe
+Step 3/5 : COPY manager.linux manager
+ ---> Using cache
+ ---> dfd51e339896
+Step 4/5 : USER nonroot:nonroot
+ ---> Using cache
+ ---> 886af638ed5a
+Step 5/5 : ENTRYPOINT ["/manager"]
+ ---> Using cache
+ ---> 34f5baa0810d
+Successfully built 34f5baa0810d
+Successfully tagged tykio/tyk-operator:test
+/Volumes/code/gosrc/bin/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/Volumes/code/gosrc/bin/kustomize build config/crd > ./helm/crds/crds.yaml
+/Volumes/code/gosrc/bin/kustomize build config/helm |go run hack/pre_helm.go > ./helm/templates/all.yaml
+===> installing operator with helmr
+kind load docker-image tykio/tyk-operator:test
+Image: "tykio/tyk-operator:test" with ID "sha256:34f5baa0810d4c04e20d5cfc22265aea6ac510b33ab04022dfb58fe06dbeec20" not yet present on node "kind-worker", loading...
+Image: "tykio/tyk-operator:test" with ID "sha256:34f5baa0810d4c04e20d5cfc22265aea6ac510b33ab04022dfb58fe06dbeec20" not yet present on node "kind-worker2", loading...
+Image: "tykio/tyk-operator:test" with ID "sha256:34f5baa0810d4c04e20d5cfc22265aea6ac510b33ab04022dfb58fe06dbeec20" not yet present on node "kind-control-plane", loading...
+helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
+NAME: ci
+LAST DEPLOYED: Fri Nov 27 12:09:39 2020
+NAMESPACE: tyk-operator-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+You have deployed the tyk-operator! See https://github.com/TykTechnologies/tyk-operator for more information.
+******** Successful boot strapped pro dev env ************
 
-The operator requires various env vars to be set, so that may interract with Tyk.
+</pre>
+</p>
+</details>
+
+This will 
+- deploy cert-manager
+- deploy tyk-pro
+- creates an org that you can use to log into your dashboard. run `cat ./bootstrapped` to see the org credentials
+- setup secret that will be used by the operator to access the deployed dashboard
 
 ```
 export TYK_AUTH=$(awk '/USER AUTHENTICATION CODE: /{print $NF}' bootstrapped)
