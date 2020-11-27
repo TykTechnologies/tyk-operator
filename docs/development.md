@@ -297,10 +297,13 @@ This will
 - setup secret that will be used by the operator to access the deployed dashboard
 
 
-Checking if our deployment is dound
+### 2 Checking if the environment is working
 
 
-expose our gateway locally
+#### PRO
+
+***expose our gateway locally***
+
 Run this in a separate terminal
 
 ```
@@ -314,6 +317,8 @@ Forwarding from [::1]:8000 -> 8000
 </pre>
 </p>
 </details>
+
+***check if the gateway is properly configured***
 
 In a separate terminal run
 
@@ -343,6 +348,8 @@ curl http://localhost:8000/hello
 </pre>
 </p>
 </details>
+
+***check if the operator is working***
 
 create your first api resource
 
