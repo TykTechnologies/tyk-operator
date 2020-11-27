@@ -296,213 +296,85 @@ This will
 - creates an org that you can use to log into your dashboard. run `cat ./bootstrapped` to see the org credentials
 - setup secret that will be used by the operator to access the deployed dashboard
 
-```
-export TYK_AUTH=$(awk '/USER AUTHENTICATION CODE: /{print $NF}' bootstrapped)
-export TYK_ORG=$(awk '/ORG ID: /{print $NF}' bootstrapped)
-export TYK_MODE=pro
-export TYK_URL=http://localhost:3000
-```
 
-In this example, we set the `TYK_URL=http://localhost:3000`
+Checking if our deployment is dound
 
-Lets expose the dashboard on port 3000 so that the operator may talk to it, and so we can log in.
+
+expose our gateway locally
+Run this in a separate terminal
 
 ```
-kubectl port-forward -n tykpro-control-plane svc/dashboard 3000:3000
+kubectl port-forward svc/gw 8000:8000  -n tykpro-control-plane
 ```
+<details><summary>SHOW EXPECTED OUTPUT</summary>
+<p>
+<pre>
+Forwarding from 127.0.0.1:8000 -> 8000
+Forwarding from [::1]:8000 -> 8000
+</pre>
+</p>
+</details>
 
-#### OSS Inside Cluster
+In a separate terminal run
 
-If you already have a Gateway running on port 8080 in the cluster, skip to step 2.
-
-Run all these commands from the root directory of this project.
-
-A) Run Redis
-
-```kubernetes
-kubectl apply -f playground/redis/redis.yaml
 ```
-
-B) Run HttpBin
-
-```kubernetes
-kubectl apply -f playground/httpbin/httpbin.yaml
+curl http://localhost:8000/hello
 ```
-
-C) Create ConfigMap
-
-```kubernetes
-kubectl create configmap tyk-conf --from-file ./playground/gateway/confs/tyk.json
-```
-
-D) Deploy GW and create Service
-
-```kubernetes
-$ kubectl apply -f playground/gateway/deployment.yaml
-$ kubectl apply -f playground/gateway/service.yaml
-```
-
-E) Expose Gateway locally
-```bash
-kubectl port-forward svc/tyk 8000:8080
-```
-
-F) Test:
-```bash
-$ curl localhost:8000/hello
+<details><summary>SHOW EXPECTED OUTPUT</summary>
+<p>
+<pre>
 {
-  "description": "Tyk GW",
-  "details": {
-    "redis": {
-      "componentType": "datastore",
-      "status": "pass",
-      "time": "2020-09-08T19:42:05Z"
+    "status": "pass",
+    "version": "v3.0.0",
+    "description": "Tyk GW",
+    "details": {
+        "dashboard": {
+            "status": "pass",
+            "componentType": "system",
+            "time": "2020-11-27T09:29:09Z"
+        },
+        "redis": {
+            "status": "pass",
+            "componentType": "datastore",
+            "time": "2020-11-27T09:29:09Z"
+        }
     }
-  },
-  "status": "pass",
-  "version": "v3.0.0"
 }
-```
+</pre>
+</p>
+</details>
 
-### 2. Start the operator (on host/dev machine)
-
-```
-make run ENABLE_WEBHOOKS=false
-```
+create your first api resource
 
 ```
-make run ENABLE_WEBHOOKS=false
-/home/asoorm/go/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
-go fmt ./...
-go vet ./...
-/home/asoorm/go/bin/controller-gen "crd:trivialVersions=true,crdVersions=v1" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
- ENABLE_WEBHOOKS=false go run ./main.gopro TYK_TLS_INSECURE_SKIP_VERIFY= TYK_ADMIN_AUTH= TYK_AUTH=2dcc0707f5ff42764ecf2fb84ea23cd6
-2020-10-15T11:32:04.789+0100    INFO    controller-runtime.metrics      metrics server is starting to listen    {"addr": ":8080"}
-2020-10-15T11:32:04.790+0100    INFO    setup   starting manager
-2020-10-15T11:32:04.790+0100    INFO    controller-runtime.manager      starting metrics server {"path": "/metrics"}
-2020-10-15T11:32:04.790+0100    INFO    controller-runtime.controller   Starting EventSource    {"controller": "securitypolicy", "source": "kind source: /, Kind="}
-2020-10-15T11:32:04.790+0100    INFO    controller-runtime.controller   Starting EventSource    {"controller": "apidefinition", "source": "kind source: /, Kind="}
-2020-10-15T11:32:04.790+0100    INFO    controller-runtime.controller   Starting EventSource    {"controller": "webhook", "source": "kind source: /, Kind="}
-2020-10-15T11:32:04.790+0100    INFO    controller-runtime.controller   Starting EventSource    {"controller": "organization", "source": "kind source: /, Kind="}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting Controller     {"controller": "organization"}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting workers        {"controller": "organization", "worker count": 1}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting Controller     {"controller": "securitypolicy"}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting workers        {"controller": "securitypolicy", "worker count": 1}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting Controller     {"controller": "apidefinition"}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting workers        {"controller": "apidefinition", "worker count": 1}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting Controller     {"controller": "webhook"}
-2020-10-15T11:32:04.890+0100    INFO    controller-runtime.controller   Starting workers        {"controller": "webhook", "worker count": 1}
+kubectl apply -f config/samples/httpbin.yaml 
 ```
-
-### 3. Generate & install the CRDs and run the Operator from source
-
-A) in root of directory, run this command to install the CRDs into the cluster.
-```bash
-make install
-```
-
-### 4. Add API definition through command line
-
-Add an API definition using kubectl apply
-
-```bash
-$ kubectl apply -f config/samples/httpbin.yaml
+<details><summary>SHOW EXPECTED OUTPUT</summary>
+<p>
+<pre>
 apidefinition.tyk.tyk.io/httpbin created
+</pre>
+</p>
+</details>
+
+check that your api definition was applied and it works
+
 ```
-
-### 4. Get the new resource
-
-```bash
-kubectl get tykapis                                        
-NAME      PROXY.LISTENPATH   PROXY.TARGETURL      ENABLED
-httpbin   /httpbin           http://httpbin.org   true
+curl http://localhost:8000/httpbin/headers
 ```
-
-### 5. Try it out
-
-```bash
-curl localhost:8000/httpbin/get
+<details><summary>SHOW EXPECTED OUTPUT</summary>
+<p>
+<pre>
 {
-  "args": {}, 
   "headers": {
     "Accept": "*/*", 
     "Accept-Encoding": "gzip", 
     "Host": "httpbin.org", 
-    "User-Agent": "curl/7.71.1", 
-    "X-Amzn-Trace-Id": "Root=1-5f64fdeb-db917d73dd04463839339047"
-  }, 
-  "origin": "127.0.0.1, 94.14.220.241", 
-  "url": "http://httpbin.org/get"
+    "Referer": "", 
+    "User-Agent": "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)", 
+    "X-Amzn-Trace-Id": "Root=1-5fc0c7f4-4fe147d429feac260d185764"
+  }
 }
-```
-
-### 5. Enable Authentication
-
-```bash
-cat ./config/samples/httpbin.yaml | yq w - spec.use_keyless false > ./config/samples/httpbin_protected.yaml
-```
-
-### 6. Try it out
-
-```bash
-kubectl apply -f ./config/samples/httpbin_protected.yaml                            
-apidefinition.tyk.tyk.io/httpbin configured
-
-curl localhost:8000/httpbin/get                   
-{
-  "error": "Authorization field missing"
-}                    
-```
-
----
-
-## Scrapbook
-
-After modifying the *_types.go file always run the following command to update the generated code for that resource type:
-```
-make generate
-```
-
-Once the API is defined with spec/status fields and CRD validation markers, the CRD manifests can be generated and 
-updated with the following command:
-
-```
-make manifests
-```
-
-Register the CRD
-
-```
-make install
-```
-
-Run the operator locally, outside the cluster
-
-```
-make run ENABLE_WEBHOOKS=false
-```
-
-### Compile and load local docker image:
-
-Minikube:
-```
-# docker build with Docker daemon of minikube
-eval $(minikube docker-env)
-docker build . -t controller:latest
-```
-
-Kind:
-```
-docker build . -t controller:latest
-kind load docker-image controller:latest
-```
-
-Deploy it to the cluster:
-```
-make deploy IMG=controller:latest
-```
-
-
-### Highlights
-
-1. The Tyk-Operator uses the [finalizer](https://book.kubebuilder.io/reference/using-finalizers.html) pattern for deleting CRs from the cluster.
+</pre>
+</p>
+</details>
