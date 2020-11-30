@@ -139,8 +139,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	desired.Spec.CertificateSecretNames = nil
 
-	r.applyDefaults(&desired.Spec)
-
 	//  If this is not set, means it is a new object, set it first
 	if desired.Status.ApiID == "" {
 
@@ -198,30 +196,4 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&tykv1alpha1.ApiDefinition{}).
 		WithEventFilter(ignoreIngressTemplatePredicate()).
 		Complete(r)
-}
-
-func (r *ApiDefinitionReconciler) applyDefaults(spec *tykv1alpha1.APIDefinitionSpec) {
-	if len(spec.VersionData.Versions) == 0 {
-		defaultVersionData := tykv1alpha1.VersionData{
-			NotVersioned:   true,
-			DefaultVersion: "Default",
-			Versions: map[string]tykv1alpha1.VersionInfo{
-				"Default": {
-					Name:                        "Default",
-					Expires:                     "",
-					Paths:                       tykv1alpha1.VersionInfoPaths{},
-					UseExtendedPaths:            false,
-					ExtendedPaths:               tykv1alpha1.ExtendedPathsSet{},
-					GlobalHeaders:               nil,
-					GlobalHeadersRemove:         nil,
-					GlobalResponseHeaders:       nil,
-					GlobalResponseHeadersRemove: nil,
-					IgnoreEndpointCase:          false,
-					GlobalSizeLimit:             0,
-				},
-			},
-		}
-
-		spec.VersionData = defaultVersionData
-	}
 }
