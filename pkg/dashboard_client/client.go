@@ -56,6 +56,7 @@ func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *
 			},
 			InsecureSkipVerify: insecureSkipVerify,
 		},
+		secret: auth,
 	}
 
 	return c
