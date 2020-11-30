@@ -52,7 +52,7 @@ func (in *ApiDefinition) Default() {
 	}
 
 	if len(in.Spec.VersionData.Versions) == 0 {
-		defaultVersionData := VersionData{
+		in.Spec.VersionData = VersionData{
 			NotVersioned:   true,
 			DefaultVersion: "Default",
 			Versions: map[string]VersionInfo{
@@ -76,7 +76,6 @@ func (in *ApiDefinition) Default() {
 			},
 		}
 
-		in.Spec.VersionData = defaultVersionData
 	}
 
 	if in.Spec.UseStandardAuth {
