@@ -1,7 +1,6 @@
 name: Tyk CE Tests
 
-on:
-  pull_request
+on: pull_request
 
 jobs:
   ce-tests:
@@ -47,5 +46,4 @@ jobs:
       - name: bdd
         shell: bash
         run: |
-          go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && TYK_MODE=ce godog --strict -t ~@undone
+          TYK_MODE=ce make bdd
