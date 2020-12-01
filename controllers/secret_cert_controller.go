@@ -161,9 +161,10 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
 
 			apiDefObj, _ := r.UniversalClient.Api().Get(apiDef.Status.ApiID)
-			apiDefObj.Certificates = []string{certID}
+			apiDefObj.Certificates = append(apiDefObj.Certificates, certID)
 			r.UniversalClient.Api().Update(apiDef.Status.ApiID, apiDefObj)
 
+			// TODO: we only care about 1 secret - we don't need to support multiple for mvp
 			break
 		}
 	}
