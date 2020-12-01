@@ -195,8 +195,7 @@ boot-ce:setup-ce install-operator-helm
 
 .PHONY: bdd 
 bdd:
-	go test -v  ./bdd
-
+	go test -timeout 400s -v  ./bdd
 	
 
 
