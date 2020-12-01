@@ -27,7 +27,7 @@ jobs:
       - name: bootstrap tyk ce env
         shell: bash
         run: |
-          make boot-ce IMG=tykio/tyk-operator:test
+          make boot-ce IMG=tykio/tyk-operator:test CLUSTER_NAME=chart-testing
       - name: bdd
         shell: bash
         run: |

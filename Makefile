@@ -15,6 +15,8 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 IMG ?= tyk-operator:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+#The name of the kind cluster used for development
+CLUSTER_NAME ?= kind
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -156,13 +158,13 @@ install-cert-manager:
 .PHONY: install-operator-helm
 install-operator-helm: cross-build-image manifests helm
 	@echo "===> installing operator with helmr"
-	kind load docker-image ${IMG}
+	kind load docker-image ${IMG} --name=${CLUSTER_NAME}
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: scrap
 scrap: generate manifests helm cross-build-image  
 	@echo "===> re installing operator with helm"
-	kind load docker-image ${IMG}
+	kind load docker-image ${IMG} --name=${CLUSTER_NAME}
 	helm uninstall ci -n tyk-operator-system
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
