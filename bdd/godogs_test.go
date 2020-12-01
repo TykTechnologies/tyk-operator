@@ -40,7 +40,6 @@ func runCMD(cmd *exec.Cmd) string {
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() {
 		app := "kubectl"
-		exec.Command(app, "delete", "ns", namespace).Run()
 		cmd := exec.Command(app, "create", "ns", namespace)
 		output := runCMD(cmd)
 		if !strings.Contains(output, fmt.Sprintf("namespace/%s created", namespace)) {
@@ -67,43 +66,40 @@ func init() {
 	godog.BindFlags("godog.", flag.CommandLine, &opts)
 }
 
-func setup(ctx context.Context) error {
-	cmd := exec.CommandContext(ctx, "kubectl", "port-forward", "-n", gwNS, "svc/gw", "8000:8000")
+func setup() (func() error, error) {
+	// make sure we don't have the testing ns
+	exec.Command("kubectl", "delete", "ns", namespace).Run()
+
+	cmd := exec.Command("kubectl", "port-forward", "-n", gwNS, "svc/gw", "8000:8000")
 	r, w, err := os.Pipe()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Println(cmd.Args)
 	cmd.Stderr = w
 	cmd.Stdout = w
 	err = cmd.Start()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	r.SetReadDeadline(time.Now().Add(3 * time.Second))
 	x := "Forwarding from 127.0.0.1:8000"
 	b := make([]byte, len(x))
 	_, err = io.ReadFull(r, b)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !bytes.Equal(b, []byte(x)) {
-		return fmt.Errorf("expected %q got %q", x, string(b))
+		cmd.Process.Kill()
+		return nil, fmt.Errorf("expected %q got %q", x, string(b))
 	}
-	return nil
+	return cmd.Process.Kill, nil
 }
 
 func TestMain(t *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		cancel()
-		if err := recover(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	err := setup(ctx)
+	kill, err := setup()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -117,6 +113,7 @@ func TestMain(t *testing.M) {
 	if st := t.Run(); st > status {
 		status = st
 	}
+	kill()
 	os.Exit(status)
 }
 
