@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -127,8 +126,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			return reconcile.Result{}, err
 		}
 
-		println(fmt.Sprintf("ownerReferences %#v", secret.OwnerReferences))
-
 		pemCrtBytes, ok := secret.Data["tls.crt"]
 		if !ok {
 			log.Error(err, "requeueing because cert not found in secret")
@@ -150,7 +147,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			}
 		}
 
-		desired.Spec.Certificates = append(desired.Spec.Certificates, tykCertID)
+		desired.Spec.Certificates = []string{tykCertID}
+		break
 	}
 
 	desired.Spec.CertificateSecretNames = nil

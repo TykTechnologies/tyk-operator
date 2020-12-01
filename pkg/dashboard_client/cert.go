@@ -39,14 +39,15 @@ func (c *Cert) Delete(id string) error {
 
 	fullPath := JoinUrl(c.url, endpointCerts, id)
 
-	_, err := sess.Delete(fullPath, nil)
+	res, err := sess.Delete(fullPath, nil)
 	if err != nil {
 		return err
 	}
+	defer res.Close()
 
-	//if res.StatusCode != http.StatusOK {
-	//	return fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
-	//}
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
+	}
 	return nil
 }
 
@@ -69,19 +70,6 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 		return "", err
 	}
 
-	//sess := grequests.NewSession(c.opts)
-	//sess.Post(fullPath, &grequests.RequestOptions{
-	//	Files: []grequests.FileUpload{
-	//		{
-	//			FileName:     "",
-	//			FileContents: part,
-	//			FieldName:    "",
-	//			FileMime:     "",
-	//		},
-	//	},
-	//})
-
-	// TODO: is this possible with grequests?
 	r, err := http.NewRequest(http.MethodPost, fullPath, body)
 	if err != nil {
 		return "", err

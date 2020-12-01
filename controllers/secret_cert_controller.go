@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
@@ -26,7 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -48,35 +48,66 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	ctx := context.Background()
 	log := r.Log.WithValues("cert", req.NamespacedName)
 
-	//namespacedName := req.NamespacedName
-
+	log.Info("getting secret resource")
 	desired := &v1.Secret{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 
+	log.Info("checking secret type is tls")
 	if desired.Type != secretType {
 		// it's not for us
 		return ctrl.Result{}, nil
 	}
 
+	log.Info("ensuring tls.key is present")
 	tlsKey, ok := desired.Data["tls.key"]
 	if !ok {
 		// cert doesn't exist yet
-		log.Info("missing key, we don't care about it")
-		return reconcile.Result{}, nil
+		log.Info("missing tls.key, we don't care about it yet")
+		return ctrl.Result{}, nil
 	}
+	log.Info("ensuring tls.key is present")
 	tlsCrt, ok := desired.Data["tls.crt"]
 	if !ok {
 		// cert doesn't exist yet
-		log.Info("missing cert, we don't care about it")
-		return reconcile.Result{}, nil
+		log.Info("missing tls.crt, we don't care about it yet")
+		return ctrl.Result{}, nil
 	}
 
+	// all apidefinitions in current namespace
+	apiDefList := v1alpha1.ApiDefinitionList{}
+	opts := []client.ListOption{
+		client.InNamespace(req.Namespace),
+	}
+	if err := r.List(ctx, &apiDefList, opts...); err != nil {
+		log.Info("unable to list api definitions")
+		return ctrl.Result{}, err
+	}
+
+	if len(apiDefList.Items) == 0 {
+		log.Info("no apidefinitions in namespace")
+		return ctrl.Result{}, nil
+	}
+
+	ret := true
+	for _, apiDef := range apiDefList.Items {
+		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
+			log.Info("apidefinition references this secret", "apiid", apiDef.Status.ApiID)
+			ret = false
+		}
+	}
+
+	if ret {
+		log.Info("no apidefinitions reference this secret")
+		return ctrl.Result{}, nil
+	}
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Info("secret being deleted")
 		// If our finalizer is present, need to delete from Tyk still
 		if containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
+			log.Info("running finalizer logic")
 
 			certPemBytes, ok := desired.Data["tls.crt"]
 			if !ok {
@@ -88,44 +119,56 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 			certID := orgID + certFingerPrint
 
-			err := r.UniversalClient.Certificate().Delete(certID)
-			if err != nil {
-				log.Info(err.Error())
+			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
+			if err := r.UniversalClient.Certificate().Delete(certID); err != nil {
+				log.Error(err, "unable to delete certificate")
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
 			}
 
-			err = r.UniversalClient.HotReload()
-			if err != nil {
+			if err := r.UniversalClient.HotReload(); err != nil {
 				return ctrl.Result{}, err
 			}
 
-			// remove our finalizer from the list and update it.
+			log.Info("removing finalizer from secret")
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, certFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, err
+				return ctrl.Result{}, err
 			}
 		}
 
-		return reconcile.Result{}, nil
+		log.Info("secret successfully deleted")
+		return ctrl.Result{}, nil
 	}
 
 	// If finalizer not present, add it; This is a new object
 	if !containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
+		log.Info("adding finalizer for cleanup")
+
 		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, certFinalizerName)
 		err := r.Update(ctx, desired)
-		// Return either way because the update will
-		// issue a requeue anyway
-		return reconcile.Result{}, client.IgnoreNotFound(err)
+
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	certID, err := universal_client.UploadCertificate(r.UniversalClient, tlsKey, tlsCrt)
 	if err != nil {
-		return reconcile.Result{Requeue: true}, err
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	log.Info("uploaded certificate to Tyk", "certID", certID)
+	for _, apiDef := range apiDefList.Items {
+		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
+			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
 
-	return reconcile.Result{}, nil
+			apiDefObj, _ := r.UniversalClient.Api().Get(apiDef.Status.ApiID)
+			apiDefObj.Certificates = []string{certID}
+			r.UniversalClient.Api().Update(apiDef.Status.ApiID, apiDefObj)
+
+			break
+		}
+	}
+
+	return ctrl.Result{}, nil
 }
 
 // https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#resources-watched-by-the-controller
