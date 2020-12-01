@@ -38,30 +38,11 @@ jobs:
       - name: checking ci DASH_LICENSE expiry
         shell: bash
         run: jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
-      - name: build & load operator
-        shell: bash
-        run: |
-          make cross-build-image IMG=tykio/tyk-operator:test
-          kind load docker-image tykio/tyk-operator:test --name chart-testing
-      - name: installing cert-manager
-        shell: bash
-        run: kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
-      - name: deploy & bootstrap tyk pro
+      - name: bootstrap tyk pro env
         shell: bash
         run: |
           export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
-          echo "installing tyk-pro"
-          sh ./ci/deploy_tyk_pro.sh
-
-          echo "bootstrapping tyk dashboard (initial org + user)"
-          sh ./ci/bootstrap_org.sh
-          cat bootstrapped
-
-          echo "setting operator dash secrets"
-          sh ./ci/operator_pro_secrets.sh
-      - name: deploying tyk-operator
-        shell: bash
-        run: helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system
+          make boot-pro IMG=tykio/tyk-operator:test
       - name: bdd
         shell: bash
         run: |
