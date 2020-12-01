@@ -190,3 +190,11 @@ boot-pro: setup-pro install-operator-helm
 .PHONY: boot-ce
 boot-ce:setup-ce install-operator-helm
 	@echo "******** Successful boot strapped ce dev env ************"
+
+.PHONY: bdd 
+bdd:
+	go test -v  ./bdd
+
+	
+
+

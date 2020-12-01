@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -21,6 +23,32 @@ import (
 const (
 	namespace = "bdd"
 )
+
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {}
+
+var opts = godog.Options{
+	StopOnFailure: true,
+	Format:        "pretty",
+}
+
+func init() {
+	godog.BindFlags("godog.", flag.CommandLine, &opts)
+}
+
+func TestMain(t *testing.M) {
+	flag.Parse()
+	opts.Paths = flag.Args()
+	status := godog.TestSuite{
+		Name:                 "godogs",
+		TestSuiteInitializer: InitializeTestSuite,
+		ScenarioInitializer:  InitializeScenario,
+		Options:              &opts,
+	}.Run()
+	if st := t.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
+}
 
 type store struct {
 	gatewayNamespace string
