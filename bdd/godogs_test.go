@@ -1,19 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"net"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"reflect"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -24,7 +25,38 @@ const (
 	namespace = "bdd"
 )
 
-func InitializeTestSuite(ctx *godog.TestSuiteContext) {}
+var gwNS = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
+var client = http.Client{}
+
+func runCMD(cmd *exec.Cmd) string {
+	a := fmt.Sprint(cmd.Args)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		panic(fmt.Sprintf("failed %s with %v : %s", a, err, string(output)))
+	}
+	return string(output)
+}
+
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() {
+		app := "kubectl"
+		exec.Command(app, "delete", "ns", namespace).Run()
+		cmd := exec.Command(app, "create", "ns", namespace)
+		output := runCMD(cmd)
+		if !strings.Contains(output, fmt.Sprintf("namespace/%s created", namespace)) {
+			panic(string(output))
+		}
+	})
+
+	ctx.AfterSuite(func() {
+		app := "kubectl"
+		cmd := exec.Command(app, "delete", "ns", namespace)
+		output := runCMD(cmd)
+		if !strings.Contains(string(output), fmt.Sprintf(`namespace "%s" deleted`, namespace)) {
+			panic(string(output))
+		}
+	})
+}
 
 var opts = godog.Options{
 	StopOnFailure: true,
@@ -35,9 +67,47 @@ func init() {
 	godog.BindFlags("godog.", flag.CommandLine, &opts)
 }
 
+func setup(ctx context.Context) error {
+	cmd := exec.CommandContext(ctx, "kubectl", "port-forward", "-n", gwNS, "svc/gw", "8000:8000")
+	r, w, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	fmt.Println(cmd.Args)
+	cmd.Stderr = w
+	cmd.Stdout = w
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	r.SetReadDeadline(time.Now().Add(3 * time.Second))
+	x := "Forwarding from 127.0.0.1:8000"
+	b := make([]byte, len(x))
+	_, err = io.ReadFull(r, b)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(b, []byte(x)) {
+		return fmt.Errorf("expected %q got %q", x, string(b))
+	}
+	return nil
+}
+
 func TestMain(t *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		cancel()
+		if err := recover(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	err := setup(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	status := godog.TestSuite{
 		Name:                 "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -51,45 +121,15 @@ func TestMain(t *testing.M) {
 }
 
 type store struct {
-	gatewayNamespace string
-	responseCode     int
-	responseBody     []byte
-	responseTimes    []time.Duration
-	cleanupK8s       []string
-	responseHeaders  map[string]string
+	responseCode    int
+	responseBody    []byte
+	responseTimes   []time.Duration
+	cleanupK8s      []string
+	responseHeaders map[string]string
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	s := store{}
-
-	ctx.BeforeScenario(func(sc *godog.Scenario) {
-		app := "kubectl"
-
-		s.gatewayNamespace = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
-
-		cmd := exec.Command(app, "create", "ns", namespace)
-		output, err := cmd.Output()
-		if err != nil {
-			panic(err)
-		}
-		if !strings.Contains(string(output), fmt.Sprintf("namespace/%s created", namespace)) {
-			panic(string(output))
-		}
-	})
-
-	ctx.AfterScenario(func(sc *godog.Scenario, err error) {
-		app := "kubectl"
-
-		cmd := exec.Command(app, "delete", "ns", namespace)
-		output, err := cmd.Output()
-		if err != nil {
-			panic(err)
-		}
-		if !strings.Contains(string(output), fmt.Sprintf(`namespace "%s" deleted`, namespace)) {
-			panic(string(output))
-		}
-	})
-
 	ctx.Step(`^there is a (\S+) resource$`, s.thereIsAResource)
 	ctx.Step(`^i create a (\S+) resource$`, s.iCreateAResource)
 	ctx.Step(`^i update a (\S+) resource$`, s.iUpdateAResource)
@@ -102,36 +142,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^there should be a "(\S+): (\S+)" response header$`, s.thereShouldBeAResponseHeader)
 	ctx.Step(`^the response should contain json key: (\S+) value: (\S+)$`, s.theResponseShouldContainJSONKeyValue)
 	ctx.Step(`^the response should match JSON:$`, s.theResponseShouldMatchJSON)
-}
-
-// waitForServices tests and waits on the availability of a TCP host and port
-func waitForServices(services []string, timeOut time.Duration) error {
-	var depChan = make(chan struct{})
-	var wg sync.WaitGroup
-	wg.Add(len(services))
-	go func() {
-		for _, s := range services {
-			go func(s string) {
-				defer wg.Done()
-				for {
-					_, err := net.Dial("tcp", s)
-					if err == nil {
-						return
-					}
-					time.Sleep(1 * time.Second)
-				}
-			}(s)
-		}
-		wg.Wait()
-		close(depChan)
-	}()
-
-	select {
-	case <-depChan: // services are ready
-		return nil
-	case <-time.After(timeOut):
-		return fmt.Errorf("services aren't ready in %s", timeOut)
-	}
 }
 
 func (s *store) iRequestEndpointWithHeaderTimes(path string, headerKey string, headerValue string, times int) error {
@@ -166,34 +176,6 @@ func (s *store) theFirstResponseShouldBeSlowest() error {
 }
 
 func (s *store) iRequestEndpointWithHeader(path string, headerKey string, headerValue string) error {
-	cmd := exec.Command("kubectl", "port-forward", "-n", s.gatewayNamespace, "svc/gw", "8000:8000")
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	defer cmd.Process.Kill()
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		for {
-			conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second*3)
-			if err != nil {
-				time.Sleep(time.Millisecond * 500)
-				continue
-			}
-			if conn != nil {
-				conn.Close()
-				wg.Done()
-				return
-			}
-		}
-	}()
-
-	wg.Wait()
-
-	client := http.Client{}
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:8000%s", path), nil)
 	if err != nil {
 		return err
@@ -202,11 +184,6 @@ func (s *store) iRequestEndpointWithHeader(path string, headerKey string, header
 
 	res, err := client.Do(req)
 	if err != nil {
-		if strings.Contains(err.Error(), "EOF") {
-			// Assume it's a 404 to make the tests pass
-			s.responseCode = http.StatusNotFound
-			return nil
-		}
 		return err
 	}
 	defer res.Body.Close()
@@ -226,34 +203,7 @@ func (s *store) iRequestEndpointWithHeader(path string, headerKey string, header
 }
 
 func (s *store) iRequestEndpoint(path string) error {
-	cmd := exec.Command("kubectl", "port-forward", "-n", s.gatewayNamespace, "svc/gw", "8000:8000")
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	defer cmd.Process.Kill()
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		for {
-			conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second*3)
-			if err != nil {
-				time.Sleep(time.Millisecond * 500)
-				continue
-			}
-			if conn != nil {
-				conn.Close()
-				wg.Done()
-				return
-			}
-		}
-	}()
-
-	wg.Wait()
-
-	res, err := http.Get(fmt.Sprintf("http://localhost:8000%s", path))
+	res, err := client.Get(fmt.Sprintf("http://localhost:8000%s", path))
 	if err != nil {
 		// TODO: Check with Leo - this looks like a Gateway Bug
 		if strings.Contains(err.Error(), "EOF") {
@@ -297,30 +247,19 @@ func (s *store) iDeleteAResource(fileName string) error {
 
 func (s *store) kubectlFile(action string, fileName string, expected string, timeout time.Duration) error {
 	app := "kubectl"
-
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, app, action, "-f", fileName, "-n", namespace)
-	output, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-
-	if !strings.Contains(string(output), expected) {
+	output := runCMD(cmd)
+	if !strings.Contains(output, expected) {
 		return fmt.Errorf("unexpected output (%s)", string(output))
 	}
 
 	cmd = exec.CommandContext(ctx, app, "get", "tykapis", "-n", namespace)
-	output, err = cmd.Output()
-	if err != nil {
-		println(string(output))
-		return err
-	}
-
+	output = runCMD(cmd)
 	// TODO: need to wait for a bit for the reconciler to kick in
 	time.Sleep(time.Second * 5)
-
 	return nil
 }
 
