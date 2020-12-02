@@ -33,7 +33,7 @@ jobs:
           (cd helm && sed -i.orig -e "s|\(version\):.*|\1: ${REF##*/} #version of the chart|" Chart.yaml)
           git config user.name "Bender"
           git config user.email "<release@tyk-operator>"
-          git add helm/Charts.yaml && git commit -m "Updating helm chart to $REF" && git push origin master
+          git add helm/Chart.yaml && git commit -m "Updating helm chart to $REF" && git push origin master
           
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
