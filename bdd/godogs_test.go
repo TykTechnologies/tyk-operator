@@ -260,12 +260,14 @@ func (s *store) kubectlFile(action string, fileName string, timeout time.Duratio
 	cmd := exec.CommandContext(ctx, app, action, "-f", fileName, "-n", namespace)
 	output := runCMD(cmd)
 	var err error
+	var ok bool
 	for _, v := range expected {
 		if !strings.Contains(output, v) {
 			err = fmt.Errorf("unexpected output (%s)", string(output))
 		}
+		ok = true
 	}
-	if err != nil {
+	if !ok {
 		return err
 	}
 
