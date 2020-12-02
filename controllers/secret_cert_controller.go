@@ -54,6 +54,44 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 
+	// If object is being deleted
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Info("secret being deleted")
+		// If our finalizer is present, need to delete from Tyk still
+		if containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
+			log.Info("running finalizer logic")
+
+			certPemBytes, ok := desired.Data["tls.crt"]
+			if !ok {
+				return ctrl.Result{}, nil
+			}
+
+			orgID := universal_client.GetOrganizationID(r.UniversalClient)
+			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
+
+			certID := orgID + certFingerPrint
+
+			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
+			if err := r.UniversalClient.Certificate().Delete(certID); err != nil {
+				log.Error(err, "unable to delete certificate")
+				return ctrl.Result{RequeueAfter: time.Second * 5}, err
+			}
+
+			if err := r.UniversalClient.HotReload(); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			log.Info("removing finalizer from secret")
+			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, certFinalizerName)
+			if err := r.Update(ctx, desired); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
+		log.Info("secret successfully deleted")
+		return ctrl.Result{}, nil
+	}
+
 	log.Info("checking secret type is tls")
 	if desired.Type != secretType {
 		// it's not for us
@@ -100,43 +138,6 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 	if ret {
 		log.Info("no apidefinitions reference this secret")
-		return ctrl.Result{}, nil
-	}
-	// If object is being deleted
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("secret being deleted")
-		// If our finalizer is present, need to delete from Tyk still
-		if containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
-			log.Info("running finalizer logic")
-
-			certPemBytes, ok := desired.Data["tls.crt"]
-			if !ok {
-				return ctrl.Result{}, nil
-			}
-
-			orgID := universal_client.GetOrganizationID(r.UniversalClient)
-			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
-
-			certID := orgID + certFingerPrint
-
-			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
-			if err := r.UniversalClient.Certificate().Delete(certID); err != nil {
-				log.Error(err, "unable to delete certificate")
-				return ctrl.Result{RequeueAfter: time.Second * 5}, err
-			}
-
-			if err := r.UniversalClient.HotReload(); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			log.Info("removing finalizer from secret")
-			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, certFinalizerName)
-			if err := r.Update(ctx, desired); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		log.Info("secret successfully deleted")
 		return ctrl.Result{}, nil
 	}
 
