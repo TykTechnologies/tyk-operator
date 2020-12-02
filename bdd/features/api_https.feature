@@ -5,6 +5,12 @@ Feature: Managing https APIs
   into Tyk's certificate manager.
 
   @undone
+  Scenario: Ignore certificates which have not been referenced by an API Definition
+    Given there is a "self-signed-issuer" resource
+    And there is a "certificate" resource
+    Then the admin "/certs" should not be created
+
+  @undone
   Scenario: Create a certificate
     Given there is a "self-signed-issuer" resource
       And there is a "certificate" resource
