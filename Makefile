@@ -89,6 +89,7 @@ docker-push:
 
 # Make release
 release:
+	git checkout master
 	sed -i.orig -e "s|\(version\):.*|\1: ${VERSION} # version of the chart|" helm/Chart.yaml
 	rm helm/Chart.yaml.orig
 	git add helm/Chart.yaml
