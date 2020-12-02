@@ -236,7 +236,7 @@ func (s *store) iRequestEndpoint(path string) error {
 }
 
 func (s *store) thereIsAResource(fileName string) error {
-	return s.kubectlFile("apply", fileName, " created", time.Second*10)
+	return s.kubectlFile("apply", fileName, " unchanged", time.Second*10)
 }
 
 func (s *store) iCreateAResource(fileName string) error {
