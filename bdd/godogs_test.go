@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	namespace = "bdd"
+	namespace  = "bdd"
+	k8sTimeout = time.Second * 10
 )
 
 var gwNS = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
@@ -236,30 +237,36 @@ func (s *store) iRequestEndpoint(path string) error {
 }
 
 func (s *store) thereIsAResource(fileName string) error {
-	return s.kubectlFile("apply", fileName, " unchanged", time.Second*10)
+	return s.kubectlFile("apply", fileName, k8sTimeout, " created", " unchanged")
 }
 
 func (s *store) iCreateAResource(fileName string) error {
-	return s.kubectlFile("apply", fileName, " created", time.Second*10)
+	return s.kubectlFile("apply", fileName, k8sTimeout, " created")
 }
 
 func (s *store) iUpdateAResource(fileName string) error {
-	return s.kubectlFile("apply", fileName, " configured", time.Second*10)
+	return s.kubectlFile("apply", fileName, k8sTimeout, " configured")
 }
 
 func (s *store) iDeleteAResource(fileName string) error {
-	return s.kubectlFile("delete", fileName, " deleted", time.Second*20)
+	return s.kubectlFile("delete", fileName, k8sTimeout, " deleted")
 }
 
-func (s *store) kubectlFile(action string, fileName string, expected string, timeout time.Duration) error {
+func (s *store) kubectlFile(action string, fileName string, timeout time.Duration, expected ...string) error {
 	app := "kubectl"
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, app, action, "-f", fileName, "-n", namespace)
 	output := runCMD(cmd)
-	if !strings.Contains(output, expected) {
-		return fmt.Errorf("unexpected output (%s)", string(output))
+	var err error
+	for _, v := range expected {
+		if !strings.Contains(output, v) {
+			err = fmt.Errorf("unexpected output (%s)", string(output))
+		}
+	}
+	if err != nil {
+		return err
 	}
 
 	cmd = exec.CommandContext(ctx, app, "get", "tykapis", "-n", namespace)
