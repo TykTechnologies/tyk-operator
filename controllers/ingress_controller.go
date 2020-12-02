@@ -57,6 +57,29 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// FINALIZER LOGIC =================================================================================================
+
+	// If object is being deleted
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		// If our finalizer is present, need to delete from Tyk still
+		if containsString(desired.ObjectMeta.Finalizers, ingressFinalizerName) {
+			// TODO: Logic to delete ALL apis created by this ingress resource
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	// If finalizer not present, add it; This is a new object
+	if !containsString(desired.ObjectMeta.Finalizers, ingressFinalizerName) {
+		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, ingressFinalizerName)
+		err := r.Update(ctx, desired)
+		// Return either way because the update will
+		// issue a requeue anyway
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// /FINALIZER LOGIC ================================================================================================
+
 	if desired.Spec.IngressClassName == nil {
 		log.Info("IngressClassName should not be nil")
 		return ctrl.Result{}, errors.New("IngressClassName should not be nil")
@@ -84,29 +107,6 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		log.Info(fmt.Sprintf("this ingress class is not for us %s", ingressClass.Spec.Controller))
 		return ctrl.Result{}, nil
 	}
-
-	// FINALIZER LOGIC =================================================================================================
-
-	// If object is being deleted
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		// If our finalizer is present, need to delete from Tyk still
-		if containsString(desired.ObjectMeta.Finalizers, ingressFinalizerName) {
-			// TODO: Logic to delete ALL apis created by this ingress resource
-		}
-
-		return ctrl.Result{}, nil
-	}
-
-	// If finalizer not present, add it; This is a new object
-	if !containsString(desired.ObjectMeta.Finalizers, ingressFinalizerName) {
-		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, ingressFinalizerName)
-		err := r.Update(ctx, desired)
-		// Return either way because the update will
-		// issue a requeue anyway
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// /FINALIZER LOGIC ================================================================================================
 
 	if ingressClass.Spec.Parameters == nil {
 		// without any params - this just a passthrough API?
