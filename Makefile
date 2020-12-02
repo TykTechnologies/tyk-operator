@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 0.0.1
+VERSION ?= 0.0.0
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -86,6 +86,14 @@ docker-build-notest:
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+# Make release
+release:
+	sed -i.orig -e "s|\(version\):.*|\1: ${VERSION} # version of the chart|" helm/Chart.yaml
+	rm helm/Chart.yaml.orig
+	git add helm/Chart.yaml
+	git commit -m "version to: v${VERSION}"
+	git push origin master && git tag v${VERSION}
 
 # find or download controller-gen
 # download controller-gen if necessary
@@ -182,5 +190,3 @@ boot-pro: setup-pro install-operator-helm
 .PHONY: boot-ce
 boot-ce:setup-ce install-operator-helm
 	@echo "******** Successful boot strapped ce dev env ************"
-
-
