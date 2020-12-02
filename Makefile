@@ -93,7 +93,7 @@ release:
 	rm helm/Chart.yaml.orig
 	git add helm/Chart.yaml
 	git commit -m "version to: v${VERSION}"
-	git push origin master && git tag v${VERSION}
+	git push origin master && git tag v${VERSION} && git push --tags
 
 # find or download controller-gen
 # download controller-gen if necessary
