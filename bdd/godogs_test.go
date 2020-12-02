@@ -57,13 +57,14 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	})
 }
 
-var opts = godog.Options{
+var opts = &godog.Options{
 	StopOnFailure: true,
 	Format:        "pretty",
+	Tags:          "~@undone",
 }
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opts)
+	godog.BindFlags("godog.", flag.CommandLine, opts)
 }
 
 type writeFn func([]byte) (int, error)
@@ -118,7 +119,7 @@ func TestMain(t *testing.M) {
 		Name:                 "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
 		ScenarioInitializer:  InitializeScenario,
-		Options:              &opts,
+		Options:              opts,
 	}.Run()
 	if st := t.Run(); st > status {
 		status = st
