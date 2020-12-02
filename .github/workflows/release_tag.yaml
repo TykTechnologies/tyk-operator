@@ -31,8 +31,6 @@ jobs:
           
       - name: Update Charts.yaml
         if: startsWith(github.ref, 'refs/tags/')
-        env:
-          REF: ${{ github.ref }}
         run: |
           (cd helm && sed -i.orig -e "s|\(version\):.*|\1: ${REF##*/} #version of the chart|" Chart.yaml)
           git config user.name "Bender"
