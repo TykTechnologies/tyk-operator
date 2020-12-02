@@ -212,12 +212,6 @@ func (s *store) iRequestEndpointWithHeader(path string, headerKey string, header
 func (s *store) iRequestEndpoint(path string) error {
 	res, err := client.Get(fmt.Sprintf("http://localhost:8000%s", path))
 	if err != nil {
-		// TODO: Check with Leo - this looks like a Gateway Bug
-		if strings.Contains(err.Error(), "EOF") {
-			// Assume it's a 404 to make the tests pass
-			s.responseCode = http.StatusNotFound
-			return nil
-		}
 		return err
 	}
 	defer res.Body.Close()
@@ -230,9 +224,7 @@ func (s *store) iRequestEndpoint(path string) error {
 		}
 		s.responseHeaders[h] = v[0]
 	}
-
 	s.responseBody, err = ioutil.ReadAll(res.Body)
-
 	return nil
 }
 
