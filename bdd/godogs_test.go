@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +13,7 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -66,32 +65,42 @@ func init() {
 	godog.BindFlags("godog.", flag.CommandLine, &opts)
 }
 
+type writeFn func([]byte) (int, error)
+
+func (fn writeFn) Write(b []byte) (int, error) {
+	return fn(b)
+}
+
 func setup() (func() error, error) {
 	// make sure we don't have the testing ns
 	exec.Command("kubectl", "delete", "ns", namespace).Run()
-
 	cmd := exec.Command("kubectl", "port-forward", "-n", gwNS, "svc/gw", "8000:8000")
-	r, w, err := os.Pipe()
-	if err != nil {
-		return nil, err
-	}
 	fmt.Println(cmd.Args)
-	cmd.Stderr = w
-	cmd.Stdout = w
-	err = cmd.Start()
+	var once sync.Once
+	firstLine := make(chan string, 1)
+	cmd.Stderr = writeFn(func(b []byte) (int, error) {
+		once.Do(func() { firstLine <- string(b) })
+		return os.Stderr.Write(b)
+	})
+	cmd.Stdout = writeFn(func(b []byte) (int, error) {
+		once.Do(func() { firstLine <- string(b) })
+		return os.Stdout.Write(b)
+	})
+	err := cmd.Start()
 	if err != nil {
 		return nil, err
 	}
-	r.SetReadDeadline(time.Now().Add(3 * time.Second))
-	x := "Forwarding from 127.0.0.1:8000"
-	b := make([]byte, len(x))
-	_, err = io.ReadFull(r, b)
-	if err != nil {
-		return nil, err
-	}
-	if !bytes.Equal(b, []byte(x)) {
-		cmd.Process.Kill()
-		return nil, fmt.Errorf("expected %q got %q", x, string(b))
+	ts := time.NewTimer(3 * time.Second)
+	defer ts.Stop()
+	select {
+	case <-ts.C:
+		return nil, errors.New("timeout waiting for port forwarding")
+	case b := <-firstLine:
+		x := "Forwarding from 127.0.0.1:8000"
+		if !strings.HasPrefix(b, x) {
+			cmd.Process.Kill()
+			return nil, fmt.Errorf("expected %q got %q", x, b)
+		}
 	}
 	return cmd.Process.Kill, nil
 }
