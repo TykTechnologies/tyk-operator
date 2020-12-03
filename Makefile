@@ -15,6 +15,8 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 IMG ?= tyk-operator:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+#The name of the kind cluster used for development
+CLUSTER_NAME ?= kind
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -30,10 +32,12 @@ all: manager
 #	go test ./... -coverprofile cover.out
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+# skip bdd when doing unit testing
+UNIT_TEST=$(shell go list ./... | grep -v bdd)
 test: generate fmt vet manifests
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ${UNIT_TEST}  -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet
@@ -156,13 +160,13 @@ install-cert-manager:
 .PHONY: install-operator-helm
 install-operator-helm: cross-build-image manifests helm
 	@echo "===> installing operator with helmr"
-	kind load docker-image ${IMG}
+	kind load docker-image ${IMG} --name=${CLUSTER_NAME}
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: scrap
 scrap: generate manifests helm cross-build-image  
 	@echo "===> re installing operator with helm"
-	kind load docker-image ${IMG}
+	kind load docker-image ${IMG} --name=${CLUSTER_NAME}
 	helm uninstall ci -n tyk-operator-system
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
@@ -190,3 +194,11 @@ boot-pro: setup-pro install-operator-helm
 .PHONY: boot-ce
 boot-ce:setup-ce install-operator-helm
 	@echo "******** Successful boot strapped ce dev env ************"
+
+.PHONY: bdd 
+bdd:
+	go test -timeout 400s -v  ./bdd
+	
+.PHONY: test-all
+test-all: test bdd
+

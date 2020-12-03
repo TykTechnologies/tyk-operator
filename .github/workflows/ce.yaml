@@ -1,7 +1,6 @@
 name: Tyk CE Tests
 
-on:
-  pull_request
+on: pull_request
 
 jobs:
   ce-tests:
@@ -25,27 +24,11 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: build & load operator
+      - name: bootstrap tyk ce env
         shell: bash
         run: |
-          make cross-build-image IMG=tykio/tyk-operator:test
-          kind load docker-image tykio/tyk-operator:test --name chart-testing
-      - name: installing cert-manager
-        shell: bash
-        run: kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
-      - name: deploy & bootstrap tyk ce
-        shell: bash
-        run: |
-          echo "installing tyk-ce"
-          sh ./ci/deploy_tyk_ce.sh
-
-          echo "setting operator secrets"
-          sh ./ci/operator_ce_secrets.sh
-      - name: deploying tyk-operator
-        shell: bash
-        run: helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system
+          make boot-ce IMG=tykio/tyk-operator:test CLUSTER_NAME=chart-testing
       - name: bdd
         shell: bash
         run: |
-          go get github.com/cucumber/godog/cmd/godog@v0.10.0
-          cd bdd && TYK_MODE=ce godog --strict -t ~@undone
+          TYK_MODE=ce make test-all
