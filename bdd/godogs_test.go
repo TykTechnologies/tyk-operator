@@ -40,30 +40,7 @@ func runCMD(cmd *exec.Cmd) string {
 	return string(output)
 }
 
-func InitializeTestSuite(ctx *godog.TestSuiteContext) {
-	ctx.BeforeSuite(func() {
-		app := "kubectl"
-		cmd := exec.Command(app, "create", "ns", namespace)
-		output := runCMD(cmd)
-		if !strings.Contains(output, fmt.Sprintf("namespace/%s created", namespace)) {
-			panic(string(output))
-		}
-		cmd = exec.Command(app, "apply", "-f", "./custom_resources/workaround.yaml", "-n", namespace)
-		output = runCMD(cmd)
-		if !strings.Contains(output, " created") {
-			panic(string(output))
-		}
-	})
-
-	ctx.AfterSuite(func() {
-		app := "kubectl"
-		cmd := exec.Command(app, "delete", "ns", namespace)
-		output := runCMD(cmd)
-		if !strings.Contains(string(output), fmt.Sprintf(`namespace "%s" deleted`, namespace)) {
-			panic(string(output))
-		}
-	})
-}
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {}
 
 var opts = &godog.Options{
 	StopOnFailure: true,
@@ -179,6 +156,27 @@ type store struct {
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	s := store{}
+	ctx.BeforeScenario(func(sc *godog.Scenario) {
+		app := "kubectl"
+		cmd := exec.Command(app, "create", "ns", namespace)
+		output := runCMD(cmd)
+		if !strings.Contains(output, fmt.Sprintf("namespace/%s created", namespace)) {
+			panic(string(output))
+		}
+		cmd = exec.Command(app, "apply", "-f", "./custom_resources/workaround.yaml", "-n", namespace)
+		output = runCMD(cmd)
+		if !strings.Contains(output, " created") {
+			panic(string(output))
+		}
+	})
+	ctx.AfterScenario(func(sc *godog.Scenario, err error) {
+		app := "kubectl"
+		cmd := exec.Command(app, "delete", "ns", namespace)
+		output := runCMD(cmd)
+		if !strings.Contains(string(output), fmt.Sprintf(`namespace "%s" deleted`, namespace)) {
+			panic(string(output))
+		}
+	})
 	ctx.Step(`^there is a (\S+) resource$`, s.thereIsAResource)
 	ctx.Step(`^i create a (\S+) resource$`, s.iCreateAResource)
 	ctx.Step(`^i update a (\S+) resource$`, s.iUpdateAResource)
