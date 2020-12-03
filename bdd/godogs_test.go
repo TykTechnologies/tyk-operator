@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,8 +13,6 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -55,82 +52,13 @@ func init() {
 	godog.BindFlags("godog.", flag.CommandLine, opts)
 }
 
-type writeFn func([]byte) (int, error)
-
-func (fn writeFn) Write(b []byte) (int, error) {
-	return fn(b)
-}
-
-func set(comm chan struct{}) {
-	for {
-		kill, term, err := setup()
-		if err != nil {
-			panic(err)
-		}
-		comm <- struct{}{}
-		select {
-		case <-term:
-			kill()
-			fmt.Println("===> reopening port forwarding")
-			time.Sleep(time.Second)
-		case <-comm:
-			kill()
-			comm <- struct{}{}
-			return
-		}
-	}
-}
-
-func setup() (func() error, chan struct{}, error) {
-	// make sure we don't have the testing ns
-	exec.Command("kubectl", "delete", "ns", namespace).Run()
-	cmd := exec.Command("kubectl", "port-forward", "-n", gwNS, "svc/gw", "8000:8000")
-	fmt.Println(cmd.Args)
-	var once sync.Once
-	firstLine := make(chan string, 1)
-	fail := "failed to execute portforward in network namespace"
-	term := make(chan struct{})
-	cmd.Stderr = writeFn(func(b []byte) (int, error) {
-		once.Do(func() { firstLine <- string(b) })
-		if bytes.Contains(b, []byte(fail)) {
-			term <- struct{}{}
-		}
-		return os.Stderr.Write(b)
-	})
-	cmd.Stdout = writeFn(func(b []byte) (int, error) {
-		once.Do(func() { firstLine <- string(b) })
-		return os.Stdout.Write(b)
-	})
-	err := cmd.Start()
-	if err != nil {
-		return nil, nil, err
-	}
-	ts := time.NewTimer(3 * time.Second)
-	defer ts.Stop()
-	select {
-	case <-ts.C:
-		return nil, nil, errors.New("timeout waiting for port forwarding")
-	case b := <-firstLine:
-		x := "Forwarding from 127.0.0.1:8000"
-		if !strings.HasPrefix(b, x) {
-			cmd.Process.Kill()
-			return nil, nil, fmt.Errorf("expected %q got %q", x, b)
-		}
-	}
-	return cmd.Process.Kill, term, nil
-}
-
 func TestMain(t *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
-	comm := make(chan struct{})
-	go set(comm)
-	select {
-	case <-comm:
-	case <-time.After(3 * time.Second):
-		log.Fatal("Failed to setup port forwarding")
+	kill, err := k8sutil.Init(gwNS)
+	if err != nil {
+		log.Fatal(err)
 	}
-
 	status := godog.TestSuite{
 		Name:                 "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
@@ -140,11 +68,9 @@ func TestMain(t *testing.M) {
 	if st := t.Run(); st > status {
 		status = st
 	}
-	comm <- struct{}{}
-	select {
-	case <-comm:
-	case <-time.After(3 * time.Second):
-		log.Fatal("Failed to setup port forwarding")
+	err = kill()
+	if err != nil {
+		log.Fatal(err)
 	}
 	os.Exit(status)
 }

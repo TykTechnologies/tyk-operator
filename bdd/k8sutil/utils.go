@@ -1,11 +1,15 @@
 package k8sutil
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
+	"sync"
+	"time"
 )
 
 // OpExpect expected outcome from k8s operation
@@ -35,6 +39,7 @@ func (o OpExpect) String() string {
 }
 
 type CMD interface {
+	Init(ns string) (cancel func() error, err error)
 	CreateNS(ctx context.Context, ns string) error
 	DeleteNS(ctx context.Context, ns string) error
 	Create(ctx context.Context, file string, namespace string) error
@@ -43,11 +48,16 @@ type CMD interface {
 }
 
 var cmd CMD = CB{
+	InitFN:      initFn,
 	CreateFn:    create,
 	CreateNSFn:  createNS,
 	DeleteNSFn:  deleteNS,
 	ConfigureFn: config,
 	DeleteFn:    del,
+}
+
+func Init(ns string) (func() error, error) {
+	return cmd.Init(ns)
 }
 
 // Create applies file to k8s cluster and ensure that thr resource is created
@@ -76,11 +86,19 @@ func Configure(ctx context.Context, file string, namespace string) error {
 // CB is a helper struct satisfying CMD interface. Use the fields to provide
 // callbacks for respective CMD method call.
 type CB struct {
+	InitFN      func(string) (func() error, error)
 	CreateFn    func(ctx context.Context, file string, namespace string) error
 	DeleteFn    func(ctx context.Context, file string, namespace string) error
 	ConfigureFn func(ctx context.Context, file string, namespace string) error
 	CreateNSFn  func(ctx context.Context, ns string) error
 	DeleteNSFn  func(ctx context.Context, ns string) error
+}
+
+func (fn CB) Init(ns string) (func() error, error) {
+	if fn.InitFN == nil {
+		return nil, ErrNotImplemented
+	}
+	return fn.InitFN(ns)
 }
 
 func (fn CB) Create(ctx context.Context, file string, namespace string) error {
@@ -188,4 +206,87 @@ func expect(have OpExpect) func(OpExpect, error) error {
 		}
 		return nil
 	}
+}
+
+func initFn(ns string) (func() error, error) {
+	comm := make(chan struct{})
+	go set(comm, ns)
+	select {
+	case <-comm:
+	case <-time.After(3 * time.Second):
+		return nil, errors.New("Failed to setup port forwarding")
+	}
+	return func() error {
+		comm <- struct{}{}
+		select {
+		case <-comm:
+		case <-time.After(3 * time.Second):
+			return errors.New("Failed to tear down port forwarding")
+		}
+		return nil
+	}, nil
+}
+
+func set(comm chan struct{}, ns string) {
+	for {
+		kill, term, err := setup(ns)
+		if err != nil {
+			panic(err)
+		}
+		comm <- struct{}{}
+		select {
+		case <-term:
+			kill()
+			fmt.Println("===> reopening port forwarding")
+			time.Sleep(time.Second)
+		case <-comm:
+			kill()
+			comm <- struct{}{}
+			return
+		}
+	}
+}
+
+type writeFn func([]byte) (int, error)
+
+func (fn writeFn) Write(b []byte) (int, error) {
+	return fn(b)
+}
+
+func setup(ns string) (func() error, chan struct{}, error) {
+	// make sure we don't have the testing ns
+	cmd := exec.Command("kubectl", "port-forward", "-n", ns, "svc/gw", "8000:8000")
+	fmt.Println(cmd.Args)
+	var once sync.Once
+	firstLine := make(chan string, 1)
+	fail := "failed to execute portforward in network namespace"
+	term := make(chan struct{})
+	cmd.Stderr = writeFn(func(b []byte) (int, error) {
+		once.Do(func() { firstLine <- string(b) })
+		if bytes.Contains(b, []byte(fail)) {
+			term <- struct{}{}
+		}
+		return os.Stderr.Write(b)
+	})
+	cmd.Stdout = writeFn(func(b []byte) (int, error) {
+		once.Do(func() { firstLine <- string(b) })
+		return os.Stdout.Write(b)
+	})
+	err := cmd.Start()
+	if err != nil {
+		return nil, nil, err
+	}
+	ts := time.NewTimer(3 * time.Second)
+	defer ts.Stop()
+	select {
+	case <-ts.C:
+		return nil, nil, errors.New("timeout waiting for port forwarding")
+	case b := <-firstLine:
+		x := "Forwarding from 127.0.0.1:8000"
+		if !strings.HasPrefix(b, x) {
+			cmd.Process.Kill()
+			return nil, nil, fmt.Errorf("expected %q got %q", x, b)
+		}
+	}
+	return cmd.Process.Kill, term, nil
 }
