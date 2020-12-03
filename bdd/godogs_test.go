@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TykTechnologies/tyk-operator/bdd/k8sutil"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cucumber/godog"
 )
@@ -33,6 +34,7 @@ var client = http.Client{}
 
 func runCMD(cmd *exec.Cmd) string {
 	a := fmt.Sprint(cmd.Args)
+	fmt.Println(a)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		panic(fmt.Sprintf("failed %s with %v : %s", a, err, string(output)))
@@ -157,24 +159,19 @@ type store struct {
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	s := store{}
 	ctx.BeforeScenario(func(sc *godog.Scenario) {
-		app := "kubectl"
-		cmd := exec.Command(app, "create", "ns", namespace)
-		output := runCMD(cmd)
-		if !strings.Contains(output, fmt.Sprintf("namespace/%s created", namespace)) {
-			panic(string(output))
+		err := k8sutil.CreateNS(context.Background(), namespace)
+		if err != nil {
+			panic(err)
 		}
-		cmd = exec.Command(app, "apply", "-f", "./custom_resources/workaround.yaml", "-n", namespace)
-		output = runCMD(cmd)
-		if !strings.Contains(output, " created") {
-			panic(string(output))
+		err = k8sutil.Create(context.Background(), "./custom_resources/workaround.yaml", namespace)
+		if err != nil {
+			panic(err)
 		}
 	})
 	ctx.AfterScenario(func(sc *godog.Scenario, err error) {
-		app := "kubectl"
-		cmd := exec.Command(app, "delete", "ns", namespace)
-		output := runCMD(cmd)
-		if !strings.Contains(string(output), fmt.Sprintf(`namespace "%s" deleted`, namespace)) {
-			panic(string(output))
+		err = k8sutil.DeleteNS(context.Background(), namespace)
+		if err != nil {
+			panic(err)
 		}
 	})
 	ctx.Step(`^there is a (\S+) resource$`, s.thereIsAResource)
