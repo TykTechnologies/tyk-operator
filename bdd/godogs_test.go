@@ -48,6 +48,11 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 		if !strings.Contains(output, fmt.Sprintf("namespace/%s created", namespace)) {
 			panic(string(output))
 		}
+		cmd = exec.Command(app, "apply", "-f", "./custom_resources/workaround.yaml", "-n", namespace)
+		output = runCMD(cmd)
+		if !strings.Contains(output, " created") {
+			panic(string(output))
+		}
 	})
 
 	ctx.AfterSuite(func() {
@@ -87,6 +92,7 @@ func set(comm chan struct{}) {
 		case <-term:
 			kill()
 			fmt.Println("===> reopening port forwarding")
+			time.Sleep(time.Second)
 		case <-comm:
 			kill()
 			comm <- struct{}{}
@@ -233,6 +239,7 @@ func call(method, url string, body func() io.Reader,
 		}
 		res, err := client.Do(req)
 		if err != nil {
+			fmt.Println("==========> Error making client call ", err)
 			return err
 		}
 		defer res.Body.Close()
