@@ -90,8 +90,7 @@ docker-push:
 # Make release
 release:
 	git checkout master
-	sed -i.orig -e "s|\(version\):.*|\1: ${VERSION} # version of the chart|" helm/Chart.yaml
-	rm helm/Chart.yaml.orig
+	sed -i -e "s|\(version\):.*|\1: ${VERSION} # version of the chart|" helm/Chart.yaml
 	git add helm/Chart.yaml
 	git commit -m "version to: v${VERSION}"
 	git push origin master && git tag v${VERSION} && git push --tags
