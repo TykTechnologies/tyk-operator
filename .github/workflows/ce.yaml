@@ -31,4 +31,4 @@ jobs:
       - name: bdd
         shell: bash
         run: |
-          TYK_MODE=ce make bdd
+          TYK_MODE=ce make test-all

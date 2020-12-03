@@ -32,10 +32,12 @@ all: manager
 #	go test ./... -coverprofile cover.out
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+# skip bdd when doing unit testing
+UNIT_TEST=$(shell go list ./... | grep -v bdd)
 test: generate fmt vet manifests
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ${UNIT_TEST}  -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet
@@ -197,5 +199,6 @@ boot-ce:setup-ce install-operator-helm
 bdd:
 	go test -timeout 400s -v  ./bdd
 	
-
+.PHONY: test-all
+test-all: test bdd
 

@@ -46,4 +46,4 @@ jobs:
       - name: bdd
         shell: bash
         run: |
-          TYK_MODE=pro make bdd
+          TYK_MODE=pro make test-all
