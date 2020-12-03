@@ -25,8 +25,9 @@ import (
 )
 
 const (
-	namespace  = "bdd"
-	k8sTimeout = time.Second * 10
+	namespace      = "bdd"
+	k8sTimeout     = time.Second * 10
+	reconcileDelay = time.Second * 5
 )
 
 var gwNS = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
@@ -280,45 +281,47 @@ func (s *store) iRequestEndpoint(path string) error {
 }
 
 func (s *store) thereIsAResource(fileName string) error {
-	return s.kubectlFile("apply", fileName, k8sTimeout, " created", " unchanged")
+	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+	defer cancel()
+	return wait(reconcileDelay)(
+		k8sutil.Create(ctx, fileName, namespace),
+	)
 }
 
 func (s *store) iCreateAResource(fileName string) error {
-	return s.kubectlFile("apply", fileName, k8sTimeout, " created")
+	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+	defer cancel()
+	return wait(reconcileDelay)(
+		k8sutil.Create(ctx, fileName, namespace),
+	)
 }
 
 func (s *store) iUpdateAResource(fileName string) error {
-	return s.kubectlFile("apply", fileName, k8sTimeout, " configured")
+	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+	defer cancel()
+	return wait(reconcileDelay)(
+		k8sutil.Configure(ctx, fileName, namespace),
+	)
 }
 
 func (s *store) iDeleteAResource(fileName string) error {
-	return s.kubectlFile("delete", fileName, k8sTimeout, " deleted")
+	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+	defer cancel()
+	return wait(reconcileDelay)(
+		k8sutil.Delete(ctx, fileName, namespace),
+	)
 }
 
-func (s *store) kubectlFile(action string, fileName string, timeout time.Duration, expected ...string) error {
-	app := "kubectl"
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, app, action, "-f", fileName, "-n", namespace)
-	output := runCMD(cmd)
-	var err error
-	var ok bool
-	for _, v := range expected {
-		if !strings.Contains(output, v) {
-			err = fmt.Errorf("unexpected output (%s)", string(output))
+func wait(ts time.Duration) func(err error) error {
+	return func(err error) error {
+		if err != nil {
+			return err
 		}
-		ok = true
+		time.Sleep(ts)
+		cmd := exec.CommandContext(context.Background(), "kubectl", "get", "tykapis", "-n", namespace)
+		runCMD(cmd)
+		return nil
 	}
-	if !ok {
-		return err
-	}
-
-	cmd = exec.CommandContext(ctx, app, "get", "tykapis", "-n", namespace)
-	output = runCMD(cmd)
-	// TODO: need to wait for a bit for the reconciler to kick in
-	time.Sleep(time.Second * 5)
-	return nil
 }
 
 func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {

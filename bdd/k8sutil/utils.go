@@ -112,10 +112,10 @@ func (fn CB) Delete(ctx context.Context, file string, namespace string) error {
 }
 
 func (fn CB) Configure(ctx context.Context, file string, namespace string) error {
-	if fn.DeleteFn == nil {
+	if fn.ConfigureFn == nil {
 		return ErrNotImplemented
 	}
-	return fn.DeleteFn(ctx, file, namespace)
+	return fn.ConfigureFn(ctx, file, namespace)
 }
 
 func runCMD(cmd *exec.Cmd) (string, error) {
