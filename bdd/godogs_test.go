@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/cucumber/godog"
 )
 
@@ -73,15 +76,39 @@ func (fn writeFn) Write(b []byte) (int, error) {
 	return fn(b)
 }
 
-func setup() (func() error, error) {
+func set(comm chan struct{}) {
+	for {
+		kill, term, err := setup()
+		if err != nil {
+			panic(err)
+		}
+		comm <- struct{}{}
+		select {
+		case <-term:
+			kill()
+			fmt.Println("===> reopening port forwarding")
+		case <-comm:
+			kill()
+			comm <- struct{}{}
+			return
+		}
+	}
+}
+
+func setup() (func() error, chan struct{}, error) {
 	// make sure we don't have the testing ns
 	exec.Command("kubectl", "delete", "ns", namespace).Run()
 	cmd := exec.Command("kubectl", "port-forward", "-n", gwNS, "svc/gw", "8000:8000")
 	fmt.Println(cmd.Args)
 	var once sync.Once
 	firstLine := make(chan string, 1)
+	fail := "failed to execute portforward in network namespace"
+	term := make(chan struct{})
 	cmd.Stderr = writeFn(func(b []byte) (int, error) {
 		once.Do(func() { firstLine <- string(b) })
+		if bytes.Contains(b, []byte(fail)) {
+			term <- struct{}{}
+		}
 		return os.Stderr.Write(b)
 	})
 	cmd.Stdout = writeFn(func(b []byte) (int, error) {
@@ -90,29 +117,32 @@ func setup() (func() error, error) {
 	})
 	err := cmd.Start()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ts := time.NewTimer(3 * time.Second)
 	defer ts.Stop()
 	select {
 	case <-ts.C:
-		return nil, errors.New("timeout waiting for port forwarding")
+		return nil, nil, errors.New("timeout waiting for port forwarding")
 	case b := <-firstLine:
 		x := "Forwarding from 127.0.0.1:8000"
 		if !strings.HasPrefix(b, x) {
 			cmd.Process.Kill()
-			return nil, fmt.Errorf("expected %q got %q", x, b)
+			return nil, nil, fmt.Errorf("expected %q got %q", x, b)
 		}
 	}
-	return cmd.Process.Kill, nil
+	return cmd.Process.Kill, term, nil
 }
 
 func TestMain(t *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
-	kill, err := setup()
-	if err != nil {
-		log.Fatal(err)
+	comm := make(chan struct{})
+	go set(comm)
+	select {
+	case <-comm:
+	case <-time.After(3 * time.Second):
+		log.Fatal("Failed to setup port forwarding")
 	}
 
 	status := godog.TestSuite{
@@ -124,7 +154,12 @@ func TestMain(t *testing.M) {
 	if st := t.Run(); st > status {
 		status = st
 	}
-	kill()
+	comm <- struct{}{}
+	select {
+	case <-comm:
+	case <-time.After(3 * time.Second):
+		log.Fatal("Failed to setup port forwarding")
+	}
 	os.Exit(status)
 }
 
@@ -133,7 +168,7 @@ type store struct {
 	responseBody    []byte
 	responseTimes   []time.Duration
 	cleanupK8s      []string
-	responseHeaders map[string]string
+	responseHeaders http.Header
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
@@ -183,50 +218,63 @@ func (s *store) theFirstResponseShouldBeSlowest() error {
 	return nil
 }
 
-func (s *store) iRequestEndpointWithHeader(path string, headerKey string, headerValue string) error {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:8000%s", path), nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set(headerKey, headerValue)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	s.responseCode = res.StatusCode
-
-	for h, v := range res.Header {
-		if s.responseHeaders == nil {
-			s.responseHeaders = make(map[string]string, len(res.Header))
+func call(method, url string, body func() io.Reader,
+	fn func(*http.Request),
+	validate func(*http.Response) error) error {
+	var failed error
+	err := backoff.Retry(func() error {
+		req, err := http.NewRequest(method, url, body())
+		if err != nil {
+			failed = err
+			return nil
 		}
-		s.responseHeaders[h] = v[0]
+		if fn != nil {
+			fn(req)
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		failed = validate(res)
+		return nil
+	}, backoff.NewExponentialBackOff())
+	if err != nil {
+		return err
 	}
+	return failed
+}
 
-	s.responseBody, err = ioutil.ReadAll(res.Body)
-
-	return nil
+func (s *store) iRequestEndpointWithHeader(path string, headerKey string, headerValue string) error {
+	return call(
+		http.MethodGet,
+		fmt.Sprintf("http://localhost:8000%s", path),
+		func() io.Reader { return nil },
+		func(h *http.Request) {
+			h.Header.Set(headerKey, headerValue)
+		},
+		func(res *http.Response) error {
+			s.responseCode = res.StatusCode
+			s.responseHeaders = res.Header.Clone()
+			s.responseBody, _ = ioutil.ReadAll(res.Body)
+			return nil
+		},
+	)
 }
 
 func (s *store) iRequestEndpoint(path string) error {
-	res, err := client.Get(fmt.Sprintf("http://localhost:8000%s", path))
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	s.responseCode = res.StatusCode
-
-	for h, v := range res.Header {
-		if s.responseHeaders == nil {
-			s.responseHeaders = make(map[string]string, len(res.Header))
-		}
-		s.responseHeaders[h] = v[0]
-	}
-	s.responseBody, err = ioutil.ReadAll(res.Body)
-	return nil
+	return call(
+		http.MethodGet,
+		fmt.Sprintf("http://localhost:8000%s", path),
+		func() io.Reader { return nil },
+		func(h *http.Request) {},
+		func(h *http.Response) error {
+			s.responseCode = h.StatusCode
+			s.responseHeaders = h.Header.Clone()
+			s.responseBody, _ = ioutil.ReadAll(h.Body)
+			return nil
+		},
+	)
 }
 
 func (s *store) thereIsAResource(fileName string) error {
@@ -309,10 +357,11 @@ func (s *store) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
 }
 
 func (s *store) thereShouldBeAResponseHeader(key string, value string) error {
-	headerVal, ok := s.responseHeaders[key]
+	_, ok := s.responseHeaders[key]
 	if !ok {
 		return fmt.Errorf("response header (%s) not set", key)
 	}
+	headerVal := s.responseHeaders.Get(key)
 	if headerVal != value {
 		return fmt.Errorf("expected response header (%s), got (%s)", value, headerVal)
 	}

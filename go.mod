@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	cloud.google.com/go v0.45.1 // indirect
+	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/cucumber/godog v0.10.0
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-logr/logr v0.1.0
