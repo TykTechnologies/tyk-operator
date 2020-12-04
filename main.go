@@ -24,12 +24,6 @@ import (
 	"strconv"
 	"strings"
 
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_admin_client"
-	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
-	"github.com/TykTechnologies/tyk-operator/pkg/gateway_client"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -37,6 +31,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_admin_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/gateway_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -185,6 +186,10 @@ func main() {
 		}
 	}
 
+	if err = (&tykv1alpha1.SecurityPolicy{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "SecurityPolicy")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
