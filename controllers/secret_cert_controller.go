@@ -162,6 +162,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
 
 			apiDefObj, _ := r.UniversalClient.Api().Get(apiDef.Status.ApiID)
+			apiDefObj.Certificates = []string{}
 			apiDefObj.Certificates = append(apiDefObj.Certificates, certID)
 			r.UniversalClient.Api().Update(apiDef.Status.ApiID, apiDefObj)
 
