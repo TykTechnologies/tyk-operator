@@ -20,8 +20,9 @@ import (
 	"context"
 	"time"
 
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
@@ -117,9 +118,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	for _, certID := range desired.Spec.CertificateSecretNames {
+	for _, certName := range desired.Spec.CertificateSecretNames {
 		secret := v1.Secret{}
-		err := r.Get(ctx, types.NamespacedName{Name: certID, Namespace: namespacedName.Namespace}, &secret)
+		err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
 		if err != nil {
 			log.Error(err, "requeueing because secret not found")
 			return reconcile.Result{}, err
@@ -131,10 +132,23 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			return reconcile.Result{}, err
 		}
 
-		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(pemCrtBytes)
-		_, err = universal_client.GetCertificate(r.UniversalClient, tykCertID)
+		pemKeyBytes, ok := secret.Data["tls.key"]
+		if !ok {
+			log.Error(err, "requeueing because key not found in secret")
+			return reconcile.Result{}, err
+		}
 
-		desired.Spec.Certificates = append(desired.Spec.Certificates, tykCertID)
+		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(pemCrtBytes)
+		_, err = r.UniversalClient.Certificate().Get(tykCertID)
+		if err != nil {
+			tykCertID, err = r.UniversalClient.Certificate().Upload(pemKeyBytes, pemCrtBytes)
+			if err != nil {
+				return reconcile.Result{Requeue: true}, err
+			}
+		}
+
+		desired.Spec.Certificates = []string{tykCertID}
+		break
 	}
 
 	desired.Spec.CertificateSecretNames = nil
@@ -194,6 +208,7 @@ func ignoreIngressTemplatePredicate() predicate.Predicate {
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
+		Owns(&v1.Secret{}).
 		WithEventFilter(ignoreIngressTemplatePredicate()).
 		Complete(r)
 }
