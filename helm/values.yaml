@@ -4,7 +4,7 @@ confSecretName: tyk-operator-conf
 image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "v0.3.0"
 
 rbacProxy:
   image:
