@@ -58,7 +58,6 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
-	r.Recorder.Event(desired, "Normal", "SecurityPolicy", "Reconciling")
 	const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
 
 	// If object is being deleted
@@ -96,7 +95,6 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		// issue a requeue anyway
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
-
 	// Convert the API name/namespace to the Tyk API ID
 	for i, accessRight := range desired.Spec.AccessRightsArray {
 		apiNamespace := accessRight.Namespace
@@ -131,14 +129,17 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			desired.Spec.AccessRightsArray[i].APIID = apiDef.APIID
 			desired.Spec.AccessRightsArray[i].APIName = apiDef.Name
 			desired.Spec.OrgID = apiDef.OrgID
-
 			if err := r.Update(ctx, desired); err != nil {
 				log.Error(err, "unable to update apiId in access rights array")
 			}
-			return ctrl.Result{Requeue: true}, client.IgnoreNotFound(err)
+			return ctrl.Result{Requeue: true}, nil
 		}
 	}
 
+	desired.Spec.AccessRights = make(map[string]tykv1.AccessDefinition)
+	for _, v := range desired.Spec.AccessRightsArray {
+		desired.Spec.AccessRights[v.APIID] = v
+	}
 	// if "Status.PolID" not there, add and save it, this is new object.
 	if desired.Status.PolID == "" {
 		// If the spec is NOT included, means we use the B64 encoded namespaced name
@@ -161,10 +162,9 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec)
 	if err != nil {
 		log.Error(err, "createOrUpdatePolicy failure")
-		r.Recorder.Event(desired, "Warning", "SecurityPolicy", "Create or Update Security Policy")
 		return ctrl.Result{Requeue: true}, nil
 	}
-
+	log.Info("Created/Updated security policy ", "ID", desired.Spec.ID)
 	return ctrl.Result{}, nil
 }
 
