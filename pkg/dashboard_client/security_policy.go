@@ -27,9 +27,7 @@ func GetPolicyK8SName(nameSpacedName string) string {
 	return SecPolPrefix + "-" + nameSpacedName
 }
 
-/**
-Returns all policies from the Dashboard
-*/
+// All Returns all policies from the Dashboard
 func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	sess := grequests.NewSession(p.opts)
 	fullPath := JoinUrl(p.url, endpointPolicies)
@@ -51,27 +49,19 @@ func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	return response.Policies, nil
 }
 
-/**
-  Attempts to find the Policy by the namespaced name combo.
-  When creating an API, we store this unique combination in the
-  policy's tags.
-*/
+// Get  find the Policy by id
 func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
-	// Returns error if there was a mistake getting all the policies
-	list, err := p.All()
+	sess := grequests.NewSession(p.opts)
+	fullPath := JoinUrl(p.url, endpointPolicies, id)
+	res, err := sess.Get(fullPath, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	// Iterate through policies to find the policy that stores this
-	// unique identifier as the "id"
-	for _, pol := range list {
-		if id == pol.ID {
-			return &pol, nil
-		}
+	var o v1.SecurityPolicySpec
+	if err := res.JSON(&o); err != nil {
+		return nil, err
 	}
-
-	return nil, universal_client.PolicyNotFoundError
+	return &o, nil
 }
 
 /*
@@ -119,21 +109,10 @@ func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	if err != nil {
 		return err
 	}
-
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
 	}
-
-	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
-		return err
-	}
-
-	if resMsg.Status != "OK" {
-		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-
-	return nil
+	return res.JSON(def)
 }
 
 /**
