@@ -1,6 +1,6 @@
 # Ingress
 
-Tyk Operator offers an Ingress Controller, which dynamically creates ApiDefinition resources as per the ingress spec.
+Tyk Operator offers an Ingress Controller, which dynamically manages ApiDefinition resources as per the ingress spec.
  Tyk Gateway can be configured as a drop-in replacement for any standard Kubernetes Ingress.
 
 Most Ingress Controllers heavily rely on annotations to configure the ingress gateway. With Tyk Operator, our Ingress 
