@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/go-logr/logr"
 	"github.com/levigross/grequests"
 )
 
@@ -28,45 +28,26 @@ type ResponseMsg struct {
 	Message string `json:"message"`
 }
 
-func JoinUrl(parts ...string) string {
-	l := len(parts)
-	if l == 1 {
-		return parts[0]
+func (c *Client) opts() *grequests.RequestOptions {
+	return &grequests.RequestOptions{
+		Headers: map[string]string{
+			"x-tyk-authorization": c.env.Auth,
+			"content-type":        "application/json",
+		},
+		InsecureSkipVerify: c.env.InsecureSkipVerify,
 	}
-	ps := make([]string, l)
-	for i, part := range parts {
-		if i == 0 {
-			ps[i] = strings.TrimRight(part, "/")
-		} else {
-			ps[i] = strings.TrimLeft(part, "/")
-		}
-	}
-	return strings.Join(ps, "/")
 }
 
-func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *Client {
+func NewClient(log logr.Logger, env universal_client.Env) *Client {
 	c := &Client{
-		url:                url,
-		orgID:              orgID,
-		insecureSkipVerify: false,
-		opts: &grequests.RequestOptions{
-			Headers: map[string]string{
-				"x-tyk-authorization": auth,
-				"content-type":        "application/json",
-			},
-			InsecureSkipVerify: insecureSkipVerify,
-		},
+		env: env,
 	}
-
 	return c
 }
 
 type Client struct {
-	url                string
-	secret             string
-	orgID              string
-	insecureSkipVerify bool
-	opts               *grequests.RequestOptions
+	log logr.Logger
+	env universal_client.Env
 }
 
 func (c *Client) Api() universal_client.UniversalApi {
@@ -78,10 +59,10 @@ func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
 }
 
 func (c *Client) HotReload() error {
-	sess := grequests.NewSession(c.opts)
+	sess := grequests.NewSession(c.opts())
 
-	fullPath := JoinUrl(c.url, endpointReload)
-	res, err := sess.Get(fullPath, c.opts)
+	fullPath := c.env.JoinURL(endpointReload)
+	res, err := sess.Get(fullPath, c.opts())
 
 	if err != nil {
 		return err

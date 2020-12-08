@@ -13,9 +13,9 @@ type Api struct {
 }
 
 func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
-	fullPath := JoinUrl(a.url, endpointAPIs)
+	fullPath := a.env.JoinURL(endpointAPIs)
 
 	// -2 means get all pages
 	queryStruct := struct {
@@ -50,14 +50,14 @@ func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
 
 func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) (string, error) {
 	// Create
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
-	def.OrgID = a.orgID
+	def.OrgID = a.env.Org
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: *def,
 	}
 
-	fullPath := JoinUrl(a.url, endpointAPIs)
+	fullPath := a.env.JoinURL(endpointAPIs)
 
 	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: dashboardAPIRequest})
 	if err != nil {
@@ -86,8 +86,8 @@ func (a Api) Get(apiID string) (*tykv1alpha1.APIDefinitionSpec, error) {
 	}
 
 	// Create
-	sess := grequests.NewSession(a.opts)
-	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
+	sess := grequests.NewSession(a.opts())
+	fullPath := a.env.JoinURL(endpointAPIs, apiID)
 
 	res, err := sess.Get(fullPath, nil)
 	if err != nil {
@@ -117,9 +117,9 @@ func (a Api) Update(apiID string, def *tykv1alpha1.APIDefinitionSpec) error {
 		ApiDefinition: *def,
 	}
 
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
-	fullPath := JoinUrl(a.url, endpointAPIs, apiID)
+	fullPath := a.env.JoinURL(endpointAPIs, apiID)
 
 	res, err := sess.Put(fullPath, &grequests.RequestOptions{JSON: dashboardAPIRequest})
 	if err != nil {
@@ -143,9 +143,9 @@ func (a Api) Update(apiID string, def *tykv1alpha1.APIDefinitionSpec) error {
 }
 
 func (a Api) Delete(id string) error {
-	delPath := JoinUrl(a.url, endpointAPIs, id)
+	delPath := a.env.JoinURL(endpointAPIs, id)
 
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 	res, err := sess.Delete(delPath, nil)
 	if err != nil {
 		return err

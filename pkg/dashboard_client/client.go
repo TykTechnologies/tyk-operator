@@ -2,7 +2,6 @@ package dashboard_client
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
@@ -29,47 +28,27 @@ type ResponseMsg struct {
 	Meta    string `json:"Meta,omitempty"`
 }
 
-func JoinUrl(parts ...string) string {
-	l := len(parts)
-	if l == 1 {
-		return parts[0]
+func (c *Client) opts() *grequests.RequestOptions {
+	return &grequests.RequestOptions{
+		Headers: map[string]string{
+			"authorization": c.env.Auth,
+			"content-type":  "application/json",
+		},
+		InsecureSkipVerify: c.env.InsecureSkipVerify,
 	}
-	ps := make([]string, l)
-	for i, part := range parts {
-		if i == 0 {
-			ps[i] = strings.TrimRight(part, "/")
-		} else {
-			ps[i] = strings.TrimLeft(part, "/")
-		}
-	}
-	return strings.Join(ps, "/")
 }
 
-func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *Client {
+func NewClient(log logr.Logger, env universal_client.Env) *Client {
 	c := &Client{
-		url:                url,
-		insecureSkipVerify: false,
-		opts: &grequests.RequestOptions{
-			Headers: map[string]string{
-				"authorization": auth,
-				"content-type":  "application/json",
-			},
-			InsecureSkipVerify: insecureSkipVerify,
-		},
-		secret: auth,
-		orgID:  orgID,
+		log: log,
+		env: env,
 	}
-
 	return c
 }
 
 type Client struct {
-	url                string
-	secret             string
-	orgID              string
-	insecureSkipVerify bool
-	log                logr.Logger
-	opts               *grequests.RequestOptions
+	env universal_client.Env
+	log logr.Logger
 }
 
 func (c *Client) Organization() universal_client.UniversalOrganization {

@@ -18,9 +18,9 @@ type Api struct {
 }
 
 func (a Api) All() ([]v1.APIDefinitionSpec, error) {
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
-	fullPath := JoinUrl(a.url, endpointAPIs)
+	fullPath := a.env.JoinURL(endpointAPIs)
 
 	res, err := sess.Get(fullPath, nil)
 	if err != nil {
@@ -40,18 +40,15 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 }
 
 func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
-	fullPath := JoinUrl(a.url, endpointAPIs+"/", apiID)
+	fullPath := a.env.JoinURL(endpointAPIs, apiID)
 
-	res, err := sess.Get(fullPath, a.opts)
+	res, err := sess.Get(fullPath, a.opts())
 	if err != nil {
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		if res.StatusCode == http.StatusNotFound {
-			return nil, nil
-		}
 		return nil, fmt.Errorf("gateway API Returned error: %d", res.StatusCode)
 	}
 
@@ -59,7 +56,7 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	if err := res.JSON(&spec); err != nil {
 		return nil, err
 	}
-
+	a.log.Info("======> received ", res.String())
 	return &spec, nil
 }
 
@@ -86,13 +83,13 @@ func (a Api) Create(def *v1.APIDefinitionSpec) (string, error) {
 	}
 
 	// Create
-	opts := a.opts
+	opts := a.opts()
 
-	def.OrgID = a.orgID
+	def.OrgID = a.env.Org
 	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointAPIs)
+	fullPath := a.env.JoinURL(endpointAPIs)
 
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
 	res, err := sess.Post(fullPath, opts)
 	if err != nil {
@@ -134,11 +131,11 @@ func (a Api) Update(_ string, def *v1.APIDefinitionSpec) error {
 	}
 
 	// Update
-	opts := a.opts
+	opts := a.opts()
 	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointAPIs, apiToUpdate.APIID)
+	fullPath := a.env.JoinURL(endpointAPIs, apiToUpdate.APIID)
 
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
 	res, err := sess.Put(fullPath, opts)
 	if err != nil {
@@ -162,11 +159,11 @@ func (a Api) Update(_ string, def *v1.APIDefinitionSpec) error {
 }
 
 func (a Api) Delete(id string) error {
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 
-	delPath := JoinUrl(a.url, endpointAPIs, id)
+	delPath := a.env.JoinURL(endpointAPIs, id)
 
-	res, err := sess.Delete(delPath, a.opts)
+	res, err := sess.Delete(delPath, a.opts())
 	if err != nil {
 		return err
 	}

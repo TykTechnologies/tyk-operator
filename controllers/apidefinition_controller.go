@@ -75,7 +75,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			}
 
 			for _, policy := range policies {
-				for _, right := range policy.AccessRights {
+				for _, right := range policy.AccessRightsArray {
 					if right.APIID == desired.Status.ApiID {
 						log.Info("unable to delete api due to security policy dependency",
 							"api", namespacedName.String(),

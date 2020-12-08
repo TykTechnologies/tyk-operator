@@ -19,11 +19,11 @@ type Webhook struct {
 Returns all webhooks from the Dashboard for this org
 */
 func (w Webhook) All() ([]v1.WebhookSpec, error) {
-	sess := grequests.NewSession(w.opts)
+	sess := grequests.NewSession(w.opts())
 
-	fullPath := JoinUrl(w.url, endpointWebhooks)
+	fullPath := w.env.JoinURL(endpointWebhooks)
 
-	res, err := sess.Get(fullPath, w.opts)
+	res, err := sess.Get(fullPath, w.opts())
 	if err != nil {
 		return nil, err
 	}
@@ -79,9 +79,9 @@ func (w Webhook) Create(namespacedName string, def *v1.WebhookSpec) error {
 	def.Name = namespacedName
 	def.ID = ""
 
-	fullPath := JoinUrl(w.url, endpointWebhooks)
+	fullPath := w.env.JoinURL(endpointWebhooks)
 
-	sess := grequests.NewSession(w.opts)
+	sess := grequests.NewSession(w.opts())
 
 	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: def})
 	if err != nil {
@@ -123,9 +123,9 @@ func (w Webhook) Update(namespacedName string, def *v1.WebhookSpec) error {
 	def.ID = webhookToUpdate.ID       // Needed
 	def.OrgID = webhookToUpdate.OrgID // Needed
 
-	sess := grequests.NewSession(w.opts)
+	sess := grequests.NewSession(w.opts())
 
-	fullPath := JoinUrl(w.url, endpointWebhooks, webhookToUpdate.ID)
+	fullPath := w.env.JoinURL(endpointWebhooks, webhookToUpdate.ID)
 	res, err := sess.Put(fullPath, &grequests.RequestOptions{JSON: def})
 	if err != nil {
 		return err
@@ -152,7 +152,7 @@ Tries to delete a Webhook by first attempting to do a lookup on it.
 If webhook does not exist, move on, nothing to delete
 */
 func (w Webhook) Delete(namespacedName string) error {
-	sess := grequests.NewSession(w.opts)
+	sess := grequests.NewSession(w.opts())
 
 	webhook, err := w.Get(namespacedName)
 	if err == universal_client.WebhookNotFoundError {
@@ -162,7 +162,7 @@ func (w Webhook) Delete(namespacedName string) error {
 		return errors.Wrap(err, "Unable to lookup webhook.")
 	}
 
-	delPath := JoinUrl(w.url, endpointWebhooks, webhook.ID)
+	delPath := w.env.JoinURL(endpointWebhooks, webhook.ID)
 
 	res, err := sess.Delete(delPath, nil)
 	if err != nil {

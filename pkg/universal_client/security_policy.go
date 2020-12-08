@@ -24,55 +24,35 @@ var (
 	PolicyNotFoundError  = errors.New("policy not found")
 )
 
-func applyDefaults(spec *tykv1alpha1.SecurityPolicySpec) {
-	if spec.Rate == 0 || spec.Per == 0 {
-		spec.Rate = -1
-		spec.Per = -1
-	}
-	if spec.ThrottleInterval == 0 || spec.ThrottleRetryLimit == 0 {
-		spec.ThrottleInterval = -1
-		spec.ThrottleRetryLimit = -1
-	}
-	if spec.QuotaMax == 0 || spec.QuotaRenewalRate == 0 {
-		spec.QuotaMax = -1
-		spec.QuotaRenewalRate = -1
-	}
-	if spec.MaxQueryDepth == 0 {
-		spec.MaxQueryDepth = -1
-	}
-}
+// func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec) (*tykv1alpha1.SecurityPolicySpec, error) {
+// 	var err error
 
-func CreateOrUpdatePolicy(c UniversalClient, spec *tykv1alpha1.SecurityPolicySpec) (*tykv1alpha1.SecurityPolicySpec, error) {
-	var err error
+// 	pol, err := c.SecurityPolicy().Get(spec.ID)
+// 	if err != nil {
+// 		// should return "nil, http.401" if policy doesn't exist
+// 		if !errors.Is(err, PolicyNotFoundError) {
+// 			return nil, errors.Wrap(err, "Unable to communicate with Client")
+// 		}
+// 	}
 
-	pol, err := c.SecurityPolicy().Get(spec.ID)
-	if err != nil {
-		// should return "nil, http.401" if policy doesn't exist
-		if !errors.Is(err, PolicyNotFoundError) {
-			return nil, errors.Wrap(err, "Unable to communicate with Client")
-		}
-	}
+// 	if pol == nil {
+// 		// Create
+// 		err := c.SecurityPolicy().Create(spec)
+// 		if err != nil {
+// 			return nil, errors.Wrap(err, "unable to create policy")
+// 		}
 
-	applyDefaults(spec)
+// 	} else {
+// 		// Update
+// 		spec.MID = pol.MID
+// 		spec.OrgID = pol.OrgID
+// 		err = c.SecurityPolicy().Update(spec)
+// 		if err != nil {
+// 			return nil, errors.Wrap(err, "unable to update policy")
+// 		}
+// 	}
 
-	if pol == nil {
-		// Create
-		_, err := c.SecurityPolicy().Create(spec)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to create policy")
-		}
+// 	_ = c.HotReload()
 
-	} else {
-		// Update
-		spec.MID = pol.MID
-		spec.OrgID = pol.OrgID
-		err = c.SecurityPolicy().Update(spec)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to update policy")
-		}
-	}
-
-	_ = c.HotReload()
-
-	return pol, nil
-}
+// 	return pol, nil
+// }

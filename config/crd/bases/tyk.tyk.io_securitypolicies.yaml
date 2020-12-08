@@ -239,7 +239,6 @@ spec:
                 for unlimited
               type: integer
           required:
-          - access_rights_array
           - active
           - name
           - state

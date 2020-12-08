@@ -17,6 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"os"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -42,9 +45,13 @@ var _ webhook.Defaulter = &SecurityPolicy{}
 func (r *SecurityPolicy) Default() {
 	securitypolicylog.Info("default", "name", r.Name)
 	spec := r.Spec
+	spec.Rate = -1
 	spec.Per = -1
+	spec.ThrottleInterval = -1
+	spec.ThrottleRetryLimit = -1
 	spec.QuotaMax = -1
 	spec.QuotaRenewalRate = -1
+	spec.OrgID = strings.TrimSpace(os.Getenv("TYK_ORG"))
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

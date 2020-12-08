@@ -19,10 +19,10 @@ type SecurityPolicy struct {
 
 // todo: needs testing
 func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
-	sess := grequests.NewSession(a.opts)
-	fullPath := JoinUrl(a.url, endpointPolicies)
+	sess := grequests.NewSession(a.opts())
+	fullPath := a.env.JoinURL(endpointPolicies)
 
-	res, err := sess.Get(fullPath, a.opts)
+	res, err := sess.Get(fullPath, a.opts())
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +44,9 @@ func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 
 // todo: needs testing
 func (a SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, error) {
-	sess := grequests.NewSession(a.opts)
-	fullPath := JoinUrl(a.url, endpointPolicies, namespacedName)
-	res, err := sess.Get(fullPath, a.opts)
+	sess := grequests.NewSession(a.opts())
+	fullPath := a.env.JoinURL(endpointPolicies, namespacedName)
+	res, err := sess.Get(fullPath, a.opts())
 	if err != nil {
 		return nil, err
 	}
@@ -64,50 +64,23 @@ func (a SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, erro
 }
 
 // todo: needs testing
-func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
-	sess := grequests.NewSession(a.opts)
-	// Replace this with a GET ONE once that is fixed
-	// get all policies
-	list, err := a.All()
+func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
+	sess := grequests.NewSession(a.opts())
+	fullPath := a.env.JoinURL(endpointPolicies)
+
+	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: def})
 	if err != nil {
-		return "", err
+		return err
 	}
-	// check exists / collisions
-	for _, pol := range list {
-		if pol.ID == def.ID {
-			return "", policyCollisionError
-		}
-	}
-
-	// Create
-	opts := a.opts
-	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointPolicies)
-
-	res, err := sess.Post(fullPath, opts)
-	if err != nil {
-		return "", err
-	}
-
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
+		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
 	}
-
-	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
-		return "", err
-	}
-
-	if resMsg.Status != "ok" {
-		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-
-	return resMsg.Key, nil
+	return res.JSON(def)
 }
 
 // todo: needs testing
 func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 	// Replace this with a GET ONE once that is fixed
 	list, err := a.All()
 	if err != nil {
@@ -127,9 +100,9 @@ func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	}
 
 	// Update
-	opts := a.opts
+	opts := a.opts()
 	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointPolicies, polToUpdate.ID)
+	fullPath := a.env.JoinURL(endpointPolicies, polToUpdate.ID)
 
 	res, err := sess.Put(fullPath, opts)
 	if err != nil {
@@ -154,11 +127,11 @@ func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 
 // todo: needs testing
 func (a SecurityPolicy) Delete(namespacedName string) error {
-	sess := grequests.NewSession(a.opts)
+	sess := grequests.NewSession(a.opts())
 	// todo: check does this namespaced name work?
-	delPath := JoinUrl(a.url, endpointPolicies, namespacedName)
+	delPath := a.env.JoinURL(endpointPolicies, namespacedName)
 
-	res, err := sess.Delete(delPath, a.opts)
+	res, err := sess.Delete(delPath, a.opts())
 	if err != nil {
 		return err
 	}

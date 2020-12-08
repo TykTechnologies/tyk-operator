@@ -17,11 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,10 +32,10 @@ import (
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_admin_client"
 	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
 	"github.com/TykTechnologies/tyk-operator/pkg/gateway_client"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/go-logr/logr"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -63,7 +61,11 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
-
+	var env universal_client.Env
+	if err := env.Parse(); err != nil {
+		setupLog.Error(err, "unable to configure Tyk Client")
+		os.Exit(1)
+	}
 	watchNamespace, found := getWatchNamespace()
 	if !found {
 		setupLog.Info("unable to get WatchNamespace, " +
@@ -109,18 +111,12 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Organization")
 	//	os.Exit(1)
 	//}
-
-	tykClient, err := tykClient()
-	if err != nil {
-		setupLog.Error(err, "unable to configure Tyk Client")
-		os.Exit(1)
-	}
-
+	log := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
+		Log:             log.WithName("ApiDefinition"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(log.WithName("ApiDefinition.Client"), env),
 		Recorder:        mgr.GetEventRecorderFor("apidefinition-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
@@ -146,23 +142,21 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "IngressClass")
 	//	os.Exit(1)
 	//}
-
 	if err = (&controllers.SecretCertReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("SecretCert"),
+		Log:             log.WithName("SecretCert"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(log.WithName("SecretCert.Client"), env),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
 		os.Exit(1)
 	}
-
 	if err = (&controllers.SecurityPolicyReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
+		Log:             log.WithName("SecurityPolicy"),
 		Scheme:          mgr.GetScheme(),
 		Recorder:        mgr.GetEventRecorderFor("securitypolicy-controller"),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(log.WithName("SecurityPolicy.Client"), env),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)
@@ -170,9 +164,9 @@ func main() {
 
 	if err = (&controllers.WebhookReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Webhook"),
+		Log:             log.WithName("Webhook"),
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(log.WithName("Webhook.Client"), env),
 		Recorder:        mgr.GetEventRecorderFor("webhook-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Webhook")
@@ -184,12 +178,12 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
 			os.Exit(1)
 		}
+		if err = (&tykv1alpha1.SecurityPolicy{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "SecurityPolicy")
+			os.Exit(1)
+		}
 	}
 
-	if err = (&tykv1alpha1.SecurityPolicy{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "SecurityPolicy")
-		os.Exit(1)
-	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
@@ -209,75 +203,41 @@ func getWatchNamespace() (string, bool) {
 	return os.LookupEnv(watchNamespaceEnvVar)
 }
 
-func adminClient() (*dashboard_admin_client.Client, error) {
-	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
-	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
-	if err != nil {
-		insecureSkipVerify = false
-	}
-	url := strings.TrimSpace(os.Getenv("TYK_URL"))
-	if url == "" {
-		return nil, errors.New("missing TYK_URL")
-	}
-	// ADMIN AUTH NOT MANDATORY - AS WE ARE NOT MANAGING ORGS YET
-	auth := strings.TrimSpace(os.Getenv("TYK_ADMIN_AUTH"))
-	if auth == "" {
-		return nil, nil
-	}
+// func adminClient() (*dashboard_admin_client.Client, error) {
+// 	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
+// 	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
+// 	if err != nil {
+// 		insecureSkipVerify = false
+// 	}
+// 	url := strings.TrimSpace(os.Getenv("TYK_URL"))
+// 	if url == "" {
+// 		return nil, errors.New("missing TYK_URL")
+// 	}
+// 	// ADMIN AUTH NOT MANDATORY - AS WE ARE NOT MANAGING ORGS YET
+// 	auth := strings.TrimSpace(os.Getenv("TYK_ADMIN_AUTH"))
+// 	if auth == "" {
+// 		return nil, nil
+// 	}
 
-	switch mode {
-	case "pro":
-		return dashboard_admin_client.NewClient(
-			url,
-			auth,
-			insecureSkipVerify,
-		), nil
-	case "oss":
-		{
-			return nil, nil
-		}
-	default:
-		return nil, errors.New("unknown TYK_MODE")
-	}
-}
+// 	switch mode {
+// 	case "pro":
+// 		return dashboard_admin_client.NewClient(
+// 			url,
+// 			auth,
+// 			insecureSkipVerify,
+// 		), nil
+// 	case "oss":
+// 		{
+// 			return nil, nil
+// 		}
+// 	default:
+// 		return nil, errors.New("unknown TYK_MODE")
+// 	}
+// }
 
-func tykClient() (universal_client.UniversalClient, error) {
-	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
-	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
-	if err != nil {
-		insecureSkipVerify = false
+func newUniversalClient(log logr.Logger, env universal_client.Env) universal_client.UniversalClient {
+	if env.Mode == "pro" {
+		return dashboard_client.NewClient(log, env)
 	}
-	url := strings.TrimSpace(os.Getenv("TYK_URL"))
-	if url == "" {
-		return nil, errors.New("missing TYK_URL")
-	}
-	auth := strings.TrimSpace(os.Getenv("TYK_AUTH"))
-	if auth == "" {
-		return nil, errors.New("missing TYK_AUTH")
-	}
-	org := strings.TrimSpace(os.Getenv("TYK_ORG"))
-	if org == "" {
-		return nil, errors.New("missing TYK_ORG")
-	}
-
-	switch mode {
-	case "pro":
-		return dashboard_client.NewClient(
-			url,
-			auth,
-			insecureSkipVerify,
-			org,
-		), nil
-	case "oss":
-		{
-			return gateway_client.NewClient(
-				url,
-				auth,
-				insecureSkipVerify,
-				org,
-			), nil
-		}
-	default:
-		return nil, errors.New("unknown TYK_MODE")
-	}
+	return gateway_client.NewClient(log, env)
 }

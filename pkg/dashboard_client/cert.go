@@ -19,9 +19,9 @@ type Cert struct {
 }
 
 func (c *Cert) Get(id string) (string, error) {
-	sess := grequests.NewSession(c.opts)
+	sess := grequests.NewSession(c.opts())
 
-	fullPath := JoinUrl(c.url, endpointCerts, id)
+	fullPath := c.env.JoinURL(endpointCerts, id)
 
 	res, err := sess.Get(fullPath, nil)
 	if err != nil {
@@ -35,9 +35,9 @@ func (c *Cert) Get(id string) (string, error) {
 }
 
 func (c *Cert) Delete(id string) error {
-	sess := grequests.NewSession(c.opts)
+	sess := grequests.NewSession(c.opts())
 
-	fullPath := JoinUrl(c.url, endpointCerts, id)
+	fullPath := c.env.JoinURL(endpointCerts, id)
 
 	res, err := sess.Delete(fullPath, nil)
 	if err != nil {
@@ -55,7 +55,7 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 	combined := make([]byte, 0)
 	combined = append(combined, key...)
 	combined = append(combined, crt...)
-	fullPath := JoinUrl(c.url, endpointCerts)
+	fullPath := c.env.JoinURL(endpointCerts)
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -76,7 +76,7 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 	}
 
 	r.Header.Set("Content-Type", writer.FormDataContentType())
-	r.Header.Set("Authorization", c.secret)
+	r.Header.Set("Authorization", c.env.Auth)
 
 	client := &http.Client{}
 	res, err := client.Do(r)
