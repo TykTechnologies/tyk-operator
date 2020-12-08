@@ -57,9 +57,9 @@ metadata:
   name: httpbin-ingress
   annotations:
     cert-manager.io/issuer: my-issuer
+    kubernetes.io/ingress.class: tyk # <--------------- REFERENCES TYK INGRESS CONTROLLER 
     tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
 spec:
-  ingressClassName: ingress.tyk.io # <------------------- REFERENCES TYK INGRESS CONTROLLER
   rules:
     - http:
         paths:
