@@ -111,12 +111,12 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Organization")
 	//	os.Exit(1)
 	//}
-	log := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
+	a := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
-		Log:             log.WithName("ApiDefinition"),
+		Log:             a,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: newUniversalClient(log.WithName("ApiDefinition.Client"), env),
+		UniversalClient: newUniversalClient(a, env),
 		Recorder:        mgr.GetEventRecorderFor("apidefinition-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
@@ -142,31 +142,34 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "IngressClass")
 	//	os.Exit(1)
 	//}
+	sl := ctrl.Log.WithName("controllers").WithName("SecretCert")
 	if err = (&controllers.SecretCertReconciler{
 		Client:          mgr.GetClient(),
-		Log:             log.WithName("SecretCert"),
+		Log:             sl,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: newUniversalClient(log.WithName("SecretCert.Client"), env),
+		UniversalClient: newUniversalClient(sl, env),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
 		os.Exit(1)
 	}
+	sp := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
 	if err = (&controllers.SecurityPolicyReconciler{
 		Client:          mgr.GetClient(),
-		Log:             log.WithName("SecurityPolicy"),
+		Log:             sp,
 		Scheme:          mgr.GetScheme(),
 		Recorder:        mgr.GetEventRecorderFor("securitypolicy-controller"),
-		UniversalClient: newUniversalClient(log.WithName("SecurityPolicy.Client"), env),
+		UniversalClient: newUniversalClient(sp, env),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)
 	}
 
+	w := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
 	if err = (&controllers.WebhookReconciler{
 		Client:          mgr.GetClient(),
-		Log:             log.WithName("Webhook"),
+		Log:             w,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: newUniversalClient(log.WithName("Webhook.Client"), env),
+		UniversalClient: newUniversalClient(w, env),
 		Recorder:        mgr.GetEventRecorderFor("webhook-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Webhook")
