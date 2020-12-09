@@ -165,12 +165,13 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	isOurIngress := func(annotations map[string]string) bool {
 		if ingressClass, ok := annotations[ingressClassAnnotationKey]; !ok {
 			r.Log.Info("test ingress class")
-			// if there is no ingress class - we can be greedy. :D
+			// if there is no ingress class - it's prob not for us
 			return false
 		} else if ingressClass == defaultIngressClassAnnotationValue {
 			// if the ingress class is `tyk` it's for us
 			return true
 		}
+		// TODO: env var?
 
 		return false
 	}
