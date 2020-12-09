@@ -1,7 +1,6 @@
 package dashboard_client
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -65,10 +64,6 @@ func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) (string, error) {
 }
 
 func (a Api) Get(apiID string) (*tykv1alpha1.APIDefinitionSpec, error) {
-	if apiID == "" {
-		return nil, errors.New("missing api id")
-	}
-
 	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs, apiID), nil)
 	if err != nil {
 		return nil, err
