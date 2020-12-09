@@ -27,3 +27,4 @@ testbin/*
 bootstrapped
 *.linux
 
+tyk-operator
