@@ -1,0 +1,12 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: myapideftemplate
+  labels:
+    template: "true"
+spec:
+  name: foo
+  protocol: http
+  use_keyless: true
+  proxy:
+    target_url: http://example.com

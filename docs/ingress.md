@@ -28,15 +28,15 @@ As a compromise & attempt to propose an alternative & more scalable solution, we
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: myapideftemplate
-  labels:
-    - ingress: true
+ name: myapideftemplate
+ labels:
+  template: "true"
 spec:
-  name: foo
-  protocol: http
-  use_standard_auth: true
-  proxy:
-    target_url: http://example.com
+ name: foo
+ protocol: http
+ use_keyless: true
+ proxy:
+  target_url: http://example.com
 ```
 
 Pay particular attention to the ApiDefinition metadata. This specifies that we have an ApiDefinition object with the
