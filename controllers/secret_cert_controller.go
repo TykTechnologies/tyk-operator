@@ -105,7 +105,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		log.Info("missing tls.key, we don't care about it yet")
 		return ctrl.Result{}, nil
 	}
-	log.Info("ensuring tls.key is present")
+	log.Info("ensuring tls.crt is present")
 	tlsCrt, ok := desired.Data["tls.crt"]
 	if !ok {
 		// cert doesn't exist yet
