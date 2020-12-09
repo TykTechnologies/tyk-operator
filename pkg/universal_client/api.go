@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/pkg/errors"
 )
 
@@ -34,7 +35,7 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) error {
 
 		_ = c.HotReload()
 		// todo: replace this once we replace it in main.go
-		spec.OrgID = strings.TrimSpace(os.Getenv("TYK_ORG"))
+		spec.OrgID = strings.TrimSpace(os.Getenv(environmet.TykORG))
 
 		// Update "api_id" to preserve it
 		err = c.Api().Update(insertedId, spec)
