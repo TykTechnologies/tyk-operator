@@ -33,6 +33,7 @@ import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/gateway_client"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
@@ -61,7 +62,7 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
-	var env universal_client.Env
+	var env environmet.Env
 	if err := env.Parse(); err != nil {
 		setupLog.Error(err, "unable to configure Tyk Client")
 		os.Exit(1)
@@ -227,7 +228,7 @@ func main() {
 // 	}
 // }
 
-func newUniversalClient(log logr.Logger, env universal_client.Env) universal_client.UniversalClient {
+func newUniversalClient(log logr.Logger, env environmet.Env) universal_client.UniversalClient {
 	if env.Mode == "pro" {
 		return dashboard_client.NewClient(log, env)
 	}

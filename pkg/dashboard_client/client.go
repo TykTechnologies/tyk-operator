@@ -3,6 +3,7 @@ package dashboard_client
 import (
 	"errors"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"github.com/levigross/grequests"
@@ -38,7 +39,7 @@ func (c *Client) opts() *grequests.RequestOptions {
 	}
 }
 
-func NewClient(log logr.Logger, env universal_client.Env) *Client {
+func NewClient(log logr.Logger, env environmet.Env) *Client {
 	c := &Client{
 		log: log,
 		env: env,
@@ -47,7 +48,7 @@ func NewClient(log logr.Logger, env universal_client.Env) *Client {
 }
 
 type Client struct {
-	env universal_client.Env
+	env environmet.Env
 	log logr.Logger
 }
 
