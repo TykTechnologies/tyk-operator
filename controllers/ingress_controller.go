@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -114,17 +116,24 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	var apiDefinitionsToCreateOrUpdate []v1alpha1.ApiDefinition
 
+	labels := map[string]string{
+		"ingress": req.Name,
+	}
+
 	// assume create
 	for i, rule := range desired.Spec.Rules {
 		hostName := rule.Host
 		for j, p := range rule.HTTP.Paths {
-			api := v1alpha1.ApiDefinition{}
-			api.Spec = template.Spec
+			api := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-%d-%d", templateAnnotationValue, i, j),
+					Namespace: req.Namespace,
+					Labels:    labels,
+				},
+				Spec: template.Spec,
+			}
 
 			api.Spec.Name = fmt.Sprintf("%s %s %s #%s", namespacedName.Namespace, namespacedName.Name, p.Path, templateAnnotationValue)
-			api.Name = fmt.Sprintf("%s-%d-%d", templateAnnotationValue, i, j)
-			api.Namespace = req.Namespace
-
 			api.Spec.Proxy.ListenPath = p.Path
 			api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
 
