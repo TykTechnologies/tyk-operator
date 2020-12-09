@@ -30,7 +30,7 @@ kind: ApiDefinition
 metadata:
   name: myapideftemplate
   labels:
-    - isIngressTemplate: true
+    - ingress: true
 spec:
   name: foo
   protocol: http
@@ -40,9 +40,9 @@ spec:
 ```
 
 Pay particular attention to the ApiDefinition metadata. This specifies that we have an ApiDefinition object with the
- label `isIngressTemplate: true`.
+ label `ingress: true`.
 
-When applying this manifest, the ApiDefinition reconciler predicate filter will skip reconciliation. This will allow
+When applying this manifest, the ApiDefinition reconciler's predicate filter will skip reconciliation. This will allow
  the ApiDefinition to be stored inside Kubernetes as a resource, but will not reconcile the ApiDefinition inside Tyk.
 
 All mandatory fields inside the ApiDefinition spec are still mandatory, but can be replaced with placeholders as they
