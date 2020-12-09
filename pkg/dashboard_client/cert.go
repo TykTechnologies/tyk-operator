@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/levigross/grequests"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 type Cert struct {
@@ -19,31 +19,24 @@ type Cert struct {
 }
 
 func (c *Cert) Get(id string) (string, error) {
-	sess := grequests.NewSession(c.opts())
-
-	fullPath := c.env.JoinURL(endpointCerts, id)
-
-	res, err := sess.Get(fullPath, nil)
+	res, err := c.Client.Get(c.Env.JoinURL(endpointCerts, id), nil)
 	if err != nil {
 		return "", err
 	}
-
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
 	}
+	// TODO:(gernest) return certificate data?
 	return "", nil
 }
 
 func (c *Cert) Delete(id string) error {
-	sess := grequests.NewSession(c.opts())
-
-	fullPath := c.env.JoinURL(endpointCerts, id)
-
-	res, err := sess.Delete(fullPath, nil)
+	res, err := c.Client.Delete(c.Env.JoinURL(endpointCerts, id), nil)
 	if err != nil {
 		return err
 	}
-	defer res.Close()
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
@@ -55,7 +48,7 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 	combined := make([]byte, 0)
 	combined = append(combined, key...)
 	combined = append(combined, crt...)
-	fullPath := c.env.JoinURL(endpointCerts)
+	fullPath := c.Env.JoinURL(endpointCerts)
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -69,23 +62,12 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 	if err != nil {
 		return "", err
 	}
-
-	r, err := http.NewRequest(http.MethodPost, fullPath, body)
-	if err != nil {
-		return "", err
-	}
-
-	r.Header.Set("Content-Type", writer.FormDataContentType())
-	r.Header.Set("Authorization", c.env.Auth)
-
-	client := &http.Client{}
-	res, err := client.Do(r)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		_ = res.Body.Close()
-	}()
+	res, err := c.Client.Post(fullPath, body, universal_client.AddHeaders(
+		map[string]string{
+			"Content-Type": writer.FormDataContentType(),
+		},
+	))
+	defer res.Body.Close()
 
 	rBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -106,12 +88,10 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 
 		return matches[1], nil
 	}
-
 	dbResp := CertResponse{}
 	if err := json.Unmarshal(rBody, &dbResp); err != nil {
 		return "", err
 	}
-
 	if strings.ToLower(dbResp.Status) != "ok" {
 		return "", fmt.Errorf("non ok response message: %v", dbResp.Message)
 	}

@@ -7,8 +7,6 @@ import (
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
-	"github.com/levigross/grequests"
-	"github.com/pkg/errors"
 )
 
 type SecurityPolicy struct {
@@ -30,36 +28,32 @@ func GetPolicyK8SName(nameSpacedName string) string {
 
 // All Returns all policies from the Dashboard
 func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
-	sess := grequests.NewSession(p.opts())
-	fullPath := p.env.JoinURL(endpointPolicies)
-
-	res, err := sess.Get(fullPath, nil)
+	res, err := p.Client.Get(p.Env.JoinURL(endpointPolicies), nil)
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
 	}
 
 	var response PoliciesResponse
-	if err := res.JSON(&response); err != nil {
+	if err := universal_client.JSON(res, &response); err != nil {
 		return nil, err
 	}
-
 	return response.Policies, nil
 }
 
 // Get  find the Policy by id
 func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
-	sess := grequests.NewSession(p.opts())
-	fullPath := p.env.JoinURL(endpointPolicies, id)
-	res, err := sess.Get(fullPath, nil)
+	res, err := p.Client.Get(p.Env.JoinURL(endpointPolicies, id), nil)
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 	var o v1.SecurityPolicySpec
-	if err := res.JSON(&o); err != nil {
+	if err := universal_client.JSON(res, &o); err != nil {
 		return nil, err
 	}
 	return &o, nil
@@ -73,18 +67,16 @@ func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
 	2.  create a policy and preserves the "id" field.
 */
 func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
-	o := p.opts()
-	sess := grequests.NewSession(o)
-	fullPath := p.env.JoinURL(endpointPolicies)
-	res, err := sess.Post(fullPath, &grequests.RequestOptions{JSON: def})
+	res, err := p.Client.PostJSON(p.Env.JoinURL(endpointPolicies), def)
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
+		return universal_client.Error(res)
 	}
 	var msg ResponseMsg
-	if err := res.JSON(&msg); err != nil {
+	if err := universal_client.JSON(res, &msg); err != nil {
 		return err
 	}
 	switch strings.ToLower(msg.Status) {
@@ -92,7 +84,7 @@ func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
 		def.MID = msg.Message
 		return nil
 	default:
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
+		return universal_client.Error(res)
 	}
 }
 
@@ -102,17 +94,15 @@ is included in both the Payload as well as the endpoint,
 so be sure to pass a valid Policy that includes a "MID" (looked up) and "ID" (the custom one used)
 */
 func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
-	sess := grequests.NewSession(p.opts())
-
-	fullPath := p.env.JoinURL(endpointPolicies, def.MID)
-	res, err := sess.Put(fullPath, &grequests.RequestOptions{JSON: def})
+	res, err := p.Client.PutJSON(p.Env.JoinURL(endpointPolicies, def.MID), def)
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
+		return universal_client.Error(res)
 	}
-	return res.JSON(def)
+	return universal_client.JSON(res, def)
 }
 
 /**
@@ -124,26 +114,14 @@ delete.
 If policy does not exist, move on, nothing to delete.
 */
 func (p SecurityPolicy) Delete(id string) error {
-	sess := grequests.NewSession(p.opts())
-
-	pol, err := p.Get(id)
-	if err == universal_client.PolicyNotFoundError {
-		return nil
-	}
-	if err != nil {
-		return errors.Wrap(err, "Unable to delete policy.")
-	}
-
-	delPath := p.env.JoinURL(endpointPolicies, pol.MID)
-
-	res, err := sess.Delete(delPath, p.opts())
+	res, err := p.Client.Delete(p.Env.JoinURL(endpointPolicies, id), nil)
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
-	if res.StatusCode == http.StatusOK {
-		return nil
+	if res.StatusCode != http.StatusOK {
+		return universal_client.Error(res)
 	}
-
-	return fmt.Errorf("delete policy API Returned error: %s", res.String())
+	return nil
 }

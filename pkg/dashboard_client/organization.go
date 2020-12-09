@@ -5,5 +5,5 @@ type Organization struct {
 }
 
 func (o *Organization) GetID() string {
-	return o.env.Org
+	return o.Env.Org
 }
