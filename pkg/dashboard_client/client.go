@@ -17,6 +17,11 @@ const (
 	endpointWebhooks = "/api/hooks"
 )
 
+const (
+	XAuthorization = "authorization"
+	XContentType   = "content-type"
+)
+
 var (
 	notFoundError = errors.New("api not found")
 )
@@ -36,7 +41,7 @@ func NewClient(log logr.Logger, env environmet.Env) *Client {
 			Env: env,
 			BeforeRequest: func(h *http.Request) {
 				h.Header.Set("authorization", env.Auth)
-				h.Header.Set("content-type", env.Auth)
+				h.Header.Set("content-type", "application/json")
 			},
 		},
 	}

@@ -23,7 +23,7 @@ func compare(t *testing.T, k Kase, r *http.Request) {
 	}
 	for k, v := range k.Headers {
 		x := r.Header.Get(k)
-		if v != v {
+		if x != v {
 			t.Errorf("headers %q: expected %q got %q", k, v, x)
 		}
 	}
