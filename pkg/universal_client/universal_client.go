@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
+// which specifies the Namespace to watch.
+// An empty value means the operator is running with cluster scope.
+const WatchNamespaceEnvVar = "WATCH_NAMESPACE"
+
 type UniversalClient interface {
 	HotReload() error
 	Api() UniversalApi
@@ -18,6 +23,7 @@ type UniversalClient interface {
 
 // Env holds values needed to talk to the gateway or the dashboard API
 type Env struct {
+	Namespace          string
 	Mode               string
 	InsecureSkipVerify bool
 	URL                string
@@ -27,6 +33,7 @@ type Env struct {
 
 // Parse loads env vars into e and validates them, returning an error if validation fails.
 func (e *Env) Parse() error {
+	e.Namespace = strings.TrimSpace(os.Getenv(WatchNamespaceEnvVar))
 	e.Mode = strings.TrimSpace(os.Getenv("TYK_MODE"))
 	e.URL = strings.TrimSpace(os.Getenv("TYK_URL"))
 	e.Auth = strings.TrimSpace(os.Getenv("TYK_AUTH"))

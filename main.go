@@ -66,8 +66,7 @@ func main() {
 		setupLog.Error(err, "unable to configure Tyk Client")
 		os.Exit(1)
 	}
-	watchNamespace, found := getWatchNamespace()
-	if !found {
+	if env.Namespace == "" {
 		setupLog.Info("unable to get WatchNamespace, " +
 			"the manager will watch and manage resources in all Namespaces")
 	}
@@ -78,15 +77,15 @@ func main() {
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "91ad8c6e.tyk.io",
-		Namespace:          watchNamespace,
+		Namespace:          env.Namespace,
 	}
 
 	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
-	if strings.Contains(watchNamespace, ",") {
-		setupLog.Info(fmt.Sprintf("manager will be watching namespace %q", watchNamespace))
+	if strings.Contains(env.Namespace, ",") {
+		setupLog.Info(fmt.Sprintf("manager will be watching namespace %q", env.Namespace))
 		// configure cluster-scoped with MultiNamespacedCacheBuilder
 		options.Namespace = ""
-		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(watchNamespace, ","))
+		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(env.Namespace, ","))
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
@@ -194,16 +193,6 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-// getWatchNamespace returns the Namespace the operator should be watching for changes
-func getWatchNamespace() (string, bool) {
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	const watchNamespaceEnvVar = "WATCH_NAMESPACE"
-
-	return os.LookupEnv(watchNamespaceEnvVar)
 }
 
 // func adminClient() (*dashboard_admin_client.Client, error) {
