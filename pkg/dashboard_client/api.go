@@ -134,17 +134,14 @@ func (a Api) Update(apiID string, def *tykv1alpha1.APIDefinitionSpec) error {
 	if err := res.JSON(&resMsg); err != nil {
 		return err
 	}
-
 	if resMsg.Status != "OK" {
 		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
-
 	return nil
 }
 
 func (a Api) Delete(id string) error {
 	delPath := a.env.JoinURL(endpointAPIs, id)
-
 	sess := grequests.NewSession(a.opts())
 	res, err := sess.Delete(delPath, nil)
 	if err != nil {
@@ -159,6 +156,5 @@ func (a Api) Delete(id string) error {
 		// Tyk returns 404 if api is already deleted
 		return nil
 	}
-
 	return fmt.Errorf("API Returned error: %s", res.String())
 }

@@ -73,8 +73,6 @@ func (c *Client) Api() universal_client.UniversalApi {
 }
 
 func (c *Client) HotReload() error {
-	//c.log.WithValues("Action", "HotReload")
-	//c.log.Info("not implemented")
-
+	c.log.Info("hot reload not implemented", "Action", "HotReload")
 	return nil
 }
