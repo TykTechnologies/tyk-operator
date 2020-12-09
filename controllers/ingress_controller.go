@@ -18,6 +18,12 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -34,6 +40,7 @@ import (
 const (
 	ingressFinalizerName               = "finalizers.tyk.io/ingress"
 	ingressClassAnnotationKey          = "kubernetes.io/ingress.class"
+	ingressTemplateAnnotationKey       = "tyk.io/template"
 	defaultIngressClassAnnotationValue = "tyk"
 )
 
@@ -58,16 +65,6 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	if ingressClassValue, ok := desired.Annotations[ingressClassAnnotationKey]; !ok {
-		log.Info("not for us")
-		return ctrl.Result{}, nil
-	} else {
-		if ingressClassValue != defaultIngressClassAnnotationValue {
-			log.Info("not for us")
-			return ctrl.Result{}, nil
-		}
 	}
 
 	// FINALIZER LOGIC =================================================================================================
@@ -101,54 +98,56 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// /FINALIZER LOGIC ================================================================================================
 
-	//// we have parameters - as such, we should ensure that there is an api definition resource
-	//template := &v1alpha1.ApiDefinition{}
-	//err = r.Get(ctx, types.NamespacedName{Name: ingressClass.Spec.Parameters.Name, Namespace: req.Namespace}, template)
-	//if err != nil {
-	//	log.Error(err, "error getting api definition to use as a template", "name", ingressClass.Spec.Parameters.Name)
-	//	return ctrl.Result{}, err
-	//}
-	//
-	//ingressInNS := &v1beta1.IngressList{}
-	//opts = []client.ListOption{
-	//	client.InNamespace(req.NamespacedName.Namespace),
-	//}
-	//if err := r.List(ctx, ingressInNS, opts...); err != nil {
-	//	return ctrl.Result{}, err
-	//}
-	////for _, item := range ingressInNS.Items {
-	////	for _, rule := range item.Spec.Rules {
-	////		for _, path := range rule.HTTP.Paths {
-	////
-	////		}
-	////	}
-	////}
-	//
-	//apiDefinitionsInNS := &v1alpha1.ApiDefinitionList{}
-	//opts = []client.ListOption{
-	//	client.InNamespace(req.NamespacedName.Namespace),
-	//}
-	//if err := r.List(ctx, apiDefinitionsInNS, opts...); err != nil {
-	//	return ctrl.Result{}, err
-	//}
-	//
-	////apiDefinitionsToDelete := &v1alpha1.ApiDefinitionList{}
-	//apiDefinitionsToCreateOrUpdate := &v1alpha1.ApiDefinitionList{}
-	//
-	//for _, rule := range desired.Spec.Rules {
-	//	// TODO: precise match only for time being. Need to convert K8s * syntax to Tyk host regexp.
-	//	hostName := rule.Host
-	//
-	//	for _, p := range rule.HTTP.Paths {
-	//		api := template.DeepCopy()
-	//		api.Name = fmt.Sprintf("%s %s %s #%s", namespacedName.Namespace, namespacedName.Name, p.Path, ingressClass.Spec.Parameters.Name)
-	//		api.Spec.Proxy.ListenPath = p.Path
-	//		api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
-	//		api.Spec.Domain = hostName
-	//
-	//		apiDefinitionsToCreateOrUpdate.Items = append(apiDefinitionsToCreateOrUpdate.Items, *api)
-	//	}
-	//}
+	// ensure there is a template api definition
+	templateAnnotationValue, ok := desired.Annotations[ingressTemplateAnnotationKey]
+	if !ok {
+		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", ingressTemplateAnnotationKey)
+	}
+
+	// we have parameters - as such, we should ensure that there is an api definition resource
+	template := &v1alpha1.ApiDefinition{}
+	err := r.Get(ctx, types.NamespacedName{Name: templateAnnotationValue, Namespace: req.Namespace}, template)
+	if err != nil {
+		log.Error(err, "error getting api definition to use as a template", "name", templateAnnotationValue)
+		return ctrl.Result{}, err
+	}
+
+	var apiDefinitionsToCreateOrUpdate []v1alpha1.ApiDefinition
+
+	// assume create
+	for i, rule := range desired.Spec.Rules {
+		hostName := rule.Host
+		for j, p := range rule.HTTP.Paths {
+			api := v1alpha1.ApiDefinition{}
+			api.Spec = template.Spec
+
+			api.Spec.Name = fmt.Sprintf("%s %s %s #%s", namespacedName.Namespace, namespacedName.Name, p.Path, templateAnnotationValue)
+			api.Name = fmt.Sprintf("%s-%d-%d", templateAnnotationValue, i, j)
+			api.Namespace = req.Namespace
+
+			api.Spec.Proxy.ListenPath = p.Path
+			api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
+
+			// TODO: Translate to Tyk custom domain
+			api.Spec.Domain = hostName
+
+			apiDefinitionsToCreateOrUpdate = append(apiDefinitionsToCreateOrUpdate, api)
+		}
+	}
+
+	for _, a := range apiDefinitionsToCreateOrUpdate {
+		if err := r.Update(ctx, &a); err != nil {
+			if errors.IsNotFound(err) {
+				if err := r.Create(ctx, &a); err != nil {
+					log.Error(err, "unable to create resource")
+					return ctrl.Result{}, err
+				}
+				return ctrl.Result{}, nil
+			}
+			log.Error(err, "unable to update resource")
+			return ctrl.Result{}, err
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
