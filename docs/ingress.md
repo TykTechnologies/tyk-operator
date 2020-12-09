@@ -54,20 +54,21 @@ All mandatory fields inside the ApiDefinition spec are still mandatory, but can 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: httpbin-ingress
-  annotations:
-    cert-manager.io/issuer: my-issuer
-    kubernetes.io/ingress.class: tyk # <--------------- REFERENCES TYK INGRESS CONTROLLER 
-    tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
+ name: httpbin-ingress
+ annotations:
+  kubernetes.io/ingress.class: tyk # <----------------- REFERENCES TYK INGRESS CONTROLLER
+  tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
 spec:
-  rules:
-    - http:
-        paths:
-          - path: /httpbin
-            pathType: Prefix
-            backend:
-              service:
-                name: httpbin
+ rules:
+  - http:
+     paths:
+      - path: /httpbin
+        pathType: Prefix
+        backend:
+         service:
+          name: httpbin
+          port:
+           number: 8000
 ```
 
 The above ingress resource will create an ApiDefinition inside Tyk's Gateway. The ApiDefinition will offer path-based
