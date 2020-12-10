@@ -7,9 +7,26 @@ metadata:
     tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
 spec:
   rules:
+    - host: foo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
     - http:
         paths:
-          - path: /httpbin
+          - path: /httpbin22222
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
+          - path: /httpbin2
             pathType: Prefix
             backend:
               service:

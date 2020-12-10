@@ -19,22 +19,20 @@ package controllers
 import (
 	"context"
 	"fmt"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/types"
-
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const (
@@ -137,19 +135,20 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	apisToCreate := v1alpha1.ApiDefinitionList{}
 	apisToDelete := v1alpha1.ApiDefinitionList{}
 
-	for i, rule := range desired.Spec.Rules {
+	for _, rule := range desired.Spec.Rules {
 		hostName := rule.Host
-		for j, p := range rule.HTTP.Paths {
+		for _, p := range rule.HTTP.Paths {
+			apiName := strings.TrimRight(strings.ReplaceAll(fmt.Sprintf("%s-%s-%s-%s", req.Name, req.Namespace, hostName, p.Path), "/", ""), "-")
 			api := v1alpha1.ApiDefinition{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("%s-%d-%d", templateAnnotationValue, i, j),
+					Name:      apiName,
 					Namespace: req.Namespace,
 					Labels:    lbls,
 				},
 				Spec: template.Spec,
 			}
 
-			api.Spec.Name = fmt.Sprintf("%s %s %s #%s", namespacedName.Namespace, namespacedName.Name, p.Path, templateAnnotationValue)
+			api.Spec.Name = apiName
 			api.Spec.Proxy.ListenPath = p.Path
 			api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
 
@@ -191,16 +190,32 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	for _, a := range apisToDelete.Items {
-		_ = r.Delete(ctx, &a)
-	}
-
-	for _, a := range apisToUpdate.Items {
-		_ = r.Update(ctx, &a)
-	}
-
+	// create new endpoints first
 	for _, a := range apisToCreate.Items {
-		_ = r.Create(ctx, &a)
+		if err := r.Create(ctx, &a); err != nil {
+			log.Error(err, "unable to update api")
+		}
+	}
+
+	// update second
+	for _, a := range apisToUpdate.Items {
+		apiDefToUpdate := v1alpha1.ApiDefinition{}
+		err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, &apiDefToUpdate)
+		if err != nil {
+			log.Error(err, "unable to get api to update")
+			continue
+		}
+		apiDefToUpdate.Spec = a.Spec
+		if err := r.Update(ctx, &apiDefToUpdate); err != nil {
+			log.Error(err, "unable to update api")
+		}
+	}
+
+	// delete last - just in-case something renamed
+	for _, a := range apisToDelete.Items {
+		if err := r.Delete(ctx, &a); err != nil {
+			log.Error(err, "unable to update api")
+		}
 	}
 
 	return ctrl.Result{}, nil
