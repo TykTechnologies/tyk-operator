@@ -3,7 +3,6 @@ package universal_client
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,15 +11,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 )
-
-var ErrResourceNotFound = errors.New("resource not found")
-
-func IgnoreNotFound(err error) error {
-	if errors.Is(err, ErrResourceNotFound) {
-		return nil
-	}
-	return err
-}
 
 var client = &http.Client{}
 
