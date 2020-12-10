@@ -28,27 +28,27 @@ func TestAPI_requests(t *testing.T) {
 		&route{
 			path:   "/api/apis",
 			method: http.MethodPost,
-			body:   "Create.body",
+			body:   "api.Create.body",
 		},
 		&route{
 			path:   "/api/apis",
 			method: http.MethodGet,
-			body:   "All.body",
+			body:   "api.All.body",
 		},
 		&route{
 			path:   "/api/apis/5fd08ed769710900018bc196",
 			method: http.MethodGet,
-			body:   "Get.body",
+			body:   "api.Get.body",
 		},
 		&route{
 			path:   "/api/apis/5fd08ed769710900018bc196",
 			method: http.MethodPut,
-			body:   "Update.body",
+			body:   "api.Update.body",
 		},
 		&route{
 			path:   "/api/apis/5fd08ed769710900018bc196",
 			method: http.MethodDelete,
-			body:   "Delete.body",
+			body:   "api.Delete.body",
 		},
 	)
 	svr := httptest.NewServer(h)
@@ -66,7 +66,7 @@ func TestAPI_requests(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "Create.body"),
+			Body: ReadSample(t, "api.Create.body"),
 		},
 	})
 	requestAPI(t, env, Kase{
@@ -80,7 +80,7 @@ func TestAPI_requests(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "All.body"),
+			Body: ReadSample(t, "api.All.body"),
 		},
 	})
 	requestAPI(t, env, Kase{
@@ -94,7 +94,7 @@ func TestAPI_requests(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "Get.body"),
+			Body: ReadSample(t, "api.Get.body"),
 		},
 	})
 	requestAPI(t, env, Kase{
@@ -108,7 +108,7 @@ func TestAPI_requests(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "Update.body"),
+			Body: ReadSample(t, "api.Update.body"),
 		},
 	})
 
@@ -123,7 +123,7 @@ func TestAPI_requests(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "Delete.body"),
+			Body: ReadSample(t, "api.Delete.body"),
 		},
 	})
 }
@@ -151,7 +151,7 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
 				var s v1alpha1.APIDefinitionSpec
-				Sample(t, kase.Name, &s)
+				Sample(t, "api."+kase.Name, &s)
 				newKlient(c).Api().Update(&s)
 				return nil
 			},
@@ -161,7 +161,7 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
 				var s v1alpha1.APIDefinitionSpec
-				Sample(t, kase.Name, &s)
+				Sample(t, "api."+kase.Name, &s)
 				newKlient(c).Api().Create(&s)
 				return nil
 			},
