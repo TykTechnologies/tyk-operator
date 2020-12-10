@@ -115,7 +115,7 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(Client) error, kase 
 		}
 		if doErr != nil {
 			// something went wrong making upstream call
-			t.Error(err)
+			t.Error(doErr)
 			return
 		}
 		if request == nil {

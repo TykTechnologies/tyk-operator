@@ -17,6 +17,15 @@ type Kase = universal_client.Kase
 type RequestKase = universal_client.RequestKase
 type ResponseKase = universal_client.ResponseKase
 
+func env() environmet.Env {
+	return environmet.Env{
+		Mode: "pro",
+		URL:  "http://localhost:3000",
+		Auth: "secret",
+		Org:  "testing",
+	}
+}
+
 func newKlient(c universal_client.Client) universal_client.UniversalClient {
 	var e environmet.Env
 	e.Parse()

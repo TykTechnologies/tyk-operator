@@ -10,48 +10,47 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
-const contentJSON = "application/json"
+const testSecurityPolicyID = "5fd202b669710900018bc19c"
 
-const testAPIID = "5fd08ed769710900018bc196"
-
-func TestAPI(t *testing.T) {
+func TestSecurityPolicy(t *testing.T) {
 	var e environmet.Env
 	e.Parse()
+	e = env().Merge(e)
 	h := mockDash(t,
 		&route{
-			path:   "/api/apis",
+			path:   "/api/portal/policies",
 			method: http.MethodPost,
-			body:   "api.Create.body",
+			body:   "policy.Create.body",
 		},
 		&route{
-			path:   "/api/apis",
+			path:   "/api/portal/policies",
 			method: http.MethodGet,
-			body:   "api.All.body",
+			body:   "policy.All.body",
 		},
 		&route{
-			path:   "/api/apis/5fd08ed769710900018bc196",
+			path:   "/api/portal/policies/5fd202b669710900018bc19c",
 			method: http.MethodGet,
-			body:   "api.Get.body",
+			body:   "policy.Get.body",
 		},
 		&route{
-			path:   "/api/apis/5fd08ed769710900018bc196",
+			path:   "/api/portal/policies/5fd202b669710900018bc19c",
 			method: http.MethodPut,
-			body:   "api.Update.body",
+			body:   "policy.Update.body",
 		},
 		&route{
-			path:   "/api/apis/5fd08ed769710900018bc196",
+			path:   "/api/portal/policies/5fd202b669710900018bc19c",
 			method: http.MethodDelete,
-			body:   "api.Delete.body",
+			body:   "policy.Delete.body",
 		},
 	)
 	svr := httptest.NewServer(h)
 	defer svr.Close()
 	e.URL = svr.URL
-	e = env().Merge(e)
-	requestAPI(t, e, Kase{
+
+	requestSecurityPolicy(t, e, Kase{
 		Name: "Create",
 		Request: RequestKase{
-			Path:   "/api/apis",
+			Path:   "/api/portal/policies",
 			Method: http.MethodPost,
 			Headers: map[string]string{
 				XAuthorization: e.Auth,
@@ -59,13 +58,13 @@ func TestAPI(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "api.Create.body"),
+			Body: ReadSample(t, "policy.Create.body"),
 		},
 	})
-	requestAPI(t, e, Kase{
+	requestSecurityPolicy(t, e, Kase{
 		Name: "All",
 		Request: RequestKase{
-			Path:   "/api/apis",
+			Path:   "/api/portal/policies",
 			Method: http.MethodGet,
 			Headers: map[string]string{
 				XAuthorization: e.Auth,
@@ -73,13 +72,14 @@ func TestAPI(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "api.All.body"),
+			Body: ReadSample(t, "policy.All.body"),
 		},
 	})
-	requestAPI(t, e, Kase{
+
+	requestSecurityPolicy(t, e, Kase{
 		Name: "Get",
 		Request: RequestKase{
-			Path:   "/api/apis/5fd08ed769710900018bc196",
+			Path:   "/api/portal/policies/5fd202b669710900018bc19c",
 			Method: http.MethodGet,
 			Headers: map[string]string{
 				XAuthorization: e.Auth,
@@ -87,13 +87,13 @@ func TestAPI(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "api.Get.body"),
+			Body: ReadSample(t, "policy.Get.body"),
 		},
 	})
-	requestAPI(t, e, Kase{
+	requestSecurityPolicy(t, e, Kase{
 		Name: "Update",
 		Request: RequestKase{
-			Path:   "/api/apis/5fd08ed769710900018bc196",
+			Path:   "/api/portal/policies/5fd202b669710900018bc19c",
 			Method: http.MethodPut,
 			Headers: map[string]string{
 				XAuthorization: e.Auth,
@@ -101,14 +101,13 @@ func TestAPI(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "api.Update.body"),
+			Body: ReadSample(t, "policy.Update.body"),
 		},
 	})
-
-	requestAPI(t, e, Kase{
+	requestSecurityPolicy(t, e, Kase{
 		Name: "Delete",
 		Request: RequestKase{
-			Path:   "/api/apis/5fd08ed769710900018bc196",
+			Path:   "/api/portal/policies/5fd202b669710900018bc19c",
 			Method: http.MethodDelete,
 			Headers: map[string]string{
 				XAuthorization: e.Auth,
@@ -116,18 +115,19 @@ func TestAPI(t *testing.T) {
 			},
 		},
 		Response: &ResponseKase{
-			Body: ReadSample(t, "api.Delete.body"),
+			Body: ReadSample(t, "policy.Delete.body"),
 		},
 	})
+
 }
 
-func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
+func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	t.Helper()
 	switch kase.Name {
 	case "All":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).Api().All()
+				newKlient(c).SecurityPolicy().All()
 				return nil
 			},
 			kase,
@@ -135,7 +135,7 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	case "Get":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).Api().Get(testAPIID)
+				newKlient(c).SecurityPolicy().Get(testSecurityPolicyID)
 				return nil
 			},
 			kase,
@@ -143,9 +143,9 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	case "Update":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				var s v1alpha1.APIDefinitionSpec
-				Sample(t, "api."+kase.Name, &s)
-				newKlient(c).Api().Update(&s)
+				var s v1alpha1.SecurityPolicySpec
+				Sample(t, "policy."+kase.Name, &s)
+				newKlient(c).SecurityPolicy().Update(&s)
 				return nil
 			},
 			kase,
@@ -153,9 +153,9 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	case "Create":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				var s v1alpha1.APIDefinitionSpec
-				Sample(t, "api."+kase.Name, &s)
-				newKlient(c).Api().Create(&s)
+				var s v1alpha1.SecurityPolicySpec
+				Sample(t, "policy."+kase.Name, &s)
+				newKlient(c).SecurityPolicy().Create(&s)
 				return nil
 			},
 			kase,
@@ -163,7 +163,7 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	case "Delete":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).Api().Delete(testAPIID)
+				newKlient(c).SecurityPolicy().Delete(testSecurityPolicyID)
 				return nil
 			},
 			kase,

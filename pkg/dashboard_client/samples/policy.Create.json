@@ -1,0 +1,59 @@
+{
+    "access_rights": {
+        "ZGVmYXVsdC9odHRwYmlu": {
+            "allowance_scope": "",
+            "allowed_urls": [],
+            "api_id": "ZGVmYXVsdC9odHRwYmlu",
+            "api_name": "httpbin protected",
+            "limit": null,
+            "restricted_types": [],
+            "versions": [
+                "Default"
+            ]
+        }
+    },
+    "access_rights_array": [
+        {
+            "allowance_scope": "",
+            "allowed_urls": [],
+            "api_id": "ZGVmYXVsdC9odHRwYmlu",
+            "api_name": "httpbin protected",
+            "limit": null,
+            "restricted_types": [],
+            "versions": [
+                "Default"
+            ]
+        }
+    ],
+    "active": true,
+    "auth_type": "authToken",
+    "auth_types": [
+        "authToken"
+    ],
+    "date_created": "2020-12-10T11:12:54.263Z",
+    "graphql_enabled": false,
+    "hmac_enabled": false,
+    "id": "ZGVmYXVsdC9odHRwYmlu",
+    "is_inactive": false,
+    "key_expires_in": 0,
+    "last_updated": "1607598779",
+    "max_query_depth": -1,
+    "meta_data": {},
+    "name": "Create Some other Security Policy",
+    "org_id": "5fd08e0f69710900018bc195",
+    "partitions": {
+        "acl": true,
+        "complexity": false,
+        "per_api": false,
+        "quota": true,
+        "rate_limit": true
+    },
+    "per": -1,
+    "quota_max": -1,
+    "quota_renewal_rate": -1,
+    "rate": -1,
+    "state": "active",
+    "tags": [],
+    "throttle_interval": -1,
+    "throttle_retry_limit": -1
+}

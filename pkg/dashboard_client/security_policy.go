@@ -13,19 +13,6 @@ type SecurityPolicy struct {
 	*Client
 }
 
-var (
-	SecPolPrefix = "SecurityPolicy"
-)
-
-/**
-The unique identifier of this policy in the Dashboard
-we prefix this with "SecurityPolicy-"
-This is stored in the Policy's "tags"
-*/
-func GetPolicyK8SName(nameSpacedName string) string {
-	return SecPolPrefix + "-" + nameSpacedName
-}
-
 // All Returns all policies from the Dashboard
 func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 	res, err := p.Client.Get(p.Env.JoinURL(endpointPolicies), nil)
@@ -59,13 +46,7 @@ func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
 	return &o, nil
 }
 
-/*
-	Creates a policy.  Creates it with a custom "id" field.
-	Valid payload needs to include that.
-
-	1.  If this is an existing policy, will look it up via the "id" field OR
-	2.  create a policy and preserves the "id" field.
-*/
+// Create  creates a new policy using the def object
 func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
 	res, err := p.Client.PostJSON(p.Env.JoinURL(endpointPolicies), def)
 	if err != nil {
@@ -88,11 +69,7 @@ func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
 	}
 }
 
-/**
-Updates a Policy.  The Dashboard requires that the "MID"
-is included in both the Payload as well as the endpoint,
-so be sure to pass a valid Policy that includes a "MID" (looked up) and "ID" (the custom one used)
-*/
+// Update updates a resource object def
 func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	res, err := p.Client.PutJSON(p.Env.JoinURL(endpointPolicies, def.MID), def)
 	if err != nil {
@@ -105,14 +82,7 @@ func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 	return universal_client.JSON(res, def)
 }
 
-/**
-Tries to delete a Policy by first attempting to do a lookup on it
-with the Operator friendly "id" field.
-If found, will be used to lookup the mongo id "_id", which is used to do the
-delete.
-
-If policy does not exist, move on, nothing to delete.
-*/
+// Delete deletes the resource by ID
 func (p SecurityPolicy) Delete(id string) error {
 	res, err := p.Client.Delete(p.Env.JoinURL(endpointPolicies, id), nil)
 	if err != nil {
