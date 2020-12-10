@@ -156,30 +156,32 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	//  If this is not set, means it is a new object, set it first
 	if desired.Status.ApiID == "" {
-
-		// If directly specified in the spec, this refers to an existing API definition
-		// Otherwise, we use the B64 encoded namespace name as the custom API ID
-		if desired.Spec.APIID != "" {
-			desired.Status.ApiID = desired.Spec.APIID
-		} else {
-			desired.Status.ApiID = apiIDEncode(req.NamespacedName.String())
+		err := r.UniversalClient.Api().Create(
+			encodeNS(req.NamespacedName.String()),
+			&desired.Spec,
+		)
+		if err != nil {
+			log.Error(err, "Failed to create api definition")
+			return ctrl.Result{}, err
 		}
-
-		err := r.Status().Update(ctx, desired)
+		desired.Status.ApiID = desired.Spec.APIID
+		err = r.Status().Update(ctx, desired)
 		if err != nil {
 			log.Error(err, "Could not update Status ID")
 		}
-
+		r.UniversalClient.HotReload()
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.Info("createOrUpdate api")
+	log.Info("Updating ApiDefinition")
 	desired.Spec.APIID = desired.Status.ApiID
-	if err := universal_client.CreateOrUpdateAPI(r.UniversalClient, &desired.Spec); err != nil {
-		log.Error(err, "createOrUpdate failure")
-		return ctrl.Result{Requeue: true}, nil
+	err := r.UniversalClient.Api().Update(&desired.Spec)
+	if err != nil {
+		if err != nil {
+			log.Error(err, "Failed to update api definition")
+			return ctrl.Result{}, err
+		}
 	}
-
 	log.Info("done")
 	return ctrl.Result{}, nil
 }

@@ -87,6 +87,15 @@ type SecurityPolicySpec struct {
 	//GraphQL                       map[string]GraphAccessDefinition `json:"graphql_access_rights"`
 }
 
+func (s *SecurityPolicySpec) UpdateAccessRights() {
+	if len(s.AccessRightsArray) > 0 {
+		s.AccessRights = make(map[string]AccessDefinition)
+		for _, v := range s.AccessRights {
+			s.AccessRights[v.APIID] = v
+		}
+	}
+}
+
 // from tyk/session.go
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {

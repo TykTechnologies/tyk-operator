@@ -56,11 +56,11 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	if err := res.JSON(&spec); err != nil {
 		return nil, err
 	}
-	a.log.Info("======> received ", res.String())
 	return &spec, nil
 }
 
-func (a Api) Create(def *v1.APIDefinitionSpec) error {
+func (a Api) Create(ns string, def *v1.APIDefinitionSpec) error {
+	def.APIID = ns
 	// get all apis
 	list, err := a.All()
 	if err != nil {

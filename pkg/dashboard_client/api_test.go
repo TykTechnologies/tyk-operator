@@ -155,7 +155,7 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 			func(c universal_client.Client) error {
 				var s v1alpha1.APIDefinitionSpec
 				Sample(t, "api."+kase.Name, &s)
-				newKlient(c).Api().Create(&s)
+				newKlient(c).Api().Create("", &s)
 				return nil
 			},
 			kase,

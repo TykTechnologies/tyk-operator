@@ -3,14 +3,24 @@ package universal_client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 )
+
+var ErrResourceNotFound = errors.New("resource not found")
+
+func IgnoreNotFound(err error) error {
+	if errors.Is(err, ErrResourceNotFound) {
+		return nil
+	}
+	return err
+}
 
 var client = &http.Client{}
 
@@ -82,6 +92,7 @@ func (c Client) Call(method, url string, body io.Reader, fn ...func(*http.Reques
 	if c.Do != nil {
 		return c.Do(r)
 	}
+	c.Log.Info("Call", "Method", method, "URL", url)
 	return client.Do(r)
 }
 
@@ -114,6 +125,6 @@ func SetHeaders(q map[string]string) func(*http.Request) {
 
 // Error dumps whole response plus body and return it as an error
 func Error(res *http.Response) error {
-	b, _ := httputil.DumpResponse(res, true)
-	return fmt.Errorf("API call failed with %v", string(b))
+	b, _ := ioutil.ReadAll(res.Body)
+	return fmt.Errorf("%d API call failed with %v", res.StatusCode, string(b))
 }

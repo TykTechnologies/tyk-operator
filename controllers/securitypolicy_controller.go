@@ -97,16 +97,13 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	}
 
 	// Convert the API name/namespace to the Tyk API ID
-	var shouldUpdate bool
 	if desired.Spec.ID == "" {
 		desired.Spec.ID = base64.URLEncoding.EncodeToString([]byte(policyNamespacedName))
-		shouldUpdate = true
 	}
 
 	for i := 0; i < len(desired.Spec.AccessRightsArray); i++ {
 		a := &desired.Spec.AccessRightsArray[i]
 		apiNamespace := a.Namespace
-
 		api := &tykv1.ApiDefinition{}
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: apiNamespace}, api); err != nil {
 			if errors.IsNotFound(err) {
@@ -121,43 +118,25 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			return ctrl.Result{RequeueAfter: time.Second * 5}, err
 		}
 		// update the access right with the api definition details
-		if a.APIID == "" {
-			log.Info("missing APIID trying to find api for ", "APIDefinition", api.Status.ApiID)
-			apiDef, err := r.UniversalClient.Api().Get(api.Status.ApiID)
-			if err != nil {
-				log.Error(err, "Failed to find the APIDefinition")
-				return ctrl.Result{Requeue: true}, err
-			}
-			a.APIID = apiDef.APIID
-			a.APIName = apiDef.Name
-			shouldUpdate = true
+		apiDef, err := r.UniversalClient.Api().Get(api.Status.ApiID)
+		if err != nil {
+			log.Error(err, "Failed to find the APIDefinition")
+			return ctrl.Result{Requeue: true}, err
 		}
+		a.APIID = apiDef.APIID
+		a.APIName = apiDef.Name
 	}
 
-	if shouldUpdate {
-		desired.Spec.AccessRights = make(map[string]tykv1.AccessDefinition)
-		for _, v := range desired.Spec.AccessRightsArray {
-			desired.Spec.AccessRights[v.APIID] = v
-		}
-		desired.Spec.AccessRightsArray = nil
-		if err := r.Update(ctx, desired); err != nil {
-			log.Error(err, "unable to update  SecurityPolicy resource")
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{RequeueAfter: time.Second * 5}, nil
-	}
 	// if "Status.PolID" not there, add and save it, this is new object.
 	if desired.Status.PolID == "" {
 		// we are creating a new policy object
+		desired.Spec.UpdateAccessRights()
 		err := r.UniversalClient.SecurityPolicy().Create(&desired.Spec)
 		if err != nil {
 			log.Error(err, "Failed to create policy ")
 			return ctrl.Result{}, err
 		}
 		desired.Status.PolID = desired.Spec.MID
-		if desired.Spec.MID == "" {
-			desired.Status.PolID = desired.Spec.ID
-		}
 		log.Info("successful created a policy", "MID", desired.Spec.MID, "ID", desired.Status.PolID)
 		err = r.Status().Update(ctx, desired)
 		if err != nil {
@@ -167,6 +146,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	}
 	// we are updating a policy
 	desired.Spec.MID = desired.Status.PolID
+	desired.Spec.UpdateAccessRights()
 	err := r.UniversalClient.SecurityPolicy().Update(&desired.Spec)
 	if err != nil {
 		log.Error(err, "Failed to update policy resource", "ID", desired.Status.PolID)

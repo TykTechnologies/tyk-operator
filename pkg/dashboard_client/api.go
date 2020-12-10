@@ -39,7 +39,7 @@ func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) error {
+func (a Api) Create(_ string, def *tykv1alpha1.APIDefinitionSpec) error {
 	def.OrgID = a.Env.Org
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: *def,
@@ -60,7 +60,7 @@ func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) error {
 	if resMsg.Status != "OK" {
 		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
-	def.ID = resMsg.Meta
+	def.APIID = resMsg.Meta
 	return nil
 }
 
@@ -70,16 +70,9 @@ func (a Api) Get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-
-	// Todo, hacky because we dont know best way to show API not found
-	if res.StatusCode == http.StatusBadRequest {
-		return nil, nil
-	}
-
 	if res.StatusCode != http.StatusOK {
 		return nil, universal_client.Error(res)
 	}
-
 	var resMsg DashboardApi
 	if err := universal_client.JSON(res, &resMsg); err != nil {
 		return nil, err
@@ -88,8 +81,12 @@ func (a Api) Get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
 }
 
 func (a Api) Update(def *tykv1alpha1.APIDefinitionSpec) error {
+	id := def.ID
+	if id == "" {
+		id = def.APIID
+	}
 	res, err := a.Client.PutJSON(
-		a.Env.JoinURL(endpointAPIs, def.ID), DashboardApi{
+		a.Env.JoinURL(endpointAPIs, id), DashboardApi{
 			ApiDefinition: *def,
 		},
 	)
