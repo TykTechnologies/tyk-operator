@@ -22,8 +22,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -69,14 +67,34 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// ALL MANAGED API DEFINITIONS =====================================================================================
+	lbls := map[string]string{
+		"ingress": req.Name,
+	}
+
+	oldAPIs := v1alpha1.ApiDefinitionList{}
+	opts := []client.ListOption{
+		client.InNamespace(req.Namespace),
+		client.MatchingLabels(lbls),
+	}
+	if err := r.List(ctx, &oldAPIs, opts...); err != nil {
+		log.Error(err, "unable to list apis")
+		return ctrl.Result{}, err
+	}
+
+	// /MANAGED API DEFINITIONS ========================================================================================
+
 	// FINALIZER LOGIC =================================================================================================
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		// If our finalizer is present, need to delete from Tyk still
 		if containsString(desired.ObjectMeta.Finalizers, ingressFinalizerName) {
-			log.Info("resource is being deleted - executing finalizer logic")
-			// TODO: Logic to delete ALL apis managed by this ingress resource
+			log.Info("resource is being deleted - removing associated api definitions")
+
+			for _, a := range oldAPIs.Items {
+				_ = r.Delete(ctx, &a)
+			}
 
 			log.Info("removing finalizer from ingress")
 			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, ingressFinalizerName)
@@ -114,13 +132,11 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	var apiDefinitionsToCreateOrUpdate []v1alpha1.ApiDefinition
+	apisToCreateOrUpdate := v1alpha1.ApiDefinitionList{}
+	apisToUpdate := v1alpha1.ApiDefinitionList{}
+	apisToCreate := v1alpha1.ApiDefinitionList{}
+	apisToDelete := v1alpha1.ApiDefinitionList{}
 
-	labels := map[string]string{
-		"ingress": req.Name,
-	}
-
-	// assume create
 	for i, rule := range desired.Spec.Rules {
 		hostName := rule.Host
 		for j, p := range rule.HTTP.Paths {
@@ -128,7 +144,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      fmt.Sprintf("%s-%d-%d", templateAnnotationValue, i, j),
 					Namespace: req.Namespace,
-					Labels:    labels,
+					Labels:    lbls,
 				},
 				Spec: template.Spec,
 			}
@@ -140,22 +156,51 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			// TODO: Translate to Tyk custom domain
 			api.Spec.Domain = hostName
 
-			apiDefinitionsToCreateOrUpdate = append(apiDefinitionsToCreateOrUpdate, api)
+			apisToCreateOrUpdate.Items = append(apisToCreateOrUpdate.Items, api)
 		}
 	}
 
-	for _, a := range apiDefinitionsToCreateOrUpdate {
-		if err := r.Update(ctx, &a); err != nil {
-			if errors.IsNotFound(err) {
-				if err := r.Create(ctx, &a); err != nil {
-					log.Error(err, "unable to create resource")
-					return ctrl.Result{}, err
-				}
-				return ctrl.Result{}, nil
+	// All the apis we should delete or update
+	for _, x := range oldAPIs.Items {
+		found := false
+		for _, y := range apisToCreateOrUpdate.Items {
+			if y.Name == x.Name {
+				apisToUpdate.Items = append(apisToUpdate.Items, y)
+				found = true
+				break
 			}
-			log.Error(err, "unable to update resource")
-			return ctrl.Result{}, err
 		}
+
+		if !found {
+			apisToDelete.Items = append(apisToDelete.Items, x)
+		}
+	}
+
+	// all the items to create
+	for _, x := range apisToCreateOrUpdate.Items {
+		create := true
+		for _, y := range apisToUpdate.Items {
+			if x.Name == y.Name {
+				create = false
+				break
+			}
+		}
+
+		if create {
+			apisToCreate.Items = append(apisToCreate.Items, x)
+		}
+	}
+
+	for _, a := range apisToDelete.Items {
+		_ = r.Delete(ctx, &a)
+	}
+
+	for _, a := range apisToUpdate.Items {
+		_ = r.Update(ctx, &a)
+	}
+
+	for _, a := range apisToCreate.Items {
+		_ = r.Create(ctx, &a)
 	}
 
 	return ctrl.Result{}, nil
