@@ -196,38 +196,6 @@ func main() {
 	}
 }
 
-// func adminClient() (*dashboard_admin_client.Client, error) {
-// 	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
-// 	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
-// 	if err != nil {
-// 		insecureSkipVerify = false
-// 	}
-// 	url := strings.TrimSpace(os.Getenv("TYK_URL"))
-// 	if url == "" {
-// 		return nil, errors.New("missing TYK_URL")
-// 	}
-// 	// ADMIN AUTH NOT MANDATORY - AS WE ARE NOT MANAGING ORGS YET
-// 	auth := strings.TrimSpace(os.Getenv("TYK_ADMIN_AUTH"))
-// 	if auth == "" {
-// 		return nil, nil
-// 	}
-
-// 	switch mode {
-// 	case "pro":
-// 		return dashboard_admin_client.NewClient(
-// 			url,
-// 			auth,
-// 			insecureSkipVerify,
-// 		), nil
-// 	case "oss":
-// 		{
-// 			return nil, nil
-// 		}
-// 	default:
-// 		return nil, errors.New("unknown TYK_MODE")
-// 	}
-// }
-
 func newUniversalClient(log logr.Logger, env environmet.Env) universal_client.UniversalClient {
 	if env.Mode == "pro" {
 		return dashboard_client.NewClient(log, env)
