@@ -48,8 +48,17 @@ func Sample(t *testing.T, name string, out interface{}) {
 	}
 }
 
-func LoadSample(t *testing.T, name string) *os.File {
-	x := filepath.Join("./samples/", name+".json")
+// func LoadSample(t *testing.T, name string) *os.File {
+// 	x := filepath.Join("./samples/", name+".json")
+// 	f, err := os.Open(x)
+// 	if err != nil {
+// 		t.Fatalf("%s: failed to open sample file %v", x, err)
+// 	}
+// 	return f
+// }
+
+func LoadSampleFile(t *testing.T, name string) *os.File {
+	x := filepath.Join("./samples/", name)
 	f, err := os.Open(x)
 	if err != nil {
 		t.Fatalf("%s: failed to open sample file %v", x, err)
@@ -58,7 +67,17 @@ func LoadSample(t *testing.T, name string) *os.File {
 }
 
 func ReadSample(t *testing.T, name string) string {
-	f := LoadSample(t, name)
+	f := LoadSampleFile(t, name+".json")
+	defer f.Close()
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+func ReadSampleFile(t *testing.T, name string) string {
+	f := LoadSampleFile(t, name)
 	defer f.Close()
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
@@ -84,7 +103,7 @@ func (r *route) Serve(t *testing.T, w http.ResponseWriter) {
 		w.Header().Set(k, v)
 	}
 	w.WriteHeader(code)
-	f := LoadSample(t, r.body)
+	f := LoadSampleFile(t, r.body+".json")
 	defer f.Close()
 	io.Copy(w, f)
 }
@@ -104,7 +123,7 @@ func mockDash(t *testing.T, r ...*route) http.Handler {
 			}
 		}
 		rw.WriteHeader(http.StatusNotFound)
-		f := LoadSample(t, "404")
+		f := LoadSampleFile(t, "404.json")
 		defer f.Close()
 		io.Copy(rw, f)
 	})

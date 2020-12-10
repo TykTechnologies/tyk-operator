@@ -139,8 +139,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 
 		tykCertID := universal_client.GetOrganizationID(r.UniversalClient) + cert.CalculateFingerPrint(pemCrtBytes)
-		_, err = r.UniversalClient.Certificate().Get(tykCertID)
-		if err != nil {
+		exists := r.UniversalClient.Certificate().Exists(tykCertID)
+		if !exists {
+			// upload the certificate
 			tykCertID, err = r.UniversalClient.Certificate().Upload(pemKeyBytes, pemCrtBytes)
 			if err != nil {
 				return reconcile.Result{Requeue: true}, err

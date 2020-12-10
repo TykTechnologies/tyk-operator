@@ -151,7 +151,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	certID, err := universal_client.UploadCertificate(r.UniversalClient, tlsKey, tlsCrt)
+	certID, err := r.UniversalClient.Certificate().Upload(tlsKey, tlsCrt)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}

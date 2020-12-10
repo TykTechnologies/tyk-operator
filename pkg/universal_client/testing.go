@@ -20,9 +20,10 @@ type Kase struct {
 }
 
 type RequestKase struct {
-	Path    string
-	Method  string
-	Headers map[string]string
+	Path     string
+	Method   string
+	Headers  map[string]string
+	Callback func(*testing.T, *http.Request)
 }
 
 func (r *RequestKase) verify(t *testing.T, req *http.Request) {
@@ -30,11 +31,15 @@ func (r *RequestKase) verify(t *testing.T, req *http.Request) {
 	comparesString(t, "path", r.Path, req.URL.Path)
 	comparesString(t, "method", r.Method, req.Method)
 	compareHeaders(t, r.Headers, req.Header)
+	if r.Callback != nil {
+		r.Callback(t, req)
+	}
 }
 
 type ResponseKase struct {
-	Headers map[string]string
-	Body    string
+	Headers  map[string]string
+	Body     string
+	Callback func(*testing.T, *http.Response)
 }
 
 func (r *ResponseKase) verify(t *testing.T, res *http.Response, body string) {
@@ -44,6 +49,9 @@ func (r *ResponseKase) verify(t *testing.T, res *http.Response, body string) {
 		normalizeBody(t, r.Body),
 		normalizeBody(t, body),
 	)
+	if r.Callback != nil {
+		r.Callback(t, res)
+	}
 }
 
 func normalizeBody(t *testing.T, body string) string {

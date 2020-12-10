@@ -104,6 +104,14 @@ func AddHeaders(q map[string]string) func(*http.Request) {
 	}
 }
 
+func SetHeaders(q map[string]string) func(*http.Request) {
+	return func(h *http.Request) {
+		for k, v := range q {
+			h.Header.Set(k, v)
+		}
+	}
+}
+
 // Error dumps whole response plus body and return it as an error
 func Error(res *http.Response) error {
 	b, _ := httputil.DumpResponse(res, true)
