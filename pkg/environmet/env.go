@@ -42,6 +42,25 @@ type Env struct {
 	Org                string
 }
 
+func (e Env) Merge(n Env) Env {
+	if n.Namespace != "" {
+		e.Namespace = n.Namespace
+	}
+	if n.Mode != "" {
+		e.Mode = n.Mode
+	}
+	if n.URL != "" {
+		e.URL = n.URL
+	}
+	if n.Auth != "" {
+		e.Auth = n.Auth
+	}
+	if n.Org != "" {
+		e.Org = n.Org
+	}
+	return e
+}
+
 // Parse loads env vars into e and validates them, returning an error if validation fails.
 func (e *Env) Parse() error {
 	e.Namespace = strings.TrimSpace(os.Getenv(WatchNamespace))

@@ -12,8 +12,8 @@ import (
 type UniversalApi interface {
 	Get(apiID string) (*v1.APIDefinitionSpec, error)
 	All() ([]v1.APIDefinitionSpec, error)
-	Create(def *v1.APIDefinitionSpec) (apiID string, err error)
-	Update(apiID string, def *v1.APIDefinitionSpec) error
+	Create(def *v1.APIDefinitionSpec) error
+	Update(def *v1.APIDefinitionSpec) error
 	Delete(id string) error
 }
 
@@ -26,9 +26,9 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) error {
 		return errors.Wrap(err, "Unable to communicate with Client")
 	}
 
-	if api == nil {
+	if spec.APIID == "" {
 		// Create
-		insertedId, err := c.Api().Create(spec)
+		err := c.Api().Create(spec)
 		if err != nil {
 			return errors.Wrap(err, "unable to create api")
 		}
@@ -38,7 +38,7 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) error {
 		spec.OrgID = strings.TrimSpace(os.Getenv(environmet.TykORG))
 
 		// Update "api_id" to preserve it
-		err = c.Api().Update(insertedId, spec)
+		err = c.Api().Update(spec)
 		if err != nil {
 			return errors.Wrap(err, "unable to update api")
 		}
@@ -47,11 +47,10 @@ func CreateOrUpdateAPI(c UniversalClient, spec *v1.APIDefinitionSpec) error {
 	} else {
 		// Update
 		spec.OrgID = api.OrgID
-		err = c.Api().Update(spec.APIID, spec)
+		err = c.Api().Update(spec)
 		if err != nil {
 			return errors.Wrap(err, "unable to update api")
 		}
-
 		_ = c.HotReload()
 	}
 

@@ -1,6 +1,8 @@
 package dashboard_client
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -17,22 +19,117 @@ var env = environmet.Env{
 
 const contentJSON = "application/json"
 
-var testAPI = v1alpha1.APIDefinitionSpec{
-	ID: "test_api_id",
-}
+const ID = "5fd08ed769710900018bc196"
 
 func TestAPI_requests(t *testing.T) {
+	var e environmet.Env
+	e.Parse()
+	h := mockDash(t,
+		&route{
+			path:   "/api/apis",
+			method: http.MethodPost,
+			body:   "Create.body",
+		},
+		&route{
+			path:   "/api/apis",
+			method: http.MethodGet,
+			body:   "All.body",
+		},
+		&route{
+			path:   "/api/apis/5fd08ed769710900018bc196",
+			method: http.MethodGet,
+			body:   "Get.body",
+		},
+		&route{
+			path:   "/api/apis/5fd08ed769710900018bc196",
+			method: http.MethodPut,
+			body:   "Update.body",
+		},
+		&route{
+			path:   "/api/apis/5fd08ed769710900018bc196",
+			method: http.MethodDelete,
+			body:   "Delete.body",
+		},
+	)
+	svr := httptest.NewServer(h)
+	defer svr.Close()
+	e.URL = svr.URL
+	env = env.Merge(e)
+	requestAPI(t, env, Kase{
+		Name: "Create",
+		Request: RequestKase{
+			Path:   "/api/apis",
+			Method: http.MethodPost,
+			Headers: map[string]string{
+				XAuthorization: env.Auth,
+				XContentType:   contentJSON,
+			},
+		},
+		Response: &ResponseKase{
+			Body: ReadSample(t, "Create.body"),
+		},
+	})
 	requestAPI(t, env, Kase{
 		Name: "All",
-		Path: "/api/apis",
-		Headers: map[string]string{
-			XAuthorization: env.Auth,
-			XContentType:   contentJSON,
+		Request: RequestKase{
+			Path:   "/api/apis",
+			Method: http.MethodGet,
+			Headers: map[string]string{
+				XAuthorization: env.Auth,
+				XContentType:   contentJSON,
+			},
+		},
+		Response: &ResponseKase{
+			Body: ReadSample(t, "All.body"),
+		},
+	})
+	requestAPI(t, env, Kase{
+		Name: "Get",
+		Request: RequestKase{
+			Path:   "/api/apis/5fd08ed769710900018bc196",
+			Method: http.MethodGet,
+			Headers: map[string]string{
+				XAuthorization: env.Auth,
+				XContentType:   contentJSON,
+			},
+		},
+		Response: &ResponseKase{
+			Body: ReadSample(t, "Get.body"),
+		},
+	})
+	requestAPI(t, env, Kase{
+		Name: "Update",
+		Request: RequestKase{
+			Path:   "/api/apis/5fd08ed769710900018bc196",
+			Method: http.MethodPut,
+			Headers: map[string]string{
+				XAuthorization: env.Auth,
+				XContentType:   contentJSON,
+			},
+		},
+		Response: &ResponseKase{
+			Body: ReadSample(t, "Update.body"),
+		},
+	})
+
+	requestAPI(t, env, Kase{
+		Name: "Delete",
+		Request: RequestKase{
+			Path:   "/api/apis/5fd08ed769710900018bc196",
+			Method: http.MethodDelete,
+			Headers: map[string]string{
+				XAuthorization: env.Auth,
+				XContentType:   contentJSON,
+			},
+		},
+		Response: &ResponseKase{
+			Body: ReadSample(t, "Delete.body"),
 		},
 	})
 }
 
 func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
+	t.Helper()
 	switch kase.Name {
 	case "All":
 		universal_client.RunRequestKase(t, e,
@@ -45,7 +142,35 @@ func requestAPI(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	case "Get":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).Api().Get(testAPI.ID)
+				newKlient(c).Api().Get(ID)
+				return nil
+			},
+			kase,
+		)
+	case "Update":
+		universal_client.RunRequestKase(t, e,
+			func(c universal_client.Client) error {
+				var s v1alpha1.APIDefinitionSpec
+				Sample(t, kase.Name, &s)
+				newKlient(c).Api().Update(&s)
+				return nil
+			},
+			kase,
+		)
+	case "Create":
+		universal_client.RunRequestKase(t, e,
+			func(c universal_client.Client) error {
+				var s v1alpha1.APIDefinitionSpec
+				Sample(t, kase.Name, &s)
+				newKlient(c).Api().Create(&s)
+				return nil
+			},
+			kase,
+		)
+	case "Delete":
+		universal_client.RunRequestKase(t, e,
+			func(c universal_client.Client) error {
+				newKlient(c).Api().Delete(ID)
 				return nil
 			},
 			kase,

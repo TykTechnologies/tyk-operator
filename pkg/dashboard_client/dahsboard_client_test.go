@@ -1,13 +1,102 @@
 package dashboard_client
 
 import (
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 type Kase = universal_client.Kase
+type RequestKase = universal_client.RequestKase
+type ResponseKase = universal_client.ResponseKase
 
 func newKlient(c universal_client.Client) universal_client.UniversalClient {
-	x := NewClient(c.Log, c.Env)
+	var e environmet.Env
+	e.Parse()
+	x := NewClient(c.Log, c.Env.Merge(e))
 	x.Do = c.Do
 	return x
+}
+
+// Sample loads sample file
+func Sample(t *testing.T, name string, out interface{}) {
+	x := filepath.Join("./samples/", name+".json")
+	f, err := os.Open(x)
+	if err != nil {
+		t.Fatalf("%s: failed to open sample file %v", x, err)
+	}
+	defer f.Close()
+	err = json.NewDecoder(f).Decode(out)
+	if err != nil {
+		t.Fatalf("%v: Failed td decode object ", x)
+	}
+}
+
+func LoadSample(t *testing.T, name string) *os.File {
+	x := filepath.Join("./samples/", name+".json")
+	f, err := os.Open(x)
+	if err != nil {
+		t.Fatalf("%s: failed to open sample file %v", x, err)
+	}
+	return f
+}
+
+func ReadSample(t *testing.T, name string) string {
+	f := LoadSample(t, name)
+	defer f.Close()
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+type route struct {
+	path    string
+	body    string
+	method  string
+	headers map[string]string
+	code    int
+}
+
+func (r *route) Serve(t *testing.T, w http.ResponseWriter) {
+	code := r.code
+	if code == 0 {
+		code = http.StatusOK
+	}
+	for k, v := range r.headers {
+		w.Header().Set(k, v)
+	}
+	w.WriteHeader(code)
+	f := LoadSample(t, r.body)
+	defer f.Close()
+	io.Copy(w, f)
+}
+
+func mockDash(t *testing.T, r ...*route) http.Handler {
+	xm := make(map[string][]*route)
+	for _, v := range r {
+		xm[v.method] = append(xm[v.method], v)
+	}
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		if a, ok := xm[r.Method]; ok {
+			for _, i := range a {
+				if i.path == r.URL.Path {
+					i.Serve(t, rw)
+					return
+				}
+			}
+		}
+		rw.WriteHeader(http.StatusNotFound)
+		f := LoadSample(t, "404")
+		defer f.Close()
+		io.Copy(rw, f)
+	})
 }

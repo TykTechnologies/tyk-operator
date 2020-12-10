@@ -39,32 +39,33 @@ func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) (string, error) {
+func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) error {
 	def.OrgID = a.Env.Org
 	dashboardAPIRequest := DashboardApi{
 		ApiDefinition: *def,
 	}
 	res, err := a.Client.PostJSON(a.Env.JoinURL(endpointAPIs), dashboardAPIRequest)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return "", universal_client.Error(res)
+		return universal_client.Error(res)
 	}
 
 	var resMsg ResponseMsg
 	if err := universal_client.JSON(res, &resMsg); err != nil {
-		return "", err
+		return err
 	}
 	if resMsg.Status != "OK" {
-		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
+		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
-	return resMsg.Meta, nil
+	def.ID = resMsg.Meta
+	return nil
 }
 
-func (a Api) Get(apiID string) (*tykv1alpha1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs, apiID), nil)
+func (a Api) Get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
+	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -86,9 +87,9 @@ func (a Api) Get(apiID string) (*tykv1alpha1.APIDefinitionSpec, error) {
 	return &resMsg.ApiDefinition, nil
 }
 
-func (a Api) Update(apiID string, def *tykv1alpha1.APIDefinitionSpec) error {
+func (a Api) Update(def *tykv1alpha1.APIDefinitionSpec) error {
 	res, err := a.Client.PutJSON(
-		a.Env.JoinURL(endpointAPIs, apiID), DashboardApi{
+		a.Env.JoinURL(endpointAPIs, def.ID), DashboardApi{
 			ApiDefinition: *def,
 		},
 	)

@@ -1,7 +1,10 @@
 package universal_client
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -11,18 +14,65 @@ import (
 
 // Kase a single test case for an API call.
 type Kase struct {
-	Name    string
+	Name     string
+	Request  RequestKase
+	Response *ResponseKase
+}
+
+type RequestKase struct {
 	Path    string
+	Method  string
 	Headers map[string]string
 }
 
-func compare(t *testing.T, k Kase, r *http.Request) {
+func (r *RequestKase) verify(t *testing.T, req *http.Request) {
 	t.Helper()
-	if k.Path != r.URL.Path {
-		t.Errorf("path: expected %v got %v", k.Path, r.URL.Path)
+	comparesString(t, "path", r.Path, req.URL.Path)
+	comparesString(t, "method", r.Method, req.Method)
+	compareHeaders(t, r.Headers, req.Header)
+}
+
+type ResponseKase struct {
+	Headers map[string]string
+	Body    string
+}
+
+func (r *ResponseKase) verify(t *testing.T, res *http.Response, body string) {
+	compareHeaders(t, r.Headers, res.Header)
+	comparesString(t,
+		"body",
+		normalizeBody(t, r.Body),
+		normalizeBody(t, body),
+	)
+}
+
+func normalizeBody(t *testing.T, body string) string {
+	if body == "" {
+		return body
 	}
-	for k, v := range k.Headers {
-		x := r.Header.Get(k)
+	o := make(map[string]interface{})
+	err := json.Unmarshal([]byte(body), &o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := json.Marshal(o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+func comparesString(t *testing.T, field, expect, got string) {
+	t.Helper()
+	if got != expect {
+		t.Errorf("%s: expected %s got %s", field, expect, got)
+	}
+}
+
+func compareHeaders(t *testing.T, expect map[string]string, r http.Header) {
+	t.Helper()
+	for k, v := range expect {
+		x := r.Get(k)
 		if x != v {
 			t.Errorf("headers %q: expected %q got %q", k, v, x)
 		}
@@ -36,11 +86,25 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(Client) error, kase 
 	t.Helper()
 	t.Run(kase.Name, func(t *testing.T) {
 		var request *http.Request
+		var response *http.Response
+		var body string
+		var doErr error
 		x := Client{
 			Env: e,
 			Log: log.NullLogger{},
 			Do: func(h *http.Request) (*http.Response, error) {
 				request = h
+				if kase.Response != nil {
+					response, doErr = Do(h)
+					if doErr != nil {
+						return nil, doErr
+					}
+					b, _ := ioutil.ReadAll(response.Body)
+					response.Body.Close()
+					body = string(b)
+					response.Body = ioutil.NopCloser(bytes.NewReader(b))
+					return response, nil
+				}
 				return nil, errors.New("TESTING")
 			},
 		}
@@ -49,10 +113,18 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(Client) error, kase 
 			t.Error(err)
 			return
 		}
+		if doErr != nil {
+			// something went wrong making upstream call
+			t.Error(err)
+			return
+		}
 		if request == nil {
 			t.Error("no api call was made")
 			return
 		}
-		compare(t, kase, request)
+		kase.Request.verify(t, request)
+		if response != nil {
+			kase.Response.verify(t, response, body)
+		}
 	})
 }

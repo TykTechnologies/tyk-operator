@@ -18,6 +18,10 @@ func JSON(res *http.Response, o interface{}) error {
 	return json.NewDecoder(res.Body).Decode(o)
 }
 
+func Do(r *http.Request) (*http.Response, error) {
+	return client.Do(r)
+}
+
 type Client struct {
 	Env           environmet.Env
 	Log           logr.Logger
