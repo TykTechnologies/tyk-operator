@@ -2,7 +2,6 @@ package universal_client
 
 import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/pkg/errors"
 )
 
 type UniversalWebhook interface {
@@ -11,14 +10,6 @@ type UniversalWebhook interface {
 	Create(*tykv1alpha1.WebhookSpec) error
 	Update(def *tykv1alpha1.WebhookSpec) error
 	Delete(id string) error
-}
-
-var (
-	WebhookCollisionError = errors.New("webhook already exists")
-	WebhookNotFoundError  = errors.New("webhook not found")
-)
-
-func applyDefaultsWebhooks(spec *tykv1alpha1.WebhookSpec) {
 }
 
 func CreateOrUpdateWebhook(c UniversalClient, spec *tykv1alpha1.WebhookSpec) error {
