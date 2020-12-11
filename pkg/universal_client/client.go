@@ -3,6 +3,7 @@ package universal_client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,13 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 )
+
+// ErrTODO is returned when a feature is not yet implemented
+var ErrTODO = errors.New("TODO: This feature is not implemented yet")
+
+func IsTODO(err error) bool {
+	return errors.Is(err, ErrTODO)
+}
 
 var client = &http.Client{}
 

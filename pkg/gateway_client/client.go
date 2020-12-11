@@ -17,9 +17,6 @@ const (
 	endpointReload = "/tyk/reload/group"
 )
 
-// ErrTODO is returned when a feature is not yet implemented
-var ErrTODO = errors.New("TODO: This feature is not implemented yet")
-
 var (
 	notFoundError = errors.New("api not found")
 )

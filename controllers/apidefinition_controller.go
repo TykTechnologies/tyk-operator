@@ -69,7 +69,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
 			log.Info("checking linked security policies")
 			policies, err := r.UniversalClient.SecurityPolicy().All()
-			if err != nil {
+			if err != nil && !universal_client.IsTODO(err) {
 				log.Info(err.Error())
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
 			}
