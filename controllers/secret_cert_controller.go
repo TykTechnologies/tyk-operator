@@ -66,7 +66,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 				return ctrl.Result{}, nil
 			}
 
-			orgID := universal_client.GetOrganizationID(r.UniversalClient)
+			orgID := r.UniversalClient.Organization().GetID()
 			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
 			certID := orgID + certFingerPrint
@@ -151,7 +151,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	certID, err := universal_client.UploadCertificate(r.UniversalClient, tlsKey, tlsCrt)
+	certID, err := r.UniversalClient.Certificate().Upload(tlsKey, tlsCrt)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -164,7 +164,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			apiDefObj, _ := r.UniversalClient.Api().Get(apiDef.Status.ApiID)
 			apiDefObj.Certificates = []string{}
 			apiDefObj.Certificates = append(apiDefObj.Certificates, certID)
-			r.UniversalClient.Api().Update(apiDef.Status.ApiID, apiDefObj)
+			r.UniversalClient.Api().Update(apiDefObj)
 
 			// TODO: we only care about 1 secret - we don't need to support multiple for mvp
 			break

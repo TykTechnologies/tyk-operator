@@ -56,6 +56,9 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.Get(ctx, req.NamespacedName, des); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
+	if des.Name == "" {
+		des.Name = req.NamespacedName.String()
+	}
 	r.Recorder.Event(des, "Normal", "Webhook", "Reconciling")
 
 	// If object is being deleted
@@ -88,7 +91,7 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Create or Update
-	tykHook, err := universal_client.CreateOrUpdateWebhook(r.UniversalClient, &des.Spec, req.NamespacedName.String())
+	err := universal_client.CreateOrUpdateWebhook(r.UniversalClient, &des.Spec)
 	if err != nil {
 		r.Log.Error(err, "CreateOrUpdateWebhook failure")
 		r.Recorder.Event(des, "Error", "Webhook", "Create or Update Webhook")
@@ -97,7 +100,7 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// if webhook_id not there, add it, this is new object.
 	if des.Status.WebhookID == "" {
-		des.Status.WebhookID = tykHook.ID
+		des.Status.WebhookID = des.Spec.ID
 		if err := r.Status().Update(ctx, des); err != nil {
 			r.Log.Error(err, "Could not update ID")
 			return ctrl.Result{}, err

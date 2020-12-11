@@ -4,17 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
-	"github.com/levigross/grequests"
+	"github.com/go-logr/logr"
 )
 
 const (
-	endpointAPIs     = "/tyk/apis"
-	endpointCerts    = "/tyk/certs"
-	endpointReload   = "/tyk/reload/group"
-	endpointPolicies = "/tyk/policies"
+	endpointAPIs   = "/tyk/apis"
+	endpointCerts  = "/tyk/certs"
+	endpointReload = "/tyk/reload/group"
 )
 
 var (
@@ -28,71 +27,40 @@ type ResponseMsg struct {
 	Message string `json:"message"`
 }
 
-func JoinUrl(parts ...string) string {
-	l := len(parts)
-	if l == 1 {
-		return parts[0]
-	}
-	ps := make([]string, l)
-	for i, part := range parts {
-		if i == 0 {
-			ps[i] = strings.TrimRight(part, "/")
-		} else {
-			ps[i] = strings.TrimLeft(part, "/")
-		}
-	}
-	return strings.Join(ps, "/")
-}
-
-func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *Client {
+func NewClient(log logr.Logger, env environmet.Env) *Client {
 	c := &Client{
-		url:                url,
-		orgID:              orgID,
-		insecureSkipVerify: false,
-		opts: &grequests.RequestOptions{
-			Headers: map[string]string{
-				"x-tyk-authorization": auth,
-				"content-type":        "application/json",
+		Client: universal_client.Client{
+			Log: log,
+			Env: env,
+			BeforeRequest: func(h *http.Request) {
+				h.Header.Set("x-tyk-authorization", env.Auth)
+				h.Header.Set("content-type", "application/json")
 			},
-			InsecureSkipVerify: insecureSkipVerify,
 		},
 	}
-
 	return c
 }
 
 type Client struct {
-	url                string
-	secret             string
-	orgID              string
-	insecureSkipVerify bool
-	opts               *grequests.RequestOptions
+	universal_client.Client
 }
 
 func (c *Client) Api() universal_client.UniversalApi {
-	return Api{Client: c}
+	return &Api{c}
 }
 
 func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
-	return SecurityPolicy{Client: c}
+	return SecurityPolicy{}
 }
 
 func (c *Client) HotReload() error {
-	sess := grequests.NewSession(c.opts)
-
-	fullPath := JoinUrl(c.url, endpointReload)
-	res, err := sess.Get(fullPath, c.opts)
-
+	res, err := c.Get(c.Env.JoinURL(endpointReload), nil)
 	if err != nil {
 		return err
 	}
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
-	}
-
+	defer res.Body.Close()
 	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
+	if err := universal_client.JSON(res, &resMsg); err != nil {
 		return err
 	}
 

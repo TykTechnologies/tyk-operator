@@ -17,19 +17,11 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_admin_client"
-	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
-	"github.com/TykTechnologies/tyk-operator/pkg/gateway_client"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -37,6 +29,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/gateway_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/go-logr/logr"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -62,9 +62,12 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
-
-	watchNamespace, found := getWatchNamespace()
-	if !found {
+	var env environmet.Env
+	if err := env.Parse(); err != nil {
+		setupLog.Error(err, "unable to configure Tyk Client")
+		os.Exit(1)
+	}
+	if env.Namespace == "" {
 		setupLog.Info("unable to get WatchNamespace, " +
 			"the manager will watch and manage resources in all Namespaces")
 	}
@@ -75,15 +78,15 @@ func main() {
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "91ad8c6e.tyk.io",
-		Namespace:          watchNamespace,
+		Namespace:          env.Namespace,
 	}
 
 	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
-	if strings.Contains(watchNamespace, ",") {
-		setupLog.Info(fmt.Sprintf("manager will be watching namespace %q", watchNamespace))
+	if strings.Contains(env.Namespace, ",") {
+		setupLog.Info(fmt.Sprintf("manager will be watching namespace %q", env.Namespace))
 		// configure cluster-scoped with MultiNamespacedCacheBuilder
 		options.Namespace = ""
-		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(watchNamespace, ","))
+		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(env.Namespace, ","))
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
@@ -108,18 +111,12 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "Organization")
 	//	os.Exit(1)
 	//}
-
-	tykClient, err := tykClient()
-	if err != nil {
-		setupLog.Error(err, "unable to configure Tyk Client")
-		os.Exit(1)
-	}
-
+	a := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("ApiDefinition"),
+		Log:             a,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(a, env),
 		Recorder:        mgr.GetEventRecorderFor("apidefinition-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
@@ -145,33 +142,34 @@ func main() {
 	//	setupLog.Error(err, "unable to create controller", "controller", "IngressClass")
 	//	os.Exit(1)
 	//}
-
+	sl := ctrl.Log.WithName("controllers").WithName("SecretCert")
 	if err = (&controllers.SecretCertReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("SecretCert"),
+		Log:             sl,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(sl, env),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
 		os.Exit(1)
 	}
-
+	sp := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
 	if err = (&controllers.SecurityPolicyReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("SecurityPolicy"),
+		Log:             sp,
 		Scheme:          mgr.GetScheme(),
 		Recorder:        mgr.GetEventRecorderFor("securitypolicy-controller"),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(sp, env),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)
 	}
 
+	w := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
 	if err = (&controllers.WebhookReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Webhook"),
+		Log:             w,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(w, env),
 		Recorder:        mgr.GetEventRecorderFor("webhook-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Webhook")
@@ -181,6 +179,10 @@ func main() {
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&tykv1alpha1.ApiDefinition{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
+			os.Exit(1)
+		}
+		if err = (&tykv1alpha1.SecurityPolicy{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "SecurityPolicy")
 			os.Exit(1)
 		}
 	}
@@ -194,85 +196,9 @@ func main() {
 	}
 }
 
-// getWatchNamespace returns the Namespace the operator should be watching for changes
-func getWatchNamespace() (string, bool) {
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	const watchNamespaceEnvVar = "WATCH_NAMESPACE"
-
-	return os.LookupEnv(watchNamespaceEnvVar)
-}
-
-func adminClient() (*dashboard_admin_client.Client, error) {
-	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
-	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
-	if err != nil {
-		insecureSkipVerify = false
+func newUniversalClient(log logr.Logger, env environmet.Env) universal_client.UniversalClient {
+	if env.Mode == "pro" {
+		return dashboard_client.NewClient(log, env)
 	}
-	url := strings.TrimSpace(os.Getenv("TYK_URL"))
-	if url == "" {
-		return nil, errors.New("missing TYK_URL")
-	}
-	// ADMIN AUTH NOT MANDATORY - AS WE ARE NOT MANAGING ORGS YET
-	auth := strings.TrimSpace(os.Getenv("TYK_ADMIN_AUTH"))
-	if auth == "" {
-		return nil, nil
-	}
-
-	switch mode {
-	case "pro":
-		return dashboard_admin_client.NewClient(
-			url,
-			auth,
-			insecureSkipVerify,
-		), nil
-	case "oss":
-		{
-			return nil, nil
-		}
-	default:
-		return nil, errors.New("unknown TYK_MODE")
-	}
-}
-
-func tykClient() (universal_client.UniversalClient, error) {
-	mode := strings.TrimSpace(os.Getenv("TYK_MODE"))
-	insecureSkipVerify, err := strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
-	if err != nil {
-		insecureSkipVerify = false
-	}
-	url := strings.TrimSpace(os.Getenv("TYK_URL"))
-	if url == "" {
-		return nil, errors.New("missing TYK_URL")
-	}
-	auth := strings.TrimSpace(os.Getenv("TYK_AUTH"))
-	if auth == "" {
-		return nil, errors.New("missing TYK_AUTH")
-	}
-	org := strings.TrimSpace(os.Getenv("TYK_ORG"))
-	if org == "" {
-		return nil, errors.New("missing TYK_ORG")
-	}
-
-	switch mode {
-	case "pro":
-		return dashboard_client.NewClient(
-			url,
-			auth,
-			insecureSkipVerify,
-			org,
-		), nil
-	case "oss":
-		{
-			return gateway_client.NewClient(
-				url,
-				auth,
-				insecureSkipVerify,
-				org,
-			), nil
-		}
-	default:
-		return nil, errors.New("unknown TYK_MODE")
-	}
+	return gateway_client.NewClient(log, env)
 }

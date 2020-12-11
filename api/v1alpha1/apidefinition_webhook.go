@@ -18,7 +18,10 @@ package v1alpha1
 
 import (
 	"net/url"
+	"os"
+	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -50,6 +53,7 @@ func (in *ApiDefinition) Default() {
 	if in.Spec.DoNotTrack == nil {
 		in.Spec.DoNotTrack = pointer.BoolPtr(true)
 	}
+	in.Spec.OrgID = strings.TrimSpace(os.Getenv(environmet.TykORG))
 
 	if len(in.Spec.VersionData.Versions) == 0 {
 		in.Spec.VersionData = VersionData{

@@ -17,11 +17,14 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
-	"encoding/base64"
+	"encoding/json"
+	"os"
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,6 +35,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
 
 // SecurityPolicyReconciler reconciles a SecurityPolicy object
 type SecurityPolicyReconciler struct {
@@ -51,15 +56,13 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 	policyNamespacedName := req.NamespacedName.String()
 
-	log.Info("fetching SecurityPolicy instance")
+	log.Info("Reconciling SecurityPolicy instance")
 
 	// Lookup policy object
 	desired := &tykv1.SecurityPolicy{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
-	r.Recorder.Event(desired, "Normal", "SecurityPolicy", "Reconciling")
-	const securityPolicyFinalzerName = "finalizers.tyk.io/securitypolicy"
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -68,7 +71,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			// our finalizer is present, so lets handle our external dependency
 			if err := r.UniversalClient.SecurityPolicy().Delete(desired.Status.PolID); err != nil {
 				log.Error(err, "unable to delete policy", "nameSpacedName", policyNamespacedName, "polId", desired.Status.PolID)
-				return reconcile.Result{Requeue: true}, err
+				return reconcile.Result{}, nil
 			}
 
 			err := r.UniversalClient.HotReload()
@@ -83,7 +86,6 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 				return reconcile.Result{}, err
 			}
 		}
-
 		// Our finalizer has finished, so the reconciler can do nothing.
 		return reconcile.Result{}, nil
 	}
@@ -97,13 +99,18 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Convert the API name/namespace to the Tyk API ID
-	for i, accessRight := range desired.Spec.AccessRightsArray {
-		apiNamespace := accessRight.Namespace
-		apiName := accessRight.Name
+	if desired.Spec.ID == "" {
+		desired.Spec.ID = encodeNS(policyNamespacedName)
+	}
+	if desired.Spec.OrgID == "" {
+		desired.Spec.OrgID = os.Getenv(environmet.TykORG)
+	}
 
+	for i := 0; i < len(desired.Spec.AccessRightsArray); i++ {
+		a := &desired.Spec.AccessRightsArray[i]
+		apiNamespace := a.Namespace
 		api := &tykv1.ApiDefinition{}
-		if err := r.Get(ctx, types.NamespacedName{Name: apiName, Namespace: apiNamespace}, api); err != nil {
+		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: apiNamespace}, api); err != nil {
 			if errors.IsNotFound(err) {
 				// Request object not found, could have been deleted after reconcile request.
 				// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
@@ -115,57 +122,63 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
 			return ctrl.Result{RequeueAfter: time.Second * 5}, err
 		}
-
-		// We have the apiDefinition resource
-		// if it doesn't match
-		if desired.Spec.AccessRightsArray[i].APIID == "" ||
-			desired.Spec.OrgID == "" ||
-			desired.Spec.AccessRightsArray[i].APIName != api.Spec.Name {
-
-			apiDef, err := r.UniversalClient.Api().Get(api.Status.ApiID)
-			if err != nil || apiDef == nil {
-				log.Error(err, "api doesnt exist")
-				return ctrl.Result{Requeue: true}, err
-			}
-
-			desired.Spec.AccessRightsArray[i].APIID = apiDef.APIID
-			desired.Spec.AccessRightsArray[i].APIName = apiDef.Name
-			desired.Spec.OrgID = apiDef.OrgID
-
-			if err := r.Update(ctx, desired); err != nil {
-				log.Error(err, "unable to update apiId in access rights array")
-			}
-			return ctrl.Result{Requeue: true}, client.IgnoreNotFound(err)
+		// update the access right with the api definition details
+		apiDef, err := r.UniversalClient.Api().Get(api.Status.ApiID)
+		if err != nil {
+			log.Error(err, "Failed to find the APIDefinition")
+			return ctrl.Result{Requeue: true}, err
 		}
+		a.APIID = apiDef.APIID
+		a.APIName = apiDef.Name
+		a.Name = ""
+		a.Namespace = ""
+	}
+	if !r.PolicyChanged(log, desired) {
+		log.Info("Nothing changed")
+		return ctrl.Result{}, nil
 	}
 
 	// if "Status.PolID" not there, add and save it, this is new object.
 	if desired.Status.PolID == "" {
-		// If the spec is NOT included, means we use the B64 encoded namespaced name
-		// as the Policy ID.
-		if desired.Spec.ID != "" {
-			desired.Status.PolID = desired.Spec.ID
-		} else {
-			desired.Status.PolID = base64.URLEncoding.EncodeToString([]byte(policyNamespacedName))
+		// we are creating a new policy object
+		err := r.UniversalClient.SecurityPolicy().Create(&desired.Spec)
+		if err != nil {
+			log.Error(err, "Failed to create policy ")
+			return ctrl.Result{}, err
 		}
-
-		err := r.Status().Update(ctx, desired)
+		desired.Status.PolID = desired.Spec.MID
+		log.Info("successful created a policy", "MID", desired.Spec.MID, "ID", desired.Status.PolID)
+		err = r.Status().Update(ctx, desired)
 		if err != nil {
 			log.Error(err, "Could not update Status ID")
 		}
-
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	desired.Spec.ID = desired.Status.PolID
-	_, err := universal_client.CreateOrUpdatePolicy(r.UniversalClient, &desired.Spec)
+	// we are updating a policy
+	desired.Spec.MID = desired.Status.PolID
+	err := r.UniversalClient.SecurityPolicy().Update(&desired.Spec)
 	if err != nil {
-		log.Error(err, "createOrUpdatePolicy failure")
-		r.Recorder.Event(desired, "Warning", "SecurityPolicy", "Create or Update Security Policy")
-		return ctrl.Result{Requeue: true}, nil
+		log.Error(err, "Failed to update policy resource", "ID", desired.Status.PolID)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
+	log.Info("Successful updated policy", "ID", desired.Status.PolID)
 	return ctrl.Result{}, nil
+}
+
+// PolicyChanged returns true if there was any changes in the policy object.
+func (r *SecurityPolicyReconciler) PolicyChanged(log logr.Logger, def *tykv1.SecurityPolicy) bool {
+	if def.Status.PolID == "" {
+		return true
+	}
+	def.Spec.MID = def.Status.PolID
+	pol, err := r.UniversalClient.SecurityPolicy().Get(def.Status.PolID)
+	if err != nil {
+		return true
+	}
+	a, _ := json.Marshal(def.Spec)
+	pol.AccessRights = nil
+	b, _ := json.Marshal(pol)
+	return !bytes.Equal(a, b)
 }
 
 func (r *SecurityPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {

@@ -2,49 +2,62 @@ package dashboard_client
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"regexp"
-	"strings"
 
-	"github.com/levigross/grequests"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 type Cert struct {
 	*Client
 }
 
-func (c *Cert) Get(id string) (string, error) {
-	sess := grequests.NewSession(c.opts)
+type CertificateList struct {
+	CertIDs []string `json:"certs"`
+	Pages   int      `json:"pages"`
+}
 
-	fullPath := JoinUrl(c.url, endpointCerts, id)
-
-	res, err := sess.Get(fullPath, nil)
+// All returns a list of all certificates ID's
+func (c *Cert) All() ([]string, error) {
+	res, err := c.Client.Get(c.Env.JoinURL(endpointCerts), nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
+		return nil, universal_client.Error(res)
 	}
-	return "", nil
+	var o CertificateList
+	err = universal_client.JSON(res, &o)
+	if err != nil {
+		return nil, err
+	}
+	return o.CertIDs, nil
+}
+
+func (c *Cert) Exists(id string) bool {
+	res, err := c.Client.Get(c.Env.JoinURL(endpointCerts, id), nil)
+	if err != nil {
+		c.Log.Error(err, "failed to get certificate")
+		return false
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		c.Log.Error(universal_client.Error(res), "Unexepcted status")
+		return false
+	}
+	return true
 }
 
 func (c *Cert) Delete(id string) error {
-	sess := grequests.NewSession(c.opts)
-
-	fullPath := JoinUrl(c.url, endpointCerts, id)
-
-	res, err := sess.Delete(fullPath, nil)
+	res, err := c.Client.Delete(c.Env.JoinURL(endpointCerts, id), nil)
 	if err != nil {
 		return err
 	}
-	defer res.Close()
-
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("expected 200 OK, got %d %s", res.StatusCode, http.StatusText(res.StatusCode))
 	}
@@ -55,8 +68,7 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 	combined := make([]byte, 0)
 	combined = append(combined, key...)
 	combined = append(combined, crt...)
-	fullPath := JoinUrl(c.url, endpointCerts)
-
+	fullPath := c.Env.JoinURL(endpointCerts)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("cert", "cert.pem")
@@ -69,52 +81,21 @@ func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
 	if err != nil {
 		return "", err
 	}
-
-	r, err := http.NewRequest(http.MethodPost, fullPath, body)
+	res, err := c.Client.Post(fullPath, body, universal_client.SetHeaders(
+		map[string]string{
+			"Content-Type": writer.FormDataContentType(),
+		},
+	))
 	if err != nil {
 		return "", err
 	}
-
-	r.Header.Set("Content-Type", writer.FormDataContentType())
-	r.Header.Set("Authorization", c.secret)
-
-	client := &http.Client{}
-	res, err := client.Do(r)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		_ = res.Body.Close()
-	}()
-
-	rBody, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
-
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		errStruct := CertErrorResponse{}
-		json.Unmarshal(rBody, &errStruct)
-
-		reg := regexp.MustCompile(`Could not create certificate: Certificate with (?P<ID>.*) id already exists`)
-
-		matches := reg.FindStringSubmatch(errStruct.Message)
-
-		if len(matches) != 2 {
-			return "", fmt.Errorf("api returned error: %v", string(rBody))
-		}
-
-		return matches[1], nil
+		return "", universal_client.Error(res)
 	}
-
 	dbResp := CertResponse{}
-	if err := json.Unmarshal(rBody, &dbResp); err != nil {
+	if err := universal_client.JSON(res, &dbResp); err != nil {
 		return "", err
 	}
-
-	if strings.ToLower(dbResp.Status) != "ok" {
-		return "", fmt.Errorf("non ok response message: %v", dbResp.Message)
-	}
-
 	return dbResp.Id, nil
 }
