@@ -2,11 +2,11 @@ package dashboard_client
 
 import (
 	"errors"
-	"strings"
+	"net/http"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
-	"github.com/levigross/grequests"
 )
 
 const (
@@ -15,6 +15,11 @@ const (
 	//endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"
 	endpointWebhooks = "/api/hooks"
+)
+
+const (
+	XAuthorization = "authorization"
+	XContentType   = "content-type"
 )
 
 var (
@@ -29,47 +34,21 @@ type ResponseMsg struct {
 	Meta    string `json:"Meta,omitempty"`
 }
 
-func JoinUrl(parts ...string) string {
-	l := len(parts)
-	if l == 1 {
-		return parts[0]
-	}
-	ps := make([]string, l)
-	for i, part := range parts {
-		if i == 0 {
-			ps[i] = strings.TrimRight(part, "/")
-		} else {
-			ps[i] = strings.TrimLeft(part, "/")
-		}
-	}
-	return strings.Join(ps, "/")
-}
-
-func NewClient(url string, auth string, insecureSkipVerify bool, orgID string) *Client {
-	c := &Client{
-		url:                url,
-		insecureSkipVerify: false,
-		opts: &grequests.RequestOptions{
-			Headers: map[string]string{
-				"authorization": auth,
-				"content-type":  "application/json",
+func NewClient(log logr.Logger, env environmet.Env) *Client {
+	return &Client{
+		Client: universal_client.Client{
+			Log: log,
+			Env: env,
+			BeforeRequest: func(h *http.Request) {
+				h.Header.Set("authorization", env.Auth)
+				h.Header.Set("content-type", "application/json")
 			},
-			InsecureSkipVerify: insecureSkipVerify,
 		},
-		secret: auth,
-		orgID:  orgID,
 	}
-
-	return c
 }
 
 type Client struct {
-	url                string
-	secret             string
-	orgID              string
-	insecureSkipVerify bool
-	log                logr.Logger
-	opts               *grequests.RequestOptions
+	universal_client.Client
 }
 
 func (c *Client) Organization() universal_client.UniversalOrganization {
@@ -93,8 +72,6 @@ func (c *Client) Api() universal_client.UniversalApi {
 }
 
 func (c *Client) HotReload() error {
-	//c.log.WithValues("Action", "HotReload")
-	//c.log.Info("not implemented")
-
+	c.Log.Info("hot reload not implemented", "Action", "HotReload")
 	return nil
 }

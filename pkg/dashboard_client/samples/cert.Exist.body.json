@@ -1,0 +1,36 @@
+{
+    "dns_names": [
+        "localhost"
+    ],
+    "fingerprint": "68492b39a512286d3e71c4c673faa7f094ffef324d12bf3b485c295221e97150",
+    "has_private": true,
+    "id": "5fd08e0f69710900018bc19568492b39a512286d3e71c4c673faa7f094ffef324d12bf3b485c295221e97150",
+    "issuer": {
+        "CommonName": "",
+        "Country": null,
+        "ExtraNames": null,
+        "Locality": null,
+        "Names": null,
+        "Organization": null,
+        "OrganizationalUnit": null,
+        "PostalCode": null,
+        "Province": null,
+        "SerialNumber": "",
+        "StreetAddress": null
+    },
+    "not_after": "2020-12-10T14:35:36Z",
+    "not_before": "2020-12-10T13:35:36Z",
+    "subject": {
+        "CommonName": "",
+        "Country": null,
+        "ExtraNames": null,
+        "Locality": null,
+        "Names": null,
+        "Organization": null,
+        "OrganizationalUnit": null,
+        "PostalCode": null,
+        "Province": null,
+        "SerialNumber": "",
+        "StreetAddress": null
+    }
+}

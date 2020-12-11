@@ -40,7 +40,19 @@ func runCMD(cmd *exec.Cmd) string {
 	return string(output)
 }
 
-func InitializeTestSuite(ctx *godog.TestSuiteContext) {}
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() {
+		k8sutil.DeleteNS(context.Background(), namespace)
+		err := k8sutil.CreateNS(context.Background(), namespace)
+		if err != nil {
+			panic(err)
+		}
+		err = k8sutil.Create(context.Background(), "./custom_resources/workaround.yaml", namespace)
+		if err != nil {
+			panic(err)
+		}
+	})
+}
 
 var opts = &godog.Options{
 	StopOnFailure: true,
@@ -79,26 +91,21 @@ type store struct {
 	responseCode    int
 	responseBody    []byte
 	responseTimes   []time.Duration
-	cleanupK8s      []string
+	created         map[string]struct{}
 	responseHeaders http.Header
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
-	s := store{}
-	ctx.BeforeScenario(func(sc *godog.Scenario) {
-		err := k8sutil.CreateNS(context.Background(), namespace)
-		if err != nil {
-			panic(err)
-		}
-		err = k8sutil.Create(context.Background(), "./custom_resources/workaround.yaml", namespace)
-		if err != nil {
-			panic(err)
-		}
-	})
+	s := &store{
+		created: map[string]struct{}{},
+	}
 	ctx.AfterScenario(func(sc *godog.Scenario, err error) {
-		err = k8sutil.DeleteNS(context.Background(), namespace)
-		if err != nil {
-			panic(err)
+		for fileName := range s.created {
+			ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+			defer cancel()
+			wait(reconcileDelay)(
+				k8sutil.Delete(ctx, fileName, namespace),
+			)
 		}
 	})
 	ctx.Step(`^there is a (\S+) resource$`, s.thereIsAResource)
@@ -207,6 +214,7 @@ func (s *store) iRequestEndpoint(path string) error {
 }
 
 func (s *store) thereIsAResource(fileName string) error {
+	s.created[fileName] = struct{}{}
 	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
 	defer cancel()
 	return wait(reconcileDelay)(
@@ -215,6 +223,7 @@ func (s *store) thereIsAResource(fileName string) error {
 }
 
 func (s *store) iCreateAResource(fileName string) error {
+	s.created[fileName] = struct{}{}
 	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
 	defer cancel()
 	return wait(reconcileDelay)(
@@ -231,6 +240,7 @@ func (s *store) iUpdateAResource(fileName string) error {
 }
 
 func (s *store) iDeleteAResource(fileName string) error {
+	delete(s.created, fileName)
 	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
 	defer cancel()
 	return wait(reconcileDelay)(

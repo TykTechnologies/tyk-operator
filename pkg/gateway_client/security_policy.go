@@ -1,176 +1,32 @@
 package gateway_client
 
 import (
-	"errors"
-	"fmt"
-	"net/http"
-
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/levigross/grequests"
+	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
-var (
-	policyCollisionError = errors.New("policy id collision detected")
-)
-
+// SecurityPolicy provides api for accessing policies on the tyk gateway
+// NOTE: The gateway doesn't provide api for security policy so this is just a
+// placeholder and does nothing except returning universal_client.ErrTODO on all methods.
 type SecurityPolicy struct {
-	*Client
 }
 
-// todo: needs testing
 func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
-	sess := grequests.NewSession(a.opts)
-	fullPath := JoinUrl(a.url, endpointPolicies)
-
-	res, err := sess.Get(fullPath, a.opts)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		if res.StatusCode == http.StatusNotFound {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
-	}
-
-	var list []v1.SecurityPolicySpec
-	if err := res.JSON(&list); err != nil {
-		return nil, err
-	}
-
-	return list, nil
+	return nil, universal_client.ErrTODO
 }
 
-// todo: needs testing
 func (a SecurityPolicy) Get(namespacedName string) (*v1.SecurityPolicySpec, error) {
-	sess := grequests.NewSession(a.opts)
-	fullPath := JoinUrl(a.url, endpointPolicies, namespacedName)
-	res, err := sess.Get(fullPath, a.opts)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
-	}
-
-	var retrievedPol v1.SecurityPolicySpec
-	if err := res.JSON(&retrievedPol); err != nil {
-		return nil, err
-	}
-
-	return &retrievedPol, nil
+	return nil, universal_client.ErrTODO
 }
 
-// todo: needs testing
-func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) (string, error) {
-	sess := grequests.NewSession(a.opts)
-	// Replace this with a GET ONE once that is fixed
-	// get all policies
-	list, err := a.All()
-	if err != nil {
-		return "", err
-	}
-	// check exists / collisions
-	for _, pol := range list {
-		if pol.ID == def.ID {
-			return "", policyCollisionError
-		}
-	}
-
-	// Create
-	opts := a.opts
-	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointPolicies)
-
-	res, err := sess.Post(fullPath, opts)
-	if err != nil {
-		return "", err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
-	}
-
-	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
-		return "", err
-	}
-
-	if resMsg.Status != "ok" {
-		return "", fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-
-	return resMsg.Key, nil
+func (a SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
+	return universal_client.ErrTODO
 }
 
-// todo: needs testing
 func (a SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
-	sess := grequests.NewSession(a.opts)
-	// Replace this with a GET ONE once that is fixed
-	list, err := a.All()
-	if err != nil {
-		return err
-	}
-
-	var polToUpdate *v1.SecurityPolicySpec
-	for _, pol := range list {
-		if pol.ID == def.ID {
-			polToUpdate = &pol
-			break
-		}
-	}
-
-	if polToUpdate == nil {
-		return notFoundError
-	}
-
-	// Update
-	opts := a.opts
-	opts.JSON = def
-	fullPath := JoinUrl(a.url, endpointPolicies, polToUpdate.ID)
-
-	res, err := sess.Put(fullPath, opts)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
-	}
-
-	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
-		return err
-	}
-
-	if resMsg.Status != "ok" {
-		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-
-	return nil
+	return universal_client.ErrTODO
 }
 
-// todo: needs testing
 func (a SecurityPolicy) Delete(namespacedName string) error {
-	sess := grequests.NewSession(a.opts)
-	// todo: check does this namespaced name work?
-	delPath := JoinUrl(a.url, endpointPolicies, namespacedName)
-
-	res, err := sess.Delete(delPath, a.opts)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode == http.StatusOK {
-		return nil
-	}
-
-	if res.StatusCode == http.StatusInternalServerError {
-		// Tyk returns internal server error if api is already deleted
-		return nil
-	}
-
-	return fmt.Errorf("API Returned error: %s", res.String())
+	return universal_client.ErrTODO
 }

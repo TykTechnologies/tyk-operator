@@ -41,7 +41,7 @@ func apiIDDecode(encoded string) string {
 	return string(apiBytes)
 }
 
-func apiIDEncode(decoded string) string {
+func encodeNS(decoded string) string {
 	return base64.URLEncoding.EncodeToString([]byte(decoded))
 }
 
