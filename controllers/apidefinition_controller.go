@@ -182,6 +182,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			return ctrl.Result{}, err
 		}
 	}
+	r.UniversalClient.HotReload()
 	log.Info("done")
 	return ctrl.Result{}, nil
 }

@@ -137,7 +137,6 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		log.Info("Nothing changed")
 		return ctrl.Result{}, nil
 	}
-	desired.Spec.UpdateAccessRights()
 
 	// if "Status.PolID" not there, add and save it, this is new object.
 	if desired.Status.PolID == "" {
