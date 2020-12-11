@@ -17,11 +17,14 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
-	"encoding/base64"
+	"encoding/json"
+	"os"
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -96,9 +99,11 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Convert the API name/namespace to the Tyk API ID
 	if desired.Spec.ID == "" {
-		desired.Spec.ID = base64.URLEncoding.EncodeToString([]byte(policyNamespacedName))
+		desired.Spec.ID = encodeNS(policyNamespacedName)
+	}
+	if desired.Spec.OrgID == "" {
+		desired.Spec.OrgID = os.Getenv(environmet.TykORG)
 	}
 
 	for i := 0; i < len(desired.Spec.AccessRightsArray); i++ {
@@ -125,12 +130,18 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		}
 		a.APIID = apiDef.APIID
 		a.APIName = apiDef.Name
+		a.Name = ""
+		a.Namespace = ""
 	}
+	if !r.PolicyChanged(log, desired) {
+		log.Info("Nothing changed")
+		return ctrl.Result{}, nil
+	}
+	desired.Spec.UpdateAccessRights()
 
 	// if "Status.PolID" not there, add and save it, this is new object.
 	if desired.Status.PolID == "" {
 		// we are creating a new policy object
-		desired.Spec.UpdateAccessRights()
 		err := r.UniversalClient.SecurityPolicy().Create(&desired.Spec)
 		if err != nil {
 			log.Error(err, "Failed to create policy ")
@@ -146,7 +157,6 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	}
 	// we are updating a policy
 	desired.Spec.MID = desired.Status.PolID
-	desired.Spec.UpdateAccessRights()
 	err := r.UniversalClient.SecurityPolicy().Update(&desired.Spec)
 	if err != nil {
 		log.Error(err, "Failed to update policy resource", "ID", desired.Status.PolID)
@@ -154,6 +164,22 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	}
 	log.Info("Successful updated policy", "ID", desired.Status.PolID)
 	return ctrl.Result{}, nil
+}
+
+// PolicyChanged returns true if there was any changes in the policy object.
+func (r *SecurityPolicyReconciler) PolicyChanged(log logr.Logger, def *tykv1.SecurityPolicy) bool {
+	if def.Status.PolID == "" {
+		return true
+	}
+	def.Spec.MID = def.Status.PolID
+	pol, err := r.UniversalClient.SecurityPolicy().Get(def.Status.PolID)
+	if err != nil {
+		return true
+	}
+	a, _ := json.Marshal(def.Spec)
+	pol.AccessRights = nil
+	b, _ := json.Marshal(pol)
+	return !bytes.Equal(a, b)
 }
 
 func (r *SecurityPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
