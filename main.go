@@ -123,25 +123,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	il := ctrl.Log.WithName("controllers").WithName("Ingress")
 	if err = (&controllers.IngressReconciler{
 		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Ingress"),
+		Log:             il,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: tykClient,
+		UniversalClient: newUniversalClient(il, env),
 		Recorder:        mgr.GetEventRecorderFor("ingress-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Ingress")
 		os.Exit(1)
 	}
 
-	//if err = (&controllers.IngressClassReconciler{
-	//	Client: mgr.GetClient(),
-	//	Log:    ctrl.Log.WithName("controllers").WithName("IngressClass"),
-	//	Scheme: mgr.GetScheme(),
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "IngressClass")
-	//	os.Exit(1)
-	//}
 	sl := ctrl.Log.WithName("controllers").WithName("SecretCert")
 	if err = (&controllers.SecretCertReconciler{
 		Client:          mgr.GetClient(),
