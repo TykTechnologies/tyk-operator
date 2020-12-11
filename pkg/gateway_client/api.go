@@ -61,31 +61,10 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 
 func (a Api) Create(ns string, def *v1.APIDefinitionSpec) error {
 	def.APIID = ns
-	// get all apis
-	list, err := a.All()
-	if err != nil {
-		return err
-	}
-
-	// check exists / collisions
-	for _, api := range list {
-		if api.APIID == def.APIID {
-			return apiCollisionError
-		}
-
-		if api.Proxy.ListenPath == def.Proxy.ListenPath {
-			return apiCollisionError
-		}
-
-	}
-
-	// Create
 	opts := a.opts()
-
 	def.OrgID = a.env.Org
 	opts.JSON = def
 	fullPath := a.env.JoinURL(endpointAPIs)
-
 	sess := grequests.NewSession(a.opts())
 
 	res, err := sess.Post(fullPath, opts)
