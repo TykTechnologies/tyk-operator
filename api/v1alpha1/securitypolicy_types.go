@@ -48,7 +48,7 @@ type SecurityPolicySpec struct {
 
 	// IsInactive applies to the key itself. Allows enabling or disabling the policy without deleting it.
 	IsInactive        bool                        `json:"is_inactive,omitempty"`
-	AccessRightsArray []AccessDefinition          `json:"access_rights_array,omitempty"`
+	AccessRightsArray []AccessDefinition          `json:"access_rights_array"`
 	AccessRights      map[string]AccessDefinition `json:"access_rights,omitempty"`
 
 	// Rate limit per X seconds (x="Per"), omit or "-1" for unlimited
