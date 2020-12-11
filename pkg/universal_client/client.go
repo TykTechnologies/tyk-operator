@@ -87,11 +87,23 @@ func (c Client) Call(method, url string, body io.Reader, fn ...func(*http.Reques
 	for _, f := range fn {
 		f(r)
 	}
+	var res *http.Response
 	if c.Do != nil {
-		return c.Do(r)
+		res, err = c.Do(r)
+	} else {
+		res, err = client.Do(r)
 	}
-	c.Log.Info("Call", "Method", method, "URL", url)
-	return client.Do(r)
+	values := []interface{}{
+		"Method", method, "URL", url,
+	}
+	if res != nil {
+		values = append(values, "Status", res.StatusCode)
+	} else {
+		values = append(values, "Status", err.Error())
+	}
+	values = append(values)
+	c.Log.Info("Call", values...)
+	return res, err
 }
 
 // AddQuery call back for adding url queries
