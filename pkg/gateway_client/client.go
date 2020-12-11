@@ -8,7 +8,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
-	"github.com/levigross/grequests"
 )
 
 const (
@@ -28,52 +27,40 @@ type ResponseMsg struct {
 	Message string `json:"message"`
 }
 
-func (c *Client) opts() *grequests.RequestOptions {
-	return &grequests.RequestOptions{
-		Headers: map[string]string{
-			"x-tyk-authorization": c.env.Auth,
-			"content-type":        "application/json",
-		},
-		InsecureSkipVerify: c.env.InsecureSkipVerify,
-	}
-}
-
 func NewClient(log logr.Logger, env environmet.Env) *Client {
 	c := &Client{
-		env: env,
+		Client: universal_client.Client{
+			Log: log,
+			Env: env,
+			BeforeRequest: func(h *http.Request) {
+				h.Header.Set("x-tyk-authorization", env.Auth)
+				h.Header.Set("content-type", "application/json")
+			},
+		},
 	}
 	return c
 }
 
 type Client struct {
-	log logr.Logger
-	env environmet.Env
+	universal_client.Client
 }
 
 func (c *Client) Api() universal_client.UniversalApi {
-	return Api{Client: c}
+	return &Api{c}
 }
 
 func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
-	return SecurityPolicy{Client: c}
+	return SecurityPolicy{}
 }
 
 func (c *Client) HotReload() error {
-	sess := grequests.NewSession(c.opts())
-
-	fullPath := c.env.JoinURL(endpointReload)
-	res, err := sess.Get(fullPath, c.opts())
-
+	res, err := c.Get(c.Env.JoinURL(endpointReload), nil)
 	if err != nil {
 		return err
 	}
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("API Returned error: %v (code: %v)", res.String(), res.StatusCode)
-	}
-
+	defer res.Body.Close()
 	var resMsg ResponseMsg
-	if err := res.JSON(&resMsg); err != nil {
+	if err := universal_client.JSON(res, &resMsg); err != nil {
 		return err
 	}
 

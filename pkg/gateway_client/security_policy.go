@@ -9,7 +9,6 @@ import (
 // NOTE: The gateway doesn't provide api for security policy so this is just a
 // placeholder and does nothing except returning universal_client.ErrTODO on all methods.
 type SecurityPolicy struct {
-	*Client
 }
 
 func (a SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
