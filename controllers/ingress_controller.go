@@ -138,7 +138,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	for _, rule := range desired.Spec.Rules {
 		hostName := rule.Host
 		for _, p := range rule.HTTP.Paths {
-			apiName := strings.TrimRight(strings.ReplaceAll(fmt.Sprintf("%s-%s-%s-%s", req.Name, req.Namespace, hostName, p.Path), "/", ""), "-")
+			apiName := r.buildAPIName(req.Namespace, req.Name, hostName, p.Path)
 			api := v1alpha1.ApiDefinition{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      apiName,
@@ -219,6 +219,10 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *IngressReconciler) buildAPIName(nameSpace, name, hostName, path string) string {
+	return strings.TrimRight(strings.ReplaceAll(fmt.Sprintf("%s-%s-%s-%s", nameSpace, name, hostName, path), "/", ""), "-")
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
