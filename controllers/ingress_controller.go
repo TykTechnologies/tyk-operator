@@ -36,11 +36,11 @@ import (
 )
 
 var (
-	apiGVStr = v1alpha1.GroupVersion.String()
+	ingressGVString = "networking.k8s.io"
 )
 
 const (
-	apiOwnerKey                        = ".metadata.controller"
+	labelKey                           = "tyk.io/ingress"
 	ingressFinalizerName               = "finalizers.tyk.io/ingress"
 	ingressClassAnnotationKey          = "kubernetes.io/ingress.class"
 	ingressTemplateAnnotationKey       = "tyk.io/template"
@@ -75,7 +75,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	oldAPIs := v1alpha1.ApiDefinitionList{}
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
-		client.MatchingFields{apiOwnerKey: req.Name},
+		client.MatchingLabels{labelKey: req.Name},
 	}
 	if err := r.List(ctx, &oldAPIs, opts...); err != nil {
 		log.Error(err, "unable to list apis")
@@ -148,6 +148,9 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				},
 				Spec: template.Spec,
 			}
+			api.SetLabels(map[string]string{
+				labelKey: req.Name,
+			})
 
 			gvk := desired.GetObjectKind().GroupVersionKind()
 			api.SetOwnerReferences(append(api.GetOwnerReferences(), *metav1.NewControllerRef(desired, gvk)))
@@ -156,7 +159,6 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			api.Spec.Proxy.ListenPath = p.Path
 			api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
 
-			// TODO: Translate to Tyk custom domain
 			api.Spec.Domain = hostName
 
 			apisToCreateOrUpdate.Items = append(apisToCreateOrUpdate.Items, api)
@@ -232,8 +234,6 @@ func (r *IngressReconciler) buildAPIName(nameSpace, name, hostName, path string)
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	isOurIngress := func(annotations map[string]string) bool {
 		if ingressClass, ok := annotations[ingressClassAnnotationKey]; !ok {
-			r.Log.Info("test ingress class")
-			// if there is no ingress class - it's prob not for us
 			return false
 		} else if ingressClass == defaultIngressClassAnnotationValue {
 			// if the ingress class is `tyk` it's for us
@@ -258,26 +258,25 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 }
 
 func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	//err := mgr.GetFieldIndexer().
+	//	IndexField(context.TODO(), &v1alpha1.ApiDefinition{}, apiOwnerKey, func(rawObj runtime.Object) []string {
+	//		// grab the apiDef object, extract the owner...
+	//		apiDefinition := rawObj.(*v1alpha1.ApiDefinition)
+	//		owner := metav1.GetControllerOf(apiDefinition)
+	//		if owner == nil {
+	//			return nil
+	//		}
+	//
+	//		if owner.APIVersion != ingressGVString || owner.Kind != "Ingress" {
+	//			return nil
+	//		}
+	//
+	//		return []string{owner.Name}
+	//	})
 
-	err := mgr.GetFieldIndexer().
-		IndexField(context.TODO(), &v1alpha1.ApiDefinition{}, apiOwnerKey, func(rawObj runtime.Object) []string {
-			// grab the apiDef object, extract the owner...
-			apiDefinition := rawObj.(*v1alpha1.ApiDefinition)
-			owner := metav1.GetControllerOf(apiDefinition)
-			if owner == nil {
-				return nil
-			}
-
-			if owner.APIVersion != apiGVStr || owner.Kind != "Ingress" {
-				return nil
-			}
-
-			return []string{owner.Name}
-		})
-
-	if err != nil {
-		return err
-	}
+	//if err != nil {
+	//	return err
+	//}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Ingress{}).
