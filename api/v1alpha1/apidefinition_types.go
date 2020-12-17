@@ -357,30 +357,43 @@ type OpenIDOptions struct {
 // APIDefinition represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
+
 	// For server use only, do not use
 	ID string `json:"id,omitempty"`
+
 	// Only set this field if you are referring
 	// To an existing API in def.
 	// The Operator will use this API ID to link the CRD with the API in Tyk
 	// Note the values in the CRD will become the new source of truth, overriding the existing API Definition
 	APIID string `json:"api_id,omitempty"`
-	Name  string `json:"name"`
+
+	Name string `json:"name"`
+
 	// OrgID is overwritten - no point setting this
-	OrgID  string `json:"org_id,omitempty"`
-	Active bool   `json:"active,omitempty"`
+	OrgID string `json:"org_id,omitempty"`
+
+	// Active specifies if the api is enabled or not
+	Active bool `json:"active,omitempty"`
+
 	// Proxy
 	Proxy Proxy `json:"proxy"`
+
 	// +optional
 	ListenPort int `json:"listen_port"`
+
 	// +kubebuilder:validation:Enum=http;https;tcp;tls
 	Protocol string `json:"protocol"`
+
 	// Domain represents a custom host header that the gateway will listen on for this API
 	Domain string `json:"domain,omitempty"`
+
 	// DoNotTrack disables endpoint tracking for this API. Default is true, you need to explicitly set it to false
 	DoNotTrack *bool `json:"do_not_track,omitempty"`
+
 	// UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
 	// quotas and security policies will not be possible (there is no session to attach requests to).
 	UseKeylessAccess bool `json:"use_keyless,omitempty"`
+
 	//EnableProxyProtocol bool          `json:"enable_proxy_protocol"`
 	//UseOauth2           bool          `json:"use_oauth2"`
 	//UseOpenID           bool          `json:"use_openid"`
@@ -394,6 +407,7 @@ type APIDefinitionSpec struct {
 
 	// UseStandardAuth enables simple bearer token authentication
 	UseStandardAuth bool `json:"use_standard_auth,omitempty"`
+
 	//UseBasicAuth               bool                  `json:"use_basic_auth"`
 	//BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
@@ -483,6 +497,7 @@ type Proxy struct {
 	// If PreserveHostHeader is set to true then the host header in the outbound request is retained to be the
 	// inbound hostname of the proxy.
 	PreserveHostHeader bool `json:"preserve_host_header,omitempty"`
+
 	// ListenPath represents the path to listen on. e.g. `/api` or `/` or `/httpbin`.
 	// Any requests coming into the host, on the port that Tyk is configured to run on, that match this path will
 	// have the rules defined in the API Definition applied. Versioning assumes that different versions of an API
@@ -490,28 +505,36 @@ type Proxy struct {
 	// then it is recommended to set up a separate non-versioned definition for each version as they are essentially
 	// separate APIs.
 	ListenPath string `json:"listen_path,omitempty"`
+
 	// TargetURL defines the target URL that the request should be proxied to.
 	TargetURL string `json:"target_url"`
+
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
 	// when `true` a request to http://foo.bar/baz/ will be retained.
 	// when `false` a request to http://foo.bar/baz/ will be matched to http://foo.bar/baz
 	DisableStripSlash bool `json:"disable_strip_slash,omitempty"`
+
 	// StripListenPath removes the inbound listen path in the outgoing request.
 	// e.g. http://acme.com/httpbin/get where `httpbin` is the listen path. The `httpbin` listen path which is used
 	// to identify the API loaded in Tyk is removed, and the outbound request would be http://httpbin.org/get
 	StripListenPath bool `json:"strip_listen_path,omitempty"`
+
 	// EnableLoadBalancing enables Tyk's round-robin loadbalancer. Tyk will ignore the TargetURL field, and rely on
 	// the hosts in the Targets list
 	EnableLoadBalancing bool `json:"enable_load_balancing,omitempty"`
+
 	// Targets defines a list of upstream host targets. Tyk will then round-robin load balance between these targets.
 	// EnableLoadBalancing must be set to true in order to take advantage of this feature.
 	Targets []string `json:"target_list,omitempty"`
+
 	// CheckHostAgainstUptimeTests will check the hostname of the outbound request against the downtime list generated
 	// by the uptime test host checker. If the host is found, then it is skipped or removed from the load balancer.
 	// This is only valid if uptime tests for the api are enabled.
 	CheckHostAgainstUptimeTests bool `json:"check_host_against_uptime_tests,omitempty"`
+
 	// Transport section exposes advanced transport level configurations such as minimum TLS version.
 	Transport ProxyTransport `json:"transport,omitempty"`
+
 	// TODO: Untested. Is there a use-case for SD inside a K8s environment?
 	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
 }
@@ -707,7 +730,8 @@ type ApiDefinitionStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Proxy.ListenPath",type=string,JSONPath=`.spec.proxy.listen_path`
+// +kubebuilder:printcolumn:name="Domain",type=string,JSONPath=`.spec.domain`
+// +kubebuilder:printcolumn:name="ListenPath",type=string,JSONPath=`.spec.proxy.listen_path`
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
 // +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.active`
 // +kubebuilder:resource:shortName=tykapis

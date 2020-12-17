@@ -7,8 +7,11 @@ metadata:
   name: apidefinitions.tyk.tyk.io
 spec:
   additionalPrinterColumns:
+  - JSONPath: .spec.domain
+    name: Domain
+    type: string
   - JSONPath: .spec.proxy.listen_path
-    name: Proxy.ListenPath
+    name: ListenPath
     type: string
   - JSONPath: .spec.proxy.target_url
     name: Proxy.TargetURL
@@ -93,6 +96,7 @@ spec:
                   type: boolean
               type: object
             active:
+              description: Active specifies if the api is enabled or not
               type: boolean
             api_id:
               description: Only set this field if you are referring To an existing API in def. The Operator will use this API ID to link the CRD with the API in Tyk Note the values in the CRD will become the new source of truth, overriding the existing API Definition
