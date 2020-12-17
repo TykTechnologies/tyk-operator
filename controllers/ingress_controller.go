@@ -35,7 +35,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+var (
+	apiGVStr = v1alpha1.GroupVersion.String()
+)
+
 const (
+	apiOwnerKey                        = ".metadata.controller"
 	ingressFinalizerName               = "finalizers.tyk.io/ingress"
 	ingressClassAnnotationKey          = "kubernetes.io/ingress.class"
 	ingressTemplateAnnotationKey       = "tyk.io/template"
@@ -66,14 +71,11 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// ALL MANAGED API DEFINITIONS =====================================================================================
-	lbls := map[string]string{
-		"ingress": req.Name,
-	}
 
 	oldAPIs := v1alpha1.ApiDefinitionList{}
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
-		client.MatchingLabels(lbls),
+		client.MatchingFields{apiOwnerKey: req.Name},
 	}
 	if err := r.List(ctx, &oldAPIs, opts...); err != nil {
 		log.Error(err, "unable to list apis")
@@ -143,10 +145,12 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      apiName,
 					Namespace: req.Namespace,
-					Labels:    lbls,
 				},
 				Spec: template.Spec,
 			}
+
+			gvk := desired.GetObjectKind().GroupVersionKind()
+			api.SetOwnerReferences(append(api.GetOwnerReferences(), *metav1.NewControllerRef(desired, gvk)))
 
 			api.Spec.Name = apiName
 			api.Spec.Proxy.ListenPath = p.Path
@@ -254,8 +258,30 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 }
 
 func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	err := mgr.GetFieldIndexer().
+		IndexField(context.TODO(), &v1alpha1.ApiDefinition{}, apiOwnerKey, func(rawObj runtime.Object) []string {
+			// grab the apiDef object, extract the owner...
+			apiDefinition := rawObj.(*v1alpha1.ApiDefinition)
+			owner := metav1.GetControllerOf(apiDefinition)
+			if owner == nil {
+				return nil
+			}
+
+			if owner.APIVersion != apiGVStr || owner.Kind != "Ingress" {
+				return nil
+			}
+
+			return []string{owner.Name}
+		})
+
+	if err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Ingress{}).
+		Owns(&v1alpha1.ApiDefinition{}).
 		WithEventFilter(r.ingressClassEventFilter()).
 		Complete(r)
 }
