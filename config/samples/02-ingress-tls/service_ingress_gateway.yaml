@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-gateway
+  namespace: tykpro-control-plane
+  labels:
+    name: tyk
+#  annotations:
+#    service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: 'true'
+#    service.beta.kubernetes.io/do-loadbalancer-hostname: 'ingressdemo.do.poc.tyk.technology' # subdomain workaround
+spec:
+  ports:
+    - name: http
+      targetPort: 8000
+      port: 80
+      protocol: TCP
+    - name: https
+      targetPort: 8443
+      port: 443
+      protocol: TCP
+  selector:
+    name: tyk
+  type: LoadBalancer
+#  externalTrafficPolicy: Local
