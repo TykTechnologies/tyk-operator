@@ -5,9 +5,6 @@ metadata:
   namespace: tykpro-control-plane
   labels:
     name: tyk
-#  annotations:
-#    service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: 'true'
-#    service.beta.kubernetes.io/do-loadbalancer-hostname: 'ingressdemo.do.poc.tyk.technology' # subdomain workaround
 spec:
   ports:
     - name: http

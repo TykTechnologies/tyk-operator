@@ -139,6 +139,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	for _, rule := range desired.Spec.Rules {
 		hostName := rule.Host
+
 		for _, p := range rule.HTTP.Paths {
 			apiName := r.buildAPIName(req.Namespace, req.Name, hostName, p.Path)
 			api := v1alpha1.ApiDefinition{
@@ -160,6 +161,20 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
 
 			api.Spec.Domain = hostName
+
+			if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
+				for _, tls := range desired.Spec.TLS {
+					for _, host := range tls.Hosts {
+						if hostName == host {
+							api.Spec.Protocol = "https"
+							api.Spec.CertificateSecretNames = []string{
+								tls.SecretName,
+							}
+							api.Spec.ListenPort = 8443 // TODO: This should be 443. Gateway should expose 443.
+						}
+					}
+				}
+			}
 
 			apisToCreateOrUpdate.Items = append(apisToCreateOrUpdate.Items, api)
 		}
@@ -228,7 +243,9 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 }
 
 func (r *IngressReconciler) buildAPIName(nameSpace, name, hostName, path string) string {
-	return strings.TrimRight(strings.ReplaceAll(fmt.Sprintf("%s-%s-%s-%s", nameSpace, name, hostName, path), "/", ""), "-")
+	enc := strings.ReplaceAll(strings.ToLower(encodeNS(fmt.Sprintf("%s%s", hostName, path))), "=", "")
+
+	return fmt.Sprintf("%s-%s-%s", nameSpace, name, enc)
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {

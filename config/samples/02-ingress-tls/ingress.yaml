@@ -5,8 +5,13 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: tyk # <----------------- REFERENCES TYK INGRESS CONTROLLER
     tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
-
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    acme.cert-manager.io/http01-edit-in-place: "true"
 spec:
+  tls:
+    - hosts:
+        - ingressdemo.do.poc.tyk.technology
+      secretName: httpbin-ingress-tls
   rules:
     - host: ingressdemo.do.poc.tyk.technology
       http:
