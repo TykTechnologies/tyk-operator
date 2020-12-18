@@ -35,10 +35,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-var (
-	ingressGVString = "networking.k8s.io"
-)
-
 const (
 	labelKey                           = "tyk.io/ingress"
 	ingressFinalizerName               = "finalizers.tyk.io/ingress"
@@ -174,6 +170,10 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 						}
 					}
 				}
+			} else {
+				// for the acme challenge
+				api.Spec.Proxy.StripListenPath = false
+				api.Spec.Proxy.PreserveHostHeader = true
 			}
 
 			apisToCreateOrUpdate.Items = append(apisToCreateOrUpdate.Items, api)

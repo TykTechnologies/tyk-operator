@@ -16,7 +16,7 @@ spec:
     - host: ingressdemo.do.poc.tyk.technology
       http:
         paths:
-          - path: /
+          - path: /httpbin
             pathType: Prefix
             backend:
               service:
