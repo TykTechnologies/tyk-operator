@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
@@ -36,6 +37,7 @@ import (
 )
 
 const (
+	labelKey                           = "tyk.io/ingress"
 	ingressFinalizerName               = "finalizers.tyk.io/ingress"
 	ingressClassAnnotationKey          = "kubernetes.io/ingress.class"
 	ingressTemplateAnnotationKey       = "tyk.io/template"
@@ -66,14 +68,11 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// ALL MANAGED API DEFINITIONS =====================================================================================
-	lbls := map[string]string{
-		"ingress": req.Name,
-	}
 
 	oldAPIs := v1alpha1.ApiDefinitionList{}
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
-		client.MatchingLabels(lbls),
+		client.MatchingLabels{labelKey: req.Name},
 	}
 	if err := r.List(ctx, &oldAPIs, opts...); err != nil {
 		log.Error(err, "unable to list apis")
@@ -137,23 +136,46 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	for _, rule := range desired.Spec.Rules {
 		hostName := rule.Host
+
 		for _, p := range rule.HTTP.Paths {
 			apiName := r.buildAPIName(req.Namespace, req.Name, hostName, p.Path)
 			api := v1alpha1.ApiDefinition{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      apiName,
 					Namespace: req.Namespace,
-					Labels:    lbls,
 				},
 				Spec: *template.Spec.DeepCopy(),
 			}
+			api.SetLabels(map[string]string{
+				labelKey: req.Name,
+			})
+
+			gvk := desired.GetObjectKind().GroupVersionKind()
+			api.SetOwnerReferences(append(api.GetOwnerReferences(), *metav1.NewControllerRef(desired, gvk)))
 
 			api.Spec.Name = apiName
 			api.Spec.Proxy.ListenPath = p.Path
 			api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
 
-			// TODO: Translate to Tyk custom domain
 			api.Spec.Domain = hostName
+
+			if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
+				for _, tls := range desired.Spec.TLS {
+					for _, host := range tls.Hosts {
+						if hostName == host {
+							api.Spec.Protocol = "https"
+							api.Spec.CertificateSecretNames = []string{
+								tls.SecretName,
+							}
+							api.Spec.ListenPort = 443
+						}
+					}
+				}
+			} else {
+				// for the acme challenge
+				api.Spec.Proxy.StripListenPath = false
+				api.Spec.Proxy.PreserveHostHeader = true
+			}
 
 			apisToCreateOrUpdate.Items = append(apisToCreateOrUpdate.Items, api)
 		}
@@ -234,8 +256,6 @@ func shortHash(txt string) string {
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	isOurIngress := func(annotations map[string]string) bool {
 		if ingressClass, ok := annotations[ingressClassAnnotationKey]; !ok {
-			r.Log.Info("test ingress class")
-			// if there is no ingress class - it's prob not for us
 			return false
 		} else if ingressClass == defaultIngressClassAnnotationValue {
 			// if the ingress class is `tyk` it's for us
@@ -260,8 +280,29 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 }
 
 func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	//err := mgr.GetFieldIndexer().
+	//	IndexField(context.TODO(), &v1alpha1.ApiDefinition{}, apiOwnerKey, func(rawObj runtime.Object) []string {
+	//		// grab the apiDef object, extract the owner...
+	//		apiDefinition := rawObj.(*v1alpha1.ApiDefinition)
+	//		owner := metav1.GetControllerOf(apiDefinition)
+	//		if owner == nil {
+	//			return nil
+	//		}
+	//
+	//		if owner.APIVersion != ingressGVString || owner.Kind != "Ingress" {
+	//			return nil
+	//		}
+	//
+	//		return []string{owner.Name}
+	//	})
+
+	//if err != nil {
+	//	return err
+	//}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Ingress{}).
+		Owns(&v1alpha1.ApiDefinition{}).
 		WithEventFilter(r.ingressClassEventFilter()).
 		Complete(r)
 }
