@@ -53,7 +53,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: TYK_LOGLEVEL
-              value: info
+              value: debug
           command: [ "/opt/tyk-gateway/tyk", "--conf=/etc/tyk-gateway/tyk.json" ]
           workingDir: /opt/tyk-gateway
           volumeMounts:

@@ -1,0 +1,65 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: httpbin-ingress
+  annotations:
+    kubernetes.io/ingress.class: tyk # <----------------- REFERENCES TYK INGRESS CONTROLLER
+    tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
+spec:
+  rules:
+    - host: httpbin.ahmet
+      http:
+        paths:
+          - path: / # host routing: http://httpbin.ahmet/
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
+          - path: /httpbin # host + path routing: http://httpbin.ahmet/httpbin
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
+    - http:
+        paths:
+          - path: /pathonly  # path only routing: http://IPADDRESS/pathonly
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
+
+#  k get ingress
+#Warning: extensions/v1beta1 Ingress is deprecated in v1.14+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress
+#  NAME              CLASS    HOSTS           ADDRESS   PORTS   AGE
+#  httpbin-ingress   <none>   httpbin.ahmet             80      18m
+
+#  k describe ingress httpbin-ingress
+#Warning: extensions/v1beta1 Ingress is deprecated in v1.14+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress
+#Name:             httpbin-ingress
+#Namespace:        default
+#Address:
+#Default backend:  default-http-backend:80 (<error: endpoints "default-http-backend" not found>)
+#Rules:
+#  Host           Path  Backends
+#  ----           ----  --------
+#  httpbin.ahmet
+#  /          httpbin:8000   10.244.0.124:80)
+#  /httpbin   httpbin:8000   10.244.0.124:80)
+#  *
+#  /pathonly   httpbin:8000   10.244.0.124:80)
+#Annotations:     kubernetes.io/ingress.class: tyk
+#                   tyk.io/template: myapideftemplate
+#Events:          <none>
+
+#  k get tykapis
+#  NAME                                            DOMAIN          LISTENPATH   PROXY.TARGETURL                                 ENABLED
+#  default-httpbin-ingress--pathonly                               /pathonly    http://httpbin.default.svc.cluster.local:8000   true
+#  default-httpbin-ingress-httpbin.ahmet           httpbin.ahmet   /            http://httpbin.default.svc.cluster.local:8000   true
+#  default-httpbin-ingress-httpbin.ahmet-httpbin   httpbin.ahmet   /httpbin     http://httpbin.default.svc.cluster.local:8000   true
+#  myapideftemplate                                                             http://example.com                              true

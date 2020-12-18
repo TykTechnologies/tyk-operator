@@ -9,8 +9,11 @@ metadata:
   name: apidefinitions.tyk.tyk.io
 spec:
   additionalPrinterColumns:
+  - JSONPath: .spec.domain
+    name: Domain
+    type: string
   - JSONPath: .spec.proxy.listen_path
-    name: Proxy.ListenPath
+    name: ListenPath
     type: string
   - JSONPath: .spec.proxy.target_url
     name: Proxy.TargetURL
@@ -111,6 +114,7 @@ spec:
                   type: boolean
               type: object
             active:
+              description: Active specifies if the api is enabled or not
               type: boolean
             api_id:
               description: Only set this field if you are referring To an existing
