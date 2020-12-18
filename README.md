@@ -1,7 +1,7 @@
 # Tyk Operator
 
-Tyk Operator contains various controllers which watch resources inside Kubernetes and reconciles
-a Tyk deployment with the desired state as set inside K8s. 
+Tyk Operator contains various controllers which watch resources inside Kubernetes and reconciles a Tyk deployment with
+the desired state as set inside K8s.
 
 ![Demo](./docs/img/demo.svg)
 
@@ -36,6 +36,7 @@ spec:
     listen_path: /httpbin
     strip_listen_path: true
 ```
+
 </p>
 </details>
 
@@ -235,38 +236,41 @@ spec:
 
 [Installing the tyk-operator](./docs/installation/installation.md)
 
-tyk-operator is under active development. 
+tyk-operator is under active development.
 
 We are building the operator to enable you to build and ship your APIs faster and more safely. We are actively working
-on improving & stabilising our v1alpha1 custom resources, whilst also working on a helm chart so that you can 
-manage your tyk-operator deployment. 
+on improving & stabilising our v1alpha1 custom resources, whilst also working on a helm chart so that you can manage
+your tyk-operator deployment.
 
-If you find any bugs, please raise an issue. 
-We welcome code contributions as well. 
+If you find any defects, please [raise an issue](https://github.com/TykTechnologies/tyk-operator/issues/new).
+We welcome code contributions as well.
 If you require any features that we have not yet implemented, please take the time to write a GH issue detailing your
-use-case so that we may prioritise accordingly. 
+use-case so that we may prioritise accordingly.
 
 ## IDE Integration
+
 This section details the steps required to add K8s extensions to popular IDEs.
 
 ### VS Code
- 
+
 [Watch video tutorial here](http://www.youtube.com/watch?v=Kdrfp6aAZEU)
-  
+
 Steps:
-1. Go to the following link: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools
+
+1. Go to the following link: <https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools>
 2. Click on Install. This will prompt you to open Visual Studios.
 3. Click Open Visual Studios at the subsequent prompt. This will open VS Code and take you to the Extensions' section.
 4. Click Install in the Kubernetes extension page.
-  
+
 Note: The extension should take effect immediately. In case it doesn't, simply restart VS Code.
 
 ## Contributing
 
 [Setting up your development environment](./docs/development.md)
 
-## We are hiring! 
+## We are hiring
 
-Like what you see so far? Passionate about Open Source? Can you think of a ton of ways to make tyk-operator 
+Like what you see so far? Passionate about Open Source? Can you think of a ton of ways to make tyk-operator
 or some of our other projects better? We want to hear from you.
-Head over to our [careers page](https://tyk.io/current-vacancies/senior-software-engineer-kubernetes/) for further details.
+Head over to our [careers page](https://tyk.io/current-vacancies/senior-software-engineer-kubernetes/) for further
+details.
