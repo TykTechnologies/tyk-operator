@@ -400,6 +400,9 @@ type APIDefinitionSpec struct {
 	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
 	//Oauth2Meta          OAuth2Meta    `json:"oauth_meta"`
 
+	// StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
+	StripAuthData bool `json:"strip_auth_data,omitempty"`
+
 	Auth AuthConfig `json:"auth,omitempty"`
 
 	// +optional
@@ -486,8 +489,10 @@ type APIDefinitionSpec struct {
 
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
-	//StripAuthData           bool            `json:"strip_auth_data"`
-	//EnableDetailedRecording bool            `json:"enable_detailed_recording"`
+
+	// EnableDetailedRecording instructs Tyk store the inbound request and outbound response data in HTTP Wire format
+	// as part of the Analytics data
+	EnableDetailedRecording bool `json:"enable_detailed_recording,omitempty"`
 
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 }
