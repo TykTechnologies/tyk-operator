@@ -396,6 +396,11 @@ spec:
               type: boolean
             enable_coprocess_auth:
               type: boolean
+            enable_detailed_recording:
+              description: EnableDetailedRecording instructs Tyk store the inbound
+                request and outbound response data in HTTP Wire format as part of
+                the Analytics data
+              type: boolean
             graphql:
               description: GraphQLConfig is the root config object for a GraphQL API.
               properties:
@@ -669,6 +674,10 @@ spec:
                 - name
                 type: object
               type: array
+            strip_auth_data:
+              description: StripAuthData ensures that any security tokens used for
+                accessing APIs are stripped and not leaked to the upstream
+              type: boolean
             tags:
               description: Tags are named gateway nodes which tell gateway clusters
                 whether to load an API or not. for example, to load the API in an
