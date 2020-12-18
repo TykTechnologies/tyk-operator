@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
-	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
@@ -145,7 +145,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 					Namespace: req.Namespace,
 					Labels:    lbls,
 				},
-				Spec: template.Spec,
+				Spec: *template.Spec.DeepCopy(),
 			}
 
 			api.Spec.Name = apiName
@@ -222,7 +222,13 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 }
 
 func (r *IngressReconciler) buildAPIName(nameSpace, name, hostName, path string) string {
-	return strings.TrimRight(strings.ReplaceAll(fmt.Sprintf("%s-%s-%s-%s", nameSpace, name, hostName, path), "/", ""), "-")
+	return fmt.Sprintf("%s-%s-%s", nameSpace, name, shortHash(hostName+path))
+}
+
+func shortHash(txt string) string {
+	h := sha256.New()
+	h.Write([]byte(txt))
+	return fmt.Sprintf("%x", h.Sum(nil))[:9]
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
