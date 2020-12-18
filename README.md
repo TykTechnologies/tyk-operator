@@ -3,6 +3,8 @@
 Tyk Operator contains various controllers which watch resources inside Kubernetes and reconciles
 a Tyk deployment with the desired state as set inside K8s. 
 
+![Demo](./docs/img/demo.svg)
+
 Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/):
 
 - [API Definitions](./docs/api_definitions.md)
@@ -11,7 +13,7 @@ Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/e
 
 Read more about the [concepts here](./docs/concepts.md).
 
-![Demo](./docs/img/demo.svg)
+Tyk Operator also contains an [Ingress Controller](./docs/ingress.md).
 
 ## Sample Gateway Proxy Configurations
 

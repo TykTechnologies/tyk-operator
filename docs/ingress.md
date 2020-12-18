@@ -6,11 +6,18 @@ Tyk Operator offers an Ingress Controller, which dynamically manages ApiDefiniti
 Most Ingress Controllers heavily rely on annotations to configure the ingress gateway. With Tyk Operator, our Ingress 
  Controller prefers to reference a strongly typed custom resource template.
 
+## Quickstart / Samples
+
+* [HTTP Host-Based](./../config/samples/01-ingress)
+* [HTTP Host and Path](./../config/samples/01-ingress)
+* [HTTP Path Based](./../config/samples/01-ingress)
+* [HTTPS with Cert-Manager Integration](./../config/samples/02-ingress-tls)
+
 ## Motivation
 
 The standard Ingress resource is very basic and does not natively support many advanced capabilities that are required
  for real-life use-cases. Despite this, the community have built tooling, capabilities, dependencies, and technical debt 
- on top of the ingress resource. These all rely on abusing the metadata annotations, and this practice is apparent 
+ on top of the ingress resource. These all rely on abuse of the metadata annotations. This practice is apparent 
  with the standard [Kubernetes NginX Ingress resource](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#annotations).
 
 In order to decouple, gain all the benefits of Kubernetes, offer a Native & consistent API, we introduced the Tyk
@@ -48,7 +55,7 @@ When applying this manifest, the ApiDefinition reconciler's predicate filter wil
 All mandatory fields inside the ApiDefinition spec are still mandatory, but can be replaced with placeholders as they
  will be overwritten by the Ingress reconciler.
 
-## Sample Ingress resource
+## Sample HTTP Ingress resource
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -75,3 +82,45 @@ The above ingress resource will create an ApiDefinition inside Tyk's Gateway. Th
  routing listening on /httpbin. Because the referenced template is `myapideftemplate`, the IngressReconciler will
  retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard
  auth enabled.
+
+## Sample HTTPS Ingress resource
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: httpbin-ingress-tls
+  annotations:
+    kubernetes.io/ingress.class: tyk # <----------------- REFERENCES TYK INGRESS CONTROLLER
+    tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+spec:
+  tls:
+    - hosts:
+        - myingress.do.poc.tyk.technology
+      secretName: httpbin-ingress-tls
+  rules:
+    - host: myingress.do.poc.tyk.technology
+      http:
+        paths:
+          - path: /httpbin
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
+```
+
+Assuming you already have a `letsencrypt-prod` cluster issuer, it is possible to automatically provision TLS certificates
+ issued by LetsEncrypt.
+
+```yaml
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+```
+
+Tyk ingress controller can then handle the acme challenge where cert-manager edits the ingress resource.
