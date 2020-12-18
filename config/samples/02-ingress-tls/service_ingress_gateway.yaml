@@ -19,7 +19,7 @@ metadata:
 spec:
   ports:
     - name: http
-      targetPort: 80
+      targetPort: 8000
       port: 80
       protocol: TCP
     - name: https

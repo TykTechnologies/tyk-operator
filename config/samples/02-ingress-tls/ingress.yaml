@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - ingressdemo.do.poc.tyk.technology
+        - myingress.do.poc.tyk.technology
       secretName: httpbin-ingress-tls
   rules:
-    - host: ingressdemo.do.poc.tyk.technology
+    - host: myingress.do.poc.tyk.technology
       http:
         paths:
           - path: /httpbin
