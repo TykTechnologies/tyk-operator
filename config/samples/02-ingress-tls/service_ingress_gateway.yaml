@@ -5,17 +5,28 @@ metadata:
   namespace: tykpro-control-plane
   labels:
     name: tyk
+  annotations:
+    # https://www.digitalocean.com/docs/kubernetes/how-to/configure-load-balancers/
+    service.beta.kubernetes.io/do-loadbalancer-name: "ingressdemo"
+#    service.beta.kubernetes.io/do-loadbalancer-healthcheck-port: "80"
+#    service.beta.kubernetes.io/do-loadbalancer-healthcheck-protocol: "http"
+#    service.beta.kubernetes.io/do-loadbalancer-healthcheck-path: "/hello"
+#    service.beta.kubernetes.io/do-loadbalancer-healthcheck-check-interval-seconds: "3"
+#    service.beta.kubernetes.io/do-loadbalancer-healthcheck-response-timeout-seconds: "5"
+#    service.beta.kubernetes.io/do-loadbalancer-healthcheck-unhealthy-threshold: "3"
+#    service.beta.kubernetes.io/do-loadbalancer-healthcheck-healthy-threshold: "5"
+#    service.beta.kubernetes.io/do-loadbalancer-enable-backend-keepalive: "true"
 spec:
   ports:
     - name: http
-      targetPort: 8000
+      targetPort: 80
       port: 80
       protocol: TCP
     - name: https
-      targetPort: 8443
+      targetPort: 443
       port: 443
       protocol: TCP
   selector:
     name: tyk
   type: LoadBalancer
-#  externalTrafficPolicy: Local
+  externalTrafficPolicy: Local

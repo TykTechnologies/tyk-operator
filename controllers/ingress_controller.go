@@ -166,7 +166,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 							api.Spec.CertificateSecretNames = []string{
 								tls.SecretName,
 							}
-							api.Spec.ListenPort = 8443 // TODO: This should be 443. Gateway should expose 443.
+							api.Spec.ListenPort = 443
 						}
 					}
 				}
