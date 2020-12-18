@@ -1,0 +1,5 @@
+{
+  "extends": "../.markdownlint.json",
+  "MD013": false,
+  "MD041": false
+}
