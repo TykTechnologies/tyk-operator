@@ -64,16 +64,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	op, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(policy, policyFinalizer) {
-				util.RemoveFinalizer(policy, policyFinalizer)
-				if err := r.delete(ctx, policy.Status.PolID); err != nil {
-					if universal_client.IsNotFound(err) {
-						r.Log.Info("Policy not found")
-						return nil
-					}
-					r.Log.Error(err, "Failed to delete resource")
-					return err
-				}
-				r.Log.Info("Successfully deleted Policy")
+				return r.delete(ctx, policy)
 			}
 			return nil
 		}
@@ -103,25 +94,9 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			}
 		}
 		if policy.Status.PolID == "" {
-			r.Log.Info("Creating  policy")
-			err := r.create(ctx, &policy.Spec)
-			if err != nil {
-				r.Log.Error(err, "Failed to create policy")
-				return err
-			}
-			r.Log.Info("Successful created Policy")
-			policy.Status.PolID = policy.Spec.MID
-			return r.Status().Update(ctx, policy)
+			return r.create(ctx, policy)
 		}
-		r.Log.Info("Updating  policy")
-		policy.Spec.MID = policy.Status.PolID
-		err := r.update(ctx, &policy.Spec)
-		if err != nil {
-			r.Log.Error(err, "Failed to update policy")
-			return err
-		}
-		r.Log.Info("Successfully updated Policy")
-		return nil
+		return r.update(ctx, policy)
 	})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -130,7 +105,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		r.Log.Error(err, "Failed create or update security policy ", "Op", op)
 		return ctrl.Result{}, err
 	}
-	r.Log.Info("Nothing changed", "Op", op)
+	r.Log.Info("Done reconcile", "Op", op)
 	return ctrl.Result{}, nil
 }
 
@@ -149,27 +124,44 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 	return nil
 }
 
-// deletes policy with id and ensure hot reload is called after the operation
-func (r *SecurityPolicyReconciler) delete(ctx context.Context, id string) error {
-	defer func() {
-		r.UniversalClient.HotReload()
-	}()
-	return r.UniversalClient.SecurityPolicy().Delete(id)
+func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+	r.Log.Info("Deleting policy")
+	util.RemoveFinalizer(policy, policyFinalizer)
+	if err := r.UniversalClient.SecurityPolicy().Delete(policy.Status.PolID); err != nil {
+		if universal_client.IsNotFound(err) {
+			r.Log.Info("Policy not found")
+			return nil
+		}
+		r.Log.Error(err, "Failed to delete resource")
+		return err
+	}
+	r.Log.Info("Successfully deleted Policy")
+	return nil
 }
 
-// update updates policy using spec and ensure hot reload is called.
-func (r *SecurityPolicyReconciler) update(ctx context.Context, spec *tykv1.SecurityPolicySpec) error {
-	defer func() {
-		r.UniversalClient.HotReload()
-	}()
-	return r.UniversalClient.SecurityPolicy().Update(spec)
+func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+	r.Log.Info("Updating  policy")
+	policy.Spec.MID = policy.Status.PolID
+	err := r.UniversalClient.SecurityPolicy().Update(&policy.Spec)
+	if err != nil {
+		r.Log.Error(err, "Failed to update policy")
+		return err
+	}
+	r.UniversalClient.HotReload()
+	r.Log.Info("Successfully updated Policy")
+	return nil
 }
 
-func (r *SecurityPolicyReconciler) create(ctx context.Context, spec *tykv1.SecurityPolicySpec) error {
-	defer func() {
-		r.UniversalClient.HotReload()
-	}()
-	return r.UniversalClient.SecurityPolicy().Create(spec)
+func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+	r.Log.Info("Creating  policy")
+	err := r.UniversalClient.SecurityPolicy().Create(&policy.Spec)
+	if err != nil {
+		r.Log.Error(err, "Failed to create policy")
+		return err
+	}
+	r.Log.Info("Successful created Policy")
+	policy.Status.PolID = policy.Spec.MID
+	return r.Status().Update(ctx, policy)
 }
 
 func (r *SecurityPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
