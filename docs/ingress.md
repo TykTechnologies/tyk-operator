@@ -6,6 +6,13 @@ Tyk Operator offers an Ingress Controller, which dynamically manages ApiDefiniti
 Most Ingress Controllers heavily rely on annotations to configure the ingress gateway. With Tyk Operator, our Ingress 
  Controller prefers to reference a strongly typed custom resource template.
 
+## ⚠️ Current Known limitations
+
+Tyk's Ingress Controller is under active development. Please see the following 
+ [GitHub issues](https://github.com/TykTechnologies/tyk-operator/labels/ingress) which provide a list of 
+ tickets which we are currently addressing as part of our roadmap. We welcome you to upvote any issues or open new 
+ ticket if you require any new features / functionality.
+
 ## Quickstart / Samples
 
 * [HTTP Host-Based](./../config/samples/01-ingress)
