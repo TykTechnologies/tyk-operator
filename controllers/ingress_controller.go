@@ -27,17 +27,22 @@ import (
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const (
-	labelKey                           = "tyk.io/ingress"
+	ingressLabelKey                    = "tyk.io/ingress"
+	apidefLabelKey                     = "tyk.io/apidefinition"
 	ingressFinalizerName               = "finalizers.tyk.io/ingress"
 	ingressClassAnnotationKey          = "kubernetes.io/ingress.class"
 	ingressTemplateAnnotationKey       = "tyk.io/template"
@@ -72,7 +77,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	oldAPIs := v1alpha1.ApiDefinitionList{}
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
-		client.MatchingLabels{labelKey: req.Name},
+		client.MatchingLabels{ingressLabelKey: req.Name},
 	}
 	if err := r.List(ctx, &oldAPIs, opts...); err != nil {
 		log.Error(err, "unable to list apis")
@@ -115,72 +120,15 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// /FINALIZER LOGIC ================================================================================================
 
-	// ensure there is a template api definition
-	templateAnnotationValue, ok := desired.Annotations[ingressTemplateAnnotationKey]
-	if !ok {
-		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", ingressTemplateAnnotationKey)
-	}
-
-	// we have parameters - as such, we should ensure that there is an api definition resource
-	template := &v1alpha1.ApiDefinition{}
-	err := r.Get(ctx, types.NamespacedName{Name: templateAnnotationValue, Namespace: req.Namespace}, template)
-	if err != nil {
-		log.Error(err, "error getting api definition to use as a template", "name", templateAnnotationValue)
-		return ctrl.Result{}, err
-	}
-
 	apisToCreateOrUpdate := v1alpha1.ApiDefinitionList{}
 	apisToUpdate := v1alpha1.ApiDefinitionList{}
 	apisToCreate := v1alpha1.ApiDefinitionList{}
 	apisToDelete := v1alpha1.ApiDefinitionList{}
 
-	for _, rule := range desired.Spec.Rules {
-		hostName := rule.Host
-
-		for _, p := range rule.HTTP.Paths {
-			apiName := r.buildAPIName(req.Namespace, req.Name, hostName, p.Path)
-			api := v1alpha1.ApiDefinition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      apiName,
-					Namespace: req.Namespace,
-				},
-				Spec: *template.Spec.DeepCopy(),
-			}
-			api.SetLabels(map[string]string{
-				labelKey: req.Name,
-			})
-
-			gvk := desired.GetObjectKind().GroupVersionKind()
-			api.SetOwnerReferences(append(api.GetOwnerReferences(), *metav1.NewControllerRef(desired, gvk)))
-
-			api.Spec.Name = apiName
-			api.Spec.Proxy.ListenPath = p.Path
-			api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName, namespacedName.Namespace, p.Backend.ServicePort.IntValue())
-
-			api.Spec.Domain = hostName
-
-			if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
-				for _, tls := range desired.Spec.TLS {
-					for _, host := range tls.Hosts {
-						if hostName == host {
-							api.Spec.Protocol = "https"
-							api.Spec.CertificateSecretNames = []string{
-								tls.SecretName,
-							}
-							api.Spec.ListenPort = 443
-						}
-					}
-				}
-			} else {
-				// for the acme challenge
-				api.Spec.Proxy.StripListenPath = false
-				api.Spec.Proxy.PreserveHostHeader = true
-			}
-
-			apisToCreateOrUpdate.Items = append(apisToCreateOrUpdate.Items, api)
-		}
+	err := r.createAPI(ctx, req, desired)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
-
 	// All the apis we should delete or update
 	for _, x := range oldAPIs.Items {
 		found := false
@@ -239,12 +187,105 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			log.Error(err, "unable to update api")
 		}
 	}
-
 	return ctrl.Result{}, nil
 }
 
-func (r *IngressReconciler) buildAPIName(nameSpace, name, hostName, path string) string {
-	return fmt.Sprintf("%s-%s-%s", nameSpace, name, shortHash(hostName+path))
+func (r *IngressReconciler) createAPI(ctx context.Context, req ctrl.Request, desired *v1beta1.Ingress) error {
+	key, ok := desired.Annotations[ingressTemplateAnnotationKey]
+	if !ok {
+		return fmt.Errorf("expecting template annotation %s", ingressTemplateAnnotationKey)
+	}
+	template := &v1alpha1.ApiDefinition{}
+	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
+	if err != nil {
+		return err
+	}
+	err = r.deleteOrphanAPI(ctx, req.Namespace, desired)
+	if err != nil {
+		return err
+	}
+	for _, rule := range desired.Spec.Rules {
+		for _, p := range rule.HTTP.Paths {
+			hash := shortHash(rule.Host + p.Path)
+			apiName := r.buildAPIName(req.Namespace, req.Name, hash)
+			api := &v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiName,
+					Namespace: req.Namespace,
+				},
+			}
+			res, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
+				api.SetLabels(map[string]string{
+					ingressLabelKey: req.Name,
+					apidefLabelKey:  hash,
+				})
+				api.Spec = *template.Spec.DeepCopy()
+				api.Spec.Name = apiName
+				api.Spec.Proxy.ListenPath = p.Path
+				api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName,
+					req.NamespacedName.Namespace, p.Backend.ServicePort.IntValue())
+				api.Spec.Domain = rule.Host
+				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
+					for _, tls := range desired.Spec.TLS {
+						for _, host := range tls.Hosts {
+							if rule.Host == host {
+								api.Spec.Protocol = "https"
+								api.Spec.CertificateSecretNames = []string{
+									tls.SecretName,
+								}
+								api.Spec.ListenPort = 443
+							}
+						}
+					}
+				} else {
+					// for the acme challenge
+					api.Spec.Proxy.StripListenPath = false
+					api.Spec.Proxy.PreserveHostHeader = true
+				}
+				return util.SetControllerReference(desired, api, r.Scheme)
+			})
+			if err != nil {
+				r.Log.Error(err, "Failed to sync api definition", "Status", res)
+				return nil
+			}
+			r.Log.Info("Successful sync APIDefinition", "Name", api.Name, "Status", res)
+		}
+	}
+	return nil
+}
+
+func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, ns string, desired *v1beta1.Ingress) error {
+	var keys []string
+	for _, rule := range desired.Spec.Rules {
+		for _, p := range rule.HTTP.Paths {
+			hash := shortHash(rule.Host + p.Path)
+			keys = append(keys, hash)
+		}
+	}
+	s := labels.NewSelector()
+	exists, err := labels.NewRequirement(apidefLabelKey, selection.Exists, []string{})
+	if err != nil {
+		return err
+	}
+	s = s.Add(*exists)
+	notIn, err := labels.NewRequirement(apidefLabelKey, selection.NotIn, keys)
+	if err != nil {
+		return err
+	}
+	s = s.Add(*notIn)
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
+			ListOptions: client.ListOptions{
+				LabelSelector: s,
+				Namespace:     ns,
+			},
+			DeleteOptions: client.DeleteOptions{},
+		})
+	})
+}
+
+func (r *IngressReconciler) buildAPIName(nameSpace, name, hash string) string {
+	return fmt.Sprintf("%s-%s-%s", nameSpace, name, hash)
 }
 
 func shortHash(txt string) string {
