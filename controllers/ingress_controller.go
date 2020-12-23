@@ -258,27 +258,8 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	}
 }
 
+// SetupWithManager initializes ingress controller manager
 func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	//err := mgr.GetFieldIndexer().
-	//	IndexField(context.TODO(), &v1alpha1.ApiDefinition{}, apiOwnerKey, func(rawObj runtime.Object) []string {
-	//		// grab the apiDef object, extract the owner...
-	//		apiDefinition := rawObj.(*v1alpha1.ApiDefinition)
-	//		owner := metav1.GetControllerOf(apiDefinition)
-	//		if owner == nil {
-	//			return nil
-	//		}
-	//
-	//		if owner.APIVersion != ingressGVString || owner.Kind != "Ingress" {
-	//			return nil
-	//		}
-	//
-	//		return []string{owner.Name}
-	//	})
-
-	//if err != nil {
-	//	return err
-	//}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Ingress{}).
 		Owns(&v1alpha1.ApiDefinition{}).
