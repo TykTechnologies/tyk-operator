@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -143,8 +144,18 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func (r *IngressReconciler) ours(a *v1alpha1.ApiDefinition, i *v1beta1.Ingress) bool {
-	if x := metav1.GetControllerOf(a); x != nil {
+func (r *IngressReconciler) ours(d *v1alpha1.ApiDefinition, i *v1beta1.Ingress) bool {
+	if x := metav1.GetControllerOf(d); x != nil {
+		a, err := schema.ParseGroupVersion(x.APIVersion)
+		if err != nil {
+			return false
+		}
+		b, err := schema.ParseGroupVersion(i.APIVersion)
+		if err != nil {
+			return false
+		}
+		return a.Group == b.Group &&
+			d.Kind == i.Kind && x.Name == i.Name
 	}
 	return false
 }
