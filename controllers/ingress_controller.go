@@ -70,9 +70,26 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	key, ok := desired.Annotations[ingressTemplateAnnotationKey]
+	if !ok {
+		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", ingressTemplateAnnotationKey)
+	}
+	template := &v1alpha1.ApiDefinition{}
+	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 	nsl := r.Log.WithValues("name", req.NamespacedName)
+	nsl.Info("updating owner ref on template", "template", key)
+	op, err := util.CreateOrUpdate(ctx, r.Client, template, func() error {
+		return util.SetControllerReference(desired, template, r.Scheme)
+	})
+	if err != nil {
+		nsl.Error(err, "failed to update ownsership of template", "op", op)
+		return ctrl.Result{}, err
+	}
 	nsl.Info("updating  ingress object")
-	op, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
 			nsl.Info("adding ingress finalizer")
 			util.RemoveFinalizer(desired, ingressFinalizerName)
@@ -96,11 +113,11 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return nil
 	})
 	if err != nil {
-		nsl.Error(err, "Failed to update ingress object", "Op", op)
+		nsl.Error(err, "failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
 	}
 	nsl.Info("creating api defintiions")
-	err = r.createAPI(ctx, nsl, req.Namespace, desired)
+	err = r.createAPI(ctx, nsl, template, req.Namespace, desired)
 	if err != nil {
 		nsl.Error(err, "Failed to create api's")
 		return ctrl.Result{}, err
@@ -109,16 +126,9 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
-	key, ok := desired.Annotations[ingressTemplateAnnotationKey]
-	if !ok {
-		return fmt.Errorf("expecting template annotation %s", ingressTemplateAnnotationKey)
-	}
-	template := &v1alpha1.ApiDefinition{}
-	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: ns}, template)
-	if err != nil {
-		return err
-	}
+func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
+	template *v1alpha1.ApiDefinition, ns string, desired *v1beta1.Ingress) error {
+
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
 			hash := shortHash(rule.Host + p.Path)
