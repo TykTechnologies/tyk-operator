@@ -27,6 +27,7 @@ import (
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
@@ -278,6 +279,7 @@ func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, ns string, desi
 			ListOptions: client.ListOptions{
 				LabelSelector: s,
 				Namespace:     ns,
+				FieldSelector: fields.OneTermEqualSelector(".metadata.ownerReferences[*].name", desired.GetName()),
 			},
 			DeleteOptions: client.DeleteOptions{},
 		})
