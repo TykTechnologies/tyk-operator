@@ -81,12 +81,30 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	nsl := r.Log.WithValues("name", req.NamespacedName)
 	nsl.Info("updating owner ref on template", "template", key)
+	var halt bool
 	op, err := util.CreateOrUpdate(ctx, r.Client, template, func() error {
+		if !template.ObjectMeta.DeletionTimestamp.IsZero() {
+			nsl.Info("the template is marked for deletion", "template", key)
+			if r.ours(template, desired) {
+				// if we delete the template, we also delete the ingress too
+				nsl.Info("scheduling deletion of  ingress resource")
+				err := r.Delete(ctx, desired, &client.DeleteOptions{})
+				if err != nil {
+					return err
+				}
+			}
+			halt = true
+			return nil
+		}
 		return util.SetControllerReference(desired, template, r.Scheme)
 	})
 	if err != nil {
 		nsl.Error(err, "failed to update ownsership of template", "op", op)
 		return ctrl.Result{}, err
+	}
+	if halt {
+		nsl.Info("we have scheduled a deletion of ingress resource")
+		return ctrl.Result{}, nil
 	}
 	nsl.Info("updating  ingress object")
 	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
@@ -124,6 +142,12 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	nsl.Info("successful created api's")
 	return ctrl.Result{}, nil
+}
+
+func (r *IngressReconciler) ours(a *v1alpha1.ApiDefinition, i *v1beta1.Ingress) bool {
+	if x := metav1.GetControllerOf(a); x != nil {
+	}
+	return false
 }
 
 func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
