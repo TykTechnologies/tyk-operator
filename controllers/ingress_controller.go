@@ -243,17 +243,8 @@ func shortHash(txt string) string {
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	isOurIngress := func(annotations map[string]string) bool {
-		if ingressClass, ok := annotations[ingressClassAnnotationKey]; !ok {
-			return false
-		} else if ingressClass == defaultIngressClassAnnotationValue {
-			// if the ingress class is `tyk` it's for us
-			return true
-		}
-		// TODO: env var?
-
-		return false
+		return annotations[ingressClassAnnotationKey] == defaultIngressClassAnnotationValue
 	}
-
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return isOurIngress(e.Meta.GetAnnotations())
