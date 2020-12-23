@@ -64,167 +64,80 @@ type IngressReconciler struct {
 
 func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	namespacedName := req.NamespacedName
-
-	log := r.Log.WithValues("Ingress", namespacedName.String())
-
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	// ALL MANAGED API DEFINITIONS =====================================================================================
-
-	oldAPIs := v1alpha1.ApiDefinitionList{}
-	opts := []client.ListOption{
-		client.InNamespace(req.Namespace),
-		client.MatchingLabels{ingressLabelKey: req.Name},
-	}
-	if err := r.List(ctx, &oldAPIs, opts...); err != nil {
-		log.Error(err, "unable to list apis")
-		return ctrl.Result{}, err
-	}
-
-	// /MANAGED API DEFINITIONS ========================================================================================
-
-	// FINALIZER LOGIC =================================================================================================
-
-	// If object is being deleted
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		// If our finalizer is present, need to delete from Tyk still
-		if containsString(desired.ObjectMeta.Finalizers, ingressFinalizerName) {
-			log.Info("resource is being deleted - removing associated api definitions")
-
-			for _, a := range oldAPIs.Items {
-				_ = r.Delete(ctx, &a)
-			}
-
-			log.Info("removing finalizer from ingress")
-			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, ingressFinalizerName)
-			if err := r.Update(ctx, desired); err != nil {
-				return ctrl.Result{}, err
-			}
+	nsl := r.Log.WithValues("name", req.NamespacedName)
+	nsl.Info("updating  ingress object")
+	op, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
+			nsl.Info("adding ingress finalizer")
+			util.RemoveFinalizer(desired, ingressFinalizerName)
+			return nil
 		}
-
-		return ctrl.Result{}, nil
-	}
-
-	// If finalizer not present, add it; This is a new object
-	if !containsString(desired.ObjectMeta.Finalizers, ingressFinalizerName) {
-		log.Info("adding finalizer", "name", ingressFinalizerName)
-		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, ingressFinalizerName)
-		err := r.Update(ctx, desired)
-		// Return either way because the update will
-		// issue a requeue anyway
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// /FINALIZER LOGIC ================================================================================================
-
-	apisToCreateOrUpdate := v1alpha1.ApiDefinitionList{}
-	apisToUpdate := v1alpha1.ApiDefinitionList{}
-	apisToCreate := v1alpha1.ApiDefinitionList{}
-	apisToDelete := v1alpha1.ApiDefinitionList{}
-
-	err := r.createAPI(ctx, req, desired)
+		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+			nsl.Info("deleting ingress resource")
+			if util.ContainsFinalizer(desired, ingressFinalizerName) {
+				nsl.Info("deleting api's")
+				err := r.deleteAPIAll(ctx, nsl, req.Namespace, desired)
+				if err != nil {
+					nsl.Info("failed to delete api's")
+					return err
+				}
+				util.RemoveFinalizer(desired, ingressFinalizerName)
+				nsl.Info("successful deleted api's")
+			}
+			nsl.Info("successful deleted  ingress resource")
+			return nil
+		}
+		return nil
+	})
 	if err != nil {
+		nsl.Error(err, "Failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
 	}
-	// All the apis we should delete or update
-	for _, x := range oldAPIs.Items {
-		found := false
-		for _, y := range apisToCreateOrUpdate.Items {
-			if y.Name == x.Name {
-				apisToUpdate.Items = append(apisToUpdate.Items, y)
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			apisToDelete.Items = append(apisToDelete.Items, x)
-		}
+	nsl.Info("creating api defintiions")
+	err = r.createAPI(ctx, nsl, req.Namespace, desired)
+	if err != nil {
+		nsl.Error(err, "Failed to create api's")
+		return ctrl.Result{}, err
 	}
-
-	// all the items to create
-	for _, x := range apisToCreateOrUpdate.Items {
-		create := true
-		for _, y := range apisToUpdate.Items {
-			if x.Name == y.Name {
-				create = false
-				break
-			}
-		}
-
-		if create {
-			apisToCreate.Items = append(apisToCreate.Items, x)
-		}
-	}
-
-	// create new endpoints first
-	for _, a := range apisToCreate.Items {
-		if err := r.Create(ctx, &a); err != nil {
-			log.Error(err, "unable to update api")
-		}
-	}
-
-	// update second
-	for _, a := range apisToUpdate.Items {
-		apiDefToUpdate := v1alpha1.ApiDefinition{}
-		err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, &apiDefToUpdate)
-		if err != nil {
-			log.Error(err, "unable to get api to update")
-			continue
-		}
-		apiDefToUpdate.Spec = a.Spec
-		if err := r.Update(ctx, &apiDefToUpdate); err != nil {
-			log.Error(err, "unable to update api")
-		}
-	}
-
-	// delete last - just in-case something renamed
-	for _, a := range apisToDelete.Items {
-		if err := r.Delete(ctx, &a); err != nil {
-			log.Error(err, "unable to update api")
-		}
-	}
+	nsl.Info("successful created api's")
 	return ctrl.Result{}, nil
 }
 
-func (r *IngressReconciler) createAPI(ctx context.Context, req ctrl.Request, desired *v1beta1.Ingress) error {
+func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
 	key, ok := desired.Annotations[ingressTemplateAnnotationKey]
 	if !ok {
 		return fmt.Errorf("expecting template annotation %s", ingressTemplateAnnotationKey)
 	}
 	template := &v1alpha1.ApiDefinition{}
-	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
-	if err != nil {
-		return err
-	}
-	err = r.deleteOrphanAPI(ctx, req.Namespace, desired)
+	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: ns}, template)
 	if err != nil {
 		return err
 	}
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
 			hash := shortHash(rule.Host + p.Path)
-			apiName := r.buildAPIName(req.Namespace, req.Name, hash)
+			name := r.buildAPIName(ns, desired.Name, hash)
 			api := &v1alpha1.ApiDefinition{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      apiName,
-					Namespace: req.Namespace,
+					Name:      name,
+					Namespace: ns,
 				},
 			}
-			res, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
+			lg.Info("sync api definition", "name", name)
+			op, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
 				api.SetLabels(map[string]string{
-					ingressLabelKey: req.Name,
+					ingressLabelKey: desired.Name,
 					apidefLabelKey:  hash,
 				})
 				api.Spec = *template.Spec.DeepCopy()
-				api.Spec.Name = apiName
+				api.Spec.Name = name
 				api.Spec.Proxy.ListenPath = p.Path
 				api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName,
-					req.NamespacedName.Namespace, p.Backend.ServicePort.IntValue())
+					ns, p.Backend.ServicePort.IntValue())
 				api.Spec.Domain = rule.Host
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
@@ -246,16 +159,45 @@ func (r *IngressReconciler) createAPI(ctx context.Context, req ctrl.Request, des
 				return util.SetControllerReference(desired, api, r.Scheme)
 			})
 			if err != nil {
-				r.Log.Error(err, "Failed to sync api definition", "Status", res)
+				lg.Error(err, "failed to sync api definition", "name", name, "op", op)
 				return nil
 			}
-			r.Log.Info("Successful sync APIDefinition", "Name", api.Name, "Status", res)
+			lg.Info("successful sync api defintion", "name", name, "op", op)
 		}
 	}
-	return nil
+	lg.Info("deleting orphan api's")
+	return r.deleteOrphanAPI(ctx, lg, ns, desired)
 }
 
-func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, ns string, desired *v1beta1.Ingress) error {
+func (r *IngressReconciler) deleteAPIAll(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
+	var keys []string
+	for _, rule := range desired.Spec.Rules {
+		for _, p := range rule.HTTP.Paths {
+			hash := shortHash(rule.Host + p.Path)
+			keys = append(keys, hash)
+		}
+	}
+	s := labels.NewSelector()
+	exists, err := labels.NewRequirement(apidefLabelKey, selection.Exists, keys)
+	if err != nil {
+		return err
+	}
+	s = s.Add(*exists)
+	fs := fields.OneTermEqualSelector(".metadata.ownerReferences[*].name", desired.GetName())
+	lg.Info("deleting all api's", "fieldSelector", fs, "count", len(keys))
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
+			ListOptions: client.ListOptions{
+				LabelSelector: s,
+				Namespace:     ns,
+				FieldSelector: fs,
+			},
+			DeleteOptions: client.DeleteOptions{},
+		})
+	})
+}
+
+func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
 	var keys []string
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
@@ -274,6 +216,7 @@ func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, ns string, desi
 		return err
 	}
 	s = s.Add(*notIn)
+	lg.Info("deleting orphan api definitions", "selector", s, "count", len(keys))
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
 			ListOptions: client.ListOptions{
