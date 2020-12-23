@@ -106,7 +106,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		nsl.Info("we have scheduled a deletion of ingress resource")
 		return ctrl.Result{}, nil
 	}
-	nsl.Info("updating  ingress object")
+	nsl.Info("sync  ingress object")
 	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
 			nsl.Info("adding ingress finalizer")
@@ -125,7 +125,6 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				util.RemoveFinalizer(desired, ingressFinalizerName)
 				nsl.Info("successful deleted api's")
 			}
-			nsl.Info("successful deleted  ingress resource")
 			return nil
 		}
 		return nil
@@ -134,10 +133,10 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		nsl.Error(err, "failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
 	}
-	nsl.Info("creating api defintiions")
+	nsl.Info("creating api's")
 	err = r.createAPI(ctx, nsl, template, req.Namespace, desired)
 	if err != nil {
-		nsl.Error(err, "Failed to create api's")
+		nsl.Error(err, "failed to create api's")
 		return ctrl.Result{}, err
 	}
 	nsl.Info("successful created api's")
