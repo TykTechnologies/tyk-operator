@@ -50,7 +50,7 @@ const (
 	defaultIngressClassAnnotationValue = "tyk"
 )
 
-// CertificateReconciler reconciles a CertificateSecret object
+// IngressReconciler watches and reconciles Ingress objects
 type IngressReconciler struct {
 	client.Client
 	Log             logr.Logger
@@ -62,6 +62,8 @@ type IngressReconciler struct {
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch
 
+// Reconcile perform reconciliation logic for Ingress resource that is managed
+// by the operator.
 func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	desired := &v1beta1.Ingress{}
