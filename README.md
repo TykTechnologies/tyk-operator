@@ -1,21 +1,24 @@
+[Quickstart API Definitions](#quickstart-api-definitions) | [Installation](#installation) | [IDE Integration](#ide-integration) | [Community](#community)
+
 # Tyk Operator
 
-Tyk Operator contains various controllers which watch resources inside Kubernetes and reconciles
-a Tyk deployment with the desired state as set inside K8s. 
+Tyk Operator contains various custom resources and controllers which enable 
+ Full-Lifecycle API Management with Tyk by extending the Kubernetes API.
 
-![Demo](./docs/img/demo.svg)
+Read more about the [concepts here](./docs/concepts.md).
 
-Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/):
+Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+ and documentation for each of these custom resources are available:
 
 - [API Definitions](./docs/api_definitions.md)
 - [WebHooks](./docs/webhooks.md)
 - [Security Policies](./docs/policies.md)
 
-Read more about the [concepts here](./docs/concepts.md).
-
 Tyk Operator also contains an [Ingress Controller](./docs/ingress.md).
 
-## Sample Gateway Proxy Configurations
+![Demo](./docs/img/demo.svg)
+
+## Quickstart API Definitions
 
 <details><summary>HTTP Proxy</summary>
 <p>
@@ -261,12 +264,11 @@ Steps:
   
 Note: The extension should take effect immediately. In case it doesn't, simply restart VS Code.
 
-## Contributing
+## Community
 
-[Setting up your development environment](./docs/development.md)
-
-## We are hiring! 
-
-Like what you see so far? Passionate about Open Source? Can you think of a ton of ways to make tyk-operator 
-or some of our other projects better? We want to hear from you.
-Head over to our [careers page](https://tyk.io/current-vacancies/senior-software-engineer-kubernetes/) for further details.
+[Configuring your development environment](./docs/development.md)
+[Request a feature](https://github.com/TykTechnologies/tyk-operator/issues)
+[Got an Idea or RFC](https://github.com/TykTechnologies/tyk-operator/discussions/categories/ideas)
+[Found a Defect](https://github.com/TykTechnologies/tyk-operator/issues)
+[Got a Question](https://github.com/TykTechnologies/tyk-operator/discussions/categories/q-a)
+[Show and Tell](https://github.com/TykTechnologies/tyk-operator/discussions/categories/show-and-tell)
