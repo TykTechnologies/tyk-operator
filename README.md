@@ -266,9 +266,9 @@ Note: The extension should take effect immediately. In case it doesn't, simply r
 
 ## Community
 
-[Configuring your development environment](./docs/development.md)
-[Request a feature](https://github.com/TykTechnologies/tyk-operator/issues)
-[Got an Idea or RFC](https://github.com/TykTechnologies/tyk-operator/discussions/categories/ideas)
-[Found a Defect](https://github.com/TykTechnologies/tyk-operator/issues)
-[Got a Question](https://github.com/TykTechnologies/tyk-operator/discussions/categories/q-a)
-[Show and Tell](https://github.com/TykTechnologies/tyk-operator/discussions/categories/show-and-tell)
+- [Configuring your development environment](./docs/development.md)
+- [Request a feature](https://github.com/TykTechnologies/tyk-operator/issues)
+- [Got an Idea or RFC](https://github.com/TykTechnologies/tyk-operator/discussions/categories/ideas)
+- [Found a Defect](https://github.com/TykTechnologies/tyk-operator/issues)
+- [Got a Question](https://github.com/TykTechnologies/tyk-operator/discussions/categories/q-a)
+- [Show and Tell](https://github.com/TykTechnologies/tyk-operator/discussions/categories/show-and-tell)
