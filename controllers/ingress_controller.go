@@ -107,24 +107,19 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, nil
 	}
 	nsl.Info("sync  ingress object")
+	halt = false
 	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
 			nsl.Info("adding ingress finalizer")
-			util.RemoveFinalizer(desired, ingressFinalizerName)
+			util.AddFinalizer(desired, ingressFinalizerName)
 			return nil
 		}
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			nsl.Info("deleting ingress resource")
 			if util.ContainsFinalizer(desired, ingressFinalizerName) {
-				nsl.Info("deleting api's")
-				err := r.deleteAPIAll(ctx, nsl, req.Namespace, desired)
-				if err != nil {
-					nsl.Info("failed to delete api's")
-					return err
-				}
 				util.RemoveFinalizer(desired, ingressFinalizerName)
-				nsl.Info("successful deleted api's")
 			}
+			halt = true
 			return nil
 		}
 		return nil
@@ -132,6 +127,10 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err != nil {
 		nsl.Error(err, "failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
+	}
+	if halt {
+		nsl.Info("we have scheduled a deletion of ingress resource")
+		return ctrl.Result{}, nil
 	}
 	nsl.Info("creating api's")
 	err = r.createAPI(ctx, nsl, template, req.Namespace, desired)
