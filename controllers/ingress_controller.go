@@ -27,7 +27,6 @@ import (
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -228,15 +227,18 @@ func (r *IngressReconciler) deleteAPIAll(ctx context.Context, lg logr.Logger, ns
 	if err != nil {
 		return err
 	}
+	name, err := labels.NewRequirement(ingressLabelKey, selection.DoubleEquals, []string{desired.Name})
+	if err != nil {
+		return err
+	}
+	s = s.Add(*name)
 	s = s.Add(*exists)
-	fs := fields.OneTermEqualSelector(".metadata.ownerReferences[*].name", desired.GetName())
-	lg.Info("deleting all api's", "fieldSelector", fs, "count", len(keys))
+	lg.Info("deleting all api's", "selector", s, "count", len(keys))
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
 			ListOptions: client.ListOptions{
 				LabelSelector: s,
 				Namespace:     ns,
-				FieldSelector: fs,
 			},
 			DeleteOptions: client.DeleteOptions{},
 		})
@@ -261,6 +263,11 @@ func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger,
 	if err != nil {
 		return err
 	}
+	name, err := labels.NewRequirement(ingressLabelKey, selection.DoubleEquals, []string{desired.Name})
+	if err != nil {
+		return err
+	}
+	s.Add(*name)
 	s = s.Add(*notIn)
 	lg.Info("deleting orphan api definitions", "selector", s, "count", len(keys))
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
@@ -268,7 +275,6 @@ func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger,
 			ListOptions: client.ListOptions{
 				LabelSelector: s,
 				Namespace:     ns,
-				FieldSelector: fields.OneTermEqualSelector(".metadata.ownerReferences[*].name", desired.GetName()),
 			},
 			DeleteOptions: client.DeleteOptions{},
 		})
