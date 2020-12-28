@@ -189,7 +189,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 func ignoreIngressTemplatePredicate() predicate.Predicate {
 	labelFilter := func(labels map[string]string) bool {
-		return labels["template"] == "true"
+		return labels["template"] != "true"
 	}
 
 	return predicate.Funcs{
