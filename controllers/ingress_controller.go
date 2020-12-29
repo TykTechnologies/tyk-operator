@@ -145,17 +145,10 @@ func (r *IngressReconciler) match(d *v1alpha1.ApiDefinition, x *metav1.OwnerRefe
 }
 
 func (r *IngressReconciler) ours(d *v1alpha1.ApiDefinition, i *v1beta1.Ingress) bool {
-	if x := metav1.GetControllerOf(d); x != nil {
-		a, err := schema.ParseGroupVersion(x.APIVersion)
-		if err != nil {
-			return false
+	for _, x := range d.GetOwnerReferences() {
+		if r.match(d, &x, i) {
+			return true
 		}
-		b, err := schema.ParseGroupVersion(i.APIVersion)
-		if err != nil {
-			return false
-		}
-		return a.Group == b.Group &&
-			d.Kind == i.Kind && x.Name == i.Name
 	}
 	return false
 }
