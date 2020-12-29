@@ -20,9 +20,6 @@ func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode == http.StatusNotFound {
-		return []v1.SecurityPolicySpec{}, nil
-	}
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
 	}

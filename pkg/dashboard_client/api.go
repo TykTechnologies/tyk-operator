@@ -22,9 +22,6 @@ func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode == http.StatusNotFound {
-		return []tykv1alpha1.APIDefinitionSpec{}, nil
-	}
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
 	}
