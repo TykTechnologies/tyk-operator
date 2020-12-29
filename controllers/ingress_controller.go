@@ -80,40 +80,30 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 	nsl := r.Log.WithValues("name", req.NamespacedName)
-	nsl.Info("updating owner ref on template", "template", key)
+	nsl.Info("Sync ingress")
 	op, err := util.CreateOrUpdate(ctx, r.Client, template, func() error {
-		if !template.ObjectMeta.DeletionTimestamp.IsZero() {
-			nsl.Info("the template is marked for deletion", "template", key)
-			if r.ours(template, desired) {
-				// if we delete the template, we also delete the ingress too
-				nsl.Info("scheduling deletion of  ingress resource")
-				return r.Delete(ctx, desired, &client.DeleteOptions{})
-
-			}
+		if !desired.DeletionTimestamp.IsZero() {
+			r.removeOwner(template, desired)
 			return nil
 		}
-		return util.SetControllerReference(desired, template, r.Scheme)
+		return util.SetOwnerReference(desired, template, r.Scheme)
 	})
 	if err != nil {
 		nsl.Error(err, "failed to update ownsership of template", "op", op)
 		return ctrl.Result{}, err
 	}
 	if !template.ObjectMeta.DeletionTimestamp.IsZero() {
-		// The template was deleted, do nothing.
-		return ctrl.Result{}, nil
-	}
-	nsl.Info("sync  ingress object")
-	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
-		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
-			nsl.Info("adding ingress finalizer")
-			util.AddFinalizer(desired, ingressFinalizerName)
-			return nil
-		}
-		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			nsl.Info("deleting ingress resource")
+		_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 			if util.ContainsFinalizer(desired, ingressFinalizerName) {
 				util.RemoveFinalizer(desired, ingressFinalizerName)
 			}
+			return nil
+		})
+		return ctrl.Result{}, err
+	}
+	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
+			util.AddFinalizer(desired, ingressFinalizerName)
 			return nil
 		}
 		return nil
@@ -122,18 +112,36 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		nsl.Error(err, "failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
 	}
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		// We deleted the resource do nothing.
-		return ctrl.Result{}, nil
-	}
-	nsl.Info("creating api's")
 	err = r.createAPI(ctx, nsl, template, req.Namespace, desired)
 	if err != nil {
 		nsl.Error(err, "failed to create api's")
 		return ctrl.Result{}, err
 	}
-	nsl.Info("successful created api's")
+	nsl.Info("Sync ingress OK")
 	return ctrl.Result{}, nil
+}
+
+func (r *IngressReconciler) removeOwner(d *v1alpha1.ApiDefinition, i *v1beta1.Ingress) {
+	var o []metav1.OwnerReference
+	for _, x := range d.GetOwnerReferences() {
+		if !r.match(d, &x, i) {
+			o = append(o, x)
+		}
+	}
+	d.OwnerReferences = o
+}
+
+func (r *IngressReconciler) match(d *v1alpha1.ApiDefinition, x *metav1.OwnerReference, i *v1beta1.Ingress) bool {
+	a, err := schema.ParseGroupVersion(x.APIVersion)
+	if err != nil {
+		return false
+	}
+	b, err := schema.ParseGroupVersion(i.APIVersion)
+	if err != nil {
+		return false
+	}
+	return a.Group == b.Group &&
+		d.Kind == i.Kind && x.Name == i.Name
 }
 
 func (r *IngressReconciler) ours(d *v1alpha1.ApiDefinition, i *v1beta1.Ingress) bool {
