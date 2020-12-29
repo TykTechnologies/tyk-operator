@@ -88,12 +88,9 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			if r.ours(template, desired) {
 				// if we delete the template, we also delete the ingress too
 				nsl.Info("scheduling deletion of  ingress resource")
-				err := r.Delete(ctx, desired, &client.DeleteOptions{})
-				if err != nil {
-					return err
-				}
+				return r.Delete(ctx, desired, &client.DeleteOptions{})
+
 			}
-			halt = true
 			return nil
 		}
 		return util.SetControllerReference(desired, template, r.Scheme)
@@ -102,12 +99,11 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		nsl.Error(err, "failed to update ownsership of template", "op", op)
 		return ctrl.Result{}, err
 	}
-	if halt {
-		nsl.Info("we have scheduled a deletion of ingress resource")
+	if !template.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The template was deleted, do nothing.
 		return ctrl.Result{}, nil
 	}
 	nsl.Info("sync  ingress object")
-	halt = false
 	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
 			nsl.Info("adding ingress finalizer")
@@ -119,7 +115,6 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			if util.ContainsFinalizer(desired, ingressFinalizerName) {
 				util.RemoveFinalizer(desired, ingressFinalizerName)
 			}
-			halt = true
 			return nil
 		}
 		return nil
@@ -128,8 +123,8 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		nsl.Error(err, "failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
 	}
-	if halt {
-		nsl.Info("we have scheduled a deletion of ingress resource")
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		// We deleted the resource do nothing.
 		return ctrl.Result{}, nil
 	}
 	nsl.Info("creating api's")
