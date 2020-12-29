@@ -29,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -82,26 +81,19 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	nsl := r.Log.WithValues("name", req.NamespacedName)
 	nsl.Info("Sync ingress")
 	op, err := util.CreateOrUpdate(ctx, r.Client, template, func() error {
-		if !desired.DeletionTimestamp.IsZero() {
-			r.removeOwner(template, desired)
-			return nil
-		}
-		return util.SetOwnerReference(desired, template, r.Scheme)
+		return util.SetControllerReference(desired, template, r.Scheme)
 	})
 	if err != nil {
 		nsl.Error(err, "failed to update ownsership of template", "op", op)
 		return ctrl.Result{}, err
 	}
-	if !template.ObjectMeta.DeletionTimestamp.IsZero() {
-		_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+		if !desired.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(desired, ingressFinalizerName) {
 				util.RemoveFinalizer(desired, ingressFinalizerName)
 			}
 			return nil
-		})
-		return ctrl.Result{}, err
-	}
-	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+		}
 		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
 			util.AddFinalizer(desired, ingressFinalizerName)
 			return nil
@@ -112,6 +104,10 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		nsl.Error(err, "failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
 	}
+	if !desired.DeletionTimestamp.IsZero() {
+		nsl.Info("Deleted ingress resource")
+		return ctrl.Result{}, nil
+	}
 	err = r.createAPI(ctx, nsl, template, req.Namespace, desired)
 	if err != nil {
 		nsl.Error(err, "failed to create api's")
@@ -119,38 +115,6 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	nsl.Info("Sync ingress OK")
 	return ctrl.Result{}, nil
-}
-
-func (r *IngressReconciler) removeOwner(d *v1alpha1.ApiDefinition, i *v1beta1.Ingress) {
-	var o []metav1.OwnerReference
-	for _, x := range d.GetOwnerReferences() {
-		if !r.match(d, &x, i) {
-			o = append(o, x)
-		}
-	}
-	d.OwnerReferences = o
-}
-
-func (r *IngressReconciler) match(d *v1alpha1.ApiDefinition, x *metav1.OwnerReference, i *v1beta1.Ingress) bool {
-	a, err := schema.ParseGroupVersion(x.APIVersion)
-	if err != nil {
-		return false
-	}
-	b, err := schema.ParseGroupVersion(i.APIVersion)
-	if err != nil {
-		return false
-	}
-	return a.Group == b.Group &&
-		d.Kind == i.Kind && x.Name == i.Name
-}
-
-func (r *IngressReconciler) ours(d *v1alpha1.ApiDefinition, i *v1beta1.Ingress) bool {
-	for _, x := range d.GetOwnerReferences() {
-		if r.match(d, &x, i) {
-			return true
-		}
-	}
-	return false
 }
 
 func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
@@ -251,7 +215,7 @@ func (r *IngressReconciler) buildAPIName(nameSpace, name, hash string) string {
 func shortHash(txt string) string {
 	h := sha256.New()
 	h.Write([]byte(txt))
-	return fmt.Sprintf("%x", h.Sum(nil))[:9]
+	return fmt.Sprintf("%x", h.Sum(nil))[:4]
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
@@ -260,11 +224,7 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 		case *v1beta1.Ingress:
 			return e.GetAnnotations()[ingressClassAnnotationKey] == defaultIngressClassAnnotationValue
 		case *v1alpha1.ApiDefinition:
-			tpl := e.GetLabels()["template"] == "true"
-			if tpl {
-				r.Log.Info("================> ", "name", e.Name)
-			}
-			return tpl
+			return e.GetLabels()["template"] == "true"
 		default:
 			return false
 		}
