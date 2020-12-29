@@ -81,7 +81,6 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	nsl := r.Log.WithValues("name", req.NamespacedName)
 	nsl.Info("updating owner ref on template", "template", key)
-	var halt bool
 	op, err := util.CreateOrUpdate(ctx, r.Client, template, func() error {
 		if !template.ObjectMeta.DeletionTimestamp.IsZero() {
 			nsl.Info("the template is marked for deletion", "template", key)
