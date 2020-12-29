@@ -215,37 +215,6 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 	return r.deleteOrphanAPI(ctx, lg, ns, desired)
 }
 
-func (r *IngressReconciler) deleteAPIAll(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
-	var keys []string
-	for _, rule := range desired.Spec.Rules {
-		for _, p := range rule.HTTP.Paths {
-			hash := shortHash(rule.Host + p.Path)
-			keys = append(keys, hash)
-		}
-	}
-	s := labels.NewSelector()
-	exists, err := labels.NewRequirement(apidefLabelKey, selection.Exists, keys)
-	if err != nil {
-		return err
-	}
-	name, err := labels.NewRequirement(ingressLabelKey, selection.DoubleEquals, []string{desired.Name})
-	if err != nil {
-		return err
-	}
-	s = s.Add(*name)
-	s = s.Add(*exists)
-	lg.Info("deleting all api's", "selector", s, "count", len(keys))
-	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
-			ListOptions: client.ListOptions{
-				LabelSelector: s,
-				Namespace:     ns,
-			},
-			DeleteOptions: client.DeleteOptions{},
-		})
-	})
-}
-
 func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
 	var keys []string
 	for _, rule := range desired.Spec.Rules {
