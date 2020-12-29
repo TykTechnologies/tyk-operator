@@ -224,7 +224,8 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 		case *v1beta1.Ingress:
 			return e.GetAnnotations()[ingressClassAnnotationKey] == defaultIngressClassAnnotationValue
 		case *v1alpha1.ApiDefinition:
-			return e.GetLabels()["template"] == "true"
+			return e.GetLabels()["template"] == "true" &&
+				metav1.GetControllerOf(e) != nil
 		default:
 			return false
 		}
