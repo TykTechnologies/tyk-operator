@@ -262,18 +262,29 @@ func shortHash(txt string) string {
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
-	isOurIngress := func(annotations map[string]string) bool {
-		return annotations[ingressClassAnnotationKey] == defaultIngressClassAnnotationValue
+	isOurIngress := func(o runtime.Object) bool {
+		switch e := o.(type) {
+		case *v1beta1.Ingress:
+			return e.GetAnnotations()[ingressClassAnnotationKey] == defaultIngressClassAnnotationValue
+		case *v1alpha1.ApiDefinition:
+			tpl := e.GetLabels()["template"] == "true"
+			if tpl {
+				r.Log.Info("================> ", "name", e.Name)
+			}
+			return tpl
+		default:
+			return false
+		}
 	}
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			return isOurIngress(e.Meta.GetAnnotations())
+			return isOurIngress(e.Object)
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return isOurIngress(e.MetaNew.GetAnnotations())
+			return isOurIngress(e.ObjectNew)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-			return isOurIngress(e.Meta.GetAnnotations())
+			return isOurIngress(e.Object)
 		},
 	}
 }
