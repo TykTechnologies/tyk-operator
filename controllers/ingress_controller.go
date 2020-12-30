@@ -209,7 +209,7 @@ func (r *IngressReconciler) buildAPIName(nameSpace, name, hash string) string {
 func shortHash(txt string) string {
 	h := sha256.New()
 	h.Write([]byte(txt))
-	return fmt.Sprintf("%x", h.Sum(nil))[:4]
+	return fmt.Sprintf("%x", h.Sum(nil))[:9]
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
