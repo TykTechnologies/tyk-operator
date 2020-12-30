@@ -26,13 +26,12 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -60,6 +59,17 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	desired := &tykv1alpha1.ApiDefinition{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
+	}
+
+	if desired.GetLabels()["template"] == "true" {
+		log.Info("Syncing template", "template", desired.Name)
+		err := r.syncTemplate(ctx, req.Namespace, desired)
+		if err != nil {
+			log.Error(err, "Failed to sync template")
+			return ctrl.Result{}, err
+		}
+		log.Info("Synced template", "template", desired.Name)
+		return ctrl.Result{}, nil
 	}
 
 	// If object is being deleted
@@ -187,29 +197,35 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	return ctrl.Result{}, nil
 }
 
-func ignoreIngressTemplatePredicate() predicate.Predicate {
-	labelFilter := func(labels map[string]string) bool {
-		return labels["template"] != "true"
+// This triggers an update to all ingress resources that have template
+// annotation matching a.Name.
+//
+// We return nil when a is being deleted and do nothing.
+func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a *tykv1alpha1.ApiDefinition) error {
+	if !a.DeletionTimestamp.IsZero() {
+		return nil
 	}
-
-	return predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return labelFilter(e.Meta.GetLabels())
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return labelFilter(e.MetaNew.GetLabels())
-		},
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			// Evaluates to false if the object has been confirmed deleted.
-			return labelFilter(e.Meta.GetLabels())
-		},
+	ls := v1beta1.IngressList{}
+	err := r.List(ctx, &ls,
+		client.InNamespace(ns),
+	)
+	if err != nil {
+		return client.IgnoreNotFound(err)
 	}
+	for _, v := range ls.Items {
+		if v.GetAnnotations()[ingressTemplateAnnotationKey] == a.Name {
+			err = r.Update(ctx, &v)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
 		Owns(&v1.Secret{}).
-		WithEventFilter(ignoreIngressTemplatePredicate()).
 		Complete(r)
 }
