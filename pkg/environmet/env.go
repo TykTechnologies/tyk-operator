@@ -32,7 +32,7 @@ const (
 	SkipVerify = "TYK_TLS_INSECURE_SKIP_VERIFY"
 
 	// IngressClass overides the default class to watch for ingress
-	IngressClass = "WATCH_INGRESS_CLASSES"
+	IngressClass = "WATCH_INGRESS_CLASS"
 )
 
 // Env holds values needed to talk to the gateway or the dashboard API
