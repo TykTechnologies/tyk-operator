@@ -30,6 +30,9 @@ const (
 
 	// SkipVerify the client will skip tls verification if this is true
 	SkipVerify = "TYK_TLS_INSECURE_SKIP_VERIFY"
+
+	// IngressClass overides the default class to watch for ingress
+	IngressClass = "WATCH_INGRESS_CLASS"
 )
 
 // Env holds values needed to talk to the gateway or the dashboard API
@@ -40,6 +43,7 @@ type Env struct {
 	URL                string
 	Auth               string
 	Org                string
+	IngressClass       string
 }
 
 func (e Env) Merge(n Env) Env {
@@ -58,6 +62,9 @@ func (e Env) Merge(n Env) Env {
 	if n.Org != "" {
 		e.Org = n.Org
 	}
+	if n.IngressClass != "" {
+		e.IngressClass = n.IngressClass
+	}
 	return e
 }
 
@@ -68,8 +75,8 @@ func (e *Env) Parse() error {
 	e.URL = strings.TrimSpace(os.Getenv(TykURL))
 	e.Auth = strings.TrimSpace(os.Getenv(TykAuth))
 	e.Org = strings.TrimSpace(os.Getenv(TykORG))
-	e.InsecureSkipVerify, _ = strconv.ParseBool(os.Getenv("TYK_TLS_INSECURE_SKIP_VERIFY"))
-
+	e.InsecureSkipVerify, _ = strconv.ParseBool(os.Getenv(SkipVerify))
+	e.IngressClass = os.Getenv(IngressClass)
 	// verify
 	sample := []struct {
 		env, value string
