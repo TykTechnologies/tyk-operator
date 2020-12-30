@@ -42,6 +42,7 @@ import (
 
 const (
 	ingressLabelKey                    = "tyk.io/ingress"
+	ingressTaintLabelKey               = "tyk.io/taint"
 	apidefLabelKey                     = "tyk.io/apidefinition"
 	ingressFinalizerName               = "finalizers.tyk.io/ingress"
 	ingressClassAnnotationKey          = "kubernetes.io/ingress.class"

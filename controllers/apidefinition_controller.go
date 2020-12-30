@@ -219,6 +219,10 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 				Name:      v.GetName(),
 			}
 			r.Log.Info("Updating ingress " + key.String())
+			if v.Labels == nil {
+				v.Labels = make(map[string]string)
+			}
+			v.Labels[ingressTaintLabelKey] = time.Now().String()
 			err = r.Update(ctx, &v)
 			if err != nil {
 				return err
