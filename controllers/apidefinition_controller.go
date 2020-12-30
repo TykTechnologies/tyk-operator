@@ -214,6 +214,11 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 	}
 	for _, v := range ls.Items {
 		if v.GetAnnotations()[ingressTemplateAnnotationKey] == a.Name {
+			key := client.ObjectKey{
+				Namespace: v.GetNamespace(),
+				Name:      v.GetName(),
+			}
+			r.Log.Info("Updating ingress " + key.String())
 			err = r.Update(ctx, &v)
 			if err != nil {
 				return err
