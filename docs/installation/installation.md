@@ -31,17 +31,6 @@ management URL is accessible by the operator.
 
 Operator configurations are all stored in the secret `tyk-operator-conf`.
 
-#### Watching Namespaces
-
-Tyk Operator installs with cluster permissions, however you can optionally control which namespaces it watches by
- by setting the `WATCH_NAMESPACE` environment variable.
- 
-`WATCH_NAMESPACE` can be omitted entirely, or a comma separated list of k8s namespaces.
-
-- `WATCH_NAMESPACE=""` will watch for resources across the entire cluster.
-- `WATCH_NAMESPACE="foo"` will watch for resources in the `foo` namespace.
-- `WATCH_NAMESPACE="foo,bar"` will watch for resources in the `foo` and `bar` namespace. 
-
 #### connecting to Tyk
 
 tyk-operator needs to connect to a Tyk Pro deployment. And it needs to know whether it is talking to a Community
@@ -77,6 +66,46 @@ k get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
   "TYK_ORG": "NWY5MmQ5YWQyZGFiMWMwMDAxM2M3NDlm",
   "TYK_URL": "aHR0cDovL2Rhc2hib2FyZC50eWtwcm8tY29udHJvbC1wbGFuZS5zdmMuY2x1c3Rlci5sb2NhbDozMDAw"
 }
+```
+
+#### Watching Namespaces
+
+Tyk Operator installs with cluster permissions, however you can optionally control which namespaces it watches by
+ by setting the `WATCH_NAMESPACE` environment variable.
+ 
+`WATCH_NAMESPACE` can be omitted entirely, or a comma separated list of k8s namespaces.
+
+- `WATCH_NAMESPACE=""` will watch for resources across the entire cluster.
+- `WATCH_NAMESPACE="foo"` will watch for resources in the `foo` namespace.
+- `WATCH_NAMESPACE="foo,bar"` will watch for resources in the `foo` and `bar` namespace.
+
+example:
+
+```
+kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
+  --from-literal "TYK_AUTH=${TYK_AUTH}" \
+  --from-literal "TYK_ORG=${TYK_ORG}" \
+  --from-literal "TYK_MODE=${TYK_MODE}" \
+  --from-literal "TYK_URL=${TYK_URL}" \
+  --from-literal "WATCH_NAMESPACE=foo,bar"
+```
+
+#### Watching custom ingress class
+
+The value of the `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
+
+Tyk Operator by default looks for the value `tyk` and will ignore all other ingress classes. If you wish to override this default behaviour,
+ you may do so by setting the environment variable `WATCH_INGRESS_CLASS` in the operator manager deployment.
+
+example:
+
+```
+kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
+  --from-literal "TYK_AUTH=${TYK_AUTH}" \
+  --from-literal "TYK_ORG=${TYK_ORG}" \
+  --from-literal "TYK_MODE=${TYK_MODE}" \
+  --from-literal "TYK_URL=${TYK_URL}" \
+  --from-literal "WATCH_INGRESS_CLASS=foo"
 ```
 
 ### Installing CRDs
