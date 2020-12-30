@@ -80,14 +80,7 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	nsl := r.Log.WithValues("name", req.NamespacedName)
 	nsl.Info("Sync ingress")
-	op, err := util.CreateOrUpdate(ctx, r.Client, template, func() error {
-		return util.SetControllerReference(desired, template, r.Scheme)
-	})
-	if err != nil {
-		nsl.Error(err, "failed to update ownsership of template", "op", op)
-		return ctrl.Result{}, err
-	}
-	op, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+	op, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(desired, ingressFinalizerName) {
 				util.RemoveFinalizer(desired, ingressFinalizerName)
