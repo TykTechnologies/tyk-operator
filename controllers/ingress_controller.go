@@ -219,13 +219,18 @@ func shortHash(txt string) string {
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
+	ls := append([]string{defaultIngressClassAnnotationValue},
+		r.UniversalClient.Environment().IngressClasses...)
 	isOurIngress := func(o runtime.Object) bool {
 		switch e := o.(type) {
 		case *v1beta1.Ingress:
-			return e.GetAnnotations()[ingressClassAnnotationKey] == defaultIngressClassAnnotationValue
-		case *v1alpha1.ApiDefinition:
-			return e.GetLabels()["template"] == "true" &&
-				metav1.GetControllerOf(e) != nil
+			x := e.GetAnnotations()[ingressClassAnnotationKey]
+			for _, v := range ls {
+				if x == v {
+					return true
+				}
+			}
+			return false
 		default:
 			return false
 		}

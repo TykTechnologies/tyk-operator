@@ -37,6 +37,10 @@ type Client struct {
 	Do            func(*http.Request) (*http.Response, error)
 }
 
+func (c Client) Environment() environmet.Env {
+	return c.Env
+}
+
 func (c Client) Request(method, url string, body io.Reader) (*http.Request, error) {
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
