@@ -12,6 +12,13 @@ Tyk's Ingress Controller is under active development. Please see the following
  [GitHub issues](https://github.com/TykTechnologies/tyk-operator/labels/ingress) which provide a list of 
  tickets which we are currently addressing as part of our roadmap. We welcome you to upvote any issues or open new 
  ticket if you require any new features / functionality.
+ 
+## Ingress Class
+
+The value of the `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
+
+Tyk Operator by default looks for the value `tyk` and will ignore all other ingress classes. If you wish to override this default behaviour,
+ you may do so by setting the environment variable `WATCH_INGRESS_CLASS` in the operator manager deployment. See https://github.com/TykTechnologies/tyk-operator/blob/master/docs/installation/installation.md for further info.
 
 ## Quickstart / Samples
 
