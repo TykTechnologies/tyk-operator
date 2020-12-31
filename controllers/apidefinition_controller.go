@@ -30,6 +30,7 @@ import (
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -212,7 +213,9 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 				client.InNamespace(ns),
 			)
 			if err != nil {
-				return ctrl.Result{}, client.IgnoreNotFound(err)
+				if !errors.IsNotFound(err) {
+					return ctrl.Result{}, err
+				}
 			}
 			var refs []string
 			for _, v := range ls.Items {
