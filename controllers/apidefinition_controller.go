@@ -206,14 +206,14 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a *tykv1alpha1.ApiDefinition) (ctrl.Result, error) {
 
 	if !a.DeletionTimestamp.IsZero() {
-		ls := v1beta1.IngressList{}
-		err := r.List(ctx, &ls,
-			client.InNamespace(ns),
-		)
-		if err != nil {
-			return ctrl.Result{}, client.IgnoreNotFound(err)
-		}
 		if util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
+			ls := v1beta1.IngressList{}
+			err := r.List(ctx, &ls,
+				client.InNamespace(ns),
+			)
+			if err != nil {
+				return ctrl.Result{}, client.IgnoreNotFound(err)
+			}
 			var refs []string
 			for _, v := range ls.Items {
 				if v.GetAnnotations()[keys.IngressTemplateAnnotation] == a.Name {
