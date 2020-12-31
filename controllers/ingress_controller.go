@@ -179,7 +179,7 @@ func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger,
 	if err != nil {
 		return err
 	}
-	s.Add(*name)
+	s = s.Add(*name)
 	s = s.Add(*notIn)
 	lg.Info("deleting orphan api definitions", "selector", s, "count", len(ids))
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
