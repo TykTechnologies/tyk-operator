@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -76,7 +77,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		log.Info("resource being deleted")
 		// If our finalizer is present, need to delete from Tyk still
-		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+		if util.ContainsFinalizer(desired, apiDefFinalizerName) {
 			log.Info("checking linked security policies")
 			policies, err := r.UniversalClient.SecurityPolicy().All()
 			if err != nil && !universal_client.IsTODO(err) {
@@ -110,7 +111,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			}
 
 			log.Info("removing finalizer")
-			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+			util.RemoveFinalizer(desired, apiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
@@ -119,7 +120,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, nil
 	}
 
-	if !containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+	if !util.ContainsFinalizer(desired, apiDefFinalizerName) {
 		log.Info("adding finalizer")
 		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
 		err := r.Update(ctx, desired)

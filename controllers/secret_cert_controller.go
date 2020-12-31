@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
@@ -58,7 +59,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		log.Info("secret being deleted")
 		// If our finalizer is present, need to delete from Tyk still
-		if containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
+		if util.ContainsFinalizer(desired, certFinalizerName) {
 			log.Info("running finalizer logic")
 
 			certPemBytes, ok := desired.Data["tls.crt"]
@@ -82,7 +83,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			}
 
 			log.Info("removing finalizer from secret")
-			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, certFinalizerName)
+			util.RemoveFinalizer(desired, certFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -142,7 +143,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	}
 
 	// If finalizer not present, add it; This is a new object
-	if !containsString(desired.ObjectMeta.Finalizers, certFinalizerName) {
+	if !util.ContainsFinalizer(desired, certFinalizerName) {
 		log.Info("adding finalizer for cleanup")
 
 		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, certFinalizerName)

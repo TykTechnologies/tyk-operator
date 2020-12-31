@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -65,14 +66,14 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if !des.ObjectMeta.DeletionTimestamp.IsZero() {
 
 		// If still need to delete from Tyk
-		if containsString(des.ObjectMeta.Finalizers, webhookDefFinalizerName) {
+		if util.ContainsFinalizer(des, webhookDefFinalizerName) {
 
 			if err := r.UniversalClient.Webhook().Delete(req.NamespacedName.String()); err != nil {
 				return ctrl.Result{}, err
 			}
 
 			// remove our finalizer from the list and update it.
-			des.ObjectMeta.Finalizers = removeString(des.ObjectMeta.Finalizers, webhookDefFinalizerName)
+			util.RemoveFinalizer(des, webhookDefFinalizerName)
 			if err := r.Update(context.Background(), des); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -82,7 +83,7 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// If finalizer not present, add it; This is a new object
-	if !containsString(des.ObjectMeta.Finalizers, webhookDefFinalizerName) {
+	if !util.ContainsFinalizer(des, webhookDefFinalizerName) {
 		des.ObjectMeta.Finalizers = append(des.ObjectMeta.Finalizers, webhookDefFinalizerName)
 		err := r.Update(ctx, des)
 		// Return either way because the update will
