@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -222,7 +223,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 			if v.Labels == nil {
 				v.Labels = make(map[string]string)
 			}
-			v.Labels[keys.IngressTaintLabelKey] = time.Now().String()
+			v.Labels[keys.IngressTaintLabelKey] = strconv.FormatInt(time.Now().UnixNano(), 10)
 			err = r.Update(ctx, &v)
 			if err != nil {
 				return err
