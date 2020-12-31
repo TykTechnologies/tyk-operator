@@ -1,0 +1,25 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: myapideftemplate
+  labels:
+    template: "true"
+spec:
+  name: foo
+  protocol: http
+  use_keyless: false
+  use_standard_auth: true
+  active: true
+  proxy:
+    target_url: http://example.com
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        paths:
+          black_list: []
+          ignored: []
+          white_list: []
