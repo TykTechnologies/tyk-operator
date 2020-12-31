@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: httpbin-ingress1
+  annotations:
+    kubernetes.io/ingress.class: tyk
+    tyk.io/template: myapideftemplate
+spec:
+  rules:
+    - host: httpbin1
+      http:
+        paths:
+          - path: /httpbin
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
