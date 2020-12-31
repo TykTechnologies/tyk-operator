@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
@@ -38,16 +39,6 @@ import (
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-)
-
-const (
-	ingressLabelKey                    = "tyk.io/ingress"
-	ingressTaintLabelKey               = "tyk.io/taint"
-	apidefLabelKey                     = "tyk.io/apidefinition"
-	ingressFinalizerName               = "finalizers.tyk.io/ingress"
-	ingressClassAnnotationKey          = "kubernetes.io/ingress.class"
-	ingressTemplateAnnotationKey       = "tyk.io/template"
-	defaultIngressClassAnnotationValue = "tyk"
 )
 
 // IngressReconciler watches and reconciles Ingress objects
@@ -70,9 +61,9 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	key, ok := desired.Annotations[ingressTemplateAnnotationKey]
+	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
 	if !ok {
-		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", ingressTemplateAnnotationKey)
+		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", keys.IngressTemplateAnnotation)
 	}
 	template := &v1alpha1.ApiDefinition{}
 	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
@@ -83,13 +74,13 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	nsl.Info("Sync ingress")
 	op, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.DeletionTimestamp.IsZero() {
-			if util.ContainsFinalizer(desired, ingressFinalizerName) {
-				util.RemoveFinalizer(desired, ingressFinalizerName)
+			if util.ContainsFinalizer(desired, keys.IngressFinalizerName) {
+				util.RemoveFinalizer(desired, keys.IngressFinalizerName)
 			}
 			return nil
 		}
-		if !util.ContainsFinalizer(desired, ingressFinalizerName) {
-			util.AddFinalizer(desired, ingressFinalizerName)
+		if !util.ContainsFinalizer(desired, keys.IngressFinalizerName) {
+			util.AddFinalizer(desired, keys.IngressFinalizerName)
 			return nil
 		}
 		return nil
@@ -127,8 +118,8 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 			lg.Info("sync api definition", "name", name)
 			op, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
 				api.SetLabels(map[string]string{
-					ingressLabelKey: desired.Name,
-					apidefLabelKey:  hash,
+					keys.IngressLabel: desired.Name,
+					keys.APIDefLabel:  hash,
 				})
 				api.Spec = *template.Spec.DeepCopy()
 				api.Spec.Name = name
@@ -167,30 +158,30 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 }
 
 func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
-	var keys []string
+	var ids []string
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
 			hash := shortHash(rule.Host + p.Path)
-			keys = append(keys, hash)
+			ids = append(ids, hash)
 		}
 	}
 	s := labels.NewSelector()
-	exists, err := labels.NewRequirement(apidefLabelKey, selection.Exists, []string{})
+	exists, err := labels.NewRequirement(keys.APIDefLabel, selection.Exists, []string{})
 	if err != nil {
 		return err
 	}
 	s = s.Add(*exists)
-	notIn, err := labels.NewRequirement(apidefLabelKey, selection.NotIn, keys)
+	notIn, err := labels.NewRequirement(keys.APIDefLabel, selection.NotIn, ids)
 	if err != nil {
 		return err
 	}
-	name, err := labels.NewRequirement(ingressLabelKey, selection.DoubleEquals, []string{desired.Name})
+	name, err := labels.NewRequirement(keys.IngressLabel, selection.DoubleEquals, []string{desired.Name})
 	if err != nil {
 		return err
 	}
 	s.Add(*name)
 	s = s.Add(*notIn)
-	lg.Info("deleting orphan api definitions", "selector", s, "count", len(keys))
+	lg.Info("deleting orphan api definitions", "selector", s, "count", len(ids))
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
 			ListOptions: client.ListOptions{
@@ -213,14 +204,14 @@ func shortHash(txt string) string {
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
-	watch := defaultIngressClassAnnotationValue
+	watch := keys.DefaultIngressClassAnnotationValue
 	if overide := r.UniversalClient.Environment().IngressClass; overide != "" {
 		watch = overide
 	}
 	isOurIngress := func(o runtime.Object) bool {
 		switch e := o.(type) {
 		case *v1beta1.Ingress:
-			return e.GetAnnotations()[ingressClassAnnotationKey] == watch
+			return e.GetAnnotations()[keys.IngressClassAnnotation] == watch
 		default:
 			return false
 		}
