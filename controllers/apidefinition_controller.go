@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
@@ -35,8 +36,6 @@ import (
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-const apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {
@@ -77,7 +76,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		log.Info("resource being deleted")
 		// If our finalizer is present, need to delete from Tyk still
-		if util.ContainsFinalizer(desired, apiDefFinalizerName) {
+		if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
 			log.Info("checking linked security policies")
 			policies, err := r.UniversalClient.SecurityPolicy().All()
 			if err != nil && !universal_client.IsTODO(err) {
@@ -111,7 +110,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			}
 
 			log.Info("removing finalizer")
-			util.RemoveFinalizer(desired, apiDefFinalizerName)
+			util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
@@ -120,9 +119,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, nil
 	}
 
-	if !util.ContainsFinalizer(desired, apiDefFinalizerName) {
+	if !util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
 		log.Info("adding finalizer")
-		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, keys.ApiDefFinalizerName)
 		err := r.Update(ctx, desired)
 		// Return either way because the update will
 		// issue a requeue anyway
@@ -214,7 +213,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 		return client.IgnoreNotFound(err)
 	}
 	for _, v := range ls.Items {
-		if v.GetAnnotations()[ingressTemplateAnnotationKey] == a.Name {
+		if v.GetAnnotations()[keys.IngressTemplateAnnotationKey] == a.Name {
 			key := client.ObjectKey{
 				Namespace: v.GetNamespace(),
 				Name:      v.GetName(),
@@ -223,7 +222,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 			if v.Labels == nil {
 				v.Labels = make(map[string]string)
 			}
-			v.Labels[ingressTaintLabelKey] = time.Now().String()
+			v.Labels[keys.IngressTaintLabelKey] = time.Now().String()
 			err = r.Update(ctx, &v)
 			if err != nil {
 				return err

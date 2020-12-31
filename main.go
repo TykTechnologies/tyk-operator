@@ -94,7 +94,6 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-
 	//_, err := adminClient()
 	//if err != nil {
 	//	setupLog.Error(err, "unable to configure admin client")
