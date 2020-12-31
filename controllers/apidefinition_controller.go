@@ -18,24 +18,27 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-const apiDefFinalizerName = "finalizers.tyk.io/apidefinition"
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {
@@ -63,10 +66,10 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	if desired.GetLabels()["template"] == "true" {
 		log.Info("Syncing template", "template", desired.Name)
-		err := r.syncTemplate(ctx, req.Namespace, desired)
+		res, err := r.syncTemplate(ctx, req.Namespace, desired)
 		if err != nil {
 			log.Error(err, "Failed to sync template")
-			return ctrl.Result{}, err
+			return res, err
 		}
 		log.Info("Synced template", "template", desired.Name)
 		return ctrl.Result{}, nil
@@ -76,7 +79,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		log.Info("resource being deleted")
 		// If our finalizer is present, need to delete from Tyk still
-		if containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+		if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
 			log.Info("checking linked security policies")
 			policies, err := r.UniversalClient.SecurityPolicy().All()
 			if err != nil && !universal_client.IsTODO(err) {
@@ -110,7 +113,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			}
 
 			log.Info("removing finalizer")
-			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+			util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
@@ -119,9 +122,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return reconcile.Result{}, nil
 	}
 
-	if !containsString(desired.ObjectMeta.Finalizers, apiDefFinalizerName) {
+	if !util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
 		log.Info("adding finalizer")
-		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, apiDefFinalizerName)
+		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, keys.ApiDefFinalizerName)
 		err := r.Update(ctx, desired)
 		// Return either way because the update will
 		// issue a requeue anyway
@@ -201,19 +204,46 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 // annotation matching a.Name.
 //
 // We return nil when a is being deleted and do nothing.
-func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a *tykv1alpha1.ApiDefinition) error {
+func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a *tykv1alpha1.ApiDefinition) (ctrl.Result, error) {
+
 	if !a.DeletionTimestamp.IsZero() {
-		return nil
+		if util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
+			ls := v1beta1.IngressList{}
+			err := r.List(ctx, &ls,
+				client.InNamespace(ns),
+			)
+			if err != nil {
+				if !errors.IsNotFound(err) {
+					return ctrl.Result{}, err
+				}
+			}
+			var refs []string
+			for _, v := range ls.Items {
+				if v.GetAnnotations()[keys.IngressTemplateAnnotation] == a.Name {
+					refs = append(refs, v.GetName())
+				}
+			}
+			if len(refs) > 0 {
+				return ctrl.Result{RequeueAfter: time.Second * 5}, fmt.Errorf("Can't delete %s %v depends on it", a.Name, refs)
+			}
+			util.RemoveFinalizer(a, keys.ApiDefTemplateFinalizerName)
+			return ctrl.Result{}, r.Update(ctx, a)
+		}
+		return ctrl.Result{}, nil
+	}
+	if !util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
+		util.AddFinalizer(a, keys.ApiDefTemplateFinalizerName)
+		return ctrl.Result{}, r.Update(ctx, a)
 	}
 	ls := v1beta1.IngressList{}
 	err := r.List(ctx, &ls,
 		client.InNamespace(ns),
 	)
 	if err != nil {
-		return client.IgnoreNotFound(err)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	for _, v := range ls.Items {
-		if v.GetAnnotations()[ingressTemplateAnnotationKey] == a.Name {
+		if v.GetAnnotations()[keys.IngressTemplateAnnotation] == a.Name {
 			key := client.ObjectKey{
 				Namespace: v.GetNamespace(),
 				Name:      v.GetName(),
@@ -222,14 +252,14 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 			if v.Labels == nil {
 				v.Labels = make(map[string]string)
 			}
-			v.Labels[ingressTaintLabelKey] = time.Now().String()
+			v.Labels[keys.IngressTaintLabel] = strconv.FormatInt(time.Now().UnixNano(), 10)
 			err = r.Update(ctx, &v)
 			if err != nil {
-				return err
+				return ctrl.Result{}, err
 			}
 		}
 	}
-	return nil
+	return ctrl.Result{}, nil
 }
 
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {

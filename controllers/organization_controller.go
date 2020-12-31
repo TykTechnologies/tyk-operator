@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -84,7 +85,7 @@ func (r *OrganizationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	const organizationFinalzerName = "finalizers.tyk.io/organization"
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is being deleted
-		if containsString(desired.ObjectMeta.Finalizers, organizationFinalzerName) {
+		if util.ContainsFinalizer(desired, organizationFinalzerName) {
 			// our finalizer is present, so lets handle our external dependency
 
 			// Delete org
@@ -114,7 +115,8 @@ func (r *OrganizationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			}
 
 			// remove our finalizer from the list and update it.
-			desired.ObjectMeta.Finalizers = removeString(desired.ObjectMeta.Finalizers, organizationFinalzerName)
+
+			util.RemoveFinalizer(desired, organizationFinalzerName)
 			if err := r.Update(ctx, desired); err != nil {
 				return reconcile.Result{}, err
 			}
@@ -125,7 +127,7 @@ func (r *OrganizationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	// If finalizer not present, add it; This is a new object
-	if !containsString(desired.ObjectMeta.Finalizers, organizationFinalzerName) {
+	if !util.ContainsFinalizer(desired, organizationFinalzerName) {
 		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, organizationFinalzerName)
 		err := r.Update(ctx, desired)
 		// Return either way because the update will
