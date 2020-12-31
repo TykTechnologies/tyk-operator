@@ -216,7 +216,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 		if util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
 			var refs []string
 			for _, v := range ls.Items {
-				if v.GetAnnotations()[keys.IngressTemplateAnnotationKey] == a.Name {
+				if v.GetAnnotations()[keys.IngressTemplateAnnotation] == a.Name {
 					refs = append(refs, v.GetName())
 				}
 			}
@@ -240,7 +240,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	for _, v := range ls.Items {
-		if v.GetAnnotations()[keys.IngressTemplateAnnotationKey] == a.Name {
+		if v.GetAnnotations()[keys.IngressTemplateAnnotation] == a.Name {
 			key := client.ObjectKey{
 				Namespace: v.GetNamespace(),
 				Name:      v.GetName(),
@@ -249,7 +249,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 			if v.Labels == nil {
 				v.Labels = make(map[string]string)
 			}
-			v.Labels[keys.IngressTaintLabelKey] = strconv.FormatInt(time.Now().UnixNano(), 10)
+			v.Labels[keys.IngressTaintLabel] = strconv.FormatInt(time.Now().UnixNano(), 10)
 			err = r.Update(ctx, &v)
 			if err != nil {
 				return ctrl.Result{}, err

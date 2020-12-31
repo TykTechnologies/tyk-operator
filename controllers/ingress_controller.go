@@ -61,9 +61,9 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	key, ok := desired.Annotations[keys.IngressTemplateAnnotationKey]
+	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
 	if !ok {
-		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", keys.IngressTemplateAnnotationKey)
+		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", keys.IngressTemplateAnnotation)
 	}
 	template := &v1alpha1.ApiDefinition{}
 	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
@@ -118,8 +118,8 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 			lg.Info("sync api definition", "name", name)
 			op, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
 				api.SetLabels(map[string]string{
-					keys.IngressLabelKey: desired.Name,
-					keys.APIDefLabelKey:  hash,
+					keys.IngressLabel: desired.Name,
+					keys.APIDefLabel:  hash,
 				})
 				api.Spec = *template.Spec.DeepCopy()
 				api.Spec.Name = name
@@ -166,16 +166,16 @@ func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger,
 		}
 	}
 	s := labels.NewSelector()
-	exists, err := labels.NewRequirement(keys.APIDefLabelKey, selection.Exists, []string{})
+	exists, err := labels.NewRequirement(keys.APIDefLabel, selection.Exists, []string{})
 	if err != nil {
 		return err
 	}
 	s = s.Add(*exists)
-	notIn, err := labels.NewRequirement(keys.APIDefLabelKey, selection.NotIn, ids)
+	notIn, err := labels.NewRequirement(keys.APIDefLabel, selection.NotIn, ids)
 	if err != nil {
 		return err
 	}
-	name, err := labels.NewRequirement(keys.IngressLabelKey, selection.DoubleEquals, []string{desired.Name})
+	name, err := labels.NewRequirement(keys.IngressLabel, selection.DoubleEquals, []string{desired.Name})
 	if err != nil {
 		return err
 	}
@@ -211,7 +211,7 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	isOurIngress := func(o runtime.Object) bool {
 		switch e := o.(type) {
 		case *v1beta1.Ingress:
-			return e.GetAnnotations()[keys.IngressClassAnnotationKey] == watch
+			return e.GetAnnotations()[keys.IngressClassAnnotation] == watch
 		default:
 			return false
 		}

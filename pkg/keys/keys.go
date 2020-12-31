@@ -8,11 +8,11 @@ const (
 
 //Ingress
 const (
-	IngressLabelKey                    = "tyk.io/ingress"
-	IngressTaintLabelKey               = "tyk.io/taint"
-	APIDefLabelKey                     = "tyk.io/apidefinition"
+	IngressLabel                       = "tyk.io/ingress"
+	IngressTaintLabel                  = "tyk.io/taint"
+	APIDefLabel                        = "tyk.io/apidefinition"
 	IngressFinalizerName               = "finalizers.tyk.io/ingress"
-	IngressClassAnnotationKey          = "kubernetes.io/ingress.class"
-	IngressTemplateAnnotationKey       = "tyk.io/template"
+	IngressClassAnnotation             = "kubernetes.io/ingress.class"
+	IngressTemplateAnnotation          = "tyk.io/template"
 	DefaultIngressClassAnnotationValue = "tyk"
 )
