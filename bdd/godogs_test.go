@@ -24,11 +24,10 @@ import (
 const (
 	namespace      = "bdd"
 	k8sTimeout     = time.Second * 10
-	reconcileDelay = time.Second * 5
+	reconcileDelay = time.Second * 10
 )
 
 var gwNS = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
-var client = http.Client{}
 
 func runCMD(cmd *exec.Cmd) string {
 	a := fmt.Sprint(cmd.Args)
@@ -67,7 +66,7 @@ func init() {
 func TestMain(t *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
-	kill, err := k8sutil.Init(gwNS)
+	kill, err := k8sutil.Init(gwNS, os.Getenv("TYK_MODE"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -166,7 +165,7 @@ func call(method, url string, body func() io.Reader,
 		if fn != nil {
 			fn(req)
 		}
-		res, err := client.Do(req)
+		res, err := k8sutil.Do(req)
 		if err != nil {
 			fmt.Println("==========> Error making client call ", err)
 			return err

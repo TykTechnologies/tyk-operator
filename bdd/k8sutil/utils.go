@@ -1,15 +1,16 @@
 package k8sutil
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"os"
+	"net/http"
 	"os/exec"
 	"strings"
-	"sync"
-	"time"
+
+	"moul.io/http2curl/v2"
 )
 
 // OpExpect expected outcome from k8s operation
@@ -56,7 +57,12 @@ var cmd CMD = CB{
 	DeleteFn:    del,
 }
 
-func Init(ns string) (func() error, error) {
+func Init(ns, env string) (func() error, error) {
+	switch env {
+	case "ce", "pro":
+	default:
+		return nil, fmt.Errorf("Unknown TYK_ENV=%q", env)
+	}
 	return cmd.Init(ns)
 }
 
@@ -86,7 +92,7 @@ func Configure(ctx context.Context, file string, namespace string) error {
 // CB is a helper struct satisfying CMD interface. Use the fields to provide
 // callbacks for respective CMD method call.
 type CB struct {
-	InitFN      func(string) (func() error, error)
+	InitFN      func(ns string) (func() error, error)
 	CreateFn    func(ctx context.Context, file string, namespace string) error
 	DeleteFn    func(ctx context.Context, file string, namespace string) error
 	ConfigureFn func(ctx context.Context, file string, namespace string) error
@@ -209,42 +215,7 @@ func expect(have OpExpect) func(OpExpect, error) error {
 }
 
 func initFn(ns string) (func() error, error) {
-	comm := make(chan struct{})
-	go set(comm, ns)
-	select {
-	case <-comm:
-	case <-time.After(3 * time.Second):
-		return nil, errors.New("Failed to setup port forwarding")
-	}
-	return func() error {
-		comm <- struct{}{}
-		select {
-		case <-comm:
-		case <-time.After(3 * time.Second):
-			return errors.New("Failed to tear down port forwarding")
-		}
-		return nil
-	}, nil
-}
-
-func set(comm chan struct{}, ns string) {
-	for {
-		kill, term, err := setup(ns)
-		if err != nil {
-			panic(err)
-		}
-		comm <- struct{}{}
-		select {
-		case <-term:
-			kill()
-			fmt.Println("===> reopening port forwarding")
-			time.Sleep(time.Second)
-		case <-comm:
-			kill()
-			comm <- struct{}{}
-			return
-		}
-	}
+	return func() error { return nil }, setup(ns)
 }
 
 type writeFn func([]byte) (int, error)
@@ -253,40 +224,70 @@ func (fn writeFn) Write(b []byte) (int, error) {
 	return fn(b)
 }
 
-func setup(ns string) (func() error, chan struct{}, error) {
-	// make sure we don't have the testing ns
-	cmd := exec.Command("kubectl", "port-forward", "-n", ns, "svc/gw", "8000:8000")
-	fmt.Println(cmd.Args)
-	var once sync.Once
-	firstLine := make(chan string, 1)
-	fail := "failed to execute portforward in network namespace"
-	term := make(chan struct{})
-	cmd.Stderr = writeFn(func(b []byte) (int, error) {
-		once.Do(func() { firstLine <- string(b) })
-		if bytes.Contains(b, []byte(fail)) {
-			term <- struct{}{}
-		}
-		return os.Stderr.Write(b)
-	})
-	cmd.Stdout = writeFn(func(b []byte) (int, error) {
-		once.Do(func() { firstLine <- string(b) })
-		return os.Stdout.Write(b)
-	})
-	err := cmd.Start()
+var api TykAPI
+
+func setup(ns string) error {
+	e := exec.Command(
+		"kubectl", "get", "pods", "-l", "name=tyk", "-n", ns,
+		"-o", "jsonpath={.items..metadata.name}",
+	)
+	o, err := e.CombinedOutput()
 	if err != nil {
-		return nil, nil, err
+		return fmt.Errorf("%v:%v", err, string(o))
 	}
-	ts := time.NewTimer(3 * time.Second)
-	defer ts.Stop()
-	select {
-	case <-ts.C:
-		return nil, nil, errors.New("timeout waiting for port forwarding")
-	case b := <-firstLine:
-		x := "Forwarding from 127.0.0.1:8000"
-		if !strings.HasPrefix(b, x) {
-			cmd.Process.Kill()
-			return nil, nil, fmt.Errorf("expected %q got %q", x, b)
-		}
+	pod := string(bytes.TrimSpace(o))
+	if pod == "" {
+		return fmt.Errorf("failed to get tyk pod cmd=%v", e.Args)
 	}
-	return cmd.Process.Kill, term, nil
+	api.Namespace = ns
+	api.Pod = pod
+	api.Container = "tyk"
+	return nil
+}
+
+type TykAPI struct {
+	Namespace, Pod, Container string
+}
+
+func Do(r *http.Request) (*http.Response, error) {
+	return api.Do(r)
+}
+
+func unquote(s string) string {
+	if s[0] == '\'' {
+		return s[1 : len(s)-1]
+	}
+	return s
+}
+func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
+	c, err := http2curl.GetCurlCommand(r)
+	if err != nil {
+		return nil, err
+	}
+	cs := []string(*c)
+	for i := 0; i < len(cs); i++ {
+		cs[i] = unquote(cs[i])
+	}
+	e := exec.Command("kubectl", append(
+		t.commands(), cs[1:]...,
+	)...)
+	if err != nil {
+		return nil, err
+	}
+	o, err := e.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("%v:%v", err, string(o))
+	}
+	res, err := http.ReadResponse(bufio.NewReader(bytes.NewReader(o)), r)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (t TykAPI) commands() []string {
+	return []string{
+		"exec", t.Pod, "-c", t.Container, "-n", t.Namespace,
+		"--", "curl", "-s", "-i",
+	}
 }
