@@ -62,13 +62,13 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
-	if !ok {
-		return ctrl.Result{}, fmt.Errorf("expecting template annotation %s", keys.IngressTemplateAnnotation)
-	}
-	template := &v1alpha1.ApiDefinition{}
-	err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
-	if err != nil {
-		return ctrl.Result{}, err
+	template := r.keyless()
+	if ok {
+		template = &v1alpha1.ApiDefinition{}
+		err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 	nsl := r.Log.WithValues("name", req.NamespacedName)
 	nsl.Info("Sync ingress")
@@ -100,6 +100,23 @@ func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	nsl.Info("Sync ingress OK")
 	return ctrl.Result{}, nil
+}
+
+func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
+	return &v1alpha1.ApiDefinition{
+		Spec: v1alpha1.APIDefinitionSpec{
+			Name:             "default-keyless",
+			Protocol:         "http",
+			UseKeylessAccess: true,
+			Active:           true,
+			Proxy: v1alpha1.Proxy{
+				TargetURL: "http://example.com",
+			},
+			VersionData: v1alpha1.VersionData{
+				NotVersioned: true,
+			},
+		},
+	}
 }
 
 func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
