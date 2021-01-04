@@ -126,7 +126,7 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 				api.Spec.Proxy.ListenPath = p.Path
 				api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName,
 					ns, p.Backend.ServicePort.IntValue())
-				api.Spec.Domain = rule.Host
+				api.Spec.Domain = r.translateHost(rule.Host)
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
 						for _, host := range tls.Hosts {
@@ -155,6 +155,10 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 	}
 	lg.Info("deleting orphan api's")
 	return r.deleteOrphanAPI(ctx, lg, ns, desired)
+}
+
+func (r *IngressReconciler) translateHost(host string) string {
+	return strings.Replace(host, "*", "{?:[^.]+}", 1)
 }
 
 func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
