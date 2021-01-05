@@ -126,7 +126,9 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 				api.Spec.Proxy.ListenPath = p.Path
 				api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName,
 					ns, p.Backend.ServicePort.IntValue())
-				api.Spec.Domain = r.translateHost(rule.Host)
+				if rule.Host != "" {
+					api.Spec.Domain = r.translateHost(rule.Host)
+				}
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
 						for _, host := range tls.Hosts {
