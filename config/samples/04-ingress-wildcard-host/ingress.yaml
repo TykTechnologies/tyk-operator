@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: httpbin-ingress-wildcard-host
+  annotations:
+    kubernetes.io/ingress.class: tyk
+    tyk.io/template: myapideftemplate
+spec:
+  rules:
+    - host: "*.foo.com" # wildcard
+      # curl http://bar.foo.com/httpbin/get === OK Matches based on shared suffix
+      # curl http://baz.bar.foo.com/httpbin/get === NOK No match, wildcard only covers a single DNS label
+      # curl http://foo.com/httpbin/get === NOK No match, wildcard only covers a single DNS label
+      http:
+        paths:
+          - path: /httpbin
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 8000
