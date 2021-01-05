@@ -285,13 +285,12 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	res.Header.Del("Accept") // workaround to look like http.Client
 	return res, nil
 }
 
 func (t TykAPI) commands() []string {
 	return []string{
 		"exec", t.Pod, "-c", t.Container, "-n", t.Namespace,
-		"--", "curl", "-s", "-i", "-A", agent,
+		"--", "curl", "-s", "-i", "-A", agent, "-H", "Accept:",
 	}
 }
