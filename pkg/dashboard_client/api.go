@@ -38,14 +38,15 @@ func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
 	for _, api := range apisResponse.Apis {
 		list = append(list, api.ApiDefinition)
 	}
+	a.Log.Info("All api's", "Count", len(list))
 	return list, nil
 }
 
 func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) error {
-	dashboardAPIRequest := DashboardApi{
-		ApiDefinition: *def,
-	}
-	res, err := a.Client.PostJSON(a.Env.JoinURL(endpointAPIs), dashboardAPIRequest)
+	res, err := a.Client.PostJSON(a.Env.JoinURL(endpointAPIs),
+		DashboardApi{
+			ApiDefinition: *def,
+		})
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,12 @@ func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) error {
 	if resMsg.Status != "OK" {
 		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
-	return nil
+	o, err := a.get(resMsg.Meta)
+	if err != nil {
+		return err
+	}
+	o.APIID = def.APIID
+	return a.update(*o)
 }
 
 func (a Api) Get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
@@ -77,13 +83,33 @@ func (a Api) Get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
 	return nil, universal_client.ErrNotFound
 }
 
+func (a Api) get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
+	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs, id), nil)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return nil, universal_client.Error(res)
+	}
+	var resMsg DashboardApi
+	if err := universal_client.JSON(res, &resMsg); err != nil {
+		return nil, err
+	}
+	return &resMsg.ApiDefinition, nil
+}
+
 func (a Api) Update(def *tykv1alpha1.APIDefinitionSpec) error {
 	x, err := a.Get(def.APIID)
 	if err != nil {
-		return universal_client.IgnoreNotFound(err)
+		return err
 	}
 	o := *def
 	o.ID = x.ID
+	return a.update(o)
+}
+
+func (a Api) update(o tykv1alpha1.APIDefinitionSpec) error {
 	res, err := a.Client.PutJSON(
 		a.Env.JoinURL(endpointAPIs, o.ID), DashboardApi{
 			ApiDefinition: o,
@@ -113,7 +139,6 @@ func (a Api) Delete(id string) error {
 	if err != nil {
 		return universal_client.IgnoreNotFound(err)
 	}
-
 	res, err := a.Client.Delete(a.Env.JoinURL(endpointAPIs, x.ID), nil)
 	if err != nil {
 		return err
