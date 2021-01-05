@@ -285,6 +285,7 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	res.Header.Del("Accept") // workaround to look like http.Client
 	return res, nil
 }
 
