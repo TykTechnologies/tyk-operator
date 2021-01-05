@@ -48,20 +48,51 @@ func TestAPI(t *testing.T) {
 	defer svr.Close()
 	e.URL = svr.URL
 	e = env().Merge(e)
-	requestAPI(t, e, "Create", Kase{
-		Name: "Create",
-		Request: RequestKase{
-			Path:   "/api/apis",
-			Method: http.MethodPost,
-			Headers: map[string]string{
-				XAuthorization: e.Auth,
-				XContentType:   contentJSON,
+	requestAPI(t, e, "Create",
+		Kase{
+			Name: "Create",
+			Request: RequestKase{
+				Path:   "/api/apis",
+				Method: http.MethodPost,
+				Headers: map[string]string{
+					XAuthorization: e.Auth,
+					XContentType:   contentJSON,
+				},
+			},
+			Response: &ResponseKase{
+				Body: ReadSample(t, "api.Create.body"),
 			},
 		},
-		Response: &ResponseKase{
-			Body: ReadSample(t, "api.Create.body"),
+		Kase{
+			Name: "Get",
+			Request: RequestKase{
+				Path:   "/api/apis/5fd08ed769710900018bc196",
+				Method: http.MethodGet,
+				Headers: map[string]string{
+					XAuthorization: e.Auth,
+					XContentType:   contentJSON,
+				},
+			},
+			Response: &ResponseKase{
+				Body: ReadSample(t, "api.Get.body"),
+			},
 		},
-	})
+		Kase{
+			Name: "Update",
+			Request: RequestKase{
+				Path:   "/api/apis/5fd08ed769710900018bc196",
+				Method: http.MethodPut,
+				Headers: map[string]string{
+					XAuthorization: e.Auth,
+					XContentType:   contentJSON,
+				},
+			},
+			Response: &ResponseKase{
+				Body: ReadSample(t, "api.Update.body"),
+			},
+		},
+	)
+
 	requestAPI(t, e, "All", Kase{
 		Name: "All",
 		Request: RequestKase{
