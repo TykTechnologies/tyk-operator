@@ -259,6 +259,9 @@ func unquote(s string) string {
 	}
 	return s
 }
+
+const agent = "Go-http-client/1.1"
+
 func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 	c, err := http2curl.GetCurlCommand(r)
 	if err != nil {
@@ -288,6 +291,6 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 func (t TykAPI) commands() []string {
 	return []string{
 		"exec", t.Pod, "-c", t.Container, "-n", t.Namespace,
-		"--", "curl", "-s", "-i",
+		"--", "curl", "-s", "-i", "-A", agent,
 	}
 }
