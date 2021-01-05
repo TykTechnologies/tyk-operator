@@ -254,7 +254,7 @@ func wait(ts time.Duration) func(err error) error {
 		}
 		time.Sleep(ts)
 		cmd := exec.CommandContext(context.Background(), "kubectl", "get", "tykapis", "-n", namespace)
-		runCMD(cmd)
+		fmt.Println(runCMD(cmd))
 		return nil
 	}
 }
