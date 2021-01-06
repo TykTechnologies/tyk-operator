@@ -28,7 +28,6 @@ const (
 )
 
 var gwNS = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
-var client = http.Client{}
 
 func runCMD(cmd *exec.Cmd) string {
 	a := fmt.Sprint(cmd.Args)
@@ -67,7 +66,7 @@ func init() {
 func TestMain(t *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
-	kill, err := k8sutil.Init(gwNS)
+	kill, err := k8sutil.Init(gwNS, os.Getenv("TYK_MODE"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -166,7 +165,7 @@ func call(method, url string, body func() io.Reader,
 		if fn != nil {
 			fn(req)
 		}
-		res, err := client.Do(req)
+		res, err := k8sutil.Do(req)
 		if err != nil {
 			fmt.Println("==========> Error making client call ", err)
 			return err
@@ -255,7 +254,7 @@ func wait(ts time.Duration) func(err error) error {
 		}
 		time.Sleep(ts)
 		cmd := exec.CommandContext(context.Background(), "kubectl", "get", "tykapis", "-n", namespace)
-		runCMD(cmd)
+		fmt.Println(runCMD(cmd))
 		return nil
 	}
 }

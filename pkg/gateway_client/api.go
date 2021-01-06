@@ -51,8 +51,7 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	return &spec, nil
 }
 
-func (a Api) Create(ns string, def *v1.APIDefinitionSpec) error {
-	def.APIID = ns
+func (a Api) Create(def *v1.APIDefinitionSpec) error {
 	res, err := a.PostJSON(a.Env.JoinURL(endpointAPIs), def)
 	if err != nil {
 		return err
@@ -66,7 +65,6 @@ func (a Api) Create(ns string, def *v1.APIDefinitionSpec) error {
 	if resMsg.Status != "ok" {
 		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
-	def.APIID = resMsg.Key
 	return nil
 }
 
