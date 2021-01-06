@@ -23,9 +23,12 @@ Tyk Operator by default looks for the value `tyk` and will ignore all other ingr
 ## Quickstart / Samples
 
 * [HTTP Host-Based](./../config/samples/01-ingress)
-* [HTTP Host and Path](./../config/samples/01-ingress)
 * [HTTP Path Based](./../config/samples/01-ingress)
+* [HTTP Host and Path](./../config/samples/01-ingress)
 * [HTTPS with Cert-Manager Integration](./../config/samples/02-ingress-tls)
+* [Multiple Ingress Resources](./../config/samples/03-ingress-multi)
+* [Wildcard Hosts](./../config/samples/04-ingress-wildcard-host)
+* [Istio Ingress Gateway](./../config/samples/05-istio-ingress-bookinfo)
 
 ## Motivation
 
