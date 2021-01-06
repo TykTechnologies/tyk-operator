@@ -3,7 +3,6 @@ package universal_client
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -90,49 +89,60 @@ func compareHeaders(t *testing.T, expect map[string]string, r http.Header) {
 // RunRequestKase this helps check if we are sending a correct request. This
 // assumes fn will only perform a single API call, this ignores the response it
 // only validates we are sending correct path/method/headers
-func RunRequestKase(t *testing.T, e environmet.Env, fn func(Client) error, kase Kase) {
+func RunRequestKase(t *testing.T, e environmet.Env, fn func(Client) error, kase ...Kase) {
 	t.Helper()
-	t.Run(kase.Name, func(t *testing.T) {
-		var request *http.Request
-		var response *http.Response
-		var body string
-		var doErr error
-		x := Client{
-			Env: e,
-			Log: log.NullLogger{},
-			Do: func(h *http.Request) (*http.Response, error) {
-				request = h
-				if kase.Response != nil {
-					response, doErr = Do(h)
-					if doErr != nil {
-						return nil, doErr
-					}
-					b, _ := ioutil.ReadAll(response.Body)
-					response.Body.Close()
-					body = string(b)
-					response.Body = ioutil.NopCloser(bytes.NewReader(b))
-					return response, nil
+	var request []*http.Request
+	var response []*http.Response
+	var body []string
+	var doErr []error
+	x := Client{
+		Env: e,
+		Log: log.NullLogger{},
+		Do: func(h *http.Request) (*http.Response, error) {
+			request = append(request, h)
+			res, err := Do(h)
+			if err != nil {
+				doErr = append(doErr, err)
+				response = append(response, nil)
+				return nil, err
+			}
+			doErr = append(doErr, nil)
+			response = append(response, res)
+			b, _ := ioutil.ReadAll(res.Body)
+			res.Body.Close()
+			body = append(body, string(b))
+			res.Body = ioutil.NopCloser(bytes.NewReader(b))
+			return res, nil
+		},
+	}
+	err := fn(x)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if request == nil {
+		t.Error("no api call was made")
+		return
+	}
+	if len(request) != len(kase) {
+		t.Errorf("Mismatch expectations want %d got %d", len(kase), len(request))
+		return
+	}
+	for i := 0; i < len(kase); i++ {
+		k := kase[i]
+		t.Run(k.Name, func(t *testing.T) {
+			if doErr[i] != nil {
+				t.Error(doErr[i])
+				return
+			}
+			k.Request.verify(t, request[i])
+			if k.Response != nil {
+				if response[i] == nil {
+					t.Error(doErr[i])
+					return
 				}
-				return nil, errors.New("TESTING")
-			},
-		}
-		err := fn(x)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if doErr != nil {
-			// something went wrong making upstream call
-			t.Error(doErr)
-			return
-		}
-		if request == nil {
-			t.Error("no api call was made")
-			return
-		}
-		kase.Request.verify(t, request)
-		if response != nil {
-			kase.Response.verify(t, response, body)
-		}
-	})
+				k.Response.verify(t, response[i], body[i])
+			}
+		})
+	}
 }
