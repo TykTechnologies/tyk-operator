@@ -7,3 +7,14 @@ func TestShortHash(t *testing.T) {
 		t.Errorf("expected %v got %v", expect, got)
 	}
 }
+
+func TestTranslateHost(t *testing.T) {
+	reconciler := IngressReconciler{}
+	if expect, got := "foo.com", reconciler.translateHost("foo.com"); got != expect {
+		t.Errorf("expected %v got %v", expect, got)
+	}
+
+	if expect, got := "{?:[^.]+}.foo.com", reconciler.translateHost("*.foo.com"); got != expect {
+		t.Errorf("expected %v got %v", expect, got)
+	}
+}

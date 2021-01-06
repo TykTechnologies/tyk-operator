@@ -16,8 +16,24 @@ import (
 // ErrTODO is returned when a feature is not yet implemented
 var ErrTODO = errors.New("TODO: This feature is not implemented yet")
 
+// ErrNotFound is returned when an api call returns 404
+var ErrNotFound = errors.New("Resource not found")
+
 func IsTODO(err error) bool {
 	return errors.Is(err, ErrTODO)
+}
+
+// IsNotFound returns true if err is ErrNotFound
+func IsNotFound(err error) bool {
+	return errors.Is(err, ErrNotFound)
+}
+
+// IgnoreNotFound returns nil if err is ErrNotFound
+func IgnoreNotFound(err error) error {
+	if !IsNotFound(err) {
+		return err
+	}
+	return nil
 }
 
 var client = &http.Client{}
@@ -35,6 +51,10 @@ type Client struct {
 	Log           logr.Logger
 	BeforeRequest func(*http.Request)
 	Do            func(*http.Request) (*http.Response, error)
+}
+
+func (c Client) Environment() environmet.Env {
+	return c.Env
 }
 
 func (c Client) Request(method, url string, body io.Reader) (*http.Request, error) {
@@ -103,6 +123,10 @@ func (c Client) Call(method, url string, body io.Reader, fn ...func(*http.Reques
 	}
 	values = append(values)
 	c.Log.Info("Call", values...)
+	if err == nil && res.StatusCode == http.StatusNotFound {
+		res.Body.Close()
+		return nil, ErrNotFound
+	}
 	return res, err
 }
 
