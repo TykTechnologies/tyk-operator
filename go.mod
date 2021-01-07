@@ -18,3 +18,5 @@ require (
 	moul.io/http2curl/v2 v2.2.0
 	sigs.k8s.io/controller-runtime v0.6.4
 )
+
+replace github.com/go-logr/zapr => github.com/go-logr/zapr v0.3.0

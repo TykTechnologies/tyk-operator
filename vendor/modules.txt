@@ -25,7 +25,7 @@ github.com/go-chi/chi
 # github.com/go-logr/logr v0.3.0
 ## explicit
 github.com/go-logr/logr
-# github.com/go-logr/zapr v0.1.0
+# github.com/go-logr/zapr v0.1.0 => github.com/go-logr/zapr v0.3.0
 github.com/go-logr/zapr
 # github.com/gofrs/uuid v3.2.0+incompatible
 github.com/gofrs/uuid
@@ -419,3 +419,4 @@ sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
+# github.com/go-logr/zapr => github.com/go-logr/zapr v0.3.0
