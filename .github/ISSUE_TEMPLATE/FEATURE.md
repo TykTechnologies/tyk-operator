@@ -7,6 +7,13 @@ labels: enhancement
 
 <!-- Provide a general summary of the issue in the Title above -->
 
+⚠️ ⚠️ ⚠️
+
+For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new)
+in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions) of this project.
+
+⚠️ ⚠️ ⚠️
+
 ## Expected Behavior
 <!-- Tell us how it should work -->
 
