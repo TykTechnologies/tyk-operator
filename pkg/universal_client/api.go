@@ -7,7 +7,7 @@ import (
 type UniversalApi interface {
 	Get(apiID string) (*v1.APIDefinitionSpec, error)
 	All() ([]v1.APIDefinitionSpec, error)
-	Create(ns string, spec *v1.APIDefinitionSpec) error
+	Create(spec *v1.APIDefinitionSpec) error
 	Update(def *v1.APIDefinitionSpec) error
 	Delete(id string) error
 }

@@ -121,7 +121,9 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		log.Info("done")
 		return reconcile.Result{}, nil
 	}
-
+	if desired.Spec.APIID == "" {
+		desired.Spec.APIID = encodeNS(req.NamespacedName.String())
+	}
 	if !util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
 		log.Info("adding finalizer")
 		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, keys.ApiDefFinalizerName)
@@ -169,10 +171,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	//  If this is not set, means it is a new object, set it first
 	if desired.Status.ApiID == "" {
-		err := r.UniversalClient.Api().Create(
-			encodeNS(req.NamespacedName.String()),
-			&desired.Spec,
-		)
+		err := r.UniversalClient.Api().Create(&desired.Spec)
 		if err != nil {
 			log.Error(err, "Failed to create api definition")
 			return ctrl.Result{}, err
