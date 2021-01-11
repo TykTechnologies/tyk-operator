@@ -26,21 +26,33 @@ Feature: Managing http APIs
     Then there should be a "Content-Type: application/json" response header
 
   Scenario: Blacklist IP address with blacklisted ip
-    Given There is a ./custom_resources/blacklist.yaml resource
-    And I request httpbin/get endpoint with header X-Real-IP: 127.0.0.2
-    Then there should be a 401 http response code
+    Given there is a ./custom_resources/ip/blacklist.yaml resource
+    When i request /httpbin/headers endpoint with header X-Real-IP: 127.0.0.2
+    Then there should be a 403 http response code
+    And the response should match JSON:
+      """
+      {
+        "error": "access from this IP has been disallowed"
+      }
+      """
 
   Scenario: Blacklist IP address without blacklisted ip
-    Given There is a ./custom_resources/blacklist.yaml resource
-    And I request httpbin/get endpoint
+    Given there is a ./custom_resources/ip/blacklist.yaml resource
+    When i request /httpbin/get endpoint
     Then there should be a 200 http response code
 
   Scenario: Whitelist IP address with blocked ip
-    Given There is a ./custom_resources/whitelist.yaml resource
-    And I request httpbin/get endpoint
-    Then there should be a 401 http response code
+    Given there is a ./custom_resources/ip/whitelist.yaml resource
+    When i request /httpbin/get endpoint
+    Then there should be a 403 http response code
+    And the response should match JSON:
+      """
+      {
+        "error": "access from this IP has been disallowed"
+      }
+      """
 
   Scenario: Whitelist IP address with whitelisted ip
-    Given There is a ./custom_resources/whitelist.yaml resource
-    And I request httpbin/get endpoint with header X-Real-IP: 127.0.0.2
+    Given there is a ./custom_resources/ip/whitelist.yaml resource
+    When i request /httpbin/headers endpoint with header X-Real-IP: 127.0.0.2
     Then there should be a 200 http response code

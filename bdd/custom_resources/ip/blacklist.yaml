@@ -9,7 +9,7 @@ spec:
   active: true
   enable_ip_blacklisting: true
   blacklisted_ips:
-    - 127.0.0.1
+    - 127.0.0.2
   proxy:
     target_url: http://httpbin.default.svc:8000
     listen_path: /httpbin
