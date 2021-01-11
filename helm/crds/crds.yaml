@@ -98,6 +98,10 @@ spec:
             active:
               description: Active specifies if the api is enabled or not
               type: boolean
+            allowed_ips:
+              items:
+                type: string
+              type: array
             api_id:
               description: Only set this field if you are referring To an existing API in def. The Operator will use this API ID to link the CRD with the API in Tyk Note the values in the CRD will become the new source of truth, overriding the existing API Definition
               type: string
@@ -187,6 +191,10 @@ spec:
                 - auth_header_name
                 type: object
               type: object
+            blacklisted_ips:
+              items:
+                type: string
+              type: array
             cache_options:
               properties:
                 cache_all_safe_requests:
@@ -361,6 +369,11 @@ spec:
               type: boolean
             enable_detailed_recording:
               description: EnableDetailedRecording instructs Tyk store the inbound request and outbound response data in HTTP Wire format as part of the Analytics data
+              type: boolean
+            enable_ip_blacklisting:
+              type: boolean
+            enable_ip_whitelisting:
+              description: SessionLifetime        int64               `json:"session_lifetime"` Internal               bool                `json:"internal"` AuthProvider           AuthProviderMeta    `json:"auth_provider"` SessionProvider        SessionProviderMeta `json:"session_provider"` //EventHandlers             EventHandlerMetaConfig `json:"event_handlers"` EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
               type: boolean
             graphql:
               description: GraphQLConfig is the root config object for a GraphQL API.

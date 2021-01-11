@@ -458,11 +458,10 @@ type APIDefinitionSpec struct {
 	//SessionProvider        SessionProviderMeta `json:"session_provider"`
 	////EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
 	//EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
-	//EnableIpWhiteListing      bool `json:"enable_ip_whitelisting"`
-	//// +optional
-	//AllowedIPs            []string            `json:"allowed_ips"`
-	//EnableIpBlacklisting  bool                `json:"enable_ip_blacklisting"`
-	//BlacklistedIPs        []string            `json:"blacklisted_ips"`
+	EnableIPWhiteListing bool     `json:"enable_ip_whitelisting,omitempty"`
+	AllowedIPs           []string `json:"allowed_ips,omitempty"`
+	EnableIPBlacklisting bool     `json:"enable_ip_blacklisting,omitempty"`
+	BlacklistedIPs       []string `json:"blacklisted_ips,omitempty"`
 	//DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
 
