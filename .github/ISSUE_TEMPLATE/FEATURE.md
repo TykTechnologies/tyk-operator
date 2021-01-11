@@ -10,6 +10,20 @@ labels: enhancement
 ## Expected Behavior
 <!-- Tell us how it should work -->
 
+### Potential BDD Test Coverage
+
+```gherkin
+Feature: <summary of feature>
+  As a <role>
+  I want <feature>
+  So that <value>
+
+  Scenario: <summary of a scenario within this feature>
+    Given <context>
+    When <event occurs>
+    Then <outcome>
+```
+
 ## Current Behavior
 <!-- Explain the difference from current behaviour -->
 <!-- A clear and concise description of what the problem is may help. For example: "I'm always frustrated when [...]" -->
