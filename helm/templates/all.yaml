@@ -31,6 +31,17 @@ rules:
   verbs:
   - create
   - patch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patc
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -256,15 +267,16 @@ metadata:
 spec:
   selfSigned: {}
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "tyk-operator-helm.fullname" . }}-serving-cert'
   name: '{{ include "tyk-operator-helm.fullname" . }}-mutating-webhook-configuration'
 webhooks:
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: '{{ include "tyk-operator-helm.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
@@ -282,8 +294,9 @@ webhooks:
     resources:
     - apidefinitions
   sideEffects: None
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: '{{ include "tyk-operator-helm.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
@@ -300,16 +313,18 @@ webhooks:
     - UPDATE
     resources:
     - securitypolicies
+  sideEffects: None
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "tyk-operator-helm.fullname" . }}-serving-cert'
   name: '{{ include "tyk-operator-helm.fullname" . }}-validating-webhook-configuration'
 webhooks:
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: '{{ include "tyk-operator-helm.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
@@ -327,8 +342,9 @@ webhooks:
     resources:
     - apidefinitions
   sideEffects: None
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: '{{ include "tyk-operator-helm.fullname" . }}-webhook-service'
       namespace: '{{ .Release.Namespace }}'
@@ -346,3 +362,4 @@ webhooks:
     - DELETE
     resources:
     - securitypolicies
+  sideEffects: None

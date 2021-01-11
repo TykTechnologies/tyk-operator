@@ -41,7 +41,7 @@ func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-apidefinition,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,verbs=create;update,versions=v1alpha1,name=mapidefinition.kb.io,sideEffects=None
+// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-apidefinition,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,verbs=create;update,versions=v1alpha1,name=mapidefinition.kb.io,sideEffects=None,admissionReviewVersions=v1,webhookVersions=v1
 
 var _ webhook.Defaulter = &ApiDefinition{}
 
@@ -95,7 +95,7 @@ func (in *ApiDefinition) Default() {
 	}
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-tyk-tyk-io-v1alpha1-apidefinition,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,versions=v1alpha1,name=vapidefinition.kb.io,sideEffects=None
+// +kubebuilder:webhook:verbs=create;update,path=/validate-tyk-tyk-io-v1alpha1-apidefinition,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=apidefinitions,versions=v1alpha1,name=vapidefinition.kb.io,sideEffects=None,admissionReviewVersions=v1,webhookVersions=v1
 
 var _ webhook.Validator = &ApiDefinition{}
 

@@ -1,26 +1,13 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.3.0
+    controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
   name: apidefinitions.tyk.tyk.io
 spec:
-  additionalPrinterColumns:
-  - JSONPath: .spec.domain
-    name: Domain
-    type: string
-  - JSONPath: .spec.proxy.listen_path
-    name: ListenPath
-    type: string
-  - JSONPath: .spec.proxy.target_url
-    name: Proxy.TargetURL
-    type: string
-  - JSONPath: .spec.active
-    name: Enabled
-    type: boolean
   group: tyk.tyk.io
   names:
     kind: ApiDefinition
@@ -30,142 +17,112 @@ spec:
     - tykapis
     singular: apidefinition
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: ApiDefinition is the Schema for the apidefinitions API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: APIDefinition represents the configuration for a single proxied
-            API and it's versions.
-          properties:
-            CORS:
-              description: CORS cors settings
-              properties:
-                allow_credentials:
-                  description: AllowCredentials if true will allow cookies
-                  type: boolean
-                allowed_headers:
-                  description: AllowedHeaders are headers that are allowed within
-                    a request.
-                  items:
-                    type: string
-                  type: array
-                allowed_methods:
-                  description: AllowedMethods is a list of methods to allow access
-                    via.
-                  items:
-                    description: Method represents HTTP request method
-                    enum:
-                    - GET
-                    - POST
-                    - PUT
-                    - PATCH
-                    - DELETE
-                    - OPTIONS
-                    - HEAD
-                    - CONNECT
-                    - TRACE
-                    type: string
-                  type: array
-                allowed_origins:
-                  description: AllowedOrigins is a list of origin domains to allow
-                    access from.
-                  items:
-                    type: string
-                  type: array
-                debug:
-                  description: Debug if true, this option produces log files for the
-                    CORS middleware
-                  type: boolean
-                enable:
-                  description: Enable when set to true it enables the cors middleware
-                    for the api
-                  type: boolean
-                exposed_headers:
-                  description: ExposedHeaders is a list of headers that are exposed
-                    back in the response.
-                  items:
-                    type: string
-                  type: array
-                max_age:
-                  description: MaxAge is the maximum age of credentials
-                  type: integer
-                options_passthrough:
-                  description: OptionsPassthrough allow CORS OPTIONS preflight request
-                    to be proxied directly to upstream, without authentication and
-                    rest of checks. This means that pre-flight requests generated
-                    by web-clients such as SwaggerUI or the Tyk Portal documentation
-                    system will be able to test the API using trial keys. If your
-                    service handles CORS natively, then enable this option.
-                  type: boolean
-              type: object
-            active:
-              description: Active specifies if the api is enabled or not
-              type: boolean
-            api_id:
-              description: Only set this field if you are referring To an existing
-                API in def. The Operator will use this API ID to link the CRD with
-                the API in Tyk Note the values in the CRD will become the new source
-                of truth, overriding the existing API Definition
-              type: string
-            auth:
-              properties:
-                auth_header_name:
-                  type: string
-                cookie_name:
-                  type: string
-                param_name:
-                  type: string
-                signature:
-                  properties:
-                    algorithm:
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.domain
+      name: Domain
+      type: string
+    - jsonPath: .spec.proxy.listen_path
+      name: ListenPath
+      type: string
+    - jsonPath: .spec.proxy.target_url
+      name: Proxy.TargetURL
+      type: string
+    - jsonPath: .spec.active
+      name: Enabled
+      type: boolean
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ApiDefinition is the Schema for the apidefinitions API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: APIDefinition represents the configuration for a single proxied
+              API and it's versions.
+            properties:
+              CORS:
+                description: CORS cors settings
+                properties:
+                  allow_credentials:
+                    description: AllowCredentials if true will allow cookies
+                    type: boolean
+                  allowed_headers:
+                    description: AllowedHeaders are headers that are allowed within
+                      a request.
+                    items:
                       type: string
-                    allowed_clock_skew:
-                      format: int64
-                      type: integer
-                    error_code:
-                      type: integer
-                    error_message:
+                    type: array
+                  allowed_methods:
+                    description: AllowedMethods is a list of methods to allow access
+                      via.
+                    items:
+                      description: Method represents HTTP request method
+                      enum:
+                      - GET
+                      - POST
+                      - PUT
+                      - PATCH
+                      - DELETE
+                      - OPTIONS
+                      - HEAD
+                      - CONNECT
+                      - TRACE
                       type: string
-                    header:
+                    type: array
+                  allowed_origins:
+                    description: AllowedOrigins is a list of origin domains to allow
+                      access from.
+                    items:
                       type: string
-                    secret:
+                    type: array
+                  debug:
+                    description: Debug if true, this option produces log files for
+                      the CORS middleware
+                    type: boolean
+                  enable:
+                    description: Enable when set to true it enables the cors middleware
+                      for the api
+                    type: boolean
+                  exposed_headers:
+                    description: ExposedHeaders is a list of headers that are exposed
+                      back in the response.
+                    items:
                       type: string
-                  required:
-                  - algorithm
-                  - allowed_clock_skew
-                  - error_code
-                  - error_message
-                  - header
-                  - secret
-                  type: object
-                use_certificate:
-                  type: boolean
-                use_cookie:
-                  type: boolean
-                use_param:
-                  type: boolean
-                validate_signature:
-                  type: boolean
-              required:
-              - auth_header_name
-              type: object
-            auth_configs:
-              additionalProperties:
+                    type: array
+                  max_age:
+                    description: MaxAge is the maximum age of credentials
+                    type: integer
+                  options_passthrough:
+                    description: OptionsPassthrough allow CORS OPTIONS preflight request
+                      to be proxied directly to upstream, without authentication and
+                      rest of checks. This means that pre-flight requests generated
+                      by web-clients such as SwaggerUI or the Tyk Portal documentation
+                      system will be able to test the API using trial keys. If your
+                      service handles CORS natively, then enable this option.
+                    type: boolean
+                type: object
+              active:
+                description: Active specifies if the api is enabled or not
+                type: boolean
+              api_id:
+                description: Only set this field if you are referring To an existing
+                  API in def. The Operator will use this API ID to link the CRD with
+                  the API in Tyk Note the values in the CRD will become the new source
+                  of truth, overriding the existing API Definition
+                type: string
+              auth:
                 properties:
                   auth_header_name:
                     type: string
@@ -207,1289 +164,1335 @@ spec:
                 required:
                 - auth_header_name
                 type: object
-              type: object
-            cache_options:
-              properties:
-                cache_all_safe_requests:
-                  description: CacheAllSafeRequests caches responses to (GET, HEAD,
-                    OPTIONS) requests overrides per-path cache settings in versions,
-                    applies across versions
-                  type: boolean
-                cache_by_headers:
-                  description: CacheByHeaders allows header values to be used as part
-                    of the cache key
-                  items:
+              auth_configs:
+                additionalProperties:
+                  properties:
+                    auth_header_name:
+                      type: string
+                    cookie_name:
+                      type: string
+                    param_name:
+                      type: string
+                    signature:
+                      properties:
+                        algorithm:
+                          type: string
+                        allowed_clock_skew:
+                          format: int64
+                          type: integer
+                        error_code:
+                          type: integer
+                        error_message:
+                          type: string
+                        header:
+                          type: string
+                        secret:
+                          type: string
+                      required:
+                      - algorithm
+                      - allowed_clock_skew
+                      - error_code
+                      - error_message
+                      - header
+                      - secret
+                      type: object
+                    use_certificate:
+                      type: boolean
+                    use_cookie:
+                      type: boolean
+                    use_param:
+                      type: boolean
+                    validate_signature:
+                      type: boolean
+                  required:
+                  - auth_header_name
+                  type: object
+                type: object
+              cache_options:
+                properties:
+                  cache_all_safe_requests:
+                    description: CacheAllSafeRequests caches responses to (GET, HEAD,
+                      OPTIONS) requests overrides per-path cache settings in versions,
+                      applies across versions
+                    type: boolean
+                  cache_by_headers:
+                    description: CacheByHeaders allows header values to be used as
+                      part of the cache key
+                    items:
+                      type: string
+                    type: array
+                  cache_control_ttl_header:
+                    description: CacheControlTTLHeader is the response header which
+                      tells Tyk how long it is safe to cache the response for
                     type: string
-                  type: array
-                cache_control_ttl_header:
-                  description: CacheControlTTLHeader is the response header which
-                    tells Tyk how long it is safe to cache the response for
-                  type: string
-                cache_response_codes:
-                  description: CacheOnlyResponseCodes is an array of response codes
-                    which are safe to cache. e.g. 404
-                  items:
+                  cache_response_codes:
+                    description: CacheOnlyResponseCodes is an array of response codes
+                      which are safe to cache. e.g. 404
+                    items:
+                      type: integer
+                    type: array
+                  cache_timeout:
+                    description: CacheTimeout is the TTL for a cached object in seconds
+                    format: int64
                     type: integer
-                  type: array
-                cache_timeout:
-                  description: CacheTimeout is the TTL for a cached object in seconds
-                  format: int64
-                  type: integer
-                enable_cache:
-                  description: EnableCache turns global cache middleware on or off.
-                    It is still possible to enable caching on a per-path basis by
-                    explicitly setting the endpoint cache middleware. see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
-                  type: boolean
-                enable_upstream_cache_control:
-                  description: EnableUpstreamCacheControl instructs Tyk Cache to respect
-                    upstream cache control headers
-                  type: boolean
-              required:
-              - cache_timeout
-              type: object
-            certificate_secret_names:
-              description: CertificateSecretNames represents the names of the secrets
-                that the controller should look for in the in the current namespace
-                which contain the certificates.
-              items:
+                  enable_cache:
+                    description: EnableCache turns global cache middleware on or off.
+                      It is still possible to enable caching on a per-path basis by
+                      explicitly setting the endpoint cache middleware. see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
+                    type: boolean
+                  enable_upstream_cache_control:
+                    description: EnableUpstreamCacheControl instructs Tyk Cache to
+                      respect upstream cache control headers
+                    type: boolean
+                required:
+                - cache_timeout
+                type: object
+              certificate_secret_names:
+                description: CertificateSecretNames represents the names of the secrets
+                  that the controller should look for in the in the current namespace
+                  which contain the certificates.
+                items:
+                  type: string
+                type: array
+              certificates:
+                description: Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint.
+                  Use CertificateSecretNames if using cert-manager
+                items:
+                  type: string
+                type: array
+              custom_middleware:
+                properties:
+                  auth_check:
+                    properties:
+                      name:
+                        type: string
+                      path:
+                        type: string
+                      raw_body_only:
+                        type: boolean
+                      require_session:
+                        type: boolean
+                    required:
+                    - name
+                    - path
+                    type: object
+                  driver:
+                    type: string
+                  id_extractor:
+                    properties:
+                      extract_from:
+                        type: string
+                      extract_with:
+                        type: string
+                      extractor_config:
+                        properties:
+                          header_name:
+                            type: string
+                          param_name:
+                            type: string
+                          regex_expression:
+                            type: string
+                          regex_match_index:
+                            type: integer
+                        type: object
+                    required:
+                    - extract_from
+                    - extract_with
+                    - extractor_config
+                    type: object
+                  post:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                  post_key_auth:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                  pre:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                  response:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        path:
+                          type: string
+                        raw_body_only:
+                          type: boolean
+                        require_session:
+                          type: boolean
+                      required:
+                      - name
+                      - path
+                      type: object
+                    type: array
+                required:
+                - driver
+                type: object
+              definition:
+                properties:
+                  key:
+                    type: string
+                  location:
+                    type: string
+                  strip_path:
+                    type: boolean
+                required:
+                - key
+                - location
+                - strip_path
+                type: object
+              do_not_track:
+                description: DoNotTrack disables endpoint tracking for this API. Default
+                  is true, you need to explicitly set it to false
+                type: boolean
+              domain:
+                description: Domain represents a custom host header that the gateway
+                  will listen on for this API
                 type: string
-              type: array
-            certificates:
-              description: Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint.
-                Use CertificateSecretNames if using cert-manager
-              items:
+              enable_context_vars:
+                description: EnableContextVars extracts request context variables
+                  from the start of the middleware chain. Set this to true to make
+                  them available to your transforms. Context Variables are available
+                  in the url rewriter, modify headers and body transforms.
+                type: boolean
+              enable_coprocess_auth:
+                type: boolean
+              enable_detailed_recording:
+                description: EnableDetailedRecording instructs Tyk store the inbound
+                  request and outbound response data in HTTP Wire format as part of
+                  the Analytics data
+                type: boolean
+              graphql:
+                description: GraphQLConfig is the root config object for a GraphQL
+                  API.
+                properties:
+                  enabled:
+                    description: Enabled indicates if GraphQL proxy should be enabled.
+                    type: boolean
+                  execution_mode:
+                    description: ExecutionMode is the mode to define how an api behaves.
+                    enum:
+                    - proxyOnly
+                    - executionEngine
+                    type: string
+                  playground:
+                    description: GraphQLPlayground is the Playground specific configuration.
+                    properties:
+                      enabled:
+                        description: Enabled indicates if the playground should be
+                          enabled.
+                        type: boolean
+                      path:
+                        description: Path sets the path on which the playground will
+                          be hosted if enabled.
+                        type: string
+                    required:
+                    - enabled
+                    - path
+                    type: object
+                  schema:
+                    description: Schema is the GraphQL Schema exposed by the GraphQL
+                      API/Upstream/Engine.
+                    type: string
+                  type_field_configurations:
+                    description: TypeFieldConfigurations is a rule set of data source
+                      and mapping of a schema field.
+                    items:
+                      properties:
+                        data_source:
+                          properties:
+                            data_source_config:
+                              description: Config is the DataSource specific configuration
+                                object Each Planner needs to make sure to parse their
+                                Config Object correctly
+                              properties:
+                                body:
+                                  type: string
+                                default_type_name:
+                                  type: string
+                                headers:
+                                  items:
+                                    type: string
+                                  type: array
+                                method:
+                                  description: Method represents HTTP request method
+                                  enum:
+                                  - GET
+                                  - POST
+                                  - PUT
+                                  - PATCH
+                                  - DELETE
+                                  - OPTIONS
+                                  - HEAD
+                                  - CONNECT
+                                  - TRACE
+                                  type: string
+                                status_code_type_name_mappings:
+                                  items:
+                                    properties:
+                                      status_code:
+                                        type: integer
+                                      type_name:
+                                        type: string
+                                    required:
+                                    - status_code
+                                    type: object
+                                  type: array
+                                url:
+                                  type: string
+                              required:
+                              - method
+                              - url
+                              type: object
+                            kind:
+                              description: Kind defines the unique identifier of the
+                                DataSource Kind needs to match to the Planner "DataSourceName"
+                                name
+                              enum:
+                              - GraphQLDataSource
+                              - HTTPJSONDataSource
+                              type: string
+                          required:
+                          - kind
+                          type: object
+                        field_name:
+                          type: string
+                        mapping:
+                          properties:
+                            disabled:
+                              type: boolean
+                            path:
+                              type: string
+                          required:
+                          - disabled
+                          - path
+                          type: object
+                        type_name:
+                          type: string
+                      required:
+                      - data_source
+                      - field_name
+                      - mapping
+                      - type_name
+                      type: object
+                    type: array
+                required:
+                - enabled
+                - execution_mode
+                - schema
+                type: object
+              id:
+                description: For server use only, do not use
                 type: string
-              type: array
-            custom_middleware:
-              properties:
-                auth_check:
+              listen_port:
+                type: integer
+              name:
+                type: string
+              org_id:
+                description: OrgID is overwritten - no point setting this
+                type: string
+              protocol:
+                enum:
+                - http
+                - https
+                - tcp
+                - tls
+                type: string
+              proxy:
+                description: Proxy
+                properties:
+                  check_host_against_uptime_tests:
+                    description: CheckHostAgainstUptimeTests will check the hostname
+                      of the outbound request against the downtime list generated
+                      by the uptime test host checker. If the host is found, then
+                      it is skipped or removed from the load balancer. This is only
+                      valid if uptime tests for the api are enabled.
+                    type: boolean
+                  disable_strip_slash:
+                    description: DisableStripSlash disables the stripping of the slash
+                      suffix from a URL. when `true` a request to http://foo.bar/baz/
+                      will be retained. when `false` a request to http://foo.bar/baz/
+                      will be matched to http://foo.bar/baz
+                    type: boolean
+                  enable_load_balancing:
+                    description: EnableLoadBalancing enables Tyk's round-robin loadbalancer.
+                      Tyk will ignore the TargetURL field, and rely on the hosts in
+                      the Targets list
+                    type: boolean
+                  listen_path:
+                    description: ListenPath represents the path to listen on. e.g.
+                      `/api` or `/` or `/httpbin`. Any requests coming into the host,
+                      on the port that Tyk is configured to run on, that match this
+                      path will have the rules defined in the API Definition applied.
+                      Versioning assumes that different versions of an API will live
+                      on the same URL structure. If you are using URL-based versioning
+                      (e.g. /v1/function, /v2/function) then it is recommended to
+                      set up a separate non-versioned definition for each version
+                      as they are essentially separate APIs.
+                    type: string
+                  preserve_host_header:
+                    description: If PreserveHostHeader is set to true then the host
+                      header in the outbound request is retained to be the inbound
+                      hostname of the proxy.
+                    type: boolean
+                  service_discovery:
+                    description: 'TODO: Untested. Is there a use-case for SD inside
+                      a K8s environment?'
+                    properties:
+                      cache_timeout:
+                        format: int64
+                        type: integer
+                      data_path:
+                        type: string
+                      endpoint_returns_list:
+                        type: boolean
+                      parent_data_path:
+                        type: string
+                      port_data_path:
+                        type: string
+                      query_endpoint:
+                        type: string
+                      target_path:
+                        type: string
+                      use_discovery_service:
+                        type: boolean
+                      use_nested_query:
+                        type: boolean
+                      use_target_list:
+                        type: boolean
+                    required:
+                    - cache_timeout
+                    - data_path
+                    - endpoint_returns_list
+                    - parent_data_path
+                    - port_data_path
+                    - query_endpoint
+                    - target_path
+                    - use_discovery_service
+                    - use_nested_query
+                    - use_target_list
+                    type: object
+                  strip_listen_path:
+                    description: StripListenPath removes the inbound listen path in
+                      the outgoing request. e.g. http://acme.com/httpbin/get where
+                      `httpbin` is the listen path. The `httpbin` listen path which
+                      is used to identify the API loaded in Tyk is removed, and the
+                      outbound request would be http://httpbin.org/get
+                    type: boolean
+                  target_list:
+                    description: Targets defines a list of upstream host targets.
+                      Tyk will then round-robin load balance between these targets.
+                      EnableLoadBalancing must be set to true in order to take advantage
+                      of this feature.
+                    items:
+                      type: string
+                    type: array
+                  target_url:
+                    description: TargetURL defines the target URL that the request
+                      should be proxied to.
+                    type: string
+                  transport:
+                    description: Transport section exposes advanced transport level
+                      configurations such as minimum TLS version.
+                    properties:
+                      proxy_url:
+                        description: ProxyURL specifies custom forward proxy & port.
+                          e.g. `http(s)://proxy.url:1234`
+                        type: string
+                      ssl_ciphers:
+                        description: SSLCipherSuites is an array of acceptable cipher
+                          suites. A list of allowed cipher suites can be found in
+                          the Go Crypto TLS package constants documentation https://golang.org/pkg/crypto/tls/#pkg-constants
+                        items:
+                          type: string
+                        type: array
+                      ssl_force_common_name_check:
+                        description: SSLForceCommonNameCheck forces hostname validation
+                          against the certificate Common Name
+                        type: boolean
+                      ssl_insecure_skip_verify:
+                        description: SSLInsecureSkipVerify controls whether it is
+                          possible to use self-signed certificates when connecting
+                          to the upstream. This is applied to `TykMakeHttpRequest`
+                          & `TykMakeBatchRequest` in virtual endpoint middleware.
+                        type: boolean
+                      ssl_min_version:
+                        description: 'SSLMinVersion defines the minimum TLS version
+                          the gateway will use to establish a connection to the upstream.
+                          1.0: 769; 1.1: 770; 1.2: 771; 1.3: 772.'
+                        enum:
+                        - 769
+                        - 770
+                        - 771
+                        - 772
+                        type: integer
+                    type: object
+                required:
+                - target_url
+                type: object
+              response_processors:
+                items:
                   properties:
                     name:
                       type: string
-                    path:
-                      type: string
-                    raw_body_only:
-                      type: boolean
-                    require_session:
-                      type: boolean
                   required:
                   - name
-                  - path
                   type: object
-                driver:
+                type: array
+              strip_auth_data:
+                description: StripAuthData ensures that any security tokens used for
+                  accessing APIs are stripped and not leaked to the upstream
+                type: boolean
+              tags:
+                description: Tags are named gateway nodes which tell gateway clusters
+                  whether to load an API or not. for example, to load the API in an
+                  ARA gateway, you might want to include an `edge` tag.
+                items:
                   type: string
-                id_extractor:
-                  properties:
-                    extract_from:
-                      type: string
-                    extract_with:
-                      type: string
-                    extractor_config:
-                      properties:
-                        header_name:
-                          type: string
-                        param_name:
-                          type: string
-                        regex_expression:
-                          type: string
-                        regex_match_index:
-                          type: integer
-                      type: object
-                  required:
-                  - extract_from
-                  - extract_with
-                  - extractor_config
-                  type: object
-                post:
-                  items:
-                    properties:
-                      name:
-                        type: string
-                      path:
-                        type: string
-                      raw_body_only:
-                        type: boolean
-                      require_session:
-                        type: boolean
-                    required:
-                    - name
-                    - path
-                    type: object
-                  type: array
-                post_key_auth:
-                  items:
-                    properties:
-                      name:
-                        type: string
-                      path:
-                        type: string
-                      raw_body_only:
-                        type: boolean
-                      require_session:
-                        type: boolean
-                    required:
-                    - name
-                    - path
-                    type: object
-                  type: array
-                pre:
-                  items:
-                    properties:
-                      name:
-                        type: string
-                      path:
-                        type: string
-                      raw_body_only:
-                        type: boolean
-                      require_session:
-                        type: boolean
-                    required:
-                    - name
-                    - path
-                    type: object
-                  type: array
-                response:
-                  items:
-                    properties:
-                      name:
-                        type: string
-                      path:
-                        type: string
-                      raw_body_only:
-                        type: boolean
-                      require_session:
-                        type: boolean
-                    required:
-                    - name
-                    - path
-                    type: object
-                  type: array
-              required:
-              - driver
-              type: object
-            definition:
-              properties:
-                key:
-                  type: string
-                location:
-                  type: string
-                strip_path:
-                  type: boolean
-              required:
-              - key
-              - location
-              - strip_path
-              type: object
-            do_not_track:
-              description: DoNotTrack disables endpoint tracking for this API. Default
-                is true, you need to explicitly set it to false
-              type: boolean
-            domain:
-              description: Domain represents a custom host header that the gateway
-                will listen on for this API
-              type: string
-            enable_context_vars:
-              description: EnableContextVars extracts request context variables from
-                the start of the middleware chain. Set this to true to make them available
-                to your transforms. Context Variables are available in the url rewriter,
-                modify headers and body transforms.
-              type: boolean
-            enable_coprocess_auth:
-              type: boolean
-            enable_detailed_recording:
-              description: EnableDetailedRecording instructs Tyk store the inbound
-                request and outbound response data in HTTP Wire format as part of
-                the Analytics data
-              type: boolean
-            graphql:
-              description: GraphQLConfig is the root config object for a GraphQL API.
-              properties:
-                enabled:
-                  description: Enabled indicates if GraphQL proxy should be enabled.
-                  type: boolean
-                execution_mode:
-                  description: ExecutionMode is the mode to define how an api behaves.
-                  enum:
-                  - proxyOnly
-                  - executionEngine
-                  type: string
-                playground:
-                  description: GraphQLPlayground is the Playground specific configuration.
-                  properties:
-                    enabled:
-                      description: Enabled indicates if the playground should be enabled.
-                      type: boolean
-                    path:
-                      description: Path sets the path on which the playground will
-                        be hosted if enabled.
-                      type: string
-                  required:
-                  - enabled
-                  - path
-                  type: object
-                schema:
-                  description: Schema is the GraphQL Schema exposed by the GraphQL
-                    API/Upstream/Engine.
-                  type: string
-                type_field_configurations:
-                  description: TypeFieldConfigurations is a rule set of data source
-                    and mapping of a schema field.
-                  items:
-                    properties:
-                      data_source:
-                        properties:
-                          data_source_config:
-                            description: Config is the DataSource specific configuration
-                              object Each Planner needs to make sure to parse their
-                              Config Object correctly
-                            properties:
-                              body:
-                                type: string
-                              default_type_name:
-                                type: string
-                              headers:
-                                items:
-                                  type: string
-                                type: array
-                              method:
-                                description: Method represents HTTP request method
-                                enum:
-                                - GET
-                                - POST
-                                - PUT
-                                - PATCH
-                                - DELETE
-                                - OPTIONS
-                                - HEAD
-                                - CONNECT
-                                - TRACE
-                                type: string
-                              status_code_type_name_mappings:
-                                items:
-                                  properties:
-                                    status_code:
-                                      type: integer
-                                    type_name:
-                                      type: string
-                                  required:
-                                  - status_code
-                                  type: object
-                                type: array
-                              url:
-                                type: string
-                            required:
-                            - method
-                            - url
-                            type: object
-                          kind:
-                            description: Kind defines the unique identifier of the
-                              DataSource Kind needs to match to the Planner "DataSourceName"
-                              name
-                            enum:
-                            - GraphQLDataSource
-                            - HTTPJSONDataSource
-                            type: string
-                        required:
-                        - kind
-                        type: object
-                      field_name:
-                        type: string
-                      mapping:
-                        properties:
-                          disabled:
-                            type: boolean
-                          path:
-                            type: string
-                        required:
-                        - disabled
-                        - path
-                        type: object
-                      type_name:
-                        type: string
-                    required:
-                    - data_source
-                    - field_name
-                    - mapping
-                    - type_name
-                    type: object
-                  type: array
-              required:
-              - enabled
-              - execution_mode
-              - schema
-              type: object
-            id:
-              description: For server use only, do not use
-              type: string
-            listen_port:
-              type: integer
-            name:
-              type: string
-            org_id:
-              description: OrgID is overwritten - no point setting this
-              type: string
-            protocol:
-              enum:
-              - http
-              - https
-              - tcp
-              - tls
-              type: string
-            proxy:
-              description: Proxy
-              properties:
-                check_host_against_uptime_tests:
-                  description: CheckHostAgainstUptimeTests will check the hostname
-                    of the outbound request against the downtime list generated by
-                    the uptime test host checker. If the host is found, then it is
-                    skipped or removed from the load balancer. This is only valid
-                    if uptime tests for the api are enabled.
-                  type: boolean
-                disable_strip_slash:
-                  description: DisableStripSlash disables the stripping of the slash
-                    suffix from a URL. when `true` a request to http://foo.bar/baz/
-                    will be retained. when `false` a request to http://foo.bar/baz/
-                    will be matched to http://foo.bar/baz
-                  type: boolean
-                enable_load_balancing:
-                  description: EnableLoadBalancing enables Tyk's round-robin loadbalancer.
-                    Tyk will ignore the TargetURL field, and rely on the hosts in
-                    the Targets list
-                  type: boolean
-                listen_path:
-                  description: ListenPath represents the path to listen on. e.g. `/api`
-                    or `/` or `/httpbin`. Any requests coming into the host, on the
-                    port that Tyk is configured to run on, that match this path will
-                    have the rules defined in the API Definition applied. Versioning
-                    assumes that different versions of an API will live on the same
-                    URL structure. If you are using URL-based versioning (e.g. /v1/function,
-                    /v2/function) then it is recommended to set up a separate non-versioned
-                    definition for each version as they are essentially separate APIs.
-                  type: string
-                preserve_host_header:
-                  description: If PreserveHostHeader is set to true then the host
-                    header in the outbound request is retained to be the inbound hostname
-                    of the proxy.
-                  type: boolean
-                service_discovery:
-                  description: 'TODO: Untested. Is there a use-case for SD inside
-                    a K8s environment?'
-                  properties:
-                    cache_timeout:
-                      format: int64
-                      type: integer
-                    data_path:
-                      type: string
-                    endpoint_returns_list:
-                      type: boolean
-                    parent_data_path:
-                      type: string
-                    port_data_path:
-                      type: string
-                    query_endpoint:
-                      type: string
-                    target_path:
-                      type: string
-                    use_discovery_service:
-                      type: boolean
-                    use_nested_query:
-                      type: boolean
-                    use_target_list:
-                      type: boolean
-                  required:
-                  - cache_timeout
-                  - data_path
-                  - endpoint_returns_list
-                  - parent_data_path
-                  - port_data_path
-                  - query_endpoint
-                  - target_path
-                  - use_discovery_service
-                  - use_nested_query
-                  - use_target_list
-                  type: object
-                strip_listen_path:
-                  description: StripListenPath removes the inbound listen path in
-                    the outgoing request. e.g. http://acme.com/httpbin/get where `httpbin`
-                    is the listen path. The `httpbin` listen path which is used to
-                    identify the API loaded in Tyk is removed, and the outbound request
-                    would be http://httpbin.org/get
-                  type: boolean
-                target_list:
-                  description: Targets defines a list of upstream host targets. Tyk
-                    will then round-robin load balance between these targets. EnableLoadBalancing
-                    must be set to true in order to take advantage of this feature.
-                  items:
-                    type: string
-                  type: array
-                target_url:
-                  description: TargetURL defines the target URL that the request should
-                    be proxied to.
-                  type: string
-                transport:
-                  description: Transport section exposes advanced transport level
-                    configurations such as minimum TLS version.
-                  properties:
-                    proxy_url:
-                      description: ProxyURL specifies custom forward proxy & port.
-                        e.g. `http(s)://proxy.url:1234`
-                      type: string
-                    ssl_ciphers:
-                      description: SSLCipherSuites is an array of acceptable cipher
-                        suites. A list of allowed cipher suites can be found in the
-                        Go Crypto TLS package constants documentation https://golang.org/pkg/crypto/tls/#pkg-constants
-                      items:
-                        type: string
-                      type: array
-                    ssl_force_common_name_check:
-                      description: SSLForceCommonNameCheck forces hostname validation
-                        against the certificate Common Name
-                      type: boolean
-                    ssl_insecure_skip_verify:
-                      description: SSLInsecureSkipVerify controls whether it is possible
-                        to use self-signed certificates when connecting to the upstream.
-                        This is applied to `TykMakeHttpRequest` & `TykMakeBatchRequest`
-                        in virtual endpoint middleware.
-                      type: boolean
-                    ssl_min_version:
-                      description: 'SSLMinVersion defines the minimum TLS version
-                        the gateway will use to establish a connection to the upstream.
-                        1.0: 769; 1.1: 770; 1.2: 771; 1.3: 772.'
-                      enum:
-                      - 769
-                      - 770
-                      - 771
-                      - 772
-                      type: integer
-                  type: object
-              required:
-              - target_url
-              type: object
-            response_processors:
-              items:
+                type: array
+              use_keyless:
+                description: UseKeylessAccess will switch off all key checking. Some
+                  analytics will still be recorded, but rate-limiting, quotas and
+                  security policies will not be possible (there is no session to attach
+                  requests to).
+                type: boolean
+              use_standard_auth:
+                description: UseStandardAuth enables simple bearer token authentication
+                type: boolean
+              version_data:
                 properties:
-                  name:
+                  default_version:
                     type: string
-                required:
-                - name
-                type: object
-              type: array
-            strip_auth_data:
-              description: StripAuthData ensures that any security tokens used for
-                accessing APIs are stripped and not leaked to the upstream
-              type: boolean
-            tags:
-              description: Tags are named gateway nodes which tell gateway clusters
-                whether to load an API or not. for example, to load the API in an
-                ARA gateway, you might want to include an `edge` tag.
-              items:
-                type: string
-              type: array
-            use_keyless:
-              description: UseKeylessAccess will switch off all key checking. Some
-                analytics will still be recorded, but rate-limiting, quotas and security
-                policies will not be possible (there is no session to attach requests
-                to).
-              type: boolean
-            use_standard_auth:
-              description: UseStandardAuth enables simple bearer token authentication
-              type: boolean
-            version_data:
-              properties:
-                default_version:
-                  type: string
-                not_versioned:
-                  type: boolean
-                versions:
-                  additionalProperties:
-                    properties:
-                      expires:
-                        type: string
-                      extended_paths:
-                        properties:
-                          advance_cache_config:
-                            items:
-                              properties:
-                                cache_key_regex:
-                                  type: string
-                                cache_response_codes:
-                                  items:
+                  not_versioned:
+                    type: boolean
+                  versions:
+                    additionalProperties:
+                      properties:
+                        expires:
+                          type: string
+                        extended_paths:
+                          properties:
+                            advance_cache_config:
+                              items:
+                                properties:
+                                  cache_key_regex:
+                                    type: string
+                                  cache_response_codes:
+                                    items:
+                                      type: integer
+                                    type: array
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                required:
+                                - cache_key_regex
+                                - cache_response_codes
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            black_list:
+                              items:
+                                properties:
+                                  ignore_case:
+                                    type: boolean
+                                  method_actions:
+                                    additionalProperties:
+                                      properties:
+                                        action:
+                                          type: string
+                                        code:
+                                          type: integer
+                                        data:
+                                          type: string
+                                        headers:
+                                          additionalProperties:
+                                            type: string
+                                          type: object
+                                      required:
+                                      - action
+                                      - code
+                                      - data
+                                      - headers
+                                      type: object
+                                    type: object
+                                  path:
+                                    type: string
+                                required:
+                                - ignore_case
+                                - method_actions
+                                - path
+                                type: object
+                              type: array
+                            cache:
+                              description: List of paths which cache middleware should
+                                be enabled on
+                              items:
+                                type: string
+                              type: array
+                            circuit_breakers:
+                              items:
+                                properties:
+                                  disable_half_open_state:
+                                    type: boolean
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                  return_to_service_after:
+                                    description: ReturnToServiceAfter represents the
+                                      time in seconds to return back to the service
                                     type: integer
-                                  type: array
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - cache_key_regex
-                              - cache_response_codes
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          black_list:
-                            items:
-                              properties:
-                                ignore_case:
-                                  type: boolean
-                                method_actions:
-                                  additionalProperties:
-                                    properties:
-                                      action:
-                                        type: string
-                                      code:
-                                        type: integer
-                                      data:
-                                        type: string
-                                      headers:
-                                        additionalProperties:
+                                  samples:
+                                    description: Samples defines the number of requests
+                                      to base the ThresholdPercent on
+                                    format: int64
+                                    type: integer
+                                  threshold_percent:
+                                    description: ThresholdPercent is the percentage
+                                      of requests that fail before breaker is tripped
+                                    type: string
+                                required:
+                                - method
+                                - path
+                                - return_to_service_after
+                                - samples
+                                - threshold_percent
+                                type: object
+                              type: array
+                            do_not_track_endpoints:
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                required:
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            hard_timeouts:
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                  timeout:
+                                    type: integer
+                                required:
+                                - method
+                                - path
+                                - timeout
+                                type: object
+                              type: array
+                            ignored:
+                              items:
+                                properties:
+                                  ignore_case:
+                                    type: boolean
+                                  method_actions:
+                                    additionalProperties:
+                                      properties:
+                                        action:
                                           type: string
-                                        type: object
-                                    required:
-                                    - action
-                                    - code
-                                    - data
-                                    - headers
-                                    type: object
-                                  type: object
-                                path:
-                                  type: string
-                              required:
-                              - ignore_case
-                              - method_actions
-                              - path
-                              type: object
-                            type: array
-                          cache:
-                            description: List of paths which cache middleware should
-                              be enabled on
-                            items:
-                              type: string
-                            type: array
-                          circuit_breakers:
-                            items:
-                              properties:
-                                disable_half_open_state:
-                                  type: boolean
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                                return_to_service_after:
-                                  description: ReturnToServiceAfter represents the
-                                    time in seconds to return back to the service
-                                  type: integer
-                                samples:
-                                  description: Samples defines the number of requests
-                                    to base the ThresholdPercent on
-                                  format: int64
-                                  type: integer
-                                threshold_percent:
-                                  description: ThresholdPercent is the percentage
-                                    of requests that fail before breaker is tripped
-                                  type: string
-                              required:
-                              - method
-                              - path
-                              - return_to_service_after
-                              - samples
-                              - threshold_percent
-                              type: object
-                            type: array
-                          do_not_track_endpoints:
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          hard_timeouts:
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                                timeout:
-                                  type: integer
-                              required:
-                              - method
-                              - path
-                              - timeout
-                              type: object
-                            type: array
-                          ignored:
-                            items:
-                              properties:
-                                ignore_case:
-                                  type: boolean
-                                method_actions:
-                                  additionalProperties:
-                                    properties:
-                                      action:
-                                        type: string
-                                      code:
-                                        type: integer
-                                      data:
-                                        type: string
-                                      headers:
-                                        additionalProperties:
+                                        code:
+                                          type: integer
+                                        data:
                                           type: string
-                                        type: object
-                                    required:
-                                    - action
-                                    - code
-                                    - data
-                                    - headers
+                                        headers:
+                                          additionalProperties:
+                                            type: string
+                                          type: object
+                                      required:
+                                      - action
+                                      - code
+                                      - data
+                                      - headers
+                                      type: object
                                     type: object
-                                  type: object
-                                path:
-                                  type: string
-                              required:
-                              - ignore_case
-                              - method_actions
-                              - path
-                              type: object
-                            type: array
-                          internal:
-                            description: ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
-                              //  Breaking integration test?
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          method_transforms:
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                                to_method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                              required:
-                              - method
-                              - path
-                              - to_method
-                              type: object
-                            type: array
-                          size_limits:
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                                size_limit:
-                                  format: int64
-                                  type: integer
-                              required:
-                              - method
-                              - path
-                              - size_limit
-                              type: object
-                            type: array
-                          track_endpoints:
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          transform:
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                                template_data:
-                                  properties:
-                                    enable_session:
-                                      type: boolean
-                                    input_type:
-                                      type: string
-                                    template_mode:
-                                      type: string
-                                    template_source:
-                                      type: string
-                                  required:
-                                  - enable_session
-                                  - input_type
-                                  - template_mode
-                                  - template_source
-                                  type: object
-                              required:
-                              - method
-                              - path
-                              - template_data
-                              type: object
-                            type: array
-                          transform_headers:
-                            items:
-                              properties:
-                                act_on:
-                                  type: boolean
-                                add_headers:
-                                  additionalProperties:
+                                  path:
                                     type: string
-                                  type: object
-                                delete_headers:
-                                  items:
+                                required:
+                                - ignore_case
+                                - method_actions
+                                - path
+                                type: object
+                              type: array
+                            internal:
+                              description: ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
+                                //  Breaking integration test?
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
                                     type: string
-                                  type: array
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - act_on
-                              - add_headers
-                              - delete_headers
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          transform_jq:
-                            items:
-                              properties:
-                                filter:
-                                  type: string
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - filter
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          transform_jq_response:
-                            items:
-                              properties:
-                                filter:
-                                  type: string
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - filter
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          transform_response:
-                            items:
-                              properties:
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                                template_data:
-                                  properties:
-                                    enable_session:
-                                      type: boolean
-                                    input_type:
-                                      type: string
-                                    template_mode:
-                                      type: string
-                                    template_source:
-                                      type: string
-                                  required:
-                                  - enable_session
-                                  - input_type
-                                  - template_mode
-                                  - template_source
-                                  type: object
-                              required:
-                              - method
-                              - path
-                              - template_data
-                              type: object
-                            type: array
-                          transform_response_headers:
-                            items:
-                              properties:
-                                act_on:
-                                  type: boolean
-                                add_headers:
-                                  additionalProperties:
+                                  path:
                                     type: string
-                                  type: object
-                                delete_headers:
-                                  items:
+                                required:
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            method_transforms:
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
                                     type: string
-                                  type: array
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                              required:
-                              - act_on
-                              - add_headers
-                              - delete_headers
-                              - method
-                              - path
-                              type: object
-                            type: array
-                          url_rewrites:
-                            items:
-                              properties:
-                                match_pattern:
-                                  description: MatchPattern is a regular expression
-                                    pattern to match the path
-                                  type: string
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  description: Path represents the endpoint listen
-                                    path
-                                  type: string
-                                rewrite_to:
-                                  description: RewriteTo is the target path on the
-                                    upstream, or target URL we wish to rewrite to
-                                  type: string
-                                triggers:
-                                  items:
+                                  path:
+                                    type: string
+                                  to_method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                required:
+                                - method
+                                - path
+                                - to_method
+                                type: object
+                              type: array
+                            size_limits:
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                  size_limit:
+                                    format: int64
+                                    type: integer
+                                required:
+                                - method
+                                - path
+                                - size_limit
+                                type: object
+                              type: array
+                            track_endpoints:
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                required:
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            transform:
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                  template_data:
                                     properties:
-                                      "on":
+                                      enable_session:
+                                        type: boolean
+                                      input_type:
                                         type: string
-                                      options:
-                                        properties:
-                                          header_matches:
-                                            additionalProperties:
-                                              properties:
-                                                match_rx:
-                                                  type: string
-                                                reverse:
-                                                  type: boolean
-                                              required:
-                                              - match_rx
-                                              - reverse
-                                              type: object
-                                            type: object
-                                          path_part_matches:
-                                            additionalProperties:
-                                              properties:
-                                                match_rx:
-                                                  type: string
-                                                reverse:
-                                                  type: boolean
-                                              required:
-                                              - match_rx
-                                              - reverse
-                                              type: object
-                                            type: object
-                                          payload_matches:
-                                            properties:
-                                              match_rx:
-                                                type: string
-                                              reverse:
-                                                type: boolean
-                                            required:
-                                            - match_rx
-                                            - reverse
-                                            type: object
-                                          query_val_matches:
-                                            additionalProperties:
-                                              properties:
-                                                match_rx:
-                                                  type: string
-                                                reverse:
-                                                  type: boolean
-                                              required:
-                                              - match_rx
-                                              - reverse
-                                              type: object
-                                            type: object
-                                          request_context_matches:
-                                            additionalProperties:
-                                              properties:
-                                                match_rx:
-                                                  type: string
-                                                reverse:
-                                                  type: boolean
-                                              required:
-                                              - match_rx
-                                              - reverse
-                                              type: object
-                                            type: object
-                                          session_meta_matches:
-                                            additionalProperties:
-                                              properties:
-                                                match_rx:
-                                                  type: string
-                                                reverse:
-                                                  type: boolean
-                                              required:
-                                              - match_rx
-                                              - reverse
-                                              type: object
-                                            type: object
-                                        required:
-                                        - header_matches
-                                        - path_part_matches
-                                        - payload_matches
-                                        - query_val_matches
-                                        - request_context_matches
-                                        - session_meta_matches
-                                        type: object
-                                      rewrite_to:
+                                      template_mode:
+                                        type: string
+                                      template_source:
                                         type: string
                                     required:
-                                    - "on"
-                                    - options
-                                    - rewrite_to
+                                    - enable_session
+                                    - input_type
+                                    - template_mode
+                                    - template_source
                                     type: object
-                                  type: array
-                              required:
-                              - match_pattern
-                              - method
-                              - path
-                              - rewrite_to
-                              - triggers
-                              type: object
-                            type: array
-                          virtual:
-                            items:
-                              properties:
-                                function_source_type:
-                                  type: string
-                                function_source_uri:
-                                  type: string
-                                method:
-                                  description: Method represents HTTP request method
-                                  enum:
-                                  - GET
-                                  - POST
-                                  - PUT
-                                  - PATCH
-                                  - DELETE
-                                  - OPTIONS
-                                  - HEAD
-                                  - CONNECT
-                                  - TRACE
-                                  type: string
-                                path:
-                                  type: string
-                                proxy_on_error:
-                                  type: boolean
-                                response_function_name:
-                                  type: string
-                                use_session:
-                                  type: boolean
-                              required:
-                              - function_source_type
-                              - function_source_uri
-                              - method
-                              - path
-                              - proxy_on_error
-                              - response_function_name
-                              - use_session
-                              type: object
-                            type: array
-                          white_list:
-                            items:
-                              properties:
-                                ignore_case:
-                                  type: boolean
-                                method_actions:
-                                  additionalProperties:
+                                required:
+                                - method
+                                - path
+                                - template_data
+                                type: object
+                              type: array
+                            transform_headers:
+                              items:
+                                properties:
+                                  act_on:
+                                    type: boolean
+                                  add_headers:
+                                    additionalProperties:
+                                      type: string
+                                    type: object
+                                  delete_headers:
+                                    items:
+                                      type: string
+                                    type: array
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                required:
+                                - act_on
+                                - add_headers
+                                - delete_headers
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            transform_jq:
+                              items:
+                                properties:
+                                  filter:
+                                    type: string
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                required:
+                                - filter
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            transform_jq_response:
+                              items:
+                                properties:
+                                  filter:
+                                    type: string
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                required:
+                                - filter
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            transform_response:
+                              items:
+                                properties:
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                  template_data:
                                     properties:
-                                      action:
+                                      enable_session:
+                                        type: boolean
+                                      input_type:
                                         type: string
-                                      code:
-                                        type: integer
-                                      data:
+                                      template_mode:
                                         type: string
-                                      headers:
-                                        additionalProperties:
+                                      template_source:
+                                        type: string
+                                    required:
+                                    - enable_session
+                                    - input_type
+                                    - template_mode
+                                    - template_source
+                                    type: object
+                                required:
+                                - method
+                                - path
+                                - template_data
+                                type: object
+                              type: array
+                            transform_response_headers:
+                              items:
+                                properties:
+                                  act_on:
+                                    type: boolean
+                                  add_headers:
+                                    additionalProperties:
+                                      type: string
+                                    type: object
+                                  delete_headers:
+                                    items:
+                                      type: string
+                                    type: array
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                required:
+                                - act_on
+                                - add_headers
+                                - delete_headers
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            url_rewrites:
+                              items:
+                                properties:
+                                  match_pattern:
+                                    description: MatchPattern is a regular expression
+                                      pattern to match the path
+                                    type: string
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    description: Path represents the endpoint listen
+                                      path
+                                    type: string
+                                  rewrite_to:
+                                    description: RewriteTo is the target path on the
+                                      upstream, or target URL we wish to rewrite to
+                                    type: string
+                                  triggers:
+                                    items:
+                                      properties:
+                                        "on":
                                           type: string
-                                        type: object
-                                    required:
-                                    - action
-                                    - code
-                                    - data
-                                    - headers
+                                        options:
+                                          properties:
+                                            header_matches:
+                                              additionalProperties:
+                                                properties:
+                                                  match_rx:
+                                                    type: string
+                                                  reverse:
+                                                    type: boolean
+                                                required:
+                                                - match_rx
+                                                - reverse
+                                                type: object
+                                              type: object
+                                            path_part_matches:
+                                              additionalProperties:
+                                                properties:
+                                                  match_rx:
+                                                    type: string
+                                                  reverse:
+                                                    type: boolean
+                                                required:
+                                                - match_rx
+                                                - reverse
+                                                type: object
+                                              type: object
+                                            payload_matches:
+                                              properties:
+                                                match_rx:
+                                                  type: string
+                                                reverse:
+                                                  type: boolean
+                                              required:
+                                              - match_rx
+                                              - reverse
+                                              type: object
+                                            query_val_matches:
+                                              additionalProperties:
+                                                properties:
+                                                  match_rx:
+                                                    type: string
+                                                  reverse:
+                                                    type: boolean
+                                                required:
+                                                - match_rx
+                                                - reverse
+                                                type: object
+                                              type: object
+                                            request_context_matches:
+                                              additionalProperties:
+                                                properties:
+                                                  match_rx:
+                                                    type: string
+                                                  reverse:
+                                                    type: boolean
+                                                required:
+                                                - match_rx
+                                                - reverse
+                                                type: object
+                                              type: object
+                                            session_meta_matches:
+                                              additionalProperties:
+                                                properties:
+                                                  match_rx:
+                                                    type: string
+                                                  reverse:
+                                                    type: boolean
+                                                required:
+                                                - match_rx
+                                                - reverse
+                                                type: object
+                                              type: object
+                                          required:
+                                          - header_matches
+                                          - path_part_matches
+                                          - payload_matches
+                                          - query_val_matches
+                                          - request_context_matches
+                                          - session_meta_matches
+                                          type: object
+                                        rewrite_to:
+                                          type: string
+                                      required:
+                                      - "on"
+                                      - options
+                                      - rewrite_to
+                                      type: object
+                                    type: array
+                                required:
+                                - match_pattern
+                                - method
+                                - path
+                                - rewrite_to
+                                - triggers
+                                type: object
+                              type: array
+                            virtual:
+                              items:
+                                properties:
+                                  function_source_type:
+                                    type: string
+                                  function_source_uri:
+                                    type: string
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                  proxy_on_error:
+                                    type: boolean
+                                  response_function_name:
+                                    type: string
+                                  use_session:
+                                    type: boolean
+                                required:
+                                - function_source_type
+                                - function_source_uri
+                                - method
+                                - path
+                                - proxy_on_error
+                                - response_function_name
+                                - use_session
+                                type: object
+                              type: array
+                            white_list:
+                              items:
+                                properties:
+                                  ignore_case:
+                                    type: boolean
+                                  method_actions:
+                                    additionalProperties:
+                                      properties:
+                                        action:
+                                          type: string
+                                        code:
+                                          type: integer
+                                        data:
+                                          type: string
+                                        headers:
+                                          additionalProperties:
+                                            type: string
+                                          type: object
+                                      required:
+                                      - action
+                                      - code
+                                      - data
+                                      - headers
+                                      type: object
                                     type: object
-                                  type: object
-                                path:
-                                  type: string
-                              required:
-                              - ignore_case
-                              - method_actions
-                              - path
-                              type: object
-                            type: array
-                        type: object
-                      global_headers:
-                        additionalProperties:
+                                  path:
+                                    type: string
+                                required:
+                                - ignore_case
+                                - method_actions
+                                - path
+                                type: object
+                              type: array
+                          type: object
+                        global_headers:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        global_headers_remove:
+                          items:
+                            type: string
+                          type: array
+                        global_response_headers:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        global_response_headers_remove:
+                          items:
+                            type: string
+                          type: array
+                        global_size_limit:
+                          format: int64
+                          type: integer
+                        ignore_endpoint_case:
+                          type: boolean
+                        name:
                           type: string
-                        type: object
-                      global_headers_remove:
-                        items:
+                        override_target:
                           type: string
-                        type: array
-                      global_response_headers:
-                        additionalProperties:
-                          type: string
-                        type: object
-                      global_response_headers_remove:
-                        items:
-                          type: string
-                        type: array
-                      global_size_limit:
-                        format: int64
-                        type: integer
-                      ignore_endpoint_case:
-                        type: boolean
-                      name:
-                        type: string
-                      override_target:
-                        type: string
-                      paths:
-                        properties:
-                          black_list:
-                            items:
-                              type: string
-                            type: array
-                          ignored:
-                            items:
-                              type: string
-                            type: array
-                          white_list:
-                            items:
-                              type: string
-                            type: array
-                        required:
-                        - black_list
-                        - ignored
-                        - white_list
-                        type: object
-                      use_extended_paths:
-                        type: boolean
-                    required:
-                    - name
+                        paths:
+                          properties:
+                            black_list:
+                              items:
+                                type: string
+                              type: array
+                            ignored:
+                              items:
+                                type: string
+                              type: array
+                            white_list:
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - black_list
+                          - ignored
+                          - white_list
+                          type: object
+                        use_extended_paths:
+                          type: boolean
+                      required:
+                      - name
+                      type: object
                     type: object
-                  type: object
-              required:
-              - default_version
-              - not_versioned
-              type: object
-          required:
-          - name
-          - protocol
-          - proxy
-          type: object
-        status:
-          description: ApiDefinitionStatus defines the observed state of ApiDefinition
-          properties:
-            api_id:
-              type: string
-          required:
-          - api_id
-          type: object
-      type: object
-  version: v1alpha1
-  versions:
-  - name: v1alpha1
+                required:
+                - default_version
+                - not_versioned
+                type: object
+            required:
+            - name
+            - protocol
+            - proxy
+            type: object
+          status:
+            description: ApiDefinitionStatus defines the observed state of ApiDefinition
+            properties:
+              api_id:
+                type: string
+            required:
+            - api_id
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

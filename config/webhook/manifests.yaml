@@ -1,13 +1,14 @@
 
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   creationTimestamp: null
   name: mutating-webhook-configuration
 webhooks:
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: webhook-service
       namespace: system
@@ -25,8 +26,9 @@ webhooks:
     resources:
     - apidefinitions
   sideEffects: None
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: webhook-service
       namespace: system
@@ -43,16 +45,18 @@ webhooks:
     - UPDATE
     resources:
     - securitypolicies
+  sideEffects: None
 
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: webhook-service
       namespace: system
@@ -70,8 +74,9 @@ webhooks:
     resources:
     - apidefinitions
   sideEffects: None
-- clientConfig:
-    caBundle: Cg==
+- admissionReviewVersions:
+  - v1
+  clientConfig:
     service:
       name: webhook-service
       namespace: system
@@ -89,3 +94,4 @@ webhooks:
     - DELETE
     resources:
     - securitypolicies
+  sideEffects: None
