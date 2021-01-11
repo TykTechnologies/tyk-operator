@@ -1,14 +1,18 @@
-[Quickstart API Definitions](#quickstart-api-definitions) | [Installation](#installation) | [IDE Integration](#ide-integration) | [Community](#community)
-
 # Tyk Operator
 
-Tyk Operator contains various custom resources and controllers which enable 
- Full-Lifecycle API Management with Tyk by extending the Kubernetes API.
+- [Quickstart API Definitions](#quickstart-api-definitions)
+- [Installation](#installation)
+- [IDE Integration](#ide-integration)
+  - [VS Code](#vs-code)
+- [Community](#community)
+
+Tyk Operator contains various custom resources and controllers which enable Full-Lifecycle API Management with Tyk by
+extending the Kubernetes API.
 
 Read more about the [concepts here](./docs/concepts.md).
 
 Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
- and documentation for each of these custom resources are available:
+and documentation for each of these custom resources are available:
 
 - [API Definitions](./docs/api_definitions.md)
 - [WebHooks](./docs/webhooks.md)
@@ -39,6 +43,7 @@ spec:
     listen_path: /httpbin
     strip_listen_path: true
 ```
+
 </p>
 </details>
 
@@ -236,32 +241,39 @@ spec:
 
 ## Installation
 
-[Installing the tyk-operator](./docs/installation/installation.md)
+[Installing the Tyk Operator](./docs/installation/installation.md).
 
-tyk-operator is under active development. 
+Tyk Operator is under active development.
 
 We are building the operator to enable you to build and ship your APIs faster and more safely. We are actively working
-on improving & stabilising our v1alpha1 custom resources, whilst also working on a helm chart so that you can 
-manage your tyk-operator deployment. 
+on improving & stabilising our v1alpha1 custom resources, whilst also working on a helm chart so that you can manage
+your tyk-operator deployment.
 
-If you find any bugs, please raise an issue. 
-We welcome code contributions as well. 
-If you require any features that we have not yet implemented, please take the time to write a GH issue detailing your
-use-case so that we may prioritise accordingly. 
+If you find any defects, please [raise an issue](https://github.com/TykTechnologies/tyk-operator/issues/new).
+We welcome code contributions as well.
+
+If you require any features that we have not yet implemented, please take the time to
+[write a GH issue](https://github.com/TykTechnologies/tyk-operator/issues/new/choose) detailing your use case so that
+we may prioritise accordingly.
+
+For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new)
+in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions).
 
 ## IDE Integration
+
 This section details the steps required to add K8s extensions to popular IDEs.
 
 ### VS Code
- 
-[Watch video tutorial here](http://www.youtube.com/watch?v=Kdrfp6aAZEU)
-  
+
+[Watch video tutorial here](http://www.youtube.com/watch?v=Kdrfp6aAZEU).
+
 Steps:
-1. Go to the following link: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools
+
+1. Go to the following link: <https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools>
 2. Click on Install. This will prompt you to open Visual Studios.
 3. Click Open Visual Studios at the subsequent prompt. This will open VS Code and take you to the Extensions' section.
 4. Click Install in the Kubernetes extension page.
-  
+
 Note: The extension should take effect immediately. In case it doesn't, simply restart VS Code.
 
 ## Community
