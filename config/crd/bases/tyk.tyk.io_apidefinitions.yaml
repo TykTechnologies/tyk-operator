@@ -117,6 +117,10 @@ spec:
               description: Active specifies if the api is enabled or not
               type: boolean
             allowed_ips:
+              description: AllowedIPs is a list of IP address that are whitelisted.When
+                this is provided all IP address that is not on this list will be blocked
+                and a 403 http status will be returned. The IP address can be IPv4
+                or IPv6.IP in CIDR notation is also supported.
               items:
                 type: string
               type: array
@@ -213,6 +217,10 @@ spec:
                 type: object
               type: object
             blacklisted_ips:
+              description: BlacklistedIPs is a list of IP address that will be blacklisted.This
+                means if origin IP matches any IP in this list a 403 http status code
+                will be returned. The IP address can be IPv4 or IPv6. IP in CIDR notation
+                is also supported.
               items:
                 type: string
               type: array
@@ -410,13 +418,10 @@ spec:
                 the Analytics data
               type: boolean
             enable_ip_blacklisting:
+              description: EnableIPBlacklisting activates the ip blacklisting middleware.
               type: boolean
             enable_ip_whitelisting:
-              description: SessionLifetime        int64               `json:"session_lifetime"`
-                Internal               bool                `json:"internal"` AuthProvider           AuthProviderMeta    `json:"auth_provider"`
-                SessionProvider        SessionProviderMeta `json:"session_provider"`
-                //EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
-                EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
+              description: EnableIPWhiteListing activates the ip whitelisting middleware.
               type: boolean
             graphql:
               description: GraphQLConfig is the root config object for a GraphQL API.

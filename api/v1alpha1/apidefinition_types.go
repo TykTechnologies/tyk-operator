@@ -458,10 +458,24 @@ type APIDefinitionSpec struct {
 	//SessionProvider        SessionProviderMeta `json:"session_provider"`
 	////EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
 	//EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
-	EnableIPWhiteListing bool     `json:"enable_ip_whitelisting,omitempty"`
-	AllowedIPs           []string `json:"allowed_ips,omitempty"`
-	EnableIPBlacklisting bool     `json:"enable_ip_blacklisting,omitempty"`
-	BlacklistedIPs       []string `json:"blacklisted_ips,omitempty"`
+
+	// EnableIPWhiteListing activates the ip whitelisting middleware.
+	EnableIPWhiteListing bool `json:"enable_ip_whitelisting,omitempty"`
+
+	// AllowedIPs is a list of IP address that are whitelisted.When this is
+	// provided all IP address that is not on this list will be blocked and a 403 http
+	// status will be returned. The IP address can be IPv4 or IPv6.IP in
+	// CIDR notation is also supported.
+	AllowedIPs []string `json:"allowed_ips,omitempty"`
+
+	// EnableIPBlacklisting activates the ip blacklisting middleware.
+	EnableIPBlacklisting bool `json:"enable_ip_blacklisting,omitempty"`
+
+	// BlacklistedIPs is a list of IP address that will be blacklisted.This means if
+	// origin IP matches any IP in this list a 403 http status code will be
+	// returned. The IP address can be IPv4 or IPv6. IP in CIDR notation is also
+	// supported.
+	BlacklistedIPs []string `json:"blacklisted_ips,omitempty"`
 	//DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
 

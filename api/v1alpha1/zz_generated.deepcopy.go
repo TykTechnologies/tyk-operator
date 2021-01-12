@@ -45,6 +45,16 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 	in.VersionData.DeepCopyInto(&out.VersionData)
 	in.CustomMiddleware.DeepCopyInto(&out.CustomMiddleware)
 	in.CacheOptions.DeepCopyInto(&out.CacheOptions)
+	if in.AllowedIPs != nil {
+		in, out := &in.AllowedIPs, &out.AllowedIPs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.BlacklistedIPs != nil {
+		in, out := &in.BlacklistedIPs, &out.BlacklistedIPs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.ResponseProcessors != nil {
 		in, out := &in.ResponseProcessors, &out.ResponseProcessors
 		*out = make([]ResponseProcessor, len(*in))
