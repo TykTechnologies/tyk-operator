@@ -45,8 +45,8 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Basic Authentication | ❌ | Not implemented |
 | Plugin Auth - Go | ❌ | Not implemented |
 | [Plugin Auth - gRPC](./../bdd/features/api_http_grpc_plugin.feature) | ✅ | - |
-| IP Whitelisting | ❌ | Not implemented |
-| IP Blacklisting | ❌ | Not implemented |
+| [IP Whitelisting](./api_definitions/ip.md#whitelisting) | ✅ | - |
+| [IP Blacklisting](./api_definitions/ip.md#blacklisting) | ✅ | - |
 
 ## Gateway to Upstream Authentication
 
