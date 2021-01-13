@@ -1,0 +1,34 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.default.svc:8000
+    listen_path: /
+  version_data:
+    default_version: v1
+    not_versioned: true
+    versions:
+      Default:
+        name: v1
+        use_extended_paths: true
+        paths:
+          black_list: []
+          ignored: []
+          white_list: []
+        extended_paths:
+          url_rewrites:
+            - path: /get
+              method: GET
+              match_pattern: /get(.*)
+              rewrite_to: /anything$1
+              triggers: []
+          method_transforms:
+            - path: /get
+              method: GET
+              to_method: POST
