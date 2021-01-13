@@ -165,7 +165,7 @@ install-operator-helm: cross-build-image manifests helm
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: scrap
-scrap: generate manifests helm cross-build-image  
+scrap: generate manifests helm cross-build-image
 	@echo "===> re installing operator with helm"
 	kind load docker-image ${IMG} --name=${CLUSTER_NAME}
 	helm uninstall ci -n tyk-operator-system
@@ -196,10 +196,9 @@ boot-pro: setup-pro install-operator-helm
 boot-ce:setup-ce install-operator-helm
 	@echo "******** Successful boot strapped ce dev env ************"
 
-.PHONY: bdd 
+.PHONY: bdd
 bdd:
 	go test -timeout 400s -v  ./bdd
-	
+
 .PHONY: test-all
 test-all: test bdd
-
