@@ -23,12 +23,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.15.x
-      - uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: checking ci DASH_LICENSE expiry
         shell: bash
         run: jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
