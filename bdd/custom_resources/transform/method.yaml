@@ -14,7 +14,7 @@ spec:
     default_version: v1
     not_versioned: true
     versions:
-      Default:
+      v1:
         name: v1
         use_extended_paths: true
         paths:
