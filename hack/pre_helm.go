@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"unicode"
+	"unicode/utf8"
 )
 
 func main() {
@@ -23,5 +25,27 @@ func main() {
 	for k, v := range m {
 		b = bytes.ReplaceAll(b, []byte(k), []byte(v))
 	}
-	os.Stdout.Write(b)
+	os.Stdout.Write(injectResources(b))
+}
+
+var resource = `{{- with .Values.resources}}
+        resources:
+{{- . | toYaml | nindent 10 }}
+{{end}}
+`
+
+func injectResources(b []byte) []byte {
+	n := bytes.Index(b, []byte("kind: Deployment"))
+	s := b[n:]
+	w := bytes.Index(s, []byte("volumeMounts"))
+	for ; w > 0; w-- {
+		r, _ := utf8.DecodeLastRune(s[:w])
+		if !unicode.IsSpace(r) {
+			break
+		}
+	}
+	w++
+	return append(b[:n+w],
+		append([]byte(resource), b[n+w:]...)...,
+	)
 }
