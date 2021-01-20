@@ -41,6 +41,18 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.JWTDefaultPolicies != nil {
+		in, out := &in.JWTDefaultPolicies, &out.JWTDefaultPolicies
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.JWTScopeToPolicyMapping != nil {
+		in, out := &in.JWTScopeToPolicyMapping, &out.JWTScopeToPolicyMapping
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	out.VersionDefinition = in.VersionDefinition
 	in.VersionData.DeepCopyInto(&out.VersionData)
 	in.CustomMiddleware.DeepCopyInto(&out.CustomMiddleware)
