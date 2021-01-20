@@ -417,22 +417,24 @@ type APIDefinitionSpec struct {
 	//ClientCertificates         []string              `json:"client_certificates"`
 	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
-	//EnableJWT                  bool                  `json:"enable_jwt"`
+
+	// EnableJWT enables JSON web token authentication
+	EnableJWT bool `json:"enable_jwt,omitempty"`
 	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
 
-	EnableCoProcessAuth bool `json:"enable_coprocess_auth,omitempty"`
-	//JWTSigningMethod           string                `json:"jwt_signing_method"`
-	//JWTSource                  string                `json:"jwt_source"`
-	//JWTIdentityBaseField       string                `json:"jwt_identity_base_field"`
-	//JWTClientIDBaseField       string                `json:"jwt_client_base_field"`
-	//JWTPolicyFieldName         string                `json:"jwt_policy_field_name"`
-	//JWTDefaultPolicies         []string              `json:"jwt_default_policies"`
-	//JWTIssuedAtValidationSkew  uint64                `json:"jwt_issued_at_validation_skew"`
-	//JWTExpiresAtValidationSkew uint64                `json:"jwt_expires_at_validation_skew"`
-	//JWTNotBeforeValidationSkew uint64                `json:"jwt_not_before_validation_skew"`
-	//JWTSkipKid                 bool                  `json:"jwt_skip_kid"`
-	//JWTScopeToPolicyMapping    map[string]string     `json:"jwt_scope_to_policy_mapping"`
-	//JWTScopeClaimName          string                `json:"jwt_scope_claim_name"`
+	EnableCoProcessAuth        bool              `json:"enable_coprocess_auth,omitempty"`
+	JWTSigningMethod           string            `json:"jwt_signing_method,omitempty"`
+	JWTSource                  string            `json:"jwt_source,omitempty"`
+	JWTIdentityBaseField       string            `json:"jwt_identity_base_field,omitempty"`
+	JWTClientIDBaseField       string            `json:"jwt_client_base_field,omitempty"`
+	JWTPolicyFieldName         string            `json:"jwt_policy_field_name,omitempty"`
+	JWTDefaultPolicies         []string          `json:"jwt_default_policies,omitempty"`
+	JWTIssuedAtValidationSkew  uint64            `json:"jwt_issued_at_validation_skew,omitempty"`
+	JWTExpiresAtValidationSkew uint64            `json:"jwt_expires_at_validation_skew,omitempty"`
+	JWTNotBeforeValidationSkew uint64            `json:"jwt_not_before_validation_skew,omitempty"`
+	JWTSkipKid                 bool              `json:"jwt_skip_kid,omitempty"`
+	JWTScopeToPolicyMapping    map[string]string `json:"jwt_scope_to_policy_mapping,omitempty"`
+	JWTScopeClaimName          string            `json:"jwt_scope_claim_name,omitempty"`
 	//NotificationsDetails       NotificationsManager  `json:"notifications"`
 	//EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
 	//HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
