@@ -243,22 +243,6 @@ spec:
 
 [Installing the Tyk Operator](./docs/installation/installation.md).
 
-Tyk Operator is under active development.
-
-We are building the operator to enable you to build and ship your APIs faster and more safely. We are actively working
-on improving & stabilising our v1alpha1 custom resources, whilst also working on a helm chart so that you can manage
-your tyk-operator deployment.
-
-If you find any defects, please [raise an issue](https://github.com/TykTechnologies/tyk-operator/issues/new).
-We welcome code contributions as well.
-
-If you require any features that we have not yet implemented, please take the time to
-[write a GH issue](https://github.com/TykTechnologies/tyk-operator/issues/new/choose) detailing your use case so that
-we may prioritise accordingly.
-
-For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new)
-in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions).
-
 ## IDE Integration
 
 This section details the steps required to add K8s extensions to popular IDEs.
@@ -277,6 +261,20 @@ Steps:
 Note: The extension should take effect immediately. In case it doesn't, simply restart VS Code.
 
 ## Community
+
+Tyk Operator is under active development.
+
+We are building the operator to enable you to build and ship your APIs faster and more safely.
+
+If you find any defects, please [raise an issue](https://github.com/TykTechnologies/tyk-operator/issues/new).
+We welcome code contributions as well.
+
+If you require any features that we have not yet implemented, please take the time to
+[write a GH issue](https://github.com/TykTechnologies/tyk-operator/issues/new/choose) detailing your use case so that
+we may prioritise accordingly.
+
+For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new)
+in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions).
 
 - [Configuring your development environment](./docs/development.md)
 - [Request a feature](https://github.com/TykTechnologies/tyk-operator/issues)
