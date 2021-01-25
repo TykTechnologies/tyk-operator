@@ -99,7 +99,7 @@ These are features which are only available to tyk PRO users
 | Security - Block list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
 | Security - Ignore list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
 | Transform - Internal | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
-| Transform - Method | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
+| Transform - Method |  ✅ | - |
 | Transform - Mock | ⚠️ | [Untested #93](https://github.com/TykTechnologies/tyk-operator/issues/93) |
 | [Transform - Request Body](../config/samples/httpbin_transform.yaml) | ✅ | - |
 | [Transform - Response Body](../config/samples/httpbin_transform.yaml) | ✅ | - |
