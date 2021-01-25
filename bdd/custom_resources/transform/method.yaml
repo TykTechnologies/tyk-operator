@@ -22,13 +22,7 @@ spec:
           ignored: []
           white_list: []
         extended_paths:
-          url_rewrites:
-            - path: /get
-              method: GET
-              match_pattern: /get(.*)
-              rewrite_to: /anything$1
-              triggers: []
           method_transforms:
-            - path: /get
+            - path: /anything
               method: GET
               to_method: POST
