@@ -269,7 +269,15 @@ func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {
 }
 
 func (s *store) theResponseShouldContainJSONKeyValue(key string, expVal string) error {
-	panic("not implemented this test")
+	m := map[string]interface{}{}
+	if err := json.Unmarshal(s.responseBody, &m); err != nil {
+		return err
+	}
+	got := fmt.Sprint(m[key])
+	if got != expVal {
+		return fmt.Errorf("expected %q got %q", expVal, got)
+	}
+	return nil
 }
 
 func (s *store) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
