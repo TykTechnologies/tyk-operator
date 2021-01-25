@@ -41,6 +41,10 @@ type RoutingTriggerOnType string
 // +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE;OPTIONS;HEAD;CONNECT;TRACE
 type HttpMethod string
 
+// JWTSigningMethod algorithm used to sign jwt token
+// +kubebuilder:validation:Enum=rsa;hmac;ecdsa
+type JWTSigningMethod string
+
 // ExecutionMode is the mode to define how an api behaves.
 // +kubebuilder:validation:Enum=proxyOnly;executionEngine
 type GraphQLExecutionMode string
@@ -423,7 +427,7 @@ type APIDefinitionSpec struct {
 	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
 
 	EnableCoProcessAuth        bool              `json:"enable_coprocess_auth,omitempty"`
-	JWTSigningMethod           string            `json:"jwt_signing_method,omitempty"`
+	JWTSigningMethod           JWTSigningMethod  `json:"jwt_signing_method,omitempty"`
 	JWTSource                  string            `json:"jwt_source,omitempty"`
 	JWTIdentityBaseField       string            `json:"jwt_identity_base_field,omitempty"`
 	JWTClientIDBaseField       string            `json:"jwt_client_base_field,omitempty"`

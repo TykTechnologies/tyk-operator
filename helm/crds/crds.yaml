@@ -520,6 +520,11 @@ spec:
                 type: string
               type: object
             jwt_signing_method:
+              description: JWTSigningMethod algorithm used to sign jwt token
+              enum:
+              - rsa
+              - hmac
+              - ecdsa
               type: string
             jwt_skip_kid:
               type: boolean
