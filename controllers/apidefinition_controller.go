@@ -160,10 +160,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition isnatnce")
 	}
-	if queueA != 0 {
-		return ctrl.Result{RequeueAfter: queueA}, err
-	}
-	return ctrl.Result{Requeue: queue}, err
+	return ctrl.Result{Requeue: queue, RequeueAfter: queueA}, err
 }
 
 // This triggers an update to all ingress resources that have template

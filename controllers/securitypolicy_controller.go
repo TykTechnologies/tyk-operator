@@ -18,9 +18,13 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
@@ -60,10 +64,14 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	if err := r.Get(ctx, req.NamespacedName, policy); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
+	var queueA time.Duration
 	_, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(policy, policyFinalizer) {
+				if err := r.checkLinkedAPI(ctx, policy); err != nil {
+					queueA = queueAfter
+					return err
+				}
 				return r.delete(ctx, policy)
 			}
 			return nil
@@ -92,7 +100,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	if err == nil {
 		r.Log.Info("Completed reconciling SecurityPolicy instance")
 	}
-	return ctrl.Result{}, err
+	return ctrl.Result{RequeueAfter: queueA}, err
 }
 
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
@@ -189,6 +197,27 @@ func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *
 				r.Log.Error(err, "Failed to update linked api definition")
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func (r *SecurityPolicyReconciler) checkLinkedAPI(ctx context.Context, a *tykv1alpha1.SecurityPolicy) error {
+	r.Log.Info("checking linked api definitions")
+	if len(a.Status.LinkedAPI) == 0 {
+		return nil
+	}
+	for _, n := range a.Status.LinkedAPI {
+		p := strings.Split(n, string(types.Separator))
+		if len(p) != 2 {
+			err := fmt.Errorf("malformed linked_api expected namespace/name format got %s", n)
+			r.Log.Error(err, "Failed to parse lined_policies")
+			return err
+		}
+		ns := types.NamespacedName{Namespace: p[0], Name: p[1]}
+		var api tykv1alpha1.ApiDefinition
+		if err := r.Get(ctx, ns, &api); err == nil {
+			return fmt.Errorf("unable to delete policy due to security policy dependency=%s", n)
 		}
 	}
 	return nil
