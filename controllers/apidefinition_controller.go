@@ -39,8 +39,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+const queueAfter = time.Second * 5
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {
@@ -60,7 +61,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	namespacedName := req.NamespacedName
 
 	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
-
+	log.Info("Reconciling ApiDefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
@@ -77,43 +78,14 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, nil
 	}
 
-	// If object is being deleted
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("resource being deleted")
-		// If our finalizer is present, need to delete from Tyk still
-		if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
-			if err := r.checkLinkedPolicies(ctx, desired); err != nil {
-				return ctrl.Result{RequeueAfter: time.Second * 5}, err
-			}
-			log.Info("deleting api")
-			err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
-			if err != nil {
-				log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
-				return ctrl.Result{}, err
-			}
-			err = r.UniversalClient.HotReload()
-			if err != nil {
-				log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
-				return ctrl.Result{}, err
-			}
-			err = r.updateLinkedPolicies(ctx, desired, func(sps *tykv1alpha1.SecurityPolicyStatus, s string) {
-				sps.LinkedAPI = removeString(sps.LinkedAPI, s)
-			})
-			if err != nil {
-				log.Error(err, "Failed to update linked policies")
-				return reconcile.Result{}, err
-			}
-			log.Info("removing finalizer")
-			util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
-			if err := r.Update(ctx, desired); err != nil {
-				return reconcile.Result{}, err
-			}
-		}
-		log.Info("done")
-		return reconcile.Result{}, nil
-	}
 	var queue bool
+	var queueA time.Duration
 	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+			e, err := r.delete(ctx, desired)
+			queueA = e
+			return err
+		}
 		if desired.Spec.APIID == "" {
 			desired.Spec.APIID = encodeNS(req.NamespacedName.String())
 		}
@@ -183,9 +155,14 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			}
 		}
 		r.UniversalClient.HotReload()
-		log.Info("done")
 		return nil
 	})
+	if err == nil {
+		log.Info("Completed reconciling ApiDefinition isnatnce")
+	}
+	if queueA != 0 {
+		return ctrl.Result{RequeueAfter: queueA}, err
+	}
 	return ctrl.Result{Requeue: queue}, err
 }
 
@@ -248,6 +225,37 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 		}
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alpha1.ApiDefinition) (time.Duration, error) {
+	r.Log.Info("resource being deleted")
+	// If our finalizer is present, need to delete from Tyk still
+	if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
+		if err := r.checkLinkedPolicies(ctx, desired); err != nil {
+			return queueAfter, err
+		}
+		r.Log.Info("deleting api")
+		err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
+		if err != nil {
+			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
+			return 0, err
+		}
+		err = r.UniversalClient.HotReload()
+		if err != nil {
+			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
+			return 0, err
+		}
+		err = r.updateLinkedPolicies(ctx, desired, func(sps *tykv1alpha1.SecurityPolicyStatus, s string) {
+			sps.LinkedAPI = removeString(sps.LinkedAPI, s)
+		})
+		if err != nil {
+			r.Log.Error(err, "Failed to update linked policies")
+			return 0, err
+		}
+		r.Log.Info("removing finalizer")
+		util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
+	}
+	return 0, nil
 }
 
 // checkLinkedPolicies checks if there are any policies that are still linking

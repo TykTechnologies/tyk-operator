@@ -25,7 +25,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -62,16 +61,14 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	op, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
+	_, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(policy, policyFinalizer) {
 				return r.delete(ctx, policy)
 			}
 			return nil
 		}
-		if !util.ContainsFinalizer(policy, policyFinalizer) {
-			util.AddFinalizer(policy, policyFinalizer)
-		}
+		util.AddFinalizer(policy, policyFinalizer)
 		if policy.Spec.ID == "" {
 			policy.Spec.ID = encodeNS(ns)
 		}
@@ -84,13 +81,6 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			a := &policy.Spec.AccessRightsArray[i]
 			err := r.updateAccess(ctx, a, ns)
 			if err != nil {
-				if errors.IsNotFound(err) {
-					r.Log.Info("APIDefinition resource was not found",
-						"Name", a.Name,
-						"Namespace", a.Namespace,
-					)
-					return nil
-				}
 				return err
 			}
 		}
@@ -99,22 +89,21 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		}
 		return r.update(ctx, policy)
 	})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return ctrl.Result{}, nil
-		}
-		r.Log.Error(err, "Failed create or update security policy ", "Op", op)
-		return ctrl.Result{}, err
+	if err == nil {
+		r.Log.Info("Completed reconciling SecurityPolicy instance")
 	}
-	r.Log.Info("Done reconcile", "Op", op)
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, err
 }
 
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 	a *tykv1.AccessDefinition, namespacedName string) error {
 	api := &tykv1.ApiDefinition{}
 	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
-		return err
+		r.Log.Info("APIDefinition resource was not found",
+			"Name", a.Name,
+			"Namespace", a.Namespace,
+		)
+		return client.IgnoreNotFound(err)
 	}
 	def, err := r.UniversalClient.Api().Get(api.Status.ApiID)
 	if err != nil {
