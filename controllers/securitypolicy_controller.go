@@ -24,6 +24,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -81,7 +82,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		r.Log.Info("updating access rights")
 		for i := 0; i < len(policy.Spec.AccessRightsArray); i++ {
 			a := &policy.Spec.AccessRightsArray[i]
-			err := r.updateAccess(ctx, a)
+			err := r.updateAccess(ctx, a, ns)
 			if err != nil {
 				if errors.IsNotFound(err) {
 					r.Log.Info("APIDefinition resource was not found",
@@ -110,7 +111,7 @@ func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 }
 
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
-	a *tykv1.AccessDefinition) error {
+	a *tykv1.AccessDefinition, namespacedName string) error {
 	api := &tykv1.ApiDefinition{}
 	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 		return err
@@ -135,6 +136,12 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to delete resource")
 		return err
 	}
+	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns string) {
+		ads.LinkedPolicies = removeString(ads.LinkedPolicies, ns)
+	})
+	if err != nil {
+		return err
+	}
 	r.Log.Info("Successfully deleted Policy")
 	return nil
 }
@@ -145,6 +152,12 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	err := r.UniversalClient.SecurityPolicy().Update(&policy.Spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to update policy")
+		return err
+	}
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s string) {
+		ads.LinkedPolicies = addString(ads.LinkedPolicies, s)
+	})
+	if err != nil {
 		return err
 	}
 	r.UniversalClient.HotReload()
@@ -159,11 +172,40 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to create policy")
 		return err
 	}
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s string) {
+		ads.LinkedPolicies = addString(ads.LinkedPolicies, s)
+	})
 	r.Log.Info("Successful created Policy")
 	policy.Status.PolID = policy.Spec.MID
 	return r.Status().Update(ctx, policy)
 }
 
+// updateLinkedAPI updates the status of api definitions associated with this
+// policy.
+func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *tykv1.SecurityPolicy,
+	fn func(*tykv1.ApiDefinitionStatus, string),
+) error {
+	r.Log.Info("Updating linked api definitions")
+	ns := (types.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}).String()
+	for _, a := range policy.Spec.AccessRightsArray {
+		api := &tykv1.ApiDefinition{}
+		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
+			r.Log.Error(err, "Failed to get linked api definition")
+			return err
+		}
+		x := api.Status.DeepCopy()
+		fn(&api.Status, ns)
+		if !equality.Semantic.DeepEqual(x, api.Status) {
+			if err := r.Status().Update(ctx, api); err != nil {
+				r.Log.Error(err, "Failed to update linked api definition")
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SetupWithManager initializes the security policy controller.
 func (r *SecurityPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1.SecurityPolicy{}).

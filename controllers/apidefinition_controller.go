@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -80,38 +81,20 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		log.Info("resource being deleted")
 		// If our finalizer is present, need to delete from Tyk still
 		if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
-			log.Info("checking linked security policies")
-			policies, err := r.UniversalClient.SecurityPolicy().All()
-			if err != nil && !universal_client.IsTODO(err) {
-				log.Info(err.Error())
-				return ctrl.Result{RequeueAfter: time.Second * 5}, err
+			if err := r.checkLinkedPolicies(ctx, desired); err != nil {
+				return ctrl.Result{RequeueAfter: time.Second * 5}, nil
 			}
-
-			for _, policy := range policies {
-				for _, right := range policy.AccessRightsArray {
-					if right.APIID == desired.Status.ApiID {
-						log.Info("unable to delete api due to security policy dependency",
-							"api", namespacedName.String(),
-							"policy", apiIDDecode(policy.ID),
-						)
-						return ctrl.Result{RequeueAfter: time.Second * 5}, err
-					}
-				}
-			}
-
 			log.Info("deleting api")
-			err = r.UniversalClient.Api().Delete(desired.Status.ApiID)
+			err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
 			if err != nil {
 				log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 				return ctrl.Result{}, err
 			}
-
 			err = r.UniversalClient.HotReload()
 			if err != nil {
 				log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 				return ctrl.Result{}, err
 			}
-
 			log.Info("removing finalizer")
 			util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 			if err := r.Update(ctx, desired); err != nil {
@@ -204,7 +187,6 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 //
 // We return nil when a is being deleted and do nothing.
 func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a *tykv1alpha1.ApiDefinition) (ctrl.Result, error) {
-
 	if !a.DeletionTimestamp.IsZero() {
 		if util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
 			ls := v1beta1.IngressList{}
@@ -261,6 +243,35 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 	return ctrl.Result{}, nil
 }
 
+// checkLinkedPolicies checks if there are any policies that are still linking
+// to this api defintion resource.
+func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
+	r.Log.Info("checking linked security policies")
+	if len(a.Status.LinkedPolicies) == 0 {
+		return nil
+	}
+	api := (types.NamespacedName{Namespace: a.Namespace, Name: a.Name}).String()
+	for _, n := range a.Status.LinkedPolicies {
+		p := strings.Split(n, string(types.Separator))
+		if len(p) != 2 {
+			err := fmt.Errorf("malformed linked_policy expected namespace/name format got %s", n)
+			r.Log.Error(err, "Failed to parse lined_policies")
+			return err
+		}
+		ns := types.NamespacedName{Namespace: p[0], Name: p[1]}
+		var policy tykv1alpha1.SecurityPolicy
+		if err := r.Get(ctx, ns, &policy); err == nil {
+			r.Log.Info("unable to delete api due to security policy dependency",
+				"api", api,
+				"policies", n,
+			)
+			return err
+		}
+	}
+	return nil
+}
+
+// SetupWithManager initializes the api definition controller.
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).

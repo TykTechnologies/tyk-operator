@@ -749,6 +749,11 @@ type GraphQLPlayground struct {
 // ApiDefinitionStatus defines the observed state of ApiDefinition
 type ApiDefinitionStatus struct {
 	ApiID string `json:"api_id"`
+
+	// LinkedPolicies is a list of policy resources that depends on this api
+	// definition.
+	//+optional
+	LinkedPolicies []string `json:"linked_policies,omitempty"`
 }
 
 // +kubebuilder:object:root=true

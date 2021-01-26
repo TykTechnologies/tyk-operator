@@ -36,6 +36,17 @@ func removeString(slice []string, s string) (result []string) {
 	return
 }
 
+// addString returns a string slice with s in it. If s is in slice then slice
+// will be returned
+func addString(slice []string, s string) (result []string) {
+	for _, item := range slice {
+		if item == s {
+			return slice
+		}
+	}
+	return append(slice, s)
+}
+
 func apiIDDecode(encoded string) string {
 	apiBytes, _ := base64.URLEncoding.DecodeString(encoded)
 	return string(apiBytes)
