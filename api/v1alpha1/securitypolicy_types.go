@@ -136,6 +136,8 @@ type PolicyPartitions struct {
 // SecurityPolicyStatus defines the observed state of SecurityPolicy
 type SecurityPolicyStatus struct {
 	PolID string `json:"pol_id"`
+	// LinkedAPI is a list of ApiDefinition resources linked to this policy.
+	LinkedAPI []string `json:"linked_api,omitempty"`
 }
 
 // +kubebuilder:object:root=true

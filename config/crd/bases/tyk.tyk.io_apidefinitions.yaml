@@ -1542,6 +1542,12 @@ spec:
           properties:
             api_id:
               type: string
+            linked_policies:
+              description: LinkedPolicies is a list of policy resources that depends
+                on this api definition.
+              items:
+                type: string
+              type: array
           required:
           - api_id
           type: object

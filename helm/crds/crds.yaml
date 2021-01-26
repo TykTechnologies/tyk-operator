@@ -1440,6 +1440,11 @@ spec:
           properties:
             api_id:
               type: string
+            linked_policies:
+              description: LinkedPolicies is a list of policy resources that depends on this api definition.
+              items:
+                type: string
+              type: array
           required:
           - api_id
           type: object
@@ -1675,6 +1680,11 @@ spec:
         status:
           description: SecurityPolicyStatus defines the observed state of SecurityPolicy
           properties:
+            linked_api:
+              description: LinkedAPI is a list of ApiDefinition resources linked to this policy.
+              items:
+                type: string
+              type: array
             pol_id:
               type: string
           required:

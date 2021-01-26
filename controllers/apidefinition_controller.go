@@ -82,7 +82,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		// If our finalizer is present, need to delete from Tyk still
 		if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
 			if err := r.checkLinkedPolicies(ctx, desired); err != nil {
-				return ctrl.Result{RequeueAfter: time.Second * 5}, nil
+				return ctrl.Result{RequeueAfter: time.Second * 5}, err
 			}
 			log.Info("deleting api")
 			err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
@@ -250,7 +250,6 @@ func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *ty
 	if len(a.Status.LinkedPolicies) == 0 {
 		return nil
 	}
-	api := (types.NamespacedName{Namespace: a.Namespace, Name: a.Name}).String()
 	for _, n := range a.Status.LinkedPolicies {
 		p := strings.Split(n, string(types.Separator))
 		if len(p) != 2 {
@@ -261,11 +260,7 @@ func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *ty
 		ns := types.NamespacedName{Namespace: p[0], Name: p[1]}
 		var policy tykv1alpha1.SecurityPolicy
 		if err := r.Get(ctx, ns, &policy); err == nil {
-			r.Log.Info("unable to delete api due to security policy dependency",
-				"api", api,
-				"policies", n,
-			)
-			return err
+			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
 		}
 	}
 	return nil
