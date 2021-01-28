@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"strings"
@@ -31,7 +32,6 @@ import (
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -123,13 +123,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			break
 		}
 		desired.Spec.CertificateSecretNames = nil
-		err := r.updateLinkedPolicies(ctx, desired, func(sps *tykv1alpha1.SecurityPolicyStatus, s string) {
-			sps.LinkedAPI = addString(sps.LinkedAPI, s)
-		})
-		if err != nil {
-			log.Error(err, "Failed to update linked policies")
-			return err
-		}
+		r.updateLinkedPolicies(ctx, desired)
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			err := r.UniversalClient.Api().Create(&desired.Spec)
@@ -147,7 +141,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 		log.Info("Updating ApiDefinition")
 		desired.Spec.APIID = desired.Status.ApiID
-		err = r.UniversalClient.Api().Update(&desired.Spec)
+		err := r.UniversalClient.Api().Update(&desired.Spec)
 		if err != nil {
 			if err != nil {
 				log.Error(err, "Failed to update api definition")
@@ -158,7 +152,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return nil
 	})
 	if err == nil {
-		log.Info("Completed reconciling ApiDefinition isnatnce")
+		log.Info("Completed reconciling ApiDefinition instance")
 	}
 	return ctrl.Result{Requeue: queue, RequeueAfter: queueA}, err
 }
@@ -242,13 +236,6 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
-		err = r.updateLinkedPolicies(ctx, desired, func(sps *tykv1alpha1.SecurityPolicyStatus, s string) {
-			sps.LinkedAPI = removeString(sps.LinkedAPI, s)
-		})
-		if err != nil {
-			r.Log.Error(err, "Failed to update linked policies")
-			return 0, err
-		}
 		r.Log.Info("removing finalizer")
 		util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 	}
@@ -259,10 +246,10 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 // to this api defintion resource.
 func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("checking linked security policies")
-	if len(a.Status.LinkedPolicies) == 0 {
+	if len(a.Status.LinkedByPolicies) == 0 {
 		return nil
 	}
-	for _, n := range a.Status.LinkedPolicies {
+	for _, n := range a.Status.LinkedByPolicies {
 		p := strings.Split(n, string(types.Separator))
 		if len(p) != 2 {
 			err := fmt.Errorf("malformed linked_policy expected namespace/name format got %s", n)
@@ -278,52 +265,25 @@ func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *ty
 	return nil
 }
 
+func encodeIfNotBase64(s string) string {
+	_, err := base64.URLEncoding.DecodeString(s)
+	if err == nil {
+		return s
+	}
+	return encodeNS(s)
+}
+
 // updateLinkedPolicies ensure that all policies needed by this api denition are
 // updated.
-func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition,
-	fn func(*tykv1alpha1.SecurityPolicyStatus, string),
-) error {
+func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
 	r.Log.Info("Updating linked policies")
-	ns := (types.NamespacedName{Namespace: a.Namespace, Name: a.Name}).String()
-	names := map[string]struct{}{}
-	for _, x := range a.Spec.JWTDefaultPolicies {
-		names[x] = struct{}{}
-	}
-	for _, x := range a.Spec.JWTScopeToPolicyMapping {
-		names[x] = struct{}{}
-	}
-	if len(names) == 0 {
-		return nil
-	}
-	replace := map[string]string{}
-	for n := range names {
-		p := strings.Split(n, string(types.Separator))
-		if len(p) != 2 {
-			replace[n] = n
-			continue
-		}
-		api := &tykv1alpha1.SecurityPolicy{}
-		if err := r.Get(ctx, types.NamespacedName{Namespace: p[0], Name: p[1]}, api); err != nil {
-			r.Log.Error(err, "Failed to get linked api definition")
-			return err
-		}
-		x := api.Status.DeepCopy()
-		fn(&api.Status, ns)
-		if !equality.Semantic.DeepEqual(x, api.Status) {
-			if err := r.Status().Update(ctx, api); err != nil {
-				r.Log.Error(err, "Failed to update linked security policy")
-				return err
-			}
-		}
-		replace[n] = api.Status.PolID
-	}
 	for x := range a.Spec.JWTDefaultPolicies {
-		a.Spec.JWTDefaultPolicies[x] = replace[a.Spec.JWTDefaultPolicies[x]]
+		a.Spec.JWTDefaultPolicies[x] = encodeIfNotBase64(a.Spec.JWTDefaultPolicies[x])
 	}
 	for k, x := range a.Spec.JWTScopeToPolicyMapping {
-		a.Spec.JWTScopeToPolicyMapping[k] = replace[x]
+		a.Spec.JWTScopeToPolicyMapping[k] = encodeIfNotBase64(x)
 	}
-	return nil
+	return
 }
 
 // SetupWithManager initializes the api definition controller.

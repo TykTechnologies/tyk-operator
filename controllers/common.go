@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"sort"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -45,6 +46,21 @@ func addString(slice []string, s string) (result []string) {
 		}
 	}
 	return append(slice, s)
+}
+
+func addStringSlice(slice []string, s ...string) (result []string) {
+	m := make(map[string]struct{})
+	for _, item := range slice {
+		m[item] = struct{}{}
+	}
+	for _, item := range s {
+		m[item] = struct{}{}
+	}
+	for x := range m {
+		result = append(result, x)
+	}
+	sort.Strings(result)
+	return
 }
 
 func apiIDDecode(encoded string) string {

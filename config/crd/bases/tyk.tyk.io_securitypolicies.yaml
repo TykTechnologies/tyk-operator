@@ -247,12 +247,6 @@ spec:
         status:
           description: SecurityPolicyStatus defines the observed state of SecurityPolicy
           properties:
-            linked_api:
-              description: LinkedAPI is a list of ApiDefinition resources linked to
-                this policy.
-              items:
-                type: string
-              type: array
             pol_id:
               type: string
           required:

@@ -750,10 +750,17 @@ type GraphQLPlayground struct {
 type ApiDefinitionStatus struct {
 	ApiID string `json:"api_id"`
 
-	// LinkedPolicies is a list of policy resources that depends on this api
-	// definition.
+	// LinkedToPolicies is a list policies that references this api definition
 	//+optional
-	LinkedPolicies []string `json:"linked_policies,omitempty"`
+	LinkedByPolicies []string `json:"linked_by_policies,omitempty"`
+}
+
+// LinkedPolicies describes cyclic policy dependency on the api definition
+type LinkedPolicies struct {
+	//From this is a list of policy id's that are defined/set in the api definition.
+	From []string `json:"from,omitempty"`
+	// To this is a list of policies that references this api definition.
+	To []string `json:"to,omitempty"`
 }
 
 // +kubebuilder:object:root=true
