@@ -1441,7 +1441,7 @@ spec:
             api_id:
               type: string
             linked_by_policies:
-              description: LinkedToPolicies is a list policies that references this api definition
+              description: LinkedByPolicies is a list policies that references this api definition
               items:
                 type: string
               type: array
