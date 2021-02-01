@@ -750,7 +750,7 @@ type GraphQLPlayground struct {
 type ApiDefinitionStatus struct {
 	ApiID string `json:"api_id"`
 
-	// LinkedToPolicies is a list policies that references this api definition
+	// LinkedByPolicies is a list policies that references this api definition
 	//+optional
 	LinkedByPolicies []string `json:"linked_by_policies,omitempty"`
 }
