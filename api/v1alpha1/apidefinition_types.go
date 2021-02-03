@@ -418,7 +418,7 @@ type APIDefinitionSpec struct {
 	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
-	// EnableJWT enables JSON web token authentication
+	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
 	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
 
@@ -426,10 +426,22 @@ type APIDefinitionSpec struct {
 
 	// JWTSigningMethod algorithm used to sign jwt token
 	// +kubebuilder:validation:Enum=rsa;hmac;ecdsa
-	JWTSigningMethod           string            `json:"jwt_signing_method,omitempty"`
-	JWTSource                  string            `json:"jwt_source,omitempty"`
-	JWTIdentityBaseField       string            `json:"jwt_identity_base_field,omitempty"`
-	JWTClientIDBaseField       string            `json:"jwt_client_base_field,omitempty"`
+	JWTSigningMethod string `json:"jwt_signing_method,omitempty"`
+
+	// JWTSource Must either be a base64 encoded valid RSA/HMAC key or a url to a
+	// resource serving JWK, this key will then be used to validate inbound JWT and
+	// throttle them according to the centralised JWT options and fields set in the
+	// configuration.
+	JWTSource string `json:"jwt_source,omitempty"`
+
+	// JWTIdentityBaseField Identifies the user or identity to be used in the
+	// Claims of the JWT. This will fallback to sub if not found. This field forms
+	// the basis of a new “virtual” token that gets used after validation. It means
+	// policy attributes are carried forward through Tyk for attribution purposes.
+	JWTIdentityBaseField string `json:"jwt_identity_base_field,omitempty"`
+	JWTClientIDBaseField string `json:"jwt_client_base_field,omitempty"`
+
+	// JWTPolicyFieldName The policy ID to apply to the virtual token generated for a JWT
 	JWTPolicyFieldName         string            `json:"jwt_policy_field_name,omitempty"`
 	JWTDefaultPolicies         []string          `json:"jwt_default_policies,omitempty"`
 	JWTIssuedAtValidationSkew  uint64            `json:"jwt_issued_at_validation_skew,omitempty"`

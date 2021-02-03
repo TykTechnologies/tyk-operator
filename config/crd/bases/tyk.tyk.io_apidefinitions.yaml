@@ -424,7 +424,7 @@ spec:
               description: EnableIPWhiteListing activates the ip whitelisting middleware.
               type: boolean
             enable_jwt:
-              description: EnableJWT enables JSON web token authentication
+              description: EnableJWT set JWT as the access method for this API.
               type: boolean
             graphql:
               description: GraphQLConfig is the root config object for a GraphQL API.
@@ -556,6 +556,11 @@ spec:
               format: int64
               type: integer
             jwt_identity_base_field:
+              description: JWTIdentityBaseField Identifies the user or identity to
+                be used in the Claims of the JWT. This will fallback to sub if not
+                found. This field forms the basis of a new “virtual” token that gets
+                used after validation. It means policy attributes are carried forward
+                through Tyk for attribution purposes.
               type: string
             jwt_issued_at_validation_skew:
               format: int64
@@ -564,6 +569,8 @@ spec:
               format: int64
               type: integer
             jwt_policy_field_name:
+              description: JWTPolicyFieldName The policy ID to apply to the virtual
+                token generated for a JWT
               type: string
             jwt_scope_claim_name:
               type: string
@@ -581,6 +588,10 @@ spec:
             jwt_skip_kid:
               type: boolean
             jwt_source:
+              description: JWTSource Must either be a base64 encoded valid RSA/HMAC
+                key or a url to a resource serving JWK, this key will then be used
+                to validate inbound JWT and throttle them according to the centralised
+                JWT options and fields set in the configuration.
               type: string
             listen_port:
               type: integer
