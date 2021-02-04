@@ -69,3 +69,13 @@ type Percent string
 func (p Percent) MarshalJSON() ([]byte, error) {
 	return Float64(p).MarshalJSON()
 }
+
+func (f *Percent) UnmarshalJSON(b []byte) error {
+	var x Float64
+	err := x.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	*f = Percent(x)
+	return nil
+}
