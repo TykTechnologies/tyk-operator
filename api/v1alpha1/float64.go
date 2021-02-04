@@ -61,7 +61,7 @@ func Marshal(v interface{}) ([]byte, error) {
 
 // Percent describes a percentage value expressed as a float. This is a positive
 // decimal value that is less than 1
-// +kubebuilder:validation:Pattern="^(?:[+]?(?:0))?(?:\\.[0-9]*)?(?:[eE][\\+\\-]?(?:[0-9]+))?$"
+//+kubebuilder:validation:Pattern="^0\\.\\d+|1\\.0$"
 type Percent string
 
 // MarshalJSON returns a json string for p. This is a string for normal

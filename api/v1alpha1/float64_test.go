@@ -5,13 +5,8 @@ import (
 	"testing"
 )
 
-const (
-	// PercentPattern is a regular expression to match a percentage value.
-	PercentPattern = "^(?:[+]?(?:0))?(?:\\.[0-9]*)?(?:[eE][\\+\\-]?(?:[0-9]+))?$"
-)
-
 func TestPercent(t *testing.T) {
-	r := regexp.MustCompile(PercentPattern)
+	r := regexp.MustCompile("^0\\.\\d+|1\\.0$")
 	s := []struct {
 		v  string
 		ok bool
@@ -20,9 +15,10 @@ func TestPercent(t *testing.T) {
 		{"-0.5", false},
 		{"0.5", true},
 
-		// must be <1
+		// must be <=1
 		{"1.5", false},
 		{"2.5", false},
+		{"1.0", true},
 	}
 
 	for i, v := range s {
