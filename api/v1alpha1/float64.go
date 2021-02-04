@@ -58,3 +58,14 @@ func Marshal(v interface{}) ([]byte, error) {
 	}()
 	return json.Marshal(v)
 }
+
+// Percent describes a percentage value expressed as a float. This is a positive
+// decimal value that is less than 1
+// +kubebuilder:validation:Pattern="^(?:[+]?(?:0))?(?:\\.[0-9]*)?(?:[eE][\\+\\-]?(?:[0-9]+))?$"
+type Percent string
+
+// MarshalJSON returns a json string for p. This is a string for normal
+// operations and a float64 when marshalling for dashboard or gateway
+func (p Percent) MarshalJSON() ([]byte, error) {
+	return Float64(p).MarshalJSON()
+}

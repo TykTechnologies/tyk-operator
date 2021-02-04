@@ -767,7 +767,7 @@ spec:
                                   type: integer
                                 threshold_percent:
                                   description: ThresholdPercent is the percentage of requests that fail before breaker is tripped
-                                  pattern: ^(?:[-+]?(?:[0-9]+))?(?:\.[0-9]*)?(?:[eE][\+\-]?(?:[0-9]+))?$
+                                  pattern: ^(?:[+]?(?:0))?(?:\.[0-9]*)?(?:[eE][\+\-]?(?:[0-9]+))?$
                                   type: string
                               required:
                               - method
