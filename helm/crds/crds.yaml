@@ -495,6 +495,7 @@ spec:
               description: For server use only, do not use
               type: string
             jwt_client_base_field:
+              description: JWTClientIDBaseField is the name of the field on JWT claim to use for client id. This field is mutually exclusive to jwt_identity_base_field, meaning you can only set/use one and jwt_identity_base_field takes precedence when both are set.
               type: string
             jwt_default_policies:
               description: JWTDefaultPolicies is a list of policies that will be used when base policy can't be extracted from the JWT token. When this list is provided the first element will be used as the base policy while the rest of elements will be applied.
