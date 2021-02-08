@@ -439,6 +439,11 @@ type APIDefinitionSpec struct {
 	// the basis of a new “virtual” token that gets used after validation. It means
 	// policy attributes are carried forward through Tyk for attribution purposes.
 	JWTIdentityBaseField string `json:"jwt_identity_base_field,omitempty"`
+
+	// JWTClientIDBaseField is the name of the field on JWT claim to use for client
+	// id. This field is mutually exclusive to jwt_identity_base_field, meaning you
+	// can only set/use one and jwt_identity_base_field takes precedence when both
+	// are set.
 	JWTClientIDBaseField string `json:"jwt_client_base_field,omitempty"`
 
 	// JWTPolicyFieldName The policy ID to apply to the virtual token generated for a JWT
