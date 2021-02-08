@@ -8,8 +8,6 @@ spec:
   name: httpbin protected
   protocol: http
   active: true
-  jwt_default_policies:
-    - "default/httpbin"
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin
