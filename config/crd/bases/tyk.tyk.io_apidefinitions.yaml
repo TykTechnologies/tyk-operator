@@ -549,10 +549,18 @@ spec:
             jwt_client_base_field:
               type: string
             jwt_default_policies:
+              description: JWTDefaultPolicies is a list of policies that will be used
+                when base policy can't be extracted from the JWT token. When this
+                list is provided the first element will be used as the base policy
+                while the rest of elements will be applied.
               items:
                 type: string
               type: array
             jwt_expires_at_validation_skew:
+              description: "JWTExpiresAtValidationSkew adds validation for  expired
+                at JWT claim. Given \tnow = current unix time \tskew = jwt_expires_at_validation_skew
+                \texp = expired at If exp > (now - skew) then validation will fail
+                with \"token has expired\""
               format: int64
               type: integer
             jwt_identity_base_field:
@@ -563,9 +571,17 @@ spec:
                 through Tyk for attribution purposes.
               type: string
             jwt_issued_at_validation_skew:
+              description: "JWTIssuedAtValidationSkew adds validation for  issued
+                at JWT claim. Given \tnow = current unix time \tskew = jwt_issued_at_validation_skew
+                \tiat = the issued at jwt claim If iat > (now + skew) then validation
+                will fail with \"token used before issued\""
               format: int64
               type: integer
             jwt_not_before_validation_skew:
+              description: "JWTNotBeforeValidationSkew adds validation for  not before
+                \ JWT claim. Given \tnow = current unix time \tskew = jwt_not_before_validation_skew
+                \tnbf = the not before  jwt claim If nbf > (now + skew) then validation
+                will fail with \"token is not valid yet\""
               format: int64
               type: integer
             jwt_policy_field_name:
@@ -573,10 +589,15 @@ spec:
                 token generated for a JWT
               type: string
             jwt_scope_claim_name:
+              description: JWTScopeClaimName overides the key used for scope values
+                in the JWT claims. By default the value is "scope"
               type: string
             jwt_scope_to_policy_mapping:
               additionalProperties:
                 type: string
+              description: JWTScopeToPolicyMapping this is a mapping of scope value
+                to policy id. If this is set then a scope value found in this map
+                will make the mappend policy to be applied.
               type: object
             jwt_signing_method:
               description: JWTSigningMethod algorithm used to sign jwt token
@@ -586,6 +607,9 @@ spec:
               - ecdsa
               type: string
             jwt_skip_kid:
+              description: JWTSkipKid when true we ingore using kid as the identity
+                for a JWT token and instead use jwt_identity_base_field if it was
+                set or fallback to sub JWT claim.
               type: boolean
             jwt_source:
               description: JWTSource Must either be a base64 encoded valid RSA/HMAC

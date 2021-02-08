@@ -442,14 +442,50 @@ type APIDefinitionSpec struct {
 	JWTClientIDBaseField string `json:"jwt_client_base_field,omitempty"`
 
 	// JWTPolicyFieldName The policy ID to apply to the virtual token generated for a JWT
-	JWTPolicyFieldName         string            `json:"jwt_policy_field_name,omitempty"`
-	JWTDefaultPolicies         []string          `json:"jwt_default_policies,omitempty"`
-	JWTIssuedAtValidationSkew  uint64            `json:"jwt_issued_at_validation_skew,omitempty"`
-	JWTExpiresAtValidationSkew uint64            `json:"jwt_expires_at_validation_skew,omitempty"`
-	JWTNotBeforeValidationSkew uint64            `json:"jwt_not_before_validation_skew,omitempty"`
-	JWTSkipKid                 bool              `json:"jwt_skip_kid,omitempty"`
-	JWTScopeToPolicyMapping    map[string]string `json:"jwt_scope_to_policy_mapping,omitempty"`
-	JWTScopeClaimName          string            `json:"jwt_scope_claim_name,omitempty"`
+	JWTPolicyFieldName string `json:"jwt_policy_field_name,omitempty"`
+
+	// JWTDefaultPolicies is a list of policies that will be used when base policy
+	// can't be extracted from the JWT token. When this list is provided the first
+	// element will be used as the base policy while the rest of elements will be applied.
+	JWTDefaultPolicies []string `json:"jwt_default_policies,omitempty"`
+
+	// JWTIssuedAtValidationSkew adds validation for  issued at JWT claim.
+	// Given
+	//	now = current unix time
+	//	skew = jwt_issued_at_validation_skew
+	//	iat = the issued at jwt claim
+	// If iat > (now + skew) then validation will fail with "token used before issued"
+	JWTIssuedAtValidationSkew uint64 `json:"jwt_issued_at_validation_skew,omitempty"`
+
+	// JWTExpiresAtValidationSkew adds validation for  expired at JWT claim.
+	// Given
+	//	now = current unix time
+	//	skew = jwt_expires_at_validation_skew
+	//	exp = expired at
+	// If exp > (now - skew) then validation will fail with "token has expired"
+	JWTExpiresAtValidationSkew uint64 `json:"jwt_expires_at_validation_skew,omitempty"`
+
+	// JWTNotBeforeValidationSkew adds validation for  not before  JWT claim.
+	// Given
+	//	now = current unix time
+	//	skew = jwt_not_before_validation_skew
+	//	nbf = the not before  jwt claim
+	// If nbf > (now + skew) then validation will fail with "token is not valid yet"
+	JWTNotBeforeValidationSkew uint64 `json:"jwt_not_before_validation_skew,omitempty"`
+
+	// JWTSkipKid when true we ingore using kid as the identity for a JWT token and
+	// instead use jwt_identity_base_field if it was set or fallback to sub JWT
+	// claim.
+	JWTSkipKid bool `json:"jwt_skip_kid,omitempty"`
+
+	// JWTScopeToPolicyMapping this is a mapping of scope value to policy id. If
+	// this is set then a scope value found in this map will make the mappend
+	// policy to be applied.
+	JWTScopeToPolicyMapping map[string]string `json:"jwt_scope_to_policy_mapping,omitempty"`
+
+	// JWTScopeClaimName overides the key used for scope values in the JWT claims.
+	// By default the value is "scope"
+	JWTScopeClaimName string `json:"jwt_scope_claim_name,omitempty"`
 	//NotificationsDetails       NotificationsManager  `json:"notifications"`
 	//EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
 	//HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
