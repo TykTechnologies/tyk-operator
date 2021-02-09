@@ -62,7 +62,7 @@ deploy: manifests kustomize
 
 helm: kustomize
 	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
-	$(KUSTOMIZE) build config/helm |go run hack/pre_helm.go > ./helm/templates/all.yaml
+	$(KUSTOMIZE) build config/helm |go run hack/helm/pre_helm.go > ./helm/templates/all.yaml
 
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
