@@ -8,6 +8,8 @@ import (
 
 //Float64 is a work around to allow representing floating points as strings
 // +kubebuilder:validation:Pattern="^(?:[-+]?(?:[0-9]+))?(?:\\.[0-9]*)?(?:[eE][\\+\\-]?(?:[0-9]+))?$"
+//
+// source for pattern https://github.com/asaskevich/govalidator/blob/7a23bdc65eef5f3783e782b436f3065eae3fc72d/patterns.go#L19
 type Float64 string
 
 // number when this is true we marshal Float64 as a number
