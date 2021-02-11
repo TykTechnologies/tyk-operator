@@ -510,8 +510,18 @@ type APIDefinitionSpec struct {
 	//CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
 
 	CacheOptions CacheOptions `json:"cache_options,omitempty"`
-	//SessionLifetime        int64               `json:"session_lifetime"`
-	//Internal               bool                `json:"internal"`
+
+	// SessionLifetime this is duration in seconds before the session key expires
+	// in redis.
+	//
+	// Example:
+	// If you want the session keys to be alive only 24 hours you can set this
+	// value to 86400 that we can break down to
+	//	60 * 60 * 24 = Total seconds in a day
+	//+optional
+	SessionLifetime int64 `json:"session_lifetime,omitempty"`
+
+	//Internal    	           bool                `json:"internal"`
 	//AuthProvider           AuthProviderMeta    `json:"auth_provider"`
 	//SessionProvider        SessionProviderMeta `json:"session_provider"`
 	////EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`

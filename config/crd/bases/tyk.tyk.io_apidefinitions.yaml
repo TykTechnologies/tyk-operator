@@ -774,6 +774,13 @@ spec:
                 - name
                 type: object
               type: array
+            session_lifetime:
+              description: "SessionLifetime this is duration in seconds before the
+                session key expires in redis. \n Example: If you want the session
+                keys to be alive only 24 hours you can set this value to 86400 that
+                we can break down to \t60 * 60 * 24 = Total seconds in a day"
+              format: int64
+              type: integer
             strip_auth_data:
               description: StripAuthData ensures that any security tokens used for
                 accessing APIs are stripped and not leaked to the upstream
