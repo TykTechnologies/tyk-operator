@@ -494,6 +494,9 @@ spec:
             id:
               description: For server use only, do not use
               type: string
+            internal:
+              description: Internal tells Tyk Gateway that this is a virtual API. It can only be routed to from other APIs.
+              type: boolean
             jwt_client_base_field:
               description: JWTClientIDBaseField is the name of the field on JWT claim to use for client id. This field is mutually exclusive to jwt_identity_base_field, meaning you can only set/use one and jwt_identity_base_field takes precedence when both are set.
               type: string
