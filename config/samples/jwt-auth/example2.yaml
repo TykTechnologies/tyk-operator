@@ -1,4 +1,4 @@
-# default security policy applied
+# security policy defined in JWT pol claim
 
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -22,8 +22,6 @@ spec:
   jwt_source: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFRVZzL281K3VRYlRqTDNjaHluTDR3WGdVZzJSOQpxOVVVOEk1bUVvdlVmODZRWjdrT0JJakp3cW56RDFvbWFnZUVIV3dIZEJPNkIrZEZhYm1kVDlQT3hnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
   jwt_identity_base_field: sub
   jwt_policy_field_name: pol
-  jwt_default_policies:
-    - default/jwt-policy
 
 ---
 
@@ -41,7 +39,8 @@ spec:
   name: jwt-policy
   state: active
 
-#curl http://httpbin.test/httpbin/get -H 'Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNTE2MjM5MDIyfQ.rgPyrCJYs2im7zG6im5XUqsf_oAf_Kqk-F6IlLb3yzZCSZvrQObhBnkLKgfmVTbhQ5El7Q6KskXPal5-eZFuTQ'
+# jwt with explicit policy
+#curl http://httpbin.test/httpbin/get -H 'Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNTE2MjM5MDIyLCJwb2wiOiJaR1ZtWVhWc2RDOXFkM1F0Y0c5c2FXTjUifQ.7nY9TvYgsAZqIHLhJdUPqZtzqU_5T-dcNtCt4zt8YPyUj893Z_NopL6Q8PlF8TlMdxUq1Ff8rt4-p8gVboIqlA'
 #  {
 #    "args": {},
 #    "headers": {
