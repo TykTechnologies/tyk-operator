@@ -1,0 +1,55 @@
+# default security policy applied
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  enable_jwt: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.default.svc.cluster.local:8000
+    listen_path: /httpbin
+    strip_listen_path: true
+
+  strip_auth_data: true
+
+  jwt_signing_method: ecdsa
+  # ecdsa pvt: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2V2WnpMMWdkQUZyODhoYjIKT0YvMk54QXBKQ3pHQ0VEZGZTcDZWUU8zMGh5aFJBTkNBQVFSV3oram42NUJ0T012ZHlIS2N2akJlQlNEWkgycgoxUlR3am1ZU2k5Ui96cEJudVE0RWlNbkNxZk1QV2lacUI0UWRiQWQwRTdvSDUwVnB1WjFQMDg3RwotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0t
+  # ecdsa pub: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFRVZzL281K3VRYlRqTDNjaHluTDR3WGdVZzJSOQpxOVVVOEk1bUVvdlVmODZRWjdrT0JJakp3cW56RDFvbWFnZUVIV3dIZEJPNkIrZEZhYm1kVDlQT3hnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+  jwt_source: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFRVZzL281K3VRYlRqTDNjaHluTDR3WGdVZzJSOQpxOVVVOEk1bUVvdlVmODZRWjdrT0JJakp3cW56RDFvbWFnZUVIV3dIZEJPNkIrZEZhYm1kVDlQT3hnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+  jwt_identity_base_field: sub
+  jwt_policy_field_name: pol
+  jwt_default_policies:
+    - default/jwt-policy
+
+---
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: jwt-policy
+spec:
+  access_rights_array:
+    - name: httpbin
+      namespace: default
+      versions:
+        - Default
+  active: true
+  name: jwt-policy
+  state: active
+
+#curl http://httpbin.test/httpbin/get -H 'Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNTE2MjM5MDIyfQ.rgPyrCJYs2im7zG6im5XUqsf_oAf_Kqk-F6IlLb3yzZCSZvrQObhBnkLKgfmVTbhQ5El7Q6KskXPal5-eZFuTQ'
+#  {
+#    "args": {},
+#    "headers": {
+#      "Accept": "*/*",
+#      "Accept-Encoding": "gzip",
+#      "Host": "httpbin.default.svc.cluster.local:8000",
+#      "User-Agent": "curl/7.64.1"
+#    },
+#    "origin": "10.131.132.144",
+#    "url": "http://httpbin.default.svc.cluster.local:8000/get"
+#  }
