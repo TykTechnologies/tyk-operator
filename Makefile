@@ -62,7 +62,7 @@ deploy: manifests kustomize
 
 helm: kustomize
 	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
-	$(KUSTOMIZE) build config/helm |go run hack/pre_helm.go > ./helm/templates/all.yaml
+	$(KUSTOMIZE) build config/helm |go run hack/helm/pre_helm.go > ./helm/templates/all.yaml
 
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
@@ -160,13 +160,13 @@ install-cert-manager:
 .PHONY: install-operator-helm
 install-operator-helm: cross-build-image manifests helm
 	@echo "===> installing operator with helmr"
-	kind load docker-image ${IMG} --name=${CLUSTER_NAME}
+	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: scrap
 scrap: generate manifests helm cross-build-image
 	@echo "===> re installing operator with helm"
-	kind load docker-image ${IMG} --name=${CLUSTER_NAME}
+	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
 	helm uninstall ci -n tyk-operator-system
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
