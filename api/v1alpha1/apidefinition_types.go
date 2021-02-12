@@ -418,23 +418,79 @@ type APIDefinitionSpec struct {
 	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
-	// EnableJWT enables JSON web token authentication
+	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
 	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
 
-	EnableCoProcessAuth        bool              `json:"enable_coprocess_auth,omitempty"`
-	JWTSigningMethod           string            `json:"jwt_signing_method,omitempty"`
-	JWTSource                  string            `json:"jwt_source,omitempty"`
-	JWTIdentityBaseField       string            `json:"jwt_identity_base_field,omitempty"`
-	JWTClientIDBaseField       string            `json:"jwt_client_base_field,omitempty"`
-	JWTPolicyFieldName         string            `json:"jwt_policy_field_name,omitempty"`
-	JWTDefaultPolicies         []string          `json:"jwt_default_policies,omitempty"`
-	JWTIssuedAtValidationSkew  uint64            `json:"jwt_issued_at_validation_skew,omitempty"`
-	JWTExpiresAtValidationSkew uint64            `json:"jwt_expires_at_validation_skew,omitempty"`
-	JWTNotBeforeValidationSkew uint64            `json:"jwt_not_before_validation_skew,omitempty"`
-	JWTSkipKid                 bool              `json:"jwt_skip_kid,omitempty"`
-	JWTScopeToPolicyMapping    map[string]string `json:"jwt_scope_to_policy_mapping,omitempty"`
-	JWTScopeClaimName          string            `json:"jwt_scope_claim_name,omitempty"`
+	EnableCoProcessAuth bool `json:"enable_coprocess_auth,omitempty"`
+
+	// JWTSigningMethod algorithm used to sign jwt token
+	// +kubebuilder:validation:Enum=rsa;hmac;ecdsa
+	JWTSigningMethod string `json:"jwt_signing_method,omitempty"`
+
+	// JWTSource Must either be a base64 encoded valid RSA/HMAC key or a url to a
+	// resource serving JWK, this key will then be used to validate inbound JWT and
+	// throttle them according to the centralised JWT options and fields set in the
+	// configuration.
+	JWTSource string `json:"jwt_source,omitempty"`
+
+	// JWTIdentityBaseField Identifies the user or identity to be used in the
+	// Claims of the JWT. This will fallback to sub if not found. This field forms
+	// the basis of a new “virtual” token that gets used after validation. It means
+	// policy attributes are carried forward through Tyk for attribution purposes.
+	JWTIdentityBaseField string `json:"jwt_identity_base_field,omitempty"`
+
+	// JWTClientIDBaseField is the name of the field on JWT claim to use for client
+	// id. This field is mutually exclusive to jwt_identity_base_field, meaning you
+	// can only set/use one and jwt_identity_base_field takes precedence when both
+	// are set.
+	JWTClientIDBaseField string `json:"jwt_client_base_field,omitempty"`
+
+	// JWTPolicyFieldName The policy ID to apply to the virtual token generated for a JWT
+	JWTPolicyFieldName string `json:"jwt_policy_field_name,omitempty"`
+
+	// JWTDefaultPolicies is a list of policies that will be used when base policy
+	// can't be extracted from the JWT token. When this list is provided the first
+	// element will be used as the base policy while the rest of elements will be applied.
+	JWTDefaultPolicies []string `json:"jwt_default_policies,omitempty"`
+
+	// JWTIssuedAtValidationSkew adds validation for  issued at JWT claim.
+	// Given
+	//	now = current unix time
+	//	skew = jwt_issued_at_validation_skew
+	//	iat = the issued at jwt claim
+	// If iat > (now + skew) then validation will fail with "token used before issued"
+	JWTIssuedAtValidationSkew uint64 `json:"jwt_issued_at_validation_skew,omitempty"`
+
+	// JWTExpiresAtValidationSkew adds validation for  expired at JWT claim.
+	// Given
+	//	now = current unix time
+	//	skew = jwt_expires_at_validation_skew
+	//	exp = expired at
+	// If exp > (now - skew) then validation will fail with "token has expired"
+	JWTExpiresAtValidationSkew uint64 `json:"jwt_expires_at_validation_skew,omitempty"`
+
+	// JWTNotBeforeValidationSkew adds validation for  not before  JWT claim.
+	// Given
+	//	now = current unix time
+	//	skew = jwt_not_before_validation_skew
+	//	nbf = the not before  jwt claim
+	// If nbf > (now + skew) then validation will fail with "token is not valid yet"
+	JWTNotBeforeValidationSkew uint64 `json:"jwt_not_before_validation_skew,omitempty"`
+
+	// JWTSkipKid when true we ingore using kid as the identity for a JWT token and
+	// instead use jwt_identity_base_field if it was set or fallback to sub JWT
+	// claim.
+	JWTSkipKid bool `json:"jwt_skip_kid,omitempty"`
+
+	// JWTScopeToPolicyMapping this is a mapping of scope value to policy id. If
+	// this is set then a scope value found in this map will make the mappend
+	// policy to be applied.
+	JWTScopeToPolicyMapping map[string]string `json:"jwt_scope_to_policy_mapping,omitempty"`
+
+	// JWTScopeClaimName overides the key used for scope values in the JWT claims.
+	// By default the value is "scope"
+	JWTScopeClaimName string `json:"jwt_scope_claim_name,omitempty"`
 	//NotificationsDetails       NotificationsManager  `json:"notifications"`
 	//EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
 	//HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
@@ -756,6 +812,10 @@ type GraphQLPlayground struct {
 // ApiDefinitionStatus defines the observed state of ApiDefinition
 type ApiDefinitionStatus struct {
 	ApiID string `json:"api_id"`
+
+	// LinkedByPolicies is a list policies that references this api definition
+	//+optional
+	LinkedByPolicies []string `json:"linked_by_policies,omitempty"`
 }
 
 // +kubebuilder:object:root=true

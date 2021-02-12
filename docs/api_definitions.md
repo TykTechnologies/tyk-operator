@@ -37,7 +37,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | ----------- | --------- | --------- |
 | [Keyless (open)](./../config/samples/httpbin.yaml) | ✅ | - |
 | [Static Bearer Token](./../config/samples/httpbin_protected.yaml) | ✅ | - |
-| JWT | ⚠️ | Untested / Requires Documentation |
+| [JWT](./../config/samples/jwt-auth) | ✅️ | - |
 | OpenID Connect | ❌ | Not implemented |
 | OAuth2 | ❌ | Not implemented |
 | mTLS | ❌ | Not implemented |
