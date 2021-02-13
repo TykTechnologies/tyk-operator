@@ -1,28 +1,37 @@
 # Tyk Operator
 
-- [Quickstart API Definitions](#quickstart-api-definitions)
-- [Installation](#installation)
-- [IDE Integration](#ide-integration)
-  - [VS Code](#vs-code)
-- [Community](#community)
+[Tyk Gateway](https://github.com/TykTechnologies/tyk) is a modern, ultra-performant, purpose-built, open source API Gateway. 
+ 
+Tyk Operator brings API Management capabilities to Kubernetes. Configure Ingress, APIs, Security Policies, Authentication, 
+ Authorization, Mediation and more - all using Custom Resources and Kubernetes Native primitives.
 
-Tyk Operator contains various custom resources and controllers which enable Full-Lifecycle API Management with Tyk by
-extending the Kubernetes API.
+---
+
+[Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples) | [IDE Integration](#ide-integration) | [Community](#community)
+
+---
+
+## Documentation
 
 Read more about the [concepts here](./docs/concepts.md).
 
 Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
 and documentation for each of these custom resources are available:
 
+- [Installing Tyk Operator](./docs/installation/installation.md)
+- [Ingress Controller](./docs/ingress.md)
 - [API Definitions](./docs/api_definitions.md)
 - [WebHooks](./docs/webhooks.md)
 - [Security Policies](./docs/policies.md)
 
-Tyk Operator also contains an [Ingress Controller](./docs/ingress.md).
+## Learning with Videos
 
-![Demo](./docs/img/demo.svg)
+- [GitOps Friendly API Management with Tyk Operator](https://youtu.be/AaDnBMrS-2c)
+- [Extending Kubernetes Ingress with Tyk Operator](https://youtu.be/jq1a_7bo78w)
+- [Declarative REST to GraphQL with Tyk Kubernetes Operator and Universal Data Graph](https://youtu.be/NYzIh8yCJ7M)
+- [Configuring VS Code Tyk Custom Resources Intellisense](https://youtu.be/Kdrfp6aAZEU)
 
-## Quickstart API Definitions
+## Quickstart Examples
 
 <details><summary>HTTP Proxy</summary>
 <p>
@@ -238,10 +247,6 @@ spec:
 
 </p>
 </details>
-
-## Installation
-
-[Installing the Tyk Operator](./docs/installation/installation.md).
 
 ## IDE Integration
 
