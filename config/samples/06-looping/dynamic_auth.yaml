@@ -18,7 +18,7 @@
 # It is worth noting that there are no actual http redirect happening here, meaning that there is no performance penalty
 # in performing any of these "Internal Redirects".
 
----
+# ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -35,60 +35,92 @@ spec:
   use_keyless: true
   # if Authorization: Basic - redirect to tyk://APIID where APIID is the ID associated with namespace/name basic-auth-internal
   # if Authorization: Bearer - redirect to tyk://APIID where APIID is the ID associated with namespace/name auth-token-internal
----
-apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-  name: basic-auth-internal
-spec:
-  name: BasicAuth Internal API
-  protocol: http
-  active: true
-  internal: true
-  use_basic_auth: true
-  auth_configs:
-    basicAuth:
-      auth_header_name: Authorization
   version_data:
     default_version: Default
     not_versioned: true
     versions:
       Default:
         name: Default
-        # redirect all traffic to proxy API
----
-apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-  name: auth-token-internal
-spec:
-  name: AuthToken Internal API
-  protocol: http
-  active: true
-  internal: true
-  use_basic_auth: true
-  auth_configs:
-    authToken:
-      auth_header_name: Authorization
-  version_data:
-    default_version: Default
-    not_versioned: true
-    versions:
-      Default:
-        name: Default
-        # redirect all traffic to proxy API
----
-apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-  name: proxy-api
-spec:
-  name: Proxy API
-  protocol: http
-  active: true
-  internal: true
-  proxy:
-    target_url: http://httpbin.org
-  use_keyless: true
----
+        use_extended_paths: true
+        paths:
+          black_list: []
+          ignored: []
+          white_list: []
+        extended_paths:
+          url_rewrites:
+            - path: /get
+              match_pattern: /get
+              method: GET
+              rewrite_to: /xml
+              triggers:
+                - on: all
+                  options: 
+                    header_matches:
+                      "Authorization":
+                        match_rx: "^Basic" 
+                    rewrite_to: tyk://basic-auth-internal
+                - on: all
+                  options: 
+                    header_matches:
+                      "Authorization":
+                        match_rx: "^Bearer" 
+                    rewrite_to: tyk://auth-token-internal
+
+                  
+# ---
+# apiVersion: tyk.tyk.io/v1alpha1
+# kind: ApiDefinition
+# metadata:
+#   name: basic-auth-internal
+# spec:
+#   name: BasicAuth Internal API
+#   protocol: http
+#   active: true
+#   internal: true
+#   use_basic_auth: true
+#   auth_configs:
+#     basicAuth:
+#       auth_header_name: Authorization
+#   version_data:
+#     default_version: Default
+#     not_versioned: true
+#     versions:
+#       Default:
+#         name: Default
+#         # redirect all traffic to proxy API
+# ---
+# apiVersion: tyk.tyk.io/v1alpha1
+# kind: ApiDefinition
+# metadata:
+#   name: auth-token-internal
+# spec:
+#   name: AuthToken Internal API
+#   protocol: http
+#   active: true
+#   internal: true
+#   use_basic_auth: true
+#   auth_configs:
+#     authToken:
+#       auth_header_name: Authorization
+#   version_data:
+#     default_version: Default
+#     not_versioned: true
+#     versions:
+#       Default:
+#         name: Default
+#         # redirect all traffic to proxy API
+# ---
+# apiVersion: tyk.tyk.io/v1alpha1
+# kind: ApiDefinition
+# metadata:
+#   name: proxy-api
+# spec:
+#   name: Proxy API
+#   protocol: http
+#   active: true
+#   internal: true
+#   proxy:
+#     target_url: http://httpbin.org
+#   use_keyless: true
+# ---
 

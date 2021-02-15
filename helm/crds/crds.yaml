@@ -1267,7 +1267,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           path_part_matches:
@@ -1279,7 +1278,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           payload_matches:
@@ -1290,7 +1288,6 @@ spec:
                                                 type: boolean
                                             required:
                                             - match_rx
-                                            - reverse
                                             type: object
                                           query_val_matches:
                                             additionalProperties:
@@ -1301,7 +1298,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           request_context_matches:
@@ -1313,7 +1309,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           session_meta_matches:
@@ -1325,16 +1320,8 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
-                                        required:
-                                        - header_matches
-                                        - path_part_matches
-                                        - payload_matches
-                                        - query_val_matches
-                                        - request_context_matches
-                                        - session_meta_matches
                                         type: object
                                       rewrite_to:
                                         type: string
@@ -1348,7 +1335,6 @@ spec:
                               - match_pattern
                               - method
                               - path
-                              - triggers
                               type: object
                             type: array
                           virtual:

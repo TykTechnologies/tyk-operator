@@ -137,17 +137,22 @@ type CircuitBreakerMeta struct {
 
 type StringRegexMap struct {
 	MatchPattern string `json:"match_rx"`
-	Reverse      bool   `json:"reverse"`
-	//matchRegex   *regexp.Regexp
+	// +optionall
+	Reverse bool `json:"reverse,omitempty"`
 }
 
 type RoutingTriggerOptions struct {
-	HeaderMatches         map[string]StringRegexMap `json:"header_matches"`
-	QueryValMatches       map[string]StringRegexMap `json:"query_val_matches"`
-	PathPartMatches       map[string]StringRegexMap `json:"path_part_matches"`
-	SessionMetaMatches    map[string]StringRegexMap `json:"session_meta_matches"`
-	RequestContextMatches map[string]StringRegexMap `json:"request_context_matches"`
-	PayloadMatches        StringRegexMap            `json:"payload_matches"`
+	// +optionall
+	HeaderMatches map[string]StringRegexMap `json:"header_matches,omitempty"`
+	// +optionall
+	QueryValMatches map[string]StringRegexMap `json:"query_val_matches,omitempty"`
+	// +optionall
+	PathPartMatches map[string]StringRegexMap `json:"path_part_matches,omitempty"`
+	// +optionall
+	SessionMetaMatches map[string]StringRegexMap `json:"session_meta_matches,omitempty"`
+	// +optionall
+	RequestContextMatches map[string]StringRegexMap `json:"request_context_matches,omitempty"`
+	PayloadMatches        StringRegexMap            `json:"payload_matches,omitempty"`
 }
 
 type RoutingTrigger struct {
@@ -163,12 +168,15 @@ type URLRewriteMeta struct {
 	// MatchPattern is a regular expression pattern to match the path
 	MatchPattern string `json:"match_pattern"`
 	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
+	// +optionall
 	RewriteTo string `json:"rewrite_to,omitempty"`
 	// RewriteToLoop serves as rewrite_to but used when rewriting to looping
 	// targets. When rewrite_to and rewrite_to_loop are both provided then
 	// rewrite_to will take rewrite_to_loop
-	RewriteToLoop *LoopTarget      `json:"rewrite_to_loop,omitempty"`
-	Triggers      []RoutingTrigger `json:"triggers"`
+	// +optionall
+	RewriteToLoop *LoopTarget `json:"rewrite_to_loop,omitempty"`
+	// +optionall
+	Triggers []RoutingTrigger `json:"triggers,omitempty"`
 }
 
 // LoopTarget defines options that constructs a url that does looping.
