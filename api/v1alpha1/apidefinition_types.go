@@ -152,7 +152,8 @@ type RoutingTriggerOptions struct {
 	SessionMetaMatches map[string]StringRegexMap `json:"session_meta_matches,omitempty"`
 	// +optionall
 	RequestContextMatches map[string]StringRegexMap `json:"request_context_matches,omitempty"`
-	PayloadMatches        StringRegexMap            `json:"payload_matches,omitempty"`
+	// +optionall
+	PayloadMatches *StringRegexMap `json:"payload_matches,omitempty"`
 }
 
 type RoutingTrigger struct {

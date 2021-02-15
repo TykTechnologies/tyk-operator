@@ -1,3 +1,4 @@
+---
 # Dynamic Auth
 
 # In this example, we have a bunch of legacy customers who authenticate with our service using Basic Authentication.
@@ -18,7 +19,6 @@
 # It is worth noting that there are no actual http redirect happening here, meaning that there is no performance penalty
 # in performing any of these "Internal Redirects".
 
-# ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -53,21 +53,19 @@ spec:
               method: GET
               rewrite_to: /xml
               triggers:
-                - on: all
-                  options: 
+                - "on": "all"
+                  options:
                     header_matches:
                       "Authorization":
-                        match_rx: "^Basic" 
-                    rewrite_to: tyk://basic-auth-internal
-                - on: all
-                  options: 
+                        match_rx: "^Basic"
+                    rewrite_to: "tyk://basic-auth-internal"
+                - "on": "all"
+                  options:
                     header_matches:
                       "Authorization":
-                        match_rx: "^Bearer" 
-                    rewrite_to: tyk://auth-token-internal
-
-                  
-# ---
+                        match_rx: "^Bearer"
+                    rewrite_to: "tyk://auth-token-internal"
+---
 # apiVersion: tyk.tyk.io/v1alpha1
 # kind: ApiDefinition
 # metadata:
