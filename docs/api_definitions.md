@@ -87,7 +87,7 @@ These are features which are only available to tyk PRO users
 | Endpoint Middleware  | Supported | Comments |
 | ----------- | --------- | --------- |
 | Analytics - Endpoint Tracking | ⚠️ | Untested |
-| [Availability - Circuit Breaker](./../config/samples/httpbin_timeout.yaml) | ❌ | Incompatible types string vs float64 |
+| [Availability - Circuit Breaker](./../config/samples/httpbin_timeout.yaml) | ✅ | - |
 | [Availability - Enforced Timeouts](./../config/samples/httpbin_timeout.yaml) | ✅ | - |
 | [Headers - Global Request Add](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
 | [Headers - Global Request Remove](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
