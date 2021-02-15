@@ -1325,10 +1325,25 @@ spec:
                                         type: object
                                       rewrite_to:
                                         type: string
+                                      rewrite_to_loop:
+                                        description: LoopTarget defines options that constructs a url that does looping.
+                                        properties:
+                                          endpoint:
+                                            description: "Path path on target , this does not include query parameters. \texample /myendpoint"
+                                            type: string
+                                          query:
+                                            description: "Query url query string to add to target \texample check_limits=true"
+                                            type: string
+                                          self:
+                                            description: Self set this to true if the api definition is looping to itself.
+                                            type: boolean
+                                          target:
+                                            description: "Target a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
+                                            type: string
+                                        type: object
                                     required:
                                     - "on"
                                     - options
-                                    - rewrite_to
                                     type: object
                                   type: array
                               required:

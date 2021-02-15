@@ -212,8 +212,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 	// darget or a looping target or both.
 	if in.Spec.Proxy.TargetURL == "" && in.Spec.Proxy.TargetLoop == nil {
 		all = append(all,
-			field.Invalid(path("proxy", "target_url"),
-				"",
+			field.Required(path("proxy", "target_url"),
 				"can't be emptry",
 			),
 		)
@@ -222,11 +221,19 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 		for _, u := range v.ExtendedPaths.URLRewrite {
 			if u.RewriteTo == "" && u.RewriteToLoop == nil {
 				all = append(all,
-					field.Invalid(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
-						"",
+					field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
 						"can't be emptry",
 					),
 				)
+			}
+			for _, t := range u.Triggers {
+				if t.RewriteTo == "" && t.RewriteToLoop == nil {
+					all = append(all,
+						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
+							"can't be emptry",
+						),
+					)
+				}
 			}
 		}
 	}

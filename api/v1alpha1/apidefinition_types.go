@@ -157,9 +157,10 @@ type RoutingTriggerOptions struct {
 }
 
 type RoutingTrigger struct {
-	On        RoutingTriggerOnType  `json:"on"`
-	Options   RoutingTriggerOptions `json:"options"`
-	RewriteTo string                `json:"rewrite_to"`
+	On            RoutingTriggerOnType  `json:"on"`
+	Options       RoutingTriggerOptions `json:"options"`
+	RewriteTo     string                `json:"rewrite_to,omitempty"`
+	RewriteToLoop *LoopTarget           `json:"rewrite_to_loop,omitempty"`
 }
 
 type URLRewriteMeta struct {

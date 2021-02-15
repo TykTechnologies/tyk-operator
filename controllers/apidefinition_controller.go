@@ -302,6 +302,13 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *t
 				u.RewriteTo = formatLoop(u.RewriteToLoop)
 				u.RewriteToLoop = nil
 			}
+			for j := 0; j < len(u.Triggers); j++ {
+				x := &u.Triggers[j]
+				if x.RewriteToLoop != nil {
+					x.RewriteTo = formatLoop(x.RewriteToLoop)
+					x.RewriteToLoop = nil
+				}
+			}
 		}
 		d.Versions[n] = v
 	}
