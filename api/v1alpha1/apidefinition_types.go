@@ -163,8 +163,29 @@ type URLRewriteMeta struct {
 	// MatchPattern is a regular expression pattern to match the path
 	MatchPattern string `json:"match_pattern"`
 	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
-	RewriteTo string           `json:"rewrite_to"`
-	Triggers  []RoutingTrigger `json:"triggers"`
+	RewriteTo string `json:"rewrite_to,omitempty"`
+	// RewriteToLoop serves as rewrite_to but used when rewriting to looping
+	// targets. When rewrite_to and rewrite_to_loop are both provided then
+	// rewrite_to will take rewrite_to_loop
+	RewriteToLoop *LoopTarget      `json:"rewrite_to_loop,omitempty"`
+	Triggers      []RoutingTrigger `json:"triggers"`
+}
+
+// LoopTarget defines options that constructs a url that does looping.
+type LoopTarget struct {
+	// Self set this to true if the api definition is looping to itself.
+	Self bool `json:"self,omitempty"`
+	// Target a namespaced/name to the api definition resource that you are
+	// targetting. If self is set to true this value will be ignored.
+	//	example
+	Target string `json:"target,omitempty"`
+	// Path path on target , this does not include query parameters.
+	//	example /myendpoint
+	Path string `json:"endpoint,omitempty"`
+
+	// Query url query string to add to target
+	//	example check_limits=true
+	Query string `json:"query,omitempty"`
 }
 
 type VirtualMeta struct {
@@ -594,7 +615,8 @@ type Proxy struct {
 	ListenPath string `json:"listen_path,omitempty"`
 
 	// TargetURL defines the target URL that the request should be proxied to.
-	TargetURL string `json:"target_url"`
+	TargetURL  string      `json:"target_url,omitempty"`
+	TargetLoop *LoopTarget `json:"target_loop,omitempty"`
 
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
 	// when `true` a request to http://foo.bar/baz/ will be retained.

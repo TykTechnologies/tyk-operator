@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -124,6 +125,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 		desired.Spec.CertificateSecretNames = nil
 		r.updateLinkedPolicies(ctx, desired)
+		r.updateLoopingTargets(ctx, desired)
+
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			err := r.UniversalClient.Api().Create(&desired.Spec)
@@ -284,6 +287,37 @@ func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *t
 		a.Spec.JWTScopeToPolicyMapping[k] = encodeIfNotBase64(x)
 	}
 	return
+}
+func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
+	if a.Spec.Proxy.TargetLoop != nil {
+		a.Spec.Proxy.TargetURL = formatLoop(a.Spec.Proxy.TargetLoop)
+		a.Spec.Proxy.TargetLoop = nil
+	}
+	d := &a.Spec.VersionData
+	for n := range d.Versions {
+		v := d.Versions[n]
+		for i := 0; i < len(v.ExtendedPaths.URLRewrite); i++ {
+			u := &v.ExtendedPaths.URLRewrite[i]
+			if u.RewriteToLoop != nil {
+				u.RewriteTo = formatLoop(u.RewriteToLoop)
+				u.RewriteToLoop = nil
+			}
+		}
+		d.Versions[n] = v
+	}
+}
+
+func formatLoop(t *tykv1alpha1.LoopTarget) string {
+	u := url.URL{
+		Scheme:   "tyk",
+		Host:     encodeIfNotBase64(t.Target),
+		RawPath:  t.Path,
+		RawQuery: t.Query,
+	}
+	if t.Self {
+		u.Host = "self"
+	}
+	return u.String()
 }
 
 // SetupWithManager initializes the api definition controller.

@@ -726,6 +726,28 @@ spec:
                   items:
                     type: string
                   type: array
+                target_loop:
+                  description: LoopTarget defines options that constructs a url that
+                    does looping.
+                  properties:
+                    endpoint:
+                      description: "Path path on target , this does not include query
+                        parameters. \texample /myendpoint"
+                      type: string
+                    query:
+                      description: "Query url query string to add to target \texample
+                        check_limits=true"
+                      type: string
+                    self:
+                      description: Self set this to true if the api definition is
+                        looping to itself.
+                      type: boolean
+                    target:
+                      description: "Target a namespaced/name to the api definition
+                        resource that you are targetting. If self is set to true this
+                        value will be ignored. \texample"
+                      type: string
+                  type: object
                 target_url:
                   description: TargetURL defines the target URL that the request should
                     be proxied to.
@@ -766,8 +788,6 @@ spec:
                       - 772
                       type: integer
                   type: object
-              required:
-              - target_url
               type: object
             response_processors:
               items:
@@ -1355,6 +1375,31 @@ spec:
                                   description: RewriteTo is the target path on the
                                     upstream, or target URL we wish to rewrite to
                                   type: string
+                                rewrite_to_loop:
+                                  description: RewriteToLoop serves as rewrite_to
+                                    but used when rewriting to looping targets. When
+                                    rewrite_to and rewrite_to_loop are both provided
+                                    then rewrite_to will take rewrite_to_loop
+                                  properties:
+                                    endpoint:
+                                      description: "Path path on target , this does
+                                        not include query parameters. \texample /myendpoint"
+                                      type: string
+                                    query:
+                                      description: "Query url query string to add
+                                        to target \texample check_limits=true"
+                                      type: string
+                                    self:
+                                      description: Self set this to true if the api
+                                        definition is looping to itself.
+                                      type: boolean
+                                    target:
+                                      description: "Target a namespaced/name to the
+                                        api definition resource that you are targetting.
+                                        If self is set to true this value will be
+                                        ignored. \texample"
+                                      type: string
+                                  type: object
                                 triggers:
                                   items:
                                     properties:
@@ -1452,7 +1497,6 @@ spec:
                               - match_pattern
                               - method
                               - path
-                              - rewrite_to
                               - triggers
                               type: object
                             type: array
