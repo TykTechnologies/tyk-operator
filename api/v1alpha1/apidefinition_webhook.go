@@ -61,21 +61,8 @@ func (in *ApiDefinition) Default() {
 			DefaultVersion: "Default",
 			Versions: map[string]VersionInfo{
 				"Default": {
-					Name:    "Default",
-					Expires: "",
-					Paths: VersionInfoPaths{
-						Ignored:   []string{},
-						WhiteList: []string{},
-						BlackList: []string{},
-					},
-					UseExtendedPaths:            false,
-					ExtendedPaths:               ExtendedPathsSet{},
-					GlobalHeaders:               nil,
-					GlobalHeadersRemove:         nil,
-					GlobalResponseHeaders:       nil,
-					GlobalResponseHeadersRemove: nil,
-					IgnoreEndpointCase:          false,
-					GlobalSizeLimit:             0,
+					Name:             "Default",
+					UseExtendedPaths: false,
 				},
 			},
 		}

@@ -1448,10 +1448,6 @@ spec:
                             items:
                               type: string
                             type: array
-                        required:
-                        - black_list
-                        - ignored
-                        - white_list
                         type: object
                       use_extended_paths:
                         type: boolean

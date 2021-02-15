@@ -251,9 +251,9 @@ type ExtendedPathsSet struct {
 type VersionInfo struct {
 	Name                        string            `json:"name"`
 	Expires                     string            `json:"expires,omitempty"`
-	Paths                       VersionInfoPaths  `json:"paths,omitempty"`
+	Paths                       *VersionInfoPaths `json:"paths,omitempty"`
 	UseExtendedPaths            bool              `json:"use_extended_paths,omitempty"`
-	ExtendedPaths               ExtendedPathsSet  `json:"extended_paths,omitempty"`
+	ExtendedPaths               *ExtendedPathsSet `json:"extended_paths,omitempty"`
 	GlobalHeaders               map[string]string `json:"global_headers,omitempty"`
 	GlobalHeadersRemove         []string          `json:"global_headers_remove,omitempty"`
 	GlobalResponseHeaders       map[string]string `json:"global_response_headers,omitempty"`
@@ -264,9 +264,9 @@ type VersionInfo struct {
 }
 
 type VersionInfoPaths struct {
-	Ignored   []string `json:"ignored"`
-	WhiteList []string `json:"white_list"`
-	BlackList []string `json:"black_list"`
+	Ignored   []string `json:"ignored,omitempty"`
+	WhiteList []string `json:"white_list,omitempty"`
+	BlackList []string `json:"black_list,omitempty"`
 }
 
 type AuthProviderMeta struct {
