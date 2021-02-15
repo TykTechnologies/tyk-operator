@@ -33,8 +33,6 @@ spec:
     # TODO: We should be able to create ROUTES without a target URL.
     target_url: http://dummy.com
   use_keyless: true
-  # if Authorization: Basic - redirect to tyk://APIID where APIID is the ID associated with namespace/name basic-auth-internal
-  # if Authorization: Bearer - redirect to tyk://APIID where APIID is the ID associated with namespace/name auth-token-internal
   version_data:
     default_version: Default
     not_versioned: true
