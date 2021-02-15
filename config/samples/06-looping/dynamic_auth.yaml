@@ -52,15 +52,15 @@ spec:
                     header_matches:
                       "Authorization":
                         match_rx: "^Basic"
-                  rewrite_to_loop:
-                    target: "default/basic-auth-internal"
+                  rewrite_to_internal:
+                    api: "default/basic-auth-internal"
                 - "on": "all"
                   options:
                     header_matches:
                       "Authorization":
                         match_rx: "^Bearer"
-                  rewrite_to_loop:
-                    target: "default/auth-token-internal"
+                  rewrite_to_internal:
+                    api: "default/auth-token-internal"
 ---
 # apiVersion: tyk.tyk.io/v1alpha1
 # kind: ApiDefinition

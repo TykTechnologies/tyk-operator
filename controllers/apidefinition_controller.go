@@ -289,24 +289,24 @@ func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *t
 	return
 }
 func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
-	if a.Spec.Proxy.TargetLoop != nil {
-		a.Spec.Proxy.TargetURL = formatLoop(a.Spec.Proxy.TargetLoop)
-		a.Spec.Proxy.TargetLoop = nil
+	if a.Spec.Proxy.TargeInternal != nil {
+		a.Spec.Proxy.TargetURL = formatLoop(a.Spec.Proxy.TargeInternal)
+		a.Spec.Proxy.TargeInternal = nil
 	}
 	d := &a.Spec.VersionData
 	for n := range d.Versions {
 		v := d.Versions[n]
 		for i := 0; i < len(v.ExtendedPaths.URLRewrite); i++ {
 			u := &v.ExtendedPaths.URLRewrite[i]
-			if u.RewriteToLoop != nil {
-				u.RewriteTo = formatLoop(u.RewriteToLoop)
-				u.RewriteToLoop = nil
+			if u.RewriteToInternal != nil {
+				u.RewriteTo = formatLoop(u.RewriteToInternal)
+				u.RewriteToInternal = nil
 			}
 			for j := 0; j < len(u.Triggers); j++ {
 				x := &u.Triggers[j]
-				if x.RewriteToLoop != nil {
-					x.RewriteTo = formatLoop(x.RewriteToLoop)
-					x.RewriteToLoop = nil
+				if x.RewriteToInternal != nil {
+					x.RewriteTo = formatLoop(x.RewriteToInternal)
+					x.RewriteToInternal = nil
 				}
 			}
 		}
@@ -314,10 +314,10 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *t
 	}
 }
 
-func formatLoop(t *tykv1alpha1.LoopTarget) string {
+func formatLoop(t *tykv1alpha1.LoopInternal) string {
 	u := url.URL{
 		Scheme:   "tyk",
-		Host:     encodeIfNotBase64(t.Target),
+		Host:     encodeIfNotBase64(t.API),
 		RawPath:  t.Path,
 		RawQuery: t.Query,
 	}

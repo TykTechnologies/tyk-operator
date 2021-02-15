@@ -615,15 +615,13 @@ spec:
                 strip_listen_path:
                   description: StripListenPath removes the inbound listen path in the outgoing request. e.g. http://acme.com/httpbin/get where `httpbin` is the listen path. The `httpbin` listen path which is used to identify the API loaded in Tyk is removed, and the outbound request would be http://httpbin.org/get
                   type: boolean
-                target_list:
-                  description: Targets defines a list of upstream host targets. Tyk will then round-robin load balance between these targets. EnableLoadBalancing must be set to true in order to take advantage of this feature.
-                  items:
-                    type: string
-                  type: array
-                target_loop:
-                  description: LoopTarget defines options that constructs a url that does looping.
+                target_internal:
+                  description: LoopInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                   properties:
-                    endpoint:
+                    api:
+                      description: "API a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
+                      type: string
+                    path:
                       description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                       type: string
                     query:
@@ -632,10 +630,12 @@ spec:
                     self:
                       description: Self set this to true if the api definition is looping to itself.
                       type: boolean
-                    target:
-                      description: "Target a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
-                      type: string
                   type: object
+                target_list:
+                  description: Targets defines a list of upstream host targets. Tyk will then round-robin load balance between these targets. EnableLoadBalancing must be set to true in order to take advantage of this feature.
+                  items:
+                    type: string
+                  type: array
                 target_url:
                   description: TargetURL defines the target URL that the request should be proxied to.
                   type: string
@@ -1235,10 +1235,13 @@ spec:
                                 rewrite_to:
                                   description: RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
                                   type: string
-                                rewrite_to_loop:
-                                  description: RewriteToLoop serves as rewrite_to but used when rewriting to looping targets. When rewrite_to and rewrite_to_loop are both provided then rewrite_to will take rewrite_to_loop
+                                rewrite_to_internal:
+                                  description: RewriteToInternal serves as rewrite_to but used when rewriting to target internal api's When rewrite_to and rewrite_to_loop are both provided then rewrite_to will take rewrite_to_loop
                                   properties:
-                                    endpoint:
+                                    api:
+                                      description: "API a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
+                                      type: string
+                                    path:
                                       description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                                       type: string
                                     query:
@@ -1247,9 +1250,6 @@ spec:
                                     self:
                                       description: Self set this to true if the api definition is looping to itself.
                                       type: boolean
-                                    target:
-                                      description: "Target a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
-                                      type: string
                                   type: object
                                 triggers:
                                   items:
@@ -1325,10 +1325,13 @@ spec:
                                         type: object
                                       rewrite_to:
                                         type: string
-                                      rewrite_to_loop:
-                                        description: LoopTarget defines options that constructs a url that does looping.
+                                      rewrite_to_internal:
+                                        description: LoopInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                                         properties:
-                                          endpoint:
+                                          api:
+                                            description: "API a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
+                                            type: string
+                                          path:
                                             description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                                             type: string
                                           query:
@@ -1337,9 +1340,6 @@ spec:
                                           self:
                                             description: Self set this to true if the api definition is looping to itself.
                                             type: boolean
-                                          target:
-                                            description: "Target a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
-                                            type: string
                                         type: object
                                     required:
                                     - "on"

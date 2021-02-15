@@ -157,10 +157,10 @@ type RoutingTriggerOptions struct {
 }
 
 type RoutingTrigger struct {
-	On            RoutingTriggerOnType  `json:"on"`
-	Options       RoutingTriggerOptions `json:"options"`
-	RewriteTo     string                `json:"rewrite_to,omitempty"`
-	RewriteToLoop *LoopTarget           `json:"rewrite_to_loop,omitempty"`
+	On                RoutingTriggerOnType  `json:"on"`
+	Options           RoutingTriggerOptions `json:"options"`
+	RewriteTo         string                `json:"rewrite_to,omitempty"`
+	RewriteToInternal *LoopInternal         `json:"rewrite_to_internal,omitempty"`
 }
 
 type URLRewriteMeta struct {
@@ -172,26 +172,28 @@ type URLRewriteMeta struct {
 	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
 	// +optionall
 	RewriteTo string `json:"rewrite_to,omitempty"`
-	// RewriteToLoop serves as rewrite_to but used when rewriting to looping
-	// targets. When rewrite_to and rewrite_to_loop are both provided then
+	// RewriteToInternal serves as rewrite_to but used when rewriting to target
+	// internal api's
+	// When rewrite_to and rewrite_to_loop are both provided then
 	// rewrite_to will take rewrite_to_loop
 	// +optionall
-	RewriteToLoop *LoopTarget `json:"rewrite_to_loop,omitempty"`
+	RewriteToInternal *LoopInternal `json:"rewrite_to_internal,omitempty"`
 	// +optionall
 	Triggers []RoutingTrigger `json:"triggers,omitempty"`
 }
 
-// LoopTarget defines options that constructs a url that does looping.
-type LoopTarget struct {
+// LoopInternal defines options that constructs a url that refers to an api that
+// is loaded into the gateway.
+type LoopInternal struct {
 	// Self set this to true if the api definition is looping to itself.
 	Self bool `json:"self,omitempty"`
-	// Target a namespaced/name to the api definition resource that you are
+	// API a namespaced/name to the api definition resource that you are
 	// targetting. If self is set to true this value will be ignored.
 	//	example
-	Target string `json:"target,omitempty"`
+	API string `json:"api,omitempty"`
 	// Path path on target , this does not include query parameters.
 	//	example /myendpoint
-	Path string `json:"endpoint,omitempty"`
+	Path string `json:"path,omitempty"`
 
 	// Query url query string to add to target
 	//	example check_limits=true
@@ -625,8 +627,8 @@ type Proxy struct {
 	ListenPath string `json:"listen_path,omitempty"`
 
 	// TargetURL defines the target URL that the request should be proxied to.
-	TargetURL  string      `json:"target_url,omitempty"`
-	TargetLoop *LoopTarget `json:"target_loop,omitempty"`
+	TargetURL     string        `json:"target_url,omitempty"`
+	TargeInternal *LoopInternal `json:"target_internal,omitempty"`
 
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
 	// when `true` a request to http://foo.bar/baz/ will be retained.
