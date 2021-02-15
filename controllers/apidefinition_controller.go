@@ -296,17 +296,19 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *t
 	d := &a.Spec.VersionData
 	for n := range d.Versions {
 		v := d.Versions[n]
-		for i := 0; i < len(v.ExtendedPaths.URLRewrite); i++ {
-			u := &v.ExtendedPaths.URLRewrite[i]
-			if u.RewriteToInternal != nil {
-				u.RewriteTo = formatLoop(u.RewriteToInternal)
-				u.RewriteToInternal = nil
-			}
-			for j := 0; j < len(u.Triggers); j++ {
-				x := &u.Triggers[j]
-				if x.RewriteToInternal != nil {
-					x.RewriteTo = formatLoop(x.RewriteToInternal)
-					x.RewriteToInternal = nil
+		if v.ExtendedPaths != nil {
+			for i := 0; i < len(v.ExtendedPaths.URLRewrite); i++ {
+				u := &v.ExtendedPaths.URLRewrite[i]
+				if u.RewriteToInternal != nil {
+					u.RewriteTo = formatLoop(u.RewriteToInternal)
+					u.RewriteToInternal = nil
+				}
+				for j := 0; j < len(u.Triggers); j++ {
+					x := &u.Triggers[j]
+					if x.RewriteToInternal != nil {
+						x.RewriteTo = formatLoop(x.RewriteToInternal)
+						x.RewriteToInternal = nil
+					}
 				}
 			}
 		}

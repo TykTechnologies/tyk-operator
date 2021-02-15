@@ -218,21 +218,23 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 		)
 	}
 	for _, v := range in.Spec.VersionData.Versions {
-		for _, u := range v.ExtendedPaths.URLRewrite {
-			if u.RewriteTo == "" && u.RewriteToInternal == nil {
-				all = append(all,
-					field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
-						"can't be emptry",
-					),
-				)
-			}
-			for _, t := range u.Triggers {
-				if t.RewriteTo == "" && t.RewriteToInternal == nil {
+		if v.ExtendedPaths != nil {
+			for _, u := range v.ExtendedPaths.URLRewrite {
+				if u.RewriteTo == "" && u.RewriteToInternal == nil {
 					all = append(all,
-						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
+						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
 							"can't be emptry",
 						),
 					)
+				}
+				for _, t := range u.Triggers {
+					if t.RewriteTo == "" && t.RewriteToInternal == nil {
+						all = append(all,
+							field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
+								"can't be emptry",
+							),
+						)
+					}
 				}
 			}
 		}
