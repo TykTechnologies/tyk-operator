@@ -16,6 +16,12 @@ Before running the operator
 * A secret in the namespace of your operator deployment telling the operator how to communicate with Tyk
 * The CRDs must be registered with the Kubernetes apiserver
 * cert-manager must be installed
+* If you are using `pro` edition make sure in your gateway's `tyk.conf` `policies.allow_explicit_policy_id` is set to true
+```json
+    "policies": {
+        "allow_explicit_policy_id": true
+    },
+```
 
 ### Installing Tyk
 
