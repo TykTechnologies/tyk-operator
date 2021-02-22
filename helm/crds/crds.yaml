@@ -618,18 +618,23 @@ spec:
                 target_internal:
                   description: LoopInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                   properties:
-                    api:
-                      description: "API a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
-                      type: string
                     path:
                       description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                       type: string
                     query:
                       description: "Query url query string to add to target \texample check_limits=true"
                       type: string
-                    self:
-                      description: Self set this to true if the api definition is looping to itself.
-                      type: boolean
+                    target:
+                      description: API a namespaced/name to the api definition resource that you are targetting
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                      required:
+                      - name
+                      - namespace
+                      type: object
                   type: object
                 target_list:
                   description: Targets defines a list of upstream host targets. Tyk will then round-robin load balance between these targets. EnableLoadBalancing must be set to true in order to take advantage of this feature.
@@ -1236,20 +1241,25 @@ spec:
                                   description: RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
                                   type: string
                                 rewrite_to_internal:
-                                  description: RewriteToInternal serves as rewrite_to but used when rewriting to target internal api's When rewrite_to and rewrite_to_loop are both provided then rewrite_to will take rewrite_to_loop
+                                  description: RewriteToInternal serves as rewrite_to but used when rewriting to target internal api's When rewrite_to and rewrite_to_internal are both provided then rewrite_to will take rewrite_to_internal
                                   properties:
-                                    api:
-                                      description: "API a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
-                                      type: string
                                     path:
                                       description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                                       type: string
                                     query:
                                       description: "Query url query string to add to target \texample check_limits=true"
                                       type: string
-                                    self:
-                                      description: Self set this to true if the api definition is looping to itself.
-                                      type: boolean
+                                    target:
+                                      description: API a namespaced/name to the api definition resource that you are targetting
+                                      properties:
+                                        name:
+                                          type: string
+                                        namespace:
+                                          type: string
+                                      required:
+                                      - name
+                                      - namespace
+                                      type: object
                                   type: object
                                 triggers:
                                   items:
@@ -1328,18 +1338,23 @@ spec:
                                       rewrite_to_internal:
                                         description: LoopInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                                         properties:
-                                          api:
-                                            description: "API a namespaced/name to the api definition resource that you are targetting. If self is set to true this value will be ignored. \texample"
-                                            type: string
                                           path:
                                             description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                                             type: string
                                           query:
                                             description: "Query url query string to add to target \texample check_limits=true"
                                             type: string
-                                          self:
-                                            description: Self set this to true if the api definition is looping to itself.
-                                            type: boolean
+                                          target:
+                                            description: API a namespaced/name to the api definition resource that you are targetting
+                                            properties:
+                                              name:
+                                                type: string
+                                              namespace:
+                                                type: string
+                                            required:
+                                            - name
+                                            - namespace
+                                            type: object
                                         type: object
                                     required:
                                     - "on"

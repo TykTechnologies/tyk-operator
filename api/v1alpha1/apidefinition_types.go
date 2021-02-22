@@ -176,9 +176,8 @@ type URLRewriteMeta struct {
 // is loaded into the gateway.
 type LoopInternal struct {
 	// API a namespaced/name to the api definition resource that you are
-	// targetting. If self is set to true this value will be ignored.
-	//	example
-	API string `json:"api,omitempty"`
+	// targetting
+	Target Target `json:"target,omitempty"`
 	// Path path on target , this does not include query parameters.
 	//	example /myendpoint
 	Path string `json:"path,omitempty"`
@@ -186,6 +185,11 @@ type LoopInternal struct {
 	// Query url query string to add to target
 	//	example check_limits=true
 	Query string `json:"query,omitempty"`
+}
+
+type Target struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type VirtualMeta struct {

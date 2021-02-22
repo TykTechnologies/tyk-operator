@@ -317,9 +317,13 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *t
 }
 
 func formatLoop(t *tykv1alpha1.LoopInternal) string {
+	host := types.NamespacedName{
+		Namespace: t.Target.Namespace,
+		Name:      t.Target.Name,
+	}
 	u := url.URL{
 		Scheme:   "tyk",
-		Host:     encodeIfNotBase64(t.API),
+		Host:     encodeIfNotBase64(host.String()),
 		RawPath:  t.Path,
 		RawQuery: t.Query,
 	}
