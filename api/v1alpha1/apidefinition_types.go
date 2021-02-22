@@ -166,8 +166,8 @@ type URLRewriteMeta struct {
 	RewriteTo string `json:"rewrite_to,omitempty"`
 	// RewriteToInternal serves as rewrite_to but used when rewriting to target
 	// internal api's
-	// When rewrite_to and rewrite_to_loop are both provided then
-	// rewrite_to will take rewrite_to_loop
+	// When rewrite_to and rewrite_to_internal are both provided then
+	// rewrite_to will take rewrite_to_internal
 	RewriteToInternal *LoopInternal    `json:"rewrite_to_internal,omitempty"`
 	Triggers          []RoutingTrigger `json:"triggers,omitempty"`
 }
@@ -175,8 +175,6 @@ type URLRewriteMeta struct {
 // LoopInternal defines options that constructs a url that refers to an api that
 // is loaded into the gateway.
 type LoopInternal struct {
-	// Self set this to true if the api definition is looping to itself.
-	Self bool `json:"self,omitempty"`
 	// API a namespaced/name to the api definition resource that you are
 	// targetting. If self is set to true this value will be ignored.
 	//	example

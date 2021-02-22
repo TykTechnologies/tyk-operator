@@ -323,9 +323,6 @@ func formatLoop(t *tykv1alpha1.LoopInternal) string {
 		RawPath:  t.Path,
 		RawQuery: t.Query,
 	}
-	if t.Self {
-		u.Host = "self"
-	}
 	return u.String()
 }
 
