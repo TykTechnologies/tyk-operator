@@ -137,23 +137,16 @@ type CircuitBreakerMeta struct {
 
 type StringRegexMap struct {
 	MatchPattern string `json:"match_rx"`
-	// +optionall
-	Reverse bool `json:"reverse,omitempty"`
+	Reverse      bool   `json:"reverse,omitempty"`
 }
 
 type RoutingTriggerOptions struct {
-	// +optionall
-	HeaderMatches map[string]StringRegexMap `json:"header_matches,omitempty"`
-	// +optionall
-	QueryValMatches map[string]StringRegexMap `json:"query_val_matches,omitempty"`
-	// +optionall
-	PathPartMatches map[string]StringRegexMap `json:"path_part_matches,omitempty"`
-	// +optionall
-	SessionMetaMatches map[string]StringRegexMap `json:"session_meta_matches,omitempty"`
-	// +optionall
+	HeaderMatches         map[string]StringRegexMap `json:"header_matches,omitempty"`
+	QueryValMatches       map[string]StringRegexMap `json:"query_val_matches,omitempty"`
+	PathPartMatches       map[string]StringRegexMap `json:"path_part_matches,omitempty"`
+	SessionMetaMatches    map[string]StringRegexMap `json:"session_meta_matches,omitempty"`
 	RequestContextMatches map[string]StringRegexMap `json:"request_context_matches,omitempty"`
-	// +optionall
-	PayloadMatches *StringRegexMap `json:"payload_matches,omitempty"`
+	PayloadMatches        *StringRegexMap           `json:"payload_matches,omitempty"`
 }
 
 type RoutingTrigger struct {
@@ -170,16 +163,13 @@ type URLRewriteMeta struct {
 	// MatchPattern is a regular expression pattern to match the path
 	MatchPattern string `json:"match_pattern"`
 	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
-	// +optionall
 	RewriteTo string `json:"rewrite_to,omitempty"`
 	// RewriteToInternal serves as rewrite_to but used when rewriting to target
 	// internal api's
 	// When rewrite_to and rewrite_to_loop are both provided then
 	// rewrite_to will take rewrite_to_loop
-	// +optionall
-	RewriteToInternal *LoopInternal `json:"rewrite_to_internal,omitempty"`
-	// +optionall
-	Triggers []RoutingTrigger `json:"triggers,omitempty"`
+	RewriteToInternal *LoopInternal    `json:"rewrite_to_internal,omitempty"`
+	Triggers          []RoutingTrigger `json:"triggers,omitempty"`
 }
 
 // LoopInternal defines options that constructs a url that refers to an api that
