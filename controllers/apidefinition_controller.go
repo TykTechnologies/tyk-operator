@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -125,8 +126,11 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 		desired.Spec.CertificateSecretNames = nil
 		r.updateLinkedPolicies(ctx, desired)
-		r.updateLoopingTargets(ctx, desired)
-
+		err := r.updateLoopingTargets(ctx, desired)
+		if err != nil {
+			queueA = queueAfter
+			return err
+		}
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			err := r.UniversalClient.Api().Create(&desired.Spec)
@@ -144,7 +148,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 		log.Info("Updating ApiDefinition")
 		desired.Spec.APIID = desired.Status.ApiID
-		err := r.UniversalClient.Api().Update(&desired.Spec)
+		err = r.UniversalClient.Api().Update(&desired.Spec)
 		if err != nil {
 			if err != nil {
 				log.Error(err, "Failed to update api definition")
@@ -288,24 +292,45 @@ func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *t
 	}
 	return
 }
-func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
+
+// checkLoopingTargets Check if there is any other api's linking to a
+func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
+	r.Log.Info("checking linked api resources")
+	if len(a.Status.LinkedByAPI) == 0 {
+		return nil
+	}
+	for _, n := range a.Status.LinkedByAPI {
+		var policy tykv1alpha1.SecurityPolicy
+		if err := r.Get(ctx, n.NS(), &policy); err == nil {
+			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
+		}
+	}
+	return nil
+}
+
+func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
+	a *tykv1alpha1.ApiDefinition,
+) error {
 	if a.Spec.Proxy.TargeInternal != nil {
 		a.Spec.Proxy.TargetURL = formatLoop(a.Spec.Proxy.TargeInternal)
 		a.Spec.Proxy.TargeInternal = nil
 	}
 	d := &a.Spec.VersionData
+	var links []tykv1alpha1.Target
 	for n := range d.Versions {
 		v := d.Versions[n]
 		if v.ExtendedPaths != nil {
 			for i := 0; i < len(v.ExtendedPaths.URLRewrite); i++ {
 				u := &v.ExtendedPaths.URLRewrite[i]
 				if u.RewriteToInternal != nil {
+					links = append(links, u.RewriteToInternal.Target)
 					u.RewriteTo = formatLoop(u.RewriteToInternal)
 					u.RewriteToInternal = nil
 				}
 				for j := 0; j < len(u.Triggers); j++ {
 					x := &u.Triggers[j]
 					if x.RewriteToInternal != nil {
+						links = append(links, x.RewriteToInternal.Target)
 						x.RewriteTo = formatLoop(x.RewriteToInternal)
 						x.RewriteToInternal = nil
 					}
@@ -314,16 +339,54 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context, a *t
 		}
 		d.Versions[n] = v
 	}
+	added, removed := compare(a.Status.LinkedToAPI, links)
+	if len(removed) > 0 {
+		for _, target := range added {
+			err := r.updateStatus(ctx, target, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, tykv1alpha1.Target{
+					Namespace: a.Namespace,
+					Name:      a.Name,
+				})
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if len(added) > 0 {
+		for _, target := range added {
+			err := r.updateStatus(ctx, target, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+				ads.LinkedByAPI = addTarget(ads.LinkedByAPI, tykv1alpha1.Target{
+					Namespace: a.Namespace,
+					Name:      a.Name,
+				})
+			})
+			if err != nil {
+				return err
+			}
+		}
+		sort.Slice(links, func(i, j int) bool {
+			return links[i].String() < links[j].String()
+		})
+		a.Status.LinkedToAPI = links
+		return r.Status().Update(ctx, a)
+	}
+	return nil
+}
+
+func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1alpha1.Target, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
+	var api tykv1alpha1.ApiDefinition
+	if err := r.Get(ctx, target.NS(), &api); err != nil {
+		return fmt.Errorf("unable to delete api %v %v", target, err)
+	}
+	fn(&api.Status)
+	return r.Status().Update(ctx, &api)
 }
 
 func formatLoop(t *tykv1alpha1.LoopInternal) string {
-	host := types.NamespacedName{
-		Namespace: t.Target.Namespace,
-		Name:      t.Target.Name,
-	}
 	u := url.URL{
 		Scheme:   "tyk",
-		Host:     encodeIfNotBase64(host.String()),
+		Host:     encodeIfNotBase64(t.Target.String()),
 		RawPath:  t.Path,
 		RawQuery: t.Query,
 	}

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
@@ -190,6 +191,14 @@ type LoopInternal struct {
 type Target struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+}
+
+func (t Target) String() string {
+	return t.NS().String()
+}
+
+func (t Target) NS() types.NamespacedName {
+	return types.NamespacedName{Namespace: t.Namespace, Name: t.Name}
 }
 
 type VirtualMeta struct {
@@ -843,6 +852,14 @@ type ApiDefinitionStatus struct {
 	// LinkedByPolicies is a list policies that references this api definition
 	//+optional
 	LinkedByPolicies []string `json:"linked_by_policies,omitempty"`
+
+	// LinkedByAPI is a list of ApiDefinition namespaced/name that links to this
+	// resource
+	LinkedByAPI []Target `json:"linked_by_api,omitempty"`
+
+	// LinkedByAPI is a list of ApiDefinition namespaced/name that this resource
+	// links to.
+	LinkedToAPI []Target `json:"linked_to_api,omitempty"`
 }
 
 // +kubebuilder:object:root=true

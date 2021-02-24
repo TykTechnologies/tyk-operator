@@ -1499,10 +1499,36 @@ spec:
           properties:
             api_id:
               type: string
+            linked_by_api:
+              description: LinkedByAPI is a list of ApiDefinition namespaced/name that links to this resource
+              items:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              type: array
             linked_by_policies:
               description: LinkedByPolicies is a list policies that references this api definition
               items:
                 type: string
+              type: array
+            linked_to_api:
+              description: LinkedByAPI is a list of ApiDefinition namespaced/name that this resource links to.
+              items:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               type: array
           required:
           - api_id
