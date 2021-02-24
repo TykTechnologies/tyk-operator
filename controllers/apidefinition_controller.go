@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"net/url"
 	"sort"
 	"strconv"
 	"time"
@@ -304,7 +303,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	a *tykv1alpha1.ApiDefinition,
 ) error {
 	if a.Spec.Proxy.TargeInternal != nil {
-		a.Spec.Proxy.TargetURL = formatLoop(a.Spec.Proxy.TargeInternal)
+		a.Spec.Proxy.TargetURL = a.Spec.Proxy.TargeInternal.String()
 		a.Spec.Proxy.TargeInternal = nil
 	}
 	d := &a.Spec.VersionData
@@ -316,14 +315,14 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 				u := &v.ExtendedPaths.URLRewrite[i]
 				if u.RewriteToInternal != nil {
 					links = append(links, u.RewriteToInternal.Target)
-					u.RewriteTo = formatLoop(u.RewriteToInternal)
+					u.RewriteTo = u.RewriteToInternal.String()
 					u.RewriteToInternal = nil
 				}
 				for j := 0; j < len(u.Triggers); j++ {
 					x := &u.Triggers[j]
 					if x.RewriteToInternal != nil {
 						links = append(links, x.RewriteToInternal.Target)
-						x.RewriteTo = formatLoop(x.RewriteToInternal)
+						x.RewriteTo = x.RewriteToInternal.String()
 						x.RewriteToInternal = nil
 					}
 				}
@@ -371,16 +370,6 @@ func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1
 	}
 	fn(&api.Status)
 	return r.Status().Update(ctx, &api)
-}
-
-func formatLoop(t *tykv1alpha1.LoopInternal) string {
-	u := url.URL{
-		Scheme:   "tyk",
-		Host:     encodeIfNotBase64(t.Target.String()),
-		RawPath:  t.Path,
-		RawQuery: t.Query,
-	}
-	return u.String()
 }
 
 // SetupWithManager initializes the api definition controller.

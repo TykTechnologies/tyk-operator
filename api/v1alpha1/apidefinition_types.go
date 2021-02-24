@@ -17,7 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"net/url"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -154,7 +156,7 @@ type RoutingTrigger struct {
 	On                RoutingTriggerOnType  `json:"on"`
 	Options           RoutingTriggerOptions `json:"options"`
 	RewriteTo         string                `json:"rewrite_to,omitempty"`
-	RewriteToInternal *LoopInternal         `json:"rewrite_to_internal,omitempty"`
+	RewriteToInternal *RewriteToInternal    `json:"rewrite_to_internal,omitempty"`
 }
 
 type URLRewriteMeta struct {
@@ -169,13 +171,13 @@ type URLRewriteMeta struct {
 	// internal api's
 	// When rewrite_to and rewrite_to_internal are both provided then
 	// rewrite_to will take rewrite_to_internal
-	RewriteToInternal *LoopInternal    `json:"rewrite_to_internal,omitempty"`
-	Triggers          []RoutingTrigger `json:"triggers,omitempty"`
+	RewriteToInternal *RewriteToInternal `json:"rewrite_to_internal,omitempty"`
+	Triggers          []RoutingTrigger   `json:"triggers,omitempty"`
 }
 
-// LoopInternal defines options that constructs a url that refers to an api that
+// TargetInternal defines options that constructs a url that refers to an api that
 // is loaded into the gateway.
-type LoopInternal struct {
+type TargetInternal struct {
 	// API a namespaced/name to the api definition resource that you are
 	// targetting
 	Target Target `json:"target,omitempty"`
@@ -186,6 +188,45 @@ type LoopInternal struct {
 	// Query url query string to add to target
 	//	example check_limits=true
 	Query string `json:"query,omitempty"`
+}
+
+func (i TargetInternal) String() string {
+	host := i.Target.String()
+	host = base64.URLEncoding.EncodeToString([]byte(host))
+	u := url.URL{
+		Scheme:   "tyk",
+		Host:     host,
+		RawPath:  i.Path,
+		RawQuery: i.Query,
+	}
+	return u.String()
+}
+
+// RewriteToInternal defines options that constructs a url that refers to an api that
+// is loaded into the gateway.
+type RewriteToInternal struct {
+	// API a namespaced/name to the api definition resource that you are
+	// targetting
+	Target Target `json:"target,omitempty"`
+	// Path path on target , this does not include query parameters.
+	//	example /myendpoint
+	Path string `json:"path,omitempty"`
+
+	// Query url query string to add to target
+	//	example check_limits=true
+	Query string `json:"query,omitempty"`
+}
+
+func (i RewriteToInternal) String() string {
+	host := i.Target.String()
+	host = base64.URLEncoding.EncodeToString([]byte(host))
+	u := url.URL{
+		Scheme:   "tyk",
+		Host:     host,
+		RawPath:  i.Path,
+		RawQuery: i.Query,
+	}
+	return u.String()
 }
 
 type Target struct {
@@ -628,8 +669,8 @@ type Proxy struct {
 	ListenPath string `json:"listen_path,omitempty"`
 
 	// TargetURL defines the target URL that the request should be proxied to.
-	TargetURL     string        `json:"target_url,omitempty"`
-	TargeInternal *LoopInternal `json:"target_internal,omitempty"`
+	TargetURL     string          `json:"target_url,omitempty"`
+	TargeInternal *TargetInternal `json:"target_internal,omitempty"`
 
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
 	// when `true` a request to http://foo.bar/baz/ will be retained.

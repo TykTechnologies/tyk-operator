@@ -66,59 +66,63 @@ spec:
                       name: auth-token-internal
                       namespace: default
 ---
-# apiVersion: tyk.tyk.io/v1alpha1
-# kind: ApiDefinition
-# metadata:
-#   name: basic-auth-internal
-# spec:
-#   name: BasicAuth Internal API
-#   protocol: http
-#   active: true
-#   internal: true
-#   use_basic_auth: true
-#   auth_configs:
-#     basicAuth:
-#       auth_header_name: Authorization
-#   version_data:
-#     default_version: Default
-#     not_versioned: true
-#     versions:
-#       Default:
-#         name: Default
-#         # redirect all traffic to proxy API
-# ---
-# apiVersion: tyk.tyk.io/v1alpha1
-# kind: ApiDefinition
-# metadata:
-#   name: auth-token-internal
-# spec:
-#   name: AuthToken Internal API
-#   protocol: http
-#   active: true
-#   internal: true
-#   use_basic_auth: true
-#   auth_configs:
-#     authToken:
-#       auth_header_name: Authorization
-#   version_data:
-#     default_version: Default
-#     not_versioned: true
-#     versions:
-#       Default:
-#         name: Default
-#         # redirect all traffic to proxy API
-# ---
-# apiVersion: tyk.tyk.io/v1alpha1
-# kind: ApiDefinition
-# metadata:
-#   name: proxy-api
-# spec:
-#   name: Proxy API
-#   protocol: http
-#   active: true
-#   internal: true
-#   proxy:
-#     target_url: http://httpbin.org
-#   use_keyless: true
-# ---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: basic-auth-internal
+spec:
+  name: BasicAuth Internal API
+  protocol: http
+  proxy:
+    target_url: http://dummy.com
+  active: true
+  internal: true
+  use_basic_auth: true
+  auth_configs:
+    basicAuth:
+      auth_header_name: Authorization
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        # redirect all traffic to proxy API
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: auth-token-internal
+spec:
+  name: AuthToken Internal API
+  protocol: http
+  proxy:
+    target_url: http://dummy.com
+  active: true
+  internal: true
+  use_basic_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: Authorization
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        # redirect all traffic to proxy API
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: proxy-api
+spec:
+  name: Proxy API
+  protocol: http
+  active: true
+  internal: true
+  proxy:
+    target_url: http://httpbin.org
+  use_keyless: true
+---
 

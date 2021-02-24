@@ -616,7 +616,7 @@ spec:
                   description: StripListenPath removes the inbound listen path in the outgoing request. e.g. http://acme.com/httpbin/get where `httpbin` is the listen path. The `httpbin` listen path which is used to identify the API loaded in Tyk is removed, and the outbound request would be http://httpbin.org/get
                   type: boolean
                 target_internal:
-                  description: LoopInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
+                  description: TargetInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                   properties:
                     path:
                       description: "Path path on target , this does not include query parameters. \texample /myendpoint"
@@ -1336,7 +1336,7 @@ spec:
                                       rewrite_to:
                                         type: string
                                       rewrite_to_internal:
-                                        description: LoopInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
+                                        description: RewriteToInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                                         properties:
                                           path:
                                             description: "Path path on target , this does not include query parameters. \texample /myendpoint"

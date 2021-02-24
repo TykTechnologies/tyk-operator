@@ -720,7 +720,7 @@ spec:
                     would be http://httpbin.org/get
                   type: boolean
                 target_internal:
-                  description: LoopInternal defines options that constructs a url
+                  description: TargetInternal defines options that constructs a url
                     that refers to an api that is loaded into the gateway.
                   properties:
                     path:
@@ -1480,7 +1480,7 @@ spec:
                                       rewrite_to:
                                         type: string
                                       rewrite_to_internal:
-                                        description: LoopInternal defines options
+                                        description: RewriteToInternal defines options
                                           that constructs a url that refers to an
                                           api that is loaded into the gateway.
                                         properties:
