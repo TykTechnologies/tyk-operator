@@ -302,6 +302,7 @@ func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *ty
 func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	a *tykv1alpha1.ApiDefinition,
 ) error {
+	r.Log.Info("updating looping targets")
 	if a.Spec.Proxy.TargeInternal != nil {
 		a.Spec.Proxy.TargetURL = a.Spec.Proxy.TargeInternal.String()
 		a.Spec.Proxy.TargeInternal = nil
@@ -336,7 +337,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	}
 	added, removed := compare(a.Status.LinkedToAPI, links)
 	if len(removed) > 0 {
-		for _, target := range added {
+		for _, target := range removed {
 			err := r.updateStatus(ctx, target, func(ads *tykv1alpha1.ApiDefinitionStatus) {
 				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, ns)
 			})

@@ -87,6 +87,16 @@ spec:
     versions:
       Default:
         name: Default
+        use_extended_paths: true
+        extended_paths:
+          url_rewrites:
+            - path: /get
+              match_pattern: /get
+              method: GET
+              rewrite_to_internal:
+                target:
+                  name: proxy-api
+                  namespace: default
         # redirect all traffic to proxy API
 ---
 apiVersion: tyk.tyk.io/v1alpha1
@@ -110,7 +120,16 @@ spec:
     versions:
       Default:
         name: Default
-        # redirect all traffic to proxy API
+        use_extended_paths: true
+        extended_paths:
+          url_rewrites:
+            - path: /get
+              match_pattern: /get
+              method: GET
+              rewrite_to_internal:
+                target:
+                  name: proxy-api
+                  namespace: default
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
