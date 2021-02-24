@@ -851,7 +851,7 @@ type ApiDefinitionStatus struct {
 
 	// LinkedByPolicies is a list policies that references this api definition
 	//+optional
-	LinkedByPolicies []string `json:"linked_by_policies,omitempty"`
+	LinkedByPolicies []Target `json:"linked_by_policies,omitempty"`
 
 	// LinkedByAPI is a list of ApiDefinition namespaced/name that links to this
 	// resource

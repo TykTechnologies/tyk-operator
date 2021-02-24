@@ -136,8 +136,8 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to delete resource")
 		return err
 	}
-	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns string) {
-		ads.LinkedByPolicies = removeString(ads.LinkedByPolicies, ns)
+	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns tykv1.Target) {
+		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
 	})
 	if err != nil {
 		return err
@@ -154,8 +154,8 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to update policy")
 		return err
 	}
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s string) {
-		ads.LinkedByPolicies = addString(ads.LinkedByPolicies, s)
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s tykv1.Target) {
+		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	if err != nil {
 		return err
@@ -172,8 +172,8 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to create policy")
 		return err
 	}
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s string) {
-		ads.LinkedByPolicies = addString(ads.LinkedByPolicies, s)
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s tykv1.Target) {
+		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	r.Log.Info("Successful created Policy")
 	policy.Status.PolID = policy.Spec.MID
@@ -183,10 +183,12 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 // updateLinkedAPI updates the status of api definitions associated with this
 // policy.
 func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *tykv1.SecurityPolicy,
-	fn func(*tykv1.ApiDefinitionStatus, string),
+	fn func(*tykv1.ApiDefinitionStatus, tykv1.Target),
 ) error {
 	r.Log.Info("Updating linked api definitions")
-	ns := (types.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}).String()
+	ns := tykv1.Target{
+		Namespace: policy.Namespace, Name: policy.Name,
+	}
 	for _, a := range policy.Spec.AccessRightsArray {
 		api := &tykv1.ApiDefinition{}
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {

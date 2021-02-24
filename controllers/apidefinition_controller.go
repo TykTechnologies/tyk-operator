@@ -23,7 +23,6 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -257,15 +256,8 @@ func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *ty
 		return nil
 	}
 	for _, n := range a.Status.LinkedByPolicies {
-		p := strings.Split(n, string(types.Separator))
-		if len(p) != 2 {
-			err := fmt.Errorf("malformed linked_policy expected namespace/name format got %s", n)
-			r.Log.Error(err, "Failed to parse lined_policies")
-			return err
-		}
-		ns := types.NamespacedName{Namespace: p[0], Name: p[1]}
 		var policy tykv1alpha1.SecurityPolicy
-		if err := r.Get(ctx, ns, &policy); err == nil {
+		if err := r.Get(ctx, n.NS(), &policy); err == nil {
 			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
 		}
 	}
