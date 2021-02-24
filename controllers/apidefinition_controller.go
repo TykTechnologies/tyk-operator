@@ -331,14 +331,15 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 		}
 		d.Versions[n] = v
 	}
+	ns := tykv1alpha1.Target{
+		Name:      a.Name,
+		Namespace: a.Namespace,
+	}
 	added, removed := compare(a.Status.LinkedToAPI, links)
 	if len(removed) > 0 {
 		for _, target := range added {
 			err := r.updateStatus(ctx, target, func(ads *tykv1alpha1.ApiDefinitionStatus) {
-				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, tykv1alpha1.Target{
-					Namespace: a.Namespace,
-					Name:      a.Name,
-				})
+				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, ns)
 			})
 			if err != nil {
 				return err
@@ -348,10 +349,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	if len(added) > 0 {
 		for _, target := range added {
 			err := r.updateStatus(ctx, target, func(ads *tykv1alpha1.ApiDefinitionStatus) {
-				ads.LinkedByAPI = addTarget(ads.LinkedByAPI, tykv1alpha1.Target{
-					Namespace: a.Namespace,
-					Name:      a.Name,
-				})
+				ads.LinkedByAPI = addTarget(ads.LinkedByAPI, ns)
 			})
 			if err != nil {
 				return err
