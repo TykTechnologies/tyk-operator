@@ -367,7 +367,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1alpha1.Target, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
 	var api tykv1alpha1.ApiDefinition
 	if err := r.Get(ctx, target.NS(), &api); err != nil {
-		return fmt.Errorf("unable to delete api %v %v", target, err)
+		return fmt.Errorf("unable to get api %v %v", target, err)
 	}
 	fn(&api.Status)
 	return r.Status().Update(ctx, &api)
