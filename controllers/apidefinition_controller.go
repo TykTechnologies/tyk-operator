@@ -302,16 +302,13 @@ func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *ty
 	return nil
 }
 
-func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
-	a *tykv1alpha1.ApiDefinition,
-) error {
-	r.Log.Info("updating looping targets")
+func collectAndUpdateLoopingTargets(a *tykv1alpha1.ApiDefinition) (links []tykv1alpha1.Target) {
 	if a.Spec.Proxy.TargeInternal != nil {
+		links = append(links, a.Spec.Proxy.TargeInternal.Target)
 		a.Spec.Proxy.TargetURL = a.Spec.Proxy.TargeInternal.String()
 		a.Spec.Proxy.TargeInternal = nil
 	}
 	d := &a.Spec.VersionData
-	var links []tykv1alpha1.Target
 	for n := range d.Versions {
 		v := d.Versions[n]
 		if v.ExtendedPaths != nil {
@@ -334,10 +331,21 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 		}
 		d.Versions[n] = v
 	}
+	sort.Slice(links, func(i, j int) bool {
+		return links[i].String() < links[j].String()
+	})
+	return
+}
+
+func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
+	a *tykv1alpha1.ApiDefinition,
+) error {
+	r.Log.Info("updating looping targets")
 	ns := tykv1alpha1.Target{
 		Name:      a.Name,
 		Namespace: a.Namespace,
 	}
+	links := collectAndUpdateLoopingTargets(a)
 	for _, target := range links {
 		err := r.updateStatus(ctx, target, func(ads *tykv1alpha1.ApiDefinitionStatus) {
 			ads.LinkedByAPI = addTarget(ads.LinkedByAPI, ns)
@@ -349,9 +357,6 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 			return err
 		}
 	}
-	sort.Slice(links, func(i, j int) bool {
-		return links[i].String() < links[j].String()
-	})
 	a.Status.LinkedToAPI = links
 	return r.Status().Update(ctx, a)
 }
