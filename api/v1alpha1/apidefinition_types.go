@@ -238,6 +238,11 @@ func (t Target) String() string {
 	return t.NS().String()
 }
 
+// Equal returns true if t and o are equal
+func (t Target) Equal(o Target) bool {
+	return t.Namespace == o.Namespace && t.Name == o.Name
+}
+
 func (t Target) NS() types.NamespacedName {
 	return types.NamespacedName{Namespace: t.Namespace, Name: t.Name}
 }

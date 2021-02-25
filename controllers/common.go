@@ -58,7 +58,7 @@ func addTarget(slice []tykv1.Target, s tykv1.Target) (result []tykv1.Target) {
 
 func removeTarget(slice []tykv1.Target, s tykv1.Target) (result []tykv1.Target) {
 	for _, item := range slice {
-		if item.String() == s.String() {
+		if item.Equal(s) {
 			continue
 		}
 		result = append(result, item)
