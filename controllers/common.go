@@ -66,27 +66,6 @@ func removeTarget(slice []tykv1.Target, s tykv1.Target) (result []tykv1.Target) 
 	return
 }
 
-func compare(slice, s []tykv1.Target) (added, removed []tykv1.Target) {
-	a := make(map[string]struct{})
-	b := make(map[string]struct{})
-	for _, item := range slice {
-		a[item.String()] = struct{}{}
-	}
-	for _, item := range s {
-		b[item.String()] = struct{}{}
-	}
-	for _, k := range slice {
-		if _, ok := b[k.String()]; !ok {
-			removed = append(removed, k)
-		}
-	}
-	for _, k := range s {
-		if _, ok := a[k.String()]; !ok {
-			added = append(added, k)
-		}
-	}
-	return
-}
 func apiIDDecode(encoded string) string {
 	apiBytes, _ := base64.URLEncoding.DecodeString(encoded)
 	return string(apiBytes)
