@@ -233,6 +233,18 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		if err := r.checkLoopingTargets(ctx, desired); err != nil {
 			return queueAfter, err
 		}
+		ns := tykv1alpha1.Target{
+			Name:      desired.Name,
+			Namespace: desired.Namespace,
+		}
+		for _, target := range desired.Status.LinkedToAPI {
+			err := r.updateStatus(ctx, target, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, ns)
+			})
+			if err != nil {
+				return queueAfter, err
+			}
+		}
 		r.Log.Info("deleting api")
 		err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
 		if err != nil {
@@ -244,6 +256,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
+
 		r.Log.Info("removing finalizer")
 		util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 	}
@@ -347,7 +360,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	}
 	links := collectAndUpdateLoopingTargets(a)
 	for _, target := range links {
-		err := r.updateStatus(ctx, target, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+		err := r.updateStatus(ctx, target, false, func(ads *tykv1alpha1.ApiDefinitionStatus) {
 			ads.LinkedByAPI = addTarget(ads.LinkedByAPI, ns)
 			sort.Slice(ads.LinkedByAPI, func(i, j int) bool {
 				return ads.LinkedByAPI[i].String() < ads.LinkedByAPI[j].String()
@@ -361,9 +374,14 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	return r.Status().Update(ctx, a)
 }
 
-func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1alpha1.Target, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
+func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1alpha1.Target, ignoreNotFound bool, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
 	var api tykv1alpha1.ApiDefinition
 	if err := r.Get(ctx, target.NS(), &api); err != nil {
+		if errors.IsNotFound(err) {
+			if ignoreNotFound {
+				return nil
+			}
+		}
 		return fmt.Errorf("unable to get api %v %v", target, err)
 	}
 	fn(&api.Status)
