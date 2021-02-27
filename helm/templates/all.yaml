@@ -199,6 +199,9 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundPorts: "3000"
+        traffic.sidecar.istio.io/includeOutboundPorts: ""
     spec:
       containers:
       - args:
