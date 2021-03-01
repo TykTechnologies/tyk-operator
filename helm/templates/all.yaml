@@ -197,6 +197,10 @@ spec:
       control-plane: controller-manager
   template:
     metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
       labels:
         control-plane: controller-manager
     spec:
