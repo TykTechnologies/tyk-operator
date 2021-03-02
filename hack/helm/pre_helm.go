@@ -17,6 +17,7 @@ func main() {
 		"imagePullPolicy: IfNotPresent": "imagePullPolicy: {{ .Values.image.pullPolicy }}",
 		"name: default":                 "name: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
 		"serviceAccountName: default":   "serviceAccountName: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
+		annotationsSrc:                  annotationsDest,
 	}
 	b, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -33,6 +34,20 @@ var resource = `{{- with .Values.resources}}
 {{- . | toYaml | nindent 10 }}
 {{end}}
 `
+
+const annotationsSrc = `  template:
+    metadata:
+      labels:
+        control-plane: controller-manager`
+
+const annotationsDest = `  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        control-plane: controller-manager`
 
 func injectResources(b []byte) []byte {
 	n := bytes.Index(b, []byte("kind: Deployment"))
