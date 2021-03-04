@@ -53,7 +53,7 @@ spec:
                     target:
                       name: basic-auth-internal
                       namespace: default
-                      path: basic/$2
+                    path: "basic/$2"
                 - "on": "all"
                   options:
                     header_matches:
@@ -63,7 +63,7 @@ spec:
                     target:
                       name: auth-token-internal
                       namespace: default
-                      path: token/$2
+                    path: "token/$2"
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -93,7 +93,7 @@ spec:
                 target:
                   name: proxy-api
                   namespace: default
-                  path: proxy/$1
+                path: proxy/$1
           transform_headers:
             - add_headers:
                 x-transform-api: "token-auth"
@@ -130,7 +130,7 @@ spec:
                 target:
                   name: proxy-api
                   namespace: default
-                  path: proxy/$1
+                path: proxy/$1
           transform_headers:
             - add_headers:
                 x-transform-api: "token-auth"
