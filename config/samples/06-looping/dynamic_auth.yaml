@@ -28,10 +28,8 @@ spec:
   protocol: http
   active: true
   proxy:
-    listen_path: /entrypoint
-    strip_listen_path: true
-    # TODO: We should be able to create ROUTES without a target URL.
-    target_url: http://dummy.com
+    listen_path: /entry
+    target_url: http://example.com
   use_keyless: true
   version_data:
     default_version: Default
@@ -42,10 +40,9 @@ spec:
         use_extended_paths: true
         extended_paths:
           url_rewrites:
-            - path: /get
-              match_pattern: /get
+            - path: "/{id}"
+              match_pattern: "/(.*)/(.*)"
               method: GET
-              rewrite_to: /xml
               triggers:
                 - "on": "all"
                   options:
@@ -56,6 +53,7 @@ spec:
                     target:
                       name: basic-auth-internal
                       namespace: default
+                      path: basic/$2
                 - "on": "all"
                   options:
                     header_matches:
@@ -65,6 +63,7 @@ spec:
                     target:
                       name: auth-token-internal
                       namespace: default
+                      path: token/$2
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -74,13 +73,10 @@ spec:
   name: BasicAuth Internal API
   protocol: http
   proxy:
-    target_url: http://dummy.com
+    listen_path: "/basic"
+    target_url: http://example.com
   active: true
   internal: true
-  use_basic_auth: true
-  auth_configs:
-    basicAuth:
-      auth_header_name: Authorization
   version_data:
     default_version: Default
     not_versioned: true
@@ -90,14 +86,20 @@ spec:
         use_extended_paths: true
         extended_paths:
           url_rewrites:
-            - path: /get
-              match_pattern: /get
+            - path: "/{id}"
+              match_pattern: "/basic/(.*)"
               method: GET
               rewrite_to_internal:
                 target:
                   name: proxy-api
                   namespace: default
-        # redirect all traffic to proxy API
+                  path: proxy/$1
+          transform_headers:
+            - add_headers:
+                x-transform-api: "token-auth"
+              method: GET
+              path: "/{id}"
+              delete_headers: []
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -107,13 +109,11 @@ spec:
   name: AuthToken Internal API
   protocol: http
   proxy:
-    target_url: http://dummy.com
+    listen_path: "/token"
+    target_url: http://example.com
   active: true
   internal: true
-  use_basic_auth: true
-  auth_configs:
-    authToken:
-      auth_header_name: Authorization
+  use_keyless: true
   version_data:
     default_version: Default
     not_versioned: true
@@ -123,13 +123,20 @@ spec:
         use_extended_paths: true
         extended_paths:
           url_rewrites:
-            - path: /get
-              match_pattern: /get
+            - path: "/{id}"
+              match_pattern: "/token/(.*)"
               method: GET
               rewrite_to_internal:
                 target:
                   name: proxy-api
                   namespace: default
+                  path: proxy/$1
+          transform_headers:
+            - add_headers:
+                x-transform-api: "token-auth"
+              method: GET
+              path: "/{id}"
+              delete_headers: []
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -141,6 +148,7 @@ spec:
   active: true
   internal: true
   proxy:
+    listen_path: "/proxy"
     target_url: http://httpbin.org
   use_keyless: true
 ---
