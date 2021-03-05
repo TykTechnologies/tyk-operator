@@ -183,3 +183,18 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		}
 	})
 }
+
+func TestTargetInternal(t *testing.T) {
+	target3 := &tykv1alpha1.RewriteToInternal{
+		Target: tykv1alpha1.Target{
+			Name:      "test3",
+			Namespace: "default",
+		},
+		Path:  "proxy/$1",
+		Query: "a=1&b=2",
+	}
+	if expert, got := "tyk://ZGVmYXVsdC90ZXN0Mw==/proxy/$1?a=1&b=2", target3.String(); expert != got {
+		t.Errorf("expected %q got %q", expert, got)
+	}
+
+}

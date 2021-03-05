@@ -223,7 +223,7 @@ func (i RewriteToInternal) String() string {
 	u := url.URL{
 		Scheme:   "tyk",
 		Host:     host,
-		RawPath:  i.Path,
+		Path:     i.Path,
 		RawQuery: i.Query,
 	}
 	return u.String()

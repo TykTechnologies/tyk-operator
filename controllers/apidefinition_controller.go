@@ -129,6 +129,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			queueA = queueAfter
 			return err
 		}
+		collectAndUpdateLoopingTargets(desired)
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			err := r.UniversalClient.Api().Create(&desired.Spec)
