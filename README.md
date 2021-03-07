@@ -256,7 +256,7 @@ This section details the steps required to add K8s extensions to popular IDEs.
 
 [Watch video tutorial here](http://www.youtube.com/watch?v=Kdrfp6aAZEU).
 
-Steps:
+<details><summary>Steps</summary>
 
 1. Go to the following link: <https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools>
 2. Click on Install. This will prompt you to open Visual Studios.
@@ -264,6 +264,8 @@ Steps:
 4. Click Install in the Kubernetes extension page.
 
 Note: The extension should take effect immediately. In case it doesn't, simply restart VS Code.
+
+</details>
 
 ## Community
 
