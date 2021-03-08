@@ -96,7 +96,7 @@ spec:
                 path: proxy/$1
           transform_headers:
             - add_headers:
-                x-transform-api: "token-auth"
+                x-transform-api: "basic-auth"
               method: GET
               path: "/{id}"
               delete_headers: []

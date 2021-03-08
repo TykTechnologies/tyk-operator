@@ -66,13 +66,8 @@ func removeTarget(slice []tykv1.Target, s tykv1.Target) (result []tykv1.Target) 
 	return
 }
 
-func apiIDDecode(encoded string) string {
-	apiBytes, _ := base64.URLEncoding.DecodeString(encoded)
-	return string(apiBytes)
-}
-
 func encodeNS(decoded string) string {
-	return base64.URLEncoding.EncodeToString([]byte(decoded))
+	return base64.RawURLEncoding.EncodeToString([]byte(decoded))
 }
 
 // labelsForGateway returns the labels for selecting the resources

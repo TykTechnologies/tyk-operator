@@ -219,7 +219,7 @@ type RewriteToInternal struct {
 
 func (i RewriteToInternal) String() string {
 	host := i.Target.String()
-	host = base64.URLEncoding.EncodeToString([]byte(host))
+	host = base64.RawURLEncoding.EncodeToString([]byte(host))
 	u := url.URL{
 		Scheme:   "tyk",
 		Host:     host,
