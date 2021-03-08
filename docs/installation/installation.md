@@ -37,6 +37,17 @@ management URL is accessible by the operator.
 
 Operator configurations are all stored in the secret `tyk-operator-conf`.
 
+| Key | Example Value | Description |
+|-----|---------|-------------|
+| `TYK_ORG` | `5e9d9544a1dcd60001d0ed20` | Operator User ORG ID |
+| `TYK_AUTH` | `2d095c2155774fe36d77e5cbe3ac963b` | Operator User API Key or Gateway Management API Key |
+| `TYK_MODE` | `oss` | Tyk Open Source Mode |
+| `TYK_MODE` | `pro` | Tyk Pro Mode |
+| `TYK_URL` | `http://dashboard.tykpro-control-plane.svc.cluster.local:3000` | Management URL of Tyk Gateway (OSS) or Tyk Dashboard (PRO) |
+| `TYK_TLS_INSECURE_SKIP_VERIFY` | `true` | If the Tyk URL is https & self signed certificate. Default `false` |
+| `WATCH_NAMESPACE` | `foo,bar` | Comma separated list of namespaces for Operator to operate on. Defaults to all namespaces if not specified |
+| `WATCH_INGRESS_CLASS` | `customclass` | Default `tyk` if omitted. Allows Tyk Operator to watch a different ingress class. |
+
 #### connecting to Tyk
 
 tyk-operator needs to connect to a Tyk Pro deployment. And it needs to know whether it is talking to a Community
@@ -51,16 +62,9 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "TYK_AUTH=${TYK_AUTH}" \
   --from-literal "TYK_ORG=${TYK_ORG}" \
   --from-literal "TYK_MODE=${TYK_MODE}" \
-  --from-literal "TYK_URL=${TYK_URL}"
+  --from-literal "TYK_URL=${TYK_URL}" \
+  --from-literal "TYK_TLS_INSECURE_SKIP_VERIFY=true"
 ```
-
-Examples of these values:
-
-|         | TYK_ORG     | TYK_AUTH       | TYK_URL            | TYK_MODE |
-|---------|-------------|----------------|--------------------|----------|
-| Tyk Pro | User Org ID, ie "5e9d9544a1dcd60001d0ed20" | User API Key, ie "2d095c2155774fe36d77e5cbe3ac963b"   | Dashboard Base URL, ie "http://localhost:3000" | "pro"    |
-| Tyk Hybrid | User Org ID | User API Key   | "https://admin.cloud.tyk.io/" | "pro"    |
-| Tyk OSS |      "foo"       | Gateway secret | Gateway Base URL   | "oss"    |
 
 And after you run the command, the values get automatically Base64 encoded:
 
@@ -70,7 +74,8 @@ k get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
   "TYK_AUTH": "NWFhOTIyMTQwMTA0NGYxYzcwZDFjOTUwMDhkMzllZGE=",
   "TYK_MODE": "cHJv",
   "TYK_ORG": "NWY5MmQ5YWQyZGFiMWMwMDAxM2M3NDlm",
-  "TYK_URL": "aHR0cDovL2Rhc2hib2FyZC50eWtwcm8tY29udHJvbC1wbGFuZS5zdmMuY2x1c3Rlci5sb2NhbDozMDAw"
+  "TYK_URL": "aHR0cDovL2Rhc2hib2FyZC50eWtwcm8tY29udHJvbC1wbGFuZS5zdmMuY2x1c3Rlci5sb2NhbDozMDAw",
+  "TYK_TLS_INSECURE_SKIP_VERIFY": "dHJ1ZQ=="
 }
 ```
 
