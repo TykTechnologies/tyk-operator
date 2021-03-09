@@ -140,9 +140,11 @@ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/relea
 
 [cert-manager documentation](https://cert-manager.io/docs/installation/kubernetes/)
 
-Please wait for cert-manager to become available.
 
-```
+<details><summary>Please wait for cert-manager to become available.</summary>
+<pre>
+
+
 k get all -n cert-manager
 NAME                                           READY   STATUS    RESTARTS   AGE
 pod/cert-manager-79c5f9946-d5hfv               1/1     Running   0          14s
@@ -162,7 +164,9 @@ NAME                                                 DESIRED   CURRENT   READY  
 replicaset.apps/cert-manager-79c5f9946               1         1         1       14s
 replicaset.apps/cert-manager-cainjector-76c9d55b6f   1         1         1       14s
 replicaset.apps/cert-manager-webhook-6d4c5c44bb      1         1         0       14s
-```
+</pre>
+</details>
+
 
 ## Installing tyk-operator
 
