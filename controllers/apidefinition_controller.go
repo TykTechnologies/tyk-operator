@@ -124,12 +124,18 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 		desired.Spec.CertificateSecretNames = nil
 		r.updateLinkedPolicies(ctx, desired)
-		err := r.updateLoopingTargets(ctx, desired)
-		if err != nil {
+		targets := desired.Spec.CollectLoopingTarget()
+		if err := r.ensureTargets(ctx, targets); err != nil {
+			// We make sure all targets are available
 			queueA = queueAfter
 			return err
 		}
-		collectAndUpdateLoopingTargets(desired)
+		err := r.updateLoopingTargets(ctx, desired, targets)
+		if err != nil {
+			log.Error(err, "Failed to update looping targets")
+			return err
+		}
+		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			err := r.UniversalClient.Api().Create(&desired.Spec)
@@ -316,50 +322,27 @@ func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *ty
 	return nil
 }
 
-func collectAndUpdateLoopingTargets(a *tykv1alpha1.ApiDefinition) (links []tykv1alpha1.Target) {
-	if a.Spec.Proxy.TargeInternal != nil {
-		links = append(links, a.Spec.Proxy.TargeInternal.Target)
-		a.Spec.Proxy.TargetURL = a.Spec.Proxy.TargeInternal.String()
-		a.Spec.Proxy.TargeInternal = nil
-	}
-	d := &a.Spec.VersionData
-	for n := range d.Versions {
-		v := d.Versions[n]
-		if v.ExtendedPaths != nil {
-			for i := 0; i < len(v.ExtendedPaths.URLRewrite); i++ {
-				u := &v.ExtendedPaths.URLRewrite[i]
-				if u.RewriteToInternal != nil {
-					links = append(links, u.RewriteToInternal.Target)
-					u.RewriteTo = u.RewriteToInternal.String()
-					u.RewriteToInternal = nil
-				}
-				for j := 0; j < len(u.Triggers); j++ {
-					x := &u.Triggers[j]
-					if x.RewriteToInternal != nil {
-						links = append(links, x.RewriteToInternal.Target)
-						x.RewriteTo = x.RewriteToInternal.String()
-						x.RewriteToInternal = nil
-					}
-				}
-			}
+func (r *ApiDefinitionReconciler) ensureTargets(ctx context.Context, targets []tykv1alpha1.Target) error {
+	for _, target := range targets {
+		var api tykv1alpha1.ApiDefinition
+		if err := r.Get(ctx, target.NS(), &api); err != nil {
+			return err
 		}
-		d.Versions[n] = v
 	}
-	sort.Slice(links, func(i, j int) bool {
-		return links[i].String() < links[j].String()
-	})
-	return
+	return nil
 }
 
 func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
-	a *tykv1alpha1.ApiDefinition,
+	a *tykv1alpha1.ApiDefinition, links []tykv1alpha1.Target,
 ) error {
 	r.Log.Info("updating looping targets")
+	if len(links) == 0 {
+		return nil
+	}
 	ns := tykv1alpha1.Target{
 		Name:      a.Name,
 		Namespace: a.Namespace,
 	}
-	links := collectAndUpdateLoopingTargets(a)
 	for _, target := range links {
 		err := r.updateStatus(ctx, target, false, func(ads *tykv1alpha1.ApiDefinitionStatus) {
 			ads.LinkedByAPI = addTarget(ads.LinkedByAPI, ns)
@@ -371,8 +354,27 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 			return err
 		}
 	}
+
+	// we need to update removed targets
+	newTargets := make(map[string]tykv1alpha1.Target)
+	for _, v := range links {
+		newTargets[v.String()] = v
+	}
+	for _, v := range a.Status.LinkedToAPI {
+		if _, ok := newTargets[v.String()]; !ok {
+			err := r.updateStatus(ctx, v, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, ns)
+				sort.Slice(ads.LinkedByAPI, func(i, j int) bool {
+					return ads.LinkedByAPI[i].String() < ads.LinkedByAPI[j].String()
+				})
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
 	a.Status.LinkedToAPI = links
-	return r.Status().Update(ctx, a)
+	return client.IgnoreNotFound(r.Status().Update(ctx, a))
 }
 
 func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1alpha1.Target, ignoreNotFound bool, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {

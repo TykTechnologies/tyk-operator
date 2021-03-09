@@ -159,6 +159,15 @@ type RoutingTrigger struct {
 	RewriteToInternal *RewriteToInternal    `json:"rewrite_to_internal,omitempty"`
 }
 
+func (r *RoutingTrigger) collectLoopingTarget(fn func(Target)) {
+	if r.RewriteToInternal != nil {
+		x := r.RewriteToInternal.Target
+		r.RewriteTo = r.RewriteToInternal.String()
+		r.RewriteToInternal = nil
+		fn(x)
+	}
+}
+
 type URLRewriteMeta struct {
 	// Path represents the endpoint listen path
 	Path   string     `json:"path"`
@@ -173,6 +182,18 @@ type URLRewriteMeta struct {
 	// rewrite_to will take rewrite_to_internal
 	RewriteToInternal *RewriteToInternal `json:"rewrite_to_internal,omitempty"`
 	Triggers          []RoutingTrigger   `json:"triggers,omitempty"`
+}
+
+func (u *URLRewriteMeta) collectLoopingTarget(fn func(Target)) {
+	if u.RewriteToInternal != nil {
+		x := u.RewriteToInternal.Target
+		u.RewriteTo = u.RewriteToInternal.String()
+		u.RewriteToInternal = nil
+		fn(x)
+	}
+	for i := 0; i < len(u.Triggers); i++ {
+		u.Triggers[i].collectLoopingTarget(fn)
+	}
 }
 
 // TargetInternal defines options that constructs a url that refers to an api that
@@ -298,6 +319,15 @@ type ExtendedPathsSet struct {
 	Internal []InternalMeta `json:"internal,omitempty"`
 }
 
+func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
+	if e == nil {
+		return
+	}
+	for i := 0; i < len(e.URLRewrite); i++ {
+		e.URLRewrite[i].collectLoopingTarget(fn)
+	}
+}
+
 type VersionInfo struct {
 	Name                        string            `json:"name"`
 	Expires                     string            `json:"expires,omitempty"`
@@ -311,6 +341,10 @@ type VersionInfo struct {
 	IgnoreEndpointCase          bool              `json:"ignore_endpoint_case,omitempty"`
 	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
 	OverrideTarget              string            `json:"override_target,omitempty"`
+}
+
+func (v *VersionInfo) collectLoopingTarget(fn func(Target)) {
+	v.ExtendedPaths.collectLoopingTarget(fn)
 }
 
 type VersionInfoPaths struct {
@@ -659,6 +693,15 @@ type APIDefinitionSpec struct {
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 }
 
+func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
+	fn := func(t Target) {
+		targets = append(targets, t)
+	}
+	a.Proxy.collectLoopingTarget(fn)
+	a.VersionData.collectLoopingTarget(fn)
+	return
+}
+
 // Proxy outlines the API proxying functionality.
 type Proxy struct {
 	// If PreserveHostHeader is set to true then the host header in the outbound request is retained to be the
@@ -705,6 +748,15 @@ type Proxy struct {
 
 	// TODO: Untested. Is there a use-case for SD inside a K8s environment?
 	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
+}
+
+func (p *Proxy) collectLoopingTarget(fn func(Target)) {
+	if p.TargeInternal != nil {
+		x := p.TargeInternal.Target
+		p.TargetURL = p.TargeInternal.String()
+		p.TargeInternal = nil
+		fn(x)
+	}
 }
 
 type ProxyTransport struct {
@@ -765,6 +817,13 @@ type VersionData struct {
 	NotVersioned   bool                   `json:"not_versioned"`
 	DefaultVersion string                 `json:"default_version"`
 	Versions       map[string]VersionInfo `json:"versions,omitempty"`
+}
+
+func (v *VersionData) collectLoopingTarget(fn func(Target)) {
+	for k, value := range v.Versions {
+		value.collectLoopingTarget(fn)
+		v.Versions[k] = value
+	}
 }
 
 type VersionDefinition struct {
