@@ -244,9 +244,9 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			Name:      desired.Name,
 			Namespace: desired.Namespace,
 		}
-		for _, target := range desired.Status.LinkedToAPI {
+		for _, target := range desired.Status.LinkedToAPIs {
 			err := r.updateStatus(ctx, target, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
-				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, ns)
+				ads.LinkedByAPIs = removeTarget(ads.LinkedByAPIs, ns)
 			})
 			if err != nil {
 				return queueAfter, err
@@ -310,10 +310,10 @@ func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *t
 // checkLoopingTargets Check if there is any other api's linking to a
 func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("checking linked api resources")
-	if len(a.Status.LinkedByAPI) == 0 {
+	if len(a.Status.LinkedByAPIs) == 0 {
 		return nil
 	}
-	for _, n := range a.Status.LinkedByAPI {
+	for _, n := range a.Status.LinkedByAPIs {
 		var api tykv1alpha1.ApiDefinition
 		if err := r.Get(ctx, n.NS(), &api); err == nil {
 			return fmt.Errorf("unable to delete api due to being depended by =%s", n)
@@ -345,9 +345,9 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	}
 	for _, target := range links {
 		err := r.updateStatus(ctx, target, false, func(ads *tykv1alpha1.ApiDefinitionStatus) {
-			ads.LinkedByAPI = addTarget(ads.LinkedByAPI, ns)
-			sort.Slice(ads.LinkedByAPI, func(i, j int) bool {
-				return ads.LinkedByAPI[i].String() < ads.LinkedByAPI[j].String()
+			ads.LinkedByAPIs = addTarget(ads.LinkedByAPIs, ns)
+			sort.Slice(ads.LinkedByAPIs, func(i, j int) bool {
+				return ads.LinkedByAPIs[i].String() < ads.LinkedByAPIs[j].String()
 			})
 		})
 		if err != nil {
@@ -360,12 +360,12 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	for _, v := range links {
 		newTargets[v.String()] = v
 	}
-	for _, v := range a.Status.LinkedToAPI {
+	for _, v := range a.Status.LinkedToAPIs {
 		if _, ok := newTargets[v.String()]; !ok {
 			err := r.updateStatus(ctx, v, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
-				ads.LinkedByAPI = removeTarget(ads.LinkedByAPI, ns)
-				sort.Slice(ads.LinkedByAPI, func(i, j int) bool {
-					return ads.LinkedByAPI[i].String() < ads.LinkedByAPI[j].String()
+				ads.LinkedByAPIs = removeTarget(ads.LinkedByAPIs, ns)
+				sort.Slice(ads.LinkedByAPIs, func(i, j int) bool {
+					return ads.LinkedByAPIs[i].String() < ads.LinkedByAPIs[j].String()
 				})
 			})
 			if err != nil {
@@ -373,7 +373,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 			}
 		}
 	}
-	a.Status.LinkedToAPI = links
+	a.Status.LinkedToAPIs = links
 	return client.IgnoreNotFound(r.Status().Update(ctx, a))
 }
 

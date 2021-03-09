@@ -234,13 +234,13 @@ func (in *ApiDefinitionStatus) DeepCopyInto(out *ApiDefinitionStatus) {
 		*out = make([]Target, len(*in))
 		copy(*out, *in)
 	}
-	if in.LinkedByAPI != nil {
-		in, out := &in.LinkedByAPI, &out.LinkedByAPI
+	if in.LinkedByAPIs != nil {
+		in, out := &in.LinkedByAPIs, &out.LinkedByAPIs
 		*out = make([]Target, len(*in))
 		copy(*out, *in)
 	}
-	if in.LinkedToAPI != nil {
-		in, out := &in.LinkedToAPI, &out.LinkedToAPI
+	if in.LinkedToAPIs != nil {
+		in, out := &in.LinkedToAPIs, &out.LinkedToAPIs
 		*out = make([]Target, len(*in))
 		copy(*out, *in)
 	}

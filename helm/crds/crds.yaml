@@ -1500,7 +1500,7 @@ spec:
             api_id:
               type: string
             linked_by_apis:
-              description: LinkedByAPI is a list of ApiDefinition namespaced/name that links to this resource
+              description: LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this resource
               items:
                 properties:
                   name:
@@ -1526,7 +1526,7 @@ spec:
                 type: object
               type: array
             linked_to_apis:
-              description: LinkedByAPI is a list of ApiDefinition namespaced/name that this resource links to.
+              description: LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource links to.
               items:
                 properties:
                   name:

@@ -958,13 +958,13 @@ type ApiDefinitionStatus struct {
 	//+optional
 	LinkedByPolicies []Target `json:"linked_by_policies,omitempty"`
 
-	// LinkedByAPI is a list of ApiDefinition namespaced/name that links to this
+	// LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this
 	// resource
-	LinkedByAPI []Target `json:"linked_by_apis,omitempty"`
+	LinkedByAPIs []Target `json:"linked_by_apis,omitempty"`
 
-	// LinkedByAPI is a list of ApiDefinition namespaced/name that this resource
+	// LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource
 	// links to.
-	LinkedToAPI []Target `json:"linked_to_apis,omitempty"`
+	LinkedToAPIs []Target `json:"linked_to_apis,omitempty"`
 }
 
 // +kubebuilder:object:root=true
