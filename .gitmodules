@@ -1,0 +1,3 @@
+[submodule "ci/charts"]
+	path = ci/charts
+	url = git@github.com:TykTechnologies/tyk-helm-chart.git
