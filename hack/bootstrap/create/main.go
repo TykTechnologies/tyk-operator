@@ -53,32 +53,13 @@ func main() {
 	createNS()
 	pro(dash)
 	ce(community)
-	if true {
-		return
-	}
 	operator()
 }
 
 func bootsrap() {
 	if *mode == "pro" {
-		a, err := ioutil.ReadFile("bootstrapped")
-		if err != nil {
-			exit(err)
-		}
-		{
-			u := "USER AUTHENTICATION CODE:"
-			i := bytes.Index(a, []byte(u))
-			n := bytes.TrimLeft(a[i+len(u):], " ")
-			n = n[:bytes.Index(n, []byte("\n"))]
-			*auth = string(n)
-		}
-		{
-			u := "ORG ID:"
-			i := bytes.Index(a, []byte(u))
-			n := bytes.TrimLeft(a[i+len(u):], " ")
-			n = n[:bytes.Index(n, []byte("\n"))]
-			*org = string(n)
-		}
+		// remove bootstrapped file so we can bootsrap a new one
+		os.Remove("bootstrapped")
 		if *target == "" {
 			*target = "http://dashboard.tykpro-control-plane.svc.cluster.local:3000"
 		}
@@ -105,17 +86,23 @@ func bootsrap() {
 
 func bootsrapDash() {
 	say("Bootstrapping dashboard ...")
-	var buf bytes.Buffer
-	exit(kf(func(c *exec.Cmd) {
-		c.Stdout = &buf
-		c.Stderr = os.Stderr
-	},
-		"exec", "-t", "-n", *namespace,
-		"svc/dashboard", "--", "./tyk-analytics", "bootstrap",
-		"--conf", "/etc/tyk-dashboard/dash.json",
-	))
-	ioutil.WriteFile("bootstrapped", buf.Bytes(), 0600)
-	a := buf.Bytes()
+	_, err := os.Stat("bootstrapped")
+	if err != nil {
+		var buf bytes.Buffer
+		exit(kf(func(c *exec.Cmd) {
+			c.Stdout = &buf
+			c.Stderr = os.Stderr
+		},
+			"exec", "-t", "-n", *namespace,
+			"svc/dashboard", "--", "./tyk-analytics", "bootstrap",
+			"--conf", "/etc/tyk-dashboard/dash.json",
+		))
+		exit(ioutil.WriteFile("bootstrapped", buf.Bytes(), 0600))
+	}
+	a, err := ioutil.ReadFile("bootstrapped")
+	if err != nil {
+		exit(err)
+	}
 	{
 		u := "USER AUTHENTICATION CODE:"
 		i := bytes.Index(a, []byte(u))
@@ -131,6 +118,8 @@ func bootsrapDash() {
 		*org = string(n)
 	}
 	ok()
+	fmt.Println("ORG ", *org)
+	fmt.Println("AUTH ", *auth)
 }
 
 // down removes  installed resources
@@ -191,8 +180,8 @@ func ce(fn func()) {
 func k(args ...string) error {
 	return kf(func(c *exec.Cmd) {
 		if *debug {
-			c.Stdout = os.Stdout
 			c.Stderr = os.Stderr
+			c.Stdout = os.Stdout
 		}
 	}, args...)
 }
@@ -266,18 +255,6 @@ func sayn(a ...interface{}) {
 	fmt.Println(a...)
 }
 
-func hasNS(name string) bool {
-	return k("get", "ns", name) == nil
-}
-
-func hasSecret(name string) bool {
-	return k("get", "secret", "-n", *namespace, name) == nil
-}
-
-func hasOperatorSecret() bool {
-	return k("get", "secret", "-n", *operatorNS, *secret) == nil
-}
-
 func exit(err error) {
 	if err != nil {
 		log.Fatal(err)
@@ -293,7 +270,7 @@ func createRedis() {
 			"-n", *namespace,
 		))
 		ok()
-		say("Waiting for redis to be ready")
+		say("Waiting for redis to be ready ...")
 		exit(k(
 			"rollout", "status", "deployment/redis", "-n", *namespace,
 		))
@@ -310,7 +287,7 @@ func createMongo() {
 			"-n", *namespace,
 		))
 		ok()
-		say("Waiting for mongo to be ready")
+		say("Waiting for mongo to be ready ...")
 		exit(k(
 			"rollout", "status", "deployment/mongo", "-n", *namespace,
 		))
@@ -348,6 +325,17 @@ func hasChart() bool {
 	return strings.Contains(buf.String(), *mode)
 }
 
+func hasNS(name string) bool {
+	return k("get", "ns", name) == nil
+}
+
+func hasSecret(name string) bool {
+	return k("get", "secret", "-n", *namespace, name) == nil
+}
+
+func hasOperatorSecret() bool {
+	return k("get", "secret", "-n", *operatorNS, *secret) == nil
+}
 func hasRedis() bool {
 	return k("get", "deployment/redis", "-n", *namespace) == nil
 }
@@ -356,8 +344,24 @@ func hasMongo() bool {
 	return k("get", "deployment/mongo", "-n", *namespace) == nil
 }
 
+func hasGateway() bool {
+	return k("get", "deployment/tyk", "-n", *namespace) == nil
+}
+
+func hasDash() bool {
+	return k("get", "deployment/dashboard", "-n", *namespace) == nil
+}
+
+func hasHTTPBIN() bool {
+	return k("get", "deployment/httpbin") == nil
+}
+
 func hasCertManager() bool {
 	return k("get", "deployment/cert-manager", "-n", *certManagerNamespace) == nil
+}
+
+func hasConfigMap(name string) bool {
+	return k("get", "configmap", name, "-n", *namespace) == nil
 }
 
 func createCertManager() {
@@ -435,10 +439,6 @@ func createConfigMaps() {
 	}
 }
 
-func hasConfigMap(name string) bool {
-	return k("get", "configmap", name, "-n", *namespace) == nil
-}
-
 func dash() {
 	createRedis()
 	createMongo()
@@ -461,34 +461,40 @@ func operator() {
 }
 
 func deployDash() {
-	say("Deploying dashboard")
-	exit(k("apply", "-n", *namespace, "-f", filepath.Join(workdir, repo[*mode], "dashboard")))
-	ok()
-	say("Waiting for dashboard to be ready")
-	exit(k(
-		"rollout", "status", "deployment/dashboard", "-n", *namespace,
-	))
+	say("Deploying dashboard ...")
+	if !hasDash() {
+		exit(k("apply", "-n", *namespace, "-f", filepath.Join(workdir, repo[*mode], "dashboard")))
+		ok()
+		say("Waiting for dashboard to be ready ...")
+		exit(k(
+			"rollout", "status", "deployment/dashboard", "-n", *namespace,
+		))
+	}
 	ok()
 }
 
 func deployGateway() {
-	say("Deploying gateway")
-	exit(k("apply", "-n", *namespace, "-f", filepath.Join(workdir, repo[*mode], "gateway")))
-	ok()
-	say("Waiting for gateway to be ready")
-	exit(k(
-		"rollout", "status", "deployment/tyk", "-n", *namespace,
-	))
+	say("Deploying gateway ...")
+	if !hasGateway() {
+		exit(k("apply", "-n", *namespace, "-f", filepath.Join(workdir, repo[*mode], "gateway")))
+		ok()
+		say("Waiting for gateway to be ready ...")
+		exit(k(
+			"rollout", "status", "deployment/tyk", "-n", *namespace,
+		))
+	}
 	ok()
 }
 
 func deployHTTPBIN() {
-	say("Deploying httpbin")
-	exit(k("apply", "-f", filepath.Join(workdir, "upstreams")))
-	ok()
-	say("Waiting for httpbin to be ready")
-	exit(k(
-		"rollout", "status", "deployment/httpbin",
-	))
+	say("Deploying httpbin ...")
+	if !hasHTTPBIN() {
+		exit(k("apply", "-f", filepath.Join(workdir, "upstreams")))
+		ok()
+		say("Waiting for httpbin to be ready ...")
+		exit(k(
+			"rollout", "status", "deployment/httpbin",
+		))
+	}
 	ok()
 }
