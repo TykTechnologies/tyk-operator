@@ -12,167 +12,166 @@ import (
 	"strings"
 )
 
-var auth = flag.String("auth", os.Getenv("TYK_AUTH"), "Secret")
-var org = flag.String("org", os.Getenv("TYK_ORG"), "organizarion id")
-var mode = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
-var target = flag.String("url", os.Getenv("TYK_URL"), "ce for community and pro for pro")
-var secret = flag.String("secret", "tyk-operator-conf", "ce for community and pro for pro")
-var namespace = flag.String("ns", "", "namespace")
-var operatorNS = flag.String("op-ns", "tyk-operator-system", "namespace")
-var debug = flag.Bool("debug", false, "prints lots of details")
-var certManagerRelease = flag.String("certmanager-release", "https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml", "The file for cert manager")
-var certManagerNamespace = flag.String("cert-manager-ns", "cert-manager", "The namespace to install cert manager")
-var adminSecret = flag.String("admin-secret", "54321", "admin-secret")
-var workdir string
-
-var charts = map[string]string{
-	"oss": filepath.Join("charts", "tyk-headless"),
-	"pro": filepath.Join("charts"),
+// Config configuration for booting operator environment
+type Config struct {
+	WorkDir  string
+	Tyk      Tyk
+	Operator Operator
 }
 
-var repo = map[string]string{
-	"oss": "tyk-ce",
-	"pro": "tyk-pro",
-}
+func (c *Config) bind(mode string) {
+	c.Tyk.bind(mode)
+	c.Operator.bind(mode)
 
-func init() {
+	// set working directory
 	wd, err := os.Getwd()
 	if err != nil {
 		exit(err)
 	}
-	workdir = filepath.Join(wd, "ci")
+	c.WorkDir = filepath.Join(wd, "ci")
+	env(&c.WorkDir, "TYK_OPERATOR_WORK_DIR")
+}
+
+type Tyk struct {
+	License     string
+	Auth        string
+	Org         string
+	Mode        string
+	URL         string
+	AdminSecret string
+	Namespace   string
+	Charts      string
+}
+
+func (t *Tyk) oss() {
+	t.Mode = "oss"
+	t.URL = "http://tyk.tykce-control-plane.svc.cluster.local:8001"
+	t.Auth = "foo"
+	t.Org = "myorg"
+	t.Namespace = "tykce-control-plane"
+}
+
+func (t *Tyk) pro() {
+	t.Mode = "pro"
+	t.URL = "http://dashboard.tykpro-control-plane.svc.cluster.local:3000"
+	t.Namespace = "tykpro-control-plane"
+	t.AdminSecret = "54321"
+}
+
+func (t *Tyk) bind(mode string) {
+	if mode == "pro" {
+		t.pro()
+	} else {
+		t.oss()
+	}
+	env(&t.Mode, "TYK_MODE")
+	env(&t.URL, "TYK_URL")
+	env(&t.Org, "TYK_ORG")
+	env(&t.Auth, "TYK_AUTH")
+	env(&t.Namespace, "TYK_NAMESPACE")
+	env(&t.AdminSecret, "TYK_ADMIN_SECRET")
+	env(&t.Charts, "TYK_HELM_CHARTS")
+	env(&t.License, "TYK_DB_LICENSEKEY")
+}
+
+func env(dest *string, name string) {
+	if a := os.Getenv(name); a != "" {
+		*dest = a
+	}
+}
+
+type Operator struct {
+	Namespace            string
+	SecretName           string
+	CertManager          string
+	CertManagerNamespace string
+}
+
+func (o *Operator) defaults() {
+	o.Namespace = "tyk-operator-system"
+	o.SecretName = "tyk-operator-conf"
+	o.CertManager = "https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml"
+	o.CertManagerNamespace = "cert-manager"
+}
+
+func (o *Operator) bind(mode string) {
+	o.defaults()
+	env(&o.Namespace, "TYK_OPERATOR_NAMESPACE")
+	env(&o.SecretName, "TYK_OPERATOR_SECRET_NAME")
+	env(&o.CertManager, "TYK_OPERATOR_CERT_MANAGER")
+	env(&o.CertManagerNamespace, "TYK_OPERATOR_CERT_MANAGER_NAMESPACE")
+}
+
+var config Config
+
+var mode = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
+var debug = flag.Bool("debug", false, "prints lots of details")
+
+var charts = map[string]string{
+	"oss": filepath.Join("charts", "tyk-headless"),
+	"pro": filepath.Join("charts", "tyk-pro"),
+}
+
+func chartDir() string {
+	return charts[config.Tyk.Mode]
+}
+
+var rep = map[string]string{
+	"oss": "tyk-ce",
+	"pro": "tyk-pro",
+}
+
+func deployDir() string {
+	return rep[config.Tyk.Mode]
 }
 
 func main() {
 	flag.Parse()
-	bootsrap()
-	if flag.Arg(0) == "down" {
-		down()
-		return
-	}
+	config.bind(*mode)
 	createNS()
 	pro(dash)
 	ce(community)
 	operator()
 }
 
-func bootsrap() {
-	if *mode == "pro" {
-		// remove bootstrapped file so we can bootsrap a new one
-		os.Remove("bootstrapped")
-		if *target == "" {
-			*target = "http://dashboard.tykpro-control-plane.svc.cluster.local:3000"
-		}
-		if *namespace == "" {
-			*namespace = "tykpro-control-plane"
-		}
-	} else {
-		// we are running community edition
-		if *target == "" {
-			*target = "http://tyk.tykce-control-plane.svc.cluster.local:8001"
-		}
-		if *auth == "" {
-			*auth = "foo"
-		}
-		if *org == "" {
-			*org = "myorg"
-		}
-		*mode = "oss"
-		if *namespace == "" {
-			*namespace = "tykce-control-plane"
-		}
-	}
-}
-
 func bootsrapDash() {
 	say("Bootstrapping dashboard ...")
-	_, err := os.Stat("bootstrapped")
-	if err != nil {
-		var buf bytes.Buffer
-		exit(kf(func(c *exec.Cmd) {
-			c.Stdout = &buf
-			c.Stderr = os.Stderr
-		},
-			"exec", "-t", "-n", *namespace,
-			"svc/dashboard", "--", "./tyk-analytics", "bootstrap",
-			"--conf", "/etc/tyk-dashboard/dash.json",
-		))
-		exit(ioutil.WriteFile("bootstrapped", buf.Bytes(), 0600))
-	}
-	a, err := ioutil.ReadFile("bootstrapped")
-	if err != nil {
-		exit(err)
-	}
+	var buf bytes.Buffer
+	exit(kf(func(c *exec.Cmd) {
+		c.Stdout = &buf
+		c.Stderr = os.Stderr
+	},
+		"exec", "-t", "-n", config.Tyk.Namespace,
+		"svc/dashboard", "--", "./tyk-analytics", "bootstrap",
+		"--conf", "/etc/tyk-dashboard/dash.json",
+	))
+	exit(ioutil.WriteFile("bootstrapped", buf.Bytes(), 0600))
+	a := buf.Bytes()
 	{
 		u := "USER AUTHENTICATION CODE:"
 		i := bytes.Index(a, []byte(u))
 		n := bytes.TrimLeft(a[i+len(u):], " ")
 		n = n[:bytes.Index(n, []byte("\n"))]
-		*auth = string(n)
+		config.Tyk.Auth = string(n)
 	}
 	{
 		u := "ORG ID:"
 		i := bytes.Index(a, []byte(u))
 		n := bytes.TrimLeft(a[i+len(u):], " ")
 		n = n[:bytes.Index(n, []byte("\n"))]
-		*org = string(n)
-	}
-	ok()
-	fmt.Println("ORG ", *org)
-	fmt.Println("AUTH ", *auth)
-}
-
-// down removes  installed resources
-func down() {
-	say("Uninstalling helm chart ...")
-	if hasChart() {
-		exit(exec.Command("helm", "uninstall", *mode, "-n", *namespace).Run())
-	}
-	ok()
-	say("Deleting secret ...")
-	if hasOperatorSecret() {
-		exit(k("delete", "secret", *secret, "-n", *operatorNS))
-	}
-	ok()
-	say("Deleting redis ...")
-	if hasRedis() {
-		f := filepath.Join(workdir, repo[*mode], "redis")
-		exit(k("delete", "-f", f, "-n", *namespace))
-	}
-	ok()
-	pro(func() {
-		say("Deleting mongo ...")
-		if hasRedis() {
-			f := filepath.Join(workdir, repo[*mode], "mongo")
-			exit(k("delete", "-f", f, "-n", *namespace))
-		}
-		ok()
-	})
-	pro(func() {
-		say("Deleting configmaps ...")
-		if hasConfigMap("dash-conf") {
-			exit(k("delete", "configmap", "dash-conf", "-n", *namespace))
-		}
-		if hasConfigMap("tyk-conf") {
-			exit(k("delete", "configmap", "tyk-conf", "-n", *namespace))
-		}
-		ok()
-	})
-	say("Deleting cert manager ...")
-	if hasCertManager() {
-		exit(k("delete", "-f", *certManagerRelease))
+		config.Tyk.Org = string(n)
 	}
 	ok()
 }
 
 func pro(fn func()) {
-	if *mode == "pro" {
+	if config.Tyk.Mode == "pro" {
 		fn()
 	}
 }
 
 func ce(fn func()) {
-	if *mode == "oss" {
+	if config.Tyk.Mode == "oss" {
 		fn()
 	}
 }
@@ -186,9 +185,15 @@ func k(args ...string) error {
 	}, args...)
 }
 
+func kl(args ...string) error {
+	return kf(func(c *exec.Cmd) {
+		c.Stderr = os.Stderr
+	}, args...)
+}
+
 func kf(fn func(*exec.Cmd), args ...string) error {
 	cmd := exec.Command("kubectl", args...)
-	cmd.Dir = workdir
+	cmd.Dir = config.WorkDir
 	fn(cmd)
 	if *debug {
 		fmt.Println("==>", cmd.Args)
@@ -198,11 +203,11 @@ func kf(fn func(*exec.Cmd), args ...string) error {
 
 func createNS() {
 	say("Creating namespace ...")
-	if !hasNS(*namespace) {
-		exit(k("create", "namespace", *namespace))
+	if !hasNS(config.Tyk.Namespace) {
+		exit(kl("create", "namespace", config.Tyk.Namespace))
 	}
-	if !hasNS(*operatorNS) {
-		exit(k("create", "namespace", *operatorNS))
+	if !hasNS(config.Operator.Namespace) {
+		exit(kl("create", "namespace", config.Operator.Namespace))
 	}
 	ok()
 }
@@ -214,10 +219,10 @@ func createDashSecret() {
 		c.Stdout = &buf
 		c.Stderr = os.Stderr
 	},
-		"create", "secret", "-n", *namespace,
+		"create", "secret", "-n", config.Tyk.Namespace,
 		"generic", "dashboard", "--dry-run=client",
-		"--from-literal", "license="+os.Getenv("TYK_DB_LICENSEKEY"),
-		"--from-literal", "adminSecret="+*adminSecret, "-o", "yaml",
+		"--from-literal", "license="+config.Tyk.License,
+		"--from-literal", "adminSecret="+config.Tyk.AdminSecret, "-o", "yaml",
 	))
 	exit(kf(func(c *exec.Cmd) {
 		c.Stdin = &buf
@@ -231,13 +236,13 @@ func createDashSecret() {
 func createSecret() {
 	say("Creating Secret ... ")
 	if !hasOperatorSecret() {
-		exit(k("create", "secret",
-			"-n", *operatorNS,
-			"generic", *secret,
-			"--from-literal", fmt.Sprintf("TYK_AUTH=%s", *auth),
-			"--from-literal", fmt.Sprintf("TYK_ORG=%s", *org),
-			"--from-literal", fmt.Sprintf("TYK_MODE=%s", *mode),
-			"--from-literal", fmt.Sprintf("TYK_URL=%s", *target),
+		exit(kl("create", "secret",
+			"-n", config.Operator.Namespace,
+			"generic", config.Operator.SecretName,
+			"--from-literal", fmt.Sprintf("TYK_AUTH=%s", config.Tyk.Auth),
+			"--from-literal", fmt.Sprintf("TYK_ORG=%s", config.Tyk.Org),
+			"--from-literal", fmt.Sprintf("TYK_MODE=%s", config.Tyk.Mode),
+			"--from-literal", fmt.Sprintf("TYK_URL=%s", config.Tyk.URL),
 		))
 	}
 	ok()
@@ -264,15 +269,15 @@ func exit(err error) {
 func createRedis() {
 	say("Creating Redis ....")
 	if !hasRedis() {
-		f := filepath.Join(workdir, repo[*mode], "redis")
-		exit(k(
+		f := filepath.Join(config.WorkDir, deployDir(), "redis")
+		exit(kl(
 			"apply", "-f", f,
-			"-n", *namespace,
+			"-n", config.Tyk.Namespace,
 		))
 		ok()
 		say("Waiting for redis to be ready ...")
-		exit(k(
-			"rollout", "status", "deployment/redis", "-n", *namespace,
+		exit(kl(
+			"rollout", "status", "deployment/redis", "-n", config.Tyk.Namespace,
 		))
 	}
 	ok()
@@ -281,15 +286,15 @@ func createRedis() {
 func createMongo() {
 	say("Creating Mongo ....")
 	if !hasMongo() {
-		f := filepath.Join(workdir, repo[*mode], "mongo")
-		exit(k(
+		f := filepath.Join(config.WorkDir, deployDir(), "mongo")
+		exit(kl(
 			"apply", "-f", f,
-			"-n", *namespace,
+			"-n", config.Tyk.Namespace,
 		))
 		ok()
 		say("Waiting for mongo to be ready ...")
-		exit(k(
-			"rollout", "status", "deployment/mongo", "-n", *namespace,
+		exit(kl(
+			"rollout", "status", "deployment/mongo", "-n", config.Tyk.Namespace,
 		))
 	}
 	ok()
@@ -298,16 +303,16 @@ func createMongo() {
 func createHelm() {
 	say("Installing helm chart ...")
 	if !hasChart() {
-		c := filepath.Join(workdir, charts[*mode])
-		f := filepath.Join(workdir, repo[*mode], "values.yaml")
-		cmd := exec.Command("helm", "install", *mode,
+		c := filepath.Join(config.WorkDir, chartDir())
+		f := filepath.Join(config.WorkDir, deployDir(), "values.yaml")
+		cmd := exec.Command("helm", "install", config.Tyk.Mode,
 			"-f", f,
 			c,
-			"-n", *namespace,
+			"-n", config.Tyk.Namespace,
 			"--wait",
 		)
 		fmt.Println(cmd.Args)
-		cmd.Dir = workdir
+		cmd.Dir = config.WorkDir
 		cmd.Stderr = os.Stderr
 		exit(cmd.Run())
 	}
@@ -316,13 +321,13 @@ func createHelm() {
 
 func hasChart() bool {
 	cmd := exec.Command("helm", "list",
-		"-n", *namespace,
+		"-n", config.Tyk.Namespace,
 	)
-	cmd.Dir = workdir
+	cmd.Dir = config.WorkDir
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	exit(cmd.Run())
-	return strings.Contains(buf.String(), *mode)
+	return strings.Contains(buf.String(), config.Tyk.Mode)
 }
 
 func hasNS(name string) bool {
@@ -330,61 +335,61 @@ func hasNS(name string) bool {
 }
 
 func hasSecret(name string) bool {
-	return k("get", "secret", "-n", *namespace, name) == nil
+	return k("get", "secret", "-n", config.Tyk.Namespace, name) == nil
 }
 
 func hasOperatorSecret() bool {
-	return k("get", "secret", "-n", *operatorNS, *secret) == nil
+	return k("get", "secret", "-n", config.Operator.Namespace, config.Operator.SecretName) == nil
 }
 func hasRedis() bool {
-	return k("get", "deployment/redis", "-n", *namespace) == nil
+	return k("get", "deployment/redis", "-n", config.Tyk.Namespace) == nil
 }
 
 func hasMongo() bool {
-	return k("get", "deployment/mongo", "-n", *namespace) == nil
+	return k("get", "deployment/mongo", "-n", config.Tyk.Namespace) == nil
 }
 
 func hasGateway() bool {
-	return k("get", "deployment/tyk", "-n", *namespace) == nil
+	return k("get", "deployment/tyk", "-n", config.Tyk.Namespace) == nil
 }
 
 func hasDash() bool {
-	return k("get", "deployment/dashboard", "-n", *namespace) == nil
+	return k("get", "deployment/dashboard", "-n", config.Tyk.Namespace) == nil
 }
 
 func hasHTTPBIN() bool {
 	return k("get", "deployment/httpbin") == nil
 }
 func hasGRPCPlugin() bool {
-	return k("get", "deployment/grpc-plugin", "-n", *namespace) == nil
+	return k("get", "deployment/grpc-plugin", "-n", config.Tyk.Namespace) == nil
 }
 
 func hasCertManager() bool {
-	return k("get", "deployment/cert-manager", "-n", *certManagerNamespace) == nil
+	return k("get", "deployment/cert-manager", "-n", config.Operator.CertManagerNamespace) == nil
 }
 
 func hasConfigMap(name string) bool {
-	return k("get", "configmap", name, "-n", *namespace) == nil
+	return k("get", "configmap", name, "-n", config.Tyk.Namespace) == nil
 }
 
 func createCertManager() {
 	say("Installing cert-manager ...")
 	if !hasCertManager() {
-		exit(k(
+		exit(kl(
 			"apply",
 			"--validate=false",
-			"-f", *certManagerRelease,
+			"-f", config.Operator.CertManager,
 		))
 		ok()
 		say("Waiting for cert-manager to be ready ...")
-		exit(k(
-			"rollout", "status", "deployment/cert-manager", "-n", *certManagerNamespace,
+		exit(kl(
+			"rollout", "status", "deployment/cert-manager", "-n", config.Operator.CertManagerNamespace,
 		))
-		exit(k(
-			"rollout", "status", "deployment/cert-manager-cainjector", "-n", *certManagerNamespace,
+		exit(kl(
+			"rollout", "status", "deployment/cert-manager-cainjector", "-n", config.Operator.CertManagerNamespace,
 		))
-		exit(k(
-			"rollout", "status", "deployment/cert-manager-webhook", "-n", *certManagerNamespace,
+		exit(kl(
+			"rollout", "status", "deployment/cert-manager-webhook", "-n", config.Operator.CertManagerNamespace,
 		))
 		ok()
 	}
@@ -402,9 +407,9 @@ func createConfigMaps() {
 				c.Stderr = os.Stderr
 			},
 				"create", "configmap",
-				"-n", *namespace,
+				"-n", config.Tyk.Namespace,
 				name, "--dry-run=client",
-				"--from-file", filepath.Join(workdir, repo[*mode], "dashboard", "confs", "dash.json"),
+				"--from-file", filepath.Join(config.WorkDir, deployDir(), "dashboard", "confs", "dash.json"),
 				"-o", "yaml",
 			))
 			exit(kf(func(c *exec.Cmd) {
@@ -426,9 +431,9 @@ func createConfigMaps() {
 				c.Stderr = os.Stderr
 			},
 				"create", "configmap",
-				"-n", *namespace,
+				"-n", config.Tyk.Namespace,
 				name, "--dry-run=client",
-				"--from-file", filepath.Join(workdir, repo[*mode], "gateway", "confs", "tyk.json"),
+				"--from-file", filepath.Join(config.WorkDir, deployDir(), "gateway", "confs", "tyk.json"),
 				"-o", "yaml",
 			))
 			exit(kf(func(c *exec.Cmd) {
@@ -467,11 +472,11 @@ func operator() {
 func deployDash() {
 	say("Deploying dashboard ...")
 	if !hasDash() {
-		exit(k("apply", "-n", *namespace, "-f", filepath.Join(workdir, repo[*mode], "dashboard")))
+		exit(k("apply", "-n", config.Tyk.Namespace, "-f", filepath.Join(config.WorkDir, deployDir(), "dashboard")))
 		ok()
 		say("Waiting for dashboard to be ready ...")
 		exit(k(
-			"rollout", "status", "deployment/dashboard", "-n", *namespace,
+			"rollout", "status", "deployment/dashboard", "-n", config.Tyk.Namespace,
 		))
 	}
 	ok()
@@ -480,11 +485,11 @@ func deployDash() {
 func deployGateway() {
 	say("Deploying gateway ...")
 	if !hasGateway() {
-		exit(k("apply", "-n", *namespace, "-f", filepath.Join(workdir, repo[*mode], "gateway")))
+		exit(k("apply", "-n", config.Tyk.Namespace, "-f", filepath.Join(config.WorkDir, deployDir(), "gateway")))
 		ok()
 		say("Waiting for gateway to be ready ...")
 		exit(k(
-			"rollout", "status", "deployment/tyk", "-n", *namespace,
+			"rollout", "status", "deployment/tyk", "-n", config.Tyk.Namespace,
 		))
 	}
 	ok()
@@ -493,7 +498,7 @@ func deployGateway() {
 func deployHTTPBIN() {
 	say("Deploying httpbin ...")
 	if !hasHTTPBIN() {
-		exit(k("apply", "-f", filepath.Join(workdir, "upstreams")))
+		exit(k("apply", "-f", filepath.Join(config.WorkDir, "upstreams")))
 		ok()
 		say("Waiting for httpbin to be ready ...")
 		exit(k(
@@ -506,11 +511,11 @@ func deployHTTPBIN() {
 func deployGRPCPlugin() {
 	say("Deploying grpc-plugin ...")
 	if !hasHTTPBIN() {
-		exit(k("apply", "-f", filepath.Join(workdir, "grpc-plugin"), "-n", *namespace))
+		exit(k("apply", "-f", filepath.Join(config.WorkDir, "grpc-plugin"), "-n", config.Tyk.Namespace))
 		ok()
 		say("Waiting for grpc-plugin to be ready ...")
 		exit(k(
-			"rollout", "status", "deployment/grpc-plugin", "-n", *namespace,
+			"rollout", "status", "deployment/grpc-plugin", "-n", config.Tyk.Namespace,
 		))
 	}
 	ok()
