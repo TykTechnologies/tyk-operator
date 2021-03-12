@@ -129,6 +129,7 @@ func main() {
 	flag.Parse()
 	config.bind(*mode)
 	createNS()
+	extra()
 	pro(dash)
 	ce(community)
 	operator()
@@ -454,14 +455,30 @@ func dash() {
 	createDashSecret()
 	deployDash()
 	deployGateway()
+	bootsrapDash()
+}
+
+func extra() {
 	deployHTTPBIN()
 	deployGRPCPlugin()
-	bootsrapDash()
 }
 
 func community() {
 	createRedis()
-	createHelm()
+	communityConfigMap()
+	deployGateway()
+}
+
+func communityConfigMap() {
+	say("creating config maps ...")
+	if !hasConfigMap("tyk-conf") {
+		exit(kl("create", "configmap",
+			"-n", config.Tyk.Namespace,
+			"tyk-conf",
+			"--from-file", filepath.Join(config.WorkDir, deployDir(), "gateway", "confs", "tyk.json"),
+		))
+	}
+	ok()
 }
 
 func operator() {
@@ -510,7 +527,7 @@ func deployHTTPBIN() {
 
 func deployGRPCPlugin() {
 	say("Deploying grpc-plugin ...")
-	if !hasHTTPBIN() {
+	if !hasGRPCPlugin() {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "grpc-plugin"), "-n", config.Tyk.Namespace))
 		ok()
 		say("Waiting for grpc-plugin to be ready ...")
