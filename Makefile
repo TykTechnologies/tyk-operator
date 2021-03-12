@@ -165,21 +165,13 @@ scrap: generate manifests helm cross-build-image
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: setup-pro
-setup-pro:  install-cert-manager
-	@echo "===> installing tyk-pro"
-	sh ./ci/deploy_tyk_pro.sh
-	@echo "===> bootstrapping tyk dashboard (initial org + user)"
-	sh ./ci/bootstrap_org.sh
-	cat bootstrapped
-	@echo "===> setting operator dash secrets"
-	sh ./ci/operator_pro_secrets.sh
+setup-pro:
+	go run hack/bootstrap/create/main.go  --mode pro
 
 .PHONY: setup-ce
-setup-ce: install-cert-manager
-	@echo "===> installing tyk-ce"
-	sh ./ci/deploy_tyk_ce.sh
-	@echo "setting operator secrets"
-	sh ./ci/operator_ce_secrets.sh
+setup-ce:
+	go run hack/bootstrap/create/main.go
+
 
 .PHONY: boot-pro
 boot-pro: setup-pro install-operator-helm
