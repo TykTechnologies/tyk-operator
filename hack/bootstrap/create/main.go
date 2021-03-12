@@ -355,6 +355,9 @@ func hasDash() bool {
 func hasHTTPBIN() bool {
 	return k("get", "deployment/httpbin") == nil
 }
+func hasGRPCPlugin() bool {
+	return k("get", "deployment/grpc-plugin", "-n", *namespace) == nil
+}
 
 func hasCertManager() bool {
 	return k("get", "deployment/cert-manager", "-n", *certManagerNamespace) == nil
@@ -447,6 +450,7 @@ func dash() {
 	deployDash()
 	deployGateway()
 	deployHTTPBIN()
+	deployGRPCPlugin()
 	bootsrapDash()
 }
 
@@ -494,6 +498,19 @@ func deployHTTPBIN() {
 		say("Waiting for httpbin to be ready ...")
 		exit(k(
 			"rollout", "status", "deployment/httpbin",
+		))
+	}
+	ok()
+}
+
+func deployGRPCPlugin() {
+	say("Deploying grpc-plugin ...")
+	if !hasHTTPBIN() {
+		exit(k("apply", "-f", filepath.Join(workdir, "grpc-plugin"), "-n", *namespace))
+		ok()
+		say("Waiting for grpc-plugin to be ready ...")
+		exit(k(
+			"rollout", "status", "deployment/grpc-plugin", "-n", *namespace,
 		))
 	}
 	ok()
