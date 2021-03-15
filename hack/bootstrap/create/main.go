@@ -56,7 +56,7 @@ func (t *Tyk) helm() {
 		if t.Mode == "pro" {
 			t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
 		} else {
-			t.URL = "http://gateway-svc-ci-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
+			t.URL = "http://gateway-svc-oss-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
 		}
 	}
 }
@@ -122,8 +122,8 @@ var mode = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro 
 var debug = flag.Bool("debug", false, "prints lots of details")
 
 var charts = map[string]string{
-	"oss": filepath.Join("charts", "tyk-headless"),
-	"pro": filepath.Join("charts", "tyk-pro"),
+	"oss": "tyk-headless",
+	"pro": "tyk-pro",
 }
 
 func chartDir() string {
@@ -149,10 +149,10 @@ func main() {
 		// when we have this provided we are installing the operator using official
 		// helm charts
 		helm()
-		return
+	} else {
+		pro(dash)
+		ce(community)
 	}
-	pro(dash)
-	ce(community)
 	operator()
 }
 
@@ -356,7 +356,6 @@ func helm() {
 			"-n", config.Tyk.Namespace,
 			"--wait",
 		)
-		cmd.Dir = config.WorkDir
 		cmd.Stderr = os.Stderr
 		if *debug {
 			cmd.Stdout = os.Stdout
