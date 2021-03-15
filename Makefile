@@ -168,7 +168,7 @@ scrap: generate manifests helm cross-build-image
 
 .PHONY: setup-pro
 setup-pro:
-	go run hack/bootstrap/create/main.go  --debug --mode pro
+	go run hack/bootstrap/create/main.go --mode pro
 
 .PHONY: setup-ce
 setup-ce:
