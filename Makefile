@@ -66,6 +66,7 @@ helm: kustomize
 	$(KUSTOMIZE) build config/helm |go run hack/helm/pre_helm.go > ./helm/templates/all.yaml
 
 manifests: controller-gen
+	$(CONTROLLER_GEN) --version
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 # Run go fmt against code
