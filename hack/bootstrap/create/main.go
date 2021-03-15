@@ -51,6 +51,16 @@ func (t *Tyk) oss() {
 	t.Namespace = "tykce-control-plane"
 }
 
+func (t *Tyk) helm() {
+	if t.Charts != "" {
+		if t.Mode == "pro" {
+			t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
+		} else {
+			t.URL = "http://gateway-svc-ci-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
+		}
+	}
+}
+
 func (t *Tyk) pro() {
 	t.Mode = "pro"
 	t.URL = "http://dashboard.tykpro-control-plane.svc.cluster.local:3000"
@@ -72,6 +82,10 @@ func (t *Tyk) bind(mode string) {
 	env(&t.AdminSecret, "TYK_ADMIN_SECRET")
 	env(&t.Charts, "TYK_HELM_CHARTS")
 	env(&t.License, "TYK_DB_LICENSEKEY")
+	if t.Charts != "" {
+		// the control name is different for helm charts
+		t.URL = "http://gateway-svc-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
+	}
 }
 
 func env(dest *string, name string) {
@@ -130,7 +144,13 @@ func main() {
 	config.bind(*mode)
 	submodule()
 	ns()
-	extra()
+	common()
+	if config.Tyk.Charts != "" {
+		// when we have this provided we are installing the operator using official
+		// helm charts
+		helm()
+		return
+	}
 	pro(dash)
 	ce(community)
 	operator()
@@ -324,20 +344,24 @@ func createMongo() {
 	ok()
 }
 
-func createHelm() {
+func helm() {
+	createRedis()
 	say("Installing helm chart ...")
 	if !hasChart() {
-		c := filepath.Join(config.WorkDir, chartDir())
-		f := filepath.Join(config.WorkDir, deployDir(), "values.yaml")
+		c := filepath.Join(config.Tyk.Charts, chartDir())
+		f := filepath.Join(config.WorkDir, "helm", chartDir(), "values.yaml")
 		cmd := exec.Command("helm", "install", config.Tyk.Mode,
 			"-f", f,
 			c,
 			"-n", config.Tyk.Namespace,
 			"--wait",
 		)
-		fmt.Println(cmd.Args)
 		cmd.Dir = config.WorkDir
 		cmd.Stderr = os.Stderr
+		if *debug {
+			cmd.Stdout = os.Stdout
+			fmt.Println(cmd.Args)
+		}
 		exit(cmd.Run())
 	}
 	ok()
@@ -472,7 +496,6 @@ func createConfigMaps() {
 }
 
 func dash() {
-	createRedis()
 	createMongo()
 	createConfigMaps()
 	createDashSecret()
@@ -481,13 +504,13 @@ func dash() {
 	bootsrapDash()
 }
 
-func extra() {
+func common() {
 	deployHTTPBIN()
 	deployGRPCPlugin()
+	createRedis()
 }
 
 func community() {
-	createRedis()
 	communityConfigMap()
 	deployGateway()
 }
@@ -541,7 +564,7 @@ func deployHTTPBIN() {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "upstreams")))
 		ok()
 		say("Waiting for httpbin to be ready ...")
-		exit(k(
+		exit(kl(
 			"rollout", "status", "deployment/httpbin",
 		))
 	}
@@ -554,7 +577,7 @@ func deployGRPCPlugin() {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "grpc-plugin"), "-n", config.Tyk.Namespace))
 		ok()
 		say("Waiting for grpc-plugin to be ready ...")
-		exit(k(
+		exit(kl(
 			"rollout", "status", "deployment/grpc-plugin", "-n", config.Tyk.Namespace,
 		))
 	}
