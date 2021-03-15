@@ -232,7 +232,7 @@ func setup(ns string) error {
 	if os.Getenv("TYK_HELM_CHARTS") != "" {
 		switch os.Getenv("TYK_MODE") {
 		case "ce":
-			label = "app=gateway-oss-tyk-headless"
+			label = "app=gateway-ce-tyk-headless"
 			api.Container = "gateway-tyk-headless"
 		case "pro":
 		}

@@ -44,7 +44,7 @@ type Tyk struct {
 }
 
 func (t *Tyk) oss() {
-	t.Mode = "oss"
+	t.Mode = "ce"
 	t.URL = "http://tyk.tykce-control-plane.svc.cluster.local:8001"
 	t.Auth = "foo"
 	t.Org = "myorg"
@@ -56,7 +56,7 @@ func (t *Tyk) helm() {
 		if t.Mode == "pro" {
 			t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
 		} else {
-			t.URL = "http://gateway-svc-oss-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
+			t.URL = "http://gateway-svc-ce-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
 		}
 	}
 }
@@ -82,10 +82,7 @@ func (t *Tyk) bind(mode string) {
 	env(&t.AdminSecret, "TYK_ADMIN_SECRET")
 	env(&t.Charts, "TYK_HELM_CHARTS")
 	env(&t.License, "TYK_DB_LICENSEKEY")
-	if t.Charts != "" {
-		// the control name is different for helm charts
-		t.URL = "http://gateway-svc-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
-	}
+	t.helm()
 }
 
 func env(dest *string, name string) {
@@ -122,7 +119,7 @@ var mode = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro 
 var debug = flag.Bool("debug", false, "prints lots of details")
 
 var charts = map[string]string{
-	"oss": "tyk-headless",
+	"ce":  "tyk-headless",
 	"pro": "tyk-pro",
 }
 
@@ -131,7 +128,7 @@ func chartDir() string {
 }
 
 var rep = map[string]string{
-	"oss": "tyk-ce",
+	"ce":  "tyk-ce",
 	"pro": "tyk-pro",
 }
 
@@ -209,7 +206,7 @@ func pro(fn func()) {
 }
 
 func ce(fn func()) {
-	if config.Tyk.Mode == "oss" {
+	if config.Tyk.Mode == "ce" {
 		fn()
 	}
 }
