@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -227,8 +228,19 @@ func (fn writeFn) Write(b []byte) (int, error) {
 var api TykAPI
 
 func setup(ns string) error {
+	label := "name=tyk"
+	if os.Getenv("TYK_HELM_CHARTS") != "" {
+		switch os.Getenv("TYK_MODE") {
+		case "ce":
+			label = "app=gateway-oss-tyk-headless"
+			api.Container = "gateway-tyk-headless"
+		case "pro":
+		}
+	} else {
+		api.Container = "tyk"
+	}
 	e := exec.Command(
-		"kubectl", "get", "pods", "-l", "name=tyk", "-n", ns,
+		"kubectl", "get", "pods", "-l", label, "-n", ns,
 		"-o", "jsonpath={.items..metadata.name}",
 	)
 	o, err := e.CombinedOutput()
@@ -241,7 +253,6 @@ func setup(ns string) error {
 	}
 	api.Namespace = ns
 	api.Pod = pod
-	api.Container = "tyk"
 	return nil
 }
 
