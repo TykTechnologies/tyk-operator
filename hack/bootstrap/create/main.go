@@ -128,6 +128,7 @@ func deployDir() string {
 func main() {
 	flag.Parse()
 	config.bind(*mode)
+	submodule()
 	createNS()
 	extra()
 	pro(dash)
@@ -135,6 +136,22 @@ func main() {
 	operator()
 }
 
+func submodule() {
+	say("Setup helm charts submodule ...")
+	cmd := exec.Command("git", "submodule", "init")
+	cmd.Stderr = os.Stderr
+	if *debug {
+		cmd.Stdout = os.Stdout
+	}
+	exit(cmd.Run())
+	cmd = exec.Command("git", "submodule", "update")
+	cmd.Stderr = os.Stderr
+	if *debug {
+		cmd.Stdout = os.Stdout
+	}
+	exit(cmd.Run())
+	ok()
+}
 func bootsrapDash() {
 	say("Bootstrapping dashboard ...")
 	var buf bytes.Buffer
