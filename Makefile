@@ -61,6 +61,7 @@ deploy: manifests kustomize
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 helm: kustomize
+	$(KUSTOMIZE) version
 	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
 	$(KUSTOMIZE) build config/helm |go run hack/helm/pre_helm.go > ./helm/templates/all.yaml
 
