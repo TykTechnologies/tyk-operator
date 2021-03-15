@@ -129,7 +129,7 @@ func main() {
 	flag.Parse()
 	config.bind(*mode)
 	submodule()
-	createNS()
+	ns()
 	extra()
 	pro(dash)
 	ce(community)
@@ -219,8 +219,14 @@ func kf(fn func(*exec.Cmd), args ...string) error {
 	return cmd.Run()
 }
 
-func createNS() {
-	say("Creating namespace ...")
+// Create all namespaces needed to run ci for the operator. Only two namespaces
+// are needed one is where tyk control plane will be deployed and the second one
+// is where the operator will be deployed.
+//
+// They will only be created if they don't exist yet so it is safe to run this
+// multiple times
+func ns() {
+	say("Creating namespaces ...")
 	if !hasNS(config.Tyk.Namespace) {
 		exit(kl("create", "namespace", config.Tyk.Namespace))
 	}
