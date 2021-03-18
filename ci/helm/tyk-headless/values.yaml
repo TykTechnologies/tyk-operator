@@ -38,6 +38,10 @@ gateway:
       value: 8000
     - name: TYK_LOGLEVEL
       value: debug
+    - name: TYK_GW_COPROCESSOPTIONS_ENABLECOPROCESS
+      value: true
+    - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
+      value: "tcp://grpc-plugin.tykce-control-plane.svc.cluster.local:9999"
 
 # If pump is enabled the Gateway will create and collect analytics data to send to a data store of your choice
 # These can be set up in the pump config. The possible pump configs can be found here: https://github.com/TykTechnologies/tyk-pump#configuration
