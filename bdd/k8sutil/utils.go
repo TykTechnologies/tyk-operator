@@ -154,7 +154,7 @@ func runCMD(cmd *exec.Cmd) (string, error) {
 }
 
 func create(ctx context.Context, file string, ns string) error {
-	return expect(Created)(runFile(ctx, "apply", file, ns))
+	return expect(Created, Configured)(runFile(ctx, "apply", file, ns))
 }
 
 func createNS(ctx context.Context, ns string) error {
@@ -203,15 +203,19 @@ func runFile(ctx context.Context, op, file string, ns string) (OpExpect, error) 
 	return 0, fmt.Errorf("k8sutil: unexpected output for cmd: %v output:%q", cmd.Args, o)
 }
 
-func expect(have OpExpect) func(OpExpect, error) error {
+func expect(have ...OpExpect) func(OpExpect, error) error {
 	return func(oe OpExpect, e error) error {
 		if e != nil {
 			return e
 		}
-		if oe != have {
-			return fmt.Errorf("expected %v got %v", have, oe)
+		var h []string
+		for _, v := range have {
+			if v == oe {
+				return nil
+			}
+			h = append(h, v.String())
 		}
-		return nil
+		return fmt.Errorf("expected %v got %v", h, oe)
 	}
 }
 
