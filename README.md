@@ -9,12 +9,8 @@ practices with Custom Resources and Kubernetes-native primitives.
 
 ---
 
-- [Documentation](#documentation)
-- [Learning with Videos](#learning-with-videos)
-- [Quickstart Examples](#quickstart-examples)
-- [IDE Integration](#ide-integration)
-  - [VS Code](#vs-code)
-- [Community](#community)
+[Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples)
+| [IDE Integration](#ide-integration) | [Community](#community)
 
 ---
 
