@@ -1,13 +1,16 @@
 # Tyk Operator
 
-[Tyk Gateway](https://github.com/TykTechnologies/tyk) is a modern, ultra-performant, purpose-built, open source API Gateway. 
- 
-Tyk Operator brings Full Lifecycle API Management capabilities to Kubernetes. Configure Ingress, APIs, Security Policies, Authentication, 
- Authorization, Mediation and more - all using GitOps best practices with Custom Resources and Kubernetes Native primitives.
+[Tyk Gateway](https://github.com/TykTechnologies/tyk) is a modern, ultra-performant, purpose-built, open source API
+Gateway.
+
+Tyk Operator brings Full Lifecycle API Management capabilities to Kubernetes.
+Configure Ingress, APIs, Security Policies, Authentication, Authorization, Mediation and more - all using GitOps best
+practices with Custom Resources and Kubernetes-native primitives.
 
 ---
 
-[Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples) | [IDE Integration](#ide-integration) | [Community](#community)
+[Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples)
+| [IDE Integration](#ide-integration) | [Community](#community)
 
 ---
 
@@ -277,10 +280,11 @@ If you find any defects, please [raise an issue](https://github.com/TykTechnolog
 We welcome code contributions as well.
 
 If you require any features that we have not yet implemented, please take the time to
-[write a GH issue](https://github.com/TykTechnologies/tyk-operator/issues/new/choose) detailing your use case so that
-we may prioritise accordingly.
+[create a GitHub issue](https://github.com/TykTechnologies/tyk-operator/issues/new/choose) detailing your use case so
+that we may prioritise accordingly.
 
-For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new)
+For larger and more in-depth feature requests, please consider
+[starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new)
 in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions).
 
 - [Configuring your development environment](./docs/development.md)
