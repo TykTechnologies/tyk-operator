@@ -6,8 +6,8 @@
   - [Connecting Tyk Operator to Tyk Gateway](#connecting-tyk-operator-to-tyk-gateway)
     - [Watching Namespaces](#watching-namespaces)
     - [Watching custom ingress class](#watching-custom-ingress-class)
-  - [Installing CRDs](#installing-crds)
   - [Installing cert-manager](#installing-cert-manager)
+- [Installing CRDs](#installing-crds)
 - [Installing Tyk Operator](#installing-tyk-operator)
 - [Uninstall](#uninstall)
 
@@ -125,17 +125,6 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "WATCH_INGRESS_CLASS=foo"
 ```
 
-### Installing CRDs
-
-Installing CRDs is as simple as checking out this repo and running `kubectl apply`:
-
-```bash
-kubectl apply -f ./helm/crds
-customresourcedefinition.apiextensions.k8s.io/apidefinitions.tyk.tyk.io configured
-customresourcedefinition.apiextensions.k8s.io/securitypolicies.tyk.tyk.io configured
-customresourcedefinition.apiextensions.k8s.io/webhooks.tyk.tyk.io configured
-```
-
 ### Installing cert-manager
 
 If you don't have cert-manager installed, here is a quick install:
@@ -173,6 +162,17 @@ replicaset.apps/cert-manager-webhook-6d4c5c44bb      1         1         0      
 
 </p>
 </details>
+
+## Installing CRDs
+
+Installing CRDs is as simple as checking out this repo and running `kubectl apply`:
+
+```bash
+kubectl apply -f ./helm/crds
+customresourcedefinition.apiextensions.k8s.io/apidefinitions.tyk.tyk.io configured
+customresourcedefinition.apiextensions.k8s.io/securitypolicies.tyk.tyk.io configured
+customresourcedefinition.apiextensions.k8s.io/webhooks.tyk.tyk.io configured
+```
 
 ## Installing Tyk Operator
 
