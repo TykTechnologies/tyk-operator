@@ -4,8 +4,8 @@
 - [Installing Tyk Gateway](#installing-tyk-gateway)
 - [Tyk Operator Configuration](#tyk-operator-configuration)
   - [Connecting Tyk Operator to Tyk Gateway](#connecting-tyk-operator-to-tyk-gateway)
-    - [Watching Namespaces](#watching-namespaces)
-    - [Watching custom ingress class](#watching-custom-ingress-class)
+  - [Watching Namespaces](#watching-namespaces)
+  - [Watching custom ingress class](#watching-custom-ingress-class)
   - [Installing cert-manager](#installing-cert-manager)
 - [Installing CRDs](#installing-crds)
 - [Installing Tyk Operator](#installing-tyk-operator)
@@ -84,7 +84,7 @@ kubectl get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
 }
 ```
 
-#### Watching Namespaces
+### Watching Namespaces
 
 Tyk Operator installs with cluster permissions, however you can optionally control which namespaces it watches by
 setting the `WATCH_NAMESPACE` environment variable.
@@ -106,7 +106,7 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "WATCH_NAMESPACE=foo,bar"
 ```
 
-#### Watching custom ingress class
+### Watching custom ingress class
 
 The value of the `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
 
