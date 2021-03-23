@@ -33,6 +33,7 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	in.Oauth2Meta.DeepCopyInto(&out.Oauth2Meta)
 	out.Auth = in.Auth
 	if in.AuthConfigs != nil {
 		in, out := &in.AuthConfigs, &out.AuthConfigs
@@ -1047,12 +1048,12 @@ func (in *OAuth2Meta) DeepCopyInto(out *OAuth2Meta) {
 	*out = *in
 	if in.AllowedAccessTypes != nil {
 		in, out := &in.AllowedAccessTypes, &out.AllowedAccessTypes
-		*out = make([]string, len(*in))
+		*out = make([]AccessTypeEnum, len(*in))
 		copy(*out, *in)
 	}
 	if in.AllowedAuthorizeTypes != nil {
 		in, out := &in.AllowedAuthorizeTypes, &out.AllowedAuthorizeTypes
-		*out = make([]string, len(*in))
+		*out = make([]AuthorizeTypeEnum, len(*in))
 		copy(*out, *in)
 	}
 }
