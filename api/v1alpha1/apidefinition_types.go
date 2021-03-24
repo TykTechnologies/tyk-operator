@@ -399,6 +399,7 @@ type APIDefinitionSpec struct {
 	// UseOAuth2 enables oauth2 authorization
 	UseOauth2 bool `json:"use_oauth2,omitempty"`
 
+	//+optional
 	Oauth2Meta OAuth2Meta `json:"oauth_meta,omitempty"`
 
 	//UseOpenID           bool          `json:"use_openid"`
@@ -719,6 +720,7 @@ type BasicAuthMeta struct {
 	BodyPasswordRegexp string `json:"body_password_regexp"`
 }
 
+// +
 type OAuth2Meta struct {
 
 	// AllowedAccessTypes are an array of allowable `grant_type`s
