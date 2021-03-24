@@ -342,7 +342,6 @@ func createMongo() {
 }
 
 func helm() {
-	createRedis()
 	say("Installing helm chart ...")
 	if !hasChart() {
 		c := filepath.Join(config.Tyk.Charts, chartDir())
@@ -492,7 +491,6 @@ func createConfigMaps() {
 }
 
 func dash() {
-	createMongo()
 	createConfigMaps()
 	createDashSecret()
 	deployDash()
@@ -504,6 +502,7 @@ func common() {
 	deployHTTPBIN()
 	deployGRPCPlugin()
 	createRedis()
+	pro(createMongo)
 }
 
 func community() {
