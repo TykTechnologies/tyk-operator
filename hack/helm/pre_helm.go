@@ -18,9 +18,6 @@ func main() {
 		"name: default":                 "name: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
 		"serviceAccountName: default":   "serviceAccountName: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
 		annotationsSrc:                  annotationsDest,
-		certSRC:                         certDST,
-		dns1SRC:                         dns1DST,
-		dns2SRC:                         dns2DST,
 	}
 	b, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -67,15 +64,3 @@ func injectResources(b []byte) []byte {
 		append([]byte(resource), b[n+w:]...)...,
 	)
 }
-
-// fix extra line breaks
-const certSRC = `'{{ .Release.Namespace }}/{{ include "tyk-operator-helm.fullname"
-      . }}-serving-cert'`
-const certDST = `'{{ .Release.Namespace }}/{{ include "tyk-operator-helm.fullname" . }}-serving-cert'`
-
-const dns1SRC = `'{{ include "tyk-operator-helm.fullname" . }}-webhook-service.{{ .Release.Namespace
-    }}.svc'`
-const dns1DST = `'{{ include "tyk-operator-helm.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc'`
-const dns2SRC = `'{{ include "tyk-operator-helm.fullname" . }}-webhook-service.{{ .Release.Namespace
-    }}.svc.cluster.local'`
-const dns2DST = `'{{ include "tyk-operator-helm.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc.cluster.local'`
