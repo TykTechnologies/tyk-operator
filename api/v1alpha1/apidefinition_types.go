@@ -400,7 +400,7 @@ type APIDefinitionSpec struct {
 	UseOauth2 bool `json:"use_oauth2,omitempty"`
 
 	//+optional
-	Oauth2Meta OAuth2Meta `json:"oauth_meta,omitempty"`
+	Oauth2Meta *OAuth2Meta `json:"oauth_meta,omitempty"`
 
 	//UseOpenID           bool          `json:"use_openid"`
 	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
