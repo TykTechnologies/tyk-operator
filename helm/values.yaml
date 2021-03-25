@@ -2,8 +2,8 @@ replicaCount: 1
 confSecretName: tyk-operator-conf
 
 image:
-  repository: mangomm/tyk-operator
-  pullPolicy: Always
+  repository: tykio/tyk-operator
+  pullPolicy: IfNotPresent
   tag: "latest"
 
 rbacProxy:
