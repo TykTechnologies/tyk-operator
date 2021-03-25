@@ -630,7 +630,8 @@ spec:
             oauth_meta:
               properties:
                 allowed_access_types:
-                  description: AllowedAccessTypes are an array of allowable `grant_type`s
+                  description: AllowedAccessTypes are an array of allowable access
+                    types.
                   items:
                     enum:
                     - authorization_code
@@ -641,7 +642,8 @@ spec:
                   type: array
                 allowed_authorize_types:
                   description: AllowedAuthorizeTypes is an array of allowable `response_type`
-                    parameters `token` or authorization code `code`.
+                    parameters `token` or authorization code `code`. Choose token
+                    for client_credentials or implicit grant types.
                   items:
                     enum:
                     - code
@@ -649,11 +651,11 @@ spec:
                     type: string
                   type: array
                 auth_login_redirect:
+                  description: Login form to handle user login.
                   type: string
               required:
               - allowed_access_types
               - allowed_authorize_types
-              - auth_login_redirect
               type: object
             org_id:
               description: OrgID is overwritten - no point setting this

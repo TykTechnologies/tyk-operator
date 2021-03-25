@@ -723,13 +723,15 @@ type BasicAuthMeta struct {
 // +
 type OAuth2Meta struct {
 
-	// AllowedAccessTypes are an array of allowable `grant_type`s
+	// AllowedAccessTypes are an array of allowable access types.
 	AllowedAccessTypes []AccessTypeEnum `json:"allowed_access_types"` // osin.AccessRequestType
 
 	// AllowedAuthorizeTypes is an array of allowable `response_type` parameters `token` or authorization code `code`.
+	// Choose token for client_credentials or implicit grant types.
 	AllowedAuthorizeTypes []AuthorizeTypeEnum `json:"allowed_authorize_types"` // osin.AuthorizeRequestType
 
-	AuthorizeLoginRedirect string `json:"auth_login_redirect"`
+	// Login form to handle user login.
+	AuthLoginRedirect string `json:"auth_login_redirect,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=authorization_code;refresh_token;password;client_credentials
