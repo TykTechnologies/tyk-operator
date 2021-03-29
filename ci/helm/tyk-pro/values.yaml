@@ -112,7 +112,7 @@ gateway:
   kind: DaemonSet
   replicaCount: 2
   tags: "ingress"
-  tls: true
+  tls: false
   containerPort: 8080
   image:
     repository: tykio/tyk-gateway

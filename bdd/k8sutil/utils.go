@@ -239,7 +239,7 @@ func setup(ns string) error {
 			label = "app=gateway-ce-tyk-headless"
 			api.Container = "gateway-tyk-headless"
 		case "pro":
-			label = "app=gateway-svc-pro-tyk-pro"
+			label = "app=gateway-pro-tyk-pro"
 			api.Container = "gateway-tyk-pro"
 		}
 	} else {
@@ -254,6 +254,7 @@ func setup(ns string) error {
 		return fmt.Errorf("%v:%v", err, string(o))
 	}
 	pod := string(bytes.TrimSpace(o))
+	pod = strings.Split(pod, " ")[0]
 	if pod == "" {
 		return fmt.Errorf("failed to get tyk pod cmd=%v", e.Args)
 	}
@@ -294,11 +295,14 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	o, err := e.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%v:%v", err, string(o))
+	fmt.Println(e.Args)
+	var buf bytes.Buffer
+	e.Stderr = os.Stderr
+	e.Stdout = &buf
+	if err := e.Run(); err != nil {
+		return nil, err
 	}
-	res, err := http.ReadResponse(bufio.NewReader(bytes.NewReader(o)), r)
+	res, err := http.ReadResponse(bufio.NewReader(&buf), r)
 	if err != nil {
 		return nil, err
 	}
