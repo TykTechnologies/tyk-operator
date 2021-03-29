@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
-          make boot-pro IMG=tykio/tyk-operator:test CLUSTER_NAME=chart-testing
+          make boot-pro IMG=tykio/tyk-operator:test CLUSTER_NAME=chart-testing TYK_HELM_CHARTS=ci/charts
       - name: bdd
         shell: bash
         run: |
