@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -277,6 +279,27 @@ func createDashSecret() {
 func createSecret() {
 	say("Creating Secret ... ")
 	if !hasOperatorSecret() {
+		if config.Tyk.Charts != "" {
+			pro(func() {
+				var buf bytes.Buffer
+				exit(kf(func(c *exec.Cmd) {
+					c.Stdout = &buf
+				}, "get", "secret",
+					config.Operator.SecretName, "-n", config.Tyk.Namespace, "-o", "json"))
+				o := struct {
+					Data map[string]string `json:"data"`
+				}{}
+				exit(json.Unmarshal(buf.Bytes(), &o))
+				for k, v := range o.Data {
+					x, _ := base64.StdEncoding.DecodeString(v)
+					o.Data[k] = string(x)
+				}
+				config.Tyk.Auth = o.Data["TYK_AUTH"]
+				config.Tyk.Org = o.Data["TYK_ORG"]
+				config.Tyk.Mode = o.Data["TYK_MODE"]
+				config.Tyk.URL = o.Data["TYK_URL"]
+			})
+		}
 		exit(kl("create", "secret",
 			"-n", config.Operator.Namespace,
 			"generic", config.Operator.SecretName,

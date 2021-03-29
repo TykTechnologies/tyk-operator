@@ -96,6 +96,9 @@ dash:
   tolerations: []
   affinity: {}
   extraEnvs: []
+  extraEnvs: 
+    - name: TYK_DB_REDISHOST
+      value:  redis.tykpro-control-plane.svc.cluster.local
 
 portal:
   ingress:
@@ -133,7 +136,13 @@ gateway:
     - key: node-role.kubernetes.io/master
       effect: NoSchedule
   affinity: {}
-  extraEnvs: []
+  extraEnvs: 
+    - name: TYK_LOGLEVEL
+      value: debug
+    - name: TYK_GW_COPROCESSOPTIONS_ENABLECOPROCESS
+      value: true
+    - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
+      value: "tcp://grpc-plugin.tykce-control-plane.svc.cluster.local:9999"
 
 pump:
   replicaCount: 1
