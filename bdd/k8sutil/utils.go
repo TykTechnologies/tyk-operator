@@ -239,6 +239,8 @@ func setup(ns string) error {
 			label = "app=gateway-ce-tyk-headless"
 			api.Container = "gateway-tyk-headless"
 		case "pro":
+			label = "app=gateway-svc-pro-tyk-pro"
+			api.Container = "gateway-tyk-pro"
 		}
 	} else {
 		api.Container = "tyk"
