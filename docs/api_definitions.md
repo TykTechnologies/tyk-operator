@@ -35,11 +35,15 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 | Type | Supported | Comments |
 | ----------- | --------- | --------- |
-| [Keyless (open)](./../config/samples/httpbin.yaml) | ✅ | - |
+| [Keyless](./../config/samples/httpbin.yaml) | ✅ | - |
 | [Static Bearer Token](./../config/samples/httpbin_protected.yaml) | ✅ | - |
 | [JWT](./../config/samples/jwt-auth) | ✅️ | - |
+| [OAuth2 - Client Credentials](./../config/samples/oauth2/client_credentials.yaml) | ✅️ | - |
+| OAuth2 - Authorization Code | ⚠️ | Untested |
+| OAuth2 - Authorization Code + Refresh Token | ⚠️ | Untested |
+| OAuth2 - Implicit | ⚠️ | Untested |
+| OAuth2 - Password | ⚠️ | Untested |
 | OpenID Connect | ❌ | Not implemented |
-| OAuth2 | ❌ | Not implemented |
 | mTLS | ❌ | Not implemented |
 | HMAC | ❌ | Not implemented |
 | Basic Authentication | ❌ | Not implemented |
