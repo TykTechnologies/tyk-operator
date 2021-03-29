@@ -19,19 +19,9 @@ secrets:
 
 redis:
     shardCount: 128
-    #If you're using Bitnami Redis chart please input the correct host to your instalaltion in the field below
-    #addrs:
-    #- "tyk-redis-master.tyk.svc.cluster.local:6379"
-    # addrs:
-    #   - "redis.tyk.svc.cluster.local:6379"
     useSSL: false
-    #If you're using Bitnami Redis chart please input your password in the field below
-    #pass: ""
 
 mongo:
-    # mongoURL: "mongodb://mongo.tykpro-control-plane.svc.cluster.local:27017/tyk_analytics"
-    #If you're using Bitnami MongoDB chart please input your password below
-    #mongoURL: "mongodb://root:pass@tyk-mongo-mongodb.tyk.svc.cluster.local:27017/tyk-dashboard?authSource=admin"
     useSSL: false
 
 mdcb:
@@ -71,34 +61,17 @@ tib:
   ingress:
     enabled: false
     annotations: {}
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
     path: /
     hosts:
       - tib.local
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
   resources: {}
-    # We usually recommend not to specify default resources and to leave this as a conscious
-    # choice for the user. This also increases chances charts run on environments with little
-    # resources, such as Minikube. If you do want to specify resources, uncomment the following
-    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
   extraEnvs: []
   configMap:
-    #Create a configMap to store profiles json
     profiles: tyk-tib-profiles-conf
-
 dash:
   replicaCount: 1
   hostName: "localhost"
@@ -118,9 +91,6 @@ dash:
     hosts:
       - tyk-dashboard.local
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
   resources: {}
   nodeSelector: {}
   tolerations: []
@@ -131,16 +101,10 @@ portal:
   ingress:
     enabled: false
     annotations: {}
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
     path: /
     hosts:
       - tyk-portal.local
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
-
 gateway:
   kind: DaemonSet
   replicaCount: 2
@@ -179,16 +143,6 @@ pump:
     pullPolicy: Always
   annotations: {}
   resources: {}
-    # We usually recommend not to specify default resources and to leave this as a conscious
-    # choice for the user. This also increases chances charts run on environments with little
-    # resources, such as Minikube. If you do want to specify resources, uncomment the following
-    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
