@@ -426,6 +426,8 @@ spec:
             enable_jwt:
               description: EnableJWT set JWT as the access method for this API.
               type: boolean
+            enable_proxy_protocol:
+              type: boolean
             graphql:
               description: GraphQLConfig is the root config object for a GraphQL API.
               properties:
@@ -625,6 +627,36 @@ spec:
               type: integer
             name:
               type: string
+            oauth_meta:
+              properties:
+                allowed_access_types:
+                  description: AllowedAccessTypes are an array of allowable access
+                    types.
+                  items:
+                    enum:
+                    - authorization_code
+                    - refresh_token
+                    - password
+                    - client_credentials
+                    type: string
+                  type: array
+                allowed_authorize_types:
+                  description: AllowedAuthorizeTypes is an array of allowable `response_type`
+                    parameters `token` or authorization code `code`. Choose token
+                    for client_credentials or implicit grant types.
+                  items:
+                    enum:
+                    - code
+                    - token
+                    type: string
+                  type: array
+                auth_login_redirect:
+                  description: Login form to handle user login.
+                  type: string
+              required:
+              - allowed_access_types
+              - allowed_authorize_types
+              type: object
             org_id:
               description: OrgID is overwritten - no point setting this
               type: string
@@ -797,6 +829,9 @@ spec:
                 analytics will still be recorded, but rate-limiting, quotas and security
                 policies will not be possible (there is no session to attach requests
                 to).
+              type: boolean
+            use_oauth2:
+              description: UseOAuth2 enables oauth2 authorization
               type: boolean
             use_standard_auth:
               description: UseStandardAuth enables simple bearer token authentication
