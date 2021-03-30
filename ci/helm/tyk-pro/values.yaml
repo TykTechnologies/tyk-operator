@@ -110,8 +110,8 @@ portal:
     tls: []
 gateway:
   kind: DaemonSet
-  replicaCount: 2
-  tags: "ingress"
+  replicaCount: 1
+  tags: "private"
   tls: false
   containerPort: 8080
   image:
@@ -143,6 +143,8 @@ gateway:
       value: true
     - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
       value: "tcp://grpc-plugin.tykce-control-plane.svc.cluster.local:9999"
+    - name: TYK_GW_DBAPPCONFOPTIONS_NODEISSEGMENTED
+      value: false
 
 pump:
   replicaCount: 1
