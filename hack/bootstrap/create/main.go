@@ -141,6 +141,10 @@ func deployDir() string {
 func main() {
 	flag.Parse()
 	config.bind(*mode)
+	if flag.Arg(0) == "down" {
+		down()
+		return
+	}
 	submodule()
 	ns()
 	common()
@@ -312,6 +316,27 @@ func createSecret() {
 	ok()
 }
 
+func deleteSecret() {
+	if hasOperatorSecret() {
+		if config.Tyk.Charts != "" {
+			pro(func() {
+				exit(kl("delete", "secret",
+					config.Operator.SecretName,
+					"-n", config.Tyk.Namespace,
+				))
+				exit(kl("delete", "secret",
+					"tyk-login-details",
+					"-n", config.Tyk.Namespace,
+				))
+			})
+		}
+		exit(kl("delete", "secret",
+			config.Operator.SecretName,
+			"-n", config.Operator.Namespace,
+		))
+	}
+}
+
 func ok() {
 	sayn("ok")
 }
@@ -366,12 +391,13 @@ func createMongo() {
 
 func helm() {
 	say("Installing helm chart ...")
-	if !hasChart() {
+	if !hasTykChart() {
 		c := filepath.Join(config.Tyk.Charts, chartDir())
 		f := filepath.Join(config.WorkDir, "helm", chartDir(), "values.yaml")
 		cmd := exec.Command("helm", "install", config.Tyk.Mode,
 			"-f", f,
 			c,
+			"--set", fmt.Sprintf("dash.license=%s", config.Tyk.License),
 			"-n", config.Tyk.Namespace,
 			"--wait",
 		)
@@ -385,7 +411,21 @@ func helm() {
 	ok()
 }
 
-func hasChart() bool {
+func down() {
+	if hasTykChart() {
+		cmd := exec.Command("helm", "uninstall", config.Tyk.Mode,
+			"-n", config.Tyk.Namespace,
+		)
+		cmd.Stderr = os.Stderr
+		if *debug {
+			cmd.Stdout = os.Stdout
+			fmt.Println(cmd.Args)
+		}
+		exit(cmd.Run())
+	}
+}
+
+func hasTykChart() bool {
 	cmd := exec.Command("helm", "list",
 		"-n", config.Tyk.Namespace,
 	)
