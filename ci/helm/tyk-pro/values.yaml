@@ -5,8 +5,7 @@
 nameOverride: ""
 fullnameOverride: ""
 
-# Only set this to false if you are not planning on using the sidecar injector
-enableSharding: true
+enableSharding: false
 
 # Set to true to use Tyk as the Ingress gateway to an Istio Service Mesh
 # We apply some exceptions to the Istio IPTables so inbound calls to the 
@@ -143,8 +142,6 @@ gateway:
       value: true
     - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
       value: "tcp://grpc-plugin.tykce-control-plane.svc.cluster.local:9999"
-    - name: TYK_GW_DBAPPCONFOPTIONS_NODEISSEGMENTED
-      value: false
 
 pump:
   replicaCount: 1
