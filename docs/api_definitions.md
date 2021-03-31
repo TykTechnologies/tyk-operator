@@ -78,14 +78,6 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Tag Headers | ❌ | Not Implemented |
 | [Webhooks](./webhooks.md) | ❌ | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62) |
 
-# Pro features
-
-These are features which are only available to tyk PRO users
-
-| Feature | Supported | Comment |
-|---------|-----------|---------|
-| [Active API](./api_definitions/fields.md#active) |✅ | Untested|
-
 ## APIDefinition - Endpoint Middleware
 
 | Endpoint Middleware  | Supported | Comments |
@@ -117,3 +109,11 @@ These are features which are only available to tyk PRO users
 ## APIDefinition - Migrating Existing APIs
 
 Please visit the [API migration page](./api_definitions/migration.md) for more info
+
+## Pro Only features
+
+These are features which are only available to tyk PRO users
+
+| Feature | Supported | Comment |
+|---------|-----------|---------|
+| [Active API](./api_definitions/fields.md#active) |✅ | Untested|
