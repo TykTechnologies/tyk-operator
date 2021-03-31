@@ -141,7 +141,7 @@ gateway:
     - name: TYK_GW_COPROCESSOPTIONS_ENABLECOPROCESS
       value: true
     - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
-      value: "tcp://grpc-plugin.tykce-control-plane.svc.cluster.local:9999"
+      value: "tcp://grpc-plugin.tykpro-control-plane.svc.cluster.local:9999"
 
 pump:
   replicaCount: 1
