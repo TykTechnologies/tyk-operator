@@ -233,17 +233,16 @@ var api TykAPI
 
 func setup(ns string) error {
 	label := "name=tyk"
-	if os.Getenv("TYK_HELM_CHARTS") != "" {
-		switch os.Getenv("TYK_MODE") {
-		case "ce":
-			label = "app=gateway-ce-tyk-headless"
-			api.Container = "gateway-tyk-headless"
-		case "pro":
-			label = "app=gateway-pro-tyk-pro"
-			api.Container = "gateway-tyk-pro"
-		}
-	} else {
-		api.Container = "tyk"
+	mode := os.Getenv("TYK_MODE")
+	switch mode {
+	case "ce":
+		label = "app=gateway-ce-tyk-headless"
+		api.Container = "gateway-tyk-headless"
+	case "pro":
+		label = "app=gateway-pro-tyk-pro"
+		api.Container = "gateway-tyk-pro"
+	default:
+		return fmt.Errorf("unknown mode %q", mode)
 	}
 	e := exec.Command(
 		"kubectl", "get", "pods", "-l", label, "-n", ns,

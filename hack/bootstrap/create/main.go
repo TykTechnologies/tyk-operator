@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -21,10 +20,17 @@ type Config struct {
 	Operator Operator
 }
 
-func (c *Config) bind(mode string) {
-	c.Tyk.bind(mode)
-	c.Operator.bind(mode)
+// Chart returns path to the helm chart to install
+func (c Config) Chart() string {
+	return filepath.Join(c.Tyk.Charts, chartDir())
+}
 
+// Values returns path to values.yaml used to install the chart
+func (c Config) Values() string {
+	return filepath.Join(c.WorkDir, "helm", chartDir(), "values.yaml")
+}
+
+func (c *Config) bind(mode string) {
 	// set working directory
 	wd, err := os.Getwd()
 	if err != nil {
@@ -32,6 +38,8 @@ func (c *Config) bind(mode string) {
 	}
 	c.WorkDir = filepath.Join(wd, "ci")
 	env(&c.WorkDir, "TYK_OPERATOR_WORK_DIR")
+	c.Tyk.bind(c.WorkDir, mode)
+	c.Operator.bind(mode)
 }
 
 type Tyk struct {
@@ -53,13 +61,12 @@ func (t *Tyk) oss() {
 	t.Namespace = "tykce-control-plane"
 }
 
-func (t *Tyk) helm() {
-	if t.Charts != "" {
-		if t.Mode == "pro" {
-			t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
-		} else {
-			t.URL = "http://gateway-svc-ce-tyk-headless.tykce-control-plane.svc.cluster.local:8000"
-		}
+func (t *Tyk) helm(workdir string) {
+	t.Charts = filepath.Join(workdir, "charts")
+	if t.Mode == "pro" {
+		t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
+	} else {
+		t.URL = "http://gateway-svc-ce-tyk-headless.tykce-control-plane.svc.cluster.local:8080"
 	}
 }
 
@@ -70,13 +77,14 @@ func (t *Tyk) pro() {
 	t.AdminSecret = "54321"
 }
 
-func (t *Tyk) bind(mode string) {
+func (t *Tyk) bind(workdir, mode string) {
+	t.Mode = mode
 	if mode == "pro" {
 		t.pro()
 	} else {
 		t.oss()
 	}
-	env(&t.Mode, "TYK_MODE")
+	t.helm(workdir)
 	env(&t.URL, "TYK_URL")
 	env(&t.Org, "TYK_ORG")
 	env(&t.Auth, "TYK_AUTH")
@@ -84,7 +92,6 @@ func (t *Tyk) bind(mode string) {
 	env(&t.AdminSecret, "TYK_ADMIN_SECRET")
 	env(&t.Charts, "TYK_HELM_CHARTS")
 	env(&t.License, "TYK_DB_LICENSEKEY")
-	t.helm()
 }
 
 func env(dest *string, name string) {
@@ -120,42 +127,35 @@ var config Config
 var mode = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
 var debug = flag.Bool("debug", false, "prints lots of details")
 
-var charts = map[string]string{
-	"ce":  "tyk-headless",
-	"pro": "tyk-pro",
-}
-
 func chartDir() string {
-	return charts[config.Tyk.Mode]
-}
-
-var rep = map[string]string{
-	"ce":  "tyk-ce",
-	"pro": "tyk-pro",
+	switch config.Tyk.Mode {
+	case "ce":
+		return "tyk-headless"
+	case "pro":
+		return "tyk-pro"
+	default:
+		return ""
+	}
 }
 
 func deployDir() string {
-	return rep[config.Tyk.Mode]
+	switch config.Tyk.Mode {
+	case "ce":
+		return "tyk-ce"
+	case "pro":
+		return "tyk-pro"
+	default:
+		return ""
+	}
 }
 
 func main() {
 	flag.Parse()
 	config.bind(*mode)
-	if flag.Arg(0) == "down" {
-		down()
-		return
-	}
 	submodule()
 	ns()
 	common()
-	if config.Tyk.Charts != "" {
-		// when we have this provided we are installing the operator using official
-		// helm charts
-		helm()
-	} else {
-		pro(dash)
-		ce(community)
-	}
+	helm()
 	operator()
 }
 
@@ -175,44 +175,9 @@ func submodule() {
 	exit(cmd.Run())
 	ok()
 }
-func bootsrapDash() {
-	say("Bootstrapping dashboard ...")
-	var buf bytes.Buffer
-	exit(kf(func(c *exec.Cmd) {
-		c.Stdout = &buf
-		c.Stderr = os.Stderr
-	},
-		"exec", "-t", "-n", config.Tyk.Namespace,
-		"svc/dashboard", "--", "./tyk-analytics", "bootstrap",
-		"--conf", "/etc/tyk-dashboard/dash.json",
-	))
-	exit(ioutil.WriteFile("bootstrapped", buf.Bytes(), 0600))
-	a := buf.Bytes()
-	{
-		u := "USER AUTHENTICATION CODE:"
-		i := bytes.Index(a, []byte(u))
-		n := bytes.TrimLeft(a[i+len(u):], " ")
-		n = n[:bytes.Index(n, []byte("\n"))]
-		config.Tyk.Auth = string(n)
-	}
-	{
-		u := "ORG ID:"
-		i := bytes.Index(a, []byte(u))
-		n := bytes.TrimLeft(a[i+len(u):], " ")
-		n = n[:bytes.Index(n, []byte("\n"))]
-		config.Tyk.Org = string(n)
-	}
-	ok()
-}
 
 func pro(fn func()) {
 	if config.Tyk.Mode == "pro" {
-		fn()
-	}
-}
-
-func ce(fn func()) {
-	if config.Tyk.Mode == "ce" {
 		fn()
 	}
 }
@@ -259,51 +224,28 @@ func ns() {
 	ok()
 }
 
-func createDashSecret() {
-	say("Creating dashboard secrets ...")
-	var buf bytes.Buffer
-	exit(kf(func(c *exec.Cmd) {
-		c.Stdout = &buf
-		c.Stderr = os.Stderr
-	},
-		"create", "secret", "-n", config.Tyk.Namespace,
-		"generic", "dashboard", "--dry-run=client",
-		"--from-literal", "license="+config.Tyk.License,
-		"--from-literal", "adminSecret="+config.Tyk.AdminSecret, "-o", "yaml",
-	))
-	exit(kf(func(c *exec.Cmd) {
-		c.Stdin = &buf
-		c.Stderr = os.Stderr
-	},
-		"apply", "-f", "-",
-	))
-	ok()
-}
-
 func createSecret() {
 	say("Creating Secret ... ")
 	if !hasOperatorSecret() {
-		if config.Tyk.Charts != "" {
-			pro(func() {
-				var buf bytes.Buffer
-				exit(kf(func(c *exec.Cmd) {
-					c.Stdout = &buf
-				}, "get", "secret",
-					config.Operator.SecretName, "-n", config.Tyk.Namespace, "-o", "json"))
-				o := struct {
-					Data map[string]string `json:"data"`
-				}{}
-				exit(json.Unmarshal(buf.Bytes(), &o))
-				for k, v := range o.Data {
-					x, _ := base64.StdEncoding.DecodeString(v)
-					o.Data[k] = string(x)
-				}
-				config.Tyk.Auth = o.Data["TYK_AUTH"]
-				config.Tyk.Org = o.Data["TYK_ORG"]
-				config.Tyk.Mode = o.Data["TYK_MODE"]
-				config.Tyk.URL = o.Data["TYK_URL"]
-			})
-		}
+		pro(func() {
+			var buf bytes.Buffer
+			exit(kf(func(c *exec.Cmd) {
+				c.Stdout = &buf
+			}, "get", "secret",
+				config.Operator.SecretName, "-n", config.Tyk.Namespace, "-o", "json"))
+			o := struct {
+				Data map[string]string `json:"data"`
+			}{}
+			exit(json.Unmarshal(buf.Bytes(), &o))
+			for k, v := range o.Data {
+				x, _ := base64.StdEncoding.DecodeString(v)
+				o.Data[k] = string(x)
+			}
+			config.Tyk.Auth = o.Data["TYK_AUTH"]
+			config.Tyk.Org = o.Data["TYK_ORG"]
+			config.Tyk.Mode = o.Data["TYK_MODE"]
+			config.Tyk.URL = o.Data["TYK_URL"]
+		})
 		exit(kl("create", "secret",
 			"-n", config.Operator.Namespace,
 			"generic", config.Operator.SecretName,
@@ -314,27 +256,6 @@ func createSecret() {
 		))
 	}
 	ok()
-}
-
-func deleteSecret() {
-	if hasOperatorSecret() {
-		if config.Tyk.Charts != "" {
-			pro(func() {
-				exit(kl("delete", "secret",
-					config.Operator.SecretName,
-					"-n", config.Tyk.Namespace,
-				))
-				exit(kl("delete", "secret",
-					"tyk-login-details",
-					"-n", config.Tyk.Namespace,
-				))
-			})
-		}
-		exit(kl("delete", "secret",
-			config.Operator.SecretName,
-			"-n", config.Operator.Namespace,
-		))
-	}
 }
 
 func ok() {
@@ -392,11 +313,9 @@ func createMongo() {
 func helm() {
 	say("Installing helm chart ...")
 	if !hasTykChart() {
-		c := filepath.Join(config.Tyk.Charts, chartDir())
-		f := filepath.Join(config.WorkDir, "helm", chartDir(), "values.yaml")
 		cmd := exec.Command("helm", "install", config.Tyk.Mode,
-			"-f", f,
-			c,
+			"-f", config.Values(),
+			config.Chart(),
 			"--set", fmt.Sprintf("dash.license=%s", config.Tyk.License),
 			"-n", config.Tyk.Namespace,
 			"--wait",
@@ -409,20 +328,6 @@ func helm() {
 		exit(cmd.Run())
 	}
 	ok()
-}
-
-func down() {
-	if hasTykChart() {
-		cmd := exec.Command("helm", "uninstall", config.Tyk.Mode,
-			"-n", config.Tyk.Namespace,
-		)
-		cmd.Stderr = os.Stderr
-		if *debug {
-			cmd.Stdout = os.Stdout
-			fmt.Println(cmd.Args)
-		}
-		exit(cmd.Run())
-	}
 }
 
 func hasTykChart() bool {
@@ -447,6 +352,7 @@ func hasSecret(name string) bool {
 func hasOperatorSecret() bool {
 	return k("get", "secret", "-n", config.Operator.Namespace, config.Operator.SecretName) == nil
 }
+
 func hasRedis() bool {
 	return k("get", "deployment/redis", "-n", config.Tyk.Namespace) == nil
 }
@@ -455,17 +361,10 @@ func hasMongo() bool {
 	return k("get", "deployment/mongo", "-n", config.Tyk.Namespace) == nil
 }
 
-func hasGateway() bool {
-	return k("get", "deployment/tyk", "-n", config.Tyk.Namespace) == nil
-}
-
-func hasDash() bool {
-	return k("get", "deployment/dashboard", "-n", config.Tyk.Namespace) == nil
-}
-
 func hasHTTPBIN() bool {
 	return k("get", "deployment/httpbin") == nil
 }
+
 func hasGRPCPlugin() bool {
 	return k("get", "deployment/grpc-plugin", "-n", config.Tyk.Namespace) == nil
 }
@@ -502,65 +401,6 @@ func createCertManager() {
 	ok()
 }
 
-func createConfigMaps() {
-	{
-		say("Creating dashboard configmap ...")
-		name := "dash-conf"
-		if !hasConfigMap(name) {
-			var buf bytes.Buffer
-			exit(kf(func(c *exec.Cmd) {
-				c.Stdout = &buf
-				c.Stderr = os.Stderr
-			},
-				"create", "configmap",
-				"-n", config.Tyk.Namespace,
-				name, "--dry-run=client",
-				"--from-file", filepath.Join(config.WorkDir, deployDir(), "dashboard", "confs", "dash.json"),
-				"-o", "yaml",
-			))
-			exit(kf(func(c *exec.Cmd) {
-				c.Stdin = &buf
-				c.Stderr = os.Stderr
-			},
-				"apply", "-f", "-",
-			))
-		}
-		ok()
-	}
-	{
-		say("Creating tyk configmap ...")
-		name := "tyk-conf"
-		if !hasConfigMap(name) {
-			var buf bytes.Buffer
-			exit(kf(func(c *exec.Cmd) {
-				c.Stdout = &buf
-				c.Stderr = os.Stderr
-			},
-				"create", "configmap",
-				"-n", config.Tyk.Namespace,
-				name, "--dry-run=client",
-				"--from-file", filepath.Join(config.WorkDir, deployDir(), "gateway", "confs", "tyk.json"),
-				"-o", "yaml",
-			))
-			exit(kf(func(c *exec.Cmd) {
-				c.Stdin = &buf
-				c.Stderr = os.Stderr
-			},
-				"apply", "-f", "-",
-			))
-		}
-		ok()
-	}
-}
-
-func dash() {
-	createConfigMaps()
-	createDashSecret()
-	deployDash()
-	deployGateway()
-	bootsrapDash()
-}
-
 func common() {
 	deployHTTPBIN()
 	deployGRPCPlugin()
@@ -568,52 +408,9 @@ func common() {
 	pro(createMongo)
 }
 
-func community() {
-	communityConfigMap()
-	deployGateway()
-}
-
-func communityConfigMap() {
-	say("creating config maps ...")
-	if !hasConfigMap("tyk-conf") {
-		exit(kl("create", "configmap",
-			"-n", config.Tyk.Namespace,
-			"tyk-conf",
-			"--from-file", filepath.Join(config.WorkDir, deployDir(), "gateway", "confs", "tyk.json"),
-		))
-	}
-	ok()
-}
-
 func operator() {
 	createCertManager()
 	createSecret()
-}
-
-func deployDash() {
-	say("Deploying dashboard ...")
-	if !hasDash() {
-		exit(k("apply", "-n", config.Tyk.Namespace, "-f", filepath.Join(config.WorkDir, deployDir(), "dashboard")))
-		ok()
-		say("Waiting for dashboard to be ready ...")
-		exit(k(
-			"rollout", "status", "deployment/dashboard", "-n", config.Tyk.Namespace,
-		))
-	}
-	ok()
-}
-
-func deployGateway() {
-	say("Deploying gateway ...")
-	if !hasGateway() {
-		exit(k("apply", "-n", config.Tyk.Namespace, "-f", filepath.Join(config.WorkDir, deployDir(), "gateway")))
-		ok()
-		say("Waiting for gateway to be ready ...")
-		exit(k(
-			"rollout", "status", "deployment/tyk", "-n", config.Tyk.Namespace,
-		))
-	}
-	ok()
 }
 
 func deployHTTPBIN() {

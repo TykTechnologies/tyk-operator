@@ -20,7 +20,7 @@ gateway:
   kind: Deployment
   replicaCount: 1
   tls: false
-  containerPort: 8000
+  containerPort: 8080
   tags: ""
   image:
     repository: tykio/tyk-gateway
@@ -28,14 +28,14 @@ gateway:
     pullPolicy: Always
   service:
     type: ClusterIP
-    port: 8000
+    port: 8080
     externalTrafficPolicy: Local
     annotations: {}
   resources: {}
   affinity: {}
   extraEnvs: 
     - name: TYK_GW_CONTROLAPIPORT
-      value: 8000
+      value: 8080
     - name: TYK_LOGLEVEL
       value: debug
     - name: TYK_GW_COPROCESSOPTIONS_ENABLECOPROCESS

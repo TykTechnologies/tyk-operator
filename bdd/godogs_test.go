@@ -58,13 +58,10 @@ var opts = &godog.Options{
 	Format:        "pretty",
 	Tags:          "~@undone",
 }
-var gatewayURL = "http://localhost:8000"
+var gatewayURL = "http://localhost:8080"
 
 func init() {
 	godog.BindFlags("godog.", flag.CommandLine, opts)
-	if os.Getenv("TYK_HELM_CHARTS") != "" && os.Getenv("TYK_MODE") == "pro" {
-		gatewayURL = "http://localhost:8080"
-	}
 }
 
 func TestMain(t *testing.M) {
