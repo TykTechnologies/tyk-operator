@@ -96,7 +96,7 @@ func (e *Env) Parse() error {
 		return fmt.Errorf("environment vars %v are missing", ls)
 	}
 	switch e.Mode {
-	case "ce", "pro":
+	case "oss", "ce", "pro":
 		return nil
 	default:
 		return fmt.Errorf("unknown TYK_MODE value %q", e.Mode)
