@@ -14,8 +14,8 @@ const (
 	// An empty value means the operator is running with cluster scope.
 	WatchNamespace = "WATCH_NAMESPACE"
 
-	// TykMode defines what environment the operator is running. The values are oss
-	// for open source version and pro for pro version
+	// TykMode defines what environment the operator is running. The values are ce
+	// for community edition and pro for pro version
 	TykMode = "TYK_MODE"
 
 	// TykURL holds the url to either tyk gateway or tyk dashboard

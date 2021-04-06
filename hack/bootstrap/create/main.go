@@ -53,7 +53,7 @@ type Tyk struct {
 	Charts      string
 }
 
-func (t *Tyk) oss() {
+func (t *Tyk) ce() {
 	t.Mode = "ce"
 	t.URL = "http://tyk.tykce-control-plane.svc.cluster.local:8001"
 	t.Auth = "foo"
@@ -82,7 +82,7 @@ func (t *Tyk) bind(workdir, mode string) {
 	if mode == "pro" {
 		t.pro()
 	} else {
-		t.oss()
+		t.ce()
 	}
 	t.helm(workdir)
 	env(&t.URL, "TYK_URL")
