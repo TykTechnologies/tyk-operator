@@ -46,7 +46,7 @@ Operator configurations are all stored in the secret `tyk-operator-conf`.
 | ------------------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `TYK_ORG`                      | `5e9d9544a1dcd60001d0ed20`                                     | Operator User ORG ID                                                                                       |
 | `TYK_AUTH`                     | `2d095c2155774fe36d77e5cbe3ac963b`                             | Operator User API Key or Gateway Management API Key                                                        |
-| `TYK_MODE`                     | `ce`                                                          | Tyk Open Source mode                                                                                       |
+| `TYK_MODE`                     | `oss`                                                          | Tyk Open Source mode                                                                                       |
 | `TYK_MODE`                     | `pro`                                                          | Tyk Pro mode                                                                                               |
 | `TYK_URL`                      | `http://dashboard.tykpro-control-plane.svc.cluster.local:3000` | Management URL of Tyk Gateway (CE) or Tyk Dashboard (PRO)                                                 |
 | `TYK_TLS_INSECURE_SKIP_VERIFY` | `true`                                                         | If the Tyk URL is HTTPS and has a self-signed certificate; defaults to `false`                             |
@@ -58,7 +58,7 @@ Operator configurations are all stored in the secret `tyk-operator-conf`.
 Tyk Operator needs to connect to a Tyk Pro deployment, and it needs to know whether it is talking to a Community
 Edition Gateway or Pro installation.
 
-`TYK_MODE` can be set to either `ce` or `pro`.
+`TYK_MODE` can be set to either `oss` or `pro`.
 
 ```bash
 kubectl create namespace tyk-operator-system
