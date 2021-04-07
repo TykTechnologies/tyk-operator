@@ -9,7 +9,8 @@ spec:
   active: true
   proxy:
     target_url: http://httpbin.default.svc:8000
-    listen_path: /
+    listen_path: /transform
+    strip_listen_path: true
   version_data:
     default_version: v1
     not_versioned: true

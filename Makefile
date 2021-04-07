@@ -61,10 +61,12 @@ deploy: manifests kustomize
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 helm: kustomize
+	$(KUSTOMIZE) version
 	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
 	$(KUSTOMIZE) build config/helm |go run hack/helm/pre_helm.go > ./helm/templates/all.yaml
 
 manifests: controller-gen
+	$(CONTROLLER_GEN) --version
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 # Run go fmt against code
@@ -165,21 +167,13 @@ scrap: generate manifests helm cross-build-image
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: setup-pro
-setup-pro:  install-cert-manager
-	@echo "===> installing tyk-pro"
-	sh ./ci/deploy_tyk_pro.sh
-	@echo "===> bootstrapping tyk dashboard (initial org + user)"
-	sh ./ci/bootstrap_org.sh
-	cat bootstrapped
-	@echo "===> setting operator dash secrets"
-	sh ./ci/operator_pro_secrets.sh
+setup-pro:
+	go run hack/bootstrap/create/main.go --debug  --mode pro
 
 .PHONY: setup-ce
-setup-ce: install-cert-manager
-	@echo "===> installing tyk-ce"
-	sh ./ci/deploy_tyk_ce.sh
-	@echo "setting operator secrets"
-	sh ./ci/operator_ce_secrets.sh
+setup-ce:
+	go run hack/bootstrap/create/main.go --debug
+
 
 .PHONY: boot-pro
 boot-pro: setup-pro install-operator-helm

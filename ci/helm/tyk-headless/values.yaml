@@ -1,0 +1,62 @@
+# Default values for tyk-dashboard.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+secrets:
+  APISecret: "foo"
+  OrgID: "myorg"
+
+redis:
+    addrs:
+      - "redis.tykce-control-plane.svc.cluster.local:6379"
+    useSSL: false
+mongo:
+  enabled: false
+
+gateway:
+  kind: Deployment
+  replicaCount: 1
+  tls: false
+  containerPort: 8080
+  tags: ""
+  image:
+    repository: tykio/tyk-gateway
+    tag: v3.1.2
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8080
+    externalTrafficPolicy: Local
+    annotations: {}
+  resources: {}
+  affinity: {}
+  extraEnvs: 
+    - name: TYK_GW_CONTROLAPIPORT
+      value: 8080
+    - name: TYK_LOGLEVEL
+      value: debug
+    - name: TYK_GW_COPROCESSOPTIONS_ENABLECOPROCESS
+      value: true
+    - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
+      value: "tcp://grpc-plugin.tykce-control-plane.svc.cluster.local:9999"
+
+# If pump is enabled the Gateway will create and collect analytics data to send to a data store of your choice
+# These can be set up in the pump config. The possible pump configs can be found here: https://github.com/TykTechnologies/tyk-pump#configuration
+pump:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: tykio/tyk-pump-docker-pub
+    tag: v1.2.0
+    pullPolicy: IfNotPresent
+  annotations: {}
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnvs: []
+
+rbac: true
