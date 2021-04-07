@@ -38,7 +38,6 @@ func NewClient(log logr.Logger, env environmet.Env) *Client {
 			},
 		},
 	}
-	universal_client.SetInsecureSkipVerify(env)
 	return c
 }
 

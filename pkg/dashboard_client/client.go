@@ -35,7 +35,6 @@ type ResponseMsg struct {
 }
 
 func NewClient(log logr.Logger, env environmet.Env) *Client {
-	universal_client.SetInsecureSkipVerify(env)
 	return &Client{
 		Client: universal_client.Client{
 			Log: log,
