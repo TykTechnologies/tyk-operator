@@ -61,21 +61,8 @@ func (in *ApiDefinition) Default() {
 			DefaultVersion: "Default",
 			Versions: map[string]VersionInfo{
 				"Default": {
-					Name:    "Default",
-					Expires: "",
-					Paths: VersionInfoPaths{
-						Ignored:   []string{},
-						WhiteList: []string{},
-						BlackList: []string{},
-					},
-					UseExtendedPaths:            false,
-					ExtendedPaths:               ExtendedPathsSet{},
-					GlobalHeaders:               nil,
-					GlobalHeadersRemove:         nil,
-					GlobalResponseHeaders:       nil,
-					GlobalResponseHeadersRemove: nil,
-					IgnoreEndpointCase:          false,
-					GlobalSizeLimit:             0,
+					Name:             "Default",
+					UseExtendedPaths: false,
 				},
 			},
 		}
@@ -105,17 +92,17 @@ func (in *ApiDefinition) ValidateCreate() error {
 	return in.validate()
 }
 
+func path(n ...string) *field.Path {
+	x := field.NewPath("spec")
+	for _, v := range n {
+		x = x.Child(v)
+	}
+	return x
+}
+
 func (in *ApiDefinition) validate() error {
 	var all field.ErrorList
 	var _ APIDefinitionSpec
-
-	path := func(n ...string) *field.Path {
-		x := field.NewPath("spec")
-		for _, v := range n {
-			x = x.Child(v)
-		}
-		return x
-	}
 
 	spec := in.Spec
 	// protocol
@@ -189,6 +176,10 @@ func (in *ApiDefinition) validate() error {
 			}
 		}
 	}
+	// proxy
+	if a := in.validateTarget(); len(a) > 0 {
+		all = append(all, a...)
+	}
 	if len(all) == 0 {
 		return nil
 	}
@@ -213,4 +204,40 @@ func (in *ApiDefinition) ValidateDelete() error {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
+}
+
+func (in *ApiDefinition) validateTarget() field.ErrorList {
+	var all field.ErrorList
+	// we make sure targets are properly set. We can either have a normal url
+	// darget or a looping target or both.
+	if in.Spec.Proxy.TargetURL == "" && in.Spec.Proxy.TargeInternal == nil {
+		all = append(all,
+			field.Required(path("proxy", "target_url"),
+				"can't be emptry",
+			),
+		)
+	}
+	for _, v := range in.Spec.VersionData.Versions {
+		if v.ExtendedPaths != nil {
+			for _, u := range v.ExtendedPaths.URLRewrite {
+				if u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
+					all = append(all,
+						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
+							"can't be emptry",
+						),
+					)
+				}
+				for _, t := range u.Triggers {
+					if t.RewriteTo == "" && t.RewriteToInternal == nil {
+						all = append(all,
+							field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
+								"can't be emptry",
+							),
+						)
+					}
+				}
+			}
+		}
+	}
+	return all
 }

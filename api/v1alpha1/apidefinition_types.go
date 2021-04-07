@@ -17,10 +17,13 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"net/url"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
@@ -137,23 +140,32 @@ type CircuitBreakerMeta struct {
 
 type StringRegexMap struct {
 	MatchPattern string `json:"match_rx"`
-	Reverse      bool   `json:"reverse"`
-	//matchRegex   *regexp.Regexp
+	Reverse      bool   `json:"reverse,omitempty"`
 }
 
 type RoutingTriggerOptions struct {
-	HeaderMatches         map[string]StringRegexMap `json:"header_matches"`
-	QueryValMatches       map[string]StringRegexMap `json:"query_val_matches"`
-	PathPartMatches       map[string]StringRegexMap `json:"path_part_matches"`
-	SessionMetaMatches    map[string]StringRegexMap `json:"session_meta_matches"`
-	RequestContextMatches map[string]StringRegexMap `json:"request_context_matches"`
-	PayloadMatches        StringRegexMap            `json:"payload_matches"`
+	HeaderMatches         map[string]StringRegexMap `json:"header_matches,omitempty"`
+	QueryValMatches       map[string]StringRegexMap `json:"query_val_matches,omitempty"`
+	PathPartMatches       map[string]StringRegexMap `json:"path_part_matches,omitempty"`
+	SessionMetaMatches    map[string]StringRegexMap `json:"session_meta_matches,omitempty"`
+	RequestContextMatches map[string]StringRegexMap `json:"request_context_matches,omitempty"`
+	PayloadMatches        *StringRegexMap           `json:"payload_matches,omitempty"`
 }
 
 type RoutingTrigger struct {
-	On        RoutingTriggerOnType  `json:"on"`
-	Options   RoutingTriggerOptions `json:"options"`
-	RewriteTo string                `json:"rewrite_to"`
+	On                RoutingTriggerOnType  `json:"on"`
+	Options           RoutingTriggerOptions `json:"options"`
+	RewriteTo         string                `json:"rewrite_to,omitempty"`
+	RewriteToInternal *RewriteToInternal    `json:"rewrite_to_internal,omitempty"`
+}
+
+func (r *RoutingTrigger) collectLoopingTarget(fn func(Target)) {
+	if r.RewriteToInternal != nil {
+		x := r.RewriteToInternal.Target
+		r.RewriteTo = r.RewriteToInternal.String()
+		r.RewriteToInternal = nil
+		fn(x)
+	}
 }
 
 type URLRewriteMeta struct {
@@ -163,8 +175,97 @@ type URLRewriteMeta struct {
 	// MatchPattern is a regular expression pattern to match the path
 	MatchPattern string `json:"match_pattern"`
 	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
-	RewriteTo string           `json:"rewrite_to"`
-	Triggers  []RoutingTrigger `json:"triggers"`
+	RewriteTo string `json:"rewrite_to,omitempty"`
+	// RewriteToInternal serves as rewrite_to but used when rewriting to target
+	// internal api's
+	// When rewrite_to and rewrite_to_internal are both provided then
+	// rewrite_to will take rewrite_to_internal
+	RewriteToInternal *RewriteToInternal `json:"rewrite_to_internal,omitempty"`
+	Triggers          []RoutingTrigger   `json:"triggers,omitempty"`
+}
+
+func (u *URLRewriteMeta) collectLoopingTarget(fn func(Target)) {
+	if u.RewriteToInternal != nil {
+		x := u.RewriteToInternal.Target
+		u.RewriteTo = u.RewriteToInternal.String()
+		u.RewriteToInternal = nil
+		fn(x)
+	}
+	for i := 0; i < len(u.Triggers); i++ {
+		u.Triggers[i].collectLoopingTarget(fn)
+	}
+}
+
+// TargetInternal defines options that constructs a url that refers to an api that
+// is loaded into the gateway.
+type TargetInternal struct {
+	// API a namespaced/name to the api definition resource that you are
+	// targetting
+	Target Target `json:"target,omitempty"`
+	// Path path on target , this does not include query parameters.
+	//	example /myendpoint
+	Path string `json:"path,omitempty"`
+
+	// Query url query string to add to target
+	//	example check_limits=true
+	Query string `json:"query,omitempty"`
+}
+
+func (i TargetInternal) String() string {
+	host := i.Target.String()
+	host = base64.URLEncoding.EncodeToString([]byte(host))
+	u := url.URL{
+		Scheme:   "tyk",
+		Host:     host,
+		RawPath:  i.Path,
+		RawQuery: i.Query,
+	}
+	return u.String()
+}
+
+// RewriteToInternal defines options that constructs a url that refers to an api that
+// is loaded into the gateway.
+type RewriteToInternal struct {
+	// API a namespaced/name to the api definition resource that you are
+	// targetting
+	Target Target `json:"target,omitempty"`
+	// Path path on target , this does not include query parameters.
+	//	example /myendpoint
+	Path string `json:"path,omitempty"`
+
+	// Query url query string to add to target
+	//	example check_limits=true
+	Query string `json:"query,omitempty"`
+}
+
+func (i RewriteToInternal) String() string {
+	host := i.Target.String()
+	host = base64.RawURLEncoding.EncodeToString([]byte(host))
+	u := url.URL{
+		Scheme:   "tyk",
+		Host:     host,
+		Path:     i.Path,
+		RawQuery: i.Query,
+	}
+	return u.String()
+}
+
+type Target struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+func (t Target) String() string {
+	return t.NS().String()
+}
+
+// Equal returns true if t and o are equal
+func (t Target) Equal(o Target) bool {
+	return t.Namespace == o.Namespace && t.Name == o.Name
+}
+
+func (t Target) NS() types.NamespacedName {
+	return types.NamespacedName{Namespace: t.Namespace, Name: t.Name}
 }
 
 type VirtualMeta struct {
@@ -218,12 +319,21 @@ type ExtendedPathsSet struct {
 	Internal []InternalMeta `json:"internal,omitempty"`
 }
 
+func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
+	if e == nil {
+		return
+	}
+	for i := 0; i < len(e.URLRewrite); i++ {
+		e.URLRewrite[i].collectLoopingTarget(fn)
+	}
+}
+
 type VersionInfo struct {
 	Name                        string            `json:"name"`
 	Expires                     string            `json:"expires,omitempty"`
-	Paths                       VersionInfoPaths  `json:"paths,omitempty"`
+	Paths                       *VersionInfoPaths `json:"paths,omitempty"`
 	UseExtendedPaths            bool              `json:"use_extended_paths,omitempty"`
-	ExtendedPaths               ExtendedPathsSet  `json:"extended_paths,omitempty"`
+	ExtendedPaths               *ExtendedPathsSet `json:"extended_paths,omitempty"`
 	GlobalHeaders               map[string]string `json:"global_headers,omitempty"`
 	GlobalHeadersRemove         []string          `json:"global_headers_remove,omitempty"`
 	GlobalResponseHeaders       map[string]string `json:"global_response_headers,omitempty"`
@@ -233,10 +343,14 @@ type VersionInfo struct {
 	OverrideTarget              string            `json:"override_target,omitempty"`
 }
 
+func (v *VersionInfo) collectLoopingTarget(fn func(Target)) {
+	v.ExtendedPaths.collectLoopingTarget(fn)
+}
+
 type VersionInfoPaths struct {
-	Ignored   []string `json:"ignored"`
-	WhiteList []string `json:"white_list"`
-	BlackList []string `json:"black_list"`
+	Ignored   []string `json:"ignored,omitempty"`
+	WhiteList []string `json:"white_list,omitempty"`
+	BlackList []string `json:"black_list,omitempty"`
 }
 
 type AuthProviderMeta struct {
@@ -528,7 +642,8 @@ type APIDefinitionSpec struct {
 	//+optional
 	SessionLifetime int64 `json:"session_lifetime,omitempty"`
 
-	//Internal    	           bool                `json:"internal"`
+	// Internal tells Tyk Gateway that this is a virtual API. It can only be routed to from other APIs.
+	Internal bool `json:"internal,omitempty"`
 	//AuthProvider           AuthProviderMeta    `json:"auth_provider"`
 	//SessionProvider        SessionProviderMeta `json:"session_provider"`
 	////EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
@@ -585,6 +700,15 @@ type APIDefinitionSpec struct {
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 }
 
+func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
+	fn := func(t Target) {
+		targets = append(targets, t)
+	}
+	a.Proxy.collectLoopingTarget(fn)
+	a.VersionData.collectLoopingTarget(fn)
+	return
+}
+
 // Proxy outlines the API proxying functionality.
 type Proxy struct {
 	// If PreserveHostHeader is set to true then the host header in the outbound request is retained to be the
@@ -600,7 +724,8 @@ type Proxy struct {
 	ListenPath string `json:"listen_path,omitempty"`
 
 	// TargetURL defines the target URL that the request should be proxied to.
-	TargetURL string `json:"target_url"`
+	TargetURL     string          `json:"target_url,omitempty"`
+	TargeInternal *TargetInternal `json:"target_internal,omitempty"`
 
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
 	// when `true` a request to http://foo.bar/baz/ will be retained.
@@ -630,6 +755,15 @@ type Proxy struct {
 
 	// TODO: Untested. Is there a use-case for SD inside a K8s environment?
 	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
+}
+
+func (p *Proxy) collectLoopingTarget(fn func(Target)) {
+	if p.TargeInternal != nil {
+		x := p.TargeInternal.Target
+		p.TargetURL = p.TargeInternal.String()
+		p.TargeInternal = nil
+		fn(x)
+	}
 }
 
 type ProxyTransport struct {
@@ -704,6 +838,13 @@ type VersionData struct {
 	NotVersioned   bool                   `json:"not_versioned"`
 	DefaultVersion string                 `json:"default_version"`
 	Versions       map[string]VersionInfo `json:"versions,omitempty"`
+}
+
+func (v *VersionData) collectLoopingTarget(fn func(Target)) {
+	for k, value := range v.Versions {
+		value.collectLoopingTarget(fn)
+		v.Versions[k] = value
+	}
 }
 
 type VersionDefinition struct {
@@ -850,7 +991,15 @@ type ApiDefinitionStatus struct {
 
 	// LinkedByPolicies is a list policies that references this api definition
 	//+optional
-	LinkedByPolicies []string `json:"linked_by_policies,omitempty"`
+	LinkedByPolicies []Target `json:"linked_by_policies,omitempty"`
+
+	// LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this
+	// resource
+	LinkedByAPIs []Target `json:"linked_by_apis,omitempty"`
+
+	// LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource
+	// links to.
+	LinkedToAPIs []Target `json:"linked_to_apis,omitempty"`
 }
 
 // +kubebuilder:object:root=true

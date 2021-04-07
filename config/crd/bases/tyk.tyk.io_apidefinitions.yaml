@@ -548,6 +548,10 @@ spec:
             id:
               description: For server use only, do not use
               type: string
+            internal:
+              description: Internal tells Tyk Gateway that this is a virtual API.
+                It can only be routed to from other APIs.
+              type: boolean
             jwt_client_base_field:
               description: JWTClientIDBaseField is the name of the field on JWT claim
                 to use for client id. This field is mutually exclusive to jwt_identity_base_field,
@@ -747,6 +751,31 @@ spec:
                     identify the API loaded in Tyk is removed, and the outbound request
                     would be http://httpbin.org/get
                   type: boolean
+                target_internal:
+                  description: TargetInternal defines options that constructs a url
+                    that refers to an api that is loaded into the gateway.
+                  properties:
+                    path:
+                      description: "Path path on target , this does not include query
+                        parameters. \texample /myendpoint"
+                      type: string
+                    query:
+                      description: "Query url query string to add to target \texample
+                        check_limits=true"
+                      type: string
+                    target:
+                      description: API a namespaced/name to the api definition resource
+                        that you are targetting
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                      required:
+                      - name
+                      - namespace
+                      type: object
+                  type: object
                 target_list:
                   description: Targets defines a list of upstream host targets. Tyk
                     will then round-robin load balance between these targets. EnableLoadBalancing
@@ -794,8 +823,6 @@ spec:
                       - 772
                       type: integer
                   type: object
-              required:
-              - target_url
               type: object
             response_processors:
               items:
@@ -1387,6 +1414,33 @@ spec:
                                   description: RewriteTo is the target path on the
                                     upstream, or target URL we wish to rewrite to
                                   type: string
+                                rewrite_to_internal:
+                                  description: RewriteToInternal serves as rewrite_to
+                                    but used when rewriting to target internal api's
+                                    When rewrite_to and rewrite_to_internal are both
+                                    provided then rewrite_to will take rewrite_to_internal
+                                  properties:
+                                    path:
+                                      description: "Path path on target , this does
+                                        not include query parameters. \texample /myendpoint"
+                                      type: string
+                                    query:
+                                      description: "Query url query string to add
+                                        to target \texample check_limits=true"
+                                      type: string
+                                    target:
+                                      description: API a namespaced/name to the api
+                                        definition resource that you are targetting
+                                      properties:
+                                        name:
+                                          type: string
+                                        namespace:
+                                          type: string
+                                      required:
+                                      - name
+                                      - namespace
+                                      type: object
+                                  type: object
                                 triggers:
                                   items:
                                     properties:
@@ -1403,7 +1457,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           path_part_matches:
@@ -1415,7 +1468,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           payload_matches:
@@ -1426,7 +1478,6 @@ spec:
                                                 type: boolean
                                             required:
                                             - match_rx
-                                            - reverse
                                             type: object
                                           query_val_matches:
                                             additionalProperties:
@@ -1437,7 +1488,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           request_context_matches:
@@ -1449,7 +1499,6 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
                                           session_meta_matches:
@@ -1461,31 +1510,48 @@ spec:
                                                   type: boolean
                                               required:
                                               - match_rx
-                                              - reverse
                                               type: object
                                             type: object
-                                        required:
-                                        - header_matches
-                                        - path_part_matches
-                                        - payload_matches
-                                        - query_val_matches
-                                        - request_context_matches
-                                        - session_meta_matches
                                         type: object
                                       rewrite_to:
                                         type: string
+                                      rewrite_to_internal:
+                                        description: RewriteToInternal defines options
+                                          that constructs a url that refers to an
+                                          api that is loaded into the gateway.
+                                        properties:
+                                          path:
+                                            description: "Path path on target , this
+                                              does not include query parameters. \texample
+                                              /myendpoint"
+                                            type: string
+                                          query:
+                                            description: "Query url query string to
+                                              add to target \texample check_limits=true"
+                                            type: string
+                                          target:
+                                            description: API a namespaced/name to
+                                              the api definition resource that you
+                                              are targetting
+                                            properties:
+                                              name:
+                                                type: string
+                                              namespace:
+                                                type: string
+                                            required:
+                                            - name
+                                            - namespace
+                                            type: object
+                                        type: object
                                     required:
                                     - "on"
                                     - options
-                                    - rewrite_to
                                     type: object
                                   type: array
                               required:
                               - match_pattern
                               - method
                               - path
-                              - rewrite_to
-                              - triggers
                               type: object
                             type: array
                           virtual:
@@ -1599,10 +1665,6 @@ spec:
                             items:
                               type: string
                             type: array
-                        required:
-                        - black_list
-                        - ignored
-                        - white_list
                         type: object
                       use_extended_paths:
                         type: boolean
@@ -1624,11 +1686,47 @@ spec:
           properties:
             api_id:
               type: string
+            linked_by_apis:
+              description: LinkedByAPIs is a list of ApiDefinition namespaced/name
+                that links to this resource
+              items:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              type: array
             linked_by_policies:
               description: LinkedByPolicies is a list policies that references this
                 api definition
               items:
-                type: string
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              type: array
+            linked_to_apis:
+              description: LinkedToAPIs is a list of ApiDefinition namespaced/name
+                that this resource links to.
+              items:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               type: array
           required:
           - api_id

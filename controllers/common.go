@@ -47,13 +47,27 @@ func addString(slice []string, s string) (result []string) {
 	return append(slice, s)
 }
 
-func apiIDDecode(encoded string) string {
-	apiBytes, _ := base64.URLEncoding.DecodeString(encoded)
-	return string(apiBytes)
+func addTarget(slice []tykv1.Target, s tykv1.Target) (result []tykv1.Target) {
+	for _, item := range slice {
+		if item == s {
+			return slice
+		}
+	}
+	return append(slice, s)
+}
+
+func removeTarget(slice []tykv1.Target, s tykv1.Target) (result []tykv1.Target) {
+	for _, item := range slice {
+		if item.Equal(s) {
+			continue
+		}
+		result = append(result, item)
+	}
+	return
 }
 
 func encodeNS(decoded string) string {
-	return base64.URLEncoding.EncodeToString([]byte(decoded))
+	return base64.RawURLEncoding.EncodeToString([]byte(decoded))
 }
 
 // labelsForGateway returns the labels for selecting the resources

@@ -20,8 +20,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -124,6 +124,18 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 		desired.Spec.CertificateSecretNames = nil
 		r.updateLinkedPolicies(ctx, desired)
+		targets := desired.Spec.CollectLoopingTarget()
+		if err := r.ensureTargets(ctx, targets); err != nil {
+			// We make sure all targets are available
+			queueA = queueAfter
+			return err
+		}
+		err := r.updateLoopingTargets(ctx, desired, targets)
+		if err != nil {
+			log.Error(err, "Failed to update looping targets")
+			return err
+		}
+		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			err := r.UniversalClient.Api().Create(&desired.Spec)
@@ -141,7 +153,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 		log.Info("Updating ApiDefinition")
 		desired.Spec.APIID = desired.Status.ApiID
-		err := r.UniversalClient.Api().Update(&desired.Spec)
+		err = r.UniversalClient.Api().Update(&desired.Spec)
 		if err != nil {
 			if err != nil {
 				log.Error(err, "Failed to update api definition")
@@ -225,6 +237,21 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		if err := r.checkLinkedPolicies(ctx, desired); err != nil {
 			return queueAfter, err
 		}
+		if err := r.checkLoopingTargets(ctx, desired); err != nil {
+			return queueAfter, err
+		}
+		ns := tykv1alpha1.Target{
+			Name:      desired.Name,
+			Namespace: desired.Namespace,
+		}
+		for _, target := range desired.Status.LinkedToAPIs {
+			err := r.updateStatus(ctx, target, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+				ads.LinkedByAPIs = removeTarget(ads.LinkedByAPIs, ns)
+			})
+			if err != nil {
+				return queueAfter, err
+			}
+		}
 		r.Log.Info("deleting api")
 		err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
 		if err != nil {
@@ -236,6 +263,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
+
 		r.Log.Info("removing finalizer")
 		util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 	}
@@ -250,15 +278,8 @@ func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *ty
 		return nil
 	}
 	for _, n := range a.Status.LinkedByPolicies {
-		p := strings.Split(n, string(types.Separator))
-		if len(p) != 2 {
-			err := fmt.Errorf("malformed linked_policy expected namespace/name format got %s", n)
-			r.Log.Error(err, "Failed to parse lined_policies")
-			return err
-		}
-		ns := types.NamespacedName{Namespace: p[0], Name: p[1]}
-		var policy tykv1alpha1.SecurityPolicy
-		if err := r.Get(ctx, ns, &policy); err == nil {
+		var api tykv1alpha1.ApiDefinition
+		if err := r.Get(ctx, n.NS(), &api); err == nil {
 			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
 		}
 	}
@@ -284,6 +305,90 @@ func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *t
 		a.Spec.JWTScopeToPolicyMapping[k] = encodeIfNotBase64(x)
 	}
 	return
+}
+
+// checkLoopingTargets Check if there is any other api's linking to a
+func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
+	r.Log.Info("checking linked api resources")
+	if len(a.Status.LinkedByAPIs) == 0 {
+		return nil
+	}
+	for _, n := range a.Status.LinkedByAPIs {
+		var api tykv1alpha1.ApiDefinition
+		if err := r.Get(ctx, n.NS(), &api); err == nil {
+			return fmt.Errorf("unable to delete api due to being depended by =%s", n)
+		}
+	}
+	return nil
+}
+
+func (r *ApiDefinitionReconciler) ensureTargets(ctx context.Context, targets []tykv1alpha1.Target) error {
+	for _, target := range targets {
+		var api tykv1alpha1.ApiDefinition
+		if err := r.Get(ctx, target.NS(), &api); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
+	a *tykv1alpha1.ApiDefinition, links []tykv1alpha1.Target,
+) error {
+	r.Log.Info("updating looping targets")
+	if len(links) == 0 {
+		return nil
+	}
+	ns := tykv1alpha1.Target{
+		Name:      a.Name,
+		Namespace: a.Namespace,
+	}
+	for _, target := range links {
+		err := r.updateStatus(ctx, target, false, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+			ads.LinkedByAPIs = addTarget(ads.LinkedByAPIs, ns)
+			sort.Slice(ads.LinkedByAPIs, func(i, j int) bool {
+				return ads.LinkedByAPIs[i].String() < ads.LinkedByAPIs[j].String()
+			})
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	// we need to update removed targets
+	newTargets := make(map[string]tykv1alpha1.Target)
+	for _, v := range links {
+		newTargets[v.String()] = v
+	}
+	for _, v := range a.Status.LinkedToAPIs {
+		if _, ok := newTargets[v.String()]; !ok {
+			err := r.updateStatus(ctx, v, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
+				ads.LinkedByAPIs = removeTarget(ads.LinkedByAPIs, ns)
+				sort.Slice(ads.LinkedByAPIs, func(i, j int) bool {
+					return ads.LinkedByAPIs[i].String() < ads.LinkedByAPIs[j].String()
+				})
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	a.Status.LinkedToAPIs = links
+	return client.IgnoreNotFound(r.Status().Update(ctx, a))
+}
+
+func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1alpha1.Target, ignoreNotFound bool, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
+	var api tykv1alpha1.ApiDefinition
+	if err := r.Get(ctx, target.NS(), &api); err != nil {
+		if errors.IsNotFound(err) {
+			if ignoreNotFound {
+				return nil
+			}
+		}
+		return fmt.Errorf("unable to get api %v %v", target, err)
+	}
+	fn(&api.Status)
+	return r.Status().Update(ctx, &api)
 }
 
 // SetupWithManager initializes the api definition controller.
