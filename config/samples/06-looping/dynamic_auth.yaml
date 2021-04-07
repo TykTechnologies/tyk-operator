@@ -1,0 +1,155 @@
+---
+# Dynamic Auth
+
+# In this example, we have a bunch of legacy customers who authenticate with our service using Basic Authentication.
+# We want to be able to support API Keys also, where both types of clients hit the same ingress.
+# As such, Tyk needs to decide whether to perform Basic Authentication or Auth Token auth check.
+#
+# In order to achieve this, we need to configure 4 API Definitions inside Tyk.
+# 1. EntryPoint API
+# 2. BasicAuthInternal API
+# 3. AuthTokenInternal API
+# 4. ProxyInternal API
+#
+# When the request hits the ingress route, we configure a URL rewrite to pass the request to either the internal
+# BasicAuth api or the AuthToken API.
+# the internal APIs will then authenticate request, and assuming the happy path, proxy to the ProxyInternal API.
+# The ProxyInternal API is responsible for proxying to the underlying service.
+#
+# It is worth noting that there are no actual http redirect happening here, meaning that there is no performance penalty
+# in performing any of these "Internal Redirects".
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: entrypoint-api
+spec:
+  name: Entrypoint API
+  protocol: http
+  active: true
+  proxy:
+    listen_path: /entry
+    target_url: http://example.com
+  use_keyless: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        use_extended_paths: true
+        extended_paths:
+          url_rewrites:
+            - path: "/{id}"
+              match_pattern: "/(.*)/(.*)"
+              method: GET
+              triggers:
+                - "on": "all"
+                  options:
+                    header_matches:
+                      "Authorization":
+                        match_rx: "^Basic"
+                  rewrite_to_internal:
+                    target:
+                      name: basic-auth-internal
+                      namespace: default
+                    path: "basic/$2"
+                - "on": "all"
+                  options:
+                    header_matches:
+                      "Authorization":
+                        match_rx: "^Bearer"
+                  rewrite_to_internal:
+                    target:
+                      name: auth-token-internal
+                      namespace: default
+                    path: "token/$2"
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: basic-auth-internal
+spec:
+  name: BasicAuth Internal API
+  protocol: http
+  proxy:
+    listen_path: "/basic"
+    target_url: http://example.com
+  active: true
+  use_keyless: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        use_extended_paths: true
+        extended_paths:
+          url_rewrites:
+            - path: "/{id}"
+              match_pattern: "/basic/(.*)"
+              method: GET
+              rewrite_to_internal:
+                target:
+                  name: proxy-api
+                  namespace: default
+                path: proxy/$1
+          transform_headers:
+            - add_headers:
+                x-transform-api: "basic-auth"
+              method: GET
+              path: "/{id}"
+              delete_headers: []
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: auth-token-internal
+spec:
+  name: AuthToken Internal API
+  protocol: http
+  proxy:
+    listen_path: "/token"
+    target_url: http://example.com
+  active: true
+  use_keyless: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        use_extended_paths: true
+        extended_paths:
+          url_rewrites:
+            - path: "/{id}"
+              match_pattern: "/token/(.*)"
+              method: GET
+              rewrite_to_internal:
+                target:
+                  name: proxy-api
+                  namespace: default
+                path: proxy/$1
+          transform_headers:
+            - add_headers:
+                x-transform-api: "token-auth"
+              method: GET
+              path: "/{id}"
+              delete_headers: []
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: proxy-api
+spec:
+  name: Proxy API
+  protocol: http
+  active: true
+  internal: true
+  proxy:
+    listen_path: "/proxy"
+    target_url: http://httpbin.org
+    strip_listen_path: true
+  use_keyless: true
+---
+
