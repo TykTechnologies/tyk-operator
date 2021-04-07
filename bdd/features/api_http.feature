@@ -59,6 +59,6 @@ Feature: Managing http APIs
 
   Scenario: Method transform
     Given there is a ./custom_resources/transform/method.yaml resource
-    When i request /anything endpoint
+    When i request /transform/anything endpoint
     Then there should be a 200 http response code
     And the response should contain json key: method value: POST

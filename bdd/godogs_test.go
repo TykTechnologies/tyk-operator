@@ -58,6 +58,7 @@ var opts = &godog.Options{
 	Format:        "pretty",
 	Tags:          "~@undone",
 }
+var gatewayURL = "http://localhost:8080"
 
 func init() {
 	godog.BindFlags("godog.", flag.CommandLine, opts)
@@ -183,7 +184,7 @@ func call(method, url string, body func() io.Reader,
 func (s *store) iRequestEndpointWithHeader(path string, headerKey string, headerValue string) error {
 	return call(
 		http.MethodGet,
-		fmt.Sprintf("http://localhost:8000%s", path),
+		createURL(path),
 		func() io.Reader { return nil },
 		func(h *http.Request) {
 			h.Header.Set(headerKey, headerValue)
@@ -197,10 +198,14 @@ func (s *store) iRequestEndpointWithHeader(path string, headerKey string, header
 	)
 }
 
+func createURL(path string) string {
+	return gatewayURL + path
+}
+
 func (s *store) iRequestEndpoint(path string) error {
 	return call(
 		http.MethodGet,
-		fmt.Sprintf("http://localhost:8000%s", path),
+		createURL(path),
 		func() io.Reader { return nil },
 		func(h *http.Request) {},
 		func(h *http.Response) error {

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -153,7 +154,7 @@ func runCMD(cmd *exec.Cmd) (string, error) {
 }
 
 func create(ctx context.Context, file string, ns string) error {
-	return expect(Created)(runFile(ctx, "apply", file, ns))
+	return expect(Created, Configured)(runFile(ctx, "apply", file, ns))
 }
 
 func createNS(ctx context.Context, ns string) error {
@@ -202,15 +203,19 @@ func runFile(ctx context.Context, op, file string, ns string) (OpExpect, error) 
 	return 0, fmt.Errorf("k8sutil: unexpected output for cmd: %v output:%q", cmd.Args, o)
 }
 
-func expect(have OpExpect) func(OpExpect, error) error {
+func expect(have ...OpExpect) func(OpExpect, error) error {
 	return func(oe OpExpect, e error) error {
 		if e != nil {
 			return e
 		}
-		if oe != have {
-			return fmt.Errorf("expected %v got %v", have, oe)
+		var h []string
+		for _, v := range have {
+			if v == oe {
+				return nil
+			}
+			h = append(h, v.String())
 		}
-		return nil
+		return fmt.Errorf("expected %v got %v", h, oe)
 	}
 }
 
@@ -227,8 +232,20 @@ func (fn writeFn) Write(b []byte) (int, error) {
 var api TykAPI
 
 func setup(ns string) error {
+	label := "name=tyk"
+	mode := os.Getenv("TYK_MODE")
+	switch mode {
+	case "ce":
+		label = "app=gateway-ce-tyk-headless"
+		api.Container = "gateway-tyk-headless"
+	case "pro":
+		label = "app=gateway-pro-tyk-pro"
+		api.Container = "gateway-tyk-pro"
+	default:
+		return fmt.Errorf("unknown mode %q", mode)
+	}
 	e := exec.Command(
-		"kubectl", "get", "pods", "-l", "name=tyk", "-n", ns,
+		"kubectl", "get", "pods", "-l", label, "-n", ns,
 		"-o", "jsonpath={.items..metadata.name}",
 	)
 	o, err := e.CombinedOutput()
@@ -236,12 +253,12 @@ func setup(ns string) error {
 		return fmt.Errorf("%v:%v", err, string(o))
 	}
 	pod := string(bytes.TrimSpace(o))
+	pod = strings.Split(pod, " ")[0]
 	if pod == "" {
 		return fmt.Errorf("failed to get tyk pod cmd=%v", e.Args)
 	}
 	api.Namespace = ns
 	api.Pod = pod
-	api.Container = "tyk"
 	return nil
 }
 
@@ -277,11 +294,14 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	o, err := e.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%v:%v", err, string(o))
+	fmt.Println(e.Args)
+	var buf bytes.Buffer
+	e.Stderr = os.Stderr
+	e.Stdout = &buf
+	if err := e.Run(); err != nil {
+		return nil, err
 	}
-	res, err := http.ReadResponse(bufio.NewReader(bytes.NewReader(o)), r)
+	res, err := http.ReadResponse(bufio.NewReader(&buf), r)
 	if err != nil {
 		return nil, err
 	}

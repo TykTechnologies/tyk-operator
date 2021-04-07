@@ -22,9 +22,9 @@ This will create a 3 node cluster. 1 control-plane and 2 worker nodes.
 The operator needs a couple of env vars so that it knows how to speak to the Tyk apis.
 
 ```shell
-export TYK_AUTH=REPLACE_WITH_DASH_USER_KEY_OR_FOR_OSS_GW_SECRET
+export TYK_AUTH=REPLACE_WITH_DASH_USER_KEY_OR_FOR_COMMUNITY_EDITION_GW_SECRET
 export TYK_ORG=REPLACE_WITH_ORG_ID
-export TYK_MODE=pro|oss
+export TYK_MODE=pro|ce
 export TYK_URL=REPLACE_WITH_DASHBOARD_URL_OR_GATEWAY_ADMIN_URL
 ```
 

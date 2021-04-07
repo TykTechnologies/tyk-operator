@@ -15,7 +15,7 @@
 
 Before running the operator
 
-- A fully functioning & bootstrapped Tyk Gateway installation (OSS or Pro Licensed) needs to be installed and accessible
+- A fully functioning & bootstrapped Tyk Gateway installation (CE or Pro Licensed) needs to be installed and accessible
   from the K8s cluster that will host the Tyk Operator
 - A secret in the namespace of your Tyk Operator deployment telling it how to communicate with the Tyk Gateway
 - The CRDs must be registered with the Kubernetes apiserver
@@ -46,9 +46,9 @@ Operator configurations are all stored in the secret `tyk-operator-conf`.
 | ------------------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `TYK_ORG`                      | `5e9d9544a1dcd60001d0ed20`                                     | Operator User ORG ID                                                                                       |
 | `TYK_AUTH`                     | `2d095c2155774fe36d77e5cbe3ac963b`                             | Operator User API Key or Gateway Management API Key                                                        |
-| `TYK_MODE`                     | `oss`                                                          | Tyk Open Source mode                                                                                       |
+| `TYK_MODE`                     | `ce`                                                          | Tyk Open Source mode                                                                                       |
 | `TYK_MODE`                     | `pro`                                                          | Tyk Pro mode                                                                                               |
-| `TYK_URL`                      | `http://dashboard.tykpro-control-plane.svc.cluster.local:3000` | Management URL of Tyk Gateway (OSS) or Tyk Dashboard (PRO)                                                 |
+| `TYK_URL`                      | `http://dashboard.tykpro-control-plane.svc.cluster.local:3000` | Management URL of Tyk Gateway (CE) or Tyk Dashboard (PRO)                                                 |
 | `TYK_TLS_INSECURE_SKIP_VERIFY` | `true`                                                         | If the Tyk URL is HTTPS and has a self-signed certificate; defaults to `false`                             |
 | `WATCH_NAMESPACE`              | `foo,bar`                                                      | Comma separated list of namespaces for Operator to operate on; defaults to all namespaces if not specified |
 | `WATCH_INGRESS_CLASS`          | `customclass`                                                  | Default `tyk` if omitted; allows Tyk Operator to watch a different ingress class                           |
@@ -58,7 +58,7 @@ Operator configurations are all stored in the secret `tyk-operator-conf`.
 Tyk Operator needs to connect to a Tyk Pro deployment, and it needs to know whether it is talking to a Community
 Edition Gateway or Pro installation.
 
-`TYK_MODE` can be set to either `oss` or `pro`.
+`TYK_MODE` can be set to either `ce` or `pro`.
 
 ```bash
 kubectl create namespace tyk-operator-system
