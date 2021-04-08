@@ -13,7 +13,7 @@ jobs:
             "kindest/node:v1.17.17",
             "kindest/node:v1.18.15",
             "kindest/node:v1.19.7",
-            "kindest/node:v1.20.2"
+            "kindest/node:v1.20.2",
           ]
     steps:
       - name: checkout tyk-operator
@@ -41,8 +41,9 @@ jobs:
         run: jq -Re 'split(".")[1] | @base64d | fromjson | .exp > now' <<< "${{ secrets.DASH_LICENSE }}"
       - name: bootstrap tyk pro env
         shell: bash
+        env:
+          TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
         run: |
-          export TYK_DB_LICENSEKEY=${{ secrets.DASH_LICENSE }}
           make boot-pro IMG=tykio/tyk-operator:test CLUSTER_NAME=chart-testing
       - name: bdd
         shell: bash
