@@ -11,6 +11,7 @@ enableSharding: false
 # We apply some exceptions to the Istio IPTables so inbound calls to the 
 # Gateway and Dashboard are exposed to the outside world - see the deployment templates for implementation
 enableIstioIngress: false
+bootstrap: true
 
 secrets:
   APISecret: "CHANGEME"
@@ -100,6 +101,7 @@ dash:
       value:  redis.tykpro-control-plane.svc.cluster.local
 
 portal:
+  bootstrap: false
   ingress:
     enabled: false
     annotations: {}
