@@ -50,9 +50,7 @@ Operator configurations are all stored in the secret `tyk-operator-conf`.
 | `TYK_MODE`                     | `ce`                                       | Tyk Open Source mode                                                                                       |
 | `TYK_MODE`                     | `pro`                                      | Tyk Pro mode                                                                                               |
 | `TYK_URL`                      | `http://dashboard.tykpro.svc:3000`         | Management URL of Tyk Dashboard                                               
-|
 | `TYK_URL`                      | `http://gateway-control.tykce.svc:9696`    | Management URL of Tyk Gateway (CE)
-|
 | `TYK_TLS_INSECURE_SKIP_VERIFY` | `true`                                     | If the Tyk URL is HTTPS and has a self-signed certificate; defaults to `false`                             |
 | `WATCH_NAMESPACE`              | `foo,bar`                                  | Comma separated list of namespaces for Operator to operate on; defaults to all namespaces if not specified |
 | `WATCH_INGRESS_CLASS`          | `customclass`                              | Default `tyk` if omitted; allows Tyk Operator to watch a different ingress class                           |
