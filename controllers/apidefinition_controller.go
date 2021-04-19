@@ -278,7 +278,7 @@ func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *ty
 		return nil
 	}
 	for _, n := range a.Status.LinkedByPolicies {
-		var api tykv1alpha1.ApiDefinition
+		var api tykv1alpha1.SecurityPolicy
 		if err := r.Get(ctx, n.NS(), &api); err == nil {
 			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
 		}
