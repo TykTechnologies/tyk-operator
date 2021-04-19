@@ -27,9 +27,7 @@ func env() environmet.Env {
 }
 
 func newKlient(c universal_client.Client) universal_client.UniversalClient {
-	var e environmet.Env
-	e.Parse()
-	x := NewClient(c.Log, c.Env.Merge(e))
+	x := NewClient(c.Log, c.Env)
 	x.Do = c.Do
 	return x
 }

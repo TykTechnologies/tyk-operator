@@ -82,6 +82,7 @@ func BeforeRequest(r *http.Request, e environmet.Env) {
 		r.Header.Set("x-tyk-authorization", e.Auth)
 	}
 }
+
 func (c Client) Environment() environmet.Env {
 	return c.Env
 }
