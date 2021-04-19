@@ -13,8 +13,12 @@ type Api struct {
 	*Client
 }
 
+func toURL(parts ...string) []string {
+	return parts
+}
+
 func (a Api) All(ctx context.Context) ([]tykv1alpha1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(ctx, a.Env.JoinURL(endpointAPIs), nil,
+	res, err := a.Client.Get(ctx, toURL(endpointAPIs), nil,
 		universal_client.AddQuery(map[string]string{
 			"p": "-2",
 		}),
@@ -44,7 +48,7 @@ func (a Api) All(ctx context.Context) ([]tykv1alpha1.APIDefinitionSpec, error) {
 }
 
 func (a Api) Create(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) error {
-	res, err := a.Client.PostJSON(ctx, a.Env.JoinURL(endpointAPIs),
+	res, err := a.Client.PostJSON(ctx, toURL(endpointAPIs),
 		DashboardApi{
 			ApiDefinition: *def,
 		})
@@ -85,7 +89,7 @@ func (a Api) Get(ctx context.Context, id string) (*tykv1alpha1.APIDefinitionSpec
 }
 
 func (a Api) get(ctx context.Context, id string) (*tykv1alpha1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(ctx, a.Env.JoinURL(endpointAPIs, id), nil)
+	res, err := a.Client.Get(ctx, toURL(endpointAPIs, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +116,7 @@ func (a Api) Update(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) err
 
 func (a Api) update(ctx context.Context, o tykv1alpha1.APIDefinitionSpec) error {
 	res, err := a.Client.PutJSON(ctx,
-		a.Env.JoinURL(endpointAPIs, o.ID), DashboardApi{
+		toURL(endpointAPIs, o.ID), DashboardApi{
 			ApiDefinition: o,
 		},
 	)
@@ -140,7 +144,7 @@ func (a Api) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return universal_client.IgnoreNotFound(err)
 	}
-	res, err := a.Client.Delete(ctx, a.Env.JoinURL(endpointAPIs, x.ID), nil)
+	res, err := a.Client.Delete(ctx, toURL(endpointAPIs, x.ID), nil)
 	if err != nil {
 		return err
 	}

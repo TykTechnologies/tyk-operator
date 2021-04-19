@@ -23,7 +23,7 @@ type CertificateList struct {
 
 // All returns a list of all certificates ID's
 func (c *Cert) All(ctx context.Context) ([]string, error) {
-	res, err := c.Client.Get(ctx, c.Env.JoinURL(endpointCerts), nil)
+	res, err := c.Client.Get(ctx, toURL(endpointCerts), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (c *Cert) All(ctx context.Context) ([]string, error) {
 }
 
 func (c *Cert) Exists(ctx context.Context, id string) bool {
-	res, err := c.Client.Get(ctx, c.Env.JoinURL(endpointCerts, id), nil)
+	res, err := c.Client.Get(ctx, toURL(endpointCerts, id), nil)
 	if err != nil {
 		c.Log.Error(err, "failed to get certificate")
 		return false
@@ -54,7 +54,7 @@ func (c *Cert) Exists(ctx context.Context, id string) bool {
 }
 
 func (c *Cert) Delete(ctx context.Context, id string) error {
-	res, err := c.Client.Delete(ctx, c.Env.JoinURL(endpointCerts, id), nil)
+	res, err := c.Client.Delete(ctx, toURL(endpointCerts, id), nil)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (c *Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, e
 	combined := make([]byte, 0)
 	combined = append(combined, key...)
 	combined = append(combined, crt...)
-	fullPath := c.Env.JoinURL(endpointCerts)
+	fullPath := toURL(endpointCerts)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("cert", "cert.pem")

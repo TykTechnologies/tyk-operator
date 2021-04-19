@@ -11,8 +11,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"os"
-	"sync"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -44,27 +42,22 @@ func IgnoreNotFound(err error) error {
 }
 
 var client = &http.Client{}
-
-var once sync.Once
-
-func init() {
-	if os.Getenv(environmet.SkipVerify) == "true" {
-		client.Transport = &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).DialContext,
-			ForceAttemptHTTP2:     true,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		}
-	}
+var clientInsecure = &http.Client{
+	Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	},
 }
 
 func JSON(res *http.Response, o interface{}) error {
@@ -76,13 +69,27 @@ func Do(r *http.Request) (*http.Response, error) {
 }
 
 type Client struct {
-	Env           environmet.Env
-	Log           logr.Logger
-	BeforeRequest func(*http.Request)
-	Do            func(*http.Request) (*http.Response, error)
+	Env environmet.Env
+	Log logr.Logger
+	Do  func(*http.Request) (*http.Response, error)
 }
 
+func BeforeRequest(r *http.Request, e environmet.Env) {
+	r.Header.Set("content-type", "application/json")
+	if e.Mode == "pro" {
+		r.Header.Set("authorization", e.Auth)
+	} else {
+		r.Header.Set("x-tyk-authorization", e.Auth)
+	}
+}
 func (c Client) Environment() environmet.Env {
+	return c.Env
+}
+
+func (c Client) get(ctx context.Context) environmet.Env {
+	if e := environmet.Get(ctx); !e.IsZero() {
+		return e
+	}
 	return c.Env
 }
 
@@ -91,13 +98,10 @@ func (c Client) Request(method, url string, body io.Reader) (*http.Request, erro
 	if err != nil {
 		return nil, err
 	}
-	if c.BeforeRequest != nil {
-		c.BeforeRequest(r)
-	}
 	return r, nil
 }
 
-func (c Client) JSON(ctx context.Context, method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) JSON(ctx context.Context, method string, url []string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	b, err := v1alpha1.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -108,31 +112,33 @@ func (c Client) JSON(ctx context.Context, method, url string, body interface{}, 
 	return c.Call(ctx, method, url, bytes.NewReader(b), fn...)
 }
 
-func (c Client) Get(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) Get(ctx context.Context, url []string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(ctx, http.MethodGet, url, body, fn...)
 }
 
-func (c Client) Post(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) Post(ctx context.Context, url []string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c Client) PostJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) PostJSON(ctx context.Context, url []string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.JSON(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c Client) PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) PutJSON(ctx context.Context, url []string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.JSON(ctx, http.MethodPut, url, body, fn...)
 }
 
-func (c Client) Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) Delete(ctx context.Context, url []string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(ctx, http.MethodDelete, url, body, fn...)
 }
 
-func (c Client) Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	r, err := c.Request(method, url, body)
+func (c Client) Call(ctx context.Context, method string, url []string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	e := c.get(ctx)
+	r, err := c.Request(method, e.JoinURL(url...), body)
 	if err != nil {
 		return nil, err
 	}
+	BeforeRequest(r, e)
 	for _, f := range fn {
 		f(r)
 	}
@@ -140,8 +146,13 @@ func (c Client) Call(ctx context.Context, method, url string, body io.Reader, fn
 	if c.Do != nil {
 		res, err = c.Do(r)
 	} else {
-		res, err = client.Do(r)
+		if e.InsecureSkipVerify {
+			res, err = clientInsecure.Do(r)
+		} else {
+			res, err = client.Do(r)
+		}
 	}
+
 	values := []interface{}{
 		"Method", method, "URL", url,
 	}

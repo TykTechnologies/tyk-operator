@@ -18,7 +18,7 @@ Returns all webhooks from the Dashboard for this org
 */
 func (w Webhook) All(ctx context.Context) ([]v1.WebhookSpec, error) {
 
-	res, err := w.Client.Get(ctx, w.Env.JoinURL(endpointWebhooks), nil)
+	res, err := w.Client.Get(ctx, toURL(endpointWebhooks), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (w Webhook) All(ctx context.Context) ([]v1.WebhookSpec, error) {
   If no webhook found, return "universal_client.WebhookNotFoundError"
 */
 func (w Webhook) Get(ctx context.Context, hookID string) (*v1.WebhookSpec, error) {
-	res, err := w.Client.Get(ctx, w.Env.JoinURL(endpointWebhooks, hookID), nil)
+	res, err := w.Client.Get(ctx, toURL(endpointWebhooks, hookID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (w Webhook) Get(ctx context.Context, hookID string) (*v1.WebhookSpec, error
 	Creates a webhook.  Overwrites the Webhook "name" with the CRD's namespaced name
 */
 func (w Webhook) Create(ctx context.Context, def *v1.WebhookSpec) error {
-	res, err := w.Client.PostJSON(ctx, w.Env.JoinURL(endpointWebhooks), def)
+	res, err := w.Client.PostJSON(ctx, toURL(endpointWebhooks), def)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ Updates a Webhook.  Adds the unique identifier namespaced-Name to the
 webhook's "name" so subsequent CRUD opps are possible.
 */
 func (w Webhook) Update(ctx context.Context, def *v1.WebhookSpec) error {
-	res, err := w.Client.PutJSON(ctx, w.Env.JoinURL(endpointWebhooks, def.ID), def)
+	res, err := w.Client.PutJSON(ctx, toURL(endpointWebhooks, def.ID), def)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ Tries to delete a Webhook by first attempting to do a lookup on it.
 If webhook does not exist, move on, nothing to delete
 */
 func (w Webhook) Delete(ctx context.Context, id string) error {
-	res, err := w.Client.Delete(ctx, w.Env.JoinURL(endpointWebhooks, id), nil)
+	res, err := w.Client.Delete(ctx, toURL(endpointWebhooks, id), nil)
 	if err != nil {
 		return err
 	}

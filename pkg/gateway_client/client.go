@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
@@ -33,10 +32,6 @@ func NewClient(log logr.Logger, env environmet.Env) *Client {
 		Client: universal_client.Client{
 			Log: log,
 			Env: env,
-			BeforeRequest: func(h *http.Request) {
-				h.Header.Set("x-tyk-authorization", env.Auth)
-				h.Header.Set("content-type", "application/json")
-			},
 		},
 	}
 	return c
@@ -54,8 +49,12 @@ func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
 	return SecurityPolicy{}
 }
 
+func toURL(parts ...string) []string {
+	return parts
+}
+
 func (c *Client) HotReload(ctx context.Context) error {
-	res, err := c.Get(ctx, c.Env.JoinURL(endpointReload), nil)
+	res, err := c.Get(ctx, toURL(endpointReload), nil)
 	if err != nil {
 		return err
 	}

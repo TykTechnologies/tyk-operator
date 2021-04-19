@@ -3,7 +3,6 @@ package dashboard_client
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
@@ -40,10 +39,6 @@ func NewClient(log logr.Logger, env environmet.Env) *Client {
 		Client: universal_client.Client{
 			Log: log,
 			Env: env,
-			BeforeRequest: func(h *http.Request) {
-				h.Header.Set("authorization", env.Auth)
-				h.Header.Set("content-type", "application/json")
-			},
 		},
 	}
 }
