@@ -2,8 +2,9 @@ package keys
 
 // APIDefinition
 const (
-	ApiDefFinalizerName         = "finalizers.tyk.io/apidefinition"
-	ApiDefTemplateFinalizerName = "finalizers.tyk.io/template"
+	ApiDefFinalizerName          = "finalizers.tyk.io/apidefinition"
+	ApiDefTemplateFinalizerName  = "finalizers.tyk.io/template"
+	OperatorContextFinalizerName = "finalizers.tyk.io/operator-context"
 )
 
 //Ingress

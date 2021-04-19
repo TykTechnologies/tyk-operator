@@ -1593,6 +1593,91 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
+  name: operatorcontexts.tyk.tyk.io
+spec:
+  group: tyk.tyk.io
+  names:
+    kind: OperatorContext
+    listKind: OperatorContextList
+    plural: operatorcontexts
+    shortNames:
+    - tykctx
+    singular: operatorcontext
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: OperatorContext is the Schema for the operatorcontexts API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: OperatorContextSpec defines the desired state of OperatorContext
+          properties:
+            env:
+              properties:
+                auth:
+                  type: string
+                mode:
+                  enum:
+                  - ce
+                  - pro
+                  type: string
+                namespace:
+                  items:
+                    type: string
+                  type: array
+                org:
+                  type: string
+                ssl_insecure_skip_verify:
+                  type: boolean
+                url:
+                  type: string
+              required:
+              - auth
+              - mode
+              - org
+              - url
+              type: object
+            from_secret:
+              properties:
+                name:
+                  type: string
+                namespace:
+                  type: string
+              required:
+              - name
+              type: object
+          type: object
+        status:
+          description: OperatorContextStatus defines the observed state of OperatorContext
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
   name: securitypolicies.tyk.tyk.io
 spec:
   group: tyk.tyk.io

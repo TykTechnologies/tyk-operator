@@ -1,0 +1,8 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: OperatorContext
+metadata:
+  name: basic-ce
+spec:
+  namespace:
+    - foo
+    - bar

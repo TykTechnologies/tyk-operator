@@ -83,6 +83,26 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - operatorcontexts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - operatorcontexts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - organizations
   verbs:
   - create
