@@ -1,11 +1,18 @@
 # Tyk Operator
 
-[Tyk Gateway](https://github.com/TykTechnologies/tyk) is a modern, ultra-performant, purpose-built, open source API
+<p align="center">
+<a href="https://github.com/TykTechnologies/tyk" target="_blank">
+Tyk Gateway</a> is a modern, ultra-performant, purpose-built, open source API
 Gateway.
-
+</p>
+<p align="center">
 Tyk Operator brings Full Lifecycle API Management capabilities to Kubernetes.
 Configure Ingress, APIs, Security Policies, Authentication, Authorization, Mediation and more - all using GitOps best
 practices with Custom Resources and Kubernetes-native primitives.
+</p>
+<p align="center">
+  <img width="600" src="https://raw.githubusercontent.com/TykTechnologies/tyk-operator/master/docs/img/apim.svg">
+</p>
 
 ---
 
