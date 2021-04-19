@@ -1,6 +1,7 @@
 package environmet
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -35,6 +36,19 @@ const (
 	IngressClass = "WATCH_INGRESS_CLASS"
 )
 
+type envKey struct{}
+
+func Get(ctx context.Context) Env {
+	if e := ctx.Value(envKey{}); e != nil {
+		return e.(Env)
+	}
+	return Env{}
+}
+
+func Set(ctx context.Context, e Env) context.Context {
+	return context.WithValue(ctx, envKey{}, e)
+}
+
 // Env holds values needed to talk to the gateway or the dashboard API
 type Env struct {
 	Namespace          string
@@ -44,6 +58,11 @@ type Env struct {
 	Auth               string
 	Org                string
 	IngressClass       string
+}
+
+func (e Env) IsZero() bool {
+	var o Env
+	return e == o
 }
 
 func (e Env) Merge(n Env) Env {
