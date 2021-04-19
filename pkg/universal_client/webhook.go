@@ -1,31 +1,33 @@
 package universal_client
 
 import (
+	"context"
+
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 type UniversalWebhook interface {
-	All() ([]tykv1alpha1.WebhookSpec, error)
-	Get(id string) (*tykv1alpha1.WebhookSpec, error)
-	Create(*tykv1alpha1.WebhookSpec) error
-	Update(def *tykv1alpha1.WebhookSpec) error
-	Delete(id string) error
+	All(ctx context.Context) ([]tykv1alpha1.WebhookSpec, error)
+	Get(ctx context.Context, id string) (*tykv1alpha1.WebhookSpec, error)
+	Create(context.Context, *tykv1alpha1.WebhookSpec) error
+	Update(ctx context.Context, def *tykv1alpha1.WebhookSpec) error
+	Delete(ctx context.Context, id string) error
 }
 
-func CreateOrUpdateWebhook(c UniversalClient, spec *tykv1alpha1.WebhookSpec) error {
-	return DoReload(c, func(u UniversalClient) error {
+func CreateOrUpdateWebhook(ctx context.Context, c UniversalClient, spec *tykv1alpha1.WebhookSpec) error {
+	return DoReload(ctx, c, func(u UniversalClient) error {
 		w := c.Webhook()
 		if spec.ID != "" {
-			return w.Update(spec)
+			return w.Update(ctx, spec)
 		}
-		return w.Create(spec)
+		return w.Create(ctx, spec)
 	})
 }
 
 // DoReload call HotReload if fn returns nil
-func DoReload(c UniversalClient, fn func(u UniversalClient) error) error {
+func DoReload(ctx context.Context, c UniversalClient, fn func(u UniversalClient) error) error {
 	if err := fn(c); err != nil {
 		return nil
 	}
-	return c.HotReload()
+	return c.HotReload(ctx)
 }

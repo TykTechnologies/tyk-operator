@@ -1,6 +1,7 @@
 package gateway_client
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -53,8 +54,8 @@ func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
 	return SecurityPolicy{}
 }
 
-func (c *Client) HotReload() error {
-	res, err := c.Get(c.Env.JoinURL(endpointReload), nil)
+func (c *Client) HotReload(ctx context.Context) error {
+	res, err := c.Get(ctx, c.Env.JoinURL(endpointReload), nil)
 	if err != nil {
 		return err
 	}

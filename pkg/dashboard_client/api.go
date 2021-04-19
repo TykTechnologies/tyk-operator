@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -12,8 +13,8 @@ type Api struct {
 	*Client
 }
 
-func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs), nil,
+func (a Api) All(ctx context.Context) ([]tykv1alpha1.APIDefinitionSpec, error) {
+	res, err := a.Client.Get(ctx, a.Env.JoinURL(endpointAPIs), nil,
 		universal_client.AddQuery(map[string]string{
 			"p": "-2",
 		}),
@@ -42,8 +43,8 @@ func (a Api) All() ([]tykv1alpha1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) error {
-	res, err := a.Client.PostJSON(a.Env.JoinURL(endpointAPIs),
+func (a Api) Create(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) error {
+	res, err := a.Client.PostJSON(ctx, a.Env.JoinURL(endpointAPIs),
 		DashboardApi{
 			ApiDefinition: *def,
 		})
@@ -62,16 +63,16 @@ func (a Api) Create(def *tykv1alpha1.APIDefinitionSpec) error {
 	if resMsg.Status != "OK" {
 		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
 	}
-	o, err := a.get(resMsg.Meta)
+	o, err := a.get(ctx, resMsg.Meta)
 	if err != nil {
 		return err
 	}
 	o.APIID = def.APIID
-	return a.update(*o)
+	return a.update(ctx, *o)
 }
 
-func (a Api) Get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
-	all, err := a.All()
+func (a Api) Get(ctx context.Context, id string) (*tykv1alpha1.APIDefinitionSpec, error) {
+	all, err := a.All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +84,8 @@ func (a Api) Get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
 	return nil, universal_client.ErrNotFound
 }
 
-func (a Api) get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs, id), nil)
+func (a Api) get(ctx context.Context, id string) (*tykv1alpha1.APIDefinitionSpec, error) {
+	res, err := a.Client.Get(ctx, a.Env.JoinURL(endpointAPIs, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -99,18 +100,18 @@ func (a Api) get(id string) (*tykv1alpha1.APIDefinitionSpec, error) {
 	return &resMsg.ApiDefinition, nil
 }
 
-func (a Api) Update(def *tykv1alpha1.APIDefinitionSpec) error {
-	x, err := a.Get(def.APIID)
+func (a Api) Update(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) error {
+	x, err := a.Get(ctx, def.APIID)
 	if err != nil {
 		return err
 	}
 	o := *def
 	o.ID = x.ID
-	return a.update(o)
+	return a.update(ctx, o)
 }
 
-func (a Api) update(o tykv1alpha1.APIDefinitionSpec) error {
-	res, err := a.Client.PutJSON(
+func (a Api) update(ctx context.Context, o tykv1alpha1.APIDefinitionSpec) error {
+	res, err := a.Client.PutJSON(ctx,
 		a.Env.JoinURL(endpointAPIs, o.ID), DashboardApi{
 			ApiDefinition: o,
 		},
@@ -134,12 +135,12 @@ func (a Api) update(o tykv1alpha1.APIDefinitionSpec) error {
 	return nil
 }
 
-func (a Api) Delete(id string) error {
-	x, err := a.Get(id)
+func (a Api) Delete(ctx context.Context, id string) error {
+	x, err := a.Get(ctx, id)
 	if err != nil {
 		return universal_client.IgnoreNotFound(err)
 	}
-	res, err := a.Client.Delete(a.Env.JoinURL(endpointAPIs, x.ID), nil)
+	res, err := a.Client.Delete(ctx, a.Env.JoinURL(endpointAPIs, x.ID), nil)
 	if err != nil {
 		return err
 	}

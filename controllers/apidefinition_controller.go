@@ -110,10 +110,10 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			}
 
 			tykCertID := r.UniversalClient.Organization().GetID() + cert.CalculateFingerPrint(pemCrtBytes)
-			exists := r.UniversalClient.Certificate().Exists(tykCertID)
+			exists := r.UniversalClient.Certificate().Exists(ctx, tykCertID)
 			if !exists {
 				// upload the certificate
-				tykCertID, err = r.UniversalClient.Certificate().Upload(pemKeyBytes, pemCrtBytes)
+				tykCertID, err = r.UniversalClient.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
 				if err != nil {
 					queue = true
 					return err
@@ -138,7 +138,7 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
-			err := r.UniversalClient.Api().Create(&desired.Spec)
+			err := r.UniversalClient.Api().Create(ctx, &desired.Spec)
 			if err != nil {
 				log.Error(err, "Failed to create api definition")
 				return err
@@ -148,19 +148,19 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 			if err != nil {
 				log.Error(err, "Could not update Status ID")
 			}
-			r.UniversalClient.HotReload()
+			r.UniversalClient.HotReload(ctx)
 			return client.IgnoreNotFound(err)
 		}
 		log.Info("Updating ApiDefinition")
 		desired.Spec.APIID = desired.Status.ApiID
-		err = r.UniversalClient.Api().Update(&desired.Spec)
+		err = r.UniversalClient.Api().Update(ctx, &desired.Spec)
 		if err != nil {
 			if err != nil {
 				log.Error(err, "Failed to update api definition")
 				return err
 			}
 		}
-		r.UniversalClient.HotReload()
+		r.UniversalClient.HotReload(ctx)
 		return nil
 	})
 	if err == nil {
@@ -253,12 +253,12 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			}
 		}
 		r.Log.Info("deleting api")
-		err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
+		err := r.UniversalClient.Api().Delete(ctx, desired.Status.ApiID)
 		if err != nil {
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
-		err = r.UniversalClient.HotReload()
+		err = r.UniversalClient.HotReload(ctx)
 		if err != nil {
 			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 			return 0, err

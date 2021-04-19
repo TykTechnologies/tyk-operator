@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -88,11 +89,12 @@ func TestCert(t *testing.T) {
 
 func requestCert(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	t.Helper()
+	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).Certificate().All()
+				newKlient(c).Certificate().All(ctx)
 				return nil
 			},
 			kase,
@@ -102,7 +104,7 @@ func requestCert(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 			func(c universal_client.Client) error {
 				key := ReadSampleFile(t, "cert.Key.pem")
 				cert := ReadSampleFile(t, "cert.Cert.pem")
-				newKlient(c).Certificate().Upload([]byte(key), []byte(cert))
+				newKlient(c).Certificate().Upload(ctx, []byte(key), []byte(cert))
 				return nil
 			},
 			kase,
@@ -110,7 +112,7 @@ func requestCert(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	case "Exist":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).Certificate().Exists(testCertID)
+				newKlient(c).Certificate().Exists(ctx, testCertID)
 				return nil
 			},
 			kase,

@@ -1,10 +1,14 @@
 package universal_client
 
-import "github.com/TykTechnologies/tyk-operator/pkg/environmet"
+import (
+	"context"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+)
 
 type UniversalClient interface {
 	Environment() environmet.Env
-	HotReload() error
+	HotReload(context.Context) error
 	Api() UniversalApi
 	SecurityPolicy() UniversalSecurityPolicy
 	Webhook() UniversalWebhook

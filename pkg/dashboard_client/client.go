@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -71,6 +72,6 @@ func (c *Client) Api() universal_client.UniversalApi {
 	return &Api{c}
 }
 
-func (c *Client) HotReload() error {
+func (c *Client) HotReload(context.Context) error {
 	return nil
 }

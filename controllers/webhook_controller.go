@@ -68,7 +68,7 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// If still need to delete from Tyk
 		if util.ContainsFinalizer(des, webhookDefFinalizerName) {
 
-			if err := r.UniversalClient.Webhook().Delete(req.NamespacedName.String()); err != nil {
+			if err := r.UniversalClient.Webhook().Delete(ctx, req.NamespacedName.String()); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -92,7 +92,7 @@ func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Create or Update
-	err := universal_client.CreateOrUpdateWebhook(r.UniversalClient, &des.Spec)
+	err := universal_client.CreateOrUpdateWebhook(ctx, r.UniversalClient, &des.Spec)
 	if err != nil {
 		r.Log.Error(err, "CreateOrUpdateWebhook failure")
 		r.Recorder.Event(des, "Error", "Webhook", "Create or Update Webhook")

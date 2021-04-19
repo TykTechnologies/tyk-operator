@@ -116,7 +116,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
 		return queueAfter, err
 	}
-	def, err := r.UniversalClient.Api().Get(api.Status.ApiID)
+	def, err := r.UniversalClient.Api().Get(ctx, api.Status.ApiID)
 	if err != nil {
 		return 0, err
 	}
@@ -128,7 +128,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Deleting policy")
 	util.RemoveFinalizer(policy, policyFinalizer)
-	if err := r.UniversalClient.SecurityPolicy().Delete(policy.Status.PolID); err != nil {
+	if err := r.UniversalClient.SecurityPolicy().Delete(ctx, policy.Status.PolID); err != nil {
 		if universal_client.IsNotFound(err) {
 			r.Log.Info("Policy not found")
 			return nil
@@ -149,7 +149,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Updating  policy")
 	policy.Spec.MID = policy.Status.PolID
-	err := r.UniversalClient.SecurityPolicy().Update(&policy.Spec)
+	err := r.UniversalClient.SecurityPolicy().Update(ctx, &policy.Spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to update policy")
 		return err
@@ -160,14 +160,14 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	r.UniversalClient.HotReload()
+	r.UniversalClient.HotReload(ctx)
 	r.Log.Info("Successfully updated Policy")
 	return nil
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Creating  policy")
-	err := r.UniversalClient.SecurityPolicy().Create(&policy.Spec)
+	err := r.UniversalClient.SecurityPolicy().Create(ctx, &policy.Spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to create policy")
 		return err

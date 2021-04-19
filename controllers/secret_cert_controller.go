@@ -73,12 +73,12 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			certID := orgID + certFingerPrint
 
 			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
-			if err := r.UniversalClient.Certificate().Delete(certID); err != nil {
+			if err := r.UniversalClient.Certificate().Delete(ctx, certID); err != nil {
 				log.Error(err, "unable to delete certificate")
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
 			}
 
-			if err := r.UniversalClient.HotReload(); err != nil {
+			if err := r.UniversalClient.HotReload(ctx); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -152,7 +152,7 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	certID, err := r.UniversalClient.Certificate().Upload(tlsKey, tlsCrt)
+	certID, err := r.UniversalClient.Certificate().Upload(ctx, tlsKey, tlsCrt)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -162,10 +162,10 @@ func (r *SecretCertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
 			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
 
-			apiDefObj, _ := r.UniversalClient.Api().Get(apiDef.Status.ApiID)
+			apiDefObj, _ := r.UniversalClient.Api().Get(ctx, apiDef.Status.ApiID)
 			apiDefObj.Certificates = []string{}
 			apiDefObj.Certificates = append(apiDefObj.Certificates, certID)
-			r.UniversalClient.Api().Update(apiDefObj)
+			r.UniversalClient.Api().Update(ctx, apiDefObj)
 
 			// TODO: we only care about 1 secret - we don't need to support multiple for mvp
 			break

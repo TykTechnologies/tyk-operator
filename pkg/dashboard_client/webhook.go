@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -15,9 +16,9 @@ type Webhook struct {
 /**
 Returns all webhooks from the Dashboard for this org
 */
-func (w Webhook) All() ([]v1.WebhookSpec, error) {
+func (w Webhook) All(ctx context.Context) ([]v1.WebhookSpec, error) {
 
-	res, err := w.Client.Get(w.Env.JoinURL(endpointWebhooks), nil)
+	res, err := w.Client.Get(ctx, w.Env.JoinURL(endpointWebhooks), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +41,8 @@ func (w Webhook) All() ([]v1.WebhookSpec, error) {
 
   If no webhook found, return "universal_client.WebhookNotFoundError"
 */
-func (w Webhook) Get(hookID string) (*v1.WebhookSpec, error) {
-	res, err := w.Client.Get(w.Env.JoinURL(endpointWebhooks, hookID), nil)
+func (w Webhook) Get(ctx context.Context, hookID string) (*v1.WebhookSpec, error) {
+	res, err := w.Client.Get(ctx, w.Env.JoinURL(endpointWebhooks, hookID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +58,8 @@ func (w Webhook) Get(hookID string) (*v1.WebhookSpec, error) {
 /*
 	Creates a webhook.  Overwrites the Webhook "name" with the CRD's namespaced name
 */
-func (w Webhook) Create(def *v1.WebhookSpec) error {
-	res, err := w.Client.PostJSON(w.Env.JoinURL(endpointWebhooks), def)
+func (w Webhook) Create(ctx context.Context, def *v1.WebhookSpec) error {
+	res, err := w.Client.PostJSON(ctx, w.Env.JoinURL(endpointWebhooks), def)
 	if err != nil {
 		return err
 	}
@@ -82,8 +83,8 @@ func (w Webhook) Create(def *v1.WebhookSpec) error {
 Updates a Webhook.  Adds the unique identifier namespaced-Name to the
 webhook's "name" so subsequent CRUD opps are possible.
 */
-func (w Webhook) Update(def *v1.WebhookSpec) error {
-	res, err := w.Client.PutJSON(w.Env.JoinURL(endpointWebhooks, def.ID), def)
+func (w Webhook) Update(ctx context.Context, def *v1.WebhookSpec) error {
+	res, err := w.Client.PutJSON(ctx, w.Env.JoinURL(endpointWebhooks, def.ID), def)
 	if err != nil {
 		return err
 	}
@@ -109,8 +110,8 @@ func (w Webhook) Update(def *v1.WebhookSpec) error {
 Tries to delete a Webhook by first attempting to do a lookup on it.
 If webhook does not exist, move on, nothing to delete
 */
-func (w Webhook) Delete(id string) error {
-	res, err := w.Client.Delete(w.Env.JoinURL(endpointWebhooks, id), nil)
+func (w Webhook) Delete(ctx context.Context, id string) error {
+	res, err := w.Client.Delete(ctx, w.Env.JoinURL(endpointWebhooks, id), nil)
 	if err != nil {
 		return err
 	}

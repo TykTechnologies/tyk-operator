@@ -1,6 +1,7 @@
 package gateway_client
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,8 +18,8 @@ type Api struct {
 	*Client
 }
 
-func (a Api) All() ([]v1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs), nil)
+func (a Api) All(ctx context.Context) ([]v1.APIDefinitionSpec, error) {
+	res, err := a.Client.Get(ctx, a.Env.JoinURL(endpointAPIs), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +36,8 @@ func (a Api) All() ([]v1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
-func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(a.Env.JoinURL(endpointAPIs, apiID), nil)
+func (a Api) Get(ctx context.Context, apiID string) (*v1.APIDefinitionSpec, error) {
+	res, err := a.Client.Get(ctx, a.Env.JoinURL(endpointAPIs, apiID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +52,8 @@ func (a Api) Get(apiID string) (*v1.APIDefinitionSpec, error) {
 	return &spec, nil
 }
 
-func (a Api) Create(def *v1.APIDefinitionSpec) error {
-	res, err := a.PostJSON(a.Env.JoinURL(endpointAPIs), def)
+func (a Api) Create(ctx context.Context, def *v1.APIDefinitionSpec) error {
+	res, err := a.PostJSON(ctx, a.Env.JoinURL(endpointAPIs), def)
 	if err != nil {
 		return err
 	}
@@ -68,8 +69,8 @@ func (a Api) Create(def *v1.APIDefinitionSpec) error {
 	return nil
 }
 
-func (a Api) Update(def *v1.APIDefinitionSpec) error {
-	res, err := a.PutJSON(a.Env.JoinURL(endpointAPIs, def.APIID), def)
+func (a Api) Update(ctx context.Context, def *v1.APIDefinitionSpec) error {
+	res, err := a.PutJSON(ctx, a.Env.JoinURL(endpointAPIs, def.APIID), def)
 	if err != nil {
 		return err
 	}
@@ -84,8 +85,8 @@ func (a Api) Update(def *v1.APIDefinitionSpec) error {
 	return nil
 }
 
-func (a Api) Delete(id string) error {
-	res, err := a.Client.Delete(a.Env.JoinURL(endpointAPIs, id), nil)
+func (a Api) Delete(ctx context.Context, id string) error {
+	res, err := a.Client.Delete(ctx, a.Env.JoinURL(endpointAPIs, id), nil)
 	if err != nil {
 		return err
 	}

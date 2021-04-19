@@ -2,6 +2,7 @@ package universal_client
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -96,7 +97,7 @@ func (c Client) Request(method, url string, body io.Reader) (*http.Request, erro
 	return r, nil
 }
 
-func (c Client) JSON(method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) JSON(ctx context.Context, method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	b, err := v1alpha1.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -104,30 +105,30 @@ func (c Client) JSON(method, url string, body interface{}, fn ...func(*http.Requ
 	fn = append(fn, AddHeaders(map[string]string{
 		"Content-Type": "application/json",
 	}))
-	return c.Call(method, url, bytes.NewReader(b), fn...)
+	return c.Call(ctx, method, url, bytes.NewReader(b), fn...)
 }
 
-func (c Client) Get(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.Call(http.MethodGet, url, body, fn...)
+func (c Client) Get(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.Call(ctx, http.MethodGet, url, body, fn...)
 }
 
-func (c Client) Post(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.Call(http.MethodPost, url, body, fn...)
+func (c Client) Post(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.Call(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c Client) PostJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.JSON(http.MethodPost, url, body, fn...)
+func (c Client) PostJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.JSON(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c Client) PutJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.JSON(http.MethodPut, url, body, fn...)
+func (c Client) PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.JSON(ctx, http.MethodPut, url, body, fn...)
 }
 
-func (c Client) Delete(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.Call(http.MethodDelete, url, body, fn...)
+func (c Client) Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.Call(ctx, http.MethodDelete, url, body, fn...)
 }
 
-func (c Client) Call(method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c Client) Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	r, err := c.Request(method, url, body)
 	if err != nil {
 		return nil, err
