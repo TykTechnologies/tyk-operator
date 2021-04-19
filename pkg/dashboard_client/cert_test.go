@@ -15,7 +15,6 @@ const testCertID = "5fd08e0f69710900018bc19568492b39a512286d3e71c4c673faa7f094ff
 
 func TestCert(t *testing.T) {
 	var e environmet.Env
-	e.Parse()
 	h := mockDash(t,
 		&route{
 			path:   "/api/certs",

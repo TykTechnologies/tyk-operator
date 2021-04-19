@@ -17,7 +17,6 @@ const testAPIID = "ZGVmYXVsdC9odHRwYmlu"
 
 func TestAPI(t *testing.T) {
 	var e environmet.Env
-	e.Parse()
 	h := mockDash(t,
 		&route{
 			path:   "/api/apis",
