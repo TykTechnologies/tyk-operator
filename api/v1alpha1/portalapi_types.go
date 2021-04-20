@@ -96,6 +96,8 @@ type PortalAPIStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=tykpapis
+// +kubebuilder:printcolumn:name="Visible",type=boolean,JSONPath=`.spec.show`
+// +kubebuilder:printcolumn:name="AuthType",type=string,JSONPath=`.spec.auth_type`
 type PortalAPI struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

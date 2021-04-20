@@ -8,6 +8,13 @@ metadata:
   creationTimestamp: null
   name: portalapis.tyk.tyk.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.show
+    name: Visible
+    type: boolean
+  - JSONPath: .spec.auth_type
+    name: AuthType
+    type: string
   group: tyk.tyk.io
   names:
     kind: PortalAPI
