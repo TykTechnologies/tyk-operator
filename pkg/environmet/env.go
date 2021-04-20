@@ -33,6 +33,8 @@ const (
 
 	// IngressClass overides the default class to watch for ingress
 	IngressClass = "WATCH_INGRESS_CLASS"
+
+	IngressPort = "TYK_INGRESS_PORT"
 )
 
 // Env holds values needed to talk to the gateway or the dashboard API
@@ -44,6 +46,7 @@ type Env struct {
 	Auth               string
 	Org                string
 	IngressClass       string
+	IngressPort        int
 }
 
 func (e Env) Merge(n Env) Env {
@@ -65,6 +68,9 @@ func (e Env) Merge(n Env) Env {
 	if n.IngressClass != "" {
 		e.IngressClass = n.IngressClass
 	}
+	if n.IngressPort != 0 {
+		e.IngressPort = n.IngressPort
+	}
 	return e
 }
 
@@ -76,6 +82,7 @@ func (e *Env) Parse() error {
 	e.Auth = strings.TrimSpace(os.Getenv(TykAuth))
 	e.Org = strings.TrimSpace(os.Getenv(TykORG))
 	e.InsecureSkipVerify, _ = strconv.ParseBool(os.Getenv(SkipVerify))
+	e.IngressPort, _ = strconv.Atoi(os.Getenv(IngressPort))
 	e.IngressClass = os.Getenv(IngressClass)
 	// verify
 	sample := []struct {
