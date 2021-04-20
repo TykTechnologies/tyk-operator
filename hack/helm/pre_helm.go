@@ -50,9 +50,9 @@ const annotationsDest = `  template:
       labels:
         control-plane: controller-manager`
 
-const envSrc = `TYK_TLS_INGRESS_PORT: 443`
+const envSrc = `value: "433"`
 
-const envDEST = `TYK_TLS_INGRESS_PORT: {{default .Values.ingressPort 8443}}`
+const envDEST = `value: {{default .Values.ingressPort 8443 |quote}}`
 
 func injectResources(b []byte) []byte {
 	n := bytes.Index(b, []byte("kind: Deployment"))

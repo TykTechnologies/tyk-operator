@@ -9,4 +9,5 @@ spec:
       containers:
         - name: manager
           env:
-            TYK_TLS_INGRESS_PORT: 443
+            - name: TYK_TLS_INGRESS_PORT
+              value: "433"
