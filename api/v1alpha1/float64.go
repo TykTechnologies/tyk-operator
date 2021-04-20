@@ -46,7 +46,7 @@ func (f *Float64) UnmarshalJSON(b []byte) error {
 		*f = Float64(e)
 		return nil
 	default:
-		return fmt.Errorf("operator: failed to decode type %#T to a Float64", e)
+		return fmt.Errorf("operator: failed to decode type %T to a Float64", e)
 	}
 }
 
