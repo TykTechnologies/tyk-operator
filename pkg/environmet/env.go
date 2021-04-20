@@ -34,7 +34,7 @@ const (
 	// IngressClass overides the default class to watch for ingress
 	IngressClass = "WATCH_INGRESS_CLASS"
 
-	IngressPort = "TYK_INGRESS_PORT"
+	IngressPort = "TYK_TLS_INGRESS_PORT"
 )
 
 // Env holds values needed to talk to the gateway or the dashboard API
