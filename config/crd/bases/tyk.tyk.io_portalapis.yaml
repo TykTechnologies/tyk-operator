@@ -13,6 +13,8 @@ spec:
     kind: PortalAPI
     listKind: PortalAPIList
     plural: portalapis
+    shortNames:
+    - tykpapis
     singular: portalapi
   scope: Namespaced
   subresources:
@@ -36,10 +38,110 @@ spec:
         spec:
           description: PortalAPISpec defines the desired state of PortalAPI
           properties:
-            foo:
-              description: Foo is an example field of PortalAPI. Edit PortalAPI_types.go
-                to remove/update
+            auth_type:
+              description: AuthType TODO should be an enum. maybe we can derive it
+                from the underlying api types? leave empty for keyless
+              enum:
+              - authToken
               type: string
+            config:
+              properties:
+                catalogue_login_only:
+                  type: boolean
+                disable_auto_login:
+                  type: boolean
+                disable_login:
+                  type: boolean
+                disable_signup:
+                  type: boolean
+                email:
+                  type: string
+                hashkeys:
+                  type: boolean
+                oauth_usage_limit:
+                  type: integer
+                org_id:
+                  type: string
+                override:
+                  description: "MailOptions          struct { \tMailFromName  string
+                    `json:\"mail_from_name\"` \tMailFromEmail string `json:\"mail_from_email\"`
+                    \tEmailCopy     struct { \t\tWelcomeEmail struct { \t\t\tEnabled
+                    \      bool   `json:\"enabled\"` \t\t\tSubject       string `json:\"subject\"`
+                    \t\t\tBody          string `json:\"body\"` \t\t\tSignOff       string
+                    `json:\"sign_off\"` \t\t\tHideTokenData bool   `json:\"hide_token_data\"`
+                    \t\t} `json:\"welcome_email\"` \t\tKeyEmail struct { \t\t\tEnabled
+                    \      bool   `json:\"enabled\"` \t\t\tSubject       string `json:\"subject\"`
+                    \t\t\tBody          string `json:\"body\"` \t\t\tSignOff       string
+                    `json:\"sign_off\"` \t\t\tHideTokenData bool   `json:\"hide_token_data\"`
+                    \t\t} `json:\"key_email\"` \t\tResetPasswordEmail struct { \t\t\tEnabled
+                    \      bool   `json:\"enabled\"` \t\t\tSubject       string `json:\"subject\"`
+                    \t\t\tBody          string `json:\"body\"` \t\t\tSignOff       string
+                    `json:\"sign_off\"` \t\t\tHideTokenData bool   `json:\"hide_token_data\"`
+                    \t\t} `json:\"reset_password_email\"` \t} `json:\"email_copy\"`
+                    } `json:\"mail_options\"`"
+                  type: boolean
+                redirect_on_key_request:
+                  type: boolean
+                redirect_to:
+                  type: string
+                require_key_approval:
+                  description: SignupFields         []interface{} `json:"signup_fields"`
+                    KeyRequestFields     []interface{} `json:"key_request_fields"`
+                  type: boolean
+                secure_key_approval:
+                  type: boolean
+              required:
+              - catalogue_login_only
+              - disable_auto_login
+              - disable_login
+              - disable_signup
+              - hashkeys
+              - oauth_usage_limit
+              - override
+              type: object
+            documentation:
+              type: string
+            fields:
+              additionalProperties:
+                type: string
+              type: object
+            is_keyless:
+              description: IsKeyless is like a flag to determine whether somebody
+                can click the get key button
+              type: boolean
+            long_description:
+              type: string
+            name:
+              type: string
+            policy_id:
+              description: Explicitly set the PolicyID or populate the SecurityPolicy
+                field with the namespace/name
+              type: string
+            security_policy:
+              properties:
+                name:
+                  description: Name of the resource to target
+                  type: string
+                namespace:
+                  description: Namespace of the resource to target
+                  type: string
+              required:
+              - name
+              - namespace
+              type: object
+            short_description:
+              type: string
+            show:
+              type: boolean
+            version:
+              description: Version should always be v2 - so we will leave it as optional
+                & set it later on
+              type: string
+          required:
+          - long_description
+          - name
+          - short_description
+          - show
           type: object
         status:
           description: PortalAPIStatus defines the observed state of PortalAPI

@@ -1,0 +1,17 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: PortalAPI
+
+metadata:
+  name: httpbin
+
+spec:
+  name: My Httpbin API
+  auth_type: authToken
+  security_policy:
+    name: httpbin
+    namespace: default
+  short_description: |
+    my short description
+  long_description: |
+    my longer description
+  show: true

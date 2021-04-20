@@ -87,8 +87,8 @@ type SecurityPolicySpec struct {
 	//GraphQL                       map[string]GraphAccessDefinition `json:"graphql_access_rights"`
 }
 
-// from tyk/session.go
 // AccessDefinition defines which versions of an API a key has access to
+// from tyk/session.go
 type AccessDefinition struct {
 	// Namespace of the ApiDefinition resource to target
 	Namespace string `json:"namespace"`
@@ -119,7 +119,7 @@ type APILimit struct {
 	QuotaRenewalRate   int64 `json:"quota_renewal_rate"`
 }
 
-// AccessSpecs define what URLS a user has access to an what methods are enabled
+// AccessSpec define what URLS a user has access to an what methods are enabled
 type AccessSpec struct {
 	URL     string   `json:"url"`
 	Methods []string `json:"methods"`
@@ -138,10 +138,10 @@ type SecurityPolicyStatus struct {
 	PolID string `json:"pol_id"`
 }
 
+// SecurityPolicy is the Schema for the securitypolicies API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=tykpolicies
-// SecurityPolicy is the Schema for the securitypolicies API
 type SecurityPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

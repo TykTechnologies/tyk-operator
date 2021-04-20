@@ -44,8 +44,8 @@ spec:
               type: string
             access_rights:
               additionalProperties:
-                description: from tyk/session.go AccessDefinition defines which versions
-                  of an API a key has access to
+                description: AccessDefinition defines which versions of an API a key
+                  has access to from tyk/session.go
                 properties:
                   allowance_scope:
                     description: RestrictedTypes []graphql.Type `json:"restricted_types"`
@@ -53,8 +53,8 @@ spec:
                     type: string
                   allowed_urls:
                     items:
-                      description: AccessSpecs define what URLS a user has access
-                        to an what methods are enabled
+                      description: AccessSpec define what URLS a user has access to
+                        an what methods are enabled
                       properties:
                         methods:
                           items:
@@ -92,8 +92,8 @@ spec:
               type: object
             access_rights_array:
               items:
-                description: from tyk/session.go AccessDefinition defines which versions
-                  of an API a key has access to
+                description: AccessDefinition defines which versions of an API a key
+                  has access to from tyk/session.go
                 properties:
                   allowance_scope:
                     description: RestrictedTypes []graphql.Type `json:"restricted_types"`
@@ -101,8 +101,8 @@ spec:
                     type: string
                   allowed_urls:
                     items:
-                      description: AccessSpecs define what URLS a user has access
-                        to an what methods are enabled
+                      description: AccessSpec define what URLS a user has access to
+                        an what methods are enabled
                       properties:
                         methods:
                           items:
