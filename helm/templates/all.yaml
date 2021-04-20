@@ -206,6 +206,8 @@ spec:
         - --enable-leader-election
         command:
         - /manager
+        env:
+          TYK_INGRESS_PORT: 443
         envFrom:
         - secretRef:
             name: {{ .Values.confSecretName }}
