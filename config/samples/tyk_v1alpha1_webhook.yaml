@@ -1,7 +1,0 @@
-apiVersion: tyk.tyk.io/v1alpha1
-kind: Webhook
-metadata:
-  name: webhook-sample
-spec:
-  method: POST
-  target_path: http://localhost:8080/webhook-LOL/
