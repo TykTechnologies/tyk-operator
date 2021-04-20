@@ -7,7 +7,7 @@ resources:
   - bases/tyk.tyk.io_securitypolicies.yaml
   #- bases/tyk.tyk.io_organizations.yaml
   - bases/tyk.tyk.io_webhooks.yaml
-- bases/tyk.tyk.io_portalapis.yaml
+  - bases/tyk.tyk.io_portalapis.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
