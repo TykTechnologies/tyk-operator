@@ -9,5 +9,7 @@ spec:
       containers:
         - name: manager
           env:
-            - name: TYK_TLS_INGRESS_PORT
+            - name: TYK_HTTPS_INGRESS_PORT
               value: "433"
+            - name: TYK_HTTP_INGRESS_PORT
+              value: "8080"

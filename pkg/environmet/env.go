@@ -34,7 +34,9 @@ const (
 	// IngressClass overides the default class to watch for ingress
 	IngressClass = "WATCH_INGRESS_CLASS"
 
-	IngressTLSPort = "TYK_TLS_INGRESS_PORT"
+	IngressTLSPort = "TYK_HTTPS_INGRESS_PORT"
+
+	IngressHTTPPort = "TYK_HTTP_INGRESS_PORT"
 )
 
 // Env holds values needed to talk to the gateway or the dashboard API
@@ -47,6 +49,7 @@ type Env struct {
 	Org                string
 	IngressClass       string
 	IngressTLSPort     int
+	IngressHTTPPort    int
 }
 
 func (e Env) Merge(n Env) Env {
@@ -71,6 +74,12 @@ func (e Env) Merge(n Env) Env {
 	if n.IngressTLSPort != 0 {
 		e.IngressTLSPort = n.IngressTLSPort
 	}
+	if n.IngressTLSPort != 0 {
+		e.IngressTLSPort = n.IngressTLSPort
+	}
+	if n.IngressHTTPPort != 0 {
+		e.IngressHTTPPort = n.IngressHTTPPort
+	}
 	return e
 }
 
@@ -83,6 +92,7 @@ func (e *Env) Parse() error {
 	e.Org = strings.TrimSpace(os.Getenv(TykORG))
 	e.InsecureSkipVerify, _ = strconv.ParseBool(os.Getenv(SkipVerify))
 	e.IngressTLSPort, _ = strconv.Atoi(os.Getenv(IngressTLSPort))
+	e.IngressHTTPPort, _ = strconv.Atoi(os.Getenv(IngressHTTPPort))
 	if e.IngressTLSPort == 0 {
 		// set default value
 		e.IngressTLSPort = 8442

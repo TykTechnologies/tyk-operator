@@ -146,6 +146,9 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 				if rule.Host != "" {
 					api.Spec.Domain = r.translateHost(rule.Host)
 				}
+				if env.IngressHTTPPort != 0 {
+					api.Spec.ListenPort = env.IngressHTTPPort
+				}
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
 						for _, host := range tls.Hosts {
