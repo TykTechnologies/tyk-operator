@@ -2,16 +2,11 @@ package gateway_client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
-)
-
-var (
-	apiCollisionError = errors.New("api id, listen path or slug collision")
 )
 
 type Api struct {

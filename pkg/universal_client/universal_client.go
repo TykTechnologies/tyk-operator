@@ -10,4 +10,5 @@ type UniversalClient interface {
 	Webhook() UniversalWebhook
 	Certificate() UniversalCertificate
 	Organization() UniversalOrganization
+	PortalCatalogue() UniversalPortalAPI
 }

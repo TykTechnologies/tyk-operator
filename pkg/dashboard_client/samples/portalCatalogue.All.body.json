@@ -1,0 +1,145 @@
+{
+  "id": "5eb1e44c767e02075dbd98d0",
+  "org_id": "5d67b96d767e02015ea84a6f",
+  "apis": [
+    {
+      "name": "oktademo",
+      "short_description": "foo",
+      "long_description": "bar",
+      "show": true,
+      "api_id": "",
+      "policy_id": "607f48e9d3626e691e800102",
+      "documentation": "",
+      "version": "v2",
+      "is_keyless": false,
+      "config": {
+        "id": "",
+        "org_id": "",
+        "signup_fields": [],
+        "key_request_fields": [],
+        "require_key_approval": false,
+        "secure_key_approval": false,
+        "redirect_on_key_request": false,
+        "redirect_to": "",
+        "enable_multi_selection": false,
+        "disable_login": false,
+        "disable_signup": false,
+        "disable_auto_login": false,
+        "catalogue_login_only": false,
+        "oauth_usage_limit": -1,
+        "email": "",
+        "mail_options": {
+          "mail_from_name": "",
+          "mail_from_email": "",
+          "email_copy": {
+            "welcome_email": {
+              "enabled": false,
+              "subject": "",
+              "body": "",
+              "sign_off": "",
+              "hide_token_data": false
+            },
+            "key_email": {
+              "enabled": false,
+              "subject": "",
+              "body": "",
+              "sign_off": "",
+              "hide_token_data": false
+            },
+            "reset_password_email": {
+              "enabled": false,
+              "subject": "",
+              "body": "",
+              "sign_off": "",
+              "hide_token_data": false
+            }
+          }
+        },
+        "dcr_options": {
+          "idp_host": "",
+          "access_token": "",
+          "registration_endpoint": "",
+          "provider": "",
+          "grant_types": [],
+          "response_types": [],
+          "token_endpoint_auth_method": ""
+        },
+        "enable_dcr": false,
+        "override": false,
+        "HashKeys": false
+      },
+      "fields": {},
+      "auth_type": "jwt"
+    },
+    {
+      "name": "asdfasdfasfd",
+      "short_description": "asdfasdf",
+      "long_description": "asdfasdf",
+      "show": true,
+      "api_id": "",
+      "policy_id": "60802c39d3626e80a36a3e3a",
+      "documentation": "",
+      "version": "v2",
+      "is_keyless": false,
+      "config": {
+        "id": "",
+        "org_id": "",
+        "signup_fields": [],
+        "key_request_fields": [],
+        "require_key_approval": false,
+        "secure_key_approval": false,
+        "redirect_on_key_request": false,
+        "redirect_to": "",
+        "enable_multi_selection": false,
+        "disable_login": false,
+        "disable_signup": false,
+        "disable_auto_login": false,
+        "catalogue_login_only": false,
+        "oauth_usage_limit": -1,
+        "email": "",
+        "mail_options": {
+          "mail_from_name": "",
+          "mail_from_email": "",
+          "email_copy": {
+            "welcome_email": {
+              "enabled": false,
+              "subject": "",
+              "body": "",
+              "sign_off": "",
+              "hide_token_data": false
+            },
+            "key_email": {
+              "enabled": false,
+              "subject": "",
+              "body": "",
+              "sign_off": "",
+              "hide_token_data": false
+            },
+            "reset_password_email": {
+              "enabled": false,
+              "subject": "",
+              "body": "",
+              "sign_off": "",
+              "hide_token_data": false
+            }
+          }
+        },
+        "dcr_options": {
+          "idp_host": "",
+          "access_token": "",
+          "registration_endpoint": "",
+          "provider": "",
+          "grant_types": [],
+          "response_types": [],
+          "token_endpoint_auth_method": ""
+        },
+        "enable_dcr": false,
+        "override": false,
+        "HashKeys": false
+      },
+      "fields": {},
+      "auth_type": "keyless"
+    }
+  ],
+  "email": ""
+}

@@ -13,8 +13,9 @@ const (
 	endpointAPIs  = "/api/apis"
 	endpointCerts = "/api/certs"
 	//endpointReload   = "/tyk/reload/group"
-	endpointPolicies = "/api/portal/policies"
-	endpointWebhooks = "/api/hooks"
+	endpointPolicies        = "/api/portal/policies"
+	endpointWebhooks        = "/api/hooks"
+	endpointPortalCatalogue = "/api/portal/catalogue"
 )
 
 const (
@@ -53,6 +54,10 @@ type Client struct {
 
 func (c *Client) Organization() universal_client.UniversalOrganization {
 	return &Organization{c}
+}
+
+func (c *Client) PortalCatalogue() universal_client.UniversalPortalAPI {
+	return &PortalApi{c}
 }
 
 func (c *Client) Certificate() universal_client.UniversalCertificate {

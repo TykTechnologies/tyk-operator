@@ -34,3 +34,9 @@ type CertResponse struct {
 	Message string `json:"message"`
 	Status  string `json:"status"`
 }
+
+type PortalCatalogueResponse struct {
+	Id    string `json:"id"`
+	OrgId string `json:"org_id"`
+	Apis  []v1.PortalAPISpec
+}

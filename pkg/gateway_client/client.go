@@ -85,3 +85,7 @@ func (c *Client) Organization() universal_client.UniversalOrganization {
 func (c *Client) Certificate() universal_client.UniversalCertificate {
 	panic("implement me")
 }
+
+func (c *Client) PortalCatalogue() universal_client.UniversalPortalAPI {
+	panic("implement me")
+}
