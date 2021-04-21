@@ -27,6 +27,7 @@ func getClient() universal_client.UniversalClient {
 }
 
 func TestPortalApi_All(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	apiSpec, err := c.PortalCatalogue().All()
 	if err != nil {
@@ -36,6 +37,7 @@ func TestPortalApi_All(t *testing.T) {
 }
 
 func TestPortalApi_Get(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	apiSpec, err := c.PortalCatalogue().Get("607f48e9d3626e691e800102")
 	if err != nil {
@@ -45,6 +47,7 @@ func TestPortalApi_Get(t *testing.T) {
 }
 
 func TestPortalApi_Create(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	err := c.PortalCatalogue().Create(&v1alpha1.PortalAPISpec{
 		Name:             "Foo",
@@ -64,6 +67,7 @@ func TestPortalApi_Create(t *testing.T) {
 }
 
 func TestPortalApi_Update(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	err := c.PortalCatalogue().Update(&v1alpha1.PortalAPISpec{
 		Name:             "Bar",
@@ -83,6 +87,7 @@ func TestPortalApi_Update(t *testing.T) {
 }
 
 func TestPortalApi_Delete(t *testing.T) {
+	t.SkipNow()
 	c := getClient()
 	err := c.PortalCatalogue().Delete("abcde")
 	if err != nil {
