@@ -54,6 +54,7 @@ Operator configurations are all stored in the secret `tyk-operator-conf`.
 | `TYK_TLS_INSECURE_SKIP_VERIFY` | `true`                                     | If the Tyk URL is HTTPS and has a self-signed certificate; defaults to `false`                             |
 | `WATCH_NAMESPACE`              | `foo,bar`                                  | Comma separated list of namespaces for Operator to operate on; defaults to all namespaces if not specified |
 | `WATCH_INGRESS_CLASS`          | `customclass`                              | Default `tyk` if omitted; allows Tyk Operator to watch a different ingress class                           |
+| `TYK_TLS_INGRESS_PORT`          | `443`                              | Default `8443` if omitted; sets ListenPort for TLS ingress
 
 ### Connecting Tyk Operator to Tyk Gateway
 
