@@ -83,6 +83,10 @@ func (e *Env) Parse() error {
 	e.Org = strings.TrimSpace(os.Getenv(TykORG))
 	e.InsecureSkipVerify, _ = strconv.ParseBool(os.Getenv(SkipVerify))
 	e.IngressTLSPort, _ = strconv.Atoi(os.Getenv(IngressTLSPort))
+	if e.IngressTLSPort == 0 {
+		// set default value
+		e.IngressTLSPort = 8442
+	}
 	e.IngressClass = os.Getenv(IngressClass)
 	// verify
 	sample := []struct {
