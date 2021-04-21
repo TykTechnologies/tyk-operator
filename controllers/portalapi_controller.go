@@ -67,6 +67,8 @@ func (r *PortalAPIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 		util.AddFinalizer(desired, keys.PortalAPIFinalizerName)
 
+		desired.Spec.Version = "v2"
+
 		// try create
 		err := r.UniversalClient.PortalCatalogue().Create(&desired.Spec)
 		if err != nil {

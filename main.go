@@ -142,7 +142,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	w := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
+	w := ctrl.Log.WithName("controllers").WithName("Webhook")
 	if err = (&controllers.WebhookReconciler{
 		Client:          mgr.GetClient(),
 		Log:             w,
@@ -151,6 +151,17 @@ func main() {
 		Recorder:        mgr.GetEventRecorderFor("webhook-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Webhook")
+		os.Exit(1)
+	}
+
+	portalApiLogger := ctrl.Log.WithName("controllers").WithName("PortalApi")
+	if err = (&controllers.PortalAPIReconciler{
+		Client:          mgr.GetClient(),
+		Log:             portalApiLogger,
+		Scheme:          mgr.GetScheme(),
+		UniversalClient: newUniversalClient(portalApiLogger, env),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PortalAPI")
 		os.Exit(1)
 	}
 
@@ -163,15 +174,6 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "SecurityPolicy")
 			os.Exit(1)
 		}
-	}
-
-	if err = (&controllers.PortalAPIReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("PortalAPI"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "PortalAPI")
-		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 

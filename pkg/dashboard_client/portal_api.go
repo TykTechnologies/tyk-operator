@@ -119,14 +119,17 @@ func (a PortalApi) Update(spec *tykv1alpha1.PortalAPISpec) error {
 		return err
 	}
 
+	found := false
 	foundIndex := 0
 	for i, catalogueEntry := range portalCatalogueResponse.Apis {
 		if catalogueEntry.PolicyID == spec.PolicyID {
 			foundIndex = i
+			found = true
+			break
 		}
 	}
 
-	if foundIndex == 0 {
+	if !found {
 		return fmt.Errorf("unable to update catalogue with policy %s as it does not exist", spec.PolicyID)
 	}
 
@@ -163,15 +166,19 @@ func (a PortalApi) Delete(policyID string) error {
 		return err
 	}
 
+	found := false
 	foundIndex := 0
 	for i, catalogueEntry := range portalCatalogueResponse.Apis {
 		if catalogueEntry.PolicyID == policyID {
 			foundIndex = i
+			found = true
+			break
 		}
 	}
 
-	if foundIndex == 0 {
-		return fmt.Errorf("unable to delete catalogue with policy %s as it does not exist", policyID)
+	if !found {
+		a.Log.Info(fmt.Sprintf("catalogue with policy %s does not exist. cannot delete, return ok as nothing to do", policyID))
+		return nil
 	}
 
 	portalCatalogueResponse.Apis = removeFromSliceByIndex(portalCatalogueResponse.Apis, foundIndex)
