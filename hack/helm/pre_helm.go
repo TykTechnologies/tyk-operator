@@ -52,7 +52,7 @@ const annotationsDest = `  template:
 
 const envSrc = `value: "433"`
 
-const envDEST = `value: {{default 8443 .Values.ingressPort |quote}}`
+const envDEST = `value: {{default 8443 .Values.ingressTLSPort |quote}}`
 
 func injectResources(b []byte) []byte {
 	n := bytes.Index(b, []byte("kind: Deployment"))

@@ -1,6 +1,6 @@
 replicaCount: 1
 confSecretName: tyk-operator-conf
-ingressPort: 8443
+ingressTLSPort: 8443
 
 image:
   repository: tykio/tyk-operator

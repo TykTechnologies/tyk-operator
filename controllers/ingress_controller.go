@@ -154,7 +154,7 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 								api.Spec.CertificateSecretNames = []string{
 									tls.SecretName,
 								}
-								api.Spec.ListenPort = env.IngressPort
+								api.Spec.ListenPort = env.IngressTLSPort
 							}
 						}
 					}
