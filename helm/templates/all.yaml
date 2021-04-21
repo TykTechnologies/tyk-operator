@@ -208,7 +208,7 @@ spec:
         - /manager
         env:
         - name: TYK_TLS_INGRESS_PORT
-          value: {{default .Values.ingressPort 8443 |quote}}
+          value: {{default 8443 .Values.ingressPort |quote}}
         envFrom:
         - secretRef:
             name: {{ .Values.confSecretName }}
