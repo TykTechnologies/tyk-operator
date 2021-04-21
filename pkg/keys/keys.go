@@ -4,6 +4,7 @@ package keys
 const (
 	ApiDefFinalizerName         = "finalizers.tyk.io/apidefinition"
 	ApiDefTemplateFinalizerName = "finalizers.tyk.io/template"
+	PortalAPIFinalizerName      = "finalizers.tyk.io/portalapi"
 )
 
 //Ingress
