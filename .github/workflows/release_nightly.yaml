@@ -1,4 +1,4 @@
-name: Release nightly and release candidates
+name: Release nightly
 
 on:
   push:
