@@ -36,7 +36,7 @@ type CertResponse struct {
 }
 
 type PortalCatalogueResponse struct {
-	Id    string `json:"id"`
-	OrgId string `json:"org_id"`
-	Apis  []v1.PortalAPISpec
+	Id    string             `json:"id"`
+	OrgId string             `json:"org_id"`
+	Apis  []v1.PortalAPISpec `json:"apis"`
 }

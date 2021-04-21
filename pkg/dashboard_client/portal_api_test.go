@@ -3,13 +3,15 @@ package dashboard_client
 import (
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func TestPortalApi_All(t *testing.T) {
-	c := newKlient(universal_client.Client{
+func getClient() universal_client.UniversalClient {
+	return newKlient(universal_client.Client{
 		Env: environmet.Env{
 			//Namespace:          "",
 			Mode:               "pro",
@@ -23,9 +25,68 @@ func TestPortalApi_All(t *testing.T) {
 		BeforeRequest: nil,
 		Do:            nil,
 	})
+}
+
+func TestPortalApi_All(t *testing.T) {
+	c := getClient()
 	apiSpec, err := c.PortalCatalogue().All()
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Logf("%#v", apiSpec)
+}
+
+func TestPortalApi_Get(t *testing.T) {
+	c := getClient()
+	apiSpec, err := c.PortalCatalogue().Get("607f48e9d3626e691e800102")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%#v", apiSpec)
+}
+
+func TestPortalApi_Create(t *testing.T) {
+	c := getClient()
+	err := c.PortalCatalogue().Create(&v1alpha1.PortalAPISpec{
+		Name:             "Foo",
+		ShortDescription: "Bar",
+		LongDescription:  "Baz",
+		Show:             true,
+		PolicyID:         "abcde",
+		Version:          "v2",
+		IsKeyless:        false,
+		Config:           v1alpha1.PortalAPIConfig{},
+		Fields:           nil,
+		AuthType:         "authToken",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPortalApi_Update(t *testing.T) {
+	c := getClient()
+	err := c.PortalCatalogue().Update(&v1alpha1.PortalAPISpec{
+		Name:             "Bar",
+		ShortDescription: "Baz",
+		LongDescription:  "Foo",
+		Show:             true,
+		PolicyID:         "abcde",
+		Version:          "v2",
+		IsKeyless:        false,
+		Config:           v1alpha1.PortalAPIConfig{},
+		Fields:           nil,
+		AuthType:         "authToken",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPortalApi_Delete(t *testing.T) {
+	c := getClient()
+	err := c.PortalCatalogue().Delete("abcde")
+	if err != nil {
+		t.Fatal(err)
+	}
 }

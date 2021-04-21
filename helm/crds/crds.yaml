@@ -1593,6 +1593,148 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
+  name: portalapis.tyk.tyk.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.show
+    name: Visible
+    type: boolean
+  - JSONPath: .spec.auth_type
+    name: AuthType
+    type: string
+  group: tyk.tyk.io
+  names:
+    kind: PortalAPI
+    listKind: PortalAPIList
+    plural: portalapis
+    shortNames:
+    - tykpapis
+    singular: portalapi
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: PortalAPI is the Schema for the portalapis API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: PortalAPISpec defines the desired state of PortalAPI
+          properties:
+            auth_type:
+              description: AuthType TODO should be an enum. maybe we can derive it from the underlying api types? leave empty for keyless
+              enum:
+              - authToken
+              type: string
+            config:
+              properties:
+                catalogue_login_only:
+                  type: boolean
+                disable_auto_login:
+                  type: boolean
+                disable_login:
+                  type: boolean
+                disable_signup:
+                  type: boolean
+                email:
+                  type: string
+                hashkeys:
+                  type: boolean
+                oauth_usage_limit:
+                  type: integer
+                org_id:
+                  type: string
+                override:
+                  description: "MailOptions          struct { \tMailFromName  string `json:\"mail_from_name\"` \tMailFromEmail string `json:\"mail_from_email\"` \tEmailCopy     struct { \t\tWelcomeEmail struct { \t\t\tEnabled       bool   `json:\"enabled\"` \t\t\tSubject       string `json:\"subject\"` \t\t\tBody          string `json:\"body\"` \t\t\tSignOff       string `json:\"sign_off\"` \t\t\tHideTokenData bool   `json:\"hide_token_data\"` \t\t} `json:\"welcome_email\"` \t\tKeyEmail struct { \t\t\tEnabled       bool   `json:\"enabled\"` \t\t\tSubject       string `json:\"subject\"` \t\t\tBody          string `json:\"body\"` \t\t\tSignOff       string `json:\"sign_off\"` \t\t\tHideTokenData bool   `json:\"hide_token_data\"` \t\t} `json:\"key_email\"` \t\tResetPasswordEmail struct { \t\t\tEnabled       bool   `json:\"enabled\"` \t\t\tSubject       string `json:\"subject\"` \t\t\tBody          string `json:\"body\"` \t\t\tSignOff       string `json:\"sign_off\"` \t\t\tHideTokenData bool   `json:\"hide_token_data\"` \t\t} `json:\"reset_password_email\"` \t} `json:\"email_copy\"` } `json:\"mail_options\"`"
+                  type: boolean
+                redirect_on_key_request:
+                  type: boolean
+                redirect_to:
+                  type: string
+                require_key_approval:
+                  description: SignupFields         []interface{} `json:"signup_fields"` KeyRequestFields     []interface{} `json:"key_request_fields"`
+                  type: boolean
+                secure_key_approval:
+                  type: boolean
+              required:
+              - catalogue_login_only
+              - disable_auto_login
+              - disable_login
+              - disable_signup
+              - hashkeys
+              - oauth_usage_limit
+              - override
+              type: object
+            documentation:
+              type: string
+            fields:
+              additionalProperties:
+                type: string
+              type: object
+            is_keyless:
+              description: IsKeyless is like a flag to determine whether somebody can click the get key button
+              type: boolean
+            long_description:
+              type: string
+            name:
+              type: string
+            policy_id:
+              description: Explicitly set the PolicyID or populate the SecurityPolicy field with the namespace/name
+              type: string
+            security_policy:
+              properties:
+                name:
+                  description: Name of the resource to target
+                  type: string
+                namespace:
+                  description: Namespace of the resource to target
+                  type: string
+              required:
+              - name
+              - namespace
+              type: object
+            short_description:
+              type: string
+            show:
+              type: boolean
+            version:
+              description: Version should always be v2 - so we will leave it as optional & set it later on
+              type: string
+          required:
+          - long_description
+          - name
+          - short_description
+          - show
+          type: object
+        status:
+          description: PortalAPIStatus defines the observed state of PortalAPI
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
   name: securitypolicies.tyk.tyk.io
 spec:
   group: tyk.tyk.io
@@ -1626,14 +1768,14 @@ spec:
               type: string
             access_rights:
               additionalProperties:
-                description: from tyk/session.go AccessDefinition defines which versions of an API a key has access to
+                description: AccessDefinition defines which versions of an API a key has access to from tyk/session.go
                 properties:
                   allowance_scope:
                     description: RestrictedTypes []graphql.Type `json:"restricted_types"` Limit          APILimit     `json:"limit,omitempty"`
                     type: string
                   allowed_urls:
                     items:
-                      description: AccessSpecs define what URLS a user has access to an what methods are enabled
+                      description: AccessSpec define what URLS a user has access to an what methods are enabled
                       properties:
                         methods:
                           items:
@@ -1669,14 +1811,14 @@ spec:
               type: object
             access_rights_array:
               items:
-                description: from tyk/session.go AccessDefinition defines which versions of an API a key has access to
+                description: AccessDefinition defines which versions of an API a key has access to from tyk/session.go
                 properties:
                   allowance_scope:
                     description: RestrictedTypes []graphql.Type `json:"restricted_types"` Limit          APILimit     `json:"limit,omitempty"`
                     type: string
                   allowed_urls:
                     items:
-                      description: AccessSpecs define what URLS a user has access to an what methods are enabled
+                      description: AccessSpec define what URLS a user has access to an what methods are enabled
                       properties:
                         methods:
                           items:
