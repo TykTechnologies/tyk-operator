@@ -95,7 +95,7 @@ func (e *Env) Parse() error {
 	e.IngressHTTPPort, _ = strconv.Atoi(os.Getenv(IngressHTTPPort))
 	if e.IngressTLSPort == 0 {
 		// set default value
-		e.IngressTLSPort = 8442
+		e.IngressTLSPort = 8443
 	}
 	e.IngressClass = os.Getenv(IngressClass)
 	// verify
