@@ -51,12 +51,12 @@ const annotationsDest = `  template:
       labels:
         control-plane: controller-manager`
 
-const envHTTPSSrc = `value: "433"`
-
-const envHTTPSDEST = `value: {{default 8443 .Values.ingressHTTPSPort |quote}}`
-const envHTTPSrc = `value: "8080"`
-
-const envHTTPDEST = `value: {{.Values.ingressHTTPPort |quote}}`
+const (
+	envHTTPSSrc  = `value: "433"`
+	envHTTPSDEST = `value: {{default 8443 .Values.ingressHTTPSPort |quote}}`
+	envHTTPSrc   = `value: "8080"`
+	envHTTPDEST  = `value: {{.Values.ingressHTTPPort |quote}}`
+)
 
 func injectResources(b []byte) []byte {
 	n := bytes.Index(b, []byte("kind: Deployment"))
