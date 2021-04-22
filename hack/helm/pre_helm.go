@@ -52,7 +52,7 @@ const annotationsDest = `  template:
         control-plane: controller-manager`
 
 const (
-	envHTTPSSrc  = `value: "433"`
+	envHTTPSSrc  = `value: "8443"`
 	envHTTPSDEST = `value: {{default 8443 .Values.ingressHTTPSPort |quote}}`
 	envHTTPSrc   = `value: "8080"`
 	envHTTPDEST  = `value: {{.Values.ingressHTTPPort |quote}}`
