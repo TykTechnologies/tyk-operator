@@ -74,9 +74,6 @@ func (e Env) Merge(n Env) Env {
 	if n.IngressTLSPort != 0 {
 		e.IngressTLSPort = n.IngressTLSPort
 	}
-	if n.IngressTLSPort != 0 {
-		e.IngressTLSPort = n.IngressTLSPort
-	}
 	if n.IngressHTTPPort != 0 {
 		e.IngressHTTPPort = n.IngressHTTPPort
 	}
