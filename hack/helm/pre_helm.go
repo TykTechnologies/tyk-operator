@@ -18,6 +18,8 @@ func main() {
 		"name: default":                 "name: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
 		"serviceAccountName: default":   "serviceAccountName: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
 		annotationsSrc:                  annotationsDest,
+		envHTTPSSrc:                     envHTTPSDEST,
+		envHTTPSrc:                      envHTTPDEST,
 	}
 	b, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -48,6 +50,13 @@ const annotationsDest = `  template:
     {{- end }}
       labels:
         control-plane: controller-manager`
+
+const (
+	envHTTPSSrc  = `value: "8443"`
+	envHTTPSDEST = `value: {{default 8443 .Values.ingressHTTPSPort |quote}}`
+	envHTTPSrc   = `value: "8080"`
+	envHTTPDEST  = `value: {{.Values.ingressHTTPPort |quote}}`
+)
 
 func injectResources(b []byte) []byte {
 	n := bytes.Index(b, []byte("kind: Deployment"))

@@ -1,5 +1,7 @@
 replicaCount: 1
 confSecretName: tyk-operator-conf
+ingressHTTPSPort: 8443
+ingressHTTPPort: 8080
 
 image:
   repository: tykio/tyk-operator
