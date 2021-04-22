@@ -213,7 +213,7 @@ type TargetInternal struct {
 
 func (i TargetInternal) String() string {
 	host := i.Target.String()
-	host = base64.URLEncoding.EncodeToString([]byte(host))
+	host = base64.RawURLEncoding.EncodeToString([]byte(host))
 	u := url.URL{
 		Scheme:   "tyk",
 		Host:     host,
