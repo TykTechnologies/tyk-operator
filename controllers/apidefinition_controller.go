@@ -155,10 +155,8 @@ func (r *ApiDefinitionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		desired.Spec.APIID = desired.Status.ApiID
 		err = r.UniversalClient.Api().Update(&desired.Spec)
 		if err != nil {
-			if err != nil {
-				log.Error(err, "Failed to update api definition")
-				return err
-			}
+			log.Error(err, "Failed to update api definition")
+			return err
 		}
 		r.UniversalClient.HotReload()
 		return nil
@@ -287,7 +285,7 @@ func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *ty
 }
 
 func encodeIfNotBase64(s string) string {
-	_, err := base64.URLEncoding.DecodeString(s)
+	_, err := base64.RawURLEncoding.DecodeString(s)
 	if err == nil {
 		return s
 	}
