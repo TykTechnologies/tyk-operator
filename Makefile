@@ -142,7 +142,7 @@ bundle-build:
 
 .PHONY: cross-build-image
 cross-build-image:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o manager.linux main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager.linux main.go
 	docker build -f cross.Dockerfile . -t ${IMG}
 
 .PHONY: cross-build-image

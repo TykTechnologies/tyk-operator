@@ -3,21 +3,41 @@ layout: go.kubebuilder.io/v2
 projectName: tyk-operator
 repo: github.com/TykTechnologies/tyk-operator
 resources:
-- group: tyk
+-
+  controller: true
+  domain: tyk.io
+  group: tyk
   kind: Gateway
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
-- group: tyk
+-
+  controller: true
+  domain: tyk.io
+  group: tyk
   kind: Organization
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
-- group: tyk
+-
+  controller: true
+  domain: tyk.io
+  group: tyk
   kind: ApiDefinition
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
-- group: tyk
+-
+  controller: true
+  domain: tyk.io
+  group: tyk
   kind: SecurityPolicy
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
-- group: tyk
+-
+  controller: true
+  domain: tyk.io
+  group: tyk
   kind: Webhook
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
-version: 3-alpha
+version: "3"
 plugins:
   go.sdk.operatorframework.io/v2-alpha: {}

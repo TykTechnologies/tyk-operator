@@ -46,8 +46,7 @@ type WebhookReconciler struct {
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=webhooks,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=webhooks/status,verbs=get;update;patch
 
-func (r *WebhookReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *WebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("webhook", req.NamespacedName)
 
 	r.Log.Info("fetching webhook desired spec")
