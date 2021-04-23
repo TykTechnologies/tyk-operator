@@ -55,8 +55,7 @@ type IngressReconciler struct {
 
 // Reconcile perform reconciliation logic for Ingress resource that is managed
 // by the operator.
-func (r *IngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
