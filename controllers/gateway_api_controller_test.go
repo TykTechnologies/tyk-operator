@@ -9,67 +9,26 @@ import (
 
 func TestGatewayApiReconciler_HostsToCustomDomains(t *testing.T) {
 	tests := map[string]struct {
-		route     *v1alpha1.HTTPRoute
+		hostname  v1alpha1.Hostname
 		want      string
 		wantError error
 		skip      bool
 	}{
 		"no hosts (match all)": {
-			route: &v1alpha1.HTTPRoute{
-				Spec: v1alpha1.HTTPRouteSpec{
-					Hostnames: []v1alpha1.Hostname{},
-				},
-			},
+			hostname:  v1alpha1.Hostname("*"),
 			want:      "",
 			wantError: nil,
 		},
 		"single host": {
-			route: &v1alpha1.HTTPRoute{
-				Spec: v1alpha1.HTTPRouteSpec{
-					Hostnames: []v1alpha1.Hostname{
-						"foo.bar.com",
-					},
-				},
-			},
+			hostname:  v1alpha1.Hostname("foo.bar.com"),
 			want:      "foo.bar.com",
 			wantError: nil,
 		},
 		"wildcard host": {
-			route: &v1alpha1.HTTPRoute{
-				Spec: v1alpha1.HTTPRouteSpec{
-					Hostnames: []v1alpha1.Hostname{
-						"*.bar.com",
-					},
-				},
-			},
-			want:      "{?:[^.]+}.foo.com",
+			hostname:  v1alpha1.Hostname("*.bar.com"),
+			want:      "{?:[^.]+}.bar.com",
 			wantError: nil,
-			skip:      true,
-		},
-		"multiple exact hosts": {
-			route: &v1alpha1.HTTPRoute{
-				Spec: v1alpha1.HTTPRouteSpec{
-					Hostnames: []v1alpha1.Hostname{
-						"foo.bar.com",
-						"bar.foo.com",
-					},
-				},
-			},
-			want:      "{?:(foo.bar.com|bar.foo.com)}",
-			wantError: nil,
-		},
-		"multiple wildcard hosts": {
-			route: &v1alpha1.HTTPRoute{
-				Spec: v1alpha1.HTTPRouteSpec{
-					Hostnames: []v1alpha1.Hostname{
-						"*.bar.com",
-						"*.foo.com",
-					},
-				},
-			},
-			want:      "{?:([^.]+.bar.com|[^.]+.foo.com)}", // TODO: need to actually check this - maybe im making it up
-			wantError: nil,
-			skip:      true,
+			skip:      false,
 		},
 	}
 	for name, tc := range tests {
@@ -78,7 +37,7 @@ func TestGatewayApiReconciler_HostsToCustomDomains(t *testing.T) {
 				innerTest.Skip()
 			}
 			c := GatewayApiReconciler{}
-			customDomain, err := c.HostsToCustomDomains(tc.route.Spec.Hostnames)
+			customDomain, err := c.hostToCustomDomain(tc.hostname)
 			assert.Equal(innerTest, tc.want, customDomain)
 			assert.Equal(innerTest, tc.wantError, err)
 		})

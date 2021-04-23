@@ -18,9 +18,9 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
+	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
@@ -39,28 +39,33 @@ type GatewayApiReconciler struct {
 	Recorder        record.EventRecorder
 }
 
-// Reconcile perform reconciliation logic for Ingress resource that is managed
-// by the operator.
 func (r *GatewayApiReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	//route := v1alpha1.HTTPRoute{}
-	//hostnames := route.Spec.Hostnames
+	route := v1alpha1.HTTPRoute{}
+	if err := r.Get(ctx, req.NamespacedName, &route); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	apiDefs := []v1.ApiDefinition{}
+	for _, hostname := range route.Spec.Hostnames {
+
+		apiDef := v1.ApiDefinition{}
+		customDomain, err := r.hostToCustomDomain(hostname)
+		if err != nil {
+			// TODO: do something
+		}
+		apiDef.Spec.Domain = customDomain
+
+		apiDefs = append(apiDefs, apiDef)
+	}
+
 	return ctrl.Result{}, nil
 }
 
-func (r *GatewayApiReconciler) HostsToCustomDomains(hosts []v1alpha1.Hostname) (string, error) {
-	hostnameToStrings := func(hostnames []v1alpha1.Hostname) []string {
-		s := []string{}
-		for _, name := range hostnames {
-			s = append(s, string(name))
-		}
-		return s
+func (r *GatewayApiReconciler) hostToCustomDomain(hostname v1alpha1.Hostname) (string, error) {
+	if hostname == "*" {
+		return "", nil
 	}
-	built := strings.Join(hostnameToStrings(hosts), "|")
-	if len(hosts) > 1 {
-		built = fmt.Sprintf("{?:(%s)}", built)
-	}
-
-	//built = strings.Replace(built, "*", "{?:[^.]+}", -1)
+	built := strings.Replace(string(hostname), "*", "{?:[^.]+}", 1)
 
 	return built, nil
 }
