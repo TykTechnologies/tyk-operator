@@ -16,9 +16,7 @@ builds:
 # https://goreleaser.com/customization/docker/
 dockers:
   - image_templates:
-      - "tykio/tyk-operator:v{{ .Major }}"
-      - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
-      - "tykio/tyk-operator:{{ .Tag }}"
+      - "tykio/tyk-operator:latest"
     extra_files:
       - go.mod
       - go.sum
