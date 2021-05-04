@@ -2,8 +2,8 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+      - "^docs:"
+      - "^test:"
 
 # https://goreleaser.com/customization/checksum/
 checksum:
@@ -16,15 +16,14 @@ builds:
 # https://goreleaser.com/customization/docker/
 dockers:
   - image_templates:
-    - "tykio/tyk-operator:latest"
-    - "tykio/tyk-operator:v{{ .Major }}"
-    - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
-    - "tykio/tyk-operator:{{ .Tag }}"
+      - "tykio/tyk-operator:v{{ .Major }}"
+      - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
+      - "tykio/tyk-operator:{{ .Tag }}"
     extra_files:
-    - go.mod
-    - go.sum
-    - main.go
-    - api
-    - controllers
-    - pkg
-    - vendor
+      - go.mod
+      - go.sum
+      - main.go
+      - api
+      - controllers
+      - pkg
+      - vendor
