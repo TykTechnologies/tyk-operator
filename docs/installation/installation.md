@@ -195,6 +195,28 @@ NOTES:
 You have deployed the tyk-operator! See https://github.com/TykTechnologies/tyk-operator for more information.
 ```
 
+## Upgrading Tyk Operator
+
+Checkout the tag you want to upgrade to `git checkout tags/{.ReleaseTag}`
+
+for example if you are on `v0.6.0` and you wish to upgrade to `v0.6.1` 
+
+```bash
+git checkout tags/v0.6.1
+```
+
+Upgrade crds
+
+```bash
+kubectl apply -f ./helm/crds
+```
+
+Upgrade helm release
+
+```bash
+helm upgrade foo ./helm -n tyk-operator-system
+```
+
 ## Uninstall
 
 Did we do something wrong? Create a [GitHub issue](https://github.com/TykTechnologies/tyk-operator/issues/new) and we
