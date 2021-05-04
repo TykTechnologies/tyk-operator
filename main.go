@@ -69,7 +69,7 @@ func main() {
 	}
 	if env.Namespace == "" {
 		setupLog.Info("unable to get WatchNamespace, " +
-			"the manager will watch and manage resources in all Namespaces")
+			"the manager will watch and manage resources in all Namespaces.")
 	}
 
 	options := ctrl.Options{
