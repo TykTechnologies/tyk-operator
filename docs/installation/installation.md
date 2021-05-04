@@ -9,6 +9,7 @@
   - [Installing cert-manager](#installing-cert-manager)
 - [Installing CRDs](#installing-crds)
 - [Installing Tyk Operator](#installing-tyk-operator)
+- [Upgrading Tyk Operator](#upgrading-tyk-operator)
 - [Uninstall](#uninstall)
 
 ## Prerequisites
