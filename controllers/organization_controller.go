@@ -45,8 +45,7 @@ const orgConfigMapName = "tyk-org-ids"
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=organizations,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=organizations/status,verbs=get;update;patch
 
-func (r *OrganizationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("organization", req.NamespacedName)
 
 	// should this configmap logic be elsewhere?
