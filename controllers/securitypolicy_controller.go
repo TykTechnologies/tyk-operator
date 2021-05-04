@@ -49,8 +49,7 @@ type SecurityPolicyReconciler struct {
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=securitypolicies/status,verbs=get;update;patch
 
 // Reconcile reconciles SecurityPolicy custom resources
-func (r *SecurityPolicyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
 
 	ns := req.NamespacedName.String()
