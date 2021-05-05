@@ -12,22 +12,8 @@ spec:
       versions:
         - Default
 
-# TODO: Think about defaulting so we don't have to set these values to -1
-  per: -1
-  quota_max: -1
-  quota_renewal_rate: -1
-  rate: -1
-  throttle_interval: -1
-  throttle_retry_limit: -1
-  max_query_depth: -1
-
-  key_expires_in: 0
-  tags: []
-
-# TODO: can we set sensible defaults for partitions?
+  # TODO: can we set sensible defaults for partitions?
   partitions:
     quota: true
     rate_limit: true
     acl: true
-    complexity: false
-    per_api: false

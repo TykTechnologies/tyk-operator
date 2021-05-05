@@ -18,11 +18,9 @@ package controllers
 
 import (
 	"context"
-	"os"
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -68,25 +66,12 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			}
 			return nil
 		}
-		if !util.ContainsFinalizer(policy, policyFinalizer) {
-			util.AddFinalizer(policy, policyFinalizer)
-		}
+		util.AddFinalizer(policy, policyFinalizer)
 		if policy.Spec.ID == "" {
 			policy.Spec.ID = encodeNS(ns)
 		}
-		if policy.Spec.OrgID == "" {
-			policy.Spec.OrgID = os.Getenv(environmet.TykORG)
-		}
 		// update access rights
 		r.Log.Info("updating access rights")
-		var err error
-		for i := 0; i < len(policy.Spec.AccessRightsArray); i++ {
-			a := &policy.Spec.AccessRightsArray[i]
-			reqA, err = r.updateAccess(ctx, a, ns)
-			if err != nil {
-				return err
-			}
-		}
 		if policy.Status.PolID == "" {
 			return r.create(ctx, policy)
 		}
@@ -98,8 +83,20 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{RequeueAfter: reqA}, err
 }
 
+// returns a copy of SecurityPolicySpec with AccessRightsArray updated
+func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
+	spec := policy.Spec.DeepCopy()
+	for i := 0; i < len(spec.AccessRightsArray); i++ {
+		err := r.updateAccess(ctx, spec.AccessRightsArray[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return spec, nil
+}
+
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
-	a *tykv1.AccessDefinition, namespacedName string) (time.Duration, error) {
+	a *tykv1.AccessDefinition) error {
 	api := &tykv1.ApiDefinition{}
 	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
@@ -110,18 +107,18 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 				"Name", a.Name,
 				"Namespace", a.Namespace,
 			)
-			return queueAfter, err
+			return err
 		}
 		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
-		return queueAfter, err
+		return err
 	}
 	def, err := r.UniversalClient.Api().Get(api.Status.ApiID)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	a.APIID = def.APIID
 	a.APIName = def.Name
-	return 0, nil
+	return nil
 }
 
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
@@ -148,7 +145,11 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Updating  policy")
 	policy.Spec.MID = policy.Status.PolID
-	err := r.UniversalClient.SecurityPolicy().Update(&policy.Spec)
+	spec, err := r.spec(ctx, policy)
+	if err != nil {
+		return err
+	}
+	err = r.UniversalClient.SecurityPolicy().Update(spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to update policy")
 		return err
@@ -166,7 +167,11 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Creating  policy")
-	err := r.UniversalClient.SecurityPolicy().Create(&policy.Spec)
+	spec, err := r.spec(ctx, policy)
+	if err != nil {
+		return err
+	}
+	err = r.UniversalClient.SecurityPolicy().Create(spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to create policy")
 		return err

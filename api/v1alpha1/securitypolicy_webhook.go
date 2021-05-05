@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	"os"
-	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,7 +37,7 @@ func (r *SecurityPolicy) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,verbs=create;update,versions=v1alpha1,name=msecuritypolicy.kb.io
+// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,verbs=create;update,versions=v1alpha1,name=msecuritypolicy.kb.io,sideEffects=None
 
 var _ webhook.Defaulter = &SecurityPolicy{}
 
@@ -52,11 +51,11 @@ func (r *SecurityPolicy) Default() {
 	spec.ThrottleRetryLimit = -1
 	spec.QuotaMax = -1
 	spec.QuotaRenewalRate = -1
-	spec.OrgID = strings.TrimSpace(os.Getenv(environmet.TykORG))
+	spec.OrgID = os.Getenv(environmet.TykORG)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,versions=v1alpha1,name=vsecuritypolicy.kb.io
+// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,versions=v1alpha1,name=vsecuritypolicy.kb.io,sideEffects=None
 
 var _ webhook.Validator = &SecurityPolicy{}
 

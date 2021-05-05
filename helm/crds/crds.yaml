@@ -1665,7 +1665,6 @@ spec:
                 required:
                 - name
                 - namespace
-                - versions
                 type: object
               type: object
             access_rights_array:
@@ -1709,7 +1708,6 @@ spec:
                 required:
                 - name
                 - namespace
-                - versions
                 type: object
               type: array
             active:
@@ -1798,7 +1796,6 @@ spec:
               description: Number of retries before returning error.   omit or "-1" for unlimited
               type: integer
           required:
-          - access_rights_array
           - active
           - name
           - state
