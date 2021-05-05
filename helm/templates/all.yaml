@@ -312,6 +312,7 @@ webhooks:
     - UPDATE
     resources:
     - securitypolicies
+  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
@@ -358,3 +359,4 @@ webhooks:
     - DELETE
     resources:
     - securitypolicies
+  sideEffects: None
