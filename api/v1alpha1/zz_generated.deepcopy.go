@@ -1483,9 +1483,13 @@ func (in *SecurityPolicySpec) DeepCopyInto(out *SecurityPolicySpec) {
 	*out = *in
 	if in.AccessRightsArray != nil {
 		in, out := &in.AccessRightsArray, &out.AccessRightsArray
-		*out = make([]AccessDefinition, len(*in))
+		*out = make([]*AccessDefinition, len(*in))
 		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(AccessDefinition)
+				(*in).DeepCopyInto(*out)
+			}
 		}
 	}
 	if in.AccessRights != nil {
@@ -1500,7 +1504,11 @@ func (in *SecurityPolicySpec) DeepCopyInto(out *SecurityPolicySpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	out.Partitions = in.Partitions
+	if in.Partitions != nil {
+		in, out := &in.Partitions, &out.Partitions
+		*out = new(PolicyPartitions)
+		**out = **in
+	}
 	if in.MetaData != nil {
 		in, out := &in.MetaData, &out.MetaData
 		*out = make(map[string]string, len(*in))

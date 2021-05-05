@@ -48,7 +48,7 @@ type SecurityPolicySpec struct {
 
 	// IsInactive applies to the key itself. Allows enabling or disabling the policy without deleting it.
 	IsInactive        bool                        `json:"is_inactive,omitempty"`
-	AccessRightsArray []AccessDefinition          `json:"access_rights_array"`
+	AccessRightsArray []*AccessDefinition         `json:"access_rights_array,omitempty"`
 	AccessRights      map[string]AccessDefinition `json:"access_rights,omitempty"`
 
 	// Rate limit per X seconds (x="Per"), omit or "-1" for unlimited
@@ -79,8 +79,8 @@ type SecurityPolicySpec struct {
 	Tags []string `json:"tags,omitempty"`
 
 	// KeyExpiresIn is the number of seconds till key expiry. For 1 hour is 3600. Default never expire or 0
-	KeyExpiresIn int64            `json:"key_expires_in,omitempty"`
-	Partitions   PolicyPartitions `json:"partitions,omitempty"`
+	KeyExpiresIn int64             `json:"key_expires_in,omitempty"`
+	Partitions   *PolicyPartitions `json:"partitions,omitempty"`
 
 	//LastUpdated                   string                           `json:"last_updated"`
 	MetaData map[string]string `json:"meta_data,omitempty"`
@@ -99,7 +99,7 @@ type AccessDefinition struct {
 	APIName string `json:"api_name,omitempty"`
 	// TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource
 	APIID    string   `json:"api_id,omitempty"`
-	Versions []string `json:"versions"`
+	Versions []string `json:"versions,omitempty"`
 	//RestrictedTypes []graphql.Type `json:"restricted_types"`
 	//Limit          APILimit     `json:"limit,omitempty"`
 	AllowanceScope string       `json:"allowance_scope,omitempty"`
