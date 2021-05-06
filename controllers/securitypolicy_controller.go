@@ -100,9 +100,6 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 	api := &tykv1.ApiDefinition{}
 	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			r.Log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue",
 				"Name", a.Name,
 				"Namespace", a.Namespace,
