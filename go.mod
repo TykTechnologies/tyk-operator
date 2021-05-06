@@ -9,6 +9,7 @@ require (
 	github.com/go-logr/logr v0.3.0
 	github.com/levigross/grequests v0.0.0-20190908174114-253788527a1a
 	github.com/pkg/errors v0.9.1
+	github.com/urfave/cli v1.22.5 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	golang.org/x/sys v0.0.0-20200814200057-3d37ad5750ed // indirect
 	k8s.io/api v0.19.2

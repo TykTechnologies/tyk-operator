@@ -522,7 +522,7 @@ type APIDefinitionSpec struct {
 	// StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
 	StripAuthData bool `json:"strip_auth_data,omitempty"`
 
-	Auth AuthConfig `json:"auth,omitempty"`
+	Auth *AuthConfig `json:"auth,omitempty"`
 
 	// +optional
 	AuthConfigs map[string]AuthConfig `json:"auth_configs,omitempty"`
@@ -619,18 +619,18 @@ type APIDefinitionSpec struct {
 	//RequestSigning             RequestSigningMeta    `json:"request_signing"`
 	//BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
 
-	VersionDefinition VersionDefinition `json:"definition,omitempty"`
+	VersionDefinition *VersionDefinition `json:"definition,omitempty"`
 
-	VersionData VersionData `json:"version_data,omitempty"`
+	VersionData *VersionData `json:"version_data,omitempty"`
 
 	//UptimeTests                UptimeTests           `json:"uptime_tests"`
 	//DisableRateLimit       bool                `json:"disable_rate_limit"`
 	//DisableQuota           bool                `json:"disable_quota"`
 
-	CustomMiddleware MiddlewareSection `json:"custom_middleware,omitempty"`
+	CustomMiddleware *MiddlewareSection `json:"custom_middleware,omitempty"`
 	//CustomMiddlewareBundle string              `json:"custom_middleware_bundle"`
 
-	CacheOptions CacheOptions `json:"cache_options,omitempty"`
+	CacheOptions *CacheOptions `json:"cache_options,omitempty"`
 
 	// SessionLifetime this is duration in seconds before the session key expires
 	// in redis.
@@ -670,7 +670,7 @@ type APIDefinitionSpec struct {
 	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
 
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
-	CORS               CORS                `json:"CORS,omitempty"`
+	CORS               *CORS               `json:"CORS,omitempty"`
 
 	// Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint. Use CertificateSecretNames if using cert-manager
 	Certificates []string `json:"certificates,omitempty"`
@@ -751,10 +751,10 @@ type Proxy struct {
 	CheckHostAgainstUptimeTests bool `json:"check_host_against_uptime_tests,omitempty"`
 
 	// Transport section exposes advanced transport level configurations such as minimum TLS version.
-	Transport ProxyTransport `json:"transport,omitempty"`
+	Transport *ProxyTransport `json:"transport,omitempty"`
 
 	// TODO: Untested. Is there a use-case for SD inside a K8s environment?
-	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
+	ServiceDiscovery *ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
 }
 
 func (p *Proxy) collectLoopingTarget(fn func(Target)) {

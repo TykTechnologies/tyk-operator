@@ -56,7 +56,7 @@ func (in *ApiDefinition) Default() {
 	in.Spec.OrgID = strings.TrimSpace(os.Getenv(environmet.TykORG))
 
 	if len(in.Spec.VersionData.Versions) == 0 {
-		in.Spec.VersionData = VersionData{
+		in.Spec.VersionData = &VersionData{
 			NotVersioned:   true,
 			DefaultVersion: "Default",
 			Versions: map[string]VersionInfo{
