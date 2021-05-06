@@ -26,4 +26,3 @@ dockers:
       - api
       - controllers
       - pkg
-      - vendor
