@@ -117,4 +117,4 @@ These are features which are only available to tyk PRO users
 
 | Feature | Supported | Comment |
 |---------|-----------|---------|
-| [Active API](./api_definitions/fields.md#active) |✅ | Untested|
+| [Active API](./api_definitions/fields.md#active) | ✅ | |
