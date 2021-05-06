@@ -12,7 +12,9 @@ checksum:
 # https://goreleaser.com/customization/build/
 builds:
   - skip: false
-
+# https://goreleaser.com/customization/release/
+release:
+  disable: true
 # https://goreleaser.com/customization/docker/
 dockers:
   - image_templates:
@@ -24,4 +26,3 @@ dockers:
       - api
       - controllers
       - pkg
-      - vendor
