@@ -493,10 +493,10 @@ type APIDefinitionSpec struct {
 	Proxy Proxy `json:"proxy"`
 
 	// +optional
-	ListenPort int `json:"listen_port"`
+	ListenPort int `json:"listen_port,omitempty"`
 
 	// +kubebuilder:validation:Enum=http;https;tcp;tls
-	Protocol string `json:"protocol"`
+	Protocol string `json:"protocol,omitempty"`
 
 	EnableProxyProtocol bool `json:"enable_proxy_protocol,omitempty"`
 
@@ -882,14 +882,14 @@ type AccessTypeEnum string
 type AuthorizeTypeEnum string
 
 type AuthConfig struct {
-	UseParam          bool            `json:"use_param,omitempty"`
-	ParamName         string          `json:"param_name,omitempty"`
-	UseCookie         bool            `json:"use_cookie,omitempty"`
-	CookieName        string          `json:"cookie_name,omitempty"`
-	AuthHeaderName    string          `json:"auth_header_name"`
-	UseCertificate    bool            `json:"use_certificate,omitempty"`
-	ValidateSignature bool            `json:"validate_signature,omitempty"`
-	Signature         SignatureConfig `json:"signature,omitempty"`
+	UseParam          bool             `json:"use_param,omitempty"`
+	ParamName         string           `json:"param_name,omitempty"`
+	UseCookie         bool             `json:"use_cookie,omitempty"`
+	CookieName        string           `json:"cookie_name,omitempty"`
+	AuthHeaderName    string           `json:"auth_header_name"`
+	UseCertificate    bool             `json:"use_certificate,omitempty"`
+	ValidateSignature bool             `json:"validate_signature,omitempty"`
+	Signature         *SignatureConfig `json:"signature,omitempty"`
 }
 
 type SignatureConfig struct {

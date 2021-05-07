@@ -111,7 +111,7 @@ func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
 			Proxy: v1alpha1.Proxy{
 				TargetURL: "http://example.com",
 			},
-			VersionData: v1alpha1.VersionData{
+			VersionData: &v1alpha1.VersionData{
 				NotVersioned: true,
 			},
 		},

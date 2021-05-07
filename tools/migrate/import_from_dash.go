@@ -1,7 +1,9 @@
-package transform
+package migrate
 
 import (
 	"bufio"
+	"bytes"
+	"fmt"
 	"io"
 	"strings"
 
@@ -17,7 +19,8 @@ func init() {
 	v1alpha1.AddToScheme(scheme)
 }
 
-func Build(o io.Writer, ns string, apis []*v1alpha1.APIDefinitionSpec, policies []*v1alpha1.SecurityPolicySpec) error {
+func Build(o io.Writer, ns string, apis []v1alpha1.APIDefinitionSpec, policies []v1alpha1.SecurityPolicySpec) error {
+	var buf bytes.Buffer
 	se := json.NewSerializerWithOptions(json.DefaultMetaFactory, scheme, scheme, json.SerializerOptions{
 		Yaml: true,
 	})
@@ -39,20 +42,16 @@ func Build(o io.Writer, ns string, apis []*v1alpha1.APIDefinitionSpec, policies 
 		names[policies[i].ID] = toName(policies[i].Name)
 	}
 	for i := 0; i < len(apis); i++ {
-		a := apis[i]
+		a := &apis[i]
 		for j := 0; j < len(a.JWTDefaultPolicies); j++ {
 			a.JWTDefaultPolicies[j] = name(a.JWTDefaultPolicies[j])
 		}
 		for k, v := range a.JWTScopeToPolicyMapping {
 			a.JWTScopeToPolicyMapping[k] = names[v]
 		}
-
-		// clear dash specific stuff
-		a.APIID = ""
-		a.ID = ""
 	}
 	for i := 0; i < len(policies); i++ {
-		p := policies[i]
+		p := &policies[i]
 		for j := 0; j < len(p.AccessRightsArray); j++ {
 			a := p.AccessRightsArray[j]
 			a.Namespace = ns
@@ -62,46 +61,64 @@ func Build(o io.Writer, ns string, apis []*v1alpha1.APIDefinitionSpec, policies 
 			a.APIID = ""
 			a.APIName = ""
 		}
-
 		// clear dash specific stuff
 		p.AccessRights = nil
 	}
 
 	for i := 0; i < len(apis); i++ {
-		a := apis[i]
+		a := &apis[i]
 		resource := &v1alpha1.ApiDefinition{}
 		resource.Name = names[a.ID]
+		resource.Kind = "ApiDefinition"
+		resource.APIVersion = v1alpha1.GroupVersion.String()
 		resource.Namespace = ns
-		// resource.Spec = *a
-		resource.Spec = omitDefault(a)
-		if err := se.Encode(resource, o); err != nil {
+
+		// clear dash specific stuff
+		a.ID = ""
+		a.APIID = ""
+
+		resource.Spec = copyAPI(a)
+
+		if err := se.Encode(resource, &buf); err != nil {
 			return err
 		}
 	}
 	for i := 0; i < len(policies); i++ {
-		a := policies[i]
+		a := &policies[i]
 		resource := &v1alpha1.SecurityPolicy{}
 		resource.Name = names[a.ID]
 		resource.Namespace = ns
-		resource.Spec = *a
-		if err := se.Encode(resource, o); err != nil {
+		resource.Spec = copyPolicy(a)
+		if err := se.Encode(resource, &buf); err != nil {
 			return err
 		}
 	}
-	return nil
+	return cleanup(o, &buf)
 }
 
 func toName(n string) string {
 	n = strings.ToLower(n)
-	var s bufio.Scanner
+	s := bufio.NewScanner(strings.NewReader(n))
 	s.Split(bufio.ScanWords)
 	var words []string
 	for s.Scan() {
 		words = append(words, s.Text())
 	}
+	fmt.Println(words)
 	return strings.Join(words, "-")
 }
 
-func omitDefault(a *v1alpha1.APIDefinitionSpec) v1alpha1.APIDefinitionSpec {
-	return *a
+func cleanup(o io.Writer, buf *bytes.Buffer) error {
+	remove := []string{
+		`  creationTimestamp: null
+`,
+		`status:
+  api_id: ""`,
+	}
+	b := buf.Bytes()
+	for _, v := range remove {
+		b = bytes.ReplaceAll(b, []byte(v), []byte(""))
+	}
+	_, err := o.Write(b)
+	return err
 }

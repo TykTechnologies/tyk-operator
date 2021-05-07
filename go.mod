@@ -7,9 +7,11 @@ require (
 	github.com/cucumber/godog v0.10.0
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-logr/logr v0.3.0
+	github.com/go-logr/zapr v0.2.0
 	github.com/levigross/grequests v0.0.0-20190908174114-253788527a1a
 	github.com/pkg/errors v0.9.1
-	github.com/urfave/cli v1.22.5 // indirect
+	github.com/urfave/cli v1.22.5
+	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	golang.org/x/sys v0.0.0-20200814200057-3d37ad5750ed // indirect
 	k8s.io/api v0.19.2
