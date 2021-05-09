@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,11 +124,12 @@ func TestSecurityPolicy(t *testing.T) {
 
 func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 	t.Helper()
+	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).SecurityPolicy().All()
+				newKlient(c).SecurityPolicy().All(ctx)
 				return nil
 			},
 			kase,
@@ -135,7 +137,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 	case "Get":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).SecurityPolicy().Get(testSecurityPolicyID)
+				newKlient(c).SecurityPolicy().Get(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,
@@ -145,7 +147,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 			func(c universal_client.Client) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
-				newKlient(c).SecurityPolicy().Update(&s)
+				newKlient(c).SecurityPolicy().Update(ctx, &s)
 				return nil
 			},
 			kase,
@@ -155,7 +157,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 			func(c universal_client.Client) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
-				newKlient(c).SecurityPolicy().Create(&s)
+				newKlient(c).SecurityPolicy().Create(ctx, &s)
 				return nil
 			},
 			kase,
@@ -163,7 +165,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 	case "Delete":
 		universal_client.RunRequestKase(t, e,
 			func(c universal_client.Client) error {
-				newKlient(c).SecurityPolicy().Delete(testSecurityPolicyID)
+				newKlient(c).SecurityPolicy().Delete(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,
