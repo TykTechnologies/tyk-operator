@@ -110,10 +110,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 
 			tykCertID := r.UniversalClient.Organization().GetID() + cert.CalculateFingerPrint(pemCrtBytes)
-			exists := r.UniversalClient.Certificate().Exists(tykCertID)
+			exists := r.UniversalClient.Certificate().Exists(ctx, tykCertID)
 			if !exists {
 				// upload the certificate
-				tykCertID, err = r.UniversalClient.Certificate().Upload(pemKeyBytes, pemCrtBytes)
+				tykCertID, err = r.UniversalClient.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
 				if err != nil {
 					queue = true
 					return err
