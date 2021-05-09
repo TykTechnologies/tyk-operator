@@ -345,6 +345,8 @@ spec:
               required:
               - driver
               type: object
+            custom_middleware_bundle:
+              type: string
             definition:
               properties:
                 key:
@@ -1523,6 +1525,7 @@ spec:
               - not_versioned
               type: object
           required:
+          - custom_middleware_bundle
           - name
           - protocol
           - proxy
