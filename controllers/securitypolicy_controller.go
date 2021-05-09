@@ -109,7 +109,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
 		return err
 	}
-	def, err := r.UniversalClient.Api().Get(api.Status.ApiID)
+	def, err := r.UniversalClient.Api().Get(ctx, api.Status.ApiID)
 	if err != nil {
 		return err
 	}

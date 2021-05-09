@@ -138,7 +138,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
-			err := r.UniversalClient.Api().Create(&desired.Spec)
+			err := r.UniversalClient.Api().Create(ctx, &desired.Spec)
 			if err != nil {
 				log.Error(err, "Failed to create api definition")
 				return err
@@ -153,7 +153,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 		log.Info("Updating ApiDefinition")
 		desired.Spec.APIID = desired.Status.ApiID
-		err = r.UniversalClient.Api().Update(&desired.Spec)
+		err = r.UniversalClient.Api().Update(ctx, &desired.Spec)
 		if err != nil {
 			log.Error(err, "Failed to update api definition")
 			return err
@@ -251,7 +251,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			}
 		}
 		r.Log.Info("deleting api")
-		err := r.UniversalClient.Api().Delete(desired.Status.ApiID)
+		err := r.UniversalClient.Api().Delete(ctx, desired.Status.ApiID)
 		if err != nil {
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 			return 0, err
