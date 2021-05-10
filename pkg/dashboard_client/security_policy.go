@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,7 +15,7 @@ type SecurityPolicy struct {
 }
 
 // All Returns all policies from the Dashboard
-func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
+func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error) {
 	res, err := p.Client.Get(p.Env.JoinURL(endpointPolicies), nil)
 	if err != nil {
 		return nil, err
@@ -33,7 +34,7 @@ func (p SecurityPolicy) All() ([]v1.SecurityPolicySpec, error) {
 }
 
 // Get  find the Policy by id
-func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
+func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicySpec, error) {
 	res, err := p.Client.Get(p.Env.JoinURL(endpointPolicies, id), nil)
 	if err != nil {
 		return nil, err
@@ -47,7 +48,7 @@ func (p SecurityPolicy) Get(id string) (*v1.SecurityPolicySpec, error) {
 }
 
 // Create  creates a new policy using the def object
-func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
+func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) error {
 	res, err := p.Client.PostJSON(p.Env.JoinURL(endpointPolicies), def)
 	if err != nil {
 		return err
@@ -70,7 +71,7 @@ func (p SecurityPolicy) Create(def *v1.SecurityPolicySpec) error {
 }
 
 // Update updates a resource object def
-func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
+func (p SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) error {
 	res, err := p.Client.PutJSON(p.Env.JoinURL(endpointPolicies, def.MID), def)
 	if err != nil {
 		return err
@@ -83,7 +84,7 @@ func (p SecurityPolicy) Update(def *v1.SecurityPolicySpec) error {
 }
 
 // Delete deletes the resource by ID
-func (p SecurityPolicy) Delete(id string) error {
+func (p SecurityPolicy) Delete(ctx context.Context, id string) error {
 	res, err := p.Client.Delete(p.Env.JoinURL(endpointPolicies, id), nil)
 	if err != nil {
 		return err
