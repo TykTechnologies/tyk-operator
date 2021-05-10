@@ -2,6 +2,7 @@ package dashboard_client
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -21,7 +22,7 @@ type CertificateList struct {
 }
 
 // All returns a list of all certificates ID's
-func (c *Cert) All() ([]string, error) {
+func (c *Cert) All(ctx context.Context) ([]string, error) {
 	res, err := c.Client.Get(c.Env.JoinURL(endpointCerts), nil)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (c *Cert) All() ([]string, error) {
 	return o.CertIDs, nil
 }
 
-func (c *Cert) Exists(id string) bool {
+func (c *Cert) Exists(ctx context.Context, id string) bool {
 	res, err := c.Client.Get(c.Env.JoinURL(endpointCerts, id), nil)
 	if err != nil {
 		c.Log.Error(err, "failed to get certificate")
@@ -52,7 +53,7 @@ func (c *Cert) Exists(id string) bool {
 	return true
 }
 
-func (c *Cert) Delete(id string) error {
+func (c *Cert) Delete(ctx context.Context, id string) error {
 	res, err := c.Client.Delete(c.Env.JoinURL(endpointCerts, id), nil)
 	if err != nil {
 		return err
@@ -64,7 +65,7 @@ func (c *Cert) Delete(id string) error {
 	return nil
 }
 
-func (c *Cert) Upload(key []byte, crt []byte) (id string, err error) {
+func (c *Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, err error) {
 	combined := make([]byte, 0)
 	combined = append(combined, key...)
 	combined = append(combined, crt...)

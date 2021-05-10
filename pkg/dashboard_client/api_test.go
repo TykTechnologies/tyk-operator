@@ -1,6 +1,7 @@
 package dashboard_client
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -189,13 +190,13 @@ func TestAPI(t *testing.T) {
 
 func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal_client.Kase) {
 	t.Helper()
-
+	ctx := context.TODO()
 	t.Run(name, func(t *testing.T) {
 		switch name {
 		case "All":
 			universal_client.RunRequestKase(t, e,
 				func(c universal_client.Client) error {
-					newKlient(c).Api().All()
+					newKlient(c).Api().All(ctx)
 					return nil
 				},
 				kase...,
@@ -203,7 +204,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal_c
 		case "Get":
 			universal_client.RunRequestKase(t, e,
 				func(c universal_client.Client) error {
-					newKlient(c).Api().Get(testAPIID)
+					newKlient(c).Api().Get(ctx, testAPIID)
 					return nil
 				},
 				kase...,
@@ -213,7 +214,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal_c
 				func(c universal_client.Client) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
-					newKlient(c).Api().Update(&s)
+					newKlient(c).Api().Update(ctx, &s)
 					return nil
 				},
 				kase...,
@@ -223,7 +224,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal_c
 				func(c universal_client.Client) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
-					newKlient(c).Api().Create(&s)
+					newKlient(c).Api().Create(ctx, &s)
 					return nil
 				},
 				kase...,
@@ -231,7 +232,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal_c
 		case "Delete":
 			universal_client.RunRequestKase(t, e,
 				func(c universal_client.Client) error {
-					newKlient(c).Api().Delete(testAPIID)
+					newKlient(c).Api().Delete(ctx, testAPIID)
 					return nil
 				},
 				kase...,
