@@ -1679,7 +1679,6 @@ spec:
               - not_versioned
               type: object
           required:
-          - custom_middleware_bundle
           - name
           - protocol
           - proxy

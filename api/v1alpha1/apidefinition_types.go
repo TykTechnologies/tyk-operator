@@ -628,7 +628,7 @@ type APIDefinitionSpec struct {
 	//DisableQuota           bool                `json:"disable_quota"`
 
 	CustomMiddleware       MiddlewareSection `json:"custom_middleware,omitempty"`
-	CustomMiddlewareBundle string            `json:"custom_middleware_bundle"`
+	CustomMiddlewareBundle string            `json:"custom_middleware_bundle,omitempty"`
 
 	CacheOptions CacheOptions `json:"cache_options,omitempty"`
 
