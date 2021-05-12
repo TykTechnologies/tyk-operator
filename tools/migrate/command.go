@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"os"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
@@ -26,6 +27,7 @@ var CMD = cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
+		runCtx := context.Background()
 		c := zap.NewProductionConfig()
 		c.DisableStacktrace = true
 		xl, err := c.Build(
@@ -41,14 +43,14 @@ var CMD = cli.Command{
 		lg := zapr.NewLogger(xl)
 		client := dashboard_client.NewClient(lg, e)
 		xl.Info("Fetching api's")
-		apis, err := client.Api().All()
+		apis, err := client.Api().All(runCtx)
 		if err != nil {
 			xl.Error("Failed to get apis", zap.Error(err))
 			return err
 		}
 		xl.Info("received apis ", zap.Int("count", len(apis)))
 		xl.Info("Fetching policies")
-		policies, err := client.SecurityPolicy().All()
+		policies, err := client.SecurityPolicy().All(runCtx)
 		if err != nil {
 			xl.Error("Failed to get polices", zap.Error(err))
 			return err
