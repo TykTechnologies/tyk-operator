@@ -1524,7 +1524,6 @@ spec:
               type: object
           required:
           - name
-          - protocol
           - proxy
           type: object
         status:

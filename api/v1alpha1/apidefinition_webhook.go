@@ -68,6 +68,9 @@ func (in *ApiDefinition) Default() {
 		}
 
 	}
+	if in.Spec.Auth == nil {
+		in.Spec.Auth = &AuthConfig{}
+	}
 
 	if in.Spec.UseStandardAuth {
 		if in.Spec.AuthConfigs == nil {
