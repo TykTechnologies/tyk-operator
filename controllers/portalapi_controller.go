@@ -42,8 +42,7 @@ type PortalAPIReconciler struct {
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=portalapis,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=portalapis/status,verbs=get;update;patch
 
-func (r *PortalAPIReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *PortalAPIReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	namespacedName := req.NamespacedName
 
 	log := r.Log.WithValues("PortalApi", namespacedName.String())
