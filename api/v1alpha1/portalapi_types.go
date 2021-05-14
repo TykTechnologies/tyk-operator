@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type PortalAPIConfig struct {
@@ -57,6 +58,10 @@ type NamespaceName struct {
 	Namespace string `json:"namespace"`
 	// Name of the resource to target
 	Name string `json:"name"`
+}
+
+func (ns NamespaceName) String() string {
+	return types.NamespacedName{Namespace: ns.Namespace, Name: ns.Name}.String()
 }
 
 // PortalAPISpec defines the desired state of PortalAPI

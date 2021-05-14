@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -62,7 +61,7 @@ func (r *PortalAPIReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		// if a PolicyID exists - use that, otherwise, overwrite it with that from the SecurityPolicy object
 		if desired.Spec.PolicyID == "" {
-			desired.Spec.PolicyID = encodeNS(fmt.Sprintf("%s/%s", desired.Spec.SecurityPolicy.Namespace, desired.Spec.SecurityPolicy.Name))
+			desired.Spec.PolicyID = encodeNS(desired.Spec.SecurityPolicy.String())
 		}
 		util.AddFinalizer(desired, keys.PortalAPIFinalizerName)
 
