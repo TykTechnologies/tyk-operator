@@ -60,26 +60,6 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
-  - organizations
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - tyk.tyk.io
-  resources:
-  - organizations/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - tyk.tyk.io
-  resources:
   - securitypolicies
   verbs:
   - create
