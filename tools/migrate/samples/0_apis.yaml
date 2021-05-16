@@ -1,0 +1,21 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-protected
+  namespace: default
+spec:
+  active: true
+  auth:
+    auth_header_name: Authorization
+  name: httpbin protected
+  org_id: 5fd08e0f69710900018bc195
+  protocol: http
+  proxy:
+    listen_path: /httpbin
+    strip_listen_path: true
+    target_url: http://httpbin.org
+  use_standard_auth: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+

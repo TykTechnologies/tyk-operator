@@ -52,7 +52,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		}
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
-				VersionData: tykv1alpha1.VersionData{
+				VersionData: &tykv1alpha1.VersionData{
 					Versions: map[string]tykv1alpha1.VersionInfo{
 						"Default": {
 							ExtendedPaths: &tykv1alpha1.ExtendedPathsSet{
@@ -92,7 +92,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		}
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
-				VersionData: tykv1alpha1.VersionData{
+				VersionData: &tykv1alpha1.VersionData{
 					Versions: map[string]tykv1alpha1.VersionInfo{
 						"Default": {
 							ExtendedPaths: &tykv1alpha1.ExtendedPathsSet{
@@ -152,7 +152,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 				Proxy: tykv1alpha1.Proxy{
 					TargeInternal: target1,
 				},
-				VersionData: tykv1alpha1.VersionData{
+				VersionData: &tykv1alpha1.VersionData{
 					Versions: map[string]tykv1alpha1.VersionInfo{
 						"Default": {
 							ExtendedPaths: &tykv1alpha1.ExtendedPathsSet{
