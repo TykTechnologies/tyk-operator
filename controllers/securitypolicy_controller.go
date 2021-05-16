@@ -177,6 +177,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	r.Log.Info("Successful created Policy")
+	policy.Spec.MID = spec.MID
 	policy.Status.PolID = policy.Spec.MID
 	return r.Status().Update(ctx, policy)
 }
