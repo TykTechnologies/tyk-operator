@@ -31,7 +31,6 @@ and documentation for each of these custom resources are available:
 - [Installing Tyk Operator](./docs/installation/installation.md)
 - [Ingress Controller](./docs/ingress.md)
 - [API Definitions](./docs/api_definitions.md)
-- [WebHooks](./docs/webhooks.md)
 - [Security Policies](./docs/policies.md)
 
 ## Learning with Videos
