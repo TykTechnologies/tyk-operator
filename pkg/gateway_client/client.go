@@ -71,16 +71,6 @@ func (c *Client) HotReload() error {
 	return nil
 }
 
-// TODO: Webhook Requires implementation
-func (c *Client) Webhook() universal_client.UniversalWebhook {
-	panic("implement me")
-}
-
-// TODO: Organization requires implementation
-func (c *Client) Organization() universal_client.UniversalOrganization {
-	panic("implement me")
-}
-
 // TODO: Certificate Requires implementation
 func (c *Client) Certificate() universal_client.UniversalCertificate {
 	panic("implement me")

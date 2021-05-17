@@ -51,16 +51,8 @@ type Client struct {
 	universal_client.Client
 }
 
-func (c *Client) Organization() universal_client.UniversalOrganization {
-	return &Organization{c}
-}
-
 func (c *Client) Certificate() universal_client.UniversalCertificate {
 	return &Cert{c}
-}
-
-func (c *Client) Webhook() universal_client.UniversalWebhook {
-	return &Webhook{c}
 }
 
 func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
