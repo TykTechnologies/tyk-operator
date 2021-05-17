@@ -169,11 +169,11 @@ scrap: generate manifests helm cross-build-image
 
 .PHONY: setup-pro
 setup-pro:
-	go run hack/bootstrap/create/main.go --debug  --mode pro
+	go run hack/bootstrap/create/main.go --debug  --mode pro -cluster=${CLUSTER_NAME}
 
 .PHONY: setup-ce
 setup-ce:
-	go run hack/bootstrap/create/main.go --debug
+	go run hack/bootstrap/create/main.go --debug -cluster=${CLUSTER_NAME}
 
 
 .PHONY: boot-pro

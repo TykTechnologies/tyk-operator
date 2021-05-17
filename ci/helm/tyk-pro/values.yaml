@@ -80,7 +80,7 @@ dash:
   image:
     repository: tykio/tyk-dashboard
     tag: v3.1.2
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 3000
@@ -146,11 +146,12 @@ gateway:
       value: "tcp://grpc-plugin.tykpro-control-plane.svc.cluster.local:9999"
 
 pump:
+  enabled: false
   replicaCount: 1
   image:
     repository: tykio/tyk-pump-docker-pub
     tag: v1.2.0
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   annotations: {}
   resources: {}
   nodeSelector: {}

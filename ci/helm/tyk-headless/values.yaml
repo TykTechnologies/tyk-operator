@@ -25,7 +25,7 @@ gateway:
   image:
     repository: tykio/tyk-gateway
     tag: v3.1.2
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 8080
