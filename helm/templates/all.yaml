@@ -109,26 +109,6 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - tyk.tyk.io
-  resources:
-  - webhooks
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - tyk.tyk.io
-  resources:
-  - webhooks/status
-  verbs:
-  - get
-  - patch
-  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

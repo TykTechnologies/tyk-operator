@@ -19,11 +19,6 @@ type PoliciesResponse struct {
 	Pages    int                     `json:"pages"`
 }
 
-type WebhookResponse struct {
-	Webhooks []v1.WebhookSpec `json:"hooks"`
-	Pages    int              `json:"pages"`
-}
-
 type CertErrorResponse struct {
 	Status  string `json:"Status"`
 	Message string `json:"Message"`

@@ -66,7 +66,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{}, nil
 			}
 
-			orgID := r.UniversalClient.Organization().GetID()
+			orgID := r.UniversalClient.Environment().Org
 			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
 			certID := orgID + certFingerPrint

@@ -109,7 +109,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				return err
 			}
 
-			tykCertID := r.UniversalClient.Organization().GetID() + cert.CalculateFingerPrint(pemCrtBytes)
+			tykCertID := r.UniversalClient.Environment().Org + cert.CalculateFingerPrint(pemCrtBytes)
 			exists := r.UniversalClient.Certificate().Exists(ctx, tykCertID)
 			if !exists {
 				// upload the certificate
