@@ -13,6 +13,20 @@ import (
 	"strings"
 )
 
+var preloadImagesList = []struct{ name, image, version string }{
+	{"mongo", "mongo", "latest"},
+	{"redis", "k8s.gcr.io/redis", "e2e"},
+	{"httpbin", "docker.io/kennethreitz/httpbin", ""},
+	{"gateway", "tykio/tyk-gateway", "v3.1.2"},
+	{"dash", "tykio/tyk-dashboard", "v3.1.2"},
+	{"bash", "bash", "5.1"},
+	{"busybox", "busybox", "1.32"},
+	{"grpc", "mangomm/tyk-grpc-plugin", ""},
+	{"cert-manager-cainjector", "quay.io/jetstack/cert-manager-cainjector", "v1.3.1"},
+	{"cert-manager-controller", "quay.io/jetstack/cert-manager-controller", "v1.3.1"},
+	{"cert-manager-webhook", "quay.io/jetstack/cert-manager-webhook", "v1.3.1"},
+}
+
 // Config configuration for booting operator environment
 type Config struct {
 	WorkDir  string
@@ -110,7 +124,7 @@ type Operator struct {
 func (o *Operator) defaults() {
 	o.Namespace = "tyk-operator-system"
 	o.SecretName = "tyk-operator-conf"
-	o.CertManager = "https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml"
+	o.CertManager = "https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml"
 	o.CertManagerNamespace = "cert-manager"
 }
 
@@ -126,6 +140,7 @@ var config Config
 
 var mode = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
 var debug = flag.Bool("debug", false, "prints lots of details")
+var cluster = flag.String("cluster", "", "cluster name")
 
 func chartDir() string {
 	switch config.Tyk.Mode {
@@ -152,6 +167,7 @@ func deployDir() string {
 func main() {
 	flag.Parse()
 	config.bind(*mode)
+	preloadImages()
 	submodule()
 	ns()
 	common()
@@ -437,4 +453,52 @@ func deployGRPCPlugin() {
 		))
 	}
 	ok()
+}
+
+func isKind() bool {
+	cmd := exec.Command("kind", "get", "clusters")
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return strings.Contains(buf.String(), *cluster)
+}
+
+func preloadImages() {
+	if !isKind() {
+		return
+	}
+	for _, v := range preloadImagesList {
+		loadImage(v.name, v.image, v.version)
+	}
+}
+
+func loadImage(name, image, version string) {
+	if version == "" {
+		version = "latest"
+	}
+	img := image + ":" + version
+	sayn("==> preloading image ", img)
+	{
+		// check if the image exists
+		cmd := exec.Command("docker", "image", "inspect", img)
+		if cmd.Run() != nil {
+			// pull the image
+			cmd = exec.Command("docker", "pull", img)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+	{
+		cmd := exec.Command("kind", "load", "docker-image", img, "--name", *cluster)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stdout
+		if err := cmd.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}
 }
