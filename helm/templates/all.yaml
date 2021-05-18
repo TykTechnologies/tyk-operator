@@ -269,7 +269,7 @@ spec:
         envFrom:
 {{- toYaml . | nindent 10 }}
 {{- end }}
-        image: tyk.io/tyk-operator-upgrade:v3.0.0
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         livenessProbe:
           httpGet:
