@@ -1,0 +1,7 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: apidefinition-sample
+spec:
+  # Add fields here
+  foo: bar
