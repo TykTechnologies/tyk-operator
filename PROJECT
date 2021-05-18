@@ -1,3 +1,4 @@
+componentConfig: true
 domain: tyk.io
 layout:
 - go.kubebuilder.io/v3
