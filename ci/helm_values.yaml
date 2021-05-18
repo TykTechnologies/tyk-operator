@@ -1,6 +1,6 @@
 replicaCount: 1
 
 image:
-  repository: tyk.io/tyk-operator
+  repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
   tag: "test"
