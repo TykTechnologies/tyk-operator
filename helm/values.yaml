@@ -1,8 +1,4 @@
 replicaCount: 1
-confSecretName: tyk-operator-conf
-
-ingressHTTPSPort: 8443
-ingressHTTPPort: 8080
 
  # loads enviroment variables to the operator.
 envFrom:
@@ -25,19 +21,5 @@ fullnameOverride: ""
 
 annotations: {}
 podAnnotations: {}
-podSecurityContext: {}
-resources:
-  limits:
-    cpu: 100m
-    memory: 30Mi
-  requests:
-    cpu: 100m
-    memory: 20Mi
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-
-clusterDnsDomain: cluster.local
+podSecurityContext:
+  allowPrivilegeEscalation: false

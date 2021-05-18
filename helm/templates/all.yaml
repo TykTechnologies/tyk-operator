@@ -292,8 +292,10 @@ spec:
         resources:
 {{- toYaml . | nindent 10 }}
 {{- end }}
+{{- with .Values.securityContext }}
         securityContext:
-          allowPrivilegeEscalation: false
+{{- toYaml . | nindent 10 }}
+{{- end }}
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert

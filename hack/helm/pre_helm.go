@@ -14,13 +14,12 @@ func main() {
 		{envVars, envVarsTPL},
 		{resources, resourcesTPL},
 		{annotation, annotationTPL},
+		{securityContext, securityContextTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
 		{"OPERATOR_ENV_CONFIG", "{{ .Values.confSecretName }}"},
 		{"IfNotPresent", "{{ .Values.image.pullPolicy }}"},
-		{"PORT_HTTPS_INGRESS", "{{default 8443 .Values.ingressHTTPSPort |quote}}"},
-		{"PORT_HTTP_INGRESS", "{{default 8080 .Values.ingressHTTPPort |quote}}"},
 		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
 	}
 	for _, v := range m {
@@ -71,5 +70,12 @@ const resources = `        resources:
             memory: 20Mi`
 const resourcesTPL = `{{- with .Values.resources }}
         resources:
+{{- toYaml . | nindent 10 }}
+{{- end }}`
+
+const securityContext = `        securityContext:
+          allowPrivilegeEscalation: false`
+const securityContextTPL = `{{- with .Values.securityContext }}
+        securityContext:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
