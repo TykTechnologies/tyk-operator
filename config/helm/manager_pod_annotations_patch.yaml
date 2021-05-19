@@ -5,7 +5,6 @@ metadata:
   namespace: system
 spec:
   template:
-    spec:
-      containers:
-        - name: manager
-          resources:
+    metadata:
+      annotations:
+        POD-ANNOTATION: POD-ANNOTATION

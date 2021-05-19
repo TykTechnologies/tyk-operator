@@ -3,73 +3,80 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
-	"log"
 	"os"
-	"unicode"
-	"unicode/utf8"
 )
 
 func main() {
-	m := map[string]string{
-		"replicas: 1":                   "replicas: {{ .Values.replicaCount }}",
-		"tyk-operator-conf":             "{{ .Values.confSecretName }}",
-		"tykio/tyk-operator:latest":     "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
-		"imagePullPolicy: IfNotPresent": "imagePullPolicy: {{ .Values.image.pullPolicy }}",
-		"name: default":                 "name: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
-		"serviceAccountName: default":   "serviceAccountName: {{ include \"tyk-operator-helm.serviceAccountName\" . }}",
-		annotationsSrc:                  annotationsDest,
-		envHTTPSSrc:                     envHTTPSDEST,
-		envHTTPSrc:                      envHTTPDEST,
+	a, _ := ioutil.ReadAll(os.Stdin)
+	m := []struct{ key, value string }{
+		{namespace, ""},
+		{envFrom, envFromTPL},
+		{envVars, envVarsTPL},
+		{resources, resourcesTPL},
+		{annotation, annotationTPL},
+		{securityContext, securityContextTPL},
+
+		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
+		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
+		{"OPERATOR_ENV_CONFIG", "{{ .Values.confSecretName }}"},
+		{"IfNotPresent", "{{ .Values.image.pullPolicy }}"},
+		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
+		{"tykio/tyk-operator:latest", "{{ .Values.image.repository }}:{{ .Values.image.tag }}"},
 	}
-	b, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		log.Fatal(err)
+	for _, v := range m {
+		a = bytes.ReplaceAll(a, []byte(v.key), []byte(v.value))
 	}
-	for k, v := range m {
-		b = bytes.ReplaceAll(b, []byte(k), []byte(v))
-	}
-	os.Stdout.Write(injectResources(b))
+	os.Stdout.Write(a)
 }
 
-var resource = `{{- with .Values.resources}}
-        resources:
-{{- . | toYaml | nindent 10 }}
-{{end}}
-`
+const namespace = `apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: RELEASE_NAMESPACE
+---`
 
-const annotationsSrc = `  template:
-    metadata:
-      labels:
-        control-plane: controller-manager`
-
-const annotationsDest = `  template:
-    metadata:
-    {{- with .Values.podAnnotations }}
+const annotation = `      annotations:
+        POD-ANNOTATION: POD-ANNOTATION`
+const annotationTPL = `{{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-      labels:
-        control-plane: controller-manager`
+{{- toYaml . | nindent 8 }}
+{{- end }}`
 
-const (
-	envHTTPSSrc  = `value: "8443"`
-	envHTTPSDEST = `value: {{default 8443 .Values.ingressHTTPSPort |quote}}`
-	envHTTPSrc   = `value: "8080"`
-	envHTTPDEST  = `value: {{.Values.ingressHTTPPort |quote}}`
-)
+const envFrom = `        envFrom:
+        - secretRef:
+            name: OPERATOR_ENV_CONFIG`
+const envFromTPL = `{{- with .Values.envFrom }}
+        envFrom:
+{{- toYaml . | nindent 10 }}
+{{- end }}`
 
-func injectResources(b []byte) []byte {
-	n := bytes.Index(b, []byte("kind: Deployment"))
-	s := b[n:]
-	w := bytes.Index(s, []byte("volumeMounts"))
-	for ; w > 0; w-- {
-		r, _ := utf8.DecodeLastRune(s[:w])
-		if !unicode.IsSpace(r) {
-			break
-		}
-	}
-	w++
-	return append(b[:n+w],
-		append([]byte(resource), b[n+w:]...)...,
-	)
-}
+const envVars = `        env:
+        - name: TYK_HTTPS_INGRESS_PORT
+          value: PORT_HTTPS_INGRESS
+        - name: TYK_HTTP_INGRESS_PORT
+          value: PORT_HTTP_INGRESS`
+const envVarsTPL = `{{- with .Values.envVars }}
+        env:
+{{- toYaml . | nindent 10 }}
+{{- end }}`
+
+const resources = `        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi`
+const resourcesTPL = `{{- with .Values.resources }}
+        resources:
+{{- toYaml . | nindent 10 }}
+{{- end }}`
+
+const securityContext = `        securityContext:
+          allowPrivilegeEscalation: false`
+const securityContextTPL = `{{- with .Values.securityContext }}
+        securityContext:
+{{- toYaml . | nindent 10 }}
+{{- end }}`

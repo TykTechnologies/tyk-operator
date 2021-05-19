@@ -4,10 +4,19 @@ __NOTE__: These instructions are for kind clusters which is the recommended way
 for development
 
 ## Prerequisites
-- [kind](https://kind.sigs.k8s.io/)
-- [helm](https://helm.sh/)
-- [Docker](https://www.docker.com/) or [podman](https://podman.io/)
-- Golang (1.15.0+)
+
+Note that these are tools which we use for development of this project.
+
+| tool | version|
+|-------|---------|
+| kind | v0.9.0+ |
+|go |1.16.3+|
+| operator-sdk| v1.7.2+ |
+|controller-gen | v0.4.1+|
+| kustomize |v3.8.7+|
+| helm|v3.5.4+|
+| Docker| 19.03.13+|
+
 
 ### 0 Create cluster
 
