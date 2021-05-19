@@ -39,7 +39,7 @@ type SecurityPolicyReconciler struct {
 	client.Client
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
-	UniversalClient universal_client.UniversalClient
+	UniversalClient universal_client.Client
 	Recorder        record.EventRecorder
 }
 

@@ -26,7 +26,7 @@ func env() environmet.Env {
 	}
 }
 
-func newKlient(c universal_client.Client) universal_client.UniversalClient {
+func newKlient(c universal_client.HTTPClient) universal_client.Client {
 	var e environmet.Env
 	e.Parse()
 	x := NewClient(c.Log, c.Env.Merge(e))

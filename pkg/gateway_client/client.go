@@ -29,7 +29,7 @@ type ResponseMsg struct {
 
 func NewClient(log logr.Logger, env environmet.Env) *Client {
 	c := &Client{
-		Client: universal_client.Client{
+		HTTPClient: universal_client.HTTPClient{
 			Log: log,
 			Env: env,
 			BeforeRequest: func(h *http.Request) {
@@ -42,7 +42,7 @@ func NewClient(log logr.Logger, env environmet.Env) *Client {
 }
 
 type Client struct {
-	universal_client.Client
+	universal_client.HTTPClient
 }
 
 func (c *Client) Api() universal_client.Api {

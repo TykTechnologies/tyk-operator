@@ -128,7 +128,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 	switch kase.Name {
 	case "All":
 		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+			func(c universal_client.HTTPClient) error {
 				newKlient(c).SecurityPolicy().All(ctx)
 				return nil
 			},
@@ -136,7 +136,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 		)
 	case "Get":
 		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+			func(c universal_client.HTTPClient) error {
 				newKlient(c).SecurityPolicy().Get(ctx, testSecurityPolicyID)
 				return nil
 			},
@@ -144,7 +144,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 		)
 	case "Update":
 		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+			func(c universal_client.HTTPClient) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
 				newKlient(c).SecurityPolicy().Update(ctx, &s)
@@ -154,7 +154,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 		)
 	case "Create":
 		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+			func(c universal_client.HTTPClient) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
 				newKlient(c).SecurityPolicy().Create(ctx, &s)
@@ -164,7 +164,7 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 		)
 	case "Delete":
 		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+			func(c universal_client.HTTPClient) error {
 				newKlient(c).SecurityPolicy().Delete(ctx, testSecurityPolicyID)
 				return nil
 			},

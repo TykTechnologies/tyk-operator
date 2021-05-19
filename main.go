@@ -174,7 +174,7 @@ func main() {
 	}
 }
 
-func newUniversalClient(log logr.Logger, env environmet.Env) universal_client.UniversalClient {
+func newUniversalClient(log logr.Logger, env environmet.Env) universal_client.Client {
 	if env.Mode == "pro" {
 		return dashboard_client.NewClient(log, env)
 	}

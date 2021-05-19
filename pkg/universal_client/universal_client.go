@@ -2,7 +2,7 @@ package universal_client
 
 import "github.com/TykTechnologies/tyk-operator/pkg/environmet"
 
-type UniversalClient interface {
+type Client interface {
 	Environment() environmet.Env
 	HotReload() error
 	Api() Api

@@ -40,7 +40,7 @@ type SecretCertReconciler struct {
 	client.Client
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
-	UniversalClient universal_client.UniversalClient
+	UniversalClient universal_client.Client
 }
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update

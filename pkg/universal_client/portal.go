@@ -19,3 +19,7 @@ type Policy interface {
 	//Delete deletes policy id id
 	Delete(ctx context.Context, id string) error
 }
+
+type Portal interface {
+	Policy() Policy
+}
