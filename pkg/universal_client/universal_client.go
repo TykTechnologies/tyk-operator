@@ -5,7 +5,7 @@ import "github.com/TykTechnologies/tyk-operator/pkg/environmet"
 type UniversalClient interface {
 	Environment() environmet.Env
 	HotReload() error
-	Api() UniversalApi
-	SecurityPolicy() UniversalSecurityPolicy
-	Certificate() UniversalCertificate
+	Api() Api
+	SecurityPolicy() Policy
+	Certificate() Certificate
 }

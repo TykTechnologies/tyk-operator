@@ -6,7 +6,7 @@ import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
-type UniversalSecurityPolicy interface {
+type Policy interface {
 	All(ctx context.Context) ([]tykv1alpha1.SecurityPolicySpec, error)
 	// Get retruns the policy with the given id.
 	Get(ctx context.Context, id string) (*tykv1alpha1.SecurityPolicySpec, error)

@@ -51,15 +51,15 @@ type Client struct {
 	universal_client.Client
 }
 
-func (c *Client) Certificate() universal_client.UniversalCertificate {
+func (c *Client) Certificate() universal_client.Certificate {
 	return &Cert{c}
 }
 
-func (c *Client) SecurityPolicy() universal_client.UniversalSecurityPolicy {
+func (c *Client) SecurityPolicy() universal_client.Policy {
 	return &SecurityPolicy{c}
 }
 
-func (c *Client) Api() universal_client.UniversalApi {
+func (c *Client) Api() universal_client.Api {
 	return &Api{c}
 }
 
