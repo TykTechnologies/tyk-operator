@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 )
 
 type Cert struct {
@@ -29,10 +29,10 @@ func (c *Cert) All(ctx context.Context) ([]string, error) {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, universal_client.Error(res)
+		return nil, universal.Error(res)
 	}
 	var o CertificateList
-	err = universal_client.JSON(res, &o)
+	err = universal.JSON(res, &o)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *Cert) Exists(ctx context.Context, id string) bool {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		c.Log.Error(universal_client.Error(res), "Unexepcted status")
+		c.Log.Error(universal.Error(res), "Unexepcted status")
 		return false
 	}
 	return true
@@ -82,7 +82,7 @@ func (c *Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, e
 	if err != nil {
 		return "", err
 	}
-	res, err := c.Client.Post(fullPath, body, universal_client.SetHeaders(
+	res, err := c.Client.Post(fullPath, body, universal.SetHeaders(
 		map[string]string{
 			"Content-Type": writer.FormDataContentType(),
 		},
@@ -92,10 +92,10 @@ func (c *Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, e
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return "", universal_client.Error(res)
+		return "", universal.Error(res)
 	}
 	dbResp := CertResponse{}
-	if err := universal_client.JSON(res, &dbResp); err != nil {
+	if err := universal.JSON(res, &dbResp); err != nil {
 		return "", err
 	}
 	return dbResp.Id, nil

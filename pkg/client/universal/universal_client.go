@@ -1,4 +1,4 @@
-package universal_client
+package universal
 
 import "github.com/TykTechnologies/tyk-operator/pkg/environmet"
 

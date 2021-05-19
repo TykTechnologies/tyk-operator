@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"encoding/json"
@@ -9,13 +9,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
-type Kase = universal_client.Kase
-type RequestKase = universal_client.RequestKase
-type ResponseKase = universal_client.ResponseKase
+type Kase = universal.Kase
+type RequestKase = universal.RequestKase
+type ResponseKase = universal.ResponseKase
 
 func env() environmet.Env {
 	return environmet.Env{
@@ -26,7 +26,7 @@ func env() environmet.Env {
 	}
 }
 
-func newKlient(c universal_client.HTTPClient) universal_client.Client {
+func newKlient(c universal.HTTPClient) universal.Client {
 	var e environmet.Env
 	e.Parse()
 	x := NewClient(c.Log, c.Env.Merge(e))

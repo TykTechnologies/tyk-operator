@@ -33,10 +33,10 @@ import (
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/dashboard_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/gateway"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/gateway_client"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 	// +kubebuilder:scaffold:imports
 )
@@ -174,9 +174,9 @@ func main() {
 	}
 }
 
-func newUniversalClient(log logr.Logger, env environmet.Env) universal_client.Client {
+func newUniversalClient(log logr.Logger, env environmet.Env) universal.Client {
 	if env.Mode == "pro" {
-		return dashboard_client.NewClient(log, env)
+		return dashboard.NewClient(log, env)
 	}
-	return gateway_client.NewClient(log, env)
+	return gateway.NewClient(log, env)
 }

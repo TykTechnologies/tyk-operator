@@ -1,11 +1,11 @@
-package dashboard_client
+package dashboard
 
 import (
 	"errors"
 	"net/http"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 	"github.com/go-logr/logr"
 )
 
@@ -36,7 +36,7 @@ type ResponseMsg struct {
 
 func NewClient(log logr.Logger, env environmet.Env) *Client {
 	return &Client{
-		HTTPClient: universal_client.HTTPClient{
+		HTTPClient: universal.HTTPClient{
 			Log: log,
 			Env: env,
 			BeforeRequest: func(h *http.Request) {
@@ -48,18 +48,18 @@ func NewClient(log logr.Logger, env environmet.Env) *Client {
 }
 
 type Client struct {
-	universal_client.HTTPClient
+	universal.HTTPClient
 }
 
-func (c *Client) Certificate() universal_client.Certificate {
+func (c *Client) Certificate() universal.Certificate {
 	return &Cert{c}
 }
 
-func (c *Client) SecurityPolicy() universal_client.Policy {
+func (c *Client) SecurityPolicy() universal.Policy {
 	return &SecurityPolicy{c}
 }
 
-func (c *Client) Api() universal_client.Api {
+func (c *Client) Api() universal.Api {
 	return &Api{c}
 }
 

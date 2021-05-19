@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"

@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 const testCertID = "5fd08e0f69710900018bc19568492b39a512286d3e71c4c673faa7f094ffef324d12bf3b485c295221e97150"
@@ -87,21 +87,21 @@ func TestCert(t *testing.T) {
 	})
 }
 
-func requestCert(t *testing.T, e environmet.Env, kase universal_client.Kase) {
+func requestCert(t *testing.T, e environmet.Env, kase universal.Kase) {
 	t.Helper()
 	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				newKlient(c).Certificate().All(ctx)
 				return nil
 			},
 			kase,
 		)
 	case "Upload":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				key := ReadSampleFile(t, "cert.Key.pem")
 				cert := ReadSampleFile(t, "cert.Cert.pem")
 				newKlient(c).Certificate().Upload(ctx, []byte(key), []byte(cert))
@@ -110,8 +110,8 @@ func requestCert(t *testing.T, e environmet.Env, kase universal_client.Kase) {
 			kase,
 		)
 	case "Exist":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				newKlient(c).Certificate().Exists(ctx, testCertID)
 				return nil
 			},

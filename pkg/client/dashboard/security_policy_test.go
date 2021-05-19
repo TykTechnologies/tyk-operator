@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 const testSecurityPolicyID = "5fd202b669710900018bc19c"
@@ -122,29 +122,29 @@ func TestSecurityPolicy(t *testing.T) {
 
 }
 
-func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client.Kase) {
+func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal.Kase) {
 	t.Helper()
 	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				newKlient(c).SecurityPolicy().All(ctx)
 				return nil
 			},
 			kase,
 		)
 	case "Get":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				newKlient(c).SecurityPolicy().Get(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,
 		)
 	case "Update":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
 				newKlient(c).SecurityPolicy().Update(ctx, &s)
@@ -153,8 +153,8 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 			kase,
 		)
 	case "Create":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
 				newKlient(c).SecurityPolicy().Create(ctx, &s)
@@ -163,8 +163,8 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client
 			kase,
 		)
 	case "Delete":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.HTTPClient) error {
+		universal.RunRequestKase(t, e,
+			func(c universal.HTTPClient) error {
 				newKlient(c).SecurityPolicy().Delete(ctx, testSecurityPolicyID)
 				return nil
 			},

@@ -1,4 +1,4 @@
-package gateway_client
+package gateway
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 )
 
 var (
@@ -30,7 +30,7 @@ func (a Api) All(ctx context.Context) ([]v1.APIDefinitionSpec, error) {
 	}
 
 	var list []v1.APIDefinitionSpec
-	if err := universal_client.JSON(res, &list); err != nil {
+	if err := universal.JSON(res, &list); err != nil {
 		return nil, err
 	}
 	return list, nil
@@ -46,7 +46,7 @@ func (a Api) Get(ctx context.Context, apiID string) (*v1.APIDefinitionSpec, erro
 		return nil, fmt.Errorf("gateway API Returned error: %d", res.StatusCode)
 	}
 	var spec v1.APIDefinitionSpec
-	if err := universal_client.JSON(res, &spec); err != nil {
+	if err := universal.JSON(res, &spec); err != nil {
 		return nil, err
 	}
 	return &spec, nil
@@ -59,7 +59,7 @@ func (a Api) Create(ctx context.Context, def *v1.APIDefinitionSpec) error {
 	}
 	defer res.Body.Close()
 	var resMsg ResponseMsg
-	if err := universal_client.JSON(res, &resMsg); err != nil {
+	if err := universal.JSON(res, &resMsg); err != nil {
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (a Api) Update(ctx context.Context, def *v1.APIDefinitionSpec) error {
 	}
 	defer res.Body.Close()
 	var resMsg ResponseMsg
-	if err := universal_client.JSON(res, &resMsg); err != nil {
+	if err := universal.JSON(res, &resMsg); err != nil {
 		return err
 	}
 	if resMsg.Status != "ok" {
@@ -92,7 +92,7 @@ func (a Api) Delete(ctx context.Context, id string) error {
 	}
 	defer res.Body.Close()
 	var resMsg ResponseMsg
-	if err := universal_client.JSON(res, &resMsg); err != nil {
+	if err := universal.JSON(res, &resMsg); err != nil {
 		return err
 	}
 	if resMsg.Status != "ok" {
