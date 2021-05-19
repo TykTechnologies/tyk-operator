@@ -10,6 +10,6 @@ spec:
         - name: manager
           env:
             - name: TYK_HTTPS_INGRESS_PORT
-              value: "8443"
+              value: PORT_HTTPS_INGRESS
             - name: TYK_HTTP_INGRESS_PORT
-              value: "8080"
+              value: PORT_HTTP_INGRESS

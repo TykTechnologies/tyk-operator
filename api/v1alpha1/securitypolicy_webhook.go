@@ -37,7 +37,7 @@ func (r *SecurityPolicy) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,verbs=create;update,versions=v1alpha1,name=msecuritypolicy.kb.io,sideEffects=None
+// +kubebuilder:webhook:path=/mutate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=true,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,verbs=create;update,versions=v1alpha1,name=msecuritypolicy.kb.io,sideEffects=None,admissionReviewVersions={v1,v1beta1}
 
 var _ webhook.Defaulter = &SecurityPolicy{}
 
@@ -55,7 +55,7 @@ func (r *SecurityPolicy) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,versions=v1alpha1,name=vsecuritypolicy.kb.io,sideEffects=None
+// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-tyk-tyk-io-v1alpha1-securitypolicy,mutating=false,failurePolicy=fail,groups=tyk.tyk.io,resources=securitypolicies,versions=v1alpha1,name=vsecuritypolicy.kb.io,sideEffects=None,admissionReviewVersions={v1,v1beta1}
 
 var _ webhook.Validator = &SecurityPolicy{}
 

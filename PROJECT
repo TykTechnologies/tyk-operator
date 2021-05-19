@@ -1,43 +1,37 @@
+componentConfig: true
 domain: tyk.io
-layout: go.kubebuilder.io/v2
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
 projectName: tyk-operator
 repo: github.com/TykTechnologies/tyk-operator
 resources:
--
-  controller: true
-  domain: tyk.io
-  group: tyk
-  kind: Gateway
-  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
-  version: v1alpha1
--
-  controller: true
-  domain: tyk.io
-  group: tyk
-  kind: Organization
-  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
-  version: v1alpha1
--
+- api:
+    crdVersion: v1
+    namespaced: true
   controller: true
   domain: tyk.io
   group: tyk
   kind: ApiDefinition
   path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
--
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
   controller: true
   domain: tyk.io
   group: tyk
   kind: SecurityPolicy
   path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
--
-  controller: true
-  domain: tyk.io
-  group: tyk
-  kind: Webhook
-  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
-  version: v1alpha1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
 version: "3"
-plugins:
-  go.sdk.operatorframework.io/v2-alpha: {}
