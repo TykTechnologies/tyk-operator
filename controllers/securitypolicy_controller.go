@@ -121,7 +121,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Deleting policy")
 	util.RemoveFinalizer(policy, policyFinalizer)
-	if err := r.UniversalClient.SecurityPolicy().Delete(ctx, policy.Status.PolID); err != nil {
+	if err := r.UniversalClient.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
 		if universal.IsNotFound(err) {
 			r.Log.Info("Policy not found")
 			return nil
@@ -146,7 +146,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	err = r.UniversalClient.SecurityPolicy().Update(ctx, spec)
+	err = r.UniversalClient.Portal().Policy().Update(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to update policy")
 		return err
@@ -168,7 +168,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	err = r.UniversalClient.SecurityPolicy().Create(ctx, spec)
+	err = r.UniversalClient.Portal().Policy().Create(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to create policy")
 		return err

@@ -17,6 +17,8 @@ const (
 	endpointWebhooks = "/api/hooks"
 )
 
+var _ universal.Client = (*Client)(nil)
+
 const (
 	XAuthorization = "authorization"
 	XContentType   = "content-type"
@@ -55,8 +57,8 @@ func (c *Client) Certificate() universal.Certificate {
 	return &Cert{c}
 }
 
-func (c *Client) SecurityPolicy() universal.Policy {
-	return &SecurityPolicy{c}
+func (c *Client) Portal() universal.Portal {
+	return &Portal{c}
 }
 
 func (c *Client) Api() universal.Api {

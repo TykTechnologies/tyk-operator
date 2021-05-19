@@ -6,6 +6,6 @@ type Client interface {
 	Environment() environmet.Env
 	HotReload() error
 	Api() Api
-	SecurityPolicy() Policy
+	Portal() Portal
 	Certificate() Certificate
 }

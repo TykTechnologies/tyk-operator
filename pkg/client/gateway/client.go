@@ -20,6 +20,8 @@ var (
 	notFoundError = errors.New("api not found")
 )
 
+var _ universal.Client = (*Client)(nil)
+
 type ResponseMsg struct {
 	Key     string `json:"key"`
 	Status  string `json:"status"`
@@ -49,8 +51,8 @@ func (c *Client) Api() universal.Api {
 	return &Api{c}
 }
 
-func (c *Client) SecurityPolicy() universal.Policy {
-	return SecurityPolicy{}
+func (c *Client) Portal() universal.Portal {
+	return Portal{}
 }
 
 func (c *Client) HotReload() error {
