@@ -24,6 +24,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
 	"k8s.io/api/networking/v1beta1"
@@ -47,6 +48,7 @@ type IngressReconciler struct {
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
 	UniversalClient universal.Client
+	Env             environmet.Env
 	Recorder        record.EventRecorder
 }
 
@@ -56,6 +58,9 @@ type IngressReconciler struct {
 // Reconcile perform reconciliation logic for Ingress resource that is managed
 // by the operator.
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Env, r.Log)
+
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -120,7 +125,6 @@ func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
 
 func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 	template *v1alpha1.ApiDefinition, ns string, desired *v1beta1.Ingress) error {
-	env := r.UniversalClient.Environment()
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
 			hash := shortHash(rule.Host + p.Path)
@@ -145,8 +149,8 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 				if rule.Host != "" {
 					api.Spec.Domain = r.translateHost(rule.Host)
 				}
-				if env.IngressHTTPPort != 0 {
-					api.Spec.ListenPort = env.IngressHTTPPort
+				if r.Env.IngressHTTPPort != 0 {
+					api.Spec.ListenPort = r.Env.IngressHTTPPort
 				}
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
@@ -156,7 +160,7 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 								api.Spec.CertificateSecretNames = []string{
 									tls.SecretName,
 								}
-								api.Spec.ListenPort = env.IngressTLSPort
+								api.Spec.ListenPort = r.Env.IngressTLSPort
 							}
 						}
 					}
@@ -230,7 +234,7 @@ func shortHash(txt string) string {
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	watch := keys.DefaultIngressClassAnnotationValue
-	if overide := r.UniversalClient.Environment().IngressClass; overide != "" {
+	if overide := r.Env.IngressClass; overide != "" {
 		watch = overide
 	}
 	isOurIngress := func(o runtime.Object) bool {

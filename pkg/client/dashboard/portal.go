@@ -2,10 +2,8 @@ package dashboard
 
 import "github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 
-type Portal struct {
-	*Client
-}
+type Portal struct{}
 
 func (p Portal) Policy() universal.Policy {
-	return &SecurityPolicy{p.Client}
+	return SecurityPolicy{}
 }

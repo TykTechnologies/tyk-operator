@@ -10,13 +10,11 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 )
 
-type SecurityPolicy struct {
-	*Client
-}
+type SecurityPolicy struct{}
 
 // All Returns all policies from the Dashboard
 func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error) {
-	res, err := p.Client.Get(ctx, client.Join(endpointPolicies), nil)
+	res, err := client.Get(ctx, client.Join(endpointPolicies), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +33,7 @@ func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error
 
 // Get  find the Policy by id
 func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicySpec, error) {
-	res, err := p.Client.Get(ctx, client.Join(endpointPolicies, id), nil)
+	res, err := client.Get(ctx, client.Join(endpointPolicies, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +47,7 @@ func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicyS
 
 // Create  creates a new policy using the def object
 func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) error {
-	res, err := p.Client.PostJSON(ctx, client.Join(endpointPolicies), def)
+	res, err := client.PostJSON(ctx, client.Join(endpointPolicies), def)
 	if err != nil {
 		return err
 	}
@@ -72,7 +70,7 @@ func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 
 // Update updates a resource object def
 func (p SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) error {
-	res, err := p.Client.PutJSON(ctx, client.Join(endpointPolicies, def.MID), def)
+	res, err := client.PutJSON(ctx, client.Join(endpointPolicies, def.MID), def)
 	if err != nil {
 		return err
 	}
@@ -85,7 +83,7 @@ func (p SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) 
 
 // Delete deletes the resource by ID
 func (p SecurityPolicy) Delete(ctx context.Context, id string) error {
-	res, err := p.Client.Delete(ctx, client.Join(endpointPolicies, id), nil)
+	res, err := client.Delete(ctx, client.Join(endpointPolicies, id), nil)
 	if err != nil {
 		return err
 	}

@@ -28,20 +28,18 @@ type ResponseMsg struct {
 	Message string `json:"message"`
 }
 
-type Client struct {
-	client.HTTP
+type Client struct{}
+
+func (c Client) Api() universal.Api {
+	return Api{}
 }
 
-func (c *Client) Api() universal.Api {
-	return &Api{c}
-}
-
-func (c *Client) Portal() universal.Portal {
+func (c Client) Portal() universal.Portal {
 	return Portal{}
 }
 
-func (c *Client) HotReload(ctx context.Context) error {
-	res, err := c.Get(ctx, endpointReload, nil)
+func (c Client) HotReload(ctx context.Context) error {
+	res, err := client.Get(ctx, endpointReload, nil)
 	if err != nil {
 		return err
 	}
@@ -59,6 +57,6 @@ func (c *Client) HotReload(ctx context.Context) error {
 }
 
 // TODO: Certificate Requires implementation
-func (c *Client) Certificate() universal.Certificate {
+func (c Client) Certificate() universal.Certificate {
 	panic("implement me")
 }

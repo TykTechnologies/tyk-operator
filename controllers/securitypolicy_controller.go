@@ -23,6 +23,7 @@ import (
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,6 +42,7 @@ type SecurityPolicyReconciler struct {
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
 	UniversalClient universal.Client
+	Env             environmet.Env
 	Recorder        record.EventRecorder
 }
 
@@ -50,6 +52,9 @@ type SecurityPolicyReconciler struct {
 // Reconcile reconciles SecurityPolicy custom resources
 func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
+
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Env, r.Log)
 
 	ns := req.NamespacedName.String()
 	log.Info("Reconciling SecurityPolicy instance")
@@ -158,7 +163,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	r.UniversalClient.HotReload()
+	r.UniversalClient.HotReload(ctx)
 	r.Log.Info("Successfully updated Policy")
 	return nil
 }

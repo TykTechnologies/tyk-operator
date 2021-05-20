@@ -26,6 +26,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -49,6 +50,7 @@ type ApiDefinitionReconciler struct {
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
 	UniversalClient universal.Client
+	Env             environmet.Env
 	Recorder        record.EventRecorder
 }
 
@@ -61,6 +63,9 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	namespacedName := req.NamespacedName
 
 	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Env, r.Log)
+
 	log.Info("Reconciling ApiDefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
@@ -109,7 +114,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				return err
 			}
 
-			tykCertID := r.UniversalClient.Environment().Org + cert.CalculateFingerPrint(pemCrtBytes)
+			tykCertID := r.Env.Org + cert.CalculateFingerPrint(pemCrtBytes)
 			exists := r.UniversalClient.Certificate().Exists(ctx, tykCertID)
 			if !exists {
 				// upload the certificate
@@ -148,7 +153,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			if err != nil {
 				log.Error(err, "Could not update Status ID")
 			}
-			r.UniversalClient.HotReload()
+			r.UniversalClient.HotReload(ctx)
 			return client.IgnoreNotFound(err)
 		}
 		log.Info("Updating ApiDefinition")
@@ -158,7 +163,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			log.Error(err, "Failed to update api definition")
 			return err
 		}
-		r.UniversalClient.HotReload()
+		r.UniversalClient.HotReload(ctx)
 		return nil
 	})
 	if err == nil {
@@ -256,7 +261,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
-		err = r.UniversalClient.HotReload()
+		err = r.UniversalClient.HotReload(ctx)
 		if err != nil {
 			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 			return 0, err

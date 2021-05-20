@@ -14,12 +14,10 @@ var (
 	apiCollisionError = errors.New("api id, listen path or slug collision")
 )
 
-type Api struct {
-	*Client
-}
+type Api struct{}
 
 func (a Api) All(ctx context.Context) ([]v1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(ctx, endpointAPIs, nil)
+	res, err := client.Get(ctx, endpointAPIs, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +35,7 @@ func (a Api) All(ctx context.Context) ([]v1.APIDefinitionSpec, error) {
 }
 
 func (a Api) Get(ctx context.Context, apiID string) (*v1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(ctx, client.Join(endpointAPIs, apiID), nil)
+	res, err := client.Get(ctx, client.Join(endpointAPIs, apiID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +51,7 @@ func (a Api) Get(ctx context.Context, apiID string) (*v1.APIDefinitionSpec, erro
 }
 
 func (a Api) Create(ctx context.Context, def *v1.APIDefinitionSpec) error {
-	res, err := a.PostJSON(ctx, endpointAPIs, def)
+	res, err := client.PostJSON(ctx, endpointAPIs, def)
 	if err != nil {
 		return err
 	}
@@ -70,7 +68,7 @@ func (a Api) Create(ctx context.Context, def *v1.APIDefinitionSpec) error {
 }
 
 func (a Api) Update(ctx context.Context, def *v1.APIDefinitionSpec) error {
-	res, err := a.PutJSON(ctx, client.Join(endpointAPIs, def.APIID), def)
+	res, err := client.PutJSON(ctx, client.Join(endpointAPIs, def.APIID), def)
 	if err != nil {
 		return err
 	}
@@ -86,7 +84,7 @@ func (a Api) Update(ctx context.Context, def *v1.APIDefinitionSpec) error {
 }
 
 func (a Api) Delete(ctx context.Context, id string) error {
-	res, err := a.Client.Delete(ctx, client.Join(endpointAPIs, id), nil)
+	res, err := client.Delete(ctx, client.Join(endpointAPIs, id), nil)
 	if err != nil {
 		return err
 	}

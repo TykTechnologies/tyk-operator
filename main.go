@@ -37,7 +37,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/gateway"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/go-logr/logr"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -100,12 +99,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	var universalClient universal.Client
+	universalClient = gateway.Client{}
+	if env.Mode == "pro" {
+		universalClient = dashboard.Client{}
+	}
+
 	a := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:          mgr.GetClient(),
 		Log:             a,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: newUniversalClient(a, env),
+		UniversalClient: universalClient,
+		Env:             env,
 		Recorder:        mgr.GetEventRecorderFor("apidefinition-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
@@ -117,7 +123,8 @@ func main() {
 		Client:          mgr.GetClient(),
 		Log:             il,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: newUniversalClient(il, env),
+		UniversalClient: universalClient,
+		Env:             env,
 		Recorder:        mgr.GetEventRecorderFor("ingress-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Ingress")
@@ -129,7 +136,8 @@ func main() {
 		Client:          mgr.GetClient(),
 		Log:             sl,
 		Scheme:          mgr.GetScheme(),
-		UniversalClient: newUniversalClient(sl, env),
+		UniversalClient: universalClient,
+		Env:             env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
 		os.Exit(1)
@@ -140,7 +148,8 @@ func main() {
 		Log:             sp,
 		Scheme:          mgr.GetScheme(),
 		Recorder:        mgr.GetEventRecorderFor("securitypolicy-controller"),
-		UniversalClient: newUniversalClient(sp, env),
+		UniversalClient: universalClient,
+		Env:             env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)
@@ -172,11 +181,4 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-func newUniversalClient(log logr.Logger, env environmet.Env) universal.Client {
-	if env.Mode == "pro" {
-		return dashboard.NewClient(log, env)
-	}
-	return gateway.NewClient(log, env)
 }

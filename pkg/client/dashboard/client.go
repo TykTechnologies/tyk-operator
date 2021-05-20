@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 )
 
@@ -35,22 +34,20 @@ type ResponseMsg struct {
 	Meta    string `json:"Meta,omitempty"`
 }
 
-type Client struct {
-	client.HTTP
+type Client struct{}
+
+func (c Client) Certificate() universal.Certificate {
+	return Cert{}
 }
 
-func (c *Client) Certificate() universal.Certificate {
-	return &Cert{c}
+func (c Client) Portal() universal.Portal {
+	return Portal{}
 }
 
-func (c *Client) Portal() universal.Portal {
-	return &Portal{c}
+func (c Client) Api() universal.Api {
+	return Api{}
 }
 
-func (c *Client) Api() universal.Api {
-	return &Api{c}
-}
-
-func (c *Client) HotReload(context.Context) error {
+func (c Client) HotReload(context.Context) error {
 	return nil
 }

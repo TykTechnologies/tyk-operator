@@ -97,10 +97,12 @@ func GetContext(ctx context.Context) Context {
 	return Context{}
 }
 
-// HTTP exposes different methods for making http api calls
-type HTTP struct{}
+var httpClient H
 
-func (c HTTP) Request(ctx context.Context, method, url string, body io.Reader) (*http.Request, error) {
+// HTTP exposes different methods for making http api calls
+type H struct{}
+
+func (c H) Request(ctx context.Context, method, url string, body io.Reader) (*http.Request, error) {
 	r, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err
@@ -109,7 +111,7 @@ func (c HTTP) Request(ctx context.Context, method, url string, body io.Reader) (
 	return r, nil
 }
 
-func (c HTTP) JSON(ctx context.Context, method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c H) JSON(ctx context.Context, method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	b, err := v1alpha1.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -120,27 +122,47 @@ func (c HTTP) JSON(ctx context.Context, method, url string, body interface{}, fn
 	return c.Call(ctx, method, url, bytes.NewReader(b), fn...)
 }
 
-func (c HTTP) Get(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func Get(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return httpClient.Get(ctx, url, body, fn...)
+}
+
+func (c H) Get(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(ctx, http.MethodGet, url, body, fn...)
 }
 
-func (c HTTP) Post(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func Post(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return httpClient.Post(ctx, url, body, fn...)
+}
+
+func (c H) Post(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c HTTP) PostJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func PostJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+	return httpClient.PostJSON(ctx, url, body, fn...)
+}
+
+func (c H) PostJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.JSON(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c HTTP) PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+	return httpClient.PutJSON(ctx, url, body, fn...)
+}
+
+func (c H) PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.JSON(ctx, http.MethodPut, url, body, fn...)
 }
 
-func (c HTTP) Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return httpClient.Delete(ctx, url, body, fn...)
+}
+
+func (c H) Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(ctx, http.MethodDelete, url, body, fn...)
 }
 
-func (c HTTP) Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c H) Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	rctx := GetContext(ctx)
 	url = JoinURL(rctx.Env.URL, url)
 	r, err := c.Request(ctx, method, url, body)

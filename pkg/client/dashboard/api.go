@@ -9,12 +9,10 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 )
 
-type Api struct {
-	*Client
-}
+type Api struct{}
 
 func (a Api) All(ctx context.Context) ([]tykv1alpha1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(ctx, endpointAPIs, nil,
+	res, err := client.Get(ctx, endpointAPIs, nil,
 		client.AddQuery(map[string]string{
 			"p": "-2",
 		}),
@@ -44,7 +42,7 @@ func (a Api) All(ctx context.Context) ([]tykv1alpha1.APIDefinitionSpec, error) {
 }
 
 func (a Api) Create(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) error {
-	res, err := a.Client.PostJSON(ctx, endpointAPIs,
+	res, err := client.PostJSON(ctx, endpointAPIs,
 		DashboardApi{
 			ApiDefinition: *def,
 		})
@@ -85,7 +83,7 @@ func (a Api) Get(ctx context.Context, id string) (*tykv1alpha1.APIDefinitionSpec
 }
 
 func (a Api) get(ctx context.Context, id string) (*tykv1alpha1.APIDefinitionSpec, error) {
-	res, err := a.Client.Get(ctx, client.Join(endpointAPIs, id), nil)
+	res, err := client.Get(ctx, client.Join(endpointAPIs, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +109,7 @@ func (a Api) Update(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) err
 }
 
 func (a Api) update(ctx context.Context, o tykv1alpha1.APIDefinitionSpec) error {
-	res, err := a.Client.PutJSON(
+	res, err := client.PutJSON(
 		ctx, client.Join(endpointAPIs, o.ID), DashboardApi{
 			ApiDefinition: o,
 		},
@@ -140,7 +138,7 @@ func (a Api) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return client.IgnoreNotFound(err)
 	}
-	res, err := a.Client.Delete(ctx, client.Join(endpointAPIs, x.ID), nil)
+	res, err := client.Delete(ctx, client.Join(endpointAPIs, x.ID), nil)
 	if err != nil {
 		return err
 	}
