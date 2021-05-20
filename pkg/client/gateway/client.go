@@ -1,14 +1,12 @@
 package gateway
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/go-logr/logr"
 )
 
 const (
@@ -30,20 +28,6 @@ type ResponseMsg struct {
 	Message string `json:"message"`
 }
 
-func NewClient(log logr.Logger, env environmet.Env) *Client {
-	c := &Client{
-		HTTP: client.HTTP{
-			Log: log,
-			Env: env,
-			BeforeRequest: func(h *http.Request) {
-				h.Header.Set("x-tyk-authorization", env.Auth)
-				h.Header.Set("content-type", "application/json")
-			},
-		},
-	}
-	return c
-}
-
 type Client struct {
 	client.HTTP
 }
@@ -56,8 +40,8 @@ func (c *Client) Portal() universal.Portal {
 	return Portal{}
 }
 
-func (c *Client) HotReload() error {
-	res, err := c.Get(c.Env.JoinURL(endpointReload), nil)
+func (c *Client) HotReload(ctx context.Context) error {
+	res, err := c.Get(ctx, endpointReload, nil)
 	if err != nil {
 		return err
 	}

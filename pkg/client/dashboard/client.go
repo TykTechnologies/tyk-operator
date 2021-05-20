@@ -1,13 +1,11 @@
 package dashboard
 
 import (
+	"context"
 	"errors"
-	"net/http"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/go-logr/logr"
 )
 
 const (
@@ -37,19 +35,6 @@ type ResponseMsg struct {
 	Meta    string `json:"Meta,omitempty"`
 }
 
-func NewClient(log logr.Logger, env environmet.Env) *Client {
-	return &Client{
-		HTTP: client.HTTP{
-			Log: log,
-			Env: env,
-			BeforeRequest: func(h *http.Request) {
-				h.Header.Set("authorization", env.Auth)
-				h.Header.Set("content-type", "application/json")
-			},
-		},
-	}
-}
-
 type Client struct {
 	client.HTTP
 }
@@ -66,6 +51,6 @@ func (c *Client) Api() universal.Api {
 	return &Api{c}
 }
 
-func (c *Client) HotReload() error {
+func (c *Client) HotReload(context.Context) error {
 	return nil
 }

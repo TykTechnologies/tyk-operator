@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -74,29 +76,40 @@ func Do(r *http.Request) (*http.Response, error) {
 	return client.Do(r)
 }
 
-type HTTP struct {
+// Context inforation needed to make a successful http api call
+type Context struct {
 	Env           environmet.Env
 	Log           logr.Logger
 	BeforeRequest func(*http.Request)
 	Do            func(*http.Request) (*http.Response, error)
 }
 
-func (c HTTP) Environment() environmet.Env {
-	return c.Env
+type contextKey struct{}
+
+func SetContext(ctx context.Context, rctx Context) context.Context {
+	return context.WithValue(ctx, contextKey{}, rctx)
 }
 
-func (c HTTP) Request(method, url string, body io.Reader) (*http.Request, error) {
-	r, err := http.NewRequest(method, url, body)
+func GetContext(ctx context.Context) Context {
+	if c := ctx.Value(contextKey{}); c != nil {
+		return c.(Context)
+	}
+	return Context{}
+}
+
+// HTTP exposes different methods for making http api calls
+type HTTP struct{}
+
+func (c HTTP) Request(ctx context.Context, method, url string, body io.Reader) (*http.Request, error) {
+	r, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err
 	}
-	if c.BeforeRequest != nil {
-		c.BeforeRequest(r)
-	}
+	BeforeRequest(r)
 	return r, nil
 }
 
-func (c HTTP) JSON(method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) JSON(ctx context.Context, method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	b, err := v1alpha1.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -104,31 +117,33 @@ func (c HTTP) JSON(method, url string, body interface{}, fn ...func(*http.Reques
 	fn = append(fn, AddHeaders(map[string]string{
 		"Content-Type": "application/json",
 	}))
-	return c.Call(method, url, bytes.NewReader(b), fn...)
+	return c.Call(ctx, method, url, bytes.NewReader(b), fn...)
 }
 
-func (c HTTP) Get(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.Call(http.MethodGet, url, body, fn...)
+func (c HTTP) Get(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.Call(ctx, http.MethodGet, url, body, fn...)
 }
 
-func (c HTTP) Post(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.Call(http.MethodPost, url, body, fn...)
+func (c HTTP) Post(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.Call(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c HTTP) PostJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.JSON(http.MethodPost, url, body, fn...)
+func (c HTTP) PostJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.JSON(ctx, http.MethodPost, url, body, fn...)
 }
 
-func (c HTTP) PutJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.JSON(http.MethodPut, url, body, fn...)
+func (c HTTP) PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.JSON(ctx, http.MethodPut, url, body, fn...)
 }
 
-func (c HTTP) Delete(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	return c.Call(http.MethodDelete, url, body, fn...)
+func (c HTTP) Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return c.Call(ctx, http.MethodDelete, url, body, fn...)
 }
 
-func (c HTTP) Call(method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
-	r, err := c.Request(method, url, body)
+func (c HTTP) Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	rctx := GetContext(ctx)
+	url = JoinURL(rctx.Env.URL, url)
+	r, err := c.Request(ctx, method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -136,8 +151,8 @@ func (c HTTP) Call(method, url string, body io.Reader, fn ...func(*http.Request)
 		f(r)
 	}
 	var res *http.Response
-	if c.Do != nil {
-		res, err = c.Do(r)
+	if rctx.Do != nil {
+		res, err = rctx.Do(r)
 	} else {
 		res, err = client.Do(r)
 	}
@@ -150,7 +165,7 @@ func (c HTTP) Call(method, url string, body io.Reader, fn ...func(*http.Request)
 		values = append(values, "Status", err.Error())
 	}
 	values = append(values)
-	c.Log.Info("Call", values...)
+	rctx.Log.Info("Call", values...)
 	if err == nil && res.StatusCode == http.StatusNotFound {
 		res.Body.Close()
 		return nil, ErrNotFound
@@ -189,4 +204,47 @@ func SetHeaders(q map[string]string) func(*http.Request) {
 func Error(res *http.Response) error {
 	b, _ := ioutil.ReadAll(res.Body)
 	return fmt.Errorf("%d API call failed with %v", res.StatusCode, string(b))
+}
+
+// JoinURL returns addition of  parts to the base e.URL
+func JoinURL(base string, parts ...string) string {
+	return Join(append([]string{base}, parts...)...)
+}
+
+func Join(parts ...string) string {
+	l := len(parts)
+	if l == 1 {
+		return parts[0]
+	}
+	ps := make([]string, l)
+	for i, part := range parts {
+		if i == 0 {
+			ps[i] = strings.TrimRight(part, "/")
+		} else {
+			ps[i] = strings.TrimLeft(part, "/")
+		}
+	}
+	return strings.Join(ps, "/")
+}
+
+func BeforeRequest(r *http.Request) {
+	ctx := GetContext(r.Context())
+	r.Header.Set("content-type", "application/json")
+	switch ctx.Env.Mode {
+	case "pro":
+		r.Header.Set("authorization", ctx.Env.Auth)
+	case "ce":
+		r.Header.Set("x-tyk-authorization", ctx.Env.Auth)
+	}
+	if ctx.BeforeRequest != nil {
+		ctx.BeforeRequest(r)
+	}
+}
+
+func LError(ctx context.Context, err error, msg string, kv ...interface{}) {
+	GetContext(ctx).Log.Error(err, msg, kv...)
+}
+
+func LInfo(ctx context.Context, msg string, kv ...interface{}) {
+	GetContext(ctx).Log.Info(msg, kv...)
 }

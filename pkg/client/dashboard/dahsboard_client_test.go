@@ -27,12 +27,8 @@ func env() environmet.Env {
 	}
 }
 
-func newKlient(c client.HTTP) universal.Client {
-	var e environmet.Env
-	e.Parse()
-	x := NewClient(c.Log, c.Env.Merge(e))
-	x.Do = c.Do
-	return x
+func newKlient() universal.Client {
+	return &Client{}
 }
 
 // Sample loads sample file

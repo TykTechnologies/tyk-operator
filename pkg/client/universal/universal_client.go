@@ -1,10 +1,9 @@
 package universal
 
-import "github.com/TykTechnologies/tyk-operator/pkg/environmet"
+import "context"
 
 type Client interface {
-	Environment() environmet.Env
-	HotReload() error
+	HotReload(context.Context) error
 	Api() Api
 	Portal() Portal
 	Certificate() Certificate

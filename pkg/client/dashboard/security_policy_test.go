@@ -124,48 +124,47 @@ func TestSecurityPolicy(t *testing.T) {
 
 func requestSecurityPolicy(t *testing.T, e environmet.Env, kase client.Kase) {
 	t.Helper()
-	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
 		client.RunRequestKase(t, e,
-			func(c client.HTTP) error {
-				newKlient(c).Portal().Policy().All(ctx)
+			func(ctx context.Context) error {
+				newKlient().Portal().Policy().All(ctx)
 				return nil
 			},
 			kase,
 		)
 	case "Get":
 		client.RunRequestKase(t, e,
-			func(c client.HTTP) error {
-				newKlient(c).Portal().Policy().Get(ctx, testSecurityPolicyID)
+			func(ctx context.Context) error {
+				newKlient().Portal().Policy().Get(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,
 		)
 	case "Update":
 		client.RunRequestKase(t, e,
-			func(c client.HTTP) error {
+			func(ctx context.Context) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
-				newKlient(c).Portal().Policy().Update(ctx, &s)
+				newKlient().Portal().Policy().Update(ctx, &s)
 				return nil
 			},
 			kase,
 		)
 	case "Create":
 		client.RunRequestKase(t, e,
-			func(c client.HTTP) error {
+			func(ctx context.Context) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
-				newKlient(c).Portal().Policy().Create(ctx, &s)
+				newKlient().Portal().Policy().Create(ctx, &s)
 				return nil
 			},
 			kase,
 		)
 	case "Delete":
 		client.RunRequestKase(t, e,
-			func(c client.HTTP) error {
-				newKlient(c).Portal().Policy().Delete(ctx, testSecurityPolicyID)
+			func(ctx context.Context) error {
+				newKlient().Portal().Policy().Delete(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,
