@@ -1,4 +1,4 @@
-package universal
+package client
 
 import (
 	"bytes"

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 )
 
@@ -122,29 +122,29 @@ func TestSecurityPolicy(t *testing.T) {
 
 }
 
-func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal.Kase) {
+func requestSecurityPolicy(t *testing.T, e environmet.Env, kase client.Kase) {
 	t.Helper()
 	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
-		universal.RunRequestKase(t, e,
-			func(c universal.HTTPClient) error {
+		client.RunRequestKase(t, e,
+			func(c client.HTTPClient) error {
 				newKlient(c).Portal().Policy().All(ctx)
 				return nil
 			},
 			kase,
 		)
 	case "Get":
-		universal.RunRequestKase(t, e,
-			func(c universal.HTTPClient) error {
+		client.RunRequestKase(t, e,
+			func(c client.HTTPClient) error {
 				newKlient(c).Portal().Policy().Get(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,
 		)
 	case "Update":
-		universal.RunRequestKase(t, e,
-			func(c universal.HTTPClient) error {
+		client.RunRequestKase(t, e,
+			func(c client.HTTPClient) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
 				newKlient(c).Portal().Policy().Update(ctx, &s)
@@ -153,8 +153,8 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal.Kase) 
 			kase,
 		)
 	case "Create":
-		universal.RunRequestKase(t, e,
-			func(c universal.HTTPClient) error {
+		client.RunRequestKase(t, e,
+			func(c client.HTTPClient) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
 				newKlient(c).Portal().Policy().Create(ctx, &s)
@@ -163,8 +163,8 @@ func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal.Kase) 
 			kase,
 		)
 	case "Delete":
-		universal.RunRequestKase(t, e,
-			func(c universal.HTTPClient) error {
+		client.RunRequestKase(t, e,
+			func(c client.HTTPClient) error {
 				newKlient(c).Portal().Policy().Delete(ctx, testSecurityPolicyID)
 				return nil
 			},

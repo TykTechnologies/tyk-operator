@@ -21,6 +21,7 @@ import (
 	"time"
 
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -122,7 +123,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 	r.Log.Info("Deleting policy")
 	util.RemoveFinalizer(policy, policyFinalizer)
 	if err := r.UniversalClient.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
-		if universal.IsNotFound(err) {
+		if opclient.IsNotFound(err) {
 			r.Log.Info("Policy not found")
 			return nil
 		}

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 )
 
 type SecurityPolicy struct {
@@ -27,7 +27,7 @@ func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error
 	}
 
 	var response PoliciesResponse
-	if err := universal.JSON(res, &response); err != nil {
+	if err := client.JSON(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Policies, nil
@@ -41,7 +41,7 @@ func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicyS
 	}
 	defer res.Body.Close()
 	var o v1.SecurityPolicySpec
-	if err := universal.JSON(res, &o); err != nil {
+	if err := client.JSON(res, &o); err != nil {
 		return nil, err
 	}
 	return &o, nil
@@ -55,10 +55,10 @@ func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return universal.Error(res)
+		return client.Error(res)
 	}
 	var msg ResponseMsg
-	if err := universal.JSON(res, &msg); err != nil {
+	if err := client.JSON(res, &msg); err != nil {
 		return err
 	}
 	switch strings.ToLower(msg.Status) {
@@ -66,7 +66,7 @@ func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 		def.MID = msg.Message
 		return nil
 	default:
-		return universal.Error(res)
+		return client.Error(res)
 	}
 }
 
@@ -78,9 +78,9 @@ func (p SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) 
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return universal.Error(res)
+		return client.Error(res)
 	}
-	return universal.JSON(res, def)
+	return client.JSON(res, def)
 }
 
 // Delete deletes the resource by ID
@@ -92,7 +92,7 @@ func (p SecurityPolicy) Delete(ctx context.Context, id string) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return universal.Error(res)
+		return client.Error(res)
 	}
 	return nil
 }

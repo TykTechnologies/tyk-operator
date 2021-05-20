@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
@@ -31,7 +32,7 @@ type ResponseMsg struct {
 
 func NewClient(log logr.Logger, env environmet.Env) *Client {
 	c := &Client{
-		HTTPClient: universal.HTTPClient{
+		HTTPClient: client.HTTPClient{
 			Log: log,
 			Env: env,
 			BeforeRequest: func(h *http.Request) {
@@ -44,7 +45,7 @@ func NewClient(log logr.Logger, env environmet.Env) *Client {
 }
 
 type Client struct {
-	universal.HTTPClient
+	client.HTTPClient
 }
 
 func (c *Client) Api() universal.Api {
@@ -62,7 +63,7 @@ func (c *Client) HotReload() error {
 	}
 	defer res.Body.Close()
 	var resMsg ResponseMsg
-	if err := universal.JSON(res, &resMsg); err != nil {
+	if err := client.JSON(res, &resMsg); err != nil {
 		return err
 	}
 

@@ -9,13 +9,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 )
 
-type Kase = universal.Kase
-type RequestKase = universal.RequestKase
-type ResponseKase = universal.ResponseKase
+type Kase = client.Kase
+type RequestKase = client.RequestKase
+type ResponseKase = client.ResponseKase
 
 func env() environmet.Env {
 	return environmet.Env{
@@ -26,7 +27,7 @@ func env() environmet.Env {
 	}
 }
 
-func newKlient(c universal.HTTPClient) universal.Client {
+func newKlient(c client.HTTPClient) universal.Client {
 	var e environmet.Env
 	e.Parse()
 	x := NewClient(c.Log, c.Env.Merge(e))

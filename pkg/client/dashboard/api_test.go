@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 )
 
@@ -188,30 +188,30 @@ func TestAPI(t *testing.T) {
 
 }
 
-func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal.Kase) {
+func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase) {
 	t.Helper()
 	ctx := context.TODO()
 	t.Run(name, func(t *testing.T) {
 		switch name {
 		case "All":
-			universal.RunRequestKase(t, e,
-				func(c universal.HTTPClient) error {
+			client.RunRequestKase(t, e,
+				func(c client.HTTPClient) error {
 					newKlient(c).Api().All(ctx)
 					return nil
 				},
 				kase...,
 			)
 		case "Get":
-			universal.RunRequestKase(t, e,
-				func(c universal.HTTPClient) error {
+			client.RunRequestKase(t, e,
+				func(c client.HTTPClient) error {
 					newKlient(c).Api().Get(ctx, testAPIID)
 					return nil
 				},
 				kase...,
 			)
 		case "Update":
-			universal.RunRequestKase(t, e,
-				func(c universal.HTTPClient) error {
+			client.RunRequestKase(t, e,
+				func(c client.HTTPClient) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
 					newKlient(c).Api().Update(ctx, &s)
@@ -220,8 +220,8 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal.K
 				kase...,
 			)
 		case "Create":
-			universal.RunRequestKase(t, e,
-				func(c universal.HTTPClient) error {
+			client.RunRequestKase(t, e,
+				func(c client.HTTPClient) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
 					newKlient(c).Api().Create(ctx, &s)
@@ -230,8 +230,8 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal.K
 				kase...,
 			)
 		case "Delete":
-			universal.RunRequestKase(t, e,
-				func(c universal.HTTPClient) error {
+			client.RunRequestKase(t, e,
+				func(c client.HTTPClient) error {
 					newKlient(c).Api().Delete(ctx, testAPIID)
 					return nil
 				},
