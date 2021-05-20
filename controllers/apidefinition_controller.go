@@ -64,7 +64,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, r.Log)
+	ctx = httpContext(ctx, r.Env, log)
 
 	log.Info("Reconciling ApiDefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}

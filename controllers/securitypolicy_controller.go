@@ -54,7 +54,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
 
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, r.Log)
+	ctx = httpContext(ctx, r.Env, log)
 
 	ns := req.NamespacedName.String()
 	log.Info("Reconciling SecurityPolicy instance")

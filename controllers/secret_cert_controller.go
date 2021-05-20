@@ -50,7 +50,7 @@ type SecretCertReconciler struct {
 func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("cert", req.NamespacedName)
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, r.Log)
+	ctx = httpContext(ctx, r.Env, log)
 
 	log.Info("getting secret resource")
 	desired := &v1.Secret{}

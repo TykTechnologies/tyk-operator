@@ -58,8 +58,9 @@ type IngressReconciler struct {
 // Reconcile perform reconciliation logic for Ingress resource that is managed
 // by the operator.
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	nsl := r.Log.WithValues("name", req.NamespacedName)
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, r.Log)
+	ctx = httpContext(ctx, r.Env, nsl)
 
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
@@ -74,7 +75,6 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, err
 		}
 	}
-	nsl := r.Log.WithValues("name", req.NamespacedName)
 	nsl.Info("Sync ingress")
 	op, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.DeletionTimestamp.IsZero() {
