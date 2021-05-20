@@ -15,7 +15,6 @@ const testSecurityPolicyID = "5fd202b669710900018bc19c"
 
 func TestSecurityPolicy(t *testing.T) {
 	var e environmet.Env
-	e.Parse()
 	e = env().Merge(e)
 	h := mockDash(t,
 		&route{
