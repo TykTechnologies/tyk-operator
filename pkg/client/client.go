@@ -74,18 +74,18 @@ func Do(r *http.Request) (*http.Response, error) {
 	return client.Do(r)
 }
 
-type HTTPClient struct {
+type HTTP struct {
 	Env           environmet.Env
 	Log           logr.Logger
 	BeforeRequest func(*http.Request)
 	Do            func(*http.Request) (*http.Response, error)
 }
 
-func (c HTTPClient) Environment() environmet.Env {
+func (c HTTP) Environment() environmet.Env {
 	return c.Env
 }
 
-func (c HTTPClient) Request(method, url string, body io.Reader) (*http.Request, error) {
+func (c HTTP) Request(method, url string, body io.Reader) (*http.Request, error) {
 	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (c HTTPClient) Request(method, url string, body io.Reader) (*http.Request, 
 	return r, nil
 }
 
-func (c HTTPClient) JSON(method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) JSON(method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	b, err := v1alpha1.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -107,27 +107,27 @@ func (c HTTPClient) JSON(method, url string, body interface{}, fn ...func(*http.
 	return c.Call(method, url, bytes.NewReader(b), fn...)
 }
 
-func (c HTTPClient) Get(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) Get(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(http.MethodGet, url, body, fn...)
 }
 
-func (c HTTPClient) Post(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) Post(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(http.MethodPost, url, body, fn...)
 }
 
-func (c HTTPClient) PostJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) PostJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.JSON(http.MethodPost, url, body, fn...)
 }
 
-func (c HTTPClient) PutJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) PutJSON(url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.JSON(http.MethodPut, url, body, fn...)
 }
 
-func (c HTTPClient) Delete(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) Delete(url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return c.Call(http.MethodDelete, url, body, fn...)
 }
 
-func (c HTTPClient) Call(method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+func (c HTTP) Call(method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	r, err := c.Request(method, url, body)
 	if err != nil {
 		return nil, err

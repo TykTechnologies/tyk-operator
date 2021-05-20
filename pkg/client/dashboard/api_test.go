@@ -195,7 +195,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 		switch name {
 		case "All":
 			client.RunRequestKase(t, e,
-				func(c client.HTTPClient) error {
+				func(c client.HTTP) error {
 					newKlient(c).Api().All(ctx)
 					return nil
 				},
@@ -203,7 +203,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 			)
 		case "Get":
 			client.RunRequestKase(t, e,
-				func(c client.HTTPClient) error {
+				func(c client.HTTP) error {
 					newKlient(c).Api().Get(ctx, testAPIID)
 					return nil
 				},
@@ -211,7 +211,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 			)
 		case "Update":
 			client.RunRequestKase(t, e,
-				func(c client.HTTPClient) error {
+				func(c client.HTTP) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
 					newKlient(c).Api().Update(ctx, &s)
@@ -221,7 +221,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 			)
 		case "Create":
 			client.RunRequestKase(t, e,
-				func(c client.HTTPClient) error {
+				func(c client.HTTP) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
 					newKlient(c).Api().Create(ctx, &s)
@@ -231,7 +231,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 			)
 		case "Delete":
 			client.RunRequestKase(t, e,
-				func(c client.HTTPClient) error {
+				func(c client.HTTP) error {
 					newKlient(c).Api().Delete(ctx, testAPIID)
 					return nil
 				},

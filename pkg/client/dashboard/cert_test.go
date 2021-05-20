@@ -93,7 +93,7 @@ func requestCert(t *testing.T, e environmet.Env, kase client.Kase) {
 	switch kase.Name {
 	case "All":
 		client.RunRequestKase(t, e,
-			func(c client.HTTPClient) error {
+			func(c client.HTTP) error {
 				newKlient(c).Certificate().All(ctx)
 				return nil
 			},
@@ -101,7 +101,7 @@ func requestCert(t *testing.T, e environmet.Env, kase client.Kase) {
 		)
 	case "Upload":
 		client.RunRequestKase(t, e,
-			func(c client.HTTPClient) error {
+			func(c client.HTTP) error {
 				key := ReadSampleFile(t, "cert.Key.pem")
 				cert := ReadSampleFile(t, "cert.Cert.pem")
 				newKlient(c).Certificate().Upload(ctx, []byte(key), []byte(cert))
@@ -111,7 +111,7 @@ func requestCert(t *testing.T, e environmet.Env, kase client.Kase) {
 		)
 	case "Exist":
 		client.RunRequestKase(t, e,
-			func(c client.HTTPClient) error {
+			func(c client.HTTP) error {
 				newKlient(c).Certificate().Exists(ctx, testCertID)
 				return nil
 			},

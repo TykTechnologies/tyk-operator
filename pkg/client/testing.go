@@ -89,13 +89,13 @@ func compareHeaders(t *testing.T, expect map[string]string, r http.Header) {
 // RunRequestKase this helps check if we are sending a correct request. This
 // assumes fn will only perform a single API call, this ignores the response it
 // only validates we are sending correct path/method/headers
-func RunRequestKase(t *testing.T, e environmet.Env, fn func(HTTPClient) error, kase ...Kase) {
+func RunRequestKase(t *testing.T, e environmet.Env, fn func(HTTP) error, kase ...Kase) {
 	t.Helper()
 	var request []*http.Request
 	var response []*http.Response
 	var body []string
 	var doErr []error
-	x := HTTPClient{
+	x := HTTP{
 		Env: e,
 		Log: log.NullLogger{},
 		Do: func(h *http.Request) (*http.Response, error) {
