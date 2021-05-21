@@ -1,6 +1,6 @@
-package v1alpha1
+package model
 
-type APICatalogueSpec struct {
+type APICatalogue struct {
 	Id    string           `json:"id"`
 	OrgId string           `json:"org_id"`
 	APIS  []APIDescription `json:"apis"`
