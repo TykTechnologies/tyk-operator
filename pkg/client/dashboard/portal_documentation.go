@@ -1,4 +1,4 @@
-package gateway
+package dashboard
 
 import (
 	"context"
@@ -8,24 +8,20 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 )
 
-type Portal struct{}
+const endpointDocumentation = "/api/portal/documentation/"
 
-func (Portal) Policy() universal.Policy {
-	return SecurityPolicy{}
-}
-
-func (Portal) Documentation() universal.Documentation {
-	return Documentation{}
-}
+var _ universal.Documentation = Documentation{}
 
 type Documentation struct{}
 
 func (Documentation) Upload(
 	ctx context.Context, o *model.APIDocumentation,
 ) (*model.Result, error) {
-	return nil, client.ErrTODO
+	return client.Result(client.PostJSON(ctx, endpointDocumentation, o))
 }
 
 func (Documentation) Delete(ctx context.Context, id string) (*model.Result, error) {
-	return nil, client.ErrTODO
+	return client.Result(client.Delete(
+		ctx, client.Join(endpointDocumentation, id), nil,
+	))
 }

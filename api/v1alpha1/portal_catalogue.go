@@ -55,6 +55,7 @@ type DCROptions struct {
 	ResponseTypes           []string `json:"response_types"`
 	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
 }
+
 type MailOptions struct {
 	MailFromName  string           `json:"mail_from_name"`
 	MailFromEmail string           `json:"mail_from_email"`

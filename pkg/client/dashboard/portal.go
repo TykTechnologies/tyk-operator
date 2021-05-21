@@ -7,3 +7,7 @@ type Portal struct{}
 func (p Portal) Policy() universal.Policy {
 	return SecurityPolicy{}
 }
+
+func (Portal) Documentation() universal.Documentation {
+	return Documentation{}
+}

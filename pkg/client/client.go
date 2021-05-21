@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
@@ -246,4 +247,17 @@ func LError(ctx context.Context, err error, msg string, kv ...interface{}) {
 
 func LInfo(ctx context.Context, msg string, kv ...interface{}) {
 	GetContext(ctx).Log.Info(msg, kv...)
+}
+
+func Result(res *http.Response, err error) (*model.Result, error) {
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	var m model.Result
+	err = json.NewDecoder(res.Body).Decode(&m)
+	if err != nil {
+		return nil, err
+	}
+	return &m, nil
 }
