@@ -250,14 +250,19 @@ func LInfo(ctx context.Context, msg string, kv ...interface{}) {
 }
 
 func Result(res *http.Response, err error) (*model.Result, error) {
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
 	var m model.Result
-	err = json.NewDecoder(res.Body).Decode(&m)
-	if err != nil {
-		return nil, err
+	if e := Data(&m)(res, err); e != nil {
+		return nil, e
 	}
 	return &m, nil
+}
+
+func Data(o interface{}) func(*http.Response, error) error {
+	return func(res *http.Response, err error) error {
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		return json.NewDecoder(res.Body).Decode(o)
+	}
 }

@@ -24,6 +24,7 @@ type Policy interface {
 type Portal interface {
 	Policy() Policy
 	Documentation() Documentation
+	Catalogue() Catalogue
 }
 
 type Documentation interface {
@@ -31,4 +32,10 @@ type Documentation interface {
 		ctx context.Context, o *model.APIDocumentation,
 	) (*model.Result, error)
 	Delete(ctx context.Context, id string) (*model.Result, error)
+}
+
+type Catalogue interface {
+	Get(ctx context.Context) (*model.APICatalogue, error)
+	Create(ctx context.Context, o *model.APICatalogue) (*model.Result, error)
+	Update(ctx context.Context, o *model.APICatalogue) (*model.Result, error)
 }

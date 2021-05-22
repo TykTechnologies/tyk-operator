@@ -18,6 +18,10 @@ func (Portal) Documentation() universal.Documentation {
 	return Documentation{}
 }
 
+func (Portal) Catalogue() universal.Catalogue {
+	return Catalogue{}
+}
+
 type Documentation struct{}
 
 func (Documentation) Upload(
@@ -27,5 +31,21 @@ func (Documentation) Upload(
 }
 
 func (Documentation) Delete(ctx context.Context, id string) (*model.Result, error) {
+	return nil, client.ErrTODO
+}
+
+var _ universal.Catalogue = Catalogue{}
+
+type Catalogue struct{}
+
+func (Catalogue) Get(ctx context.Context) (*model.APICatalogue, error) {
+	return nil, client.ErrTODO
+}
+
+func (Catalogue) Create(ctx context.Context, o *model.APICatalogue) (*model.Result, error) {
+	return nil, client.ErrTODO
+}
+
+func (Catalogue) Update(ctx context.Context, o *model.APICatalogue) (*model.Result, error) {
 	return nil, client.ErrTODO
 }

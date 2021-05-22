@@ -11,3 +11,7 @@ func (p Portal) Policy() universal.Policy {
 func (Portal) Documentation() universal.Documentation {
 	return Documentation{}
 }
+
+func (Portal) Catalogue() universal.Catalogue {
+	return Catalogue{}
+}
