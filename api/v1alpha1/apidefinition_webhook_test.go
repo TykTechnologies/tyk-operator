@@ -3,12 +3,15 @@ package v1alpha1
 import (
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"k8s.io/utils/pointer"
 )
 
 func TestApiDefinition_Default(t *testing.T) {
 	in := ApiDefinition{
-		Spec: APIDefinitionSpec{UseStandardAuth: true},
+		Spec: APIDefinitionSpec{
+			APIDefinitionSpec: model.APIDefinitionSpec{UseStandardAuth: true},
+		},
 	}
 	in.Default()
 
@@ -37,8 +40,10 @@ func TestApiDefinition_Default(t *testing.T) {
 func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
 	in := ApiDefinition{
 		Spec: APIDefinitionSpec{
-			UseStandardAuth: true,
-			DoNotTrack:      pointer.BoolPtr(true),
+			APIDefinitionSpec: model.APIDefinitionSpec{
+				UseStandardAuth: true,
+				DoNotTrack:      pointer.BoolPtr(true),
+			},
 		},
 	}
 	in.Default()
@@ -49,8 +54,10 @@ func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
 
 	in = ApiDefinition{
 		Spec: APIDefinitionSpec{
-			UseStandardAuth: true,
-			DoNotTrack:      nil,
+			APIDefinitionSpec: model.APIDefinitionSpec{
+				UseStandardAuth: true,
+				DoNotTrack:      nil,
+			},
 		},
 	}
 	in.Default()
@@ -61,8 +68,10 @@ func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
 
 	in = ApiDefinition{
 		Spec: APIDefinitionSpec{
-			UseStandardAuth: true,
-			DoNotTrack:      pointer.BoolPtr(false),
+			APIDefinitionSpec: model.APIDefinitionSpec{
+				UseStandardAuth: true,
+				DoNotTrack:      pointer.BoolPtr(false),
+			},
 		},
 	}
 	in.Default()

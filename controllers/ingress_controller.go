@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
@@ -109,15 +110,17 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
 	return &v1alpha1.ApiDefinition{
 		Spec: v1alpha1.APIDefinitionSpec{
-			Name:             "default-keyless",
-			Protocol:         "http",
-			UseKeylessAccess: true,
-			Active:           true,
-			Proxy: v1alpha1.Proxy{
-				TargetURL: "http://example.com",
-			},
-			VersionData: v1alpha1.VersionData{
-				NotVersioned: true,
+			APIDefinitionSpec: model.APIDefinitionSpec{
+				Name:             "default-keyless",
+				Protocol:         "http",
+				UseKeylessAccess: true,
+				Active:           true,
+				Proxy: model.Proxy{
+					TargetURL: "http://example.com",
+				},
+				VersionData: model.VersionData{
+					NotVersioned: true,
+				},
 			},
 		},
 	}

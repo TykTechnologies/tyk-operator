@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
-	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 )
@@ -110,7 +109,7 @@ func Request(ctx context.Context, method, url string, body io.Reader) (*http.Req
 }
 
 func CallJSON(ctx context.Context, method, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
-	b, err := v1alpha1.Marshal(body)
+	b, err := model.Marshal(body)
 	if err != nil {
 		return nil, err
 	}

@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
@@ -135,7 +136,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to delete resource")
 		return err
 	}
-	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns tykv1.Target) {
+	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
 		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
 	})
 	if err != nil {
@@ -157,7 +158,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to update policy")
 		return err
 	}
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s tykv1.Target) {
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	if err != nil {
@@ -179,7 +180,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to create policy")
 		return err
 	}
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s tykv1.Target) {
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	r.Log.Info("Successful created Policy")
@@ -191,10 +192,10 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 // updateLinkedAPI updates the status of api definitions associated with this
 // policy.
 func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *tykv1.SecurityPolicy,
-	fn func(*tykv1.ApiDefinitionStatus, tykv1.Target),
+	fn func(*tykv1.ApiDefinitionStatus, model.Target),
 ) error {
 	r.Log.Info("Updating linked api definitions")
-	ns := tykv1.Target{
+	ns := model.Target{
 		Namespace: policy.Namespace, Name: policy.Name,
 	}
 	for _, a := range policy.Spec.AccessRightsArray {

@@ -4,5 +4,4 @@ package model
 type Result struct {
 	Status  string
 	Message string
-	Meta    interface{}
 }

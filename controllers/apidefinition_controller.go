@@ -29,6 +29,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
@@ -243,7 +244,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		if err := r.checkLoopingTargets(ctx, desired); err != nil {
 			return queueAfter, err
 		}
-		ns := tykv1alpha1.Target{
+		ns := model.Target{
 			Name:      desired.Name,
 			Namespace: desired.Namespace,
 		}
@@ -325,7 +326,7 @@ func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *ty
 	return nil
 }
 
-func (r *ApiDefinitionReconciler) ensureTargets(ctx context.Context, targets []tykv1alpha1.Target) error {
+func (r *ApiDefinitionReconciler) ensureTargets(ctx context.Context, targets []model.Target) error {
 	for _, target := range targets {
 		var api tykv1alpha1.ApiDefinition
 		if err := r.Get(ctx, target.NS(), &api); err != nil {
@@ -336,13 +337,13 @@ func (r *ApiDefinitionReconciler) ensureTargets(ctx context.Context, targets []t
 }
 
 func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
-	a *tykv1alpha1.ApiDefinition, links []tykv1alpha1.Target,
+	a *tykv1alpha1.ApiDefinition, links []model.Target,
 ) error {
 	r.Log.Info("updating looping targets")
 	if len(links) == 0 {
 		return nil
 	}
-	ns := tykv1alpha1.Target{
+	ns := model.Target{
 		Name:      a.Name,
 		Namespace: a.Namespace,
 	}
@@ -359,7 +360,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	}
 
 	// we need to update removed targets
-	newTargets := make(map[string]tykv1alpha1.Target)
+	newTargets := make(map[string]model.Target)
 	for _, v := range links {
 		newTargets[v.String()] = v
 	}
@@ -380,7 +381,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	return client.IgnoreNotFound(r.Status().Update(ctx, a))
 }
 
-func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target tykv1alpha1.Target, ignoreNotFound bool, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
+func (r *ApiDefinitionReconciler) updateStatus(ctx context.Context, target model.Target, ignoreNotFound bool, fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
 	var api tykv1alpha1.ApiDefinition
 	if err := r.Get(ctx, target.NS(), &api); err != nil {
 		if errors.IsNotFound(err) {
