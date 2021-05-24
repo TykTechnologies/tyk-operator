@@ -64,9 +64,9 @@ spec:
                   url:
                     type: string
                 type: object
-              fromSecret:
-                description: FromSecret when this is specified, the given secret will
-                  be used to load values for the context environment
+              secretRef:
+                description: Reference to k8s secret resource that we load environment
+                  from.
                 properties:
                   name:
                     type: string

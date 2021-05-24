@@ -142,9 +142,9 @@ spec:
                 description: Active must be set to `true` for Tyk to load the security
                   policy into memory.
                 type: boolean
-              context:
-                description: Context specify namespace/name of the OperatorContext
-                  object used for reconciling this SecurityPolicy
+              contextRef:
+                description: Reference to k8s secret resource that we load environment
+                  from.
                 properties:
                   name:
                     type: string

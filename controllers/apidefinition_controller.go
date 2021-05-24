@@ -96,7 +96,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			desired.Spec.APIID = encodeNS(req.NamespacedName.String())
 		}
 		if desired.Spec.OrgID == "" {
-			desired.Spec.OrgID = r.UniversalClient.Environment().Org
+			desired.Spec.OrgID = r.Env.Org
 		}
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 		for _, certName := range desired.Spec.CertificateSecretNames {

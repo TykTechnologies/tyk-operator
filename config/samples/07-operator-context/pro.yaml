@@ -3,7 +3,7 @@ kind: OperatorContext
 metadata:
   name: local-pro-test
 spec:
-  fromSecret:
+  secretRef:
     namespace: tyk-operator-system
     name: tyk-operator-conf
 
@@ -13,7 +13,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin-with-context
 spec:
-  context:
+  contextRef:
     name: local-pro-test
     namespace: default
   name: httpbin-with-context

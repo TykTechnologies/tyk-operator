@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 )
@@ -49,7 +50,7 @@ var client = &http.Client{}
 var once sync.Once
 
 func init() {
-	if os.Getenv(environmet.SkipVerify) == "true" {
+	if os.Getenv(v1alpha1.SkipVerify) == "true" {
 		client.Transport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{

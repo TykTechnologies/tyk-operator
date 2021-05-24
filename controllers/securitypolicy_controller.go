@@ -78,7 +78,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			policy.Spec.ID = encodeNS(ns)
 		}
 		if policy.Spec.OrgID == "" {
-			policy.Spec.OrgID = r.UniversalClient.Environment().Org
+			policy.Spec.OrgID = r.Env.Org
 		}
 		// update access rights
 		r.Log.Info("updating access rights")

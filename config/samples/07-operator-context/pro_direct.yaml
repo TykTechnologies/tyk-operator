@@ -19,7 +19,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin-with-context
 spec:
-  context:
+  contextRef:
     name: local-pro-test
     namespace: default
   name: httpbin-with-context

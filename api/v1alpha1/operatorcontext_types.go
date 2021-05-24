@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -59,9 +60,8 @@ type OperatorContextMode string
 
 // OperatorContextSpec defines the desired state of OperatorContext
 type OperatorContextSpec struct {
-	// FromSecret when this is specified, the given secret will be used to load
-	// values for the context environment
-	FromSecret *Target `json:"fromSecret,omitempty"`
+	// Reference to k8s secret resource that we load environment from.
+	FromSecret *model.Target `json:"secretRef,omitempty"`
 	// Env is the values of the admin api endpoint that the operator will use to
 	// reconcile resources
 	Env *Environment `json:"env,omitempty"`

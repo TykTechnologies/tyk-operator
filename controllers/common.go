@@ -6,10 +6,11 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Helper function to check string exists in a slice of strings.
@@ -80,7 +81,7 @@ func httpContext(ctx context.Context, e environmet.Env, log logr.Logger) context
 // from secret
 func GetContext(
 	ctx context.Context,
-	client client.Client,
+	client runtimeClient.Client,
 	target *model.Target,
 ) (*v1alpha1.OperatorContext, error) {
 	var o v1alpha1.OperatorContext

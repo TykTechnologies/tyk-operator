@@ -1655,8 +1655,8 @@ spec:
                   url:
                     type: string
                 type: object
-              fromSecret:
-                description: FromSecret when this is specified, the given secret will be used to load values for the context environment
+              secretRef:
+                description: Reference to k8s secret resource that we load environment from.
                 properties:
                   name:
                     type: string
@@ -1808,8 +1808,8 @@ spec:
               active:
                 description: Active must be set to `true` for Tyk to load the security policy into memory.
                 type: boolean
-              context:
-                description: Context specify namespace/name of the OperatorContext object used for reconciling this SecurityPolicy
+              contextRef:
+                description: Reference to k8s secret resource that we load environment from.
                 properties:
                   name:
                     type: string

@@ -292,6 +292,8 @@ func (in *OperatorContextSpec) DeepCopyInto(out *OperatorContextSpec) {
 	*out = *in
 	if in.FromSecret != nil {
 		in, out := &in.FromSecret, &out.FromSecret
+		*out = new(model.Target)
+		**out = **in
 	}
 	if in.Env != nil {
 		in, out := &in.Env, &out.Env
@@ -404,6 +406,8 @@ func (in *SecurityPolicySpec) DeepCopyInto(out *SecurityPolicySpec) {
 	*out = *in
 	if in.Context != nil {
 		in, out := &in.Context, &out.Context
+		*out = new(model.Target)
+		**out = **in
 	}
 	if in.AccessRightsArray != nil {
 		in, out := &in.AccessRightsArray, &out.AccessRightsArray
