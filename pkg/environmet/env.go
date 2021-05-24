@@ -5,51 +5,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
-)
 
-const (
-
-	// WatchNamespace is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	WatchNamespace = "WATCH_NAMESPACE"
-
-	// TykMode defines what environment the operator is running. The values are ce
-	// for community edition and pro for pro version
-	TykMode = "TYK_MODE"
-
-	// TykURL holds the url to either tyk gateway or tyk dashboard
-	TykURL = "TYK_URL"
-
-	// TykAuth holds the authorization token used to make api calls to the
-	// gateway/dashboard
-	TykAuth = "TYK_AUTH"
-
-	// TykORG holds the org id which perform api tasks with
-	TykORG = "TYK_ORG"
-
-	// SkipVerify the client will skip tls verification if this is true
-	SkipVerify = "TYK_TLS_INSECURE_SKIP_VERIFY"
-
-	// IngressClass overides the default class to watch for ingress
-	IngressClass = "WATCH_INGRESS_CLASS"
-
-	IngressTLSPort = "TYK_HTTPS_INGRESS_PORT"
-
-	IngressHTTPPort = "TYK_HTTP_INGRESS_PORT"
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 // Env holds values needed to talk to the gateway or the dashboard API
 type Env struct {
-	Namespace          string
-	Mode               string
-	InsecureSkipVerify bool
-	URL                string
-	Auth               string
-	Org                string
-	IngressClass       string
-	IngressTLSPort     int
-	IngressHTTPPort    int
+	v1alpha1.Environment
+	Namespace    string
+	IngressClass string
 }
 
 func (e Env) Merge(n Env) Env {
@@ -71,38 +35,37 @@ func (e Env) Merge(n Env) Env {
 	if n.IngressClass != "" {
 		e.IngressClass = n.IngressClass
 	}
-	if n.IngressTLSPort != 0 {
-		e.IngressTLSPort = n.IngressTLSPort
+	if n.Ingress.HTTPSPort != 0 {
+		e.Ingress.HTTPSPort = n.Ingress.HTTPSPort
 	}
-	if n.IngressHTTPPort != 0 {
-		e.IngressHTTPPort = n.IngressHTTPPort
+	if n.Ingress.HTTPPort != 0 {
+		e.Ingress.HTTPPort = n.Ingress.HTTPPort
 	}
 	return e
 }
 
 // Parse loads env vars into e and validates them, returning an error if validation fails.
 func (e *Env) Parse() error {
-	e.Namespace = strings.TrimSpace(os.Getenv(WatchNamespace))
-	e.Mode = strings.TrimSpace(os.Getenv(TykMode))
-	e.URL = strings.TrimSpace(os.Getenv(TykURL))
-	e.Auth = strings.TrimSpace(os.Getenv(TykAuth))
-	e.Org = strings.TrimSpace(os.Getenv(TykORG))
-	e.InsecureSkipVerify, _ = strconv.ParseBool(os.Getenv(SkipVerify))
-	e.IngressTLSPort, _ = strconv.Atoi(os.Getenv(IngressTLSPort))
-	e.IngressHTTPPort, _ = strconv.Atoi(os.Getenv(IngressHTTPPort))
-	if e.IngressTLSPort == 0 {
-		// set default value
-		e.IngressTLSPort = 8443
+	e.Namespace = strings.TrimSpace(os.Getenv(v1alpha1.WatchNamespace))
+	e.Mode = v1alpha1.OperatorContextMode(os.Getenv(v1alpha1.TykMode))
+	e.URL = strings.TrimSpace(os.Getenv(v1alpha1.TykURL))
+	e.Auth = strings.TrimSpace(os.Getenv(v1alpha1.TykAuth))
+	e.Org = strings.TrimSpace(os.Getenv(v1alpha1.TykORG))
+	e.InsecureSkipVerify, _ = strconv.ParseBool(os.Getenv(v1alpha1.SkipVerify))
+	e.Ingress.HTTPSPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressTLSPort))
+	e.Ingress.HTTPPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressHTTPPort))
+	e.IngressClass = os.Getenv(v1alpha1.IngressClass)
+	if e.Ingress.HTTPSPort == 0 {
+		e.Ingress.HTTPSPort = 8443
 	}
-	e.IngressClass = os.Getenv(IngressClass)
 	// verify
 	sample := []struct {
 		env, value string
 	}{
-		{TykMode, e.Mode},
-		{TykURL, e.URL},
-		{TykAuth, e.Auth},
-		{TykORG, e.Org},
+		{v1alpha1.TykMode, string(e.Mode)},
+		{v1alpha1.TykURL, e.URL},
+		{v1alpha1.TykAuth, e.Auth},
+		{v1alpha1.TykORG, e.Org},
 	}
 	var ls []string
 	for _, v := range sample {

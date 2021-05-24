@@ -275,6 +275,18 @@ spec:
                 items:
                   type: string
                 type: array
+              context:
+                description: Context specify namespace/name of the OperatorContext
+                  object used for reconciling this APIDefinition
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               custom_middleware:
                 properties:
                   auth_check:

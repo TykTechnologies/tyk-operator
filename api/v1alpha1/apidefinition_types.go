@@ -25,6 +25,9 @@ import (
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
 	model.APIDefinitionSpec `json:",inline"`
+	// Context specify namespace/name of the OperatorContext object used for
+	// reconciling this APIDefinition
+	Context *model.Target `json:"context,omitempty"`
 }
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition

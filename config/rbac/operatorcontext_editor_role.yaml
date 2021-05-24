@@ -1,0 +1,24 @@
+# permissions for end users to edit operatorcontexts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: operatorcontext-editor-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - operatorcontexts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - operatorcontexts/status
+  verbs:
+  - get

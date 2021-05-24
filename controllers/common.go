@@ -5,9 +5,11 @@ import (
 	"encoding/base64"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
-	"github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Helper function to check string exists in a slice of strings.
@@ -70,4 +72,30 @@ func httpContext(ctx context.Context, e environmet.Env, log logr.Logger) context
 		Env: e,
 		Log: log,
 	})
+}
+
+// GetContext returns a OperatorContext context resource from k8s cluster with
+// target. When Spec.FromSecret is provided this reads the secret and loads the
+// environment from it. Values set in .Spec.Env takes precedence over the values
+// from secret
+func GetContext(
+	ctx context.Context,
+	client client.Client,
+	target *model.Target,
+) (*v1alpha1.OperatorContext, error) {
+	var o v1alpha1.OperatorContext
+	err := client.Get(ctx, target.NS(), &o)
+	if err != nil {
+		return nil, err
+	}
+	if o.Spec.FromSecret != nil {
+		var secret v1.Secret
+		if err := client.Get(ctx, o.Spec.FromSecret.NS(), &secret); err != nil {
+			return nil, err
+		}
+	}
+	if o.Spec.Env == nil {
+		o.Spec.Env = &v1alpha1.Environment{}
+	}
+	return &o, nil
 }

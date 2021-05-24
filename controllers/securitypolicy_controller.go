@@ -77,6 +77,9 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		if policy.Spec.ID == "" {
 			policy.Spec.ID = encodeNS(ns)
 		}
+		if policy.Spec.OrgID == "" {
+			policy.Spec.OrgID = r.UniversalClient.Environment().Org
+		}
 		// update access rights
 		r.Log.Info("updating access rights")
 		if policy.Status.PolID == "" {
@@ -93,6 +96,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // returns a copy of SecurityPolicySpec with AccessRightsArray updated
 func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
 	spec := policy.Spec.DeepCopy()
+	spec.Context = nil
 	for i := 0; i < len(spec.AccessRightsArray); i++ {
 		err := r.updateAccess(ctx, spec.AccessRightsArray[i])
 		if err != nil {

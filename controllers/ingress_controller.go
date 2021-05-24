@@ -152,8 +152,8 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 				if rule.Host != "" {
 					api.Spec.Domain = r.translateHost(rule.Host)
 				}
-				if r.Env.IngressHTTPPort != 0 {
-					api.Spec.ListenPort = r.Env.IngressHTTPPort
+				if env.Ingress.HTTPPort != 0 {
+					api.Spec.ListenPort = env.Ingress.HTTPPort
 				}
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
@@ -163,7 +163,7 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 								api.Spec.CertificateSecretNames = []string{
 									tls.SecretName,
 								}
-								api.Spec.ListenPort = r.Env.IngressTLSPort
+								api.Spec.ListenPort = env.Ingress.HTTPSPort
 							}
 						}
 					}

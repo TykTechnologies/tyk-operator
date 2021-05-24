@@ -142,6 +142,18 @@ spec:
                 description: Active must be set to `true` for Tyk to load the security
                   policy into memory.
                 type: boolean
+              context:
+                description: Context specify namespace/name of the OperatorContext
+                  object used for reconciling this SecurityPolicy
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               enable_http_signature_validation:
                 type: boolean
               hmac_enabled:
@@ -187,12 +199,6 @@ spec:
                     type: boolean
                   rate_limit:
                     type: boolean
-                required:
-                - acl
-                - complexity
-                - per_api
-                - quota
-                - rate_limit
                 type: object
               per:
                 description: To be used in conjunction with "Rate".  Per seconds.
