@@ -120,24 +120,3 @@ func (e *Env) Parse() error {
 		return fmt.Errorf("unknown TYK_MODE value %q", e.Mode)
 	}
 }
-
-// JoinURL returns addition of  parts to the base e.URL
-func (e *Env) JoinURL(parts ...string) string {
-	return joinURL(append([]string{e.URL}, parts...)...)
-}
-
-func joinURL(parts ...string) string {
-	l := len(parts)
-	if l == 1 {
-		return parts[0]
-	}
-	ps := make([]string, l)
-	for i, part := range parts {
-		if i == 0 {
-			ps[i] = strings.TrimRight(part, "/")
-		} else {
-			ps[i] = strings.TrimLeft(part, "/")
-		}
-	}
-	return strings.Join(ps, "/")
-}

@@ -1,7 +1,8 @@
-package universal_client
+package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -89,13 +90,13 @@ func compareHeaders(t *testing.T, expect map[string]string, r http.Header) {
 // RunRequestKase this helps check if we are sending a correct request. This
 // assumes fn will only perform a single API call, this ignores the response it
 // only validates we are sending correct path/method/headers
-func RunRequestKase(t *testing.T, e environmet.Env, fn func(Client) error, kase ...Kase) {
+func RunRequestKase(t *testing.T, e environmet.Env, fn func(context.Context) error, kase ...Kase) {
 	t.Helper()
 	var request []*http.Request
 	var response []*http.Response
 	var body []string
 	var doErr []error
-	x := Client{
+	x := Context{
 		Env: e,
 		Log: log.NullLogger{},
 		Do: func(h *http.Request) (*http.Response, error) {
@@ -115,7 +116,7 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(Client) error, kase 
 			return res, nil
 		},
 	}
-	err := fn(x)
+	err := fn(SetContext(context.Background(), x))
 	if err != nil {
 		t.Error(err)
 		return

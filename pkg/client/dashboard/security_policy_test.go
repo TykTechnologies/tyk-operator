@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"context"
@@ -7,15 +7,14 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 const testSecurityPolicyID = "5fd202b669710900018bc19c"
 
 func TestSecurityPolicy(t *testing.T) {
 	var e environmet.Env
-	e.Parse()
 	e = env().Merge(e)
 	h := mockDash(t,
 		&route{
@@ -122,50 +121,49 @@ func TestSecurityPolicy(t *testing.T) {
 
 }
 
-func requestSecurityPolicy(t *testing.T, e environmet.Env, kase universal_client.Kase) {
+func requestSecurityPolicy(t *testing.T, e environmet.Env, kase client.Kase) {
 	t.Helper()
-	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
-				newKlient(c).SecurityPolicy().All(ctx)
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
+				newKlient().Portal().Policy().All(ctx)
 				return nil
 			},
 			kase,
 		)
 	case "Get":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
-				newKlient(c).SecurityPolicy().Get(ctx, testSecurityPolicyID)
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
+				newKlient().Portal().Policy().Get(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,
 		)
 	case "Update":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
-				newKlient(c).SecurityPolicy().Update(ctx, &s)
+				newKlient().Portal().Policy().Update(ctx, &s)
 				return nil
 			},
 			kase,
 		)
 	case "Create":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
 				var s v1alpha1.SecurityPolicySpec
 				Sample(t, "policy."+kase.Name, &s)
-				newKlient(c).SecurityPolicy().Create(ctx, &s)
+				newKlient().Portal().Policy().Create(ctx, &s)
 				return nil
 			},
 			kase,
 		)
 	case "Delete":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
-				newKlient(c).SecurityPolicy().Delete(ctx, testSecurityPolicyID)
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
+				newKlient().Portal().Policy().Delete(ctx, testSecurityPolicyID)
 				return nil
 			},
 			kase,

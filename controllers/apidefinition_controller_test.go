@@ -6,22 +6,25 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 func TestUpdatingLoopingTargets(t *testing.T) {
 	t.Run(".spec.proxy.target_internal", func(t *testing.T) {
 		t.Skip()
-		target := &tykv1alpha1.TargetInternal{
-			Target: tykv1alpha1.Target{
+		target := &model.TargetInternal{
+			Target: model.Target{
 				Name:      "test",
 				Namespace: "default",
 			},
 		}
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
-				Proxy: tykv1alpha1.Proxy{
-					TargeInternal: target,
+				APIDefinitionSpec: model.APIDefinitionSpec{
+					Proxy: model.Proxy{
+						TargeInternal: target,
+					},
 				},
 			},
 		}
@@ -44,21 +47,23 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 	})
 	t.Run(".spec.version_data[url_rewrite]", func(t *testing.T) {
 		t.Skip()
-		target := &tykv1alpha1.RewriteToInternal{
-			Target: tykv1alpha1.Target{
+		target := &model.RewriteToInternal{
+			Target: model.Target{
 				Name:      "test",
 				Namespace: "default",
 			},
 		}
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
-				VersionData: tykv1alpha1.VersionData{
-					Versions: map[string]tykv1alpha1.VersionInfo{
-						"Default": {
-							ExtendedPaths: &tykv1alpha1.ExtendedPathsSet{
-								URLRewrite: []tykv1alpha1.URLRewriteMeta{
-									{
-										RewriteToInternal: target,
+				APIDefinitionSpec: model.APIDefinitionSpec{
+					VersionData: model.VersionData{
+						Versions: map[string]model.VersionInfo{
+							"Default": {
+								ExtendedPaths: &model.ExtendedPathsSet{
+									URLRewrite: []model.URLRewriteMeta{
+										{
+											RewriteToInternal: target,
+										},
 									},
 								},
 							},
@@ -84,23 +89,25 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		}
 	})
 	t.Run(".spec.version_data[url_rewrite triggers]", func(t *testing.T) {
-		target := &tykv1alpha1.RewriteToInternal{
-			Target: tykv1alpha1.Target{
+		target := &model.RewriteToInternal{
+			Target: model.Target{
 				Name:      "test",
 				Namespace: "default",
 			},
 		}
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
-				VersionData: tykv1alpha1.VersionData{
-					Versions: map[string]tykv1alpha1.VersionInfo{
-						"Default": {
-							ExtendedPaths: &tykv1alpha1.ExtendedPathsSet{
-								URLRewrite: []tykv1alpha1.URLRewriteMeta{
-									{
-										Triggers: []tykv1alpha1.RoutingTrigger{
-											{
-												RewriteToInternal: target,
+				APIDefinitionSpec: model.APIDefinitionSpec{
+					VersionData: model.VersionData{
+						Versions: map[string]model.VersionInfo{
+							"Default": {
+								ExtendedPaths: &model.ExtendedPathsSet{
+									URLRewrite: []model.URLRewriteMeta{
+										{
+											Triggers: []model.RoutingTrigger{
+												{
+													RewriteToInternal: target,
+												},
 											},
 										},
 									},
@@ -129,39 +136,41 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 	})
 	t.Run("all", func(t *testing.T) {
 		t.Skip()
-		target1 := &tykv1alpha1.TargetInternal{
-			Target: tykv1alpha1.Target{
+		target1 := &model.TargetInternal{
+			Target: model.Target{
 				Name:      "test1",
 				Namespace: "default",
 			},
 		}
-		target2 := &tykv1alpha1.RewriteToInternal{
-			Target: tykv1alpha1.Target{
+		target2 := &model.RewriteToInternal{
+			Target: model.Target{
 				Name:      "test2",
 				Namespace: "default",
 			},
 		}
-		target3 := &tykv1alpha1.RewriteToInternal{
-			Target: tykv1alpha1.Target{
+		target3 := &model.RewriteToInternal{
+			Target: model.Target{
 				Name:      "test3",
 				Namespace: "default",
 			},
 		}
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
-				Proxy: tykv1alpha1.Proxy{
-					TargeInternal: target1,
-				},
-				VersionData: tykv1alpha1.VersionData{
-					Versions: map[string]tykv1alpha1.VersionInfo{
-						"Default": {
-							ExtendedPaths: &tykv1alpha1.ExtendedPathsSet{
-								URLRewrite: []tykv1alpha1.URLRewriteMeta{
-									{
-										RewriteToInternal: target2,
-										Triggers: []tykv1alpha1.RoutingTrigger{
-											{
-												RewriteToInternal: target3,
+				APIDefinitionSpec: model.APIDefinitionSpec{
+					Proxy: model.Proxy{
+						TargeInternal: target1,
+					},
+					VersionData: model.VersionData{
+						Versions: map[string]model.VersionInfo{
+							"Default": {
+								ExtendedPaths: &model.ExtendedPathsSet{
+									URLRewrite: []model.URLRewriteMeta{
+										{
+											RewriteToInternal: target2,
+											Triggers: []model.RoutingTrigger{
+												{
+													RewriteToInternal: target3,
+												},
 											},
 										},
 									},
@@ -176,7 +185,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		if len(got) != 3 {
 			t.Fatalf("expected 3 target got %d", len(got))
 		}
-		expect := []tykv1alpha1.Target{
+		expect := []model.Target{
 			target1.Target, target2.Target, target3.Target,
 		}
 		sort.Slice(expect, func(i, j int) bool {
@@ -189,8 +198,8 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 }
 
 func TestTargetInternal(t *testing.T) {
-	target3 := &tykv1alpha1.RewriteToInternal{
-		Target: tykv1alpha1.Target{
+	target3 := &model.RewriteToInternal{
+		Target: model.Target{
 			Name:      "test3",
 			Namespace: "default",
 		},

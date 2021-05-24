@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"context"
@@ -7,15 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 const testCertID = "5fd08e0f69710900018bc19568492b39a512286d3e71c4c673faa7f094ffef324d12bf3b485c295221e97150"
 
 func TestCert(t *testing.T) {
 	var e environmet.Env
-	e.Parse()
 	h := mockDash(t,
 		&route{
 			path:   "/api/certs",
@@ -87,32 +86,31 @@ func TestCert(t *testing.T) {
 	})
 }
 
-func requestCert(t *testing.T, e environmet.Env, kase universal_client.Kase) {
+func requestCert(t *testing.T, e environmet.Env, kase client.Kase) {
 	t.Helper()
-	ctx := context.TODO()
 	switch kase.Name {
 	case "All":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
-				newKlient(c).Certificate().All(ctx)
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
+				newKlient().Certificate().All(ctx)
 				return nil
 			},
 			kase,
 		)
 	case "Upload":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
 				key := ReadSampleFile(t, "cert.Key.pem")
 				cert := ReadSampleFile(t, "cert.Cert.pem")
-				newKlient(c).Certificate().Upload(ctx, []byte(key), []byte(cert))
+				newKlient().Certificate().Upload(ctx, []byte(key), []byte(cert))
 				return nil
 			},
 			kase,
 		)
 	case "Exist":
-		universal_client.RunRequestKase(t, e,
-			func(c universal_client.Client) error {
-				newKlient(c).Certificate().Exists(ctx, testCertID)
+		client.RunRequestKase(t, e,
+			func(ctx context.Context) error {
+				newKlient().Certificate().Exists(ctx, testCertID)
 				return nil
 			},
 			kase,

@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,10 +57,10 @@ func (in *ApiDefinition) Default() {
 	in.Spec.OrgID = strings.TrimSpace(os.Getenv(environmet.TykORG))
 
 	if len(in.Spec.VersionData.Versions) == 0 {
-		in.Spec.VersionData = VersionData{
+		in.Spec.VersionData = model.VersionData{
 			NotVersioned:   true,
 			DefaultVersion: "Default",
-			Versions: map[string]VersionInfo{
+			Versions: map[string]model.VersionInfo{
 				"Default": {
 					Name:             "Default",
 					UseExtendedPaths: false,
@@ -71,11 +72,11 @@ func (in *ApiDefinition) Default() {
 
 	if in.Spec.UseStandardAuth {
 		if in.Spec.AuthConfigs == nil {
-			in.Spec.AuthConfigs = make(map[string]AuthConfig)
+			in.Spec.AuthConfigs = make(map[string]model.AuthConfig)
 		}
 		if _, ok := in.Spec.AuthConfigs["authToken"]; !ok {
 			apidefinitionlog.Info("applying default auth_config as not set & use_standard_auth enabled")
-			in.Spec.AuthConfigs["authToken"] = AuthConfig{
+			in.Spec.AuthConfigs["authToken"] = model.AuthConfig{
 				AuthHeaderName: "Authorization",
 			}
 		}

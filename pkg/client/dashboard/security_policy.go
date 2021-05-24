@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"context"
@@ -7,16 +7,14 @@ import (
 	"strings"
 
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 )
 
-type SecurityPolicy struct {
-	*Client
-}
+type SecurityPolicy struct{}
 
 // All Returns all policies from the Dashboard
 func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error) {
-	res, err := p.Client.Get(p.Env.JoinURL(endpointPolicies), nil)
+	res, err := client.Get(ctx, client.Join(endpointPolicies), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +25,7 @@ func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error
 	}
 
 	var response PoliciesResponse
-	if err := universal_client.JSON(res, &response); err != nil {
+	if err := client.JSON(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Policies, nil
@@ -35,13 +33,13 @@ func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error
 
 // Get  find the Policy by id
 func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicySpec, error) {
-	res, err := p.Client.Get(p.Env.JoinURL(endpointPolicies, id), nil)
+	res, err := client.Get(ctx, client.Join(endpointPolicies, id), nil)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 	var o v1.SecurityPolicySpec
-	if err := universal_client.JSON(res, &o); err != nil {
+	if err := client.JSON(res, &o); err != nil {
 		return nil, err
 	}
 	return &o, nil
@@ -49,16 +47,16 @@ func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicyS
 
 // Create  creates a new policy using the def object
 func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) error {
-	res, err := p.Client.PostJSON(p.Env.JoinURL(endpointPolicies), def)
+	res, err := client.PostJSON(ctx, client.Join(endpointPolicies), def)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return universal_client.Error(res)
+		return client.Error(res)
 	}
 	var msg ResponseMsg
-	if err := universal_client.JSON(res, &msg); err != nil {
+	if err := client.JSON(res, &msg); err != nil {
 		return err
 	}
 	switch strings.ToLower(msg.Status) {
@@ -66,33 +64,33 @@ func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 		def.MID = msg.Message
 		return nil
 	default:
-		return universal_client.Error(res)
+		return client.Error(res)
 	}
 }
 
 // Update updates a resource object def
 func (p SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) error {
-	res, err := p.Client.PutJSON(p.Env.JoinURL(endpointPolicies, def.MID), def)
+	res, err := client.PutJSON(ctx, client.Join(endpointPolicies, def.MID), def)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return universal_client.Error(res)
+		return client.Error(res)
 	}
-	return universal_client.JSON(res, def)
+	return client.JSON(res, def)
 }
 
 // Delete deletes the resource by ID
 func (p SecurityPolicy) Delete(ctx context.Context, id string) error {
-	res, err := p.Client.Delete(p.Env.JoinURL(endpointPolicies, id), nil)
+	res, err := client.Delete(ctx, client.Join(endpointPolicies, id), nil)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return universal_client.Error(res)
+		return client.Error(res)
 	}
 	return nil
 }
