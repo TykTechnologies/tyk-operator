@@ -19,7 +19,8 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,13 +41,16 @@ type SecretCertReconciler struct {
 	client.Client
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
-	UniversalClient universal_client.UniversalClient
+	UniversalClient universal.Client
+	Env             environmet.Env
 }
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update
 
 func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("cert", req.NamespacedName)
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Env, log)
 
 	log.Info("getting secret resource")
 	desired := &v1.Secret{}
@@ -66,7 +70,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{}, nil
 			}
 
-			orgID := r.UniversalClient.Environment().Org
+			orgID := r.Env.Org
 			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
 			certID := orgID + certFingerPrint
@@ -77,7 +81,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
 			}
 
-			if err := r.UniversalClient.HotReload(); err != nil {
+			if err := r.UniversalClient.HotReload(ctx); err != nil {
 				return ctrl.Result{}, err
 			}
 

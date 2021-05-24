@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
 )
 
 const contentJSON = "application/json"
@@ -17,7 +17,6 @@ const testAPIID = "ZGVmYXVsdC9odHRwYmlu"
 
 func TestAPI(t *testing.T) {
 	var e environmet.Env
-	e.Parse()
 	h := mockDash(t,
 		&route{
 			path:   "/api/apis",
@@ -188,51 +187,50 @@ func TestAPI(t *testing.T) {
 
 }
 
-func requestAPI(t *testing.T, e environmet.Env, name string, kase ...universal_client.Kase) {
+func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase) {
 	t.Helper()
-	ctx := context.TODO()
 	t.Run(name, func(t *testing.T) {
 		switch name {
 		case "All":
-			universal_client.RunRequestKase(t, e,
-				func(c universal_client.Client) error {
-					newKlient(c).Api().All(ctx)
+			client.RunRequestKase(t, e,
+				func(ctx context.Context) error {
+					newKlient().Api().All(ctx)
 					return nil
 				},
 				kase...,
 			)
 		case "Get":
-			universal_client.RunRequestKase(t, e,
-				func(c universal_client.Client) error {
-					newKlient(c).Api().Get(ctx, testAPIID)
+			client.RunRequestKase(t, e,
+				func(ctx context.Context) error {
+					newKlient().Api().Get(ctx, testAPIID)
 					return nil
 				},
 				kase...,
 			)
 		case "Update":
-			universal_client.RunRequestKase(t, e,
-				func(c universal_client.Client) error {
+			client.RunRequestKase(t, e,
+				func(ctx context.Context) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
-					newKlient(c).Api().Update(ctx, &s)
+					newKlient().Api().Update(ctx, &s)
 					return nil
 				},
 				kase...,
 			)
 		case "Create":
-			universal_client.RunRequestKase(t, e,
-				func(c universal_client.Client) error {
+			client.RunRequestKase(t, e,
+				func(ctx context.Context) error {
 					var s v1alpha1.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
-					newKlient(c).Api().Create(ctx, &s)
+					newKlient().Api().Create(ctx, &s)
 					return nil
 				},
 				kase...,
 			)
 		case "Delete":
-			universal_client.RunRequestKase(t, e,
-				func(c universal_client.Client) error {
-					newKlient(c).Api().Delete(ctx, testAPIID)
+			client.RunRequestKase(t, e,
+				func(ctx context.Context) error {
+					newKlient().Api().Delete(ctx, testAPIID)
 					return nil
 				},
 				kase...,

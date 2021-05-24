@@ -1,4 +1,4 @@
-package dashboard_client
+package dashboard
 
 import (
 	"bytes"
@@ -9,12 +9,10 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
 )
 
-type Cert struct {
-	*Client
-}
+type Cert struct{}
 
 type CertificateList struct {
 	CertIDs []string `json:"certs"`
@@ -22,39 +20,39 @@ type CertificateList struct {
 }
 
 // All returns a list of all certificates ID's
-func (c *Cert) All(ctx context.Context) ([]string, error) {
-	res, err := c.Client.Get(c.Env.JoinURL(endpointCerts), nil)
+func (c Cert) All(ctx context.Context) ([]string, error) {
+	res, err := client.Get(ctx, endpointCerts, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, universal_client.Error(res)
+		return nil, client.Error(res)
 	}
 	var o CertificateList
-	err = universal_client.JSON(res, &o)
+	err = client.JSON(res, &o)
 	if err != nil {
 		return nil, err
 	}
 	return o.CertIDs, nil
 }
 
-func (c *Cert) Exists(ctx context.Context, id string) bool {
-	res, err := c.Client.Get(c.Env.JoinURL(endpointCerts, id), nil)
+func (c Cert) Exists(ctx context.Context, id string) bool {
+	res, err := client.Get(ctx, client.Join(endpointCerts, id), nil)
 	if err != nil {
-		c.Log.Error(err, "failed to get certificate")
+		client.LError(ctx, err, "failed to get certificate")
 		return false
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		c.Log.Error(universal_client.Error(res), "Unexepcted status")
+		client.LError(ctx, client.Error(res), "Unexepcted status")
 		return false
 	}
 	return true
 }
 
-func (c *Cert) Delete(ctx context.Context, id string) error {
-	res, err := c.Client.Delete(c.Env.JoinURL(endpointCerts, id), nil)
+func (c Cert) Delete(ctx context.Context, id string) error {
+	res, err := client.Delete(ctx, client.Join(endpointCerts, id), nil)
 	if err != nil {
 		return err
 	}
@@ -65,11 +63,10 @@ func (c *Cert) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (c *Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, err error) {
+func (c Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, err error) {
 	combined := make([]byte, 0)
 	combined = append(combined, key...)
 	combined = append(combined, crt...)
-	fullPath := c.Env.JoinURL(endpointCerts)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("cert", "cert.pem")
@@ -82,7 +79,7 @@ func (c *Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, e
 	if err != nil {
 		return "", err
 	}
-	res, err := c.Client.Post(fullPath, body, universal_client.SetHeaders(
+	res, err := client.Post(ctx, endpointCerts, body, client.SetHeaders(
 		map[string]string{
 			"Content-Type": writer.FormDataContentType(),
 		},
@@ -92,10 +89,10 @@ func (c *Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, e
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return "", universal_client.Error(res)
+		return "", client.Error(res)
 	}
 	dbResp := CertResponse{}
-	if err := universal_client.JSON(res, &dbResp); err != nil {
+	if err := client.JSON(res, &dbResp); err != nil {
 		return "", err
 	}
 	return dbResp.Id, nil

@@ -20,8 +20,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/universal_client"
+	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,7 +42,8 @@ type SecurityPolicyReconciler struct {
 	client.Client
 	Log             logr.Logger
 	Scheme          *runtime.Scheme
-	UniversalClient universal_client.UniversalClient
+	UniversalClient universal.Client
+	Env             environmet.Env
 	Recorder        record.EventRecorder
 }
 
@@ -49,6 +53,9 @@ type SecurityPolicyReconciler struct {
 // Reconcile reconciles SecurityPolicy custom resources
 func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
+
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Env, log)
 
 	ns := req.NamespacedName.String()
 	log.Info("Reconciling SecurityPolicy instance")
@@ -121,15 +128,15 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Deleting policy")
 	util.RemoveFinalizer(policy, policyFinalizer)
-	if err := r.UniversalClient.SecurityPolicy().Delete(ctx, policy.Status.PolID); err != nil {
-		if universal_client.IsNotFound(err) {
+	if err := r.UniversalClient.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
+		if opclient.IsNotFound(err) {
 			r.Log.Info("Policy not found")
 			return nil
 		}
 		r.Log.Error(err, "Failed to delete resource")
 		return err
 	}
-	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns tykv1.Target) {
+	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
 		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
 	})
 	if err != nil {
@@ -146,18 +153,18 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	err = r.UniversalClient.SecurityPolicy().Update(ctx, spec)
+	err = r.UniversalClient.Portal().Policy().Update(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to update policy")
 		return err
 	}
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s tykv1.Target) {
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	if err != nil {
 		return err
 	}
-	r.UniversalClient.HotReload()
+	r.UniversalClient.HotReload(ctx)
 	r.Log.Info("Successfully updated Policy")
 	return nil
 }
@@ -168,12 +175,12 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	err = r.UniversalClient.SecurityPolicy().Create(ctx, spec)
+	err = r.UniversalClient.Portal().Policy().Create(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to create policy")
 		return err
 	}
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s tykv1.Target) {
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	r.Log.Info("Successful created Policy")
@@ -185,10 +192,10 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 // updateLinkedAPI updates the status of api definitions associated with this
 // policy.
 func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *tykv1.SecurityPolicy,
-	fn func(*tykv1.ApiDefinitionStatus, tykv1.Target),
+	fn func(*tykv1.ApiDefinitionStatus, model.Target),
 ) error {
 	r.Log.Info("Updating linked api definitions")
-	ns := tykv1.Target{
+	ns := model.Target{
 		Namespace: policy.Namespace, Name: policy.Name,
 	}
 	for _, a := range policy.Spec.AccessRightsArray {
