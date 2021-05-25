@@ -14,6 +14,5 @@ const (
 	IngressFinalizerName               = "finalizers.tyk.io/ingress"
 	IngressClassAnnotation             = "kubernetes.io/ingress.class"
 	IngressTemplateAnnotation          = "tyk.io/template"
-	ContextAnnotation                  = "tyk.io/context"
 	DefaultIngressClassAnnotationValue = "tyk"
 )
