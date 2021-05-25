@@ -149,10 +149,13 @@ func GetContext(
 			})
 		}
 		if !e.InsecureSkipVerify {
-			value(v1alpha1.SkipVerify, func(s string) (err error) {
+			err = value(v1alpha1.SkipVerify, func(s string) (err error) {
 				e.InsecureSkipVerify, err = strconv.ParseBool(s)
 				return
 			})
+			if err != nil {
+				return nil, err
+			}
 		}
 		if e.URL == "" {
 			value(v1alpha1.TykURL, func(s string) (err error) {
@@ -173,16 +176,22 @@ func GetContext(
 			})
 		}
 		if e.Ingress.HTTPPort == 0 {
-			value(v1alpha1.IngressHTTPPort, func(s string) (err error) {
+			err = value(v1alpha1.IngressHTTPPort, func(s string) (err error) {
 				e.Ingress.HTTPPort, err = strconv.Atoi(s)
 				return
 			})
+			if err != nil {
+				return nil, err
+			}
 		}
 		if e.Ingress.HTTPSPort == 0 {
-			value(v1alpha1.IngressTLSPort, func(s string) (err error) {
+			err = value(v1alpha1.IngressTLSPort, func(s string) (err error) {
 				e.Ingress.HTTPSPort, err = strconv.Atoi(s)
 				return
 			})
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return &o, nil
