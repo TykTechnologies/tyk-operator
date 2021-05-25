@@ -3,14 +3,18 @@ package controllers
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/networking/v1beta1"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -101,6 +105,28 @@ func httpContext(
 			} else {
 				log.Info("Successful acquired context", "contextRef", o.Spec.Context.String())
 				e.Environment = *env.Spec.Env
+			}
+		}
+	case *v1beta1.Ingress:
+		annotation, ok := o.Annotations[keys.ContextAnnotation]
+		if ok {
+			parts := strings.Split(annotation, "/")
+			if len(parts) != 2 {
+				log.Error(errors.New("Invalid context reference"), "Expected namespace/name", "contextRef", annotation)
+			} else {
+				target := &model.Target{
+					Namespace: parts[0],
+					Name:      parts[1],
+				}
+				env, err := GetContext(
+					ctx, rClient, target, log,
+				)
+				if err != nil {
+					log.Error(err, "Failed to get context", "contextRef", annotation)
+				} else {
+					log.Info("Successful acquired context", "contextRef", annotation)
+					e.Environment = *env.Spec.Env
+				}
 			}
 		}
 	}
