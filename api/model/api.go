@@ -48,6 +48,10 @@ type HttpMethod string
 // +kubebuilder:validation:Enum=proxyOnly;executionEngine
 type GraphQLExecutionMode string
 
+// APIProtocol is the network transport protocol supported by the gateway
+// +kubebuilder:validation:Enum=h2c;tcp;tls;http;https;
+type APIProtocol string
+
 type NotificationsManager struct {
 	SharedSecret      string `json:"shared_secret"`
 	OAuthKeyChangeURL string `json:"oauth_on_keychange_url"`
@@ -470,7 +474,6 @@ type OpenIDOptions struct {
 }
 
 // APIDefinition represents the configuration for a single proxied API and it's versions.
-
 type APIDefinitionSpec struct {
 
 	// For server use only, do not use
@@ -496,8 +499,7 @@ type APIDefinitionSpec struct {
 	// +optional
 	ListenPort int `json:"listen_port"`
 
-	// +kubebuilder:validation:Enum=http;https;tcp;tls
-	Protocol string `json:"protocol"`
+	Protocol APIProtocol `json:"protocol"`
 
 	EnableProxyProtocol bool `json:"enable_proxy_protocol,omitempty"`
 

@@ -103,17 +103,7 @@ func path(n ...string) *field.Path {
 
 func (in *ApiDefinition) validate() error {
 	var all field.ErrorList
-	var _ APIDefinitionSpec
-
 	spec := in.Spec
-	// protocol
-	switch spec.Protocol {
-	case "", "h2c", "tcp", "tls", "http", "https":
-	default:
-		all = append(all,
-			field.NotSupported(path("protocol"), spec.Protocol, []string{"", "h2c", "tcp", "tls", "http", "https"}),
-		)
-	}
 
 	// auth
 	if spec.UseKeylessAccess {
