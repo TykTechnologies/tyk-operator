@@ -54,9 +54,6 @@ type SecurityPolicyReconciler struct {
 func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
 
-	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, log)
-
 	ns := req.NamespacedName.String()
 	log.Info("Reconciling SecurityPolicy instance")
 
@@ -65,6 +62,9 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err := r.Get(ctx, req.NamespacedName, policy); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Client, r.Env, policy, log)
+
 	var reqA time.Duration
 	_, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {

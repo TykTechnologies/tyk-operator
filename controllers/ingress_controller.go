@@ -60,13 +60,15 @@ type IngressReconciler struct {
 // by the operator.
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	nsl := r.Log.WithValues("name", req.NamespacedName)
-	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, nsl)
 
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Client, r.Env, desired, nsl)
+
 	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
 	template := r.keyless()
 	if ok {

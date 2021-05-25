@@ -60,6 +60,13 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - operatorcontexts
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - securitypolicies
   verbs:
   - create

@@ -237,7 +237,7 @@ spec:
                 items:
                   type: string
                 type: array
-              context:
+              contextRef:
                 description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
                 properties:
                   name:

@@ -69,22 +69,58 @@ func encodeNS(decoded string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(decoded))
 }
 
-func httpContext(ctx context.Context, e environmet.Env, log logr.Logger) context.Context {
+func httpContext(
+	ctx context.Context,
+	rClient runtimeClient.Client,
+	e environmet.Env,
+	object runtimeClient.Object,
+	log logr.Logger,
+) context.Context {
+	switch o := object.(type) {
+	case *v1alpha1.ApiDefinition:
+		if o.Spec.Context != nil {
+			log.Info("Detected context for resource")
+			env, err := GetContext(
+				ctx, rClient, o.Spec.Context, log,
+			)
+			if err != nil {
+				log.Error(err, "Failed to get context", "contextRef", o.Spec.Context.String())
+			} else {
+				log.Info("Successful acquired context", "contextRef", o.Spec.Context.String())
+				e.Environment = *env.Spec.Env
+			}
+		}
+	case *v1alpha1.SecurityPolicy:
+		if o.Spec.Context != nil {
+			log.Info("Detected context for resource")
+			env, err := GetContext(
+				ctx, rClient, o.Spec.Context, log,
+			)
+			if err != nil {
+				log.Error(err, "Failed to get context", "contextRef", o.Spec.Context.String())
+			} else {
+				log.Info("Successful acquired context", "contextRef", o.Spec.Context.String())
+				e.Environment = *env.Spec.Env
+			}
+		}
+	}
 	return client.SetContext(ctx, client.Context{
 		Env: e,
 		Log: log,
 	})
 }
 
-// GetContext returns a OperatorContext context resource from k8s cluster with
-// target. When Spec.FromSecret is provided this reads the secret and loads the
-// environment from it. Values set in .Spec.Env takes precedence over the values
-// from secret
+// GetContext returns a OperatorContext resource from k8s cluster with
+// namespace/name derived from target. When Spec.FromSecret is provided this
+// reads the secret and loads the environment from it. Values set in .Spec.Env
+// takes precedence over the values from secret
 func GetContext(
 	ctx context.Context,
 	client runtimeClient.Client,
 	target *model.Target,
+	log logr.Logger,
 ) (*v1alpha1.OperatorContext, error) {
+	log.Info("Getting context", "contextRef", target.String())
 	var o v1alpha1.OperatorContext
 	err := client.Get(ctx, target.NS(), &o)
 	if err != nil {

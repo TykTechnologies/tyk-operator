@@ -105,6 +105,8 @@ type OperatorContextList struct {
 	Items           []OperatorContext `json:"items"`
 }
 
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=operatorcontexts,verbs=get;list
+
 func init() {
 	SchemeBuilder.Register(&OperatorContext{}, &OperatorContextList{})
 }
