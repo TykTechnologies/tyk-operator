@@ -14,7 +14,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -107,8 +106,8 @@ func httpContext(
 				e.Environment = *env.Spec.Env
 			}
 		}
-	case *v1beta1.Ingress:
-		annotation, ok := o.Annotations[keys.ContextAnnotation]
+	default:
+		annotation, ok := o.GetAnnotations()[keys.ContextAnnotation]
 		if ok {
 			parts := strings.Split(annotation, "/")
 			if len(parts) != 2 {
