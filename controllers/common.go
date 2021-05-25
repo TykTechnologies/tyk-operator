@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/base64"
+	"strconv"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -89,14 +90,65 @@ func GetContext(
 	if err != nil {
 		return nil, err
 	}
+	if o.Spec.Env == nil {
+		o.Spec.Env = &v1alpha1.Environment{}
+	}
 	if o.Spec.FromSecret != nil {
 		var secret v1.Secret
 		if err := client.Get(ctx, o.Spec.FromSecret.NS(), &secret); err != nil {
 			return nil, err
 		}
-	}
-	if o.Spec.Env == nil {
-		o.Spec.Env = &v1alpha1.Environment{}
+		value := func(key string, fn func(string) error) error {
+			if v, ok := secret.Data[key]; ok {
+				return fn(string(v))
+			}
+			return nil
+		}
+		// we are setting all values that are not set on env but present in secret.
+		// The assumption is values are base64 encoded.
+		e := o.Spec.Env
+		if e.Mode == "" {
+			value(v1alpha1.TykMode, func(s string) error {
+				e.Mode = v1alpha1.OperatorContextMode(s)
+				return nil
+			})
+		}
+		if !e.InsecureSkipVerify {
+			value(v1alpha1.SkipVerify, func(s string) (err error) {
+				e.InsecureSkipVerify, err = strconv.ParseBool(s)
+				return
+			})
+		}
+		if e.URL == "" {
+			value(v1alpha1.TykURL, func(s string) (err error) {
+				e.URL = s
+				return
+			})
+		}
+		if e.Auth == "" {
+			value(v1alpha1.TykAuth, func(s string) (err error) {
+				e.Auth = s
+				return
+			})
+		}
+		if e.Org == "" {
+			value(v1alpha1.TykAuth, func(s string) (err error) {
+				e.Org = s
+				return
+			})
+		}
+		if e.Ingress.HTTPPort == 0 {
+			value(v1alpha1.IngressHTTPPort, func(s string) (err error) {
+				e.Ingress.HTTPPort, err = strconv.Atoi(s)
+				return
+			})
+		}
+		if e.Ingress.HTTPSPort == 0 {
+			value(v1alpha1.IngressTLSPort, func(s string) (err error) {
+				e.Ingress.HTTPSPort, err = strconv.Atoi(s)
+				return
+			})
+		}
 	}
 	return &o, nil
 }
