@@ -141,7 +141,6 @@ func GetContext(
 			return nil
 		}
 		// we are setting all values that are not set on env but present in secret.
-		// The assumption is values are base64 encoded.
 		e := o.Spec.Env
 		if e.Mode == "" {
 			value(v1alpha1.TykMode, func(s string) error {
