@@ -46,7 +46,6 @@ spec:
             description: APIDefinition represents the configuration for a single proxied API and it's versions.
             properties:
               CORS:
-                description: CORS cors settings
                 properties:
                   allow_credentials:
                     description: AllowCredentials if true will allow cookies
@@ -386,7 +385,6 @@ spec:
               enable_proxy_protocol:
                 type: boolean
               graphql:
-                description: GraphQLConfig is the root config object for a GraphQL API.
                 properties:
                   enabled:
                     description: Enabled indicates if GraphQL proxy should be enabled.
@@ -583,11 +581,13 @@ spec:
                 description: OrgID is overwritten - no point setting this
                 type: string
               protocol:
+                description: APIProtocol is the network transport protocol supported by the gateway
                 enum:
-                - http
-                - https
+                - h2c
                 - tcp
                 - tls
+                - http
+                - https
                 type: string
               proxy:
                 description: Proxy
@@ -647,7 +647,6 @@ spec:
                     description: StripListenPath removes the inbound listen path in the outgoing request. e.g. http://acme.com/httpbin/get where `httpbin` is the listen path. The `httpbin` listen path which is used to identify the API loaded in Tyk is removed, and the outbound request would be http://httpbin.org/get
                     type: boolean
                   target_internal:
-                    description: TargetInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                     properties:
                       path:
                         description: "Path path on target , this does not include query parameters. \texample /myendpoint"
