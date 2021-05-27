@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 )
@@ -34,12 +34,17 @@ func TestAPI(t *testing.T) {
 			body:   "api.Get.body",
 		},
 		&route{
-			path:   "/api/apis/5fd08ed769710900018bc196",
+			path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
+			method: http.MethodGet,
+			body:   "api.Get.body",
+		},
+		&route{
+			path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 			method: http.MethodPut,
 			body:   "api.Update.body",
 		},
 		&route{
-			path:   "/api/apis/5fd08ed769710900018bc196",
+			path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 			method: http.MethodDelete,
 			body:   "api.Delete.body",
 		},
@@ -80,7 +85,7 @@ func TestAPI(t *testing.T) {
 		Kase{
 			Name: "Update",
 			Request: RequestKase{
-				Path:   "/api/apis/5fd08ed769710900018bc196",
+				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 				Method: http.MethodPut,
 				Headers: map[string]string{
 					XAuthorization: e.Auth,
@@ -112,7 +117,7 @@ func TestAPI(t *testing.T) {
 		Kase{
 			Name: "All",
 			Request: RequestKase{
-				Path:   "/api/apis",
+				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 				Method: http.MethodGet,
 				Headers: map[string]string{
 					XAuthorization: e.Auth,
@@ -120,30 +125,16 @@ func TestAPI(t *testing.T) {
 				},
 			},
 			Response: &ResponseKase{
-				Body: ReadSample(t, "api.All.body"),
+				Body: ReadSample(t, "api.Get.body"),
 			},
 		},
 	)
 
 	requestAPI(t, e, "Update",
 		Kase{
-			Name: "All",
-			Request: RequestKase{
-				Path:   "/api/apis",
-				Method: http.MethodGet,
-				Headers: map[string]string{
-					XAuthorization: e.Auth,
-					XContentType:   contentJSON,
-				},
-			},
-			Response: &ResponseKase{
-				Body: ReadSample(t, "api.All.body"),
-			},
-		},
-		Kase{
 			Name: "Update",
 			Request: RequestKase{
-				Path:   "/api/apis/5fd08ed769710900018bc196",
+				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 				Method: http.MethodPut,
 				Headers: map[string]string{
 					XAuthorization: e.Auth,
@@ -157,23 +148,9 @@ func TestAPI(t *testing.T) {
 
 	requestAPI(t, e, "Delete",
 		Kase{
-			Name: "All",
-			Request: RequestKase{
-				Path:   "/api/apis",
-				Method: http.MethodGet,
-				Headers: map[string]string{
-					XAuthorization: e.Auth,
-					XContentType:   contentJSON,
-				},
-			},
-			Response: &ResponseKase{
-				Body: ReadSample(t, "api.All.body"),
-			},
-		},
-		Kase{
 			Name: "Delete",
 			Request: RequestKase{
-				Path:   "/api/apis/5fd08ed769710900018bc196",
+				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 				Method: http.MethodDelete,
 				Headers: map[string]string{
 					XAuthorization: e.Auth,
@@ -194,7 +171,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 		case "All":
 			client.RunRequestKase(t, e,
 				func(ctx context.Context) error {
-					newKlient().Api().All(ctx)
+					newKlient().Api().List(ctx)
 					return nil
 				},
 				kase...,
@@ -210,7 +187,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 		case "Update":
 			client.RunRequestKase(t, e,
 				func(ctx context.Context) error {
-					var s v1alpha1.APIDefinitionSpec
+					var s model.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
 					newKlient().Api().Update(ctx, &s)
 					return nil
@@ -220,7 +197,7 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 		case "Create":
 			client.RunRequestKase(t, e,
 				func(ctx context.Context) error {
-					var s v1alpha1.APIDefinitionSpec
+					var s model.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
 					newKlient().Api().Create(ctx, &s)
 					return nil

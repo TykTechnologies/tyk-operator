@@ -43,6 +43,7 @@ type ResponseKase struct {
 }
 
 func (r *ResponseKase) verify(t *testing.T, res *http.Response, body string) {
+	t.Helper()
 	compareHeaders(t, r.Headers, res.Header)
 	comparesString(t,
 		"body",

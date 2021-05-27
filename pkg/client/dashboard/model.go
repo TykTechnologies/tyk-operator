@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
@@ -10,8 +11,8 @@ type ApisResponse struct {
 }
 
 type DashboardApi struct {
-	CreatedAt     string               `json:"created_at,omitempty"`
-	ApiDefinition v1.APIDefinitionSpec `json:"api_definition"`
+	CreatedAt     string                  `json:"created_at,omitempty"`
+	ApiDefinition model.APIDefinitionSpec `json:"api_definition"`
 }
 
 type PoliciesResponse struct {

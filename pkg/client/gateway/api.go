@@ -3,10 +3,8 @@ package gateway
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net/http"
 
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 )
 
@@ -16,91 +14,46 @@ var (
 
 type Api struct{}
 
-func (a Api) All(ctx context.Context) ([]v1.APIDefinitionSpec, error) {
-	res, err := client.Get(ctx, endpointAPIs, nil)
+func (a Api) List(ctx context.Context, options ...model.ListAPIOptions) (*model.APIDefinitionSpecList, error) {
+	var o model.APIDefinitionSpecList
+	err := client.Data(&o.Apis)(client.Get(ctx, endpointAPIs, nil))
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
-	}
-
-	var list []v1.APIDefinitionSpec
-	if err := client.JSON(res, &list); err != nil {
-		return nil, err
-	}
-	return list, nil
+	return &o, nil
 }
 
-func (a Api) Get(ctx context.Context, apiID string) (*v1.APIDefinitionSpec, error) {
-	res, err := client.Get(ctx, client.Join(endpointAPIs, apiID), nil)
+func (a Api) Get(ctx context.Context, apiID string) (*model.APIDefinitionSpec, error) {
+	var spec model.APIDefinitionSpec
+	err := client.Data(&spec)(client.Get(ctx, client.Join(endpointAPIs, apiID), nil))
 	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("gateway API Returned error: %d", res.StatusCode)
-	}
-	var spec v1.APIDefinitionSpec
-	if err := client.JSON(res, &spec); err != nil {
 		return nil, err
 	}
 	return &spec, nil
 }
 
-func (a Api) Create(ctx context.Context, def *v1.APIDefinitionSpec) error {
-	res, err := client.PostJSON(ctx, endpointAPIs, def)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	var resMsg ResponseMsg
-	if err := client.JSON(res, &resMsg); err != nil {
-		return err
-	}
-
-	if resMsg.Status != "ok" {
-		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-	return nil
+func (a Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
+	return a.createOrUpdate(ctx, def)
 }
 
-func (a Api) spec(def *v1.APIDefinitionSpec) *v1.APIDefinitionSpec {
-	o := def.DeepCopy()
-	o.Context = nil
-	return o
+func (a Api) createOrUpdate(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
+	var o model.Result
+	err := client.Data(&o)(client.PostJSON(ctx, endpointAPIs, def))
+	if err != nil {
+		return nil, err
+	}
+	return &o, nil
 }
 
-func (a Api) Update(ctx context.Context, def *v1.APIDefinitionSpec) error {
-	res, err := client.PutJSON(ctx, client.Join(endpointAPIs, def.APIID), def)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	var resMsg ResponseMsg
-	if err := client.JSON(res, &resMsg); err != nil {
-		return err
-	}
-	if resMsg.Status != "ok" {
-		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-	return nil
+func (a Api) Update(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
+	return a.createOrUpdate(ctx, def)
 }
 
-func (a Api) Delete(ctx context.Context, id string) error {
-	res, err := client.Delete(ctx, client.Join(endpointAPIs, id), nil)
+func (a Api) Delete(ctx context.Context, id string) (*model.Result, error) {
+	var o model.Result
+	err := client.Data(&o)(client.Delete(ctx, client.Join(endpointAPIs, id), nil))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer res.Body.Close()
-	var resMsg ResponseMsg
-	if err := client.JSON(res, &resMsg); err != nil {
-		return err
-	}
-	if resMsg.Status != "ok" {
-		return fmt.Errorf("API request completed, but with error: %s", resMsg.Message)
-	}
-	return nil
+	return &o, nil
 }
