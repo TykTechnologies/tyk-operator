@@ -1,8 +1,0 @@
-apiVersion: tyk.tyk.io/v1alpha1
-kind: Organization
-metadata:
-  name: testing
-spec:
-  owner_name: Ahmet Soormally
-  cname: asoorm.do.poc.tyk.technology
-  cname_enabled: true
