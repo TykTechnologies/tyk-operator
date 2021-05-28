@@ -17,9 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"os"
-
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -51,7 +48,6 @@ func (r *SecurityPolicy) Default() {
 	spec.ThrottleRetryLimit = -1
 	spec.QuotaMax = -1
 	spec.QuotaRenewalRate = -1
-	spec.OrgID = os.Getenv(environmet.TykORG)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

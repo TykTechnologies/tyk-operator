@@ -4,6 +4,7 @@
 resources:
   - bases/tyk.tyk.io_apidefinitions.yaml
   - bases/tyk.tyk.io_securitypolicies.yaml
+  - bases/tyk.tyk.io_operatorcontexts.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -11,12 +12,14 @@ patchesStrategicMerge:
   # patches here are for enabling the conversion webhook for each CRD
   # - patches/webhook_in_apidefinitions.yaml
   # - patches/webhook_in_securitypolicies.yaml
+  #- patches/webhook_in_operatorcontexts.yaml
   #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
   # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
   # patches here are for enabling the CA injection for each CRD
   - patches/cainjection_in_apidefinitions.yaml
   - patches/cainjection_in_securitypolicies.yaml
+#- patches/cainjection_in_operatorcontexts.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

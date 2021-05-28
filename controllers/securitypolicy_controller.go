@@ -54,9 +54,6 @@ type SecurityPolicyReconciler struct {
 func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
 
-	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, log)
-
 	ns := req.NamespacedName.String()
 	log.Info("Reconciling SecurityPolicy instance")
 
@@ -65,6 +62,9 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err := r.Get(ctx, req.NamespacedName, policy); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Client, r.Env, policy, log)
+
 	var reqA time.Duration
 	_, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -76,6 +76,9 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		util.AddFinalizer(policy, policyFinalizer)
 		if policy.Spec.ID == "" {
 			policy.Spec.ID = encodeNS(ns)
+		}
+		if policy.Spec.OrgID == "" {
+			policy.Spec.OrgID = r.Env.Org
 		}
 		// update access rights
 		r.Log.Info("updating access rights")
@@ -93,6 +96,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // returns a copy of SecurityPolicySpec with AccessRightsArray updated
 func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
 	spec := policy.Spec.DeepCopy()
+	spec.Context = nil
 	for i := 0; i < len(spec.AccessRightsArray); i++ {
 		err := r.updateAccess(ctx, spec.AccessRightsArray[i])
 		if err != nil {

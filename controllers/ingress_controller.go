@@ -60,13 +60,15 @@ type IngressReconciler struct {
 // by the operator.
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	nsl := r.Log.WithValues("name", req.NamespacedName)
-	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, nsl)
 
 	desired := &v1beta1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Client, r.Env, desired, nsl)
+
 	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
 	template := r.keyless()
 	if ok {
@@ -152,8 +154,8 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 				if rule.Host != "" {
 					api.Spec.Domain = r.translateHost(rule.Host)
 				}
-				if r.Env.IngressHTTPPort != 0 {
-					api.Spec.ListenPort = r.Env.IngressHTTPPort
+				if r.Env.Ingress.HTTPPort != 0 {
+					api.Spec.ListenPort = r.Env.Ingress.HTTPPort
 				}
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
@@ -163,7 +165,7 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 								api.Spec.CertificateSecretNames = []string{
 									tls.SecretName,
 								}
-								api.Spec.ListenPort = r.Env.IngressTLSPort
+								api.Spec.ListenPort = r.Env.Ingress.HTTPSPort
 							}
 						}
 					}

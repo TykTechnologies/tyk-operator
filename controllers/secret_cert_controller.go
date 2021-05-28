@@ -49,14 +49,14 @@ type SecretCertReconciler struct {
 
 func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("cert", req.NamespacedName)
-	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, log)
 
 	log.Info("getting secret resource")
 	desired := &v1.Secret{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Client, r.Env, desired, log)
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
