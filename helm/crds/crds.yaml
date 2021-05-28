@@ -237,6 +237,17 @@ spec:
                 items:
                   type: string
                 type: array
+              contextRef:
+                description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               custom_middleware:
                 properties:
                   auth_check:
@@ -1591,6 +1602,90 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: operatorcontexts.tyk.tyk.io
+spec:
+  group: tyk.tyk.io
+  names:
+    kind: OperatorContext
+    listKind: OperatorContextList
+    plural: operatorcontexts
+    singular: operatorcontext
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: OperatorContext is the Schema for the operatorcontexts API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OperatorContextSpec defines the desired state of OperatorContext
+            properties:
+              env:
+                description: Env is the values of the admin api endpoint that the operator will use to reconcile resources
+                properties:
+                  auth:
+                    type: string
+                  ingress:
+                    properties:
+                      httpPort:
+                        type: integer
+                      httpsPort:
+                        type: integer
+                    type: object
+                  insecureSkipVerify:
+                    type: boolean
+                  mode:
+                    description: OperatorContextMode is the mode to which the admin api binding is done values are ce for community edition and pro for dashboard
+                    enum:
+                    - ce
+                    - pro
+                    type: string
+                  org:
+                    type: string
+                  url:
+                    type: string
+                type: object
+              secretRef:
+                description: Reference to k8s secret resource that we load environment from.
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            type: object
+          status:
+            description: OperatorContextStatus defines the observed state of OperatorContext
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
     cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
     controller-gen.kubebuilder.io/version: v0.4.1
   name: securitypolicies.tyk.tyk.io
@@ -1713,6 +1808,17 @@ spec:
               active:
                 description: Active must be set to `true` for Tyk to load the security policy into memory.
                 type: boolean
+              contextRef:
+                description: Reference to k8s secret resource that we load environment from.
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               enable_http_signature_validation:
                 type: boolean
               hmac_enabled:
@@ -1753,12 +1859,6 @@ spec:
                     type: boolean
                   rate_limit:
                     type: boolean
-                required:
-                - acl
-                - complexity
-                - per_api
-                - quota
-                - rate_limit
                 type: object
               per:
                 description: To be used in conjunction with "Rate".  Per seconds. 1 minute=60.  1 hour=3600 omit or "-1" for unlimited

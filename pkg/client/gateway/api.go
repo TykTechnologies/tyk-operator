@@ -67,6 +67,12 @@ func (a Api) Create(ctx context.Context, def *v1.APIDefinitionSpec) error {
 	return nil
 }
 
+func (a Api) spec(def *v1.APIDefinitionSpec) *v1.APIDefinitionSpec {
+	o := def.DeepCopy()
+	o.Context = nil
+	return o
+}
+
 func (a Api) Update(ctx context.Context, def *v1.APIDefinitionSpec) error {
 	res, err := client.PutJSON(ctx, client.Join(endpointAPIs, def.APIID), def)
 	if err != nil {

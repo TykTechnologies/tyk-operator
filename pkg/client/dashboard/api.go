@@ -41,10 +41,16 @@ func (a Api) All(ctx context.Context) ([]tykv1alpha1.APIDefinitionSpec, error) {
 	return list, nil
 }
 
+func (a Api) spec(def *tykv1alpha1.APIDefinitionSpec) tykv1alpha1.APIDefinitionSpec {
+	o := def.DeepCopy()
+	o.Context = nil
+	return *o
+}
+
 func (a Api) Create(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) error {
 	res, err := client.PostJSON(ctx, endpointAPIs,
 		DashboardApi{
-			ApiDefinition: *def,
+			ApiDefinition: a.spec(def),
 		})
 	if err != nil {
 		return err
@@ -103,7 +109,7 @@ func (a Api) Update(ctx context.Context, def *tykv1alpha1.APIDefinitionSpec) err
 	if err != nil {
 		return err
 	}
-	o := *def
+	o := a.spec(def)
 	o.ID = x.ID
 	return a.update(ctx, o)
 }

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
@@ -20,10 +21,12 @@ type ResponseKase = client.ResponseKase
 
 func env() environmet.Env {
 	return environmet.Env{
-		Mode: "pro",
-		URL:  "http://localhost:3000",
-		Auth: "secret",
-		Org:  "testing",
+		Environment: v1alpha1.Environment{
+			Mode: "pro",
+			URL:  "http://localhost:3000",
+			Auth: "secret",
+			Org:  "testing",
+		},
 	}
 }
 

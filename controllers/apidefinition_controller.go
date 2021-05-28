@@ -64,14 +64,14 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	namespacedName := req.NamespacedName
 
 	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
-	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Env, log)
 
 	log.Info("Reconciling ApiDefinition instance")
 	desired := &tykv1alpha1.ApiDefinition{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
+	// set context for all api calls inside this reconciliation loop
+	ctx = httpContext(ctx, r.Client, r.Env, desired, log)
 
 	if desired.GetLabels()["template"] == "true" {
 		log.Info("Syncing template", "template", desired.Name)
@@ -94,6 +94,9 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 		if desired.Spec.APIID == "" {
 			desired.Spec.APIID = encodeNS(req.NamespacedName.String())
+		}
+		if desired.Spec.OrgID == "" {
+			desired.Spec.OrgID = r.Env.Org
 		}
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 		for _, certName := range desired.Spec.CertificateSecretNames {

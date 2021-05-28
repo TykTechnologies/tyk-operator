@@ -1,0 +1,34 @@
+# # Create a secret with OperatorContext values that we will reference on the
+# # OperatorContext resource
+# kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
+#   --from-literal "TYK_AUTH=${TYK_AUTH}" \
+#   --from-literal "TYK_ORG=${TYK_ORG}" \
+#   --from-literal "TYK_MODE=${TYK_MODE}" \
+#   --from-literal "TYK_URL=${TYK_URL}" \
+#   --from-literal "TYK_TLS_INSECURE_SKIP_VERIFY=true"
+apiVersion: tyk.tyk.io/v1alpha1
+kind: OperatorContext
+metadata:
+  name: local-pro-test
+spec:
+  secretRef:
+    namespace: tyk-operator-system
+    name: tyk-operator-conf
+
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-with-context
+spec:
+  contextRef:
+    name: local-pro-test
+    namespace: default
+  name: httpbin-with-context
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin-with-context
+    strip_listen_path: true
