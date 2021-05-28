@@ -1,3 +1,11 @@
+# # Create a secret with OperatorContext values that we will reference on the
+# # OperatorContext resource
+# kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
+#   --from-literal "TYK_AUTH=${TYK_AUTH}" \
+#   --from-literal "TYK_ORG=${TYK_ORG}" \
+#   --from-literal "TYK_MODE=${TYK_MODE}" \
+#   --from-literal "TYK_URL=${TYK_URL}" \
+#   --from-literal "TYK_TLS_INSECURE_SKIP_VERIFY=true"
 apiVersion: tyk.tyk.io/v1alpha1
 kind: OperatorContext
 metadata:
