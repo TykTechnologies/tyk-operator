@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	endpointAPIs  = "/api/apis"
 	endpointCerts = "/api/certs"
 	//endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"

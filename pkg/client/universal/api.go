@@ -3,13 +3,13 @@ package universal
 import (
 	"context"
 
-	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/api/model"
 )
 
 type Api interface {
-	Get(ctx context.Context, apiID string) (*v1.APIDefinitionSpec, error)
-	All(ctx context.Context) ([]v1.APIDefinitionSpec, error)
-	Create(ctx context.Context, spec *v1.APIDefinitionSpec) error
-	Update(ctx context.Context, def *v1.APIDefinitionSpec) error
-	Delete(ctx context.Context, id string) error
+	Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error)
+	Get(ctx context.Context, id string) (*model.APIDefinitionSpec, error)
+	Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.Result, error)
+	Delete(ctx context.Context, id string) (*model.Result, error)
+	List(ctx context.Context, options ...model.ListAPIOptions) (*model.APIDefinitionSpecList, error)
 }

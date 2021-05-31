@@ -20,6 +20,7 @@ package model
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -989,4 +990,32 @@ type GraphQLPlayground struct {
 	Enabled bool `json:"enabled"`
 	// Path sets the path on which the playground will be hosted if enabled.
 	Path string `json:"path"`
+}
+
+// APIDefinitionSpecList is a list of api definitions
+type APIDefinitionSpecList struct {
+	Apis []*APIDefinitionSpec `json:"apis"`
+}
+
+// ListAPIOptions options passed as url query when getting a list of api's
+type ListAPIOptions struct {
+	Compressed bool   `json:"compressed,omitempty"`
+	Query      string `json:"q,omitempty"`
+	Pages      int    `json:"p,omitempty"`
+	Sort       string `json:"sort,omitempty"`
+	Category   string `json:"category,omitempty"`
+	AuthType   string `json:"auth_type,omitempty"`
+	Graph      bool   `json:"graph,omitempty"`
+}
+
+// Params returns url.Values that matches what the admin api expects from ls.
+func (ls ListAPIOptions) Params() url.Values {
+	o := make(map[string]interface{})
+	b, _ := json.Marshal(ls)
+	json.Unmarshal(b, &o)
+	u := make(url.Values)
+	for k, v := range o {
+		u[k] = []string{fmt.Sprint(v)}
+	}
+	return u
 }
