@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -167,18 +168,25 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 	values = append(values)
 	rctx.Log.Info("Call", values...)
 	if err == nil && res.StatusCode == http.StatusNotFound {
-		res.Body.Close()
+		defer res.Body.Close()
+		b, _ := ioutil.ReadAll(res.Body)
+		if len(b) > 0 {
+			rctx.Log.Info("404 response", "body", string(b))
+		}
 		return nil, ErrNotFound
 	}
 	return res, err
 }
 
 // AddQuery call back for adding url queries
-func AddQuery(q map[string]string) func(*http.Request) {
+func AddQuery(q url.Values) func(*http.Request) {
 	return func(h *http.Request) {
+		if len(q) == 0 {
+			return
+		}
 		query := h.URL.Query()
 		for k, v := range q {
-			query.Set(k, v)
+			query[k] = append(query[k], v...)
 		}
 		h.URL.RawQuery = query.Encode()
 	}
