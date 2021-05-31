@@ -63,7 +63,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Client, r.Env, policy, log)
+	env, ctx := httpContext(ctx, r.Client, r.Env, policy, log)
 
 	var reqA time.Duration
 	_, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
@@ -78,7 +78,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			policy.Spec.ID = encodeNS(ns)
 		}
 		if policy.Spec.OrgID == "" {
-			policy.Spec.OrgID = r.Env.Org
+			policy.Spec.OrgID = env.Org
 		}
 		// update access rights
 		r.Log.Info("updating access rights")

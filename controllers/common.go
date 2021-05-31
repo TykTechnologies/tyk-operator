@@ -75,7 +75,7 @@ func httpContext(
 	e environmet.Env,
 	object runtimeClient.Object,
 	log logr.Logger,
-) context.Context {
+) (environmet.Env, context.Context) {
 	switch o := object.(type) {
 	case *v1alpha1.ApiDefinition:
 		if o.Spec.Context != nil {
@@ -104,7 +104,7 @@ func httpContext(
 			}
 		}
 	}
-	return client.SetContext(ctx, client.Context{
+	return e, client.SetContext(ctx, client.Context{
 		Env: e,
 		Log: log,
 	})

@@ -71,7 +71,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
 
 	if desired.GetLabels()["template"] == "true" {
 		log.Info("Syncing template", "template", desired.Name)
@@ -96,7 +96,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			desired.Spec.APIID = encodeNS(req.NamespacedName.String())
 		}
 		if desired.Spec.OrgID == "" {
-			desired.Spec.OrgID = r.Env.Org
+			desired.Spec.OrgID = env.Org
 		}
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 		for _, certName := range desired.Spec.CertificateSecretNames {
@@ -118,7 +118,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				return err
 			}
 
-			tykCertID := r.Env.Org + cert.CalculateFingerPrint(pemCrtBytes)
+			tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
 			exists := r.UniversalClient.Certificate().Exists(ctx, tykCertID)
 			if !exists {
 				// upload the certificate

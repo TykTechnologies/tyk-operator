@@ -67,7 +67,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Client, r.Env, desired, nsl)
+	env, ctx := httpContext(ctx, r.Client, r.Env, desired, nsl)
 
 	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
 	template := r.keyless()
@@ -100,7 +100,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		nsl.Info("Deleted ingress resource")
 		return ctrl.Result{}, nil
 	}
-	err = r.createAPI(ctx, nsl, template, req.Namespace, desired)
+	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, env)
 	if err != nil {
 		nsl.Error(err, "failed to create api's")
 		return ctrl.Result{}, err
@@ -128,8 +128,13 @@ func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
 	}
 }
 
-func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
-	template *v1alpha1.ApiDefinition, ns string, desired *v1beta1.Ingress) error {
+func (r *IngressReconciler) createAPI(
+	ctx context.Context, lg logr.Logger,
+	template *v1alpha1.ApiDefinition,
+	ns string,
+	desired *v1beta1.Ingress,
+	env environmet.Env,
+) error {
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
 			hash := shortHash(rule.Host + p.Path)
@@ -154,8 +159,8 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 				if rule.Host != "" {
 					api.Spec.Domain = r.translateHost(rule.Host)
 				}
-				if r.Env.Ingress.HTTPPort != 0 {
-					api.Spec.ListenPort = r.Env.Ingress.HTTPPort
+				if env.Ingress.HTTPPort != 0 {
+					api.Spec.ListenPort = env.Ingress.HTTPPort
 				}
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
@@ -165,7 +170,7 @@ func (r *IngressReconciler) createAPI(ctx context.Context, lg logr.Logger,
 								api.Spec.CertificateSecretNames = []string{
 									tls.SecretName,
 								}
-								api.Spec.ListenPort = r.Env.Ingress.HTTPSPort
+								api.Spec.ListenPort = env.Ingress.HTTPSPort
 							}
 						}
 					}
