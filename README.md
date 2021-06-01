@@ -32,6 +32,7 @@ and documentation for each of these custom resources are available:
 - [Ingress Controller](./docs/ingress.md)
 - [API Definitions](./docs/api_definitions.md)
 - [Security Policies](./docs/policies.md)
+- [Multi Gateway with Operator Context](./docs/operator_context.md)
 
 ## Learning with Videos
 
