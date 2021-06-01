@@ -1,0 +1,26 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: OperatorContext
+metadata:
+  name: community-edition
+spec:
+  env:
+    # The mod e of the admin api
+    # ce - community edition (open source gateway)
+    # pro - dashboard (requires a license)
+    mode: ce
+    # The authorization token this will be set in x-tyk-authorization header on the
+    # client while talking to the admin api
+    auth: foo
+    # Org ID to use
+    org: myorg
+    # The url to the tyk open source gateway deployment admin api
+    url: http://tyk.tykce-control-plane.svc.cluster.local:8001
+    # Set this to true if you want to skip tls certificate and host name verification
+    # this should only be used in testing
+    insecureSkipVerify: true
+    # For ingress the operator creates and manages ApiDefinition resources, use this to configure
+    # which ports the ApiDefinition resources managed by the ingress controller binds to.
+    # Use this to override default ingress http and https port
+    ingress:
+      httpPort: 8000
+      httpsPort: 8443
