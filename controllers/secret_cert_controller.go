@@ -56,7 +56,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	// set context for all api calls inside this reconciliation loop
-	ctx = httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -70,7 +70,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{}, nil
 			}
 
-			orgID := r.Env.Org
+			orgID := env.Org
 			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
 			certID := orgID + certFingerPrint
