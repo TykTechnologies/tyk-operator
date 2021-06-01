@@ -19,7 +19,7 @@ metadata:
   name: community-edition
 spec:
   env:
-    # The mod e of the admin api
+    # The mode of the admin api
     # ce - community edition (open source gateway)
     # pro - dashboard (requires a license)
     mode: ce
@@ -82,8 +82,8 @@ Mappings between `.spec.env` properties and secret `.spec.data` keys
 | TYK_MODE   | mode      |
 | TYK_URL    | url       |
 | TYK_AUTH   | auth      |
-|TYK_ORG     | org       |
-| TYK_TLS_INSECURE_SKIP_VERIFY| insecureSkipVerify|
+| TYK_ORG | org |
+| TYK_TLS_INSECURE_SKIP_VERIFY | insecureSkipVerify |
 
 
 # Referencing OperatorContext in ApiDefinion
