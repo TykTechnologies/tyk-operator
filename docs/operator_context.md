@@ -109,4 +109,4 @@ spec:
     strip_listen_path: true
 ```
 
-Then `httpbin-with-context` api will created on the gateway defined in  the `community-edition` `OperatorContext` resource.
+Then `httpbin-with-context` api will be created on the gateway defined in  the `community-edition` `OperatorContext` resource.
