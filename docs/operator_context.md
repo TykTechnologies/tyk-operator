@@ -5,7 +5,7 @@ tyk ce/pro deployment.
 
 `OperatorContext` can be referenced on all custom resources by `contextRef` property.
 When a custom resource is applied with `contextRef` set then all the operations
-conducted by the operator will use the `OperatorContext` supplied bby the `contextRef` 
+conducted by the operator will use the `OperatorContext` supplied by the `contextRef` 
 to perform reconciliation.
 
 # Defining OperatorContext
@@ -43,7 +43,7 @@ spec:
 
 # Using secret for sensitive information
 
-It is not recommended to set `.spec.auth` in the custom resource `yaml` because it is
+It is not recommended to set `.spec.env.auth` in the custom resource `yaml` because it is
 a sensitive data that third party can use to access your tyk deployment. You
 should use secret instead.
 
