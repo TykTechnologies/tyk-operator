@@ -43,10 +43,7 @@ spec:
 
 # Using secret for sensitive information
 
-It is not recommended to set `.spec.env.auth` in the custom resource `yaml` because it is
-a sensitive data that third party can use to access your tyk deployment. You
-should use secret instead.
-
+Whilst it is possible to set `.spec.env.auth` directly in the `OperatorContext` object, better security can be achieved by replacing sensitive data with values contained within a referenced secret.
 Create a `k8s` secret `tyk-operator-system` with our sensitive info for auth and values
 
 ```sh
