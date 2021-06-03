@@ -23,6 +23,8 @@ import (
 
 // APICatalogueSpec defines the desired state of APICatalogue
 type APICatalogueSpec struct {
+	OrgID              string          `json:"org_id,omitempty"`
+	Email              string          `json:"email,omitempty"`
 	APIDescriptionList []*model.Target `json:"apis,omitempty"`
 	Context            *model.Target   `json:"contextRef,omitempty"`
 }
