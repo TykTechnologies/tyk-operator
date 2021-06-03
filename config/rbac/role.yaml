@@ -60,6 +60,32 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - apidescriptions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apidescriptions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apidescriptions/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - operatorcontexts
   verbs:
   - get

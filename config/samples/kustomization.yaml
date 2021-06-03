@@ -3,4 +3,5 @@ resources:
 - tyk_v1alpha1_apidefinition.yaml
 - tyk_v1alpha1_securitypolicy.yaml
 - tyk_v1alpha1_operatorcontext.yaml
+- tyk_v1alpha1_apidescription.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

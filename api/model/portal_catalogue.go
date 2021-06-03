@@ -17,9 +17,9 @@ type APIDescription struct {
 	APIID            string                   `json:"api_id"`
 	PolicyID         string                   `json:"policy_id"`
 	Documentation    string                   `json:"documentation"`
-	Version          *CatalogueVersion        `json:"version,omitempty"`
+	Version          CatalogueVersion         `json:"version,omitempty"`
 	IsKeyless        bool                     `json:"is_keyless,omitempty"`
-	Config           *PortalModelPortalConfig `son:"config,omitempty"`
+	Config           *PortalModelPortalConfig `json:"config,omitempty"`
 	Fields           map[string]string        `json:"fields,omitempty"`
 	AuthType         string                   `json:"auth_type,omitempty"`
 }
@@ -37,7 +37,7 @@ type PortalModelPortalConfig struct {
 	DisableLogin         bool         `json:"disable_login"`
 	DisableSignup        bool         `json:"disable_signup"`
 	DisableAutoLogin     bool         `json:"disable_auto_login"`
-	CatalogueLoginOnly   bool         `son:"catalogue_login_only"`
+	CatalogueLoginOnly   bool         `json:"catalogue_login_only"`
 	OAuthUsageLimit      int          `json:"oauth_usage_limit"`
 	Email                string       `json:"email"`
 	MailOptions          *MailOptions `json:"mail_options"`
