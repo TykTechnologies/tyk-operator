@@ -47,13 +47,6 @@ type APIDescriptionReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the APIDescription object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("APICatalogue", req.NamespacedName.String())
 
@@ -66,7 +59,7 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
 	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.delete(ctx, desired, env)
+			return r.delete(ctx, desired, env, log)
 		}
 		util.AddFinalizer(desired, keys.APIDescriptionFinalizerName)
 		return nil
@@ -78,23 +71,27 @@ func (r *APIDescriptionReconciler) delete(
 	ctx context.Context,
 	desired *v1alpha1.APIDescription,
 	env environmet.Env,
+	log logr.Logger,
 ) error {
+	log.Info("Deleting resource")
 	// we find all api catalogues referencing this and update it to reflect the
 	// change
+	log.Info("Fetching APICatalogueList ...")
 	var ls v1alpha1.APICatalogueList
 	err := r.List(ctx, &ls, &client.ListOptions{
 		Namespace:     desired.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("spec.org_id", env.Org),
 	})
 	if err != nil {
-		return err
+		return client.IgnoreNotFound(err)
 	}
+	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
 	ta := model.Target{
 		Name:      desired.Name,
 		Namespace: desired.Namespace,
 	}
 	for _, catalogue := range ls.Items {
-		if err := r.updateCatalogue(ctx, &catalogue, ta); err != nil {
+		if err := r.updateCatalogue(ctx, &catalogue, ta, log); err != nil {
 			return err
 		}
 	}
@@ -106,10 +103,14 @@ func (r *APIDescriptionReconciler) updateCatalogue(
 	ctx context.Context,
 	catalogue *v1alpha1.APICatalogue,
 	target model.Target,
+	log logr.Logger,
 ) error {
 	for _, desc := range catalogue.Spec.APIDescriptionList {
 		if desc.Equal(target) {
 			// Update this catalogue
+			log.Info("Updating APICatalogue", "resource",
+				model.Target{Name: desc.Name, Namespace: desc.Namespace}.String(),
+			)
 			catalogue.Spec.APIDescriptionList =
 				removeTarget(catalogue.Spec.APIDescriptionList, target)
 			return r.Update(ctx, catalogue)
