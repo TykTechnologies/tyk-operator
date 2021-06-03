@@ -163,8 +163,8 @@ install-operator-helm: cross-build-image manifests helm
 scrap: generate manifests helm cross-build-image
 	@echo "===> re installing operator with helm"
 	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
-	# helm uninstall ci -n tyk-operator-system
-	# kubectl apply -f ./helm/crds
+	helm uninstall ci -n tyk-operator-system
+	kubectl apply -f ./helm/crds
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: setup-pro

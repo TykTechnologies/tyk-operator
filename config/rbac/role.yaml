@@ -39,6 +39,32 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - apicatalogues
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apicatalogues/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apicatalogues/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - apidefinitions
   verbs:
   - create

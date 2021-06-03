@@ -1,0 +1,20 @@
+# permissions for end users to view apicatalogues.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: apicatalogue-viewer-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apicatalogues
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - apicatalogues/status
+  verbs:
+  - get

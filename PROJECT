@@ -51,4 +51,13 @@ resources:
   kind: APIDescription
   path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: tyk.io
+  group: tyk
+  kind: APICatalogue
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"
