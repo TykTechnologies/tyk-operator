@@ -170,14 +170,17 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("APIDescription"),
 		Scheme: mgr.GetScheme(),
+		Env:    env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIDescription")
 		os.Exit(1)
 	}
 	if err = (&controllers.APICatalogueReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("APICatalogue"),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("APICatalogue"),
+		Scheme:    mgr.GetScheme(),
+		Universal: universalClient,
+		Env:       env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APICatalogue")
 		os.Exit(1)

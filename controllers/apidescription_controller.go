@@ -20,11 +20,17 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
 
 // APIDescriptionReconciler reconciles a APIDescription object
@@ -32,6 +38,7 @@ type APIDescriptionReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
+	Env    environmet.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=apidescriptions,verbs=get;list;watch;create;update;patch;delete
@@ -48,11 +55,67 @@ type APIDescriptionReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("apidescription", req.NamespacedName)
+	log := r.Log.WithValues("APICatalogue", req.NamespacedName.String())
 
-	// your logic here
+	log.Info("Reconciling APICatalogue instance")
+	desired := &tykv1alpha1.APIDescription{}
+	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
+	}
+	// set context for all api calls inside this reconciliation loop
+	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
+	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+			return r.delete(ctx, desired, env)
+		}
+		util.AddFinalizer(desired, keys.APIDescriptionFinalizerName)
+		return nil
+	})
+	return ctrl.Result{}, err
+}
 
-	return ctrl.Result{}, nil
+func (r *APIDescriptionReconciler) delete(
+	ctx context.Context,
+	desired *v1alpha1.APIDescription,
+	env environmet.Env,
+) error {
+	// we find all api catalogues referencing this and update it to reflect the
+	// change
+	var ls v1alpha1.APICatalogueList
+	err := r.List(ctx, &ls, &client.ListOptions{
+		Namespace:     desired.Namespace,
+		FieldSelector: fields.OneTermEqualSelector("spec.org_id", env.Org),
+	})
+	if err != nil {
+		return err
+	}
+	ta := model.Target{
+		Name:      desired.Name,
+		Namespace: desired.Namespace,
+	}
+	for _, catalogue := range ls.Items {
+		if err := r.updateCatalogue(ctx, &catalogue, ta); err != nil {
+			return err
+		}
+	}
+	util.RemoveFinalizer(desired, keys.APIDescriptionFinalizerName)
+	return nil
+}
+
+func (r *APIDescriptionReconciler) updateCatalogue(
+	ctx context.Context,
+	catalogue *v1alpha1.APICatalogue,
+	target model.Target,
+) error {
+	for _, desc := range catalogue.Spec.APIDescriptionList {
+		if desc.Equal(target) {
+			// Update this catalogue
+			catalogue.Spec.APIDescriptionList =
+				removeTarget(catalogue.Spec.APIDescriptionList, target)
+			return r.Update(ctx, catalogue)
+		}
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

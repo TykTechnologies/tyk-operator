@@ -58,6 +58,10 @@ spec:
                 - name
                 - namespace
                 type: object
+              email:
+                type: string
+              org_id:
+                type: string
             type: object
           status:
             description: APICatalogueStatus defines the observed state of APICatalogue
