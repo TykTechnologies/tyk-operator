@@ -39,32 +39,6 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
-  - apicatalogues
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - tyk.tyk.io
-  resources:
-  - apicatalogues/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - tyk.tyk.io
-  resources:
-  - apicatalogues/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - tyk.tyk.io
-  resources:
   - apidefinitions
   verbs:
   - create
@@ -116,6 +90,32 @@ rules:
   verbs:
   - get
   - list
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - portalapicatalogues
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - portalapicatalogues/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - portalapicatalogues/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - tyk.tyk.io
   resources:

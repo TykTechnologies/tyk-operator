@@ -246,6 +246,9 @@ spec:
             type: object
           status:
             description: APIDescriptionStatus defines the observed state of APIDescription
+            properties:
+              id:
+                type: string
             type: object
         type: object
     served: true

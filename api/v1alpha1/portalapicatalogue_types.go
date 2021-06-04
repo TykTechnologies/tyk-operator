@@ -21,40 +21,40 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// APICatalogueSpec defines the desired state of APICatalogue
-type APICatalogueSpec struct {
+// PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
+type PortalAPICatalogueSpec struct {
 	OrgID              string         `json:"org_id,omitempty"`
 	Email              string         `json:"email,omitempty"`
 	APIDescriptionList []model.Target `json:"apis,omitempty"`
 	Context            *model.Target  `json:"contextRef,omitempty"`
 }
 
-// APICatalogueStatus defines the observed state of APICatalogue
-type APICatalogueStatus struct {
+// PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
+type PortalAPICatalogueStatus struct {
 	ID string `json:"id,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// APICatalogue is the Schema for the apicatalogues API
-type APICatalogue struct {
+// PortalAPICatalogue is the Schema for the portalapicatalogues API
+type PortalAPICatalogue struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   APICatalogueSpec   `json:"spec,omitempty"`
-	Status APICatalogueStatus `json:"status,omitempty"`
+	Spec   PortalAPICatalogueSpec   `json:"spec,omitempty"`
+	Status PortalAPICatalogueStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// APICatalogueList contains a list of APICatalogue
-type APICatalogueList struct {
+// PortalAPICatalogueList contains a list of PortalAPICatalogue
+type PortalAPICatalogueList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []APICatalogue `json:"items"`
+	Items           []PortalAPICatalogue `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&APICatalogue{}, &APICatalogueList{})
+	SchemeBuilder.Register(&PortalAPICatalogue{}, &PortalAPICatalogueList{})
 }

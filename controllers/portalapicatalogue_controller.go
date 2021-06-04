@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -30,11 +31,10 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// APICatalogueReconciler reconciles a APICatalogue object
-type APICatalogueReconciler struct {
+// PortalAPICatalogueReconciler reconciles a PortalAPICatalogue object
+type PortalAPICatalogueReconciler struct {
 	client.Client
 	Log       logr.Logger
 	Scheme    *runtime.Scheme
@@ -42,17 +42,24 @@ type APICatalogueReconciler struct {
 	Env       environmet.Env
 }
 
-//+kubebuilder:rbac:groups=tyk.tyk.io,resources=apicatalogues,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=tyk.tyk.io,resources=apicatalogues/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=tyk.tyk.io,resources=apicatalogues/finalizers,verbs=update
+//+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalapicatalogues,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalapicatalogues/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalapicatalogues/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *APICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("APICatalogue", req.NamespacedName.String())
+// TODO(user): Modify the Reconcile function to compare the state specified by
+// the PortalAPICatalogue object against the actual cluster state, and then
+// perform operations to make the cluster state reflect the state specified by
+// the user.
+//
+// For more details, check Reconcile and its Result here:
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
+func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := r.Log.WithValues("PortalAPICatalogue", req.NamespacedName.String())
 
-	log.Info("Reconciling APICatalogue instance")
-	desired := &tykv1alpha1.APICatalogue{}
+	log.Info("Reconciling PortalAPICatalogue instance")
+	desired := &tykv1alpha1.PortalAPICatalogue{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
@@ -60,7 +67,7 @@ func (r *APICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
 	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.delete(ctx, desired, env)
+			return r.delete(ctx, desired, env, log)
 		}
 		if desired.Spec.OrgID == "" {
 			desired.Spec.OrgID = env.Org
@@ -74,9 +81,9 @@ func (r *APICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return ctrl.Result{}, err
 }
 
-func (r *APICatalogueReconciler) model(
+func (r *PortalAPICatalogueReconciler) model(
 	ctx context.Context,
-	desired *v1alpha1.APICatalogueSpec,
+	desired *tykv1alpha1.PortalAPICatalogueSpec,
 	env environmet.Env,
 ) (*model.APICatalogue, error) {
 	m := &model.APICatalogue{
@@ -93,7 +100,11 @@ func (r *APICatalogueReconciler) model(
 	return m, nil
 }
 
-func (r *APICatalogueReconciler) create(ctx context.Context, desired *v1alpha1.APICatalogue, env environmet.Env) error {
+func (r *PortalAPICatalogueReconciler) create(
+	ctx context.Context,
+	desired *tykv1alpha1.PortalAPICatalogue,
+	env environmet.Env,
+) error {
 	m, err := r.model(ctx, &desired.Spec, env)
 	if err != nil {
 		return err
@@ -106,7 +117,7 @@ func (r *APICatalogueReconciler) create(ctx context.Context, desired *v1alpha1.A
 	return r.Status().Update(ctx, desired)
 }
 
-func (r *APICatalogueReconciler) update(ctx context.Context, desired *v1alpha1.APICatalogue, env environmet.Env) error {
+func (r *PortalAPICatalogueReconciler) update(ctx context.Context, desired *tykv1alpha1.PortalAPICatalogue, env environmet.Env) error {
 	m, err := r.model(ctx, &desired.Spec, env)
 	if err != nil {
 		return err
@@ -116,7 +127,13 @@ func (r *APICatalogueReconciler) update(ctx context.Context, desired *v1alpha1.A
 	return err
 }
 
-func (r *APICatalogueReconciler) delete(ctx context.Context, desired *v1alpha1.APICatalogue, env environmet.Env) error {
+func (r *PortalAPICatalogueReconciler) delete(
+	ctx context.Context,
+	desired *tykv1alpha1.PortalAPICatalogue,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	log.Info("Deleting PortalAPICatalogue")
 	// There is no actual DELETE api for catalogue. What we can do is we can update
 	// the catalogue with zero APIDescription and remove the finalizer.
 	_, err := r.Universal.Portal().Catalogue().Update(ctx, &model.APICatalogue{
@@ -131,8 +148,8 @@ func (r *APICatalogueReconciler) delete(ctx context.Context, desired *v1alpha1.A
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *APICatalogueReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *PortalAPICatalogueReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&tykv1alpha1.APICatalogue{}).
+		For(&tykv1alpha1.PortalAPICatalogue{}).
 		Complete(r)
 }

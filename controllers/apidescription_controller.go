@@ -77,7 +77,7 @@ func (r *APIDescriptionReconciler) delete(
 	// we find all api catalogues referencing this and update it to reflect the
 	// change
 	log.Info("Fetching APICatalogueList ...")
-	var ls v1alpha1.APICatalogueList
+	var ls v1alpha1.PortalAPICatalogueList
 	err := r.List(ctx, &ls, &client.ListOptions{
 		Namespace:     desired.Namespace,
 		FieldSelector: fields.OneTermEqualSelector("spec.org_id", env.Org),
@@ -101,7 +101,7 @@ func (r *APIDescriptionReconciler) delete(
 
 func (r *APIDescriptionReconciler) updateCatalogue(
 	ctx context.Context,
-	catalogue *v1alpha1.APICatalogue,
+	catalogue *v1alpha1.PortalAPICatalogue,
 	target model.Target,
 	log logr.Logger,
 ) error {

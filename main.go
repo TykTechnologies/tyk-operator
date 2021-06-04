@@ -175,14 +175,15 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "APIDescription")
 		os.Exit(1)
 	}
-	if err = (&controllers.APICatalogueReconciler{
+
+	if err = (&controllers.PortalAPICatalogueReconciler{
 		Client:    mgr.GetClient(),
-		Log:       ctrl.Log.WithName("controllers").WithName("APICatalogue"),
+		Log:       ctrl.Log.WithName("controllers").WithName("PortalAPICatalogue"),
 		Scheme:    mgr.GetScheme(),
 		Universal: universalClient,
 		Env:       env,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APICatalogue")
+		setupLog.Error(err, "unable to create controller", "controller", "PortalAPICatalogue")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

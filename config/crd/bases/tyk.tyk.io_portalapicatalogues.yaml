@@ -6,20 +6,21 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: apicatalogues.tyk.tyk.io
+  name: portalapicatalogues.tyk.tyk.io
 spec:
   group: tyk.tyk.io
   names:
-    kind: APICatalogue
-    listKind: APICatalogueList
-    plural: apicatalogues
-    singular: apicatalogue
+    kind: PortalAPICatalogue
+    listKind: PortalAPICatalogueList
+    plural: portalapicatalogues
+    singular: portalapicatalogue
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: APICatalogue is the Schema for the apicatalogues API
+        description: PortalAPICatalogue is the Schema for the portalapicatalogues
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: APICatalogueSpec defines the desired state of APICatalogue
+            description: PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
             properties:
               apis:
                 items:
@@ -64,7 +65,7 @@ spec:
                 type: string
             type: object
           status:
-            description: APICatalogueStatus defines the observed state of APICatalogue
+            description: PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
             properties:
               id:
                 type: string

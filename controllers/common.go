@@ -96,7 +96,7 @@ func httpContext(
 		get(o.Spec.Context)
 	case *v1alpha1.SecurityPolicy:
 		get(o.Spec.Context)
-	case *v1alpha1.APICatalogue:
+	case *v1alpha1.PortalAPICatalogue:
 		get(o.Spec.Context)
 	case *v1alpha1.APIDescription:
 		get(o.Spec.Context)

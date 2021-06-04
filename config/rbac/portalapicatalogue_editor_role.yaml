@@ -1,20 +1,24 @@
-# permissions for end users to view apicatalogues.
+# permissions for end users to edit portalapicatalogues.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: apicatalogue-viewer-role
+  name: portalapicatalogue-editor-role
 rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
-  - apicatalogues
+  - portalapicatalogues
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - tyk.tyk.io
   resources:
-  - apicatalogues/status
+  - portalapicatalogues/status
   verbs:
   - get
