@@ -23,7 +23,6 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -106,8 +105,7 @@ func (r *APIDescriptionReconciler) delete(
 	log.Info("Fetching APICatalogueList ...")
 	var ls v1alpha1.PortalAPICatalogueList
 	err := r.List(ctx, &ls, &client.ListOptions{
-		Namespace:     desired.Namespace,
-		FieldSelector: fields.OneTermEqualSelector("spec.org_id", env.Org),
+		Namespace: desired.Namespace,
 	})
 	if err != nil {
 		return client.IgnoreNotFound(err)
@@ -142,8 +140,7 @@ func (r *APIDescriptionReconciler) sync(
 	log.Info("Fetching APICatalogueList ...")
 	var ls v1alpha1.PortalAPICatalogueList
 	err := r.List(ctx, &ls, &client.ListOptions{
-		Namespace:     desired.Namespace,
-		FieldSelector: fields.OneTermEqualSelector("spec.org_id", env.Org),
+		Namespace: desired.Namespace,
 	})
 	if err != nil {
 		return client.IgnoreNotFound(err)

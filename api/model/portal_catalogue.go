@@ -10,14 +10,14 @@ type APICatalogue struct {
 type CatalogueVersion string
 
 type APIDescription struct {
-	Name             string                   `json:"name"`
-	ShortDescription string                   `json:"short_description"`
-	LongDescription  string                   `json:"long_description"`
-	Show             bool                     `json:"show"`
-	APIID            string                   `json:"api_id"`
-	PolicyID         string                   `json:"policy_id"`
-	Documentation    string                   `json:"documentation"`
-	Version          CatalogueVersion         `json:"version,omitempty"`
+	Name             string                   `json:"name,omitempty"`
+	ShortDescription string                   `json:"short_description,omitempty"`
+	LongDescription  string                   `json:"long_description,omitempty"`
+	Show             bool                     `json:"show,omitempty"`
+	APIID            string                   `json:"api_id,omitempty"`
+	PolicyID         string                   `json:"policy_id,omitempty"`
+	Documentation    string                   `json:"documentation,omitempty"`
+	Version          CatalogueVersion         `json:"version,omitempty,omitempty"`
 	IsKeyless        bool                     `json:"is_keyless,omitempty"`
 	Config           *PortalModelPortalConfig `json:"config,omitempty"`
 	Fields           map[string]string        `json:"fields,omitempty"`

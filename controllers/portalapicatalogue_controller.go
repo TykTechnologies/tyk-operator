@@ -98,7 +98,9 @@ func (r *PortalAPICatalogueReconciler) model(
 		if err := r.sync(ctx, desired, env, &t, &a); err != nil {
 			return nil, err
 		}
-		m.APIS = append(m.APIS, a.Spec.APIDescription)
+		d := a.Spec.APIDescription
+		d.Documentation = desired.Status.Documentation[t.String()]
+		m.APIS = append(m.APIS, d)
 	}
 	return m, nil
 }
@@ -116,15 +118,24 @@ func (r *PortalAPICatalogueReconciler) sync(
 	}
 	// need to update the status of the catalogue to track new config
 	id, ok := desired.Status.Documentation[t.String()]
-	if ok {
+	if !ok {
+		// upload new documentation
+		res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
+		if err != nil {
+			return err
+		}
+		a.Spec.Documentation = res.Message
+
+		desired.Status.Documentation[t.String()] = res.Message
+	} else {
+		// update existing one
 		d.Id = id
+		_, err := r.Universal.Portal().Documentation().Upload(ctx, d)
+		if err != nil {
+			return err
+		}
+
 	}
-	// upload new documentation
-	res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
-	if err != nil {
-		return err
-	}
-	desired.Status.Documentation[t.String()] = res.Message
 	return nil
 
 }
@@ -153,7 +164,10 @@ func (r *PortalAPICatalogueReconciler) update(ctx context.Context, desired *tykv
 	}
 	m.Id = desired.Status.ID
 	_, err = r.Universal.Portal().Catalogue().Update(ctx, m)
-	return err
+	if err != nil {
+		return err
+	}
+	return r.Status().Update(ctx, desired)
 }
 
 func (r *PortalAPICatalogueReconciler) delete(

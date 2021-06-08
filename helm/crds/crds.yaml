@@ -1826,14 +1826,7 @@ spec:
               version:
                 type: string
             required:
-            - api_id
             - docs
-            - documentation
-            - long_description
-            - name
-            - policy_id
-            - short_description
-            - show
             type: object
           status:
             description: APIDescriptionStatus defines the observed state of APIDescription
