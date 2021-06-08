@@ -7,6 +7,7 @@ resources:
   - bases/tyk.tyk.io_operatorcontexts.yaml
   - bases/tyk.tyk.io_apidescriptions.yaml
   - bases/tyk.tyk.io_portalapicatalogues.yaml
+  - bases/tyk.tyk.io_portalconfigs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -18,6 +19,7 @@ patchesStrategicMerge:
   # - patches/webhook_in_apidescriptions.yaml
   # - patches/webhook_in_apicatalogues.yaml
   # - patches/webhook_in_portalapicatalogues.yaml
+  #- patches/webhook_in_portalconfigs.yaml
   #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
   # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
@@ -28,6 +30,7 @@ patchesStrategicMerge:
   #- patches/cainjection_in_apidescriptions.yaml
   #- patches/cainjection_in_apicatalogues.yaml
 #- patches/cainjection_in_portalapicatalogues.yaml
+#- patches/cainjection_in_portalconfigs.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
