@@ -83,16 +83,19 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 func (r *PortalAPICatalogueReconciler) model(
 	ctx context.Context,
-	desired *tykv1alpha1.PortalAPICatalogueSpec,
+	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
 ) (*model.APICatalogue, error) {
 	m := &model.APICatalogue{
-		OrgId: desired.OrgID,
-		Email: desired.Email,
+		OrgId: desired.Spec.OrgID,
+		Email: desired.Spec.Email,
 	}
-	for _, t := range desired.APIDescriptionList {
+	for _, t := range desired.Spec.APIDescriptionList {
 		var a v1alpha1.APIDescription
 		if err := r.Get(ctx, t.NS(), &a); err != nil {
+			return nil, err
+		}
+		if err := r.sync(ctx, desired, env, &t, &a); err != nil {
 			return nil, err
 		}
 		m.APIS = append(m.APIS, a.Spec.APIDescription)
@@ -100,12 +103,38 @@ func (r *PortalAPICatalogueReconciler) model(
 	return m, nil
 }
 
+func (r *PortalAPICatalogueReconciler) sync(
+	ctx context.Context,
+	desired *tykv1alpha1.PortalAPICatalogue,
+	env environmet.Env,
+	t *model.Target,
+	a *v1alpha1.APIDescription,
+) error {
+	d, err := description(a.Spec.APIDocumentation)
+	if err != nil {
+		return err
+	}
+	// need to update the status of the catalogue to track new config
+	id, ok := desired.Status.Documentation[t.String()]
+	if ok {
+		d.Id = id
+	}
+	// upload new documentation
+	res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
+	if err != nil {
+		return err
+	}
+	desired.Status.Documentation[t.String()] = res.Message
+	return nil
+
+}
+
 func (r *PortalAPICatalogueReconciler) create(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
 ) error {
-	m, err := r.model(ctx, &desired.Spec, env)
+	m, err := r.model(ctx, desired, env)
 	if err != nil {
 		return err
 	}
@@ -118,7 +147,7 @@ func (r *PortalAPICatalogueReconciler) create(
 }
 
 func (r *PortalAPICatalogueReconciler) update(ctx context.Context, desired *tykv1alpha1.PortalAPICatalogue, env environmet.Env) error {
-	m, err := r.model(ctx, &desired.Spec, env)
+	m, err := r.model(ctx, desired, env)
 	if err != nil {
 		return err
 	}

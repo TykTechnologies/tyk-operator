@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -54,7 +55,7 @@ type APIDescriptionReconciler struct {
 func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("APICatalogue", req.NamespacedName.String())
 
-	log.Info("Reconciling APICatalogue instance")
+	log.Info("Reconciling APIDescription instance")
 	desired := &tykv1alpha1.APIDescription{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
@@ -66,38 +67,13 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return r.delete(ctx, desired, env, log)
 		}
 		util.AddFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
-		if desired.Status.ID == "" {
-			return r.create(ctx, desired, env, log)
-		}
-		return r.update(ctx, desired, env, log)
+		return r.sync(ctx, desired, env, log)
 	})
 	return ctrl.Result{}, err
 }
 
-func (r *APIDescriptionReconciler) create(
-	ctx context.Context,
-	desired *v1alpha1.APIDescription,
-	env environmet.Env,
-	log logr.Logger,
-) error {
-	log.Info("Creating documentation object")
-	d, err := r.doc(ctx, desired.Spec.APIDocumentation, env, log)
-	if err != nil {
-		return err
-	}
-	res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
-	if err != nil {
-		return err
-	}
-	desired.Status.ID = res.Message
-	return r.Status().Update(ctx, desired)
-}
-
-func (r *APIDescriptionReconciler) doc(
-	ctx context.Context,
+func description(
 	a v1alpha1.APIDocumentation,
-	env environmet.Env,
-	log logr.Logger,
 ) (*model.APIDocumentation, error) {
 	m := &model.APIDocumentation{
 		DocumentationType: a.DocumentationType,
@@ -118,32 +94,13 @@ func (r *APIDescriptionReconciler) doc(
 	return m, nil
 }
 
-func (r *APIDescriptionReconciler) update(
-	ctx context.Context,
-	desired *v1alpha1.APIDescription,
-	env environmet.Env,
-	log logr.Logger,
-) error {
-	log.Info("Updating documentation object")
-	d, err := r.doc(ctx, desired.Spec.APIDocumentation, env, log)
-	if err != nil {
-		return err
-	}
-	d.Id = desired.Status.ID
-	_, err = r.Universal.Portal().Documentation().Upload(ctx, d)
-	if err != nil {
-		return err
-	}
-	// TODO find api catalogue referencing this resource and update the object.
-	return r.Status().Update(ctx, desired)
-}
 func (r *APIDescriptionReconciler) delete(
 	ctx context.Context,
 	desired *v1alpha1.APIDescription,
 	env environmet.Env,
 	log logr.Logger,
 ) error {
-	log.Info("Deleting resource")
+	log.Info("Deleting APIDescription resource")
 	// we find all api catalogues referencing this and update it to reflect the
 	// change
 	log.Info("Fetching APICatalogueList ...")
@@ -156,34 +113,55 @@ func (r *APIDescriptionReconciler) delete(
 		return client.IgnoreNotFound(err)
 	}
 	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
-	ta := model.Target{
+	target := model.Target{
 		Name:      desired.Name,
 		Namespace: desired.Namespace,
 	}
 	for _, catalogue := range ls.Items {
-		if err := r.updateCatalogue(ctx, &catalogue, ta, log); err != nil {
-			return err
+		for _, desc := range catalogue.Spec.APIDescriptionList {
+			if desc.Equal(target) {
+				return fmt.Errorf("Unable to delete api description due to partal catalogue dependency %q",
+					model.Target{Name: catalogue.Name, Namespace: catalogue.Namespace}.String(),
+				)
+			}
 		}
 	}
 	util.RemoveFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
 	return nil
 }
 
-func (r *APIDescriptionReconciler) updateCatalogue(
+func (r *APIDescriptionReconciler) sync(
 	ctx context.Context,
-	catalogue *v1alpha1.PortalAPICatalogue,
-	target model.Target,
+	desired *v1alpha1.APIDescription,
+	env environmet.Env,
 	log logr.Logger,
 ) error {
-	for _, desc := range catalogue.Spec.APIDescriptionList {
-		if desc.Equal(target) {
-			// Update this catalogue
-			log.Info("Updating APICatalogue", "resource",
-				model.Target{Name: desc.Name, Namespace: desc.Namespace}.String(),
-			)
-			catalogue.Spec.APIDescriptionList =
-				removeTarget(catalogue.Spec.APIDescriptionList, target)
-			return r.Update(ctx, catalogue)
+	log.Info("Syncing changes to catalogues resource")
+	// we find all api catalogues referencing this and update it to reflect the
+	// change
+	log.Info("Fetching APICatalogueList ...")
+	var ls v1alpha1.PortalAPICatalogueList
+	err := r.List(ctx, &ls, &client.ListOptions{
+		Namespace:     desired.Namespace,
+		FieldSelector: fields.OneTermEqualSelector("spec.org_id", env.Org),
+	})
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
+	target := model.Target{
+		Name:      desired.Name,
+		Namespace: desired.Namespace,
+	}
+	for _, catalogue := range ls.Items {
+		for _, desc := range catalogue.Spec.APIDescriptionList {
+			if desc.Equal(target) {
+				ns := model.Target{Name: catalogue.Name, Namespace: catalogue.Namespace}
+				log.Info("Updating catalogue", "resource", ns.String())
+				if err := r.Update(ctx, &catalogue); err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil

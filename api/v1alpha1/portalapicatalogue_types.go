@@ -32,6 +32,8 @@ type PortalAPICatalogueSpec struct {
 // PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
 type PortalAPICatalogueStatus struct {
 	ID string `json:"id,omitempty"`
+	// maps model.Target.String() => Documentation ID
+	Documentation map[string]string `json:"apis,omitempty"`
 }
 
 //+kubebuilder:object:root=true

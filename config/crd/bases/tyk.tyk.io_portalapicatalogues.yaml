@@ -67,6 +67,11 @@ spec:
           status:
             description: PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
             properties:
+              apis:
+                additionalProperties:
+                  type: string
+                description: maps model.Target.String() => Documentation ID
+                type: object
               id:
                 type: string
             type: object

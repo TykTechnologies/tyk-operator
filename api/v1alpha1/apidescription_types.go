@@ -35,9 +35,7 @@ type APIDocumentation struct {
 }
 
 // APIDescriptionStatus defines the observed state of APIDescription
-type APIDescriptionStatus struct {
-	ID string `json:"id,omitempty"`
-}
+type APIDescriptionStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

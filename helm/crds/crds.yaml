@@ -1837,9 +1837,6 @@ spec:
             type: object
           status:
             description: APIDescriptionStatus defines the observed state of APIDescription
-            properties:
-              id:
-                type: string
             type: object
         type: object
     served: true
@@ -1999,6 +1996,11 @@ spec:
           status:
             description: PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
             properties:
+              apis:
+                additionalProperties:
+                  type: string
+                description: maps model.Target.String() => Documentation ID
+                type: object
               id:
                 type: string
             type: object
