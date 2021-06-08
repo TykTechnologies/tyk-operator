@@ -25,6 +25,7 @@ type Portal interface {
 	Policy() Policy
 	Documentation() Documentation
 	Catalogue() Catalogue
+	Configuration() Configuration
 }
 
 type Documentation interface {
@@ -38,4 +39,14 @@ type Catalogue interface {
 	Get(ctx context.Context) (*model.APICatalogue, error)
 	Create(ctx context.Context, o *model.APICatalogue) (*model.Result, error)
 	Update(ctx context.Context, o *model.APICatalogue) (*model.Result, error)
+}
+
+type Configuration interface {
+	Get(ctx context.Context) (*model.PortalModelPortalConfig, error)
+	Create(
+		ctx context.Context, o *model.PortalModelPortalConfig,
+	) (*model.Result, error)
+	Update(
+		ctx context.Context, o *model.PortalModelPortalConfig,
+	) (*model.Result, error)
 }

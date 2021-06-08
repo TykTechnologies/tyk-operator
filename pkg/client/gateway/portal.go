@@ -22,6 +22,10 @@ func (Portal) Catalogue() universal.Catalogue {
 	return Catalogue{}
 }
 
+func (Portal) Configuration() universal.Configuration {
+	return Configuration{}
+}
+
 type Documentation struct{}
 
 func (Documentation) Upload(
@@ -47,5 +51,24 @@ func (Catalogue) Create(ctx context.Context, o *model.APICatalogue) (*model.Resu
 }
 
 func (Catalogue) Update(ctx context.Context, o *model.APICatalogue) (*model.Result, error) {
+	return nil, client.ErrTODO
+}
+
+var _ universal.Configuration = Configuration{}
+
+type Configuration struct{}
+
+func (Configuration) Get(ctx context.Context) (*model.PortalModelPortalConfig, error) {
+	return nil, client.ErrTODO
+}
+func (Configuration) Create(
+	ctx context.Context, o *model.PortalModelPortalConfig,
+) (*model.Result, error) {
+	return nil, client.ErrTODO
+}
+
+func (Configuration) Update(
+	ctx context.Context, o *model.PortalModelPortalConfig,
+) (*model.Result, error) {
 	return nil, client.ErrTODO
 }
