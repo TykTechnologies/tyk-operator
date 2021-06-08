@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/fields"
@@ -29,6 +31,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
@@ -36,9 +39,10 @@ import (
 // APIDescriptionReconciler reconciles a APIDescription object
 type APIDescriptionReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
-	Env    environmet.Env
+	Log       logr.Logger
+	Scheme    *runtime.Scheme
+	Universal universal.Client
+	Env       environmet.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=apidescriptions,verbs=get;list;watch;create;update;patch;delete
@@ -62,11 +66,77 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return r.delete(ctx, desired, env, log)
 		}
 		util.AddFinalizer(desired, keys.APIDescriptionFinalizerName)
-		return nil
+		if desired.Status.ID == "" {
+			return r.create(ctx, desired, env, log)
+		}
+		return r.update(ctx, desired, env, log)
 	})
 	return ctrl.Result{}, err
 }
 
+func (r *APIDescriptionReconciler) create(
+	ctx context.Context,
+	desired *v1alpha1.APIDescription,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	log.Info("Creating documentation object")
+	d, err := r.doc(ctx, desired.Spec.APIDocumentation, env, log)
+	if err != nil {
+		return err
+	}
+	res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
+	if err != nil {
+		return err
+	}
+	desired.Status.ID = res.Message
+	return r.Status().Update(ctx, desired)
+}
+
+func (r *APIDescriptionReconciler) doc(
+	ctx context.Context,
+	a v1alpha1.APIDocumentation,
+	env environmet.Env,
+	log logr.Logger,
+) (*model.APIDocumentation, error) {
+	m := &model.APIDocumentation{
+		DocumentationType: a.DocumentationType,
+		Documentation:     a.Documentation,
+	}
+	if a.URLRef != "" {
+		res, err := http.Get(a.URLRef)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+		m.Documentation = string(b)
+	}
+	return m, nil
+}
+
+func (r *APIDescriptionReconciler) update(
+	ctx context.Context,
+	desired *v1alpha1.APIDescription,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	log.Info("Updating documentation object")
+	d, err := r.doc(ctx, desired.Spec.APIDocumentation, env, log)
+	if err != nil {
+		return err
+	}
+	d.Id = desired.Status.ID
+	_, err = r.Universal.Portal().Documentation().Upload(ctx, d)
+	if err != nil {
+		return err
+	}
+	// TODO find api catalogue referencing this resource and update the object.
+	return r.Status().Update(ctx, desired)
+}
 func (r *APIDescriptionReconciler) delete(
 	ctx context.Context,
 	desired *v1alpha1.APIDescription,
