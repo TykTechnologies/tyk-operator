@@ -38,22 +38,6 @@ spec:
             properties:
               api_id:
                 type: string
-              apiDocumentation:
-                properties:
-                  doc_type:
-                    enum:
-                    - blueprint
-                    - swagger
-                    - swagger_custom_url
-                    - graphql
-                    type: string
-                  documentation:
-                    type: string
-                  urlRef:
-                    type: string
-                required:
-                - doc_type
-                type: object
               auth_type:
                 type: string
               config:
@@ -211,6 +195,22 @@ spec:
                 - name
                 - namespace
                 type: object
+              docs:
+                properties:
+                  doc_type:
+                    enum:
+                    - blueprint
+                    - swagger
+                    - swagger_custom_url
+                    - graphql
+                    type: string
+                  documentation:
+                    type: string
+                  urlRef:
+                    type: string
+                required:
+                - doc_type
+                type: object
               documentation:
                 type: string
               fields:
@@ -232,8 +232,8 @@ spec:
               version:
                 type: string
             required:
-            - apiDocumentation
             - api_id
+            - docs
             - documentation
             - long_description
             - name
