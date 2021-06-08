@@ -25,25 +25,25 @@ type APIDescription struct {
 }
 
 type PortalModelPortalConfig struct {
-	Id                   string       `json:"id"`
-	OrgID                string       `json:"org_id"`
-	SignUpFields         []string     `json:"signup_fields"`
-	KeyRequestFields     []string     `json:"key_request_fields"`
-	RequireKeyApproval   bool         `json:"require_key_approval"`
-	SecureKeyApproval    bool         `json:"secure_key_approval"`
-	RedirectOnKeyRequest bool         `json:"redirect_on_key_request"`
-	RedirectTo           string       `json:"redirect_to"`
-	EnableMultiSelection bool         `json:"enable_multi_selection"`
-	DisableLogin         bool         `json:"disable_login"`
-	DisableSignup        bool         `json:"disable_signup"`
-	DisableAutoLogin     bool         `json:"disable_auto_login"`
-	CatalogueLoginOnly   bool         `json:"catalogue_login_only"`
-	OAuthUsageLimit      int          `json:"oauth_usage_limit"`
-	Email                string       `json:"email"`
-	MailOptions          *MailOptions `json:"mail_options"`
-	DCROptions           DCROptions   `json:"dcr_options"`
-	EnableDCR            bool         `json:"enable_dcr"`
-	Override             bool         `json:"override"`
+	Id                   string       `json:"id,omitempty"`
+	OrgID                string       `json:"org_id,omitempty"`
+	SignUpFields         []string     `json:"signup_fields,omitempty"`
+	KeyRequestFields     []string     `json:"key_request_fields,omitempty"`
+	RequireKeyApproval   bool         `json:"require_key_approval,omitempty"`
+	SecureKeyApproval    bool         `json:"secure_key_approval,omitempty"`
+	RedirectOnKeyRequest bool         `json:"redirect_on_key_request,omitempty"`
+	RedirectTo           string       `json:"redirect_to,omitempty"`
+	EnableMultiSelection bool         `json:"enable_multi_selection,omitempty"`
+	DisableLogin         bool         `json:"disable_login,omitempty"`
+	DisableSignup        bool         `json:"disable_signup,omitempty"`
+	DisableAutoLogin     bool         `json:"disable_auto_login,omitempty"`
+	CatalogueLoginOnly   bool         `json:"catalogue_login_only,omitempty"`
+	OAuthUsageLimit      int          `json:"oauth_usage_limit,omitempty"`
+	Email                string       `json:"email,omitempty"`
+	MailOptions          *MailOptions `json:"mail_options,omitempty"`
+	DCROptions           *DCROptions  `json:"dcr_options,omitempty"`
+	EnableDCR            bool         `json:"enable_dcr,omitempty"`
+	Override             bool         `json:"override,omitempty"`
 }
 
 type DCROptions struct {

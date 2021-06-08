@@ -1,0 +1,5 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: PortalConfig
+metadata:
+  name: sample-portal-config
+spec: {}

@@ -200,26 +200,6 @@ spec:
                     items:
                       type: string
                     type: array
-                required:
-                - catalogue_login_only
-                - dcr_options
-                - disable_auto_login
-                - disable_login
-                - disable_signup
-                - email
-                - enable_dcr
-                - enable_multi_selection
-                - id
-                - key_request_fields
-                - mail_options
-                - oauth_usage_limit
-                - org_id
-                - override
-                - redirect_on_key_request
-                - redirect_to
-                - require_key_approval
-                - secure_key_approval
-                - signup_fields
                 type: object
               contextRef:
                 properties:
