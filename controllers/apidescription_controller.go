@@ -65,7 +65,7 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			return r.delete(ctx, desired, env, log)
 		}
-		util.AddFinalizer(desired, keys.APIDescriptionFinalizerName)
+		util.AddFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
 		if desired.Status.ID == "" {
 			return r.create(ctx, desired, env, log)
 		}
@@ -165,7 +165,7 @@ func (r *APIDescriptionReconciler) delete(
 			return err
 		}
 	}
-	util.RemoveFinalizer(desired, keys.APIDescriptionFinalizerName)
+	util.RemoveFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
 	return nil
 }
 

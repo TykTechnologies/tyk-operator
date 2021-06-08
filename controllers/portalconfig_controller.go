@@ -23,15 +23,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
 
 // PortalConfigReconciler reconciles a PortalConfig object
 type PortalConfigReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log       logr.Logger
+	Scheme    *runtime.Scheme
+	Universal universal.Client
+	Env       environmet.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalconfigs,verbs=get;list;watch;create;update;patch;delete
@@ -48,11 +55,88 @@ type PortalConfigReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *PortalConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("portalconfig", req.NamespacedName)
 
-	// your logic here
+	log := r.Log.WithValues("PortalConfig", req.NamespacedName.String())
 
-	return ctrl.Result{}, nil
+	log.Info("Reconciling PortalConfig instance")
+	desired := &tykv1alpha1.PortalConfig{}
+	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
+	}
+	// set context for all api calls inside this reconciliation loop
+	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
+	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+			return r.delete(ctx, desired, env, log)
+		}
+		util.AddFinalizer(desired, keys.PortalConfigurationFinalizerName)
+		if desired.Status.ID == "" {
+			return r.create(ctx, desired, env, log)
+		}
+		return r.update(ctx, desired, env, log)
+	})
+	return ctrl.Result{}, err
+}
+
+func (r *PortalConfigReconciler) create(
+	ctx context.Context,
+	desired *v1alpha1.PortalConfig,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	log.Info("Creating portal configuration object")
+	// Configuration is per organization. Since we can't delete this once created
+	// we can assume that this will still be present in the dashboard after kubectl
+	// delete command.
+	//
+	// We check if we have this object in dashboard already and we just update the
+	// object to match the resource state
+	conf, err := r.Universal.Portal().Configuration().Get(ctx)
+	if err != nil {
+		res, err := r.Universal.Portal().Configuration().Create(ctx, &desired.Spec.PortalModelPortalConfig)
+		if err != nil {
+			return err
+		}
+		desired.Status.ID = res.Message
+		return r.Status().Update(ctx, desired)
+	}
+	log.Info("Found existing portal configuration")
+	d := desired.Spec.PortalModelPortalConfig
+	d.Id = conf.Id
+	d.OrgID = conf.OrgID
+	_, err = r.Universal.Portal().Configuration().Update(ctx, &d)
+	if err != nil {
+		return err
+	}
+	desired.Status.ID = conf.Id
+	return r.Status().Update(ctx, desired)
+}
+
+func (r *PortalConfigReconciler) update(
+	ctx context.Context,
+	desired *v1alpha1.PortalConfig,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	log.Info("Updating portal configuration object")
+	d := desired.Spec.PortalModelPortalConfig
+	d.Id = desired.Status.ID
+	_, err := r.Universal.Portal().Configuration().Update(ctx, &d)
+	if err != nil {
+		return err
+	}
+	return r.Status().Update(ctx, desired)
+}
+
+func (r *PortalConfigReconciler) delete(
+	ctx context.Context,
+	desired *v1alpha1.PortalConfig,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	log.Info("Deleting portal configuration resource")
+	util.RemoveFinalizer(desired, keys.PortalConfigurationFinalizerName)
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

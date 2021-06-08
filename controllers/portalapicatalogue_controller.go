@@ -72,7 +72,7 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		if desired.Spec.OrgID == "" {
 			desired.Spec.OrgID = env.Org
 		}
-		util.AddFinalizer(desired, keys.APICatalogueFinalizerName)
+		util.AddFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
 		if desired.Status.ID != "" {
 			return r.update(ctx, desired, env)
 		}
@@ -143,7 +143,7 @@ func (r *PortalAPICatalogueReconciler) delete(
 	if err != nil {
 		return err
 	}
-	util.RemoveFinalizer(desired, keys.APICatalogueFinalizerName)
+	util.RemoveFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
 	return nil
 }
 

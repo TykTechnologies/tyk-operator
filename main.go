@@ -187,9 +187,11 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.PortalConfigReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("PortalConfig"),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("PortalConfig"),
+		Scheme:    mgr.GetScheme(),
+		Universal: universalClient,
+		Env:       env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PortalConfig")
 		os.Exit(1)

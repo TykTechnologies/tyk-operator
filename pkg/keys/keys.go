@@ -2,10 +2,11 @@ package keys
 
 // APIDefinition
 const (
-	ApiDefFinalizerName         = "finalizers.tyk.io/apidefinition"
-	ApiDefTemplateFinalizerName = "finalizers.tyk.io/template"
-	APICatalogueFinalizerName   = "finalizers.tyk.io/catalogue"
-	APIDescriptionFinalizerName = "finalizers.tyk.io/catalogue"
+	ApiDefFinalizerName               = "finalizers.tyk.io/apidefinition"
+	ApiDefTemplateFinalizerName       = "finalizers.tyk.io/template"
+	PortalAPICatalogueFinalizerName   = "finalizers.tyk.io/portalapicatalogue"
+	PortalAPIDescriptionFinalizerName = "finalizers.tyk.io/portalapidescription"
+	PortalConfigurationFinalizerName  = "finalizers.tyk.io/portalconfiguration"
 )
 
 //Ingress
