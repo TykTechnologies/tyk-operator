@@ -119,6 +119,32 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - portalconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - portalconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - portalconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - securitypolicies
   verbs:
   - create

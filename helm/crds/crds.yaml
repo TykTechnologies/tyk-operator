@@ -1632,6 +1632,22 @@ spec:
             properties:
               api_id:
                 type: string
+              apiDocumentation:
+                properties:
+                  doc_type:
+                    enum:
+                    - blueprint
+                    - swagger
+                    - swagger_custom_url
+                    - graphql
+                    type: string
+                  documentation:
+                    type: string
+                  urlRef:
+                    type: string
+                required:
+                - doc_type
+                type: object
               auth_type:
                 type: string
               config:
@@ -1830,6 +1846,7 @@ spec:
               version:
                 type: string
             required:
+            - apiDocumentation
             - api_id
             - documentation
             - long_description
@@ -2001,6 +2018,229 @@ spec:
             type: object
           status:
             description: PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
+            properties:
+              id:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: portalconfigs.tyk.tyk.io
+spec:
+  group: tyk.tyk.io
+  names:
+    kind: PortalConfig
+    listKind: PortalConfigList
+    plural: portalconfigs
+    singular: portalconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PortalConfig is the Schema for the portalconfigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PortalConfigSpec defines the desired state of PortalConfig
+            properties:
+              catalogue_login_only:
+                type: boolean
+              contextRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              dcr_options:
+                properties:
+                  access_token:
+                    type: string
+                  grant_types:
+                    items:
+                      type: string
+                    type: array
+                  idp_host:
+                    type: string
+                  provider:
+                    type: string
+                  registration_endpoint:
+                    type: string
+                  response_types:
+                    items:
+                      type: string
+                    type: array
+                  token_endpoint_auth_method:
+                    type: string
+                required:
+                - access_token
+                - grant_types
+                - idp_host
+                - provider
+                - registration_endpoint
+                - response_types
+                - token_endpoint_auth_method
+                type: object
+              disable_auto_login:
+                type: boolean
+              disable_login:
+                type: boolean
+              disable_signup:
+                type: boolean
+              email:
+                type: string
+              enable_dcr:
+                type: boolean
+              enable_multi_selection:
+                type: boolean
+              id:
+                type: string
+              key_request_fields:
+                items:
+                  type: string
+                type: array
+              mail_options:
+                properties:
+                  email_copy:
+                    properties:
+                      key_email:
+                        properties:
+                          body:
+                            type: string
+                          enabled:
+                            type: boolean
+                          hide_token_data:
+                            type: boolean
+                          sign_off:
+                            type: string
+                          subject:
+                            type: string
+                        required:
+                        - body
+                        - enabled
+                        - hide_token_data
+                        - sign_off
+                        - subject
+                        type: object
+                      reset_password_email:
+                        properties:
+                          body:
+                            type: string
+                          enabled:
+                            type: boolean
+                          hide_token_data:
+                            type: boolean
+                          sign_off:
+                            type: string
+                          subject:
+                            type: string
+                        required:
+                        - body
+                        - enabled
+                        - hide_token_data
+                        - sign_off
+                        - subject
+                        type: object
+                      welcome_email:
+                        properties:
+                          body:
+                            type: string
+                          enabled:
+                            type: boolean
+                          hide_token_data:
+                            type: boolean
+                          sign_off:
+                            type: string
+                          subject:
+                            type: string
+                        required:
+                        - body
+                        - enabled
+                        - hide_token_data
+                        - sign_off
+                        - subject
+                        type: object
+                    required:
+                    - key_email
+                    - reset_password_email
+                    - welcome_email
+                    type: object
+                  mail_from_email:
+                    type: string
+                  mail_from_name:
+                    type: string
+                required:
+                - email_copy
+                - mail_from_email
+                - mail_from_name
+                type: object
+              oauth_usage_limit:
+                type: integer
+              org_id:
+                type: string
+              override:
+                type: boolean
+              redirect_on_key_request:
+                type: boolean
+              redirect_to:
+                type: string
+              require_key_approval:
+                type: boolean
+              secure_key_approval:
+                type: boolean
+              signup_fields:
+                items:
+                  type: string
+                type: array
+            required:
+            - catalogue_login_only
+            - dcr_options
+            - disable_auto_login
+            - disable_login
+            - disable_signup
+            - email
+            - enable_dcr
+            - enable_multi_selection
+            - id
+            - key_request_fields
+            - mail_options
+            - oauth_usage_limit
+            - org_id
+            - override
+            - redirect_on_key_request
+            - redirect_to
+            - require_key_approval
+            - secure_key_approval
+            - signup_fields
+            type: object
+          status:
+            description: PortalConfigStatus defines the observed state of PortalConfig
             properties:
               id:
                 type: string
