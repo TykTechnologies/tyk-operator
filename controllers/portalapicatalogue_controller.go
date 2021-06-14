@@ -116,6 +116,9 @@ func (r *PortalAPICatalogueReconciler) sync(
 	if err != nil {
 		return err
 	}
+	if desired.Status.Documentation == nil {
+		desired.Status.Documentation = make(map[string]string)
+	}
 	// need to update the status of the catalogue to track new config
 	id, ok := desired.Status.Documentation[t.String()]
 	if !ok {

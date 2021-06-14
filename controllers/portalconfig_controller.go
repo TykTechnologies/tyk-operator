@@ -54,18 +54,24 @@ type PortalConfigReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *PortalConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *PortalConfigReconciler) Reconcile(
+	ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 
 	log := r.Log.WithValues("PortalConfig", req.NamespacedName.String())
-
 	log.Info("Reconciling PortalConfig instance")
+	defer func() {
+		if err == nil {
+			log.Info("Completed reconciling PortalConfig instance")
+		}
+	}()
 	desired := &tykv1alpha1.PortalConfig{}
-	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
+	if err = r.Get(ctx, req.NamespacedName, desired); err != nil {
+		err = client.IgnoreNotFound(err) // Ignore not-found errors
+		return
 	}
 	// set context for all api calls inside this reconciliation loop
 	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
-	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			return r.delete(ctx, desired, env, log)
 		}
@@ -75,7 +81,7 @@ func (r *PortalConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		return r.update(ctx, desired, env, log)
 	})
-	return ctrl.Result{}, err
+	return
 }
 
 func (r *PortalConfigReconciler) create(
@@ -106,6 +112,7 @@ func (r *PortalConfigReconciler) create(
 	d.OrgID = conf.OrgID
 	_, err = r.Universal.Portal().Configuration().Update(ctx, &d)
 	if err != nil {
+		log.Error(err, "Failed updating portal configuration")
 		return err
 	}
 	desired.Status.ID = conf.Id
@@ -121,11 +128,9 @@ func (r *PortalConfigReconciler) update(
 	log.Info("Updating portal configuration object")
 	d := desired.Spec.PortalModelPortalConfig
 	d.Id = desired.Status.ID
+	d.OrgID = env.Org
 	_, err := r.Universal.Portal().Configuration().Update(ctx, &d)
-	if err != nil {
-		return err
-	}
-	return r.Status().Update(ctx, desired)
+	return err
 }
 
 func (r *PortalConfigReconciler) delete(

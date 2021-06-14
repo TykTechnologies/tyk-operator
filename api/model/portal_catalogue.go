@@ -14,7 +14,6 @@ type APIDescription struct {
 	ShortDescription string                   `json:"short_description,omitempty"`
 	LongDescription  string                   `json:"long_description,omitempty"`
 	Show             bool                     `json:"show,omitempty"`
-	APIID            string                   `json:"api_id,omitempty"`
 	PolicyID         string                   `json:"policy_id,omitempty"`
 	Documentation    string                   `json:"documentation,omitempty"`
 	Version          CatalogueVersion         `json:"version,omitempty,omitempty"`

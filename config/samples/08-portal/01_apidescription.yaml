@@ -1,8 +1,23 @@
+# apiVersion: tyk.tyk.io/v1alpha1
+# kind: APIDescription
+# metadata:
+#   name: sample-portal-api
+# spec:
+#   docs:
+#     urlRef: "http://httpbin.org/spec.json"
+#     doc_type: swagger
+---
 apiVersion: tyk.tyk.io/v1alpha1
-kind: APIDescription
+kind: PortalConfig
 metadata:
-  name: sample-portal-api
-spec:
-  docs:
-    urlRef: "http://httpbin.org/spec.json"
-    doc_type: swagger
+  name: sample-portal-config
+spec: {}
+# ---
+# apiVersion: tyk.tyk.io/v1alpha1
+# kind: PortalAPICatalogue
+# metadata:
+#   name: sample-portal-api
+# spec:
+#   apis:
+#     - name: sample-portal-api
+#       namespace: default

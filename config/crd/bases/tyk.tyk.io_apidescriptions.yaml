@@ -36,8 +36,6 @@ spec:
           spec:
             description: APIDescriptionSpec defines the desired state of APIDescription
             properties:
-              api_id:
-                type: string
               auth_type:
                 type: string
               config:
@@ -199,7 +197,6 @@ spec:
                 properties:
                   doc_type:
                     enum:
-                    - blueprint
                     - swagger
                     - swagger_custom_url
                     - graphql
