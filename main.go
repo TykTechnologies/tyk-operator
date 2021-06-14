@@ -99,6 +99,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize universal client
 	var universalClient universal.Client
 	universalClient = gateway.Client{}
 	if env.Mode == "pro" {
