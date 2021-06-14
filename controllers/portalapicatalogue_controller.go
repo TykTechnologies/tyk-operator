@@ -143,20 +143,40 @@ func (r *PortalAPICatalogueReconciler) sync(
 
 }
 
+func (r *PortalAPICatalogueReconciler) init(
+	ctx context.Context,
+	desired *tykv1alpha1.PortalAPICatalogue,
+	env environmet.Env,
+) (id string, err error) {
+	result, err := r.Universal.Portal().Catalogue().Create(ctx, &model.APICatalogue{
+		OrgId: env.Org,
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.Message, nil
+}
+
 func (r *PortalAPICatalogueReconciler) create(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
 ) error {
+	// create an empty catalogue for the org
+	catalogueID, err := r.init(ctx, desired, env)
+	if err != nil {
+		return err
+	}
 	m, err := r.model(ctx, desired, env)
 	if err != nil {
 		return err
 	}
-	result, err := r.Universal.Portal().Catalogue().Create(ctx, m)
+	m.Id = catalogueID
+	_, err = r.Universal.Portal().Catalogue().Update(ctx, m)
 	if err != nil {
 		return err
 	}
-	desired.Status.ID = result.Message
+	desired.Status.ID = catalogueID
 	return r.Status().Update(ctx, desired)
 }
 
