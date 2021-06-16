@@ -19,8 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -69,28 +67,6 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return r.sync(ctx, desired, env, log)
 	})
 	return ctrl.Result{}, err
-}
-
-func description(
-	a v1alpha1.APIDocumentation,
-) (*model.APIDocumentation, error) {
-	m := &model.APIDocumentation{
-		DocumentationType: a.DocumentationType,
-		Documentation:     a.Documentation,
-	}
-	if a.URLRef != "" {
-		res, err := http.Get(a.URLRef)
-		if err != nil {
-			return nil, err
-		}
-		defer res.Body.Close()
-		b, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
-		m.Documentation = string(b)
-	}
-	return m, nil
 }
 
 func (r *APIDescriptionReconciler) delete(

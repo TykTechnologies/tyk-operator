@@ -220,8 +220,6 @@ spec:
                           type: string
                         documentation:
                           type: string
-                        urlRef:
-                          type: string
                       required:
                       - doc_type
                       type: object

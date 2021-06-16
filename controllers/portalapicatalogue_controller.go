@@ -112,9 +112,10 @@ func (r *PortalAPICatalogueReconciler) sync(
 	t *model.Target,
 	a *v1alpha1.APIDescription,
 ) error {
-	d, err := description(a.Spec.APIDocumentation)
-	if err != nil {
-		return err
+	d := &model.APIDocumentation{
+		DocumentationType: a.Spec.APIDocumentation.DocumentationType,
+		Documentation:     a.Spec.APIDocumentation.Documentation,
+		APIID:             a.Spec.PolicyID,
 	}
 	if desired.Status.Documentation == nil {
 		desired.Status.Documentation = make(map[string]string)
@@ -128,7 +129,6 @@ func (r *PortalAPICatalogueReconciler) sync(
 			return err
 		}
 		a.Spec.Documentation = res.Message
-
 		desired.Status.Documentation[t.String()] = res.Message
 	} else {
 		// update existing one

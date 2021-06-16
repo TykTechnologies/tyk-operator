@@ -8,7 +8,7 @@ fullnameOverride: ""
 enableSharding: false
 
 # Set to true to use Tyk as the Ingress gateway to an Istio Service Mesh
-# We apply some exceptions to the Istio IPTables so inbound calls to the 
+# We apply some exceptions to the Istio IPTables so inbound calls to the
 # Gateway and Dashboard are exposed to the outside world - see the deployment templates for implementation
 enableIstioIngress: false
 bootstrap: true
@@ -18,11 +18,11 @@ secrets:
   AdminSecret: "54321"
 
 redis:
-    shardCount: 128
-    useSSL: false
+  shardCount: 128
+  useSSL: false
 
 mongo:
-    useSSL: false
+  useSSL: false
 
 mdcb:
   enabled: false
@@ -44,7 +44,6 @@ mdcb:
   tolerations: []
   affinity: {}
   extraEnvs: []
-
 
 tib:
   enabled: false
@@ -77,6 +76,12 @@ dash:
   hostName: "localhost"
   license: ""
   containerPort: 3000
+  adminUser:
+    firstName: Tyk
+    lastName: Operator
+    email: operator@exmaple.com
+    # we need to be able to login into the dashboard
+    password: "1234testing"
   image:
     repository: tykio/tyk-dashboard
     tag: v3.1.2
@@ -95,10 +100,9 @@ dash:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-  extraEnvs: []
-  extraEnvs: 
+  extraEnvs:
     - name: TYK_DB_REDISHOST
-      value:  redis.tykpro-control-plane.svc.cluster.local
+      value: redis.tykpro-control-plane.svc.cluster.local
 
 portal:
   bootstrap: false
@@ -137,7 +141,7 @@ gateway:
     - key: node-role.kubernetes.io/master
       effect: NoSchedule
   affinity: {}
-  extraEnvs: 
+  extraEnvs:
     - name: TYK_LOGLEVEL
       value: debug
     - name: TYK_GW_COPROCESSOPTIONS_ENABLECOPROCESS

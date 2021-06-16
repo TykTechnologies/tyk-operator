@@ -30,7 +30,6 @@ type APIDescriptionSpec struct {
 
 type APIDocumentation struct {
 	DocumentationType model.DocumentationType `json:"doc_type"`
-	URLRef            string                  `json:"urlRef,omitempty"`
 	Documentation     string                  `json:"documentation,omitempty"`
 }
 
