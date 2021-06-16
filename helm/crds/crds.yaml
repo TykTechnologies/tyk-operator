@@ -1631,6 +1631,18 @@ spec:
             description: APIDescriptionSpec defines the desired state of APIDescription
             properties:
               auth_type:
+                enum:
+                - multiAuth
+                - keyless
+                - basic
+                - hmac
+                - jwt
+                - oauth
+                - openid
+                - mutualTLS
+                - authToken
+                - custom
+                - other
                 type: string
               config:
                 properties:
@@ -1971,6 +1983,18 @@ spec:
                   description: APIDescriptionSpec defines the desired state of APIDescription
                   properties:
                     auth_type:
+                      enum:
+                      - multiAuth
+                      - keyless
+                      - basic
+                      - hmac
+                      - jwt
+                      - oauth
+                      - openid
+                      - mutualTLS
+                      - authToken
+                      - custom
+                      - other
                       type: string
                     config:
                       properties:

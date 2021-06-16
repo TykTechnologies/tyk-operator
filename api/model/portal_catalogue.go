@@ -9,6 +9,9 @@ type APICatalogue struct {
 
 type CatalogueVersion string
 
+// +kubebuilder:validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
+type AuthType string
+
 type APIDescription struct {
 	Name             string                   `json:"name,omitempty"`
 	ShortDescription string                   `json:"short_description,omitempty"`
@@ -20,7 +23,7 @@ type APIDescription struct {
 	IsKeyless        bool                     `json:"is_keyless,omitempty"`
 	Config           *PortalModelPortalConfig `json:"config,omitempty"`
 	Fields           map[string]string        `json:"fields,omitempty"`
-	AuthType         string                   `json:"auth_type,omitempty"`
+	AuthType         AuthType                 `json:"auth_type,omitempty"`
 }
 
 type PortalModelPortalConfig struct {
