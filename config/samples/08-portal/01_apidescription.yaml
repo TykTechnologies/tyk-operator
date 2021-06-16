@@ -3,6 +3,8 @@ kind: APIDescription
 metadata:
   name: sample-portal-api
 spec:
+  name: "sample portal config"
+  auth_type: keyless
   docs:
     documentation: "http://httpbin.org/spec.json"
     doc_type: swagger_custom_url
