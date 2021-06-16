@@ -28,6 +28,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	uc "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
@@ -148,13 +149,20 @@ func (r *PortalAPICatalogueReconciler) init(
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
 ) (id string, err error) {
-	result, err := r.Universal.Portal().Catalogue().Create(ctx, &model.APICatalogue{
-		OrgId: env.Org,
-	})
+	cat, err := r.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
+		if uc.IsNotFound(err) {
+			result, err := r.Universal.Portal().Catalogue().Create(ctx, &model.APICatalogue{
+				OrgId: env.Org,
+			})
+			if err != nil {
+				return "", err
+			}
+			return result.Message, nil
+		}
 		return "", err
 	}
-	return result.Message, nil
+	return cat.Id, nil
 }
 
 func (r *PortalAPICatalogueReconciler) create(
