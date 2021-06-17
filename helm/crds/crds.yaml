@@ -1826,6 +1826,16 @@ spec:
                 type: string
               policy_id:
                 type: string
+              policyRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               short_description:
                 type: string
               show:
@@ -2178,6 +2188,16 @@ spec:
                       type: string
                     policy_id:
                       type: string
+                    policyRef:
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                      required:
+                      - name
+                      - namespace
+                      type: object
                     short_description:
                       type: string
                     show:

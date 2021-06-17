@@ -75,9 +75,9 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 		util.AddFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
 		if desired.Status.ID != "" {
-			return r.update(ctx, desired, env)
+			return r.update(ctx, desired, env, log)
 		}
-		return r.create(ctx, desired, env)
+		return r.create(ctx, desired, env, log)
 	})
 	return ctrl.Result{}, err
 }
@@ -86,6 +86,7 @@ func (r *PortalAPICatalogueReconciler) model(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
+	log logr.Logger,
 ) (*model.APICatalogue, error) {
 	m := &model.APICatalogue{
 		OrgId: desired.Spec.OrgID,
@@ -96,6 +97,17 @@ func (r *PortalAPICatalogueReconciler) model(
 		if err := r.Get(ctx, t.NS(), &a); err != nil {
 			return nil, err
 		}
+
+		if a.Spec.PolicyRef != nil {
+			// update security policy
+			log.Info("Updating PolicyID")
+			var sec v1alpha1.SecurityPolicy
+			if err := r.Get(ctx, a.Spec.PolicyRef.NS(), &sec); err != nil {
+				return nil, err
+			}
+			a.Spec.PolicyID = sec.Status.PolID
+		}
+
 		if err := r.sync(ctx, desired, env, &t, &a); err != nil {
 			return nil, err
 		}
@@ -169,13 +181,14 @@ func (r *PortalAPICatalogueReconciler) create(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
+	log logr.Logger,
 ) error {
 	// create an empty catalogue for the org
 	catalogueID, err := r.init(ctx, desired, env)
 	if err != nil {
 		return err
 	}
-	m, err := r.model(ctx, desired, env)
+	m, err := r.model(ctx, desired, env, log)
 	if err != nil {
 		return err
 	}
@@ -188,8 +201,13 @@ func (r *PortalAPICatalogueReconciler) create(
 	return r.Status().Update(ctx, desired)
 }
 
-func (r *PortalAPICatalogueReconciler) update(ctx context.Context, desired *tykv1alpha1.PortalAPICatalogue, env environmet.Env) error {
-	m, err := r.model(ctx, desired, env)
+func (r *PortalAPICatalogueReconciler) update(
+	ctx context.Context,
+	desired *tykv1alpha1.PortalAPICatalogue,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	m, err := r.model(ctx, desired, env, log)
 	if err != nil {
 		return err
 	}

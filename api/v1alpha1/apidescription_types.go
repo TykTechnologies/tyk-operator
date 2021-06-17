@@ -26,6 +26,7 @@ type APIDescriptionSpec struct {
 	model.APIDescription `json:",inline"`
 	Context              *model.Target    `json:"contextRef,omitempty"`
 	APIDocumentation     APIDocumentation `json:"docs"`
+	PolicyRef            *model.Target    `json:"policyRef,omitempty"`
 }
 
 type APIDocumentation struct {

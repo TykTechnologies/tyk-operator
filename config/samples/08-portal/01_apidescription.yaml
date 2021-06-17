@@ -1,9 +1,19 @@
 apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: protect-api
+spec:
+  name: Policy for portal catalogue
+  state: active
+  active: true
+---
+apiVersion: tyk.tyk.io/v1alpha1
 kind: APIDescription
 metadata:
   name: sample-portal-api
 spec:
   name: "sample portal config"
+  show: true
   auth_type: keyless
   docs:
     documentation: "http://httpbin.org/spec.json"

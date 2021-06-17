@@ -82,6 +82,9 @@ dash:
     email: operator@exmaple.com
     # we need to be able to login into the dashboard
     password: "1234testing"
+  org:
+    name: ACME Corp
+    cname: tyk-portal.local:3000/
   image:
     repository: tykio/tyk-dashboard
     tag: v3.1.2
@@ -105,7 +108,7 @@ dash:
       value: redis.tykpro-control-plane.svc.cluster.local
 
 portal:
-  bootstrap: false
+  bootstrap: true
   ingress:
     enabled: false
     annotations: {}

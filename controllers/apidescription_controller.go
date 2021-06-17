@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -129,6 +130,13 @@ func (r *APIDescriptionReconciler) sync(
 	for _, catalogue := range ls.Items {
 		for _, desc := range catalogue.Spec.APIDescriptionList {
 			if desc.Equal(target) {
+				if catalogue.Labels == nil {
+					catalogue.Labels = map[string]string{}
+				}
+				// we need to trigger an update to the catalogue. We are incrementing
+				// updates label for this
+				v, _ := strconv.Atoi(catalogue.Labels["updates"])
+				catalogue.Labels["updates"] = strconv.Itoa(v + 1)
 				ns := model.Target{Name: catalogue.Name, Namespace: catalogue.Namespace}
 				log.Info("Updating catalogue", "resource", ns.String())
 				if err := r.Update(ctx, &catalogue); err != nil {
