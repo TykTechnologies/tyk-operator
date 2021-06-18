@@ -56,17 +56,23 @@ type PortalAPICatalogueReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	log := r.Log.WithValues("PortalAPICatalogue", req.NamespacedName.String())
 
 	log.Info("Reconciling PortalAPICatalogue instance")
+	defer func() {
+		if err == nil {
+			log.Info("Successfully reconciled PortalAPICatalogue")
+		}
+	}()
 	desired := &tykv1alpha1.PortalAPICatalogue{}
-	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
+	if err = r.Get(ctx, req.NamespacedName, desired); err != nil {
+		err = client.IgnoreNotFound(err) // Ignore not-found errors
+		return
 	}
 	// set context for all api calls inside this reconciliation loop
 	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
-	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			return r.delete(ctx, desired, env, log)
 		}
@@ -79,7 +85,7 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 		return r.create(ctx, desired, env, log)
 	})
-	return ctrl.Result{}, err
+	return
 }
 
 func (r *PortalAPICatalogueReconciler) model(
@@ -130,9 +136,14 @@ func (r *PortalAPICatalogueReconciler) sync(
 		Documentation:     a.Spec.APIDocumentation.Documentation,
 		APIID:             a.Spec.PolicyID,
 	}
+	if a.Labels == nil {
+		a.Labels = make(map[string]string)
+	}
+
 	if desired.Status.Documentation == nil {
 		desired.Status.Documentation = make(map[string]string)
 	}
+
 	// need to update the status of the catalogue to track new config
 	id, ok := desired.Status.Documentation[t.String()]
 	if !ok {
@@ -150,7 +161,6 @@ func (r *PortalAPICatalogueReconciler) sync(
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 
@@ -236,6 +246,16 @@ func (r *PortalAPICatalogueReconciler) delete(
 		return err
 	}
 	util.RemoveFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
+	log.Info("Deleting documentation published by this catalogue")
+	for target, id := range desired.Status.Documentation {
+		log.Info("Deleting", "Target", target)
+		_, err := r.Universal.Portal().Documentation().Delete(ctx, id)
+		if err != nil {
+			if !uc.IsNotFound(err) {
+				return err
+			}
+		}
+	}
 	return nil
 }
 

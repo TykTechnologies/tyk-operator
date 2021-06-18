@@ -1,6 +1,6 @@
 package keys
 
-// APIDefinition
+// finalizers
 const (
 	ApiDefFinalizerName               = "finalizers.tyk.io/apidefinition"
 	ApiDefTemplateFinalizerName       = "finalizers.tyk.io/template"
