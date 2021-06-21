@@ -1,4 +1,21 @@
 apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin protected
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  use_standard_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: Authorization
+---
+apiVersion: tyk.tyk.io/v1alpha1
 kind: SecurityPolicy
 metadata:
   name: protect-api
@@ -6,6 +23,11 @@ spec:
   name: Policy for portal catalogue
   state: active
   active: true
+  access_rights_array:
+    - name: httpbin
+      namespace: default
+      versions:
+        - Default
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: APIDescription
@@ -14,9 +36,13 @@ metadata:
 spec:
   name: "sample portal config"
   show: true
-  auth_type: keyless
+  auth_type: authToken
+  # is_keyless: true
+  policyRef:
+    name: protect-api
+    namespace: default
   docs:
-    documentation: "http://httpbin.org/spec.json"
+    documentation: "https://httpbin.org/spec.json"
     doc_type: swagger_custom_url
 ---
 apiVersion: tyk.tyk.io/v1alpha1

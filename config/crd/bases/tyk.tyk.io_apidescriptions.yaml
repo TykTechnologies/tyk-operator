@@ -37,18 +37,12 @@ spec:
             description: APIDescriptionSpec defines the desired state of APIDescription
             properties:
               auth_type:
+                description: All auth_type from dashboard  validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
                 enum:
-                - multiAuth
                 - keyless
-                - basic
-                - hmac
                 - jwt
                 - oauth
-                - openid
-                - mutualTLS
                 - authToken
-                - custom
-                - other
                 type: string
               config:
                 properties:

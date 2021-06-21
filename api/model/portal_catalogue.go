@@ -9,7 +9,8 @@ type APICatalogue struct {
 
 type CatalogueVersion string
 
-// +kubebuilder:validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
+// All auth_type from dashboard  validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
+// +kubebuilder:validation:Enum=keyless;jwt;oauth;authToken
 type AuthType string
 
 type APIDescription struct {

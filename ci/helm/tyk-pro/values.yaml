@@ -87,7 +87,7 @@ dash:
     cname: tyk-portal.local:3000/
   image:
     repository: tykio/tyk-dashboard
-    tag: v3.1.2
+    tag: v3.2.1
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
