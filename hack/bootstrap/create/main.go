@@ -19,7 +19,7 @@ var preloadImagesList = []struct{ name, image, version string }{
 	{"redis", "k8s.gcr.io/redis", "e2e"},
 	{"httpbin", "docker.io/kennethreitz/httpbin", ""},
 	{"gateway", "tykio/tyk-gateway", "v3.1.2"},
-	{"dash", "tykio/tyk-dashboard", "v3.1.2"},
+	{"dash", "tykio/tyk-dashboard", "v3.2.1"},
 	{"bash", "bash", "5.1"},
 	{"busybox", "busybox", "1.32"},
 	{"grpc", "mangomm/tyk-grpc-plugin", ""},
