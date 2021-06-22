@@ -39,6 +39,11 @@ func TestAPI(t *testing.T) {
 			body:   "api.Get.body",
 		},
 		&route{
+			path:   "/api/apis/5fd08ed769710900018bc196",
+			method: http.MethodPut,
+			body:   "api.Update.body",
+		},
+		&route{
 			path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 			method: http.MethodPut,
 			body:   "api.Update.body",
@@ -85,7 +90,7 @@ func TestAPI(t *testing.T) {
 		Kase{
 			Name: "Update",
 			Request: RequestKase{
-				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
+				Path:   "/api/apis/5fd08ed769710900018bc196",
 				Method: http.MethodPut,
 				Headers: map[string]string{
 					XAuthorization: e.Auth,
