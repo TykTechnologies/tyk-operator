@@ -7,6 +7,7 @@ type APICatalogue struct {
 	Email string           `json:"email"`
 }
 
+// +kubebuilder:validation:Enum=v2
 type CatalogueVersion string
 
 // All auth_type from dashboard  validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
@@ -20,7 +21,7 @@ type APIDescription struct {
 	Show             bool                     `json:"show,omitempty"`
 	PolicyID         string                   `json:"policy_id,omitempty"`
 	Documentation    string                   `json:"documentation,omitempty"`
-	Version          CatalogueVersion         `json:"version,omitempty,omitempty"`
+	Version          CatalogueVersion         `json:"version"`
 	IsKeyless        bool                     `json:"is_keyless,omitempty"`
 	Config           *PortalModelPortalConfig `json:"config,omitempty"`
 	Fields           map[string]string        `json:"fields,omitempty"`

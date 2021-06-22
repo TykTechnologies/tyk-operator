@@ -241,9 +241,12 @@ spec:
               show:
                 type: boolean
               version:
+                enum:
+                - v2
                 type: string
             required:
             - docs
+            - version
             type: object
           status:
             description: APIDescriptionStatus defines the observed state of APIDescription
