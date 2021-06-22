@@ -147,12 +147,16 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
-			_, err := r.UniversalClient.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+			result, err := r.UniversalClient.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 			if err != nil {
 				log.Error(err, "Failed to create api definition")
 				return err
 			}
-			desired.Status.ApiID = desired.Spec.APIID
+			status := desired.Spec.APIID
+			if result.Meta != "" {
+				status = result.Meta
+			}
+			desired.Status.ApiID = status
 			err = r.Status().Update(ctx, desired)
 			if err != nil {
 				log.Error(err, "Could not update Status ID")

@@ -36,8 +36,8 @@ metadata:
 spec:
   name: "sample portal config"
   show: true
-  auth_type: authToken
-  # is_keyless: true
+  auth_type: keyless
+  version: v2
   policyRef:
     name: protect-api
     namespace: default

@@ -24,9 +24,8 @@ func (a Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.R
 	if err != nil {
 		return nil, err
 	}
-	id := api.APIID
 	api.APIID = def.APIID
-	return a.update(ctx, id, api)
+	return a.update(ctx, &o, api)
 }
 
 func (a Api) Get(ctx context.Context, id string) (*model.APIDefinitionSpec, error) {
@@ -53,17 +52,17 @@ func (a Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.
 	return &o, nil
 }
 
-func (a Api) update(ctx context.Context, id string, spec *model.APIDefinitionSpec) (*model.Result, error) {
+func (a Api) update(ctx context.Context, result *model.Result, spec *model.APIDefinitionSpec) (*model.Result, error) {
 	var o model.Result
 	err := client.Data(&o)(client.PutJSON(
-		ctx, client.Join(endpointAPIs, id), DashboardApi{
+		ctx, client.Join(endpointAPIs, result.Meta), DashboardApi{
 			ApiDefinition: *spec,
 		},
 	))
 	if err != nil {
 		return nil, err
 	}
-	return &o, nil
+	return result, nil
 }
 
 func (a Api) Delete(ctx context.Context, id string) (*model.Result, error) {
