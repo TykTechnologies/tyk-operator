@@ -14,7 +14,7 @@ type Api struct{}
 func (a Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
 	_, err := a.Get(ctx, def.APIID)
 	if err == nil {
-		return &model.Result{Meta: def.APIID}, nil
+		return a.update(ctx, &model.Result{Meta: def.APIID}, def)
 	}
 	var o model.Result
 	err = client.Data(&o)(client.PostJSON(ctx, endpointAPIs,
