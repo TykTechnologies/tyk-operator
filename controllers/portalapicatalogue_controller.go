@@ -98,6 +98,9 @@ func (r *PortalAPICatalogueReconciler) model(
 		OrgId: desired.Spec.OrgID,
 		Email: desired.Spec.Email,
 	}
+	// We keep track of APIDescriptionList to ID so that we can detect if we have
+	// un published on the catalogue
+	active := map[string]struct{}{}
 	for _, t := range desired.Spec.APIDescriptionList {
 		var a v1alpha1.APIDescription
 		if err := r.Get(ctx, t.NS(), &a); err != nil {
@@ -120,6 +123,23 @@ func (r *PortalAPICatalogueReconciler) model(
 		d := a.Spec.APIDescription
 		d.Documentation = desired.Status.Documentation[t.String()]
 		m.APIS = append(m.APIS, d)
+		active[t.String()] = struct{}{}
+	}
+
+	// Try to delete all un published catalogues
+	for target, id := range desired.Status.Documentation {
+		_, ok := active[target]
+		if !ok {
+			// This target is no longer part of the catalogue, we delete the
+			// documentation.
+			log.Info("Deleting un published catalogue", "Target", target)
+			_, err := r.Universal.Portal().Documentation().Delete(ctx, id)
+			if err != nil {
+				if !uc.IsNotFound(err) {
+					return nil, err
+				}
+			}
+		}
 	}
 	return m, nil
 }
