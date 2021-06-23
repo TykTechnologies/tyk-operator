@@ -147,37 +147,49 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
-			result, err := r.UniversalClient.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
-			if err != nil {
-				log.Error(err, "Failed to create api definition")
-				return err
-			}
-			status := desired.Spec.APIID
-			if result.Meta != "" {
-				status = result.Meta
-			}
-			desired.Status.ApiID = status
-			err = r.Status().Update(ctx, desired)
-			if err != nil {
-				log.Error(err, "Could not update Status ID")
-			}
-			r.UniversalClient.HotReload(ctx)
-			return client.IgnoreNotFound(err)
+			return r.create(ctx, desired, log)
 		}
-		log.Info("Updating ApiDefinition")
-		desired.Spec.APIID = desired.Status.ApiID
-		_, err = r.UniversalClient.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
-		if err != nil {
-			log.Error(err, "Failed to update api definition")
-			return err
-		}
-		r.UniversalClient.HotReload(ctx)
-		return nil
+		return r.update(ctx, desired, log)
 	})
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
 	}
 	return ctrl.Result{Requeue: queue, RequeueAfter: queueA}, err
+}
+
+func (r *ApiDefinitionReconciler) create(
+	ctx context.Context,
+	desired *tykv1alpha1.ApiDefinition,
+	log logr.Logger,
+) error {
+	log.Info("Creating new  ApiDefinition")
+	_, err := r.UniversalClient.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+	if err != nil {
+		log.Error(err, "Failed to create api definition")
+		return err
+	}
+	desired.Status.ApiID = desired.Spec.APIID
+	err = r.Status().Update(ctx, desired)
+	if err != nil {
+		log.Error(err, "Could not update Status ID")
+	}
+	r.UniversalClient.HotReload(ctx)
+	return nil
+}
+
+func (r *ApiDefinitionReconciler) update(
+	ctx context.Context,
+	desired *tykv1alpha1.ApiDefinition,
+	log logr.Logger,
+) error {
+	log.Info("Updating ApiDefinition")
+	_, err := r.UniversalClient.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+	if err != nil {
+		log.Error(err, "Failed to update api definition")
+		return err
+	}
+	r.UniversalClient.HotReload(ctx)
+	return nil
 }
 
 // This triggers an update to all ingress resources that have template
