@@ -12,8 +12,12 @@ const endpointAPIs = "/api/apis"
 type Api struct{}
 
 func (a Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
+	_, err := a.Get(ctx, def.APIID)
+	if err == nil {
+		return &model.Result{Meta: def.APIID}, nil
+	}
 	var o model.Result
-	err := client.Data(&o)(client.PostJSON(ctx, endpointAPIs,
+	err = client.Data(&o)(client.PostJSON(ctx, endpointAPIs,
 		DashboardApi{
 			ApiDefinition: *def,
 		}))
