@@ -23,11 +23,10 @@ import (
 
 // PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
 type PortalAPICatalogueSpec struct {
-	OrgID               string                `json:"org_id,omitempty"`
-	Email               string                `json:"email,omitempty"`
-	APIDescriptionList  []model.Target        `json:"apis,omitempty"`
-	APIDescriptionList2 []*APIDescriptionSpec `json:"apis2,omitempty"`
-	Context             *model.Target         `json:"contextRef,omitempty"`
+	OrgID              string         `json:"org_id,omitempty"`
+	Email              string         `json:"email,omitempty"`
+	APIDescriptionList []model.Target `json:"apiDescriptionRefs,omitempty"`
+	Context            *model.Target  `json:"contextRef,omitempty"`
 }
 
 // PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue

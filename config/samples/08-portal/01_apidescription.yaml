@@ -56,6 +56,6 @@ kind: PortalAPICatalogue
 metadata:
   name: sample-portal-api
 spec:
-  apis:
+  apiDescriptionRefs:
     - name: sample-portal-api
       namespace: default
