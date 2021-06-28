@@ -120,12 +120,11 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
 		return err
 	}
-	def, err := r.UniversalClient.Api().Get(ctx, api.Status.ApiID)
-	if err != nil {
-		return err
+	if api.Status.ApiID == "" {
+		return opclient.ErrNotFound
 	}
-	a.APIID = def.APIID
-	a.APIName = def.Name
+	a.APIID = api.Status.ApiID
+	a.APIName = api.Spec.Name
 	return nil
 }
 
