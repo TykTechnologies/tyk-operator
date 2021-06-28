@@ -525,17 +525,6 @@ func (in *PortalAPICatalogueSpec) DeepCopyInto(out *PortalAPICatalogueSpec) {
 		*out = make([]model.Target, len(*in))
 		copy(*out, *in)
 	}
-	if in.APIDescriptionList2 != nil {
-		in, out := &in.APIDescriptionList2, &out.APIDescriptionList2
-		*out = make([]*APIDescriptionSpec, len(*in))
-		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(APIDescriptionSpec)
-				(*in).DeepCopyInto(*out)
-			}
-		}
-	}
 	if in.Context != nil {
 		in, out := &in.Context, &out.Context
 		*out = new(model.Target)
