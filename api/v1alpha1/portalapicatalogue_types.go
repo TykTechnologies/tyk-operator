@@ -23,17 +23,15 @@ import (
 
 // PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
 type PortalAPICatalogueSpec struct {
-	OrgID              string         `json:"org_id,omitempty"`
-	Email              string         `json:"email,omitempty"`
-	APIDescriptionList []model.Target `json:"apiDescriptionRefs,omitempty"`
-	Context            *model.Target  `json:"contextRef,omitempty"`
+	OrgID              string                `json:"org_id,omitempty"`
+	Email              string                `json:"email,omitempty"`
+	APIDescriptionList []*APIDescriptionSpec `json:"apis,omitempty"`
+	Context            *model.Target         `json:"contextRef,omitempty"`
 }
 
 // PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
 type PortalAPICatalogueStatus struct {
 	ID string `json:"id,omitempty"`
-	// maps model.Target.String() => Documentation ID
-	Documentation map[string]string `json:"apis,omitempty"`
 }
 
 //+kubebuilder:object:root=true

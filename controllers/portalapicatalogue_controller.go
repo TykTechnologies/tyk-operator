@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -92,6 +93,11 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 	return
 }
 
+func updateJSON(a, b interface{}) {
+	x, _ := json.Marshal(b)
+	json.Unmarshal(x, &a)
+}
+
 func (r *PortalAPICatalogueReconciler) model(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
@@ -102,51 +108,32 @@ func (r *PortalAPICatalogueReconciler) model(
 		OrgId: desired.Spec.OrgID,
 		Email: desired.Spec.Email,
 	}
-	// We keep track of APIDescriptionList to ID so that we can detect if we have
-	// un published on the catalogue
-	active := map[string]struct{}{}
-	for _, t := range desired.Spec.APIDescriptionList {
-		var a v1alpha1.APIDescription
-		if err := r.Get(ctx, t.NS(), &a); err != nil {
-			return nil, err
+	for _, desc := range desired.Spec.APIDescriptionList {
+		if desc.APIDescriptionRef != nil {
+			var a v1alpha1.APIDescription
+			if err := r.Get(ctx, desc.APIDescriptionRef.NS(), &a); err != nil {
+				return nil, err
+			}
+			a.Spec.APIDescriptionRef = nil
+			updateJSON(&desc, &a.Spec)
 		}
 
-		if a.Spec.PolicyRef != nil {
+		if desc.PolicyRef != nil {
 			// update security policy
 			log.Info("Updating PolicyID")
 			var sec v1alpha1.SecurityPolicy
-			if err := r.Get(ctx, a.Spec.PolicyRef.NS(), &sec); err != nil {
+			if err := r.Get(ctx, desc.PolicyRef.NS(), &sec); err != nil {
 				return nil, err
 			}
-			a.Spec.PolicyID = sec.Status.PolID
+			desc.PolicyID = sec.Status.PolID
 		}
-		if a.Spec.PolicyID == "" {
-			return nil, fmt.Errorf("%s missing policy_id", t)
+		if desc.PolicyID == "" {
+			return nil, fmt.Errorf("%q missing policy_id", desc.Name)
 		}
-
-		if err := r.sync(ctx, desired, env, &t, &a); err != nil {
+		if err := r.sync(ctx, desired, env, desc); err != nil {
 			return nil, err
 		}
-		d := a.Spec.APIDescription
-		d.Documentation = desired.Status.Documentation[t.String()]
-		m.APIS = append(m.APIS, d)
-		active[t.String()] = struct{}{}
-	}
-
-	// Try to delete all un published catalogues
-	for target, id := range desired.Status.Documentation {
-		_, ok := active[target]
-		if !ok {
-			// This target is no longer part of the catalogue, we delete the
-			// documentation.
-			log.Info("Deleting un published catalogue", "Target", target)
-			_, err := r.Universal.Portal().Documentation().Delete(ctx, id)
-			if err != nil {
-				if !uc.IsNotFound(err) {
-					return nil, err
-				}
-			}
-		}
+		m.APIS = append(m.APIS, desc.APIDescription)
 	}
 	return m, nil
 }
@@ -155,31 +142,22 @@ func (r *PortalAPICatalogueReconciler) sync(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
-	t *model.Target,
-	a *v1alpha1.APIDescription,
+	a *v1alpha1.APIDescriptionSpec,
 ) error {
 	d := &model.APIDocumentation{
-		DocumentationType: a.Spec.APIDocumentation.DocumentationType,
-		Documentation:     a.Spec.APIDocumentation.Documentation,
-		APIID:             a.Spec.PolicyID,
+		DocumentationType: a.APIDocumentation.DocumentationType,
+		Documentation:     a.APIDocumentation.Documentation,
+		APIID:             a.PolicyID,
 	}
-	if desired.Status.Documentation == nil {
-		desired.Status.Documentation = make(map[string]string)
-	}
-	if a.Spec.Documentation != "" {
-		_, err := r.Universal.Portal().Documentation().Delete(ctx, a.Spec.Documentation)
+	if a.Documentation == "" {
+		// need to update the status of the catalogue to track new config
+		// upload new documentation
+		res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
 		if err != nil {
 			return err
 		}
+		a.Documentation = res.Message
 	}
-	// need to update the status of the catalogue to track new config
-	// upload new documentation
-	res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
-	if err != nil {
-		return err
-	}
-	a.Spec.Documentation = res.Message
-	desired.Status.Documentation[t.String()] = res.Message
 	return nil
 }
 
@@ -264,12 +242,14 @@ func (r *PortalAPICatalogueReconciler) delete(
 	}
 	util.RemoveFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
 	log.Info("Deleting documentation published by this catalogue")
-	for target, id := range desired.Status.Documentation {
-		log.Info("Deleting", "Target", target)
-		_, err := r.Universal.Portal().Documentation().Delete(ctx, id)
-		if err != nil {
-			if !uc.IsNotFound(err) {
-				return err
+	for _, v := range desired.Spec.APIDescriptionList {
+		if v.Documentation != "" {
+			log.Info("Deleting", "Target", v.Documentation)
+			_, err := r.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
+			if err != nil {
+				if !uc.IsNotFound(err) {
+					return err
+				}
 			}
 		}
 	}

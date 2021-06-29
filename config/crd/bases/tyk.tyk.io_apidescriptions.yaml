@@ -36,6 +36,16 @@ spec:
           spec:
             description: APIDescriptionSpec defines the desired state of APIDescription
             properties:
+              apiDescriptionRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               auth_type:
                 description: All auth_type from dashboard  validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
                 enum:
@@ -244,9 +254,6 @@ spec:
                 enum:
                 - v2
                 type: string
-            required:
-            - docs
-            - version
             type: object
           status:
             description: APIDescriptionStatus defines the observed state of APIDescription

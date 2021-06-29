@@ -21,7 +21,7 @@ type APIDescription struct {
 	Show             bool                     `json:"show,omitempty"`
 	PolicyID         string                   `json:"policy_id,omitempty"`
 	Documentation    string                   `json:"documentation,omitempty"`
-	Version          CatalogueVersion         `json:"version"`
+	Version          CatalogueVersion         `json:"version,omitempty"`
 	IsKeyless        bool                     `json:"is_keyless,omitempty"`
 	Config           *PortalModelPortalConfig `json:"config,omitempty"`
 	Fields           map[string]string        `json:"fields,omitempty"`

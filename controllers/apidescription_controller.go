@@ -99,7 +99,7 @@ func (r *APIDescriptionReconciler) delete(
 	}
 	for _, catalogue := range ls.Items {
 		for _, desc := range catalogue.Spec.APIDescriptionList {
-			if desc.Equal(target) {
+			if desc.APIDescriptionRef != nil && target.Equal(*desc.APIDescriptionRef) {
 				return fmt.Errorf("Unable to delete api description due to partal catalogue dependency %q",
 					model.Target{Name: catalogue.Name, Namespace: catalogue.Namespace}.String(),
 				)
@@ -134,7 +134,7 @@ func (r *APIDescriptionReconciler) sync(
 	}
 	for _, catalogue := range ls.Items {
 		for _, desc := range catalogue.Spec.APIDescriptionList {
-			if desc.Equal(target) {
+			if desc.APIDescriptionRef != nil && target.Equal(*desc.APIDescriptionRef) {
 				if catalogue.Labels == nil {
 					catalogue.Labels = map[string]string{}
 				}
