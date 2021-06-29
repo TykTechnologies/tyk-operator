@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -63,7 +64,10 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 	defer func() {
 		if err == nil {
 			log.Info("Successfully reconciled PortalAPICatalogue")
+		} else {
+			result = ctrl.Result{RequeueAfter: queueAfter}
 		}
+
 	}()
 	desired := &tykv1alpha1.PortalAPICatalogue{}
 	if err = r.Get(ctx, req.NamespacedName, desired); err != nil {
@@ -115,6 +119,9 @@ func (r *PortalAPICatalogueReconciler) model(
 				return nil, err
 			}
 			a.Spec.PolicyID = sec.Status.PolID
+		}
+		if a.Spec.PolicyID == "" {
+			return nil, fmt.Errorf("%s missing policy_id", t)
 		}
 
 		if err := r.sync(ctx, desired, env, &t, &a); err != nil {

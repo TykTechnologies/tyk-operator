@@ -89,6 +89,8 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	})
 	if err == nil {
 		r.Log.Info("Completed reconciling SecurityPolicy instance")
+	} else {
+		reqA = queueAfter
 	}
 	return ctrl.Result{RequeueAfter: reqA}, err
 }

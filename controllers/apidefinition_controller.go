@@ -84,7 +84,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	var queue bool
 	var queueA time.Duration
 	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -124,7 +123,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				// upload the certificate
 				tykCertID, err = r.UniversalClient.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
 				if err != nil {
-					queue = true
 					return err
 				}
 			}
@@ -135,8 +133,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.updateLinkedPolicies(ctx, desired)
 		targets := desired.Spec.CollectLoopingTarget()
 		if err := r.ensureTargets(ctx, targets); err != nil {
-			// We make sure all targets are available
-			queueA = queueAfter
 			return err
 		}
 		err := r.updateLoopingTargets(ctx, desired, targets)
@@ -153,8 +149,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	})
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
+	} else {
+		queueA = queueAfter
 	}
-	return ctrl.Result{Requeue: queue, RequeueAfter: queueA}, err
+	return ctrl.Result{RequeueAfter: queueA}, err
 }
 
 func (r *ApiDefinitionReconciler) create(
