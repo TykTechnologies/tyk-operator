@@ -156,34 +156,24 @@ func (r *PortalAPICatalogueReconciler) sync(
 		Documentation:     a.Spec.APIDocumentation.Documentation,
 		APIID:             a.Spec.PolicyID,
 	}
-	if a.Labels == nil {
-		a.Labels = make(map[string]string)
-	}
-
 	if desired.Status.Documentation == nil {
 		desired.Status.Documentation = make(map[string]string)
 	}
-
-	// need to update the status of the catalogue to track new config
-	id, ok := desired.Status.Documentation[t.String()]
-	if !ok {
-		// upload new documentation
-		res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
-		if err != nil {
-			return err
-		}
-		a.Spec.Documentation = res.Message
-		desired.Status.Documentation[t.String()] = res.Message
-	} else {
-		// update existing one
-		d.Id = id
-		_, err := r.Universal.Portal().Documentation().Upload(ctx, d)
+	if a.Spec.Documentation != "" {
+		_, err := r.Universal.Portal().Documentation().Delete(ctx, a.Spec.Documentation)
 		if err != nil {
 			return err
 		}
 	}
+	// need to update the status of the catalogue to track new config
+	// upload new documentation
+	res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
+	if err != nil {
+		return err
+	}
+	a.Spec.Documentation = res.Message
+	desired.Status.Documentation[t.String()] = res.Message
 	return nil
-
 }
 
 func (r *PortalAPICatalogueReconciler) init(
