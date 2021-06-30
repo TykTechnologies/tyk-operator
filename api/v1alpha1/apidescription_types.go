@@ -24,10 +24,10 @@ import (
 // APIDescriptionSpec defines the desired state of APIDescription
 type APIDescriptionSpec struct {
 	model.APIDescription `json:",inline"`
-	Context              *model.Target    `json:"contextRef,omitempty"`
-	APIDocumentation     APIDocumentation `json:"docs,omitempty"`
-	APIDescriptionRef    *model.Target    `json:"apiDescriptionRef,omitempty"`
-	PolicyRef            *model.Target    `json:"policyRef,omitempty"`
+	Context              *model.Target     `json:"contextRef,omitempty"`
+	APIDocumentation     *APIDocumentation `json:"docs,omitempty"`
+	APIDescriptionRef    *model.Target     `json:"apiDescriptionRef,omitempty"`
+	PolicyRef            *model.Target     `json:"policyRef,omitempty"`
 }
 
 type APIDocumentation struct {

@@ -147,14 +147,12 @@ func (r *PortalAPICatalogueReconciler) sync(
 	env environmet.Env,
 	a *v1alpha1.APIDescriptionSpec,
 ) error {
-	d := &model.APIDocumentation{
-		DocumentationType: a.APIDocumentation.DocumentationType,
-		Documentation:     a.APIDocumentation.Documentation,
-		APIID:             a.PolicyID,
-	}
-	if a.Documentation == "" {
-		// need to update the status of the catalogue to track new config
-		// upload new documentation
+	if a.APIDocumentation != nil {
+		d := &model.APIDocumentation{
+			DocumentationType: a.APIDocumentation.DocumentationType,
+			Documentation:     a.APIDocumentation.Documentation,
+			APIID:             a.PolicyID,
+		}
 		res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
 		if err != nil {
 			return err
@@ -241,13 +239,20 @@ func (r *PortalAPICatalogueReconciler) consolidate(
 	}
 	m := make(map[string]struct{})
 	for _, v := range desired.Spec.APIDescriptionList {
-		m[v.Documentation] = struct{}{}
+		if v.Documentation != "" {
+			m[v.Documentation] = struct{}{}
+		}
 	}
 	for _, v := range all.APIS {
-		_, err := r.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
-		if err != nil {
-			if !uc.IsNotFound(err) {
-				return err
+		if v.Documentation != "" {
+			_, ok := m[v.Documentation]
+			if !ok {
+				_, err := r.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
+				if err != nil {
+					if !uc.IsNotFound(err) {
+						return err
+					}
+				}
 			}
 		}
 	}
@@ -261,18 +266,12 @@ func (r *PortalAPICatalogueReconciler) delete(
 	log logr.Logger,
 ) error {
 	log.Info("Deleting PortalAPICatalogue")
-	// There is no actual DELETE api for catalogue. What we can do is we can update
-	// the catalogue with zero APIDescription and remove the finalizer.
-	_, err := r.Universal.Portal().Catalogue().Update(ctx, &model.APICatalogue{
-		Id:    desired.Status.ID,
-		OrgId: env.Org,
-	})
+	all, err := r.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		return err
 	}
-	util.RemoveFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
-	log.Info("Deleting documentation published by this catalogue")
-	for _, v := range desired.Spec.APIDescriptionList {
+	log.Info("Deleting documentation published in this catalogue")
+	for _, v := range all.APIS {
 		if v.Documentation != "" {
 			log.Info("Deleting", "Target", v.Documentation)
 			_, err := r.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
@@ -283,6 +282,16 @@ func (r *PortalAPICatalogueReconciler) delete(
 			}
 		}
 	}
+	// There is no actual DELETE api for catalogue. What we can do is we can update
+	// the catalogue with zero APIDescription and remove the finalizer.
+	_, err = r.Universal.Portal().Catalogue().Update(ctx, &model.APICatalogue{
+		Id:    desired.Status.ID,
+		OrgId: env.Org,
+	})
+	if err != nil {
+		return err
+	}
+	util.RemoveFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
 	return nil
 }
 

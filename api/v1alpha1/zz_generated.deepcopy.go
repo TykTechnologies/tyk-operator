@@ -114,7 +114,11 @@ func (in *APIDescriptionSpec) DeepCopyInto(out *APIDescriptionSpec) {
 		*out = new(model.Target)
 		**out = **in
 	}
-	out.APIDocumentation = in.APIDocumentation
+	if in.APIDocumentation != nil {
+		in, out := &in.APIDocumentation, &out.APIDocumentation
+		*out = new(APIDocumentation)
+		**out = **in
+	}
 	if in.APIDescriptionRef != nil {
 		in, out := &in.APIDescriptionRef, &out.APIDescriptionRef
 		*out = new(model.Target)
