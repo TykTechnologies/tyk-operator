@@ -135,6 +135,9 @@ func (r *PortalAPICatalogueReconciler) model(
 		}
 		m.APIS = append(m.APIS, desc.APIDescription)
 	}
+	if err := r.consolidate(ctx, desired, env, log); err != nil {
+		return nil, err
+	}
 	return m, nil
 }
 
@@ -222,6 +225,33 @@ func (r *PortalAPICatalogueReconciler) update(
 		return err
 	}
 	return r.Status().Update(ctx, desired)
+}
+
+// consolidate the k8s state with the dash by removing all catalogues that are
+// not part of the k8s resource anymore.
+func (r *PortalAPICatalogueReconciler) consolidate(
+	ctx context.Context,
+	desired *tykv1alpha1.PortalAPICatalogue,
+	env environmet.Env,
+	log logr.Logger,
+) error {
+	all, err := r.Universal.Portal().Catalogue().Get(ctx)
+	if err != nil {
+		return err
+	}
+	m := make(map[string]struct{})
+	for _, v := range desired.Spec.APIDescriptionList {
+		m[v.Documentation] = struct{}{}
+	}
+	for _, v := range all.APIS {
+		_, err := r.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
+		if err != nil {
+			if !uc.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (r *PortalAPICatalogueReconciler) delete(
