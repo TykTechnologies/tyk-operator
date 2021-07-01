@@ -133,8 +133,13 @@ func (r *APIDescriptionReconciler) sync(
 		Namespace: desired.Namespace,
 	}
 	for _, catalogue := range ls.Items {
+		if catalogue.Status.ID == "" {
+			// Skip all unpublished catalogues
+			continue
+		}
 		for _, desc := range catalogue.Spec.APIDescriptionList {
-			if desc.APIDescriptionRef != nil && target.Equal(*desc.APIDescriptionRef) {
+			if desc.APIDescriptionRef != nil &&
+				target.Equal(*desc.APIDescriptionRef) {
 				if catalogue.Labels == nil {
 					catalogue.Labels = map[string]string{}
 				}
