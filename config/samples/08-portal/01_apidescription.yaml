@@ -37,7 +37,6 @@ spec:
   name: "sample portal config"
   show: true
   auth_type: keyless
-  version: v2
   policyRef:
     name: protect-api
     namespace: default

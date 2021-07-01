@@ -251,6 +251,7 @@ spec:
               show:
                 type: boolean
               version:
+                default: v2
                 enum:
                 - v2
                 type: string
