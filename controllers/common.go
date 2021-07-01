@@ -100,6 +100,8 @@ func httpContext(
 		get(o.Spec.Context)
 	case *v1alpha1.APIDescription:
 		get(o.Spec.Context)
+	case *v1alpha1.PortalConfig:
+		get(o.Spec.Context)
 	}
 	return e, client.SetContext(ctx, client.Context{
 		Env: e,
