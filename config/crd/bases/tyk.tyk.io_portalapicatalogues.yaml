@@ -13,10 +13,16 @@ spec:
     kind: PortalAPICatalogue
     listKind: PortalAPICatalogueList
     plural: portalapicatalogues
+    shortNames:
+    - tykcatalogues
     singular: portalapicatalogue
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.id
+      name: ID
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: PortalAPICatalogue is the Schema for the portalapicatalogues
