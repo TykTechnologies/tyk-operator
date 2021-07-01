@@ -114,7 +114,6 @@ func (r *PortalAPICatalogueReconciler) model(
 			if err := r.Get(ctx, desc.APIDescriptionRef.NS(), &a); err != nil {
 				return nil, err
 			}
-			a.Spec.APIDescriptionRef = nil
 			updateJSON(&desc, &a.Spec)
 		}
 
@@ -145,7 +144,7 @@ func (r *PortalAPICatalogueReconciler) sync(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
-	a *v1alpha1.APIDescriptionSpec,
+	a *v1alpha1.PortalCatalogueDescription,
 ) error {
 	if a.APIDocumentation != nil {
 		d := &model.APIDocumentation{

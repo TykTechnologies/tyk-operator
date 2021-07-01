@@ -45,7 +45,6 @@ spec:
             properties:
               apis:
                 items:
-                  description: APIDescriptionSpec defines the desired state of APIDescription
                   properties:
                     apiDescriptionRef:
                       properties:
@@ -209,16 +208,6 @@ spec:
                           items:
                             type: string
                           type: array
-                      type: object
-                    contextRef:
-                      properties:
-                        name:
-                          type: string
-                        namespace:
-                          type: string
-                      required:
-                      - name
-                      - namespace
                       type: object
                     docs:
                       properties:
