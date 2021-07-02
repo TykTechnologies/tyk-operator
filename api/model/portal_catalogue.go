@@ -7,7 +7,7 @@ type APICatalogue struct {
 	Email string           `json:"email"`
 }
 
-// All auth_type from dashboard  validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
+// All auth_type from dashboard validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
 // +kubebuilder:validation:Enum=keyless;jwt;oauth;authToken
 type AuthType string
 
@@ -18,6 +18,7 @@ type APIDescription struct {
 	Show             bool   `json:"show,omitempty"`
 	PolicyID         string `json:"policy_id,omitempty"`
 	Documentation    string `json:"documentation,omitempty"`
+
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=v2
 	// +kubebuilder:default=v2
@@ -50,14 +51,46 @@ type PortalModelPortalConfig struct {
 	Override             bool         `json:"override,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=client_credentials;authorization_code;refresh_token
+type GrantTypeEnum string
+
+// +kubebuilder:validation:Enum=code;token
+type ResponseTypeEnum string
+
+// DCROptions are the configuration metadata for dynamic client registration. To enable DCR, ensure EnableDCR is true.
 type DCROptions struct {
-	IDPHost                 string   `json:"idp_host"`
-	AccessToken             string   `json:"access_token"`
-	RegistrationEndpoint    string   `json:"registration_endpoint"`
-	Provider                string   `json:"provider"`
-	GrantTypes              []string `json:"grant_types"`
-	ResponseTypes           []string `json:"response_types"`
-	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+
+	// IDPHost is the fully qualified hostname of the Identity Provider.
+	// e.g. https://mysubdomain.eu.auth0.com
+	IDPHost string `json:"idp_host"`
+
+	// RegistrationEndpoint is the registration_endpoint as presented in the /.well-known/openid-configuration document.
+	RegistrationEndpoint string `json:"registration_endpoint"`
+
+	// AccessToken represents an optional bearer token to authenticate with against the registration endpoint
+	AccessToken *string `json:"access_token"`
+
+	// Provider is an optional enum of the provider which allows Tyk to register clients outside the standard DCR spec
+	// and perform provider specific logic.
+	// If your provider is not in this list, please omit. Upon failure, submit a support ticket so that we may extend
+	// support for your provider.
+	// +kubebuilder:validation:Enum=gluu;keycloak;okta
+	Provider *string `json:"provider"`
+
+	// GrantTypes is an array of OAuth 2.0 grant type strings that the client can use at
+	// the token endpoint.
+	GrantTypes []GrantTypeEnum `json:"grant_types"`
+
+	// ResponseTypes is an array of OAuth 2.0 response type strings that the client can
+	// use at the authorization endpoint.
+	ResponseTypes []ResponseTypeEnum `json:"response_types"`
+
+	// TokenEndpointAuthMethod is an indicator of the requested authentication method for the token endpoint.
+	// "none": The client is a public client and does not have a client secret.
+	// "client_secret_post": The client uses the HTTP POST parameters
+	// "client_secret_basic": The client uses HTTP Basic authentication
+	// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;client_secret_jwt;private_key_jwt;none
+	TokenEndpointAuthMethod string `json:"token_endpoint_auth_method"`
 }
 
 type MailOptions struct {

@@ -49,24 +49,63 @@ spec:
                 - namespace
                 type: object
               dcr_options:
+                description: DCROptions are the configuration metadata for dynamic
+                  client registration. To enable DCR, ensure EnableDCR is true.
                 properties:
                   access_token:
+                    description: AccessToken represents an optional bearer token to
+                      authenticate with against the registration endpoint
                     type: string
                   grant_types:
+                    description: GrantTypes is an array of OAuth 2.0 grant type strings
+                      that the client can use at the token endpoint.
                     items:
+                      enum:
+                      - client_credentials
+                      - authorization_code
+                      - refresh_token
                       type: string
                     type: array
                   idp_host:
+                    description: IDPHost is the fully qualified hostname of the Identity
+                      Provider. e.g. https://mysubdomain.eu.auth0.com
                     type: string
                   provider:
+                    description: Provider is an optional enum of the provider which
+                      allows Tyk to register clients outside the standard DCR spec
+                      and perform provider specific logic. If your provider is not
+                      in this list, please omit. Upon failure, submit a support ticket
+                      so that we may extend support for your provider.
+                    enum:
+                    - gluu
+                    - keycloak
+                    - okta
                     type: string
                   registration_endpoint:
+                    description: RegistrationEndpoint is the registration_endpoint
+                      as presented in the /.well-known/openid-configuration document.
                     type: string
                   response_types:
+                    description: ResponseTypes is an array of OAuth 2.0 response type
+                      strings that the client can use at the authorization endpoint.
                     items:
+                      enum:
+                      - code
+                      - token
                       type: string
                     type: array
                   token_endpoint_auth_method:
+                    description: 'TokenEndpointAuthMethod is an indicator of the requested
+                      authentication method for the token endpoint. "none": The client
+                      is a public client and does not have a client secret. "client_secret_post":
+                      The client uses the HTTP POST parameters "client_secret_basic":
+                      The client uses HTTP Basic authentication'
+                    enum:
+                    - client_secret_basic
+                    - client_secret_post
+                    - client_secret_jwt
+                    - private_key_jwt
+                    - none
                     type: string
                 required:
                 - access_token
