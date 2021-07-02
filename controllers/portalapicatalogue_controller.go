@@ -124,7 +124,10 @@ func (r *PortalAPICatalogueReconciler) model(
 			if err := r.Get(ctx, desc.PolicyRef.NS(), &sec); err != nil {
 				return nil, err
 			}
-			desc.PolicyID = sec.Status.PolID
+			if sec.Status.PolID == "" {
+				return nil, fmt.Errorf("%q missing policy_id", desc.Name)
+			}
+			desc.PolicyID = sec.Spec.ID
 		}
 		if desc.PolicyID == "" {
 			return nil, fmt.Errorf("%q missing policy_id", desc.Name)
