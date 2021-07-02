@@ -82,7 +82,7 @@ func httpContext(
 		}
 		log.Info("Detected context for resource")
 		env, err := GetContext(
-			ctx, rClient, c, log,
+			ctx, object.GetNamespace(), rClient, c, log,
 		)
 		if err != nil {
 			log.Error(err, "Failed to get context", "contextRef", c.String())
@@ -115,13 +115,23 @@ func httpContext(
 // takes precedence over the values from secret
 func GetContext(
 	ctx context.Context,
+	ns string,
 	client runtimeClient.Client,
 	target *model.Target,
 	log logr.Logger,
 ) (*v1alpha1.OperatorContext, error) {
-	log.Info("Getting context", "contextRef", target.String())
+	if target.Namespace != "" {
+		ns = target.Namespace
+	}
+	// avoid updating target because these changes will be saved with the parent
+	// object on create/update
+	newTarget := model.Target{
+		Name:      target.Name,
+		Namespace: ns,
+	}
+	log.Info("Getting context", "contextRef", newTarget.String())
 	var o v1alpha1.OperatorContext
-	err := client.Get(ctx, target.NS(), &o)
+	err := client.Get(ctx, newTarget.NS(), &o)
 	if err != nil {
 		return nil, err
 	}

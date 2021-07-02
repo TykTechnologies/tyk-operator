@@ -258,8 +258,11 @@ func (i RewriteToInternal) String() string {
 }
 
 type Target struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	// k8s resource name
+	Name string `json:"name"`
+	// The k8s namespace of the resource being targetted. When omitted this will be
+	// set to the namespace of the object that is being reconciled.
+	Namespace string `json:"namespace,optional"`
 }
 
 func (t *Target) Parse(v string) {
