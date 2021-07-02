@@ -7,25 +7,52 @@ type APICatalogue struct {
 	Email string           `json:"email"`
 }
 
-// All auth_type from dashboard  validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
+// All auth_type from dashboard validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
 // +kubebuilder:validation:Enum=keyless;jwt;oauth;authToken
 type AuthType string
 
 type APIDescription struct {
-	Name             string `json:"name,omitempty"`
+
+	// Name is the title of the API that you wish to be published to the catalogue
+	Name string `json:"name,omitempty"`
+
+	// AuthType displays as a badge next to the name of the API
+	AuthType AuthType `json:"auth_type,omitempty"`
+
+	// Show toggles visibility of the API in the portal catalogue
+	Show bool `json:"show,omitempty"`
+
+	// TODO: I don't think this is exposed to the default portal templates.
 	ShortDescription string `json:"short_description,omitempty"`
-	LongDescription  string `json:"long_description,omitempty"`
-	Show             bool   `json:"show,omitempty"`
-	PolicyID         string `json:"policy_id,omitempty"`
-	Documentation    string `json:"documentation,omitempty"`
+
+	// LongDescription can be markdown. It allows you to describe the capabilities of the API and is displayed just
+	// below the name and AuthType in the catalogue listing page.
+	LongDescription string `json:"long_description,omitempty"`
+
+	// IsKeyless toggles visibility of the `Request an API Key button`. Use this when AuthType is keyless, jwt or oauth.
+	IsKeyless bool `json:"is_keyless,omitempty"`
+
+	// Version should always be v2
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=v2
 	// +kubebuilder:default=v2
-	Version   string                   `json:"version,omitempty"`
-	IsKeyless bool                     `json:"is_keyless,omitempty"`
-	Config    *PortalModelPortalConfig `json:"config,omitempty"`
-	Fields    map[string]string        `json:"fields,omitempty"`
-	AuthType  AuthType                 `json:"auth_type,omitempty"`
+	Version string `json:"version,omitempty"`
+
+	// Config allows you to optionally override various fields in the PortalConfig.
+	// TODO: This is an advanced capability which has not been fully tested with Tyk Operator as yet.
+	Config *PortalModelPortalConfig `json:"config,omitempty"`
+
+	// Fields is a generic map of key:value pairs.
+	// You may wish to use this to tag a catalogue as type:internal or type:public
+	// Then apply logic at the template layer to dynamically display catalogue apis to different user types.
+	Fields map[string]string `json:"fields,omitempty"`
+
+	// PolicyID explicitly sets the policy_id to be published. We do not recommend that this value is set directly.
+	// Rather, use `policyRef` instead.
+	PolicyID string `json:"policy_id,omitempty"`
+
+	// Do not set Documentation. Use `docs` instead.
+	Documentation string `json:"documentation,omitempty"`
 }
 
 type PortalModelPortalConfig struct {
@@ -50,14 +77,46 @@ type PortalModelPortalConfig struct {
 	Override             bool         `json:"override,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=client_credentials;authorization_code;refresh_token
+type GrantTypeEnum string
+
+// +kubebuilder:validation:Enum=code;token
+type ResponseTypeEnum string
+
+// DCROptions are the configuration metadata for dynamic client registration. To enable DCR, ensure EnableDCR is true.
 type DCROptions struct {
-	IDPHost                 string   `json:"idp_host"`
-	AccessToken             string   `json:"access_token"`
-	RegistrationEndpoint    string   `json:"registration_endpoint"`
-	Provider                string   `json:"provider"`
-	GrantTypes              []string `json:"grant_types"`
-	ResponseTypes           []string `json:"response_types"`
-	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+
+	// IDPHost is the fully qualified hostname of the Identity Provider.
+	// e.g. https://mysubdomain.eu.auth0.com
+	IDPHost string `json:"idp_host"`
+
+	// RegistrationEndpoint is the registration_endpoint as presented in the /.well-known/openid-configuration document.
+	RegistrationEndpoint string `json:"registration_endpoint"`
+
+	// AccessToken represents an optional bearer token to authenticate with against the registration endpoint
+	AccessToken string `json:"access_token,omitempty"`
+
+	// Provider is an optional enum of the provider which allows Tyk to register clients outside the standard DCR spec
+	// and perform provider specific logic.
+	// If your provider is not in this list, please omit. Upon failure, submit a support ticket so that we may extend
+	// support for your provider.
+	// +kubebuilder:validation:Enum=gluu;keycloak;okta
+	Provider string `json:"provider,omitempty"`
+
+	// GrantTypes is an array of OAuth 2.0 grant type strings that the client can use at
+	// the token endpoint.
+	GrantTypes []GrantTypeEnum `json:"grant_types"`
+
+	// ResponseTypes is an array of OAuth 2.0 response type strings that the client can
+	// use at the authorization endpoint.
+	ResponseTypes []ResponseTypeEnum `json:"response_types"`
+
+	// TokenEndpointAuthMethod is an indicator of the requested authentication method for the token endpoint.
+	// "none": The client is a public client and does not have a client secret.
+	// "client_secret_post": The client uses the HTTP POST parameters
+	// "client_secret_basic": The client uses HTTP Basic authentication
+	// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;client_secret_jwt;private_key_jwt;none
+	TokenEndpointAuthMethod string `json:"token_endpoint_auth_method"`
 }
 
 type MailOptions struct {
