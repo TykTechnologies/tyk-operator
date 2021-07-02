@@ -68,14 +68,14 @@ type DCROptions struct {
 	RegistrationEndpoint string `json:"registration_endpoint"`
 
 	// AccessToken represents an optional bearer token to authenticate with against the registration endpoint
-	AccessToken *string `json:"access_token"`
+	AccessToken string `json:"access_token,omitempty"`
 
 	// Provider is an optional enum of the provider which allows Tyk to register clients outside the standard DCR spec
 	// and perform provider specific logic.
 	// If your provider is not in this list, please omit. Upon failure, submit a support ticket so that we may extend
 	// support for your provider.
 	// +kubebuilder:validation:Enum=gluu;keycloak;okta
-	Provider *string `json:"provider"`
+	Provider string `json:"provider,omitempty"`
 
 	// GrantTypes is an array of OAuth 2.0 grant type strings that the client can use at
 	// the token endpoint.

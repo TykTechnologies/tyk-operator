@@ -110,10 +110,8 @@ spec:
                         - none
                         type: string
                     required:
-                    - access_token
                     - grant_types
                     - idp_host
-                    - provider
                     - registration_endpoint
                     - response_types
                     - token_endpoint_auth_method
