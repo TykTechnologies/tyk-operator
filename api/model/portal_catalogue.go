@@ -12,21 +12,47 @@ type APICatalogue struct {
 type AuthType string
 
 type APIDescription struct {
-	Name             string `json:"name,omitempty"`
-	ShortDescription string `json:"short_description,omitempty"`
-	LongDescription  string `json:"long_description,omitempty"`
-	Show             bool   `json:"show,omitempty"`
-	PolicyID         string `json:"policy_id,omitempty"`
-	Documentation    string `json:"documentation,omitempty"`
 
+	// Name is the title of the API that you wish to be published to the catalogue
+	Name string `json:"name,omitempty"`
+
+	// AuthType displays as a badge next to the name of the API
+	AuthType AuthType `json:"auth_type,omitempty"`
+
+	// Show toggles visibility of the API in the portal catalogue
+	Show bool `json:"show,omitempty"`
+
+	// TODO: I don't think this is exposed to the default portal templates.
+	ShortDescription string `json:"short_description,omitempty"`
+
+	// LongDescription can be markdown. It allows you to describe the capabilities of the API and is displayed just
+	// below the name and AuthType in the catalogue listing page.
+	LongDescription string `json:"long_description,omitempty"`
+
+	// IsKeyless toggles visibility of the `Request an API Key button`. Use this when AuthType is keyless, jwt or oauth.
+	IsKeyless bool `json:"is_keyless,omitempty"`
+
+	// Version should always be v2
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=v2
 	// +kubebuilder:default=v2
-	Version   string                   `json:"version,omitempty"`
-	IsKeyless bool                     `json:"is_keyless,omitempty"`
-	Config    *PortalModelPortalConfig `json:"config,omitempty"`
-	Fields    map[string]string        `json:"fields,omitempty"`
-	AuthType  AuthType                 `json:"auth_type,omitempty"`
+	Version string `json:"version,omitempty"`
+
+	// Config allows you to optionally override various fields in the PortalConfig.
+	// TODO: This is an advanced capability which has not been fully tested with Tyk Operator as yet.
+	Config *PortalModelPortalConfig `json:"config,omitempty"`
+
+	// Fields is a generic map of key:value pairs.
+	// You may wish to use this to tag a catalogue as type:internal or type:public
+	// Then apply logic at the template layer to dynamically display catalogue apis to different user types.
+	Fields map[string]string `json:"fields,omitempty"`
+
+	// PolicyID explicitly sets the policy_id to be published. We do not recommend that this value is set directly.
+	// Rather, use `policyRef` instead.
+	PolicyID string `json:"policy_id,omitempty"`
+
+	// Do not set Documentation. Use `docs` instead.
+	Documentation string `json:"documentation,omitempty"`
 }
 
 type PortalModelPortalConfig struct {

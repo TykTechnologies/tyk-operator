@@ -57,7 +57,8 @@ spec:
                       - namespace
                       type: object
                     auth_type:
-                      description: All auth_type from dashboard validation:Enum=multiAuth;keyless;basic;hmac;jwt;oauth;openid;mutualTLS;authToken;custom;other
+                      description: AuthType displays as a badge next to the name of
+                        the API
                       enum:
                       - keyless
                       - jwt
@@ -65,6 +66,9 @@ spec:
                       - authToken
                       type: string
                     config:
+                      description: 'Config allows you to optionally override various
+                        fields in the PortalConfig. TODO: This is an advanced capability
+                        which has not been fully tested with Tyk Operator as yet.'
                       properties:
                         catalogue_login_only:
                           type: boolean
@@ -267,18 +271,34 @@ spec:
                       - doc_type
                       type: object
                     documentation:
+                      description: Do not set Documentation. Use `docs` instead.
                       type: string
                     fields:
                       additionalProperties:
                         type: string
+                      description: Fields is a generic map of key:value pairs. You
+                        may wish to use this to tag a catalogue as type:internal or
+                        type:public Then apply logic at the template layer to dynamically
+                        display catalogue apis to different user types.
                       type: object
                     is_keyless:
+                      description: IsKeyless toggles visibility of the `Request an
+                        API Key button`. Use this when AuthType is keyless, jwt or
+                        oauth.
                       type: boolean
                     long_description:
+                      description: LongDescription can be markdown. It allows you
+                        to describe the capabilities of the API and is displayed just
+                        below the name and AuthType in the catalogue listing page.
                       type: string
                     name:
+                      description: Name is the title of the API that you wish to be
+                        published to the catalogue
                       type: string
                     policy_id:
+                      description: PolicyID explicitly sets the policy_id to be published.
+                        We do not recommend that this value is set directly. Rather,
+                        use `policyRef` instead.
                       type: string
                     policyRef:
                       properties:
@@ -291,11 +311,16 @@ spec:
                       - namespace
                       type: object
                     short_description:
+                      description: 'TODO: I don''t think this is exposed to the default
+                        portal templates.'
                       type: string
                     show:
+                      description: Show toggles visibility of the API in the portal
+                        catalogue
                       type: boolean
                     version:
                       default: v2
+                      description: Version should always be v2
                       enum:
                       - v2
                       type: string
