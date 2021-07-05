@@ -19,8 +19,9 @@ jobs:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
       - name: create kind cluster
-        uses: helm/kind-action@v1.1.0
+        uses: helm/kind-action@v1.2.0
         with:
+          wait: 2m
           node_image: ${{ matrix.k8s }}
       - name: install kubebuilder
         uses: RyanSiu1995/kubebuilder-action@v1.1
