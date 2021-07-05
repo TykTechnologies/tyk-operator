@@ -435,10 +435,10 @@ func deployHTTPBIN() {
 	if !hasHTTPBIN() {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "upstreams")))
 		ok()
-		say("Waiting for httpbin to be ready ...")
-		exit(kl(
-			"rollout", "status", "--timeout", "1m", "deployment/httpbin",
-		))
+		// say("Waiting for httpbin to be ready ...")
+		// exit(kl(
+		// 	"rollout", "status", "--timeout", "1m", "deployment/httpbin",
+		// ))
 	}
 	ok()
 }
@@ -448,10 +448,10 @@ func deployGRPCPlugin() {
 	if !hasGRPCPlugin() {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "grpc-plugin"), "-n", config.Tyk.Namespace))
 		ok()
-		say("Waiting for grpc-plugin to be ready ...")
-		exit(kl(
-			"rollout", "status", "deployment/grpc-plugin", "-n", config.Tyk.Namespace,
-		))
+		// say("Waiting for grpc-plugin to be ready ...")
+		// exit(kl(
+		// 	"rollout", "status", "deployment/grpc-plugin", "-n", config.Tyk.Namespace,
+		// ))
 	}
 	ok()
 }
