@@ -1692,7 +1692,6 @@ spec:
                     - grant_types
                     - idp_host
                     - registration_endpoint
-                    - response_types
                     - token_endpoint_auth_method
                     type: object
                   disable_auto_login:
@@ -2085,7 +2084,6 @@ spec:
                           - grant_types
                           - idp_host
                           - registration_endpoint
-                          - response_types
                           - token_endpoint_auth_method
                           type: object
                         disable_auto_login:
@@ -2383,7 +2381,6 @@ spec:
                 - grant_types
                 - idp_host
                 - registration_endpoint
-                - response_types
                 - token_endpoint_auth_method
                 type: object
               disable_auto_login:
