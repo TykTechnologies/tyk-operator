@@ -147,14 +147,27 @@ spec:
                         disable_auto_login:
                           type: boolean
                         disable_login:
+                          description: DisableLogin disables login on developer portal.If
+                            you do not want developers to be able to login, set this
+                            value to true. You can use this configuration option in
+                            the portal templates to display or hide the login form
+                            as well as disabling the actual login method.
                           type: boolean
                         disable_signup:
+                          description: DisableSignup stop developer sign-up to the
+                            portal.This will stop developers from being able to signup,
+                            they will need to be created manually, or assigned keys
+                            via the key management API.
                           type: boolean
                         email:
                           type: string
                         enable_dcr:
                           type: boolean
                         enable_multi_selection:
+                          description: EnableMultiSelection enables subscribing to
+                            multiple APIs with single key.User will be able subscript
+                            any combination of exposed catalogues of the same authentication
+                            type
                           type: boolean
                         id:
                           type: string
@@ -242,14 +255,30 @@ spec:
                         org_id:
                           type: string
                         override:
+                          description: Override overides global settings. These Catalogue
+                            settings are currently being overwritten by the Global
+                            Catalogue settings. Toggle the checkbox below to override
+                            them for this Catalogue.
                           type: boolean
                         redirect_on_key_request:
                           type: boolean
                         redirect_to:
                           type: string
                         require_key_approval:
+                          description: RequireKeyApproval requires reviewing of all
+                            key requests before approving them. By default developers
+                            will auto-enroll into an API and be given an API key.
+                            If you wish to review key requests before giving developers
+                            access to the API, enable this option and you will manually
+                            need to approve them in the 'Key requests' section of
+                            the dashboard.
                           type: boolean
                         secure_key_approval:
+                          description: SecureKeyApproval enables Secure key approval.By
+                            default, API keys when approved are sent in an email to
+                            the Developer. By enabling this option, the Developer
+                            will instead receive a link where they can go to generate
+                            the API key securely
                           type: boolean
                         signup_fields:
                           items:

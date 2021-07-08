@@ -56,25 +56,54 @@ type APIDescription struct {
 }
 
 type PortalModelPortalConfig struct {
-	Id                   string       `json:"id,omitempty"`
-	OrgID                string       `json:"org_id,omitempty"`
-	SignUpFields         []string     `json:"signup_fields,omitempty"`
-	KeyRequestFields     []string     `json:"key_request_fields,omitempty"`
-	RequireKeyApproval   bool         `json:"require_key_approval,omitempty"`
-	SecureKeyApproval    bool         `json:"secure_key_approval,omitempty"`
-	RedirectOnKeyRequest bool         `json:"redirect_on_key_request,omitempty"`
-	RedirectTo           string       `json:"redirect_to,omitempty"`
-	EnableMultiSelection bool         `json:"enable_multi_selection,omitempty"`
-	DisableLogin         bool         `json:"disable_login,omitempty"`
-	DisableSignup        bool         `json:"disable_signup,omitempty"`
-	DisableAutoLogin     bool         `json:"disable_auto_login,omitempty"`
-	CatalogueLoginOnly   bool         `json:"catalogue_login_only,omitempty"`
-	OAuthUsageLimit      int          `json:"oauth_usage_limit,omitempty"`
-	Email                string       `json:"email,omitempty"`
-	MailOptions          *MailOptions `json:"mail_options,omitempty"`
-	DCROptions           *DCROptions  `json:"dcr_options,omitempty"`
-	EnableDCR            bool         `json:"enable_dcr,omitempty"`
-	Override             bool         `json:"override,omitempty"`
+	Id               string   `json:"id,omitempty"`
+	OrgID            string   `json:"org_id,omitempty"`
+	SignUpFields     []string `json:"signup_fields,omitempty"`
+	KeyRequestFields []string `json:"key_request_fields,omitempty"`
+	// RequireKeyApproval requires reviewing of all key requests before approving
+	// them. By default developers will auto-enroll into an API and be given an API
+	// key. If you wish to review key requests before giving developers access to
+	// the API, enable this option and you will manually need to approve them in
+	// the 'Key requests' section of the dashboard.
+	RequireKeyApproval bool `json:"require_key_approval,omitempty"`
+
+	// SecureKeyApproval enables Secure key approval.By default, API keys when
+	// approved are sent in an email to the Developer. By enabling this option, the
+	// Developer will instead receive a link where they can go to generate the API
+	// key securely
+	SecureKeyApproval bool `json:"secure_key_approval,omitempty"`
+
+	RedirectOnKeyRequest bool   `json:"redirect_on_key_request,omitempty"`
+	RedirectTo           string `json:"redirect_to,omitempty"`
+
+	// EnableMultiSelection enables subscribing to multiple APIs with single
+	// key.User will be able subscript any combination of exposed catalogues of the
+	// same authentication type
+	EnableMultiSelection bool `json:"enable_multi_selection,omitempty"`
+
+	// DisableLogin disables login on developer portal.If you do not want
+	// developers to be able to login, set this value to true. You can use this
+	// configuration option in the portal templates to display or hide the login
+	// form as well as disabling the actual login method.
+	DisableLogin bool `json:"disable_login,omitempty"`
+
+	// DisableSignup stop developer sign-up to the portal.This will stop developers
+	// from being able to signup, they will need to be created manually, or
+	// assigned keys via the key management API.
+	DisableSignup bool `json:"disable_signup,omitempty"`
+
+	DisableAutoLogin   bool         `json:"disable_auto_login,omitempty"`
+	CatalogueLoginOnly bool         `json:"catalogue_login_only,omitempty"`
+	OAuthUsageLimit    int          `json:"oauth_usage_limit,omitempty"`
+	Email              string       `json:"email,omitempty"`
+	MailOptions        *MailOptions `json:"mail_options,omitempty"`
+	DCROptions         *DCROptions  `json:"dcr_options,omitempty"`
+	EnableDCR          bool         `json:"enable_dcr,omitempty"`
+
+	// Override overides global settings. These Catalogue settings are currently
+	// being overwritten by the Global Catalogue settings. Toggle the checkbox
+	// below to override them for this Catalogue.
+	Override bool `json:"override,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;refresh_token
