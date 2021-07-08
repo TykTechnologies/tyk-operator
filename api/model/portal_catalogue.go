@@ -109,7 +109,7 @@ type DCROptions struct {
 
 	// ResponseTypes is an array of OAuth 2.0 response type strings that the client can
 	// use at the authorization endpoint.
-	ResponseTypes []ResponseTypeEnum `json:"response_types"`
+	ResponseTypes []ResponseTypeEnum `json:"response_types,omitempty"`
 
 	// TokenEndpointAuthMethod is an indicator of the requested authentication method for the token endpoint.
 	// "none": The client is a public client and does not have a client secret.
