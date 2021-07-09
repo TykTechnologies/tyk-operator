@@ -1642,6 +1642,7 @@ spec:
                 description: 'Config allows you to optionally override various fields in the PortalConfig. TODO: This is an advanced capability which has not been fully tested with Tyk Operator as yet.'
                 properties:
                   catalogue_login_only:
+                    description: CatalogueLoginOnly limits access to catalogues for login users only.
                     type: boolean
                   dcr_options:
                     description: DCROptions dynamic client registration options.
@@ -1793,6 +1794,7 @@ spec:
                     - mail_from_name
                     type: object
                   oauth_usage_limit:
+                    description: OAuthUsageLimit is the maximum number of authorized OAuth clients
                     type: integer
                   org_id:
                     description: OrgID is the organization ID
@@ -1801,8 +1803,10 @@ spec:
                     description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
                     type: boolean
                   redirect_on_key_request:
+                    description: RedirectOnKeyRequest redirects key requests. WHen set to true it will redirect key requests to the url specified in RedirectTo field
                     type: boolean
                   redirect_to:
+                    description: RedirectTo is a url used to redirect key requests
                     type: string
                   require_key_approval:
                     description: RequireKeyApproval requires reviewing of all key requests before approving them. By default developers will auto-enroll into an API and be given an API key. If you wish to review key requests before giving developers access to the API, enable this option and you will manually need to approve them in the 'Key requests' section of the dashboard.
@@ -2044,6 +2048,7 @@ spec:
                       description: 'Config allows you to optionally override various fields in the PortalConfig. TODO: This is an advanced capability which has not been fully tested with Tyk Operator as yet.'
                       properties:
                         catalogue_login_only:
+                          description: CatalogueLoginOnly limits access to catalogues for login users only.
                           type: boolean
                         dcr_options:
                           description: DCROptions dynamic client registration options.
@@ -2195,6 +2200,7 @@ spec:
                           - mail_from_name
                           type: object
                         oauth_usage_limit:
+                          description: OAuthUsageLimit is the maximum number of authorized OAuth clients
                           type: integer
                         org_id:
                           description: OrgID is the organization ID
@@ -2203,8 +2209,10 @@ spec:
                           description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
                           type: boolean
                         redirect_on_key_request:
+                          description: RedirectOnKeyRequest redirects key requests. WHen set to true it will redirect key requests to the url specified in RedirectTo field
                           type: boolean
                         redirect_to:
+                          description: RedirectTo is a url used to redirect key requests
                           type: string
                         require_key_approval:
                           description: RequireKeyApproval requires reviewing of all key requests before approving them. By default developers will auto-enroll into an API and be given an API key. If you wish to review key requests before giving developers access to the API, enable this option and you will manually need to approve them in the 'Key requests' section of the dashboard.
@@ -2344,6 +2352,7 @@ spec:
             description: PortalConfigSpec defines the desired state of PortalConfig
             properties:
               catalogue_login_only:
+                description: CatalogueLoginOnly limits access to catalogues for login users only.
                 type: boolean
               contextRef:
                 properties:
@@ -2505,6 +2514,7 @@ spec:
                 - mail_from_name
                 type: object
               oauth_usage_limit:
+                description: OAuthUsageLimit is the maximum number of authorized OAuth clients
                 type: integer
               org_id:
                 description: OrgID is the organization ID
@@ -2513,8 +2523,10 @@ spec:
                 description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
                 type: boolean
               redirect_on_key_request:
+                description: RedirectOnKeyRequest redirects key requests. WHen set to true it will redirect key requests to the url specified in RedirectTo field
                 type: boolean
               redirect_to:
+                description: RedirectTo is a url used to redirect key requests
                 type: string
               require_key_approval:
                 description: RequireKeyApproval requires reviewing of all key requests before approving them. By default developers will auto-enroll into an API and be given an API key. If you wish to review key requests before giving developers access to the API, enable this option and you will manually need to approve them in the 'Key requests' section of the dashboard.

@@ -75,8 +75,11 @@ type PortalModelPortalConfig struct {
 	// key securely
 	SecureKeyApproval bool `json:"secure_key_approval,omitempty"`
 
-	RedirectOnKeyRequest bool   `json:"redirect_on_key_request,omitempty"`
-	RedirectTo           string `json:"redirect_to,omitempty"`
+	// RedirectOnKeyRequest redirects key requests. WHen set to true it will
+	// redirect key requests to the url specified in RedirectTo field
+	RedirectOnKeyRequest bool `json:"redirect_on_key_request,omitempty"`
+	// RedirectTo is a url used to redirect key requests
+	RedirectTo string `json:"redirect_to,omitempty"`
 
 	// EnableMultiSelection enables subscribing to multiple APIs with single
 	// key.User will be able subscript any combination of exposed catalogues of the
@@ -94,11 +97,13 @@ type PortalModelPortalConfig struct {
 	// assigned keys via the key management API.
 	DisableSignup bool `json:"disable_signup,omitempty"`
 
-	DisableAutoLogin   bool         `json:"disable_auto_login,omitempty"`
-	CatalogueLoginOnly bool         `json:"catalogue_login_only,omitempty"`
-	OAuthUsageLimit    int          `json:"oauth_usage_limit,omitempty"`
-	Email              string       `json:"email,omitempty"`
-	MailOptions        *MailOptions `json:"mail_options,omitempty"`
+	DisableAutoLogin bool `json:"disable_auto_login,omitempty"`
+	// CatalogueLoginOnly limits access to catalogues for login users only.
+	CatalogueLoginOnly bool `json:"catalogue_login_only,omitempty"`
+	// OAuthUsageLimit is the maximum number of authorized OAuth clients
+	OAuthUsageLimit int          `json:"oauth_usage_limit,omitempty"`
+	Email           string       `json:"email,omitempty"`
+	MailOptions     *MailOptions `json:"mail_options,omitempty"`
 	// DCROptions dynamic client registration options.
 	DCROptions *DCROptions `json:"dcr_options,omitempty"`
 	// EnableDCR activates dynamic client registration.

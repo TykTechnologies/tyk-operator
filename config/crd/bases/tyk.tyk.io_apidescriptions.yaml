@@ -51,6 +51,8 @@ spec:
                   has not been fully tested with Tyk Operator as yet.'
                 properties:
                   catalogue_login_only:
+                    description: CatalogueLoginOnly limits access to catalogues for
+                      login users only.
                     type: boolean
                   dcr_options:
                     description: DCROptions dynamic client registration options.
@@ -227,6 +229,8 @@ spec:
                     - mail_from_name
                     type: object
                   oauth_usage_limit:
+                    description: OAuthUsageLimit is the maximum number of authorized
+                      OAuth clients
                     type: integer
                   org_id:
                     description: OrgID is the organization ID
@@ -238,8 +242,12 @@ spec:
                       Catalogue.
                     type: boolean
                   redirect_on_key_request:
+                    description: RedirectOnKeyRequest redirects key requests. WHen
+                      set to true it will redirect key requests to the url specified
+                      in RedirectTo field
                     type: boolean
                   redirect_to:
+                    description: RedirectTo is a url used to redirect key requests
                     type: string
                   require_key_approval:
                     description: RequireKeyApproval requires reviewing of all key
