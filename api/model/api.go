@@ -263,9 +263,12 @@ type Target struct {
 }
 
 func (t *Target) Parse(v string) {
-	p := strings.Split(v, "/")
-	t.Namespace = p[0]
-	t.Name = p[1]
+	if strings.Contains(v, "/") {
+		if p := strings.Split(v, "/"); len(p) == 2 {
+			t.Namespace = p[0]
+			t.Name = p[1]
+		}
+	}
 }
 
 func (t Target) String() string {
