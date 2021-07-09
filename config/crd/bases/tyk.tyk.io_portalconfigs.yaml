@@ -142,6 +142,8 @@ spec:
                 description: Set by the server. DO NOT set this field it is read only.
                 type: string
               key_request_fields:
+                description: KeyRequestFields is a slice of fields which are asked
+                  of the portal developer when requesting an api key
                 items:
                   type: string
                 type: array
@@ -221,7 +223,7 @@ spec:
                 - mail_from_name
                 type: object
               oauth_usage_limit:
-                description: OAuthUsageLimit is the maximum number of authorized OAuth
+                description: OAuthUsageLimit is the maximum permitted number of OAuth
                   clients
                 type: integer
               org_id:
@@ -255,6 +257,8 @@ spec:
                   where they can go to generate the API key securely
                 type: boolean
               signup_fields:
+                description: SignUpFields is a slice of fields which are asked of
+                  the portal developer when they register for an account
                 items:
                   type: string
                 type: array

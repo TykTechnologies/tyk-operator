@@ -44,7 +44,7 @@ spec:
             description: PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
             properties:
               apis:
-                description: APIDescriptionList is alist of PortalCatalogueDescription
+                description: APIDescriptionList is a list of PortalCatalogueDescription
                   published on this PortalAPICatalogue
                 items:
                   properties:
@@ -177,6 +177,9 @@ spec:
                             is read only.
                           type: string
                         key_request_fields:
+                          description: KeyRequestFields is a slice of fields which
+                            are asked of the portal developer when requesting an api
+                            key
                           items:
                             type: string
                           type: array
@@ -256,8 +259,8 @@ spec:
                           - mail_from_name
                           type: object
                         oauth_usage_limit:
-                          description: OAuthUsageLimit is the maximum number of authorized
-                            OAuth clients
+                          description: OAuthUsageLimit is the maximum permitted number
+                            of OAuth clients
                           type: integer
                         org_id:
                           description: OrgID is the organization ID
@@ -293,6 +296,9 @@ spec:
                             the API key securely
                           type: boolean
                         signup_fields:
+                          description: SignUpFields is a slice of fields which are
+                            asked of the portal developer when they register for an
+                            account
                           items:
                             type: string
                           type: array

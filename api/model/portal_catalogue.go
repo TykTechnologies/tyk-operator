@@ -56,12 +56,19 @@ type APIDescription struct {
 }
 
 type PortalModelPortalConfig struct {
+
 	// Set by the server. DO NOT set this field it is read only.
 	Id string `json:"id,omitempty"`
+
 	// OrgID is the organization ID
-	OrgID            string   `json:"org_id,omitempty"`
-	SignUpFields     []string `json:"signup_fields,omitempty"`
+	OrgID string `json:"org_id,omitempty"`
+
+	// SignUpFields is a slice of fields which are asked of the portal developer when they register for an account
+	SignUpFields []string `json:"signup_fields,omitempty"`
+
+	// KeyRequestFields is a slice of fields which are asked of the portal developer when requesting an api key
 	KeyRequestFields []string `json:"key_request_fields,omitempty"`
+
 	// RequireKeyApproval requires reviewing of all key requests before approving
 	// them. By default developers will auto-enroll into an API and be given an API
 	// key. If you wish to review key requests before giving developers access to
@@ -78,6 +85,7 @@ type PortalModelPortalConfig struct {
 	// RedirectOnKeyRequest redirects key requests. WHen set to true it will
 	// redirect key requests to the url specified in RedirectTo field
 	RedirectOnKeyRequest bool `json:"redirect_on_key_request,omitempty"`
+
 	// RedirectTo is a url used to redirect key requests
 	RedirectTo string `json:"redirect_to,omitempty"`
 
@@ -98,16 +106,22 @@ type PortalModelPortalConfig struct {
 	DisableSignup bool `json:"disable_signup,omitempty"`
 
 	DisableAutoLogin bool `json:"disable_auto_login,omitempty"`
+
 	// CatalogueLoginOnly limits access to catalogues for login users only.
 	CatalogueLoginOnly bool `json:"catalogue_login_only,omitempty"`
-	// OAuthUsageLimit is the maximum number of authorized OAuth clients
-	OAuthUsageLimit int          `json:"oauth_usage_limit,omitempty"`
-	Email           string       `json:"email,omitempty"`
-	MailOptions     *MailOptions `json:"mail_options,omitempty"`
-	// DCROptions dynamic client registration options.
-	DCROptions *DCROptions `json:"dcr_options,omitempty"`
+
+	// OAuthUsageLimit is the maximum permitted number of OAuth clients
+	OAuthUsageLimit int `json:"oauth_usage_limit,omitempty"`
+
+	Email string `json:"email,omitempty"`
+
+	MailOptions *MailOptions `json:"mail_options,omitempty"`
+
 	// EnableDCR activates dynamic client registration.
 	EnableDCR bool `json:"enable_dcr,omitempty"`
+
+	// DCROptions dynamic client registration options.
+	DCROptions *DCROptions `json:"dcr_options,omitempty"`
 
 	// Override overides global settings. These Catalogue settings are currently
 	// being overwritten by the Global Catalogue settings. Toggle the checkbox

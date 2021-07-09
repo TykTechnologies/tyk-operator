@@ -23,13 +23,15 @@ import (
 
 // PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
 type PortalAPICatalogueSpec struct {
+
 	// OrgID is the organization ID
 	OrgID string `json:"org_id,omitempty"`
+
 	// Email is Catalogue owner email address.Catalogue owner will be notified at
 	// this email address when an API subscription request is submitted or granted
 	Email string `json:"email,omitempty"`
-	// APIDescriptionList is alist of PortalCatalogueDescription published on this
-	// PortalAPICatalogue
+
+	// APIDescriptionList is a list of PortalCatalogueDescription published on this PortalAPICatalogue
 	APIDescriptionList []*PortalCatalogueDescription `json:"apis,omitempty"`
 	// Context is reference to OperatorContext resource. Set this if you want to
 	// target a specific OperatorContext. When omitted default OperatorContext is
@@ -44,8 +46,7 @@ type PortalCatalogueDescription struct {
 
 // PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
 type PortalAPICatalogueStatus struct {
-	// ID is the mongo ID of the PortalAPICatalogue object created by the
-	// dashboard.
+	// ID is the mongo ID of the PortalAPICatalogue object created by the dashboard.
 	ID string `json:"id,omitempty"`
 }
 
