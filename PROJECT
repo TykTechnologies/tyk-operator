@@ -42,4 +42,31 @@ resources:
   kind: OperatorContext
   path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: tyk.io
+  group: tyk
+  kind: APIDescription
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: tyk.io
+  group: tyk
+  kind: PortalAPICatalogue
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: tyk.io
+  group: tyk
+  kind: PortalConfig
+  path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -259,6 +260,15 @@ func (i RewriteToInternal) String() string {
 type Target struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+}
+
+func (t *Target) Parse(v string) {
+	if strings.Contains(v, "/") {
+		if p := strings.Split(v, "/"); len(p) == 2 {
+			t.Namespace = p[0]
+			t.Name = p[1]
+		}
+	}
 }
 
 func (t Target) String() string {

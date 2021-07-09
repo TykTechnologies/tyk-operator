@@ -39,6 +39,11 @@ func TestAPI(t *testing.T) {
 			body:   "api.Get.body",
 		},
 		&route{
+			path:   "/api/apis/5fd08ed769710900018bc196",
+			method: http.MethodPut,
+			body:   "api.Update.body",
+		},
+		&route{
 			path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 			method: http.MethodPut,
 			body:   "api.Update.body",
@@ -54,24 +59,12 @@ func TestAPI(t *testing.T) {
 	e.URL = svr.URL
 	e = env().Merge(e)
 	requestAPI(t, e, "Create",
-		Kase{
-			Name: "Create",
-			Request: RequestKase{
-				Path:   "/api/apis",
-				Method: http.MethodPost,
-				Headers: map[string]string{
-					XAuthorization: e.Auth,
-					XContentType:   contentJSON,
-				},
-			},
-			Response: &ResponseKase{
-				Body: ReadSample(t, "api.Create.body"),
-			},
-		},
+		// TODO:(gernest) This only covers the case when an api already exists.
+		// Add case of creating fresh new api
 		Kase{
 			Name: "Get",
 			Request: RequestKase{
-				Path:   "/api/apis/5fd08ed769710900018bc196",
+				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
 				Method: http.MethodGet,
 				Headers: map[string]string{
 					XAuthorization: e.Auth,
