@@ -56,7 +56,9 @@ type APIDescription struct {
 }
 
 type PortalModelPortalConfig struct {
-	Id               string   `json:"id,omitempty"`
+	// Set by the server. DO NOT set this field it is read only.
+	Id string `json:"id,omitempty"`
+	// OrgID is the organization ID
 	OrgID            string   `json:"org_id,omitempty"`
 	SignUpFields     []string `json:"signup_fields,omitempty"`
 	KeyRequestFields []string `json:"key_request_fields,omitempty"`
@@ -97,8 +99,10 @@ type PortalModelPortalConfig struct {
 	OAuthUsageLimit    int          `json:"oauth_usage_limit,omitempty"`
 	Email              string       `json:"email,omitempty"`
 	MailOptions        *MailOptions `json:"mail_options,omitempty"`
-	DCROptions         *DCROptions  `json:"dcr_options,omitempty"`
-	EnableDCR          bool         `json:"enable_dcr,omitempty"`
+	// DCROptions dynamic client registration options.
+	DCROptions *DCROptions `json:"dcr_options,omitempty"`
+	// EnableDCR activates dynamic client registration.
+	EnableDCR bool `json:"enable_dcr,omitempty"`
 
 	// Override overides global settings. These Catalogue settings are currently
 	// being overwritten by the Global Catalogue settings. Toggle the checkbox

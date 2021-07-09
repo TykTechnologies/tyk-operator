@@ -1644,7 +1644,7 @@ spec:
                   catalogue_login_only:
                     type: boolean
                   dcr_options:
-                    description: DCROptions are the configuration metadata for dynamic client registration. To enable DCR, ensure EnableDCR is true.
+                    description: DCROptions dynamic client registration options.
                     properties:
                       access_token:
                         description: AccessToken represents an optional bearer token to authenticate with against the registration endpoint
@@ -1705,11 +1705,13 @@ spec:
                   email:
                     type: string
                   enable_dcr:
+                    description: EnableDCR activates dynamic client registration.
                     type: boolean
                   enable_multi_selection:
                     description: EnableMultiSelection enables subscribing to multiple APIs with single key.User will be able subscript any combination of exposed catalogues of the same authentication type
                     type: boolean
                   id:
+                    description: Set by the server. DO NOT set this field it is read only.
                     type: string
                   key_request_fields:
                     items:
@@ -1793,6 +1795,7 @@ spec:
                   oauth_usage_limit:
                     type: integer
                   org_id:
+                    description: OrgID is the organization ID
                     type: string
                   override:
                     description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
@@ -2016,6 +2019,7 @@ spec:
             description: PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
             properties:
               apis:
+                description: APIDescriptionList is alist of PortalCatalogueDescription published on this PortalAPICatalogue
                 items:
                   properties:
                     apiDescriptionRef:
@@ -2042,7 +2046,7 @@ spec:
                         catalogue_login_only:
                           type: boolean
                         dcr_options:
-                          description: DCROptions are the configuration metadata for dynamic client registration. To enable DCR, ensure EnableDCR is true.
+                          description: DCROptions dynamic client registration options.
                           properties:
                             access_token:
                               description: AccessToken represents an optional bearer token to authenticate with against the registration endpoint
@@ -2103,11 +2107,13 @@ spec:
                         email:
                           type: string
                         enable_dcr:
+                          description: EnableDCR activates dynamic client registration.
                           type: boolean
                         enable_multi_selection:
                           description: EnableMultiSelection enables subscribing to multiple APIs with single key.User will be able subscript any combination of exposed catalogues of the same authentication type
                           type: boolean
                         id:
+                          description: Set by the server. DO NOT set this field it is read only.
                           type: string
                         key_request_fields:
                           items:
@@ -2191,6 +2197,7 @@ spec:
                         oauth_usage_limit:
                           type: integer
                         org_id:
+                          description: OrgID is the organization ID
                           type: string
                         override:
                           description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
@@ -2268,6 +2275,7 @@ spec:
                   type: object
                 type: array
               contextRef:
+                description: Context is reference to OperatorContext resource. Set this if you want to target a specific OperatorContext. When omitted default OperatorContext is used.
                 properties:
                   name:
                     type: string
@@ -2278,14 +2286,17 @@ spec:
                 - namespace
                 type: object
               email:
+                description: Email is Catalogue owner email address.Catalogue owner will be notified at this email address when an API subscription request is submitted or granted
                 type: string
               org_id:
+                description: OrgID is the organization ID
                 type: string
             type: object
           status:
             description: PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
             properties:
               id:
+                description: ID is the mongo ID of the PortalAPICatalogue object created by the dashboard.
                 type: string
             type: object
         type: object
@@ -2345,7 +2356,7 @@ spec:
                 - namespace
                 type: object
               dcr_options:
-                description: DCROptions are the configuration metadata for dynamic client registration. To enable DCR, ensure EnableDCR is true.
+                description: DCROptions dynamic client registration options.
                 properties:
                   access_token:
                     description: AccessToken represents an optional bearer token to authenticate with against the registration endpoint
@@ -2406,11 +2417,13 @@ spec:
               email:
                 type: string
               enable_dcr:
+                description: EnableDCR activates dynamic client registration.
                 type: boolean
               enable_multi_selection:
                 description: EnableMultiSelection enables subscribing to multiple APIs with single key.User will be able subscript any combination of exposed catalogues of the same authentication type
                 type: boolean
               id:
+                description: Set by the server. DO NOT set this field it is read only.
                 type: string
               key_request_fields:
                 items:
@@ -2494,6 +2507,7 @@ spec:
               oauth_usage_limit:
                 type: integer
               org_id:
+                description: OrgID is the organization ID
                 type: string
               override:
                 description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.

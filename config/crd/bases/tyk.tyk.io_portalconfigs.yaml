@@ -49,8 +49,7 @@ spec:
                 - namespace
                 type: object
               dcr_options:
-                description: DCROptions are the configuration metadata for dynamic
-                  client registration. To enable DCR, ensure EnableDCR is true.
+                description: DCROptions dynamic client registration options.
                 properties:
                   access_token:
                     description: AccessToken represents an optional bearer token to
@@ -130,6 +129,7 @@ spec:
               email:
                 type: string
               enable_dcr:
+                description: EnableDCR activates dynamic client registration.
                 type: boolean
               enable_multi_selection:
                 description: EnableMultiSelection enables subscribing to multiple
@@ -137,6 +137,7 @@ spec:
                   of exposed catalogues of the same authentication type
                 type: boolean
               id:
+                description: Set by the server. DO NOT set this field it is read only.
                 type: string
               key_request_fields:
                 items:
@@ -220,6 +221,7 @@ spec:
               oauth_usage_limit:
                 type: integer
               org_id:
+                description: OrgID is the organization ID
                 type: string
               override:
                 description: Override overides global settings. These Catalogue settings
