@@ -167,6 +167,36 @@ func main() {
 		}
 	}
 
+	if err = (&controllers.APIDescriptionReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("APIDescription"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "APIDescription")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.PortalAPICatalogueReconciler{
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("PortalAPICatalogue"),
+		Scheme:    mgr.GetScheme(),
+		Universal: universalClient,
+		Env:       env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PortalAPICatalogue")
+		os.Exit(1)
+	}
+	if err = (&controllers.PortalConfigReconciler{
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("PortalConfig"),
+		Scheme:    mgr.GetScheme(),
+		Universal: universalClient,
+		Env:       env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PortalConfig")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

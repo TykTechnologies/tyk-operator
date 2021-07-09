@@ -84,7 +84,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	var queue bool
 	var queueA time.Duration
 	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -124,7 +123,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				// upload the certificate
 				tykCertID, err = r.UniversalClient.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
 				if err != nil {
-					queue = true
 					return err
 				}
 			}
@@ -135,8 +133,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.updateLinkedPolicies(ctx, desired)
 		targets := desired.Spec.CollectLoopingTarget()
 		if err := r.ensureTargets(ctx, targets); err != nil {
-			// We make sure all targets are available
-			queueA = queueAfter
 			return err
 		}
 		err := r.updateLoopingTargets(ctx, desired, targets)
@@ -147,33 +143,51 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
-			_, err := r.UniversalClient.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
-			if err != nil {
-				log.Error(err, "Failed to create api definition")
-				return err
-			}
-			desired.Status.ApiID = desired.Spec.APIID
-			err = r.Status().Update(ctx, desired)
-			if err != nil {
-				log.Error(err, "Could not update Status ID")
-			}
-			r.UniversalClient.HotReload(ctx)
-			return client.IgnoreNotFound(err)
+			return r.create(ctx, desired, log)
 		}
-		log.Info("Updating ApiDefinition")
-		desired.Spec.APIID = desired.Status.ApiID
-		_, err = r.UniversalClient.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
-		if err != nil {
-			log.Error(err, "Failed to update api definition")
-			return err
-		}
-		r.UniversalClient.HotReload(ctx)
-		return nil
+		return r.update(ctx, desired, log)
 	})
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
+	} else {
+		queueA = queueAfter
 	}
-	return ctrl.Result{Requeue: queue, RequeueAfter: queueA}, err
+	return ctrl.Result{RequeueAfter: queueA}, err
+}
+
+func (r *ApiDefinitionReconciler) create(
+	ctx context.Context,
+	desired *tykv1alpha1.ApiDefinition,
+	log logr.Logger,
+) error {
+	log.Info("Creating new  ApiDefinition")
+	_, err := r.UniversalClient.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+	if err != nil {
+		log.Error(err, "Failed to create api definition")
+		return err
+	}
+	desired.Status.ApiID = desired.Spec.APIID
+	err = r.Status().Update(ctx, desired)
+	if err != nil {
+		log.Error(err, "Could not update Status ID")
+	}
+	r.UniversalClient.HotReload(ctx)
+	return nil
+}
+
+func (r *ApiDefinitionReconciler) update(
+	ctx context.Context,
+	desired *tykv1alpha1.ApiDefinition,
+	log logr.Logger,
+) error {
+	log.Info("Updating ApiDefinition")
+	_, err := r.UniversalClient.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+	if err != nil {
+		log.Error(err, "Failed to update api definition")
+		return err
+	}
+	r.UniversalClient.HotReload(ctx)
+	return nil
 }
 
 // This triggers an update to all ingress resources that have template

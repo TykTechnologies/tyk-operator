@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -89,6 +90,8 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	})
 	if err == nil {
 		r.Log.Info("Completed reconciling SecurityPolicy instance")
+	} else {
+		reqA = queueAfter
 	}
 	return ctrl.Result{RequeueAfter: reqA}, err
 }
@@ -120,17 +123,25 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
 		return err
 	}
-	def, err := r.UniversalClient.Api().Get(ctx, api.Status.ApiID)
-	if err != nil {
-		return err
+	if api.Status.ApiID == "" {
+		return opclient.ErrNotFound
 	}
-	a.APIID = def.APIID
-	a.APIName = def.Name
+	a.APIID = api.Status.ApiID
+	a.APIName = api.Spec.Name
 	return nil
 }
 
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Deleting policy")
+	all, err := r.UniversalClient.Portal().Catalogue().Get(ctx)
+	if err != nil {
+		return err
+	}
+	for _, v := range all.APIS {
+		if v.PolicyID == policy.Status.PolID {
+			return fmt.Errorf("cannot delete policy due to catalogue %q dependency", all.Id)
+		}
+	}
 	util.RemoveFinalizer(policy, policyFinalizer)
 	if err := r.UniversalClient.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
 		if opclient.IsNotFound(err) {
@@ -140,7 +151,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		r.Log.Error(err, "Failed to delete resource")
 		return err
 	}
-	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
 		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
 	})
 	if err != nil {

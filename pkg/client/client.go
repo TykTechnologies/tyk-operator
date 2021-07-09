@@ -28,6 +28,7 @@ var ErrTODO = errors.New("TODO: This feature is not implemented yet")
 
 // ErrNotFound is returned when an api call returns 404
 var ErrNotFound = errors.New("Resource not found")
+var ErrFailed = errors.New("Failed api call")
 
 func IsTODO(err error) bool {
 	return errors.Is(err, ErrTODO)
@@ -167,13 +168,21 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 	}
 	values = append(values)
 	rctx.Log.Info("Call", values...)
-	if err == nil && res.StatusCode == http.StatusNotFound {
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
 		defer res.Body.Close()
 		b, _ := ioutil.ReadAll(res.Body)
 		if len(b) > 0 {
-			rctx.Log.Info("404 response", "body", string(b))
+			rctx.Log.Info(http.StatusText(res.StatusCode), "body", string(b))
 		}
-		return nil, ErrNotFound
+		switch res.StatusCode {
+		case http.StatusNotFound:
+			return nil, ErrNotFound
+		default:
+			return nil, ErrFailed
+		}
 	}
 	return res, err
 }

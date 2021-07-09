@@ -1,0 +1,364 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: apidescriptions.tyk.tyk.io
+spec:
+  group: tyk.tyk.io
+  names:
+    kind: APIDescription
+    listKind: APIDescriptionList
+    plural: apidescriptions
+    singular: apidescription
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: APIDescription is the Schema for the apidescriptions API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: APIDescriptionSpec defines the desired state of APIDescription
+            properties:
+              auth_type:
+                description: AuthType displays as a badge next to the name of the
+                  API
+                enum:
+                - keyless
+                - jwt
+                - oauth
+                - authToken
+                type: string
+              config:
+                description: 'Config allows you to optionally override various fields
+                  in the PortalConfig. TODO: This is an advanced capability which
+                  has not been fully tested with Tyk Operator as yet.'
+                properties:
+                  catalogue_login_only:
+                    description: CatalogueLoginOnly limits access to catalogues for
+                      login users only.
+                    type: boolean
+                  dcr_options:
+                    description: DCROptions dynamic client registration options.
+                    properties:
+                      access_token:
+                        description: AccessToken represents an optional bearer token
+                          to authenticate with against the registration endpoint
+                        type: string
+                      grant_types:
+                        description: GrantTypes is an array of OAuth 2.0 grant type
+                          strings that the client can use at the token endpoint.
+                        items:
+                          enum:
+                          - client_credentials
+                          - authorization_code
+                          - refresh_token
+                          type: string
+                        type: array
+                      idp_host:
+                        description: IDPHost is the fully qualified hostname of the
+                          Identity Provider. e.g. https://mysubdomain.eu.auth0.com
+                        type: string
+                      provider:
+                        description: Provider is an optional enum of the provider
+                          which allows Tyk to register clients outside the standard
+                          DCR spec and perform provider specific logic. If your provider
+                          is not in this list, please omit. Upon failure, submit a
+                          support ticket so that we may extend support for your provider.
+                        enum:
+                        - gluu
+                        - keycloak
+                        - okta
+                        type: string
+                      registration_endpoint:
+                        description: RegistrationEndpoint is the registration_endpoint
+                          as presented in the /.well-known/openid-configuration document.
+                        type: string
+                      response_types:
+                        description: ResponseTypes is an array of OAuth 2.0 response
+                          type strings that the client can use at the authorization
+                          endpoint.
+                        items:
+                          enum:
+                          - code
+                          - token
+                          type: string
+                        type: array
+                      token_endpoint_auth_method:
+                        description: 'TokenEndpointAuthMethod is an indicator of the
+                          requested authentication method for the token endpoint.
+                          "none": The client is a public client and does not have
+                          a client secret. "client_secret_post": The client uses the
+                          HTTP POST parameters "client_secret_basic": The client uses
+                          HTTP Basic authentication'
+                        enum:
+                        - client_secret_basic
+                        - client_secret_post
+                        - client_secret_jwt
+                        - private_key_jwt
+                        - none
+                        type: string
+                    required:
+                    - grant_types
+                    - idp_host
+                    - registration_endpoint
+                    - token_endpoint_auth_method
+                    type: object
+                  disable_auto_login:
+                    type: boolean
+                  disable_login:
+                    description: DisableLogin disables login on developer portal.If
+                      you do not want developers to be able to login, set this value
+                      to true. You can use this configuration option in the portal
+                      templates to display or hide the login form as well as disabling
+                      the actual login method.
+                    type: boolean
+                  disable_signup:
+                    description: DisableSignup stop developer sign-up to the portal.This
+                      will stop developers from being able to signup, they will need
+                      to be created manually, or assigned keys via the key management
+                      API.
+                    type: boolean
+                  email:
+                    type: string
+                  enable_dcr:
+                    description: EnableDCR activates dynamic client registration.
+                    type: boolean
+                  enable_multi_selection:
+                    description: EnableMultiSelection enables subscribing to multiple
+                      APIs with single key.User will be able subscript any combination
+                      of exposed catalogues of the same authentication type
+                    type: boolean
+                  id:
+                    description: Set by the server. DO NOT set this field it is read
+                      only.
+                    type: string
+                  key_request_fields:
+                    description: KeyRequestFields is a slice of fields which are asked
+                      of the portal developer when requesting an api key
+                    items:
+                      type: string
+                    type: array
+                  mail_options:
+                    properties:
+                      email_copy:
+                        properties:
+                          key_email:
+                            properties:
+                              body:
+                                type: string
+                              enabled:
+                                type: boolean
+                              hide_token_data:
+                                type: boolean
+                              sign_off:
+                                type: string
+                              subject:
+                                type: string
+                            required:
+                            - body
+                            - enabled
+                            - hide_token_data
+                            - sign_off
+                            - subject
+                            type: object
+                          reset_password_email:
+                            properties:
+                              body:
+                                type: string
+                              enabled:
+                                type: boolean
+                              hide_token_data:
+                                type: boolean
+                              sign_off:
+                                type: string
+                              subject:
+                                type: string
+                            required:
+                            - body
+                            - enabled
+                            - hide_token_data
+                            - sign_off
+                            - subject
+                            type: object
+                          welcome_email:
+                            properties:
+                              body:
+                                type: string
+                              enabled:
+                                type: boolean
+                              hide_token_data:
+                                type: boolean
+                              sign_off:
+                                type: string
+                              subject:
+                                type: string
+                            required:
+                            - body
+                            - enabled
+                            - hide_token_data
+                            - sign_off
+                            - subject
+                            type: object
+                        required:
+                        - key_email
+                        - reset_password_email
+                        - welcome_email
+                        type: object
+                      mail_from_email:
+                        type: string
+                      mail_from_name:
+                        type: string
+                    required:
+                    - email_copy
+                    - mail_from_email
+                    - mail_from_name
+                    type: object
+                  oauth_usage_limit:
+                    description: OAuthUsageLimit is the maximum permitted number of
+                      OAuth clients
+                    type: integer
+                  org_id:
+                    description: OrgID is the organization ID
+                    type: string
+                  override:
+                    description: Override overides global settings. These Catalogue
+                      settings are currently being overwritten by the Global Catalogue
+                      settings. Toggle the checkbox below to override them for this
+                      Catalogue.
+                    type: boolean
+                  redirect_on_key_request:
+                    description: RedirectOnKeyRequest redirects key requests. WHen
+                      set to true it will redirect key requests to the url specified
+                      in RedirectTo field
+                    type: boolean
+                  redirect_to:
+                    description: RedirectTo is a url used to redirect key requests
+                    type: string
+                  require_key_approval:
+                    description: RequireKeyApproval requires reviewing of all key
+                      requests before approving them. By default developers will auto-enroll
+                      into an API and be given an API key. If you wish to review key
+                      requests before giving developers access to the API, enable
+                      this option and you will manually need to approve them in the
+                      'Key requests' section of the dashboard.
+                    type: boolean
+                  secure_key_approval:
+                    description: SecureKeyApproval enables Secure key approval.By
+                      default, API keys when approved are sent in an email to the
+                      Developer. By enabling this option, the Developer will instead
+                      receive a link where they can go to generate the API key securely
+                    type: boolean
+                  signup_fields:
+                    description: SignUpFields is a slice of fields which are asked
+                      of the portal developer when they register for an account
+                    items:
+                      type: string
+                    type: array
+                type: object
+              contextRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              docs:
+                properties:
+                  doc_type:
+                    enum:
+                    - swagger
+                    - swagger_custom_url
+                    - graphql
+                    type: string
+                  documentation:
+                    type: string
+                required:
+                - doc_type
+                type: object
+              documentation:
+                description: Do not set Documentation. Use `docs` instead.
+                type: string
+              fields:
+                additionalProperties:
+                  type: string
+                description: Fields is a generic map of key:value pairs. You may wish
+                  to use this to tag a catalogue as type:internal or type:public Then
+                  apply logic at the template layer to dynamically display catalogue
+                  apis to different user types.
+                type: object
+              is_keyless:
+                description: IsKeyless toggles visibility of the `Request an API Key
+                  button`. Use this when AuthType is keyless, jwt or oauth.
+                type: boolean
+              long_description:
+                description: LongDescription can be markdown. It allows you to describe
+                  the capabilities of the API and is displayed just below the name
+                  and AuthType in the catalogue listing page.
+                type: string
+              name:
+                description: Name is the title of the API that you wish to be published
+                  to the catalogue
+                type: string
+              policy_id:
+                description: PolicyID explicitly sets the policy_id to be published.
+                  We do not recommend that this value is set directly. Rather, use
+                  `policyRef` instead.
+                type: string
+              policyRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              short_description:
+                description: 'TODO: I don''t think this is exposed to the default
+                  portal templates.'
+                type: string
+              show:
+                description: Show toggles visibility of the API in the portal catalogue
+                type: boolean
+              version:
+                default: v2
+                description: Version should always be v2
+                enum:
+                - v2
+                type: string
+            type: object
+          status:
+            description: APIDescriptionStatus defines the observed state of APIDescription
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

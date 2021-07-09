@@ -76,33 +76,32 @@ func httpContext(
 	object runtimeClient.Object,
 	log logr.Logger,
 ) (environmet.Env, context.Context) {
+	get := func(c *model.Target) {
+		if c == nil {
+			return
+		}
+		log.Info("Detected context for resource")
+		env, err := GetContext(
+			ctx, rClient, c, log,
+		)
+		if err != nil {
+			log.Error(err, "Failed to get context", "contextRef", c.String())
+		} else {
+			log.Info("Successful acquired context", "contextRef", c.String())
+			e.Environment = *env.Spec.Env
+		}
+	}
 	switch o := object.(type) {
 	case *v1alpha1.ApiDefinition:
-		if o.Spec.Context != nil {
-			log.Info("Detected context for resource")
-			env, err := GetContext(
-				ctx, rClient, o.Spec.Context, log,
-			)
-			if err != nil {
-				log.Error(err, "Failed to get context", "contextRef", o.Spec.Context.String())
-			} else {
-				log.Info("Successful acquired context", "contextRef", o.Spec.Context.String())
-				e.Environment = *env.Spec.Env
-			}
-		}
+		get(o.Spec.Context)
 	case *v1alpha1.SecurityPolicy:
-		if o.Spec.Context != nil {
-			log.Info("Detected context for resource")
-			env, err := GetContext(
-				ctx, rClient, o.Spec.Context, log,
-			)
-			if err != nil {
-				log.Error(err, "Failed to get context", "contextRef", o.Spec.Context.String())
-			} else {
-				log.Info("Successful acquired context", "contextRef", o.Spec.Context.String())
-				e.Environment = *env.Spec.Env
-			}
-		}
+		get(o.Spec.Context)
+	case *v1alpha1.PortalAPICatalogue:
+		get(o.Spec.Context)
+	case *v1alpha1.APIDescription:
+		get(o.Spec.Context)
+	case *v1alpha1.PortalConfig:
+		get(o.Spec.Context)
 	}
 	return e, client.SetContext(ctx, client.Context{
 		Env: e,

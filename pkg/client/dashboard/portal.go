@@ -15,3 +15,7 @@ func (Portal) Documentation() universal.Documentation {
 func (Portal) Catalogue() universal.Catalogue {
 	return Catalogue{}
 }
+
+func (Portal) Configuration() universal.Configuration {
+	return Configuration{}
+}
