@@ -111,7 +111,7 @@ func (r *PortalAPICatalogueReconciler) model(
 	for _, desc := range desired.Spec.APIDescriptionList {
 		if desc.APIDescriptionRef != nil {
 			var a v1alpha1.APIDescription
-			if err := r.Get(ctx, desc.APIDescriptionRef.NS(), &a); err != nil {
+			if err := r.Get(ctx, desc.APIDescriptionRef.NS(desired.Namespace), &a); err != nil {
 				return nil, err
 			}
 			updateJSON(&desc, &a.Spec)
@@ -121,7 +121,7 @@ func (r *PortalAPICatalogueReconciler) model(
 			// update security policy
 			log.Info("Updating PolicyID")
 			var sec v1alpha1.SecurityPolicy
-			if err := r.Get(ctx, desc.PolicyRef.NS(), &sec); err != nil {
+			if err := r.Get(ctx, desc.PolicyRef.NS(desired.Namespace), &sec); err != nil {
 				return nil, err
 			}
 			if sec.Status.PolID == "" {

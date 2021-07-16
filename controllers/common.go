@@ -120,18 +120,10 @@ func GetContext(
 	target *model.Target,
 	log logr.Logger,
 ) (*v1alpha1.OperatorContext, error) {
-	if target.Namespace != "" {
-		ns = target.Namespace
-	}
-	// avoid updating target because these changes will be saved with the parent
-	// object on create/update
-	newTarget := model.Target{
-		Name:      target.Name,
-		Namespace: ns,
-	}
+	newTarget := target.NS(ns)
 	log.Info("Getting context", "contextRef", newTarget.String())
 	var o v1alpha1.OperatorContext
-	err := client.Get(ctx, newTarget.NS(), &o)
+	err := client.Get(ctx, newTarget, &o)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +132,7 @@ func GetContext(
 	}
 	if o.Spec.FromSecret != nil {
 		var secret v1.Secret
-		if err := client.Get(ctx, o.Spec.FromSecret.NS(), &secret); err != nil {
+		if err := client.Get(ctx, o.Spec.FromSecret.NS(o.Namespace), &secret); err != nil {
 			return nil, err
 		}
 		value := func(key string, fn func(string) error) error {
