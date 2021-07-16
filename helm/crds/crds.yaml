@@ -248,7 +248,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               custom_middleware:
                 properties:
@@ -678,7 +677,6 @@ spec:
                             type: string
                         required:
                         - name
-                        - namespace
                         type: object
                     type: object
                   target_list:
@@ -1309,7 +1307,6 @@ spec:
                                             type: string
                                         required:
                                         - name
-                                        - namespace
                                         type: object
                                     type: object
                                   triggers:
@@ -1406,7 +1403,6 @@ spec:
                                                   type: string
                                               required:
                                               - name
-                                              - namespace
                                               type: object
                                           type: object
                                       required:
@@ -1564,7 +1560,6 @@ spec:
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_by_policies:
@@ -1579,7 +1574,6 @@ spec:
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_to_apis:
@@ -1594,7 +1588,6 @@ spec:
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
             required:
@@ -1845,7 +1838,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               docs:
                 properties:
@@ -1890,7 +1882,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               short_description:
                 description: 'TODO: I don''t think this is exposed to the default portal templates.'
@@ -1988,7 +1979,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
             type: object
           status:
@@ -2058,7 +2048,6 @@ spec:
                           type: string
                       required:
                       - name
-                      - namespace
                       type: object
                     auth_type:
                       description: AuthType displays as a badge next to the name of the API
@@ -2294,7 +2283,6 @@ spec:
                           type: string
                       required:
                       - name
-                      - namespace
                       type: object
                     short_description:
                       description: 'TODO: I don''t think this is exposed to the default portal templates.'
@@ -2321,7 +2309,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               email:
                 description: Email is Catalogue owner email address.Catalogue owner will be notified at this email address when an API subscription request is submitted or granted
@@ -2394,7 +2381,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               dcr_options:
                 description: DCROptions dynamic client registration options.
@@ -2728,7 +2714,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               enable_http_signature_validation:
                 type: boolean

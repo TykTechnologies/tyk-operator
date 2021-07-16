@@ -60,7 +60,6 @@ spec:
                           type: string
                       required:
                       - name
-                      - namespace
                       type: object
                     auth_type:
                       description: AuthType displays as a badge next to the name of
@@ -362,7 +361,6 @@ spec:
                           type: string
                       required:
                       - name
-                      - namespace
                       type: object
                     short_description:
                       description: 'TODO: I don''t think this is exposed to the default
@@ -395,7 +393,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               email:
                 description: Email is Catalogue owner email address.Catalogue owner

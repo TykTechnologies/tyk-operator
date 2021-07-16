@@ -156,7 +156,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               enable_http_signature_validation:
                 type: boolean

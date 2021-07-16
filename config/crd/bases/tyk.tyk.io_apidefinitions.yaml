@@ -289,7 +289,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               custom_middleware:
                 properties:
@@ -796,7 +795,6 @@ spec:
                             type: string
                         required:
                         - name
-                        - namespace
                         type: object
                     type: object
                   target_list:
@@ -1468,7 +1466,6 @@ spec:
                                             type: string
                                         required:
                                         - name
-                                        - namespace
                                         type: object
                                     type: object
                                   triggers:
@@ -1576,7 +1573,6 @@ spec:
                                                   type: string
                                               required:
                                               - name
-                                              - namespace
                                               type: object
                                           type: object
                                       required:
@@ -1737,7 +1733,6 @@ spec:
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_by_policies:
@@ -1755,7 +1750,6 @@ spec:
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_to_apis:
@@ -1773,7 +1767,6 @@ spec:
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
             required:

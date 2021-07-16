@@ -284,7 +284,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               docs:
                 properties:
@@ -340,7 +339,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               short_description:
                 description: 'TODO: I don''t think this is exposed to the default

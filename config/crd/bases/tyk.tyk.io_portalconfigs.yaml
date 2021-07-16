@@ -52,7 +52,6 @@ spec:
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               dcr_options:
                 description: DCROptions dynamic client registration options.
