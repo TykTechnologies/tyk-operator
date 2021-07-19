@@ -197,7 +197,7 @@ package-helm:
 	mkdir -p ${TPM_CHARTS_PACKAGE}
 	helm repo index --merge ${TPM_CHARTS_PACKAGE}/index.yaml --url  https://tyktechnologies.github.io/tyk-operator ${TPM_CHARTS_PACKAGE}
 
-update-gh-pages: package-helm
+update-helm-repo: package-helm
 	git checkout gh-pages
 	cp -r ${TPM_CHARTS_PACKAGE}/ .
 
