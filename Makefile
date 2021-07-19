@@ -200,9 +200,10 @@ package-helm:
 CURRENT_BRANCH=$(git branch --show-current)
 
 publish-helm: package-helm
+	git branch --show-current >>tmp/current_branch
 	git checkout gh-pages
 	cp -r ${TPM_CHARTS_PACKAGE} .
 	git add .
 	git commit -m "version to: v${VERSION}"
-	git checkout ${CURRENT_BRANCH}
+	git checkout $(cat tmp/current_branch)
 
