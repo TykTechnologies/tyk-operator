@@ -202,4 +202,5 @@ publish-helm: package-helm
 	cp -r ${TPM_CHARTS_PACKAGE} .
 	git add .
 	git commit -m "version to: v${VERSION}"
+	git push origin gh-pages
 
