@@ -190,3 +190,19 @@ bdd:
 
 .PHONY: test-all
 test-all: test bdd
+
+TPM_CHARTS_PACKAGE=tmp/charts
+.PHONY: package-helm
+package-helm:
+	mkdir -p ${TPM_CHARTS_PACKAGE}
+	helm repo index --merge ${TPM_CHARTS_PACKAGE}/index.yaml --url  https://tyktechnologies.github.io/tyk-operator ${TPM_CHARTS_PACKAGE}
+
+CURRENT_BRANCH=$(git branch --show-current)
+
+publish-helm: package-helm
+	git checkout gh-pages
+	cp - ${TPM_CHARTS_PACKAGE} .
+	git add .
+	git commit -m "version to: v${VERSION}"
+	git checkout ${CURRENT_BRANCH}
+
