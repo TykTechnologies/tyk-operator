@@ -201,7 +201,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 
 publish-helm: package-helm
 	git checkout gh-pages
-	cp - ${TPM_CHARTS_PACKAGE} .
+	cp -r ${TPM_CHARTS_PACKAGE} .
 	git add .
 	git commit -m "version to: v${VERSION}"
 	git checkout ${CURRENT_BRANCH}
