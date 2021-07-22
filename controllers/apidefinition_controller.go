@@ -414,7 +414,7 @@ func (r *ApiDefinitionReconciler) updateStatus(
 				return nil
 			}
 		}
-		return fmt.Errorf("unable to get api %v %v", target, err)
+		return fmt.Errorf("unable to get api %v %v", target.NS(ns), err)
 	}
 	fn(&api.Status)
 	return r.Status().Update(ctx, &api)
