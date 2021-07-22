@@ -82,7 +82,7 @@ func httpContext(
 		}
 		log.Info("Detected context for resource")
 		env, err := GetContext(
-			ctx, rClient, c, log,
+			ctx, object.GetNamespace(), rClient, c, log,
 		)
 		if err != nil {
 			log.Error(err, "Failed to get context", "contextRef", c.String())
@@ -115,13 +115,15 @@ func httpContext(
 // takes precedence over the values from secret
 func GetContext(
 	ctx context.Context,
+	ns string,
 	client runtimeClient.Client,
 	target *model.Target,
 	log logr.Logger,
 ) (*v1alpha1.OperatorContext, error) {
-	log.Info("Getting context", "contextRef", target.String())
+	newTarget := target.NS(ns)
+	log.Info("Getting context", "contextRef", newTarget.String())
 	var o v1alpha1.OperatorContext
-	err := client.Get(ctx, target.NS(), &o)
+	err := client.Get(ctx, newTarget, &o)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +132,7 @@ func GetContext(
 	}
 	if o.Spec.FromSecret != nil {
 		var secret v1.Secret
-		if err := client.Get(ctx, o.Spec.FromSecret.NS(), &secret); err != nil {
+		if err := client.Get(ctx, o.Spec.FromSecret.NS(o.Namespace), &secret); err != nil {
 			return nil, err
 		}
 		value := func(key string, fn func(string) error) error {
