@@ -241,12 +241,13 @@ spec:
                 description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               custom_middleware:
                 properties:
@@ -669,12 +670,13 @@ spec:
                         description: API a namespaced/name to the api definition resource that you are targetting
                         properties:
                           name:
+                            description: k8s resource name
                             type: string
                           namespace:
+                            description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                             type: string
                         required:
                         - name
-                        - namespace
                         type: object
                     type: object
                   target_list:
@@ -1298,12 +1300,13 @@ spec:
                                         description: API a namespaced/name to the api definition resource that you are targetting
                                         properties:
                                           name:
+                                            description: k8s resource name
                                             type: string
                                           namespace:
+                                            description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                                             type: string
                                         required:
                                         - name
-                                        - namespace
                                         type: object
                                     type: object
                                   triggers:
@@ -1393,12 +1396,13 @@ spec:
                                               description: API a namespaced/name to the api definition resource that you are targetting
                                               properties:
                                                 name:
+                                                  description: k8s resource name
                                                   type: string
                                                 namespace:
+                                                  description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                                                   type: string
                                               required:
                                               - name
-                                              - namespace
                                               type: object
                                           type: object
                                       required:
@@ -1549,12 +1553,13 @@ spec:
                 items:
                   properties:
                     name:
+                      description: k8s resource name
                       type: string
                     namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_by_policies:
@@ -1562,12 +1567,13 @@ spec:
                 items:
                   properties:
                     name:
+                      description: k8s resource name
                       type: string
                     namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_to_apis:
@@ -1575,12 +1581,13 @@ spec:
                 items:
                   properties:
                     name:
+                      description: k8s resource name
                       type: string
                     namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
             required:
@@ -1824,12 +1831,13 @@ spec:
               contextRef:
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               docs:
                 properties:
@@ -1867,12 +1875,13 @@ spec:
               policyRef:
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               short_description:
                 description: 'TODO: I don''t think this is exposed to the default portal templates.'
@@ -1963,12 +1972,13 @@ spec:
                 description: Reference to k8s secret resource that we load environment from.
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
             type: object
           status:
@@ -2031,12 +2041,13 @@ spec:
                     apiDescriptionRef:
                       properties:
                         name:
+                          description: k8s resource name
                           type: string
                         namespace:
+                          description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                           type: string
                       required:
                       - name
-                      - namespace
                       type: object
                     auth_type:
                       description: AuthType displays as a badge next to the name of the API
@@ -2265,12 +2276,13 @@ spec:
                     policyRef:
                       properties:
                         name:
+                          description: k8s resource name
                           type: string
                         namespace:
+                          description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                           type: string
                       required:
                       - name
-                      - namespace
                       type: object
                     short_description:
                       description: 'TODO: I don''t think this is exposed to the default portal templates.'
@@ -2290,12 +2302,13 @@ spec:
                 description: Context is reference to OperatorContext resource. Set this if you want to target a specific OperatorContext. When omitted default OperatorContext is used.
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               email:
                 description: Email is Catalogue owner email address.Catalogue owner will be notified at this email address when an API subscription request is submitted or granted
@@ -2361,12 +2374,13 @@ spec:
               contextRef:
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               dcr_options:
                 description: DCROptions dynamic client registration options.
@@ -2693,12 +2707,13 @@ spec:
                 description: Reference to k8s secret resource that we load environment from.
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               enable_http_signature_validation:
                 type: boolean

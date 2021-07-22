@@ -258,8 +258,11 @@ func (i RewriteToInternal) String() string {
 }
 
 type Target struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	// k8s resource name
+	Name string `json:"name"`
+	// The k8s namespace of the resource being targetted. When omitted this will be
+	// set to the namespace of the object that is being reconciled.
+	Namespace string `json:"namespace,omitempty"`
 }
 
 func (t *Target) Parse(v string) {
@@ -272,7 +275,7 @@ func (t *Target) Parse(v string) {
 }
 
 func (t Target) String() string {
-	return t.NS().String()
+	return t.NS("").String()
 }
 
 // Equal returns true if t and o are equal
@@ -280,8 +283,11 @@ func (t Target) Equal(o Target) bool {
 	return t.Namespace == o.Namespace && t.Name == o.Name
 }
 
-func (t Target) NS() types.NamespacedName {
-	return types.NamespacedName{Namespace: t.Namespace, Name: t.Name}
+func (t Target) NS(defaultNS string) types.NamespacedName {
+	if t.Namespace != "" {
+		defaultNS = t.Namespace
+	}
+	return types.NamespacedName{Namespace: defaultNS, Name: t.Name}
 }
 
 type VirtualMeta struct {

@@ -280,12 +280,15 @@ spec:
                   object used for reconciling this APIDefinition
                 properties:
                   name:
+                    description: k8s resource name
                     type: string
                   namespace:
+                    description: The k8s namespace of the resource being targetted.
+                      When omitted this will be set to the namespace of the object
+                      that is being reconciled.
                     type: string
                 required:
                 - name
-                - namespace
                 type: object
               custom_middleware:
                 properties:
@@ -783,12 +786,15 @@ spec:
                           that you are targetting
                         properties:
                           name:
+                            description: k8s resource name
                             type: string
                           namespace:
+                            description: The k8s namespace of the resource being targetted.
+                              When omitted this will be set to the namespace of the
+                              object that is being reconciled.
                             type: string
                         required:
                         - name
-                        - namespace
                         type: object
                     type: object
                   target_list:
@@ -1450,12 +1456,16 @@ spec:
                                           api definition resource that you are targetting
                                         properties:
                                           name:
+                                            description: k8s resource name
                                             type: string
                                           namespace:
+                                            description: The k8s namespace of the
+                                              resource being targetted. When omitted
+                                              this will be set to the namespace of
+                                              the object that is being reconciled.
                                             type: string
                                         required:
                                         - name
-                                        - namespace
                                         type: object
                                     type: object
                                   triggers:
@@ -1552,12 +1562,17 @@ spec:
                                                 are targetting
                                               properties:
                                                 name:
+                                                  description: k8s resource name
                                                   type: string
                                                 namespace:
+                                                  description: The k8s namespace of
+                                                    the resource being targetted.
+                                                    When omitted this will be set
+                                                    to the namespace of the object
+                                                    that is being reconciled.
                                                   type: string
                                               required:
                                               - name
-                                              - namespace
                                               type: object
                                           type: object
                                       required:
@@ -1709,12 +1724,15 @@ spec:
                 items:
                   properties:
                     name:
+                      description: k8s resource name
                       type: string
                     namespace:
+                      description: The k8s namespace of the resource being targetted.
+                        When omitted this will be set to the namespace of the object
+                        that is being reconciled.
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_by_policies:
@@ -1723,12 +1741,15 @@ spec:
                 items:
                   properties:
                     name:
+                      description: k8s resource name
                       type: string
                     namespace:
+                      description: The k8s namespace of the resource being targetted.
+                        When omitted this will be set to the namespace of the object
+                        that is being reconciled.
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
               linked_to_apis:
@@ -1737,12 +1758,15 @@ spec:
                 items:
                   properties:
                     name:
+                      description: k8s resource name
                       type: string
                     namespace:
+                      description: The k8s namespace of the resource being targetted.
+                        When omitted this will be set to the namespace of the object
+                        that is being reconciled.
                       type: string
                   required:
                   - name
-                  - namespace
                   type: object
                 type: array
             required:
