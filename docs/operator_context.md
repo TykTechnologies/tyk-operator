@@ -120,7 +120,7 @@ envFrom:
 ```
 That loads the default env from secret `tyk-operator-conf` . This might not be desired if you are already using operator context for resources.
 
-One work around is to set dummy values that way the operator will start, and provide valid context when appllying resources that will be used by the operator for reconciliation.
+One work around is to set dummy values that way the operator will start, and provide valid context when applying resources that will be used by the operator for reconciliation.
 
 You can update your `values.yaml` to include
 
