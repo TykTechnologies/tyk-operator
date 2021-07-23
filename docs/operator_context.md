@@ -107,3 +107,35 @@ spec:
 ```
 
 Then `httpbin-with-context` api will be created on the gateway defined in  the `community-edition` `OperatorContext` resource.
+
+
+# Default Context
+The operator will not start without a valid context.
+
+With  our helm charts we have
+```
+envFrom:
+  - secretRef:
+      name: tyk-operator-conf
+```
+That loads the default env from secret `tyk-operator-conf` . This might not be desired if you are already using operator context for resources.
+
+One work around is to set dummy values that way the operator will start, and provide valid context when applying resources that will be used by the operator for reconciliation.
+
+You can update your `values.yaml` to include
+
+```yaml
+envFrom:
+
+envVars:
+  - name: TYK_AUTH
+    value: "xxx"
+  - name: TYK_ORG
+    value: "xxx"
+  - name: TYK_MODE
+    value: "pro"
+  - name: TYK_URL
+    value: "xxx"
+```
+
+This workaround will not be required in `v0.8.0` release
