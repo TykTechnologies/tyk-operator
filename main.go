@@ -33,9 +33,6 @@ import (
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/gateway"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	// +kubebuilder:scaffold:imports
 )
@@ -99,21 +96,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Initialize universal client
-	var universalClient universal.Client
-	universalClient = gateway.Client{}
-	if env.Mode == "pro" {
-		universalClient = dashboard.Client{}
-	}
-
 	a := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
 	if err = (&controllers.ApiDefinitionReconciler{
-		Client:          mgr.GetClient(),
-		Log:             a,
-		Scheme:          mgr.GetScheme(),
-		UniversalClient: universalClient,
-		Env:             env,
-		Recorder:        mgr.GetEventRecorderFor("apidefinition-controller"),
+		Client:   mgr.GetClient(),
+		Log:      a,
+		Scheme:   mgr.GetScheme(),
+		Env:      env,
+		Recorder: mgr.GetEventRecorderFor("apidefinition-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApiDefinition")
 		os.Exit(1)
@@ -121,12 +110,11 @@ func main() {
 
 	il := ctrl.Log.WithName("controllers").WithName("Ingress")
 	if err = (&controllers.IngressReconciler{
-		Client:          mgr.GetClient(),
-		Log:             il,
-		Scheme:          mgr.GetScheme(),
-		UniversalClient: universalClient,
-		Env:             env,
-		Recorder:        mgr.GetEventRecorderFor("ingress-controller"),
+		Client:   mgr.GetClient(),
+		Log:      il,
+		Scheme:   mgr.GetScheme(),
+		Env:      env,
+		Recorder: mgr.GetEventRecorderFor("ingress-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Ingress")
 		os.Exit(1)
@@ -134,23 +122,21 @@ func main() {
 
 	sl := ctrl.Log.WithName("controllers").WithName("SecretCert")
 	if err = (&controllers.SecretCertReconciler{
-		Client:          mgr.GetClient(),
-		Log:             sl,
-		Scheme:          mgr.GetScheme(),
-		UniversalClient: universalClient,
-		Env:             env,
+		Client: mgr.GetClient(),
+		Log:    sl,
+		Scheme: mgr.GetScheme(),
+		Env:    env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
 		os.Exit(1)
 	}
 	sp := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
 	if err = (&controllers.SecurityPolicyReconciler{
-		Client:          mgr.GetClient(),
-		Log:             sp,
-		Scheme:          mgr.GetScheme(),
-		Recorder:        mgr.GetEventRecorderFor("securitypolicy-controller"),
-		UniversalClient: universalClient,
-		Env:             env,
+		Client:   mgr.GetClient(),
+		Log:      sp,
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("securitypolicy-controller"),
+		Env:      env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityPolicy")
 		os.Exit(1)
@@ -178,21 +164,19 @@ func main() {
 	}
 
 	if err = (&controllers.PortalAPICatalogueReconciler{
-		Client:    mgr.GetClient(),
-		Log:       ctrl.Log.WithName("controllers").WithName("PortalAPICatalogue"),
-		Scheme:    mgr.GetScheme(),
-		Universal: universalClient,
-		Env:       env,
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("PortalAPICatalogue"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PortalAPICatalogue")
 		os.Exit(1)
 	}
 	if err = (&controllers.PortalConfigReconciler{
-		Client:    mgr.GetClient(),
-		Log:       ctrl.Log.WithName("controllers").WithName("PortalConfig"),
-		Scheme:    mgr.GetScheme(),
-		Universal: universalClient,
-		Env:       env,
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("PortalConfig"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PortalConfig")
 		os.Exit(1)

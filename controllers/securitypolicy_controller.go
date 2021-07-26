@@ -24,7 +24,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -41,11 +41,10 @@ const policyFinalizer = "finalizers.tyk.io/securitypolicy"
 // SecurityPolicyReconciler reconciles a SecurityPolicy object
 type SecurityPolicyReconciler struct {
 	client.Client
-	Log             logr.Logger
-	Scheme          *runtime.Scheme
-	UniversalClient universal.Client
-	Env             environmet.Env
-	Recorder        record.EventRecorder
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Env      environmet.Env
+	Recorder record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=securitypolicies,verbs=get;list;watch;create;update;patch;delete
@@ -133,7 +132,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Deleting policy")
-	all, err := r.UniversalClient.Portal().Catalogue().Get(ctx)
+	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		return err
 	}
@@ -143,7 +142,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		}
 	}
 	util.RemoveFinalizer(policy, policyFinalizer)
-	if err := r.UniversalClient.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
+	if err := klient.Universal.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
 		if opclient.IsNotFound(err) {
 			r.Log.Info("Policy not found")
 			return nil
@@ -168,7 +167,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	err = r.UniversalClient.Portal().Policy().Update(ctx, spec)
+	err = klient.Universal.Portal().Policy().Update(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to update policy")
 		return err
@@ -179,7 +178,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	r.UniversalClient.HotReload(ctx)
+	klient.Universal.HotReload(ctx)
 	r.Log.Info("Successfully updated Policy")
 	return nil
 }
@@ -190,7 +189,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		return err
 	}
-	err = r.UniversalClient.Portal().Policy().Create(ctx, spec)
+	err = klient.Universal.Portal().Policy().Create(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to create policy")
 		return err

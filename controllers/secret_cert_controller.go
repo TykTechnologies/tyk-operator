@@ -19,7 +19,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
@@ -39,10 +39,9 @@ const (
 // CertReconciler reconciles a Cert object
 type SecretCertReconciler struct {
 	client.Client
-	Log             logr.Logger
-	Scheme          *runtime.Scheme
-	UniversalClient universal.Client
-	Env             environmet.Env
+	Log    logr.Logger
+	Scheme *runtime.Scheme
+	Env    environmet.Env
 }
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update
@@ -76,12 +75,12 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			certID := orgID + certFingerPrint
 
 			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
-			if err := r.UniversalClient.Certificate().Delete(ctx, certID); err != nil {
+			if err := klient.Universal.Certificate().Delete(ctx, certID); err != nil {
 				log.Error(err, "unable to delete certificate")
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
 			}
 
-			if err := r.UniversalClient.HotReload(ctx); err != nil {
+			if err := klient.Universal.HotReload(ctx); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -155,7 +154,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	certID, err := r.UniversalClient.Certificate().Upload(ctx, tlsKey, tlsCrt)
+	certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -165,10 +164,10 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
 			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
 
-			apiDefObj, _ := r.UniversalClient.Api().Get(ctx, apiDef.Status.ApiID)
+			apiDefObj, _ := klient.Universal.Api().Get(ctx, apiDef.Status.ApiID)
 			apiDefObj.Certificates = []string{}
 			apiDefObj.Certificates = append(apiDefObj.Certificates, certID)
-			r.UniversalClient.Api().Update(ctx, apiDefObj)
+			klient.Universal.Api().Update(ctx, apiDefObj)
 
 			// TODO: we only care about 1 secret - we don't need to support multiple for mvp
 			break

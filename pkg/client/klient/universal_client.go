@@ -13,7 +13,7 @@ import (
 
 var _ universal.Client = (*Client)(nil)
 
-var UniversalClient = Client{}
+var Universal = Client{}
 
 func get(ctx context.Context) universal.Client {
 	r := client.GetContext(ctx)
@@ -23,6 +23,8 @@ func get(ctx context.Context) universal.Client {
 	return gateway.Client{}
 }
 
+// Implements universal.Client but picks the correct client dynamically based on
+// context.Context
 type Client struct{}
 
 func (Client) HotReload(ctx context.Context) error {
