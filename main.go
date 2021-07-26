@@ -63,10 +63,6 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
 	var env environmet.Env
-	if err := env.Parse(); err != nil {
-		setupLog.Error(err, "unable to configure Tyk Client")
-		os.Exit(1)
-	}
 	if env.Namespace == "" {
 		setupLog.Info("unable to get WatchNamespace, " +
 			"the manager will watch and manage resources in all Namespaces")
