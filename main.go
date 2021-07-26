@@ -63,6 +63,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
 	var env environmet.Env
+	env.Parse()
 	if env.Namespace == "" {
 		setupLog.Info("unable to get WatchNamespace, " +
 			"the manager will watch and manage resources in all Namespaces")
