@@ -34,6 +34,7 @@ import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	gwv1alpha1 "sigs.k8s.io/gateway-api/apis/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -45,6 +46,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
+	utilruntime.Must(gwv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(tykv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
@@ -178,6 +180,63 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "PortalConfig")
 		os.Exit(1)
 	}
+
+	// gateway api controllers
+	if err = (&controllers.GatewayClassReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("GatewayClass"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GatewayClass")
+		os.Exit(1)
+	}
+	if err = (&controllers.GatewayReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Gateway"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Gateway")
+		os.Exit(1)
+	}
+	if err = (&controllers.HTTPRouteReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("HTTPRoute"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "HTTPRoute")
+		os.Exit(1)
+	}
+	if err = (&controllers.TCPRouteReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("TCPRoute"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "TCPRoute")
+		os.Exit(1)
+	}
+	if err = (&controllers.TLSRouteReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("TLSRoute"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "TLSRoute")
+		os.Exit(1)
+	}
+	if err = (&controllers.UDPRouteReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("UDPRoute"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "UDPRoute")
+		os.Exit(1)
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
