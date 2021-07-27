@@ -82,6 +82,27 @@ rules:
 - apiGroups:
   - networking.x-k8s.io
   resources:
+  - backendpolicies
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.x-k8s.io
+  resources:
+  - backendpolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - networking.x-k8s.io
+  resources:
   - gatewayclasses
   verbs:
   - create
