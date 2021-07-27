@@ -182,6 +182,15 @@ func main() {
 	}
 
 	// gateway api controllers
+	if err = (&controllers.BackendPolicyReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("BackendPolicy"),
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackendPolicy")
+		os.Exit(1)
+	}
 	if err = (&controllers.GatewayClassReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("GatewayClass"),
