@@ -19,3 +19,5 @@ const (
 	IngressTemplateAnnotation          = "tyk.io/template"
 	DefaultIngressClassAnnotationValue = "tyk"
 )
+
+const GatewayAPI = "tyk.io/gateway-api"
