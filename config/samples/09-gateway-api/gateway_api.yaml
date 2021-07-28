@@ -1,0 +1,21 @@
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: OperatorContext
+metadata:
+  name: gateway-api
+spec:
+  secretRef:
+    namespace: tyk-operator-system
+    name: tyk-operator-conf
+---
+kind: GatewayClass
+apiVersion: networking.x-k8s.io/v1alpha1
+metadata:
+  name: tyk-gateway-class
+spec:
+  controller: tyk.io/gateway-api
+  parametersRef:
+    kind: OperatorContext
+    group: tyk.tyk.io/v1alpha1
+    name: gateway-api
+    scope: Namespace

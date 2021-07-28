@@ -287,6 +287,9 @@ func (t Target) NS(defaultNS string) types.NamespacedName {
 	if t.Namespace != "" {
 		defaultNS = t.Namespace
 	}
+	if defaultNS == "" {
+		defaultNS = "default"
+	}
 	return types.NamespacedName{Namespace: defaultNS, Name: t.Name}
 }
 

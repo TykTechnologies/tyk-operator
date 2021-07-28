@@ -114,7 +114,7 @@ func httpContext(
 	}), nil
 }
 
-// +kubebuilder:rbac:groups=tyk.tyk.io,resources=operatorcontexts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=operatorcontexts,verbs=get;list;watch;create;update;patch;delete;deletecollection
 
 // GetContext returns a OperatorContext resource from k8s cluster with
 // namespace/name derived from target. When Spec.FromSecret is provided this
