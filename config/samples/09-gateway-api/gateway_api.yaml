@@ -18,4 +18,5 @@ spec:
     kind: OperatorContext
     group: tyk.tyk.io/v1alpha1
     name: gateway-api
+    namespace: default
     scope: Namespace

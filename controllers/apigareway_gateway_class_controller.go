@@ -33,6 +33,8 @@ func (r *GatewayClassReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if err := r.Get(ctx, req.NamespacedName, &o); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	r.Log.Info("========> ", "ns", req.Namespace)
+
 	// skip if not operator class
 	if o.Spec.Controller != keys.GatewayAPI {
 		return ctrl.Result{}, nil
@@ -65,6 +67,14 @@ func (r *GatewayClassReconciler) validateParameters(
 			Message: "parametersRef is missing",
 		}
 	}
+	if !r.isNSScoped(p) || !r.hasNS(p) {
+		return metav1.Condition{
+			Type:    string(gwv1alpha1.GatewayClassConditionStatusAdmitted),
+			Status:  metav1.ConditionFalse,
+			Reason:  string(gwv1alpha1.GatewayClassNotAdmittedInvalidParameters),
+			Message: "parametersRef must be Namespace scoped and namespace must be set",
+		}
+	}
 	if p.Group != tykv1alpha1.GroupVersion.String() || p.Kind != "OperatorContext" {
 		return metav1.Condition{
 			Type:   string(gwv1alpha1.GatewayClassConditionStatusAdmitted),
@@ -95,6 +105,24 @@ func (r *GatewayClassReconciler) validateParameters(
 		Reason:  string(gwv1alpha1.GatewayClassConditionStatusAdmitted),
 		Message: "successful configured gateway class",
 	}
+}
+
+func (r *GatewayClassReconciler) isNSScoped(p *gwv1alpha1.ParametersReference) bool {
+	if p.Scope == nil {
+		return false
+	}
+
+	return *p.Scope == "Namespace"
+}
+
+func (r *GatewayClassReconciler) hasNS(p *gwv1alpha1.ParametersReference) bool {
+	if p.Namespace == nil {
+		return false
+	}
+	if *p.Namespace == "" {
+		return false
+	}
+	return true
 }
 
 func (r *GatewayClassReconciler) setCondition(
