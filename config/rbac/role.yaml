@@ -88,8 +88,13 @@ rules:
   resources:
   - operatorcontexts
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - tyk.tyk.io
   resources:
