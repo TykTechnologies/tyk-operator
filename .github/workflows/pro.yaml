@@ -14,7 +14,7 @@ jobs:
             "kindest/node:v1.18.19",
             "kindest/node:v1.19.11",
             "kindest/node:v1.20.7",
-            "kindest/node:v1.21.1"
+            "kindest/node:v1.21.1",
           ]
     steps:
       - name: checkout tyk-operator
@@ -24,6 +24,7 @@ jobs:
         with:
           wait: 2m
           node_image: ${{ matrix.k8s }}
+          config: hack/kind.yaml
       - name: install kubebuilder
         uses: RyanSiu1995/kubebuilder-action@v1.1
         with:
