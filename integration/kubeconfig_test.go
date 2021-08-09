@@ -10,13 +10,17 @@ import (
 )
 
 func isKind() bool {
+	kluster := os.Getenv("CLUSTER_NAME")
+	if kluster == "" {
+		kluster = "kind"
+	}
 	cmd := exec.Command("kind", "get", "clusters")
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
 		return false
 	}
-	return strings.Contains(buf.String(), "kind")
+	return strings.Contains(buf.String(), kluster)
 }
 
 func kubeConf(o io.Writer) error {
