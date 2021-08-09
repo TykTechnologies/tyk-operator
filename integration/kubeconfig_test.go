@@ -24,7 +24,11 @@ func isKind() bool {
 }
 
 func kubeConf(o io.Writer) error {
-	cmd := exec.Command("kind", "get", "kubeconfig")
+	kluster := os.Getenv("CLUSTER_NAME")
+	if kluster == "" {
+		kluster = "kind"
+	}
+	cmd := exec.Command("kind", "get", "kubeconfig", "--name", kluster)
 	cmd.Stdout = o
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
