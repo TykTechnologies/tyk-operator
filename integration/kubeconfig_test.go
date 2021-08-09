@@ -36,16 +36,15 @@ func setupKind() (string, error) {
 	if !isKind() {
 		return "", errors.New("Missing kind cluster")
 	}
-
 	f, err := os.CreateTemp("", "operator-kind-kubeconf")
 	if err != nil {
 		return "", err
 	}
 	if err := kubeConf(f); err != nil {
 		f.Close()
-		return "", os.RemoveAll(f.Name())
+		os.RemoveAll(f.Name())
+		return "", err
 	}
 	defer f.Close()
-
 	return f.Name(), nil
 }
