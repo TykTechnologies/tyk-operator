@@ -26,6 +26,7 @@ func isKind() bool {
 func kubeConf(o io.Writer) error {
 	cmd := exec.Command("kind", "get", "kubeconfig")
 	cmd.Stdout = o
+	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return err
 	}
