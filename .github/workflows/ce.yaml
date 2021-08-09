@@ -34,4 +34,4 @@ jobs:
       - name: bdd
         shell: bash
         run: |
-          TYK_MODE=ce make test-all
+          TYK_MODE=ce CLUSTER_NAME=chart-testing  make test-all
