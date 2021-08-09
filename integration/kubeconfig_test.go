@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -20,6 +21,7 @@ func isKind() bool {
 	if err := cmd.Run(); err != nil {
 		return false
 	}
+	fmt.Println(buf.String(), kluster)
 	return strings.Contains(buf.String(), kluster)
 }
 
