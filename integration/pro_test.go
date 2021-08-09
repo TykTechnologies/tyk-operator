@@ -5,7 +5,7 @@ import (
 )
 
 func TestPro(t *testing.T) {
-	if string(e.Mode) != "pro" {
+	if !isPro() {
 		t.Skip("Skipping pro tests")
 	}
 }
