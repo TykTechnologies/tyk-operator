@@ -2,12 +2,18 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+
+	"sigs.k8s.io/e2e-framework/klient"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
+
+type kubeConfigKey struct{}
 
 func isKind() bool {
 	kluster := os.Getenv("CLUSTER_NAME")
@@ -52,4 +58,22 @@ func setupKind() (string, error) {
 	}
 	defer f.Close()
 	return f.Name(), nil
+}
+
+func setupk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+	kubecfg, err := setupKind()
+	if err != nil {
+		return c1, err
+	}
+	client, err := klient.NewWithKubeConfigFile(kubecfg)
+	if err != nil {
+		return c1, err
+	}
+	c2.WithClient(client)
+	return context.WithValue(c1, kubeConfigKey{}, kubecfg), nil
+}
+
+func teardownk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+	kubecfg := c1.Value(kubeConfigKey{}).(string)
+	return c1, os.RemoveAll(kubecfg)
 }
