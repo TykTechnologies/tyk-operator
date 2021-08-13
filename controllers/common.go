@@ -173,7 +173,7 @@ func GetContext(
 			})
 		}
 		if e.Org == "" {
-			value(v1alpha1.TykAuth, func(s string) (err error) {
+			value(v1alpha1.TykORG, func(s string) (err error) {
 				e.Org = s
 				return
 			})
