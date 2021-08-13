@@ -105,7 +105,6 @@ func (e *E2EContext) Setup() error {
 		if err := e.CreateUsers(); err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
@@ -357,13 +356,16 @@ func (e *E2EContext) deleteOrg(name, id string) (err error) {
 }
 
 func (e *E2EContext) Cleanup() error {
-	for _, u := range e.Users {
-		e.deleteUser(u)
+	if isPro() {
+		for _, u := range e.Users {
+			e.deleteUser(u)
+		}
+		for _, v := range e.Orgs {
+			e.deleteOrg(v.Ownder, v.ID)
+		}
+		return e.deleteUser(e.Super.User)
 	}
-	for _, v := range e.Orgs {
-		e.deleteOrg(v.Ownder, v.ID)
-	}
-	return e.deleteUser(e.Super.User)
+	return nil
 }
 
 func setupE2E(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
