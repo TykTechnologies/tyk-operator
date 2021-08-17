@@ -70,7 +70,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	if desired.GetLabels()["template"] == "true" {
 		log.Info("Syncing template", "template", desired.Name)
@@ -84,7 +87,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	var queueA time.Duration
-	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			e, err := r.delete(ctx, desired)
 			queueA = e

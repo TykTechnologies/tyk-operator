@@ -75,10 +75,10 @@ func httpContext(
 	e environmet.Env,
 	object runtimeClient.Object,
 	log logr.Logger,
-) (environmet.Env, context.Context) {
-	get := func(c *model.Target) {
+) (environmet.Env, context.Context, error) {
+	get := func(c *model.Target) error {
 		if c == nil {
-			return
+			return nil
 		}
 		log.Info("Detected context for resource")
 		env, err := GetContext(
@@ -86,27 +86,32 @@ func httpContext(
 		)
 		if err != nil {
 			log.Error(err, "Failed to get context", "contextRef", c.String())
-		} else {
-			log.Info("Successful acquired context", "contextRef", c.String())
-			e.Environment = *env.Spec.Env
+			return err
 		}
+		log.Info("Successful acquired context", "contextRef", c.String())
+		e.Environment = *env.Spec.Env
+		return nil
 	}
+	var err error
 	switch o := object.(type) {
 	case *v1alpha1.ApiDefinition:
-		get(o.Spec.Context)
+		err = get(o.Spec.Context)
 	case *v1alpha1.SecurityPolicy:
-		get(o.Spec.Context)
+		err = get(o.Spec.Context)
 	case *v1alpha1.PortalAPICatalogue:
-		get(o.Spec.Context)
+		err = get(o.Spec.Context)
 	case *v1alpha1.APIDescription:
-		get(o.Spec.Context)
+		err = get(o.Spec.Context)
 	case *v1alpha1.PortalConfig:
-		get(o.Spec.Context)
+		err = get(o.Spec.Context)
+	}
+	if err != nil {
+		return environmet.Env{}, nil, err
 	}
 	return e, client.SetContext(ctx, client.Context{
 		Env: e,
 		Log: log,
-	})
+	}), nil
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=operatorcontexts,verbs=get;list;watch;create;update;patch;delete
