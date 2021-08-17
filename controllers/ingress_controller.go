@@ -27,7 +27,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
-	"k8s.io/api/networking/v1beta1"
+	netV1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -59,7 +59,7 @@ type IngressReconciler struct {
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	nsl := r.Log.WithValues("name", req.NamespacedName)
 
-	desired := &v1beta1.Ingress{}
+	desired := &netV1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -130,7 +130,7 @@ func (r *IngressReconciler) createAPI(
 	ctx context.Context, lg logr.Logger,
 	template *v1alpha1.ApiDefinition,
 	ns string,
-	desired *v1beta1.Ingress,
+	desired *netV1.Ingress,
 	env environmet.Env,
 ) error {
 	for _, rule := range desired.Spec.Rules {
@@ -152,15 +152,16 @@ func (r *IngressReconciler) createAPI(
 				api.Spec = *template.Spec.DeepCopy()
 				api.Spec.Name = name
 				api.Spec.Proxy.ListenPath = p.Path
-				api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", p.Backend.ServiceName,
-					ns, p.Backend.ServicePort.IntValue())
+				svc := p.Backend.Service
+				api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", svc.Name,
+					ns, svc.Port.Number)
 				if rule.Host != "" {
 					api.Spec.Domain = r.translateHost(rule.Host)
 				}
 				if env.Ingress.HTTPPort != 0 {
 					api.Spec.ListenPort = env.Ingress.HTTPPort
 				}
-				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(p.Backend.ServiceName, "cm-acme-http-solver") {
+				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(svc.Name, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
 						for _, host := range tls.Hosts {
 							if rule.Host == host {
@@ -194,7 +195,7 @@ func (r *IngressReconciler) translateHost(host string) string {
 	return strings.Replace(host, "*", "{?:[^.]+}", 1)
 }
 
-func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger, ns string, desired *v1beta1.Ingress) error {
+func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger, ns string, desired *netV1.Ingress) error {
 	var ids []string
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
@@ -247,7 +248,7 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	}
 	isOurIngress := func(o runtime.Object) bool {
 		switch e := o.(type) {
-		case *v1beta1.Ingress:
+		case *netV1.Ingress:
 			return e.GetAnnotations()[keys.IngressClassAnnotation] == watch
 		default:
 			return false
@@ -269,7 +270,7 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 // SetupWithManager initializes ingress controller manager
 func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.Ingress{}).
+		For(&netV1.Ingress{}).
 		Owns(&v1alpha1.ApiDefinition{}).
 		WithEventFilter(r.ingressClassEventFilter()).
 		Complete(r)
