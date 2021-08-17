@@ -9,12 +9,10 @@ jobs:
       matrix:
         k8s:
           [
-            "kindest/node:v1.16.15",
-            "kindest/node:v1.17.17",
-            "kindest/node:v1.18.19",
             "kindest/node:v1.19.11",
             "kindest/node:v1.20.7",
-            "kindest/node:v1.21.1"
+            "kindest/node:v1.21.1",
+            "kindest/node:v1.22.0",
           ]
     steps:
       - name: checkout tyk-operator
