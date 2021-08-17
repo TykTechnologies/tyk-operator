@@ -1,7 +1,6 @@
 package environmet
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -45,7 +44,7 @@ func (e Env) Merge(n Env) Env {
 }
 
 // Parse loads env vars into e and validates them, returning an error if validation fails.
-func (e *Env) Parse() error {
+func (e *Env) Parse() {
 	e.Namespace = strings.TrimSpace(os.Getenv(v1alpha1.WatchNamespace))
 	e.Mode = v1alpha1.OperatorContextMode(os.Getenv(v1alpha1.TykMode))
 	e.URL = strings.TrimSpace(os.Getenv(v1alpha1.TykURL))
@@ -57,29 +56,5 @@ func (e *Env) Parse() error {
 	e.IngressClass = os.Getenv(v1alpha1.IngressClass)
 	if e.Ingress.HTTPSPort == 0 {
 		e.Ingress.HTTPSPort = 8443
-	}
-	// verify
-	sample := []struct {
-		env, value string
-	}{
-		{v1alpha1.TykMode, string(e.Mode)},
-		{v1alpha1.TykURL, e.URL},
-		{v1alpha1.TykAuth, e.Auth},
-		{v1alpha1.TykORG, e.Org},
-	}
-	var ls []string
-	for _, v := range sample {
-		if v.value == "" {
-			ls = append(ls, v.env)
-		}
-	}
-	if len(ls) > 0 {
-		return fmt.Errorf("environment vars %v are missing", ls)
-	}
-	switch e.Mode {
-	case "oss", "ce", "pro":
-		return nil
-	default:
-		return fmt.Errorf("unknown TYK_MODE value %q", e.Mode)
 	}
 }

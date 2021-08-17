@@ -27,7 +27,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
@@ -35,10 +35,9 @@ import (
 // PortalConfigReconciler reconciles a PortalConfig object
 type PortalConfigReconciler struct {
 	client.Client
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
-	Universal universal.Client
-	Env       environmet.Env
+	Log    logr.Logger
+	Scheme *runtime.Scheme
+	Env    environmet.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalconfigs,verbs=get;list;watch;create;update;patch;delete
@@ -97,9 +96,9 @@ func (r *PortalConfigReconciler) create(
 	//
 	// We check if we have this object in dashboard already and we just update the
 	// object to match the resource state
-	conf, err := r.Universal.Portal().Configuration().Get(ctx)
+	conf, err := klient.Universal.Portal().Configuration().Get(ctx)
 	if err != nil {
-		res, err := r.Universal.Portal().Configuration().Create(ctx, &desired.Spec.PortalModelPortalConfig)
+		res, err := klient.Universal.Portal().Configuration().Create(ctx, &desired.Spec.PortalModelPortalConfig)
 		if err != nil {
 			return err
 		}
@@ -110,7 +109,7 @@ func (r *PortalConfigReconciler) create(
 	d := desired.Spec.PortalModelPortalConfig
 	d.Id = conf.Id
 	d.OrgID = conf.OrgID
-	_, err = r.Universal.Portal().Configuration().Update(ctx, &d)
+	_, err = klient.Universal.Portal().Configuration().Update(ctx, &d)
 	if err != nil {
 		log.Error(err, "Failed updating portal configuration")
 		return err
@@ -129,7 +128,7 @@ func (r *PortalConfigReconciler) update(
 	d := desired.Spec.PortalModelPortalConfig
 	d.Id = desired.Status.ID
 	d.OrgID = env.Org
-	_, err := r.Universal.Portal().Configuration().Update(ctx, &d)
+	_, err := klient.Universal.Portal().Configuration().Update(ctx, &d)
 	return err
 }
 
