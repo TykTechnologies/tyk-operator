@@ -63,10 +63,13 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx := httpContext(ctx, r.Client, r.Env, policy, log)
+	env, ctx, err := httpContext(ctx, r.Client, r.Env, policy, log)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	var reqA time.Duration
-	_, err := util.CreateOrUpdate(ctx, r.Client, policy, func() error {
+	_, err = util.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(policy, policyFinalizer) {
 				return r.delete(ctx, policy)

@@ -55,7 +55,10 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
