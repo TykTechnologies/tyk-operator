@@ -75,7 +75,11 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			return r.delete(ctx, desired, env, log)

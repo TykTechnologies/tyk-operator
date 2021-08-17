@@ -65,7 +65,10 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// set context for all api calls inside this reconciliation loop
-	env, ctx := httpContext(ctx, r.Client, r.Env, desired, nsl)
+	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, nsl)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
 	template := r.keyless()
