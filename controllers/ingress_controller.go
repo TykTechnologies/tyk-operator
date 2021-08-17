@@ -24,7 +24,6 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
@@ -46,11 +45,10 @@ import (
 // IngressReconciler watches and reconciles Ingress objects
 type IngressReconciler struct {
 	client.Client
-	Log             logr.Logger
-	Scheme          *runtime.Scheme
-	UniversalClient universal.Client
-	Env             environmet.Env
-	Recorder        record.EventRecorder
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Env      environmet.Env
+	Recorder record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
