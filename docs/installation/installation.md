@@ -1,7 +1,8 @@
 # Tyk Operator Installation
 
 - [Prerequisites](#prerequisites)
-- [Installing Tyk Gateway](#installing-tyk-gateway)
+- [Tyk Licensing](#tyk-licensing)
+- [Installing Tyk](#installing-tyk)
 - [Tyk Operator Configuration](#tyk-operator-configuration)
   - [Connecting Tyk Operator to Tyk Gateway](#connecting-tyk-operator-to-tyk-gateway)
   - [Watching Namespaces](#watching-namespaces)
