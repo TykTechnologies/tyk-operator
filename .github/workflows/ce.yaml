@@ -12,6 +12,7 @@ jobs:
         uses: helm/kind-action@v1.2.0
         with:
           wait: 2m
+          config: hack/kind.yaml
       - name: install kubebuilder
         uses: RyanSiu1995/kubebuilder-action@v1.1
         with:
@@ -19,7 +20,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.15.x
+          go-version: 1.16.x
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
@@ -33,4 +34,4 @@ jobs:
       - name: bdd
         shell: bash
         run: |
-          TYK_MODE=ce make test-all
+          TYK_MODE=ce CLUSTER_NAME=chart-testing  make test-all
