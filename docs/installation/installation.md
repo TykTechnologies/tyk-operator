@@ -29,6 +29,12 @@ Before running the operator
   "allow_explicit_policy_id": true
 },
 ```
+## Tyk Licensing
+
+Tyk Operator and Tyk Gateway are both 100% Open Source. Tyk Operator will operate on a single gateway.
+ 
+Feel free to reach to our commercial team (or your account manager for existing customers) if you need advice about architecture,
+ licensing, or just to discuss your requirements for runnning in HA, scaling across clusters, nodes & namespaces.
 
 ## Installing Tyk
 
