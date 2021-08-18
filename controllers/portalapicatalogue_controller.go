@@ -31,7 +31,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	uc "github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
@@ -39,10 +39,9 @@ import (
 // PortalAPICatalogueReconciler reconciles a PortalAPICatalogue object
 type PortalAPICatalogueReconciler struct {
 	client.Client
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
-	Universal universal.Client
-	Env       environmet.Env
+	Log    logr.Logger
+	Scheme *runtime.Scheme
+	Env    environmet.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalapicatalogues,verbs=get;list;watch;create;update;patch;delete
@@ -76,7 +75,11 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			return r.delete(ctx, desired, env, log)
@@ -155,7 +158,7 @@ func (r *PortalAPICatalogueReconciler) sync(
 			Documentation:     a.APIDocumentation.Documentation,
 			APIID:             a.PolicyID,
 		}
-		res, err := r.Universal.Portal().Documentation().Upload(ctx, d)
+		res, err := klient.Universal.Portal().Documentation().Upload(ctx, d)
 		if err != nil {
 			return err
 		}
@@ -169,10 +172,10 @@ func (r *PortalAPICatalogueReconciler) init(
 	desired *tykv1alpha1.PortalAPICatalogue,
 	env environmet.Env,
 ) (id string, err error) {
-	cat, err := r.Universal.Portal().Catalogue().Get(ctx)
+	cat, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		if uc.IsNotFound(err) {
-			result, err := r.Universal.Portal().Catalogue().Create(ctx, &model.APICatalogue{
+			result, err := klient.Universal.Portal().Catalogue().Create(ctx, &model.APICatalogue{
 				OrgId: env.Org,
 			})
 			if err != nil {
@@ -201,7 +204,7 @@ func (r *PortalAPICatalogueReconciler) create(
 		return err
 	}
 	m.Id = catalogueID
-	_, err = r.Universal.Portal().Catalogue().Update(ctx, m)
+	_, err = klient.Universal.Portal().Catalogue().Update(ctx, m)
 	if err != nil {
 		return err
 	}
@@ -220,7 +223,7 @@ func (r *PortalAPICatalogueReconciler) update(
 		return err
 	}
 	m.Id = desired.Status.ID
-	_, err = r.Universal.Portal().Catalogue().Update(ctx, m)
+	_, err = klient.Universal.Portal().Catalogue().Update(ctx, m)
 	if err != nil {
 		return err
 	}
@@ -235,7 +238,7 @@ func (r *PortalAPICatalogueReconciler) consolidate(
 	env environmet.Env,
 	log logr.Logger,
 ) error {
-	all, err := r.Universal.Portal().Catalogue().Get(ctx)
+	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		return err
 	}
@@ -249,7 +252,7 @@ func (r *PortalAPICatalogueReconciler) consolidate(
 		if v.Documentation != "" {
 			_, ok := m[v.Documentation]
 			if !ok {
-				_, err := r.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
+				_, err := klient.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
 				if err != nil {
 					if !uc.IsNotFound(err) {
 						return err
@@ -268,7 +271,7 @@ func (r *PortalAPICatalogueReconciler) delete(
 	log logr.Logger,
 ) error {
 	log.Info("Deleting PortalAPICatalogue")
-	all, err := r.Universal.Portal().Catalogue().Get(ctx)
+	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		return err
 	}
@@ -276,7 +279,7 @@ func (r *PortalAPICatalogueReconciler) delete(
 	for _, v := range all.APIS {
 		if v.Documentation != "" {
 			log.Info("Deleting", "Target", v.Documentation)
-			_, err := r.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
+			_, err := klient.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
 			if err != nil {
 				if !uc.IsNotFound(err) {
 					return err
@@ -286,7 +289,7 @@ func (r *PortalAPICatalogueReconciler) delete(
 	}
 	// There is no actual DELETE api for catalogue. What we can do is we can update
 	// the catalogue with zero APIDescription and remove the finalizer.
-	_, err = r.Universal.Portal().Catalogue().Update(ctx, &model.APICatalogue{
+	_, err = klient.Universal.Portal().Catalogue().Update(ctx, &model.APICatalogue{
 		Id:    desired.Status.ID,
 		OrgId: env.Org,
 	})

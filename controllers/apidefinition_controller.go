@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 
@@ -48,11 +48,10 @@ const queueAfter = time.Second * 5
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {
 	client.Client
-	Log             logr.Logger
-	Scheme          *runtime.Scheme
-	UniversalClient universal.Client
-	Env             environmet.Env
-	Recorder        record.EventRecorder
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Env      environmet.Env
+	Recorder record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete;deletecollection
@@ -71,7 +70,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx := httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	if desired.GetLabels()["template"] == "true" {
 		log.Info("Syncing template", "template", desired.Name)
@@ -85,7 +87,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	var queueA time.Duration
-	_, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
+	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			e, err := r.delete(ctx, desired)
 			queueA = e
@@ -118,10 +120,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 
 			tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
-			exists := r.UniversalClient.Certificate().Exists(ctx, tykCertID)
+			exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
 			if !exists {
 				// upload the certificate
-				tykCertID, err = r.UniversalClient.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
+				tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
 				if err != nil {
 					return err
 				}
@@ -161,7 +163,7 @@ func (r *ApiDefinitionReconciler) create(
 	log logr.Logger,
 ) error {
 	log.Info("Creating new  ApiDefinition")
-	_, err := r.UniversalClient.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+	_, err := klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 	if err != nil {
 		log.Error(err, "Failed to create api definition")
 		return err
@@ -171,7 +173,7 @@ func (r *ApiDefinitionReconciler) create(
 	if err != nil {
 		log.Error(err, "Could not update Status ID")
 	}
-	r.UniversalClient.HotReload(ctx)
+	klient.Universal.HotReload(ctx)
 	return nil
 }
 
@@ -181,12 +183,12 @@ func (r *ApiDefinitionReconciler) update(
 	log logr.Logger,
 ) error {
 	log.Info("Updating ApiDefinition")
-	_, err := r.UniversalClient.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+	_, err := klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
 	if err != nil {
 		log.Error(err, "Failed to update api definition")
 		return err
 	}
-	r.UniversalClient.HotReload(ctx)
+	klient.Universal.HotReload(ctx)
 	return nil
 }
 
@@ -274,12 +276,12 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			}
 		}
 		r.Log.Info("deleting api")
-		_, err := r.UniversalClient.Api().Delete(ctx, desired.Status.ApiID)
+		_, err := klient.Universal.Api().Delete(ctx, desired.Status.ApiID)
 		if err != nil {
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
-		err = r.UniversalClient.HotReload(ctx)
+		err = klient.Universal.HotReload(ctx)
 		if err != nil {
 			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
 			return 0, err
