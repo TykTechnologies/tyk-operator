@@ -1,0 +1,8 @@
+**
+!/api/**
+!/controllers/**
+!/pkg/**
+!go.mod
+!go.sum
+!main.go
+!manager.linux
