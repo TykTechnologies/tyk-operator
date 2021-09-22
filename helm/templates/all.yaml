@@ -403,6 +403,10 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+{{- with .Values.resources }}
+        resources:
+{{- toYaml . | nindent 10 }}
+{{- end }}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ include "tyk-operator-helm.fullname" . }}-controller-manager
