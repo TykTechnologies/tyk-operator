@@ -1,14 +1,14 @@
-replicaCount: 1
-
- # loads enviroment variables to the operator.
+replicaCount:
+  1
+  # loads enviroment variables to the operator.
 envFrom:
   - secretRef:
       name: tyk-operator-conf
 envVars:
-- name: TYK_HTTPS_INGRESS_PORT
-  value: "8443" 
-- name: TYK_HTTP_INGRESS_PORT
-  value: "8080"
+  - name: TYK_HTTPS_INGRESS_PORT
+    value: "8443"
+  - name: TYK_HTTP_INGRESS_PORT
+    value: "8080"
 
 image:
   repository: tykio/tyk-operator
@@ -24,3 +24,6 @@ podAnnotations: {}
 podSecurityContext:
   allowPrivilegeEscalation: false
 resources: {}
+
+rbac:
+  resources: {}

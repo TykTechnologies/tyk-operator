@@ -13,6 +13,7 @@ func main() {
 		{envFrom, envFromTPL},
 		{envVars, envVarsTPL},
 		{resources, resourcesTPL},
+		{resourcesRBAC, resourcesRBACTPL},
 		{annotation, annotationTPL},
 		{securityContext, securityContextTPL},
 
@@ -70,6 +71,14 @@ const resources = `        resources:
             cpu: 100m
             memory: 20Mi`
 const resourcesTPL = `{{- with .Values.resources }}
+        resources:
+{{- toYaml . | nindent 10 }}
+{{- end }}`
+
+const resourcesRBAC = `        resources:
+          limits:
+            cpu: 200m`
+const resourcesRBACTPL = `{{- with .Values.rbac.resources }}
         resources:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
