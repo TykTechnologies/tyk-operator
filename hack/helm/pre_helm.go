@@ -77,7 +77,12 @@ const resourcesTPL = `{{- with .Values.resources }}
 
 const resourcesRBAC = `        resources:
           limits:
-            cpu: 200m`
+            cpu: 50m
+            memory: 20Mi
+          requests:
+            cpu: 50m
+            memory: 20Mi`
+
 const resourcesRBACTPL = `{{- with .Values.rbac.resources }}
         resources:
 {{- toYaml . | nindent 10 }}
