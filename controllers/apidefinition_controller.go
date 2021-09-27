@@ -33,7 +33,6 @@ import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -227,7 +226,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 		util.AddFinalizer(a, keys.ApiDefTemplateFinalizerName)
 		return ctrl.Result{}, r.Update(ctx, a)
 	}
-	ls := v1beta1.IngressList{}
+	ls := netv1.IngressList{}
 	err := r.List(ctx, &ls,
 		client.InNamespace(ns),
 	)
