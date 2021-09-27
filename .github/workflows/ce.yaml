@@ -13,10 +13,6 @@ jobs:
         with:
           wait: 2m
           config: hack/kind.yaml
-      - name: install kubebuilder
-        uses: RyanSiu1995/kubebuilder-action@v1.1
-        with:
-          version: 2.3.1
       - name: Install Go
         uses: actions/setup-go@v2
         with:
