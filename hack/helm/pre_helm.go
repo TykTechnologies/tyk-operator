@@ -23,6 +23,7 @@ func main() {
 		{"IfNotPresent", "{{ .Values.image.pullPolicy }}"},
 		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
 		{"tykio/tyk-operator:latest", "{{ .Values.image.repository }}:{{ .Values.image.tag }}"},
+		{"gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0", "{{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}"},
 	}
 	for _, v := range m {
 		a = bytes.ReplaceAll(a, []byte(v.key), []byte(v.value))

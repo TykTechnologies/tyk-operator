@@ -28,3 +28,8 @@ resources: {}
 #specify necessary resources for kube-rbac-proxy container
 rbac:
   resources: {}
+# specify custom/internal repo name for kube-rbac-proxy container
+  image:
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    pullPolicy: IfNotPresent
+    tag: "v0.8.0"
