@@ -33,7 +33,8 @@ import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	"k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -199,7 +200,7 @@ func (r *ApiDefinitionReconciler) update(
 func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a *tykv1alpha1.ApiDefinition) (ctrl.Result, error) {
 	if !a.DeletionTimestamp.IsZero() {
 		if util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
-			ls := v1beta1.IngressList{}
+			ls := netv1.IngressList{}
 			err := r.List(ctx, &ls,
 				client.InNamespace(ns),
 			)
