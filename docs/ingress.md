@@ -57,7 +57,7 @@ spec:
 ```
 
 Pay particular attention to the ApiDefinition metadata. This specifies that we have an ApiDefinition object with the
- label `ingress: true`.
+ label `template: true`.
 
 When applying this manifest, the ApiDefinition reconciler's predicate filter will skip reconciliation. This will allow
  the ApiDefinition to be stored inside Kubernetes as a resource, but will not reconcile the ApiDefinition inside Tyk.
