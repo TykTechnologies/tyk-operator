@@ -32,12 +32,3 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Package helm and update gh-pages with helm repo"
-        run: |
-          make update-helm-repo
-      - name: "commit and publish helm repo"
-        uses: actions-js/push@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: "gh-pages"
-          force: true
