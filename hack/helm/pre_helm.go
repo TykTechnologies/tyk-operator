@@ -16,6 +16,7 @@ func main() {
 		{resourcesRBAC, resourcesRBACTPL},
 		{annotation, annotationTPL},
 		{securityContext, securityContextTPL},
+		{imageRBAC, imageRBACTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -23,7 +24,6 @@ func main() {
 		{"IfNotPresent", "{{ .Values.image.pullPolicy }}"},
 		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
 		{"tykio/tyk-operator:latest", "{{ .Values.image.repository }}:{{ .Values.image.tag }}"},
-		{"gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0", "{{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}"},
 	}
 	for _, v := range m {
 		a = bytes.ReplaceAll(a, []byte(v.key), []byte(v.value))
@@ -95,3 +95,10 @@ const securityContextTPL = `{{- with .Values.securityContext }}
         securityContext:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
+
+const imageRBAC = `        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        name: kube-rbac-proxy`
+
+const imageRBACTPL = `        image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
+        imagePullPolicy: {{ .Values.rbac.image.pullPolicy }}
+        name: kube-rbac-proxy`

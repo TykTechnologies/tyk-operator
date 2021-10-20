@@ -399,6 +399,7 @@ spec:
         - --logtostderr=true
         - --v=10
         image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
+        imagePullPolicy: {{ .Values.rbac.image.pullPolicy }}
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
