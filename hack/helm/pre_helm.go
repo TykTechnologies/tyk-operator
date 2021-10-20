@@ -16,6 +16,7 @@ func main() {
 		{resourcesRBAC, resourcesRBACTPL},
 		{annotation, annotationTPL},
 		{securityContext, securityContextTPL},
+		{imageRBAC, imageRBACTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -94,3 +95,10 @@ const securityContextTPL = `{{- with .Values.securityContext }}
         securityContext:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
+
+const imageRBAC = `        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        name: kube-rbac-proxy`
+
+const imageRBACTPL = `        image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
+        imagePullPolicy: {{ .Values.rbac.image.pullPolicy }}
+        name: kube-rbac-proxy`
