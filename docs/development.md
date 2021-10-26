@@ -21,7 +21,7 @@ Note that these are tools which we use for development of this project.
 ### 0 Create cluster
 
 ```shell
-kind create cluster --config hack/kind.yml
+kind create cluster --config hack/kind.yaml
 ```
 
 This will create a 3 node cluster. 1 control-plane and 2 worker nodes.
