@@ -472,10 +472,10 @@ This will
 - setup secret that will be used by the operator to access the deployed dashboard
 
 
-### 2 Checking if the environment is working
+### 2. Checking if the environment is working
 
 
-#### PRO
+#### For PRO mode
 
 ***expose our gateway locally***
 
@@ -562,7 +562,7 @@ curl http://localhost:8080/httpbin/headers
 </details>
 
 
-#### Community edition
+#### For CE(Community edition) mode
 
 ***expose our gateway locally***
 
