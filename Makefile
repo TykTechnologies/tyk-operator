@@ -190,3 +190,12 @@ bdd:
 
 .PHONY: test-all
 test-all: test bdd
+
+.PHONY: create-kind-cluster
+create-kind-cluster: 
+	kind create cluster --config hack/kind.yaml --name=${CLUSTER_NAME}
+
+.PHONY: clean
+clean:
+	kind delete cluster --name=${CLUSTER_NAME}
+
