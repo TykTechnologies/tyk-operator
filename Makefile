@@ -145,7 +145,7 @@ cross-build-image:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager.linux main.go
 	docker build -f cross.Dockerfile . -t ${IMG}
 
-.PHONY: cross-build-image
+.PHONY: install-cert-manager
 install-cert-manager:
 	@echo "===> installing cert-manager"
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
