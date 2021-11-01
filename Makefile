@@ -42,62 +42,59 @@ test: generate fmt vet manifests
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ${UNIT_TEST}  -coverprofile cover.out
 
-# Build manager binary
-manager: generate fmt vet
+manager: generate fmt vet	## build manager binary
 	go build -o bin/manager main.go
 
-# Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet manifests
+run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
 	TYK_URL=${TYK_URL} TYK_MODE=${TYK_MODE} TYK_TLS_INSECURE_SKIP_VERIFY=${TYK_TLS_INSECURE_SKIP_VERIFY} TYK_ADMIN_AUTH=${TYK_ADMIN_AUTH} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ENABLE_WEBHOOKS=${ENABLE_WEBHOOKS} go run ./main.go
 
-# Install CRDs into a cluster
-install: manifests kustomize
+install: manifests kustomize	## Install CRDs into a cluster
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
-# Uninstall CRDs from a cluster
-uninstall: manifests kustomize
+
+uninstall: manifests kustomize	## Uninstall CRDs from a cluster
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
+
+deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
-helm: kustomize
+helm: kustomize ## Update helm charts
 	$(KUSTOMIZE) version
 	$(KUSTOMIZE) build config/crd > ./helm/crds/crds.yaml
 	$(KUSTOMIZE) build config/helm |go run hack/helm/pre_helm.go > ./helm/templates/all.yaml
 
-manifests: controller-gen
+manifests: controller-gen ## Generate manifests
 	$(CONTROLLER_GEN) --version
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
-# Run go fmt against code
-fmt:
+
+fmt: ## Run go fmt against code
 	go fmt ./...
 
-# Run go vet against code
-vet:
+
+vet: ## Run go vet against code
 	go vet ./...
 
-# Generate code
-generate: controller-gen
+
+generate: controller-gen ## Generate code
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
-docker-build: test
+
+docker-build: test ## Build the docker image
 	docker build . -t ${IMG}
 
-# Build the docker image
-docker-build-notest:
+
+docker-build-notest: ## Build the docker image
 	docker build . -t ${IMG}
 
-# Push the docker image
-docker-push:
+
+docker-push: ## Push the docker image
 	docker push ${IMG}
 
-# Make release
-release:
+
+release: ## Make release
 	git checkout master
 	sed -i -e "s|\(version\):.*|\1: ${VERSION} # version of the chart|" helm/Chart.yaml
 	git add helm/Chart.yaml
@@ -130,26 +127,26 @@ rm -rf $$TMP_DIR ;\
 }
 endef
 
-# Generate bundle manifests and metadata, then validate generated files.
+
 .PHONY: bundle
-bundle: manifests kustomize
+bundle: manifests kustomize	## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
-# Build the bundle image.
+
 .PHONY: bundle-build
-bundle-build:
+bundle-build:	## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 .PHONY: cross-build-image
-cross-build-image:
+cross-build-image: ## Build docker image
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager.linux main.go
 	docker build -f cross.Dockerfile . -t ${IMG}
 
 .PHONY: install-cert-manager
-install-cert-manager:
+install-cert-manager: ## Install cert manager
 	@echo "===> installing cert-manager"
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
 	kubectl rollout status  deployment/cert-manager -n cert-manager
@@ -157,13 +154,13 @@ install-cert-manager:
 	kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
 
 .PHONY: install-operator-helm
-install-operator-helm: cross-build-image manifests helm
+install-operator-helm: cross-build-image manifests helm	## Install operator using helm
 	@echo "===> installing operator with helmr"
 	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
 	helm install ci ./helm --values ./ci/helm_values.yaml --set image.tag=${TAG} -n tyk-operator-system --wait
 
 .PHONY: scrap
-scrap: generate manifests helm cross-build-image
+scrap: generate manifests helm cross-build-image ## Re-install operator with helm
 	@echo "===> re installing operator with helm"
 	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
 	helm uninstall ci -n tyk-operator-system
@@ -171,20 +168,20 @@ scrap: generate manifests helm cross-build-image
 	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: setup-pro
-setup-pro:
+setup-pro:	## Install Tyk Pro
 	go run hack/bootstrap/create/main.go --debug  --mode pro -cluster=${CLUSTER_NAME}
 
 .PHONY: setup-ce
-setup-ce:
+setup-ce:	## Install Tyk CE
 	go run hack/bootstrap/create/main.go --debug -cluster=${CLUSTER_NAME}
 
 
 .PHONY: boot-pro
-boot-pro: setup-pro install-operator-helm
+boot-pro: setup-pro install-operator-helm	## Install Tyk Pro and Operator
 	@echo "******** Successful boot strapped pro dev env ************"
 
 .PHONY: boot-ce
-boot-ce:setup-ce install-operator-helm
+boot-ce:setup-ce install-operator-helm	## Install Tyk CE and  Operator
 	@echo "******** Successful boot strapped ce dev env ************"
 
 .PHONY: bdd
@@ -192,13 +189,16 @@ bdd:
 	go test -timeout 400s -v  ./bdd
 
 .PHONY: test-all
-test-all: test bdd
+test-all: test bdd ## Run tests
 
 .PHONY: create-kind-cluster
-create-kind-cluster: 
+create-kind-cluster:	## Create kind cluster
 	kind create cluster --config hack/kind.yaml --name=${CLUSTER_NAME}
 
 .PHONY: clean
-clean:
+clean:	## Delete kind cluster
 	kind delete cluster --name=${CLUSTER_NAME}
+
+help:
+	@fgrep -h "##" Makefile | fgrep -v fgrep |sed -e 's/\\$$//' |sed -e 's/:/-:/'| sed -e 's/:.*##//'
 
