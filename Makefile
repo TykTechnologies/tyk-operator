@@ -13,6 +13,9 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
 IMG ?= tyk-operator:latest
+
+TAG = $(lastword $(subst :, ,$(IMG)))
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 #The name of the kind cluster used for development
@@ -157,7 +160,7 @@ install-cert-manager:
 install-operator-helm: cross-build-image manifests helm
 	@echo "===> installing operator with helmr"
 	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
-	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
+	helm install ci ./helm --values ./ci/helm_values.yaml --set image.tag=${TAG} -n tyk-operator-system --wait
 
 .PHONY: scrap
 scrap: generate manifests helm cross-build-image
