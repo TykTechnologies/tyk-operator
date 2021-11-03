@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -11,12 +10,7 @@ import (
 
 const (
 	endpointAPIs   = "/tyk/apis"
-	endpointCerts  = "/tyk/certs"
 	endpointReload = "/tyk/reload/group"
-)
-
-var (
-	notFoundError = errors.New("api not found")
 )
 
 var _ universal.Client = (*Client)(nil)

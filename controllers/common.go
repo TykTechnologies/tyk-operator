@@ -24,28 +24,6 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
-// Helper function to remove string from slice of string
-func removeString(slice []string, s string) (result []string) {
-	for _, item := range slice {
-		if item == s {
-			continue
-		}
-		result = append(result, item)
-	}
-	return
-}
-
-// addString returns a string slice with s in it. If s is in slice then slice
-// will be returned
-func addString(slice []string, s string) (result []string) {
-	for _, item := range slice {
-		if item == s {
-			return slice
-		}
-	}
-	return append(slice, s)
-}
-
 func addTarget(slice []model.Target, s model.Target) (result []model.Target) {
 	for _, item := range slice {
 		if item == s {

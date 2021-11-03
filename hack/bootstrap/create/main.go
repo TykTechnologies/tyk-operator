@@ -362,10 +362,6 @@ func hasNS(name string) bool {
 	return k("get", "ns", name) == nil
 }
 
-func hasSecret(name string) bool {
-	return k("get", "secret", "-n", config.Tyk.Namespace, name) == nil
-}
-
 func hasOperatorSecret() bool {
 	return k("get", "secret", "-n", config.Operator.Namespace, config.Operator.SecretName) == nil
 }
@@ -388,10 +384,6 @@ func hasGRPCPlugin() bool {
 
 func hasCertManager() bool {
 	return k("get", "deployment/cert-manager", "-n", config.Operator.CertManagerNamespace) == nil
-}
-
-func hasConfigMap(name string) bool {
-	return k("get", "configmap", name, "-n", config.Tyk.Namespace) == nil
 }
 
 func createCertManager() {

@@ -2,14 +2,9 @@ package gateway
 
 import (
 	"context"
-	"errors"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-)
-
-var (
-	apiCollisionError = errors.New("api id, listen path or slug collision")
 )
 
 type Api struct{}

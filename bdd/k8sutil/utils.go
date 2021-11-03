@@ -223,12 +223,6 @@ func initFn(ns string) (func() error, error) {
 	return func() error { return nil }, setup(ns)
 }
 
-type writeFn func([]byte) (int, error)
-
-func (fn writeFn) Write(b []byte) (int, error) {
-	return fn(b)
-}
-
 var api TykAPI
 
 func setup(ns string) error {

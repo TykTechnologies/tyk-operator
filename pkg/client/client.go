@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -48,8 +47,6 @@ func IgnoreNotFound(err error) error {
 }
 
 var client = &http.Client{}
-
-var once sync.Once
 
 func init() {
 	if os.Getenv(v1alpha1.SkipVerify) == "true" {

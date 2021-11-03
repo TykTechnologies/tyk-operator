@@ -258,10 +258,6 @@ func (e *E2EContext) adminReq(method string, url string, body []byte) (res *http
 	return
 }
 
-type Client interface {
-	Do(r *http.Request) (*http.Response, error)
-}
-
 var client = &http.Client{}
 
 type e3eClient struct {
