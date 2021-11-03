@@ -61,7 +61,7 @@ var opts = &godog.Options{
 var gatewayURL = "http://localhost:8080"
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, opts)
+	godog.BindCommandLineFlags("godog.", opts)
 }
 
 func TestMain(t *testing.M) {
