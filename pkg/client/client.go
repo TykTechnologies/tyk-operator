@@ -43,6 +43,7 @@ func IgnoreNotFound(err error) error {
 	if !IsNotFound(err) {
 		return err
 	}
+
 	return nil
 }
 
@@ -94,6 +95,7 @@ func GetContext(ctx context.Context) Context {
 	if c := ctx.Value(contextKey{}); c != nil {
 		return c.(Context)
 	}
+
 	return Context{
 		Log: logr.Discard(),
 	}
@@ -104,7 +106,9 @@ func Request(ctx context.Context, method, url string, body io.Reader) (*http.Req
 	if err != nil {
 		return nil, err
 	}
+
 	BeforeRequest(r)
+
 	return r, nil
 }
 
@@ -113,9 +117,11 @@ func CallJSON(ctx context.Context, method, url string, body interface{}, fn ...f
 	if err != nil {
 		return nil, err
 	}
+
 	fn = append(fn, AddHeaders(map[string]string{
 		"Content-Type": "application/json",
 	}))
+
 	return Call(ctx, method, url, bytes.NewReader(b), fn...)
 }
 
@@ -142,19 +148,23 @@ func Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Re
 func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	rctx := GetContext(ctx)
 	url = JoinURL(rctx.Env.URL, url)
+
 	r, err := Request(ctx, method, url, body)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, f := range fn {
 		f(r)
 	}
+
 	var res *http.Response
 	if rctx.Do != nil {
 		res, err = rctx.Do(r)
 	} else {
 		res, err = client.Do(r)
 	}
+
 	values := []interface{}{
 		"Method", method, "URL", url,
 	}
@@ -163,17 +173,23 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 	} else {
 		values = append(values, "Status", err.Error())
 	}
+
 	values = append(values)
+
 	rctx.Log.Info("Call", values...)
+
 	if err != nil {
 		return nil, err
 	}
+
 	if res.StatusCode != http.StatusOK {
 		defer res.Body.Close()
 		b, _ := ioutil.ReadAll(res.Body)
+
 		if len(b) > 0 {
 			rctx.Log.Info(http.StatusText(res.StatusCode), "body", string(b))
 		}
+
 		switch res.StatusCode {
 		case http.StatusNotFound:
 			return nil, ErrNotFound
@@ -181,6 +197,7 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 			return nil, ErrFailed
 		}
 	}
+
 	return res, err
 }
 
@@ -190,10 +207,13 @@ func AddQuery(q url.Values) func(*http.Request) {
 		if len(q) == 0 {
 			return
 		}
+
 		query := h.URL.Query()
+
 		for k, v := range q {
 			query[k] = append(query[k], v...)
 		}
+
 		h.URL.RawQuery = query.Encode()
 	}
 }
@@ -230,7 +250,9 @@ func Join(parts ...string) string {
 	if l == 1 {
 		return parts[0]
 	}
+
 	ps := make([]string, l)
+
 	for i, part := range parts {
 		if i == 0 {
 			ps[i] = strings.TrimRight(part, "/")
@@ -238,18 +260,21 @@ func Join(parts ...string) string {
 			ps[i] = strings.TrimLeft(part, "/")
 		}
 	}
+
 	return strings.Join(ps, "/")
 }
 
 func BeforeRequest(r *http.Request) {
 	ctx := GetContext(r.Context())
 	r.Header.Set("content-type", "application/json")
+
 	switch ctx.Env.Mode {
 	case "pro":
 		r.Header.Set("authorization", ctx.Env.Auth)
 	case "ce":
 		r.Header.Set("x-tyk-authorization", ctx.Env.Auth)
 	}
+
 	if ctx.BeforeRequest != nil {
 		ctx.BeforeRequest(r)
 	}
@@ -265,9 +290,11 @@ func LInfo(ctx context.Context, msg string, kv ...interface{}) {
 
 func Result(res *http.Response, err error) (*model.Result, error) {
 	var m model.Result
+
 	if e := Data(&m)(res, err); e != nil {
 		return nil, e
 	}
+
 	return &m, nil
 }
 
@@ -276,7 +303,9 @@ func Data(o interface{}) func(*http.Response, error) error {
 		if err != nil {
 			return err
 		}
+
 		defer res.Body.Close()
+
 		return json.NewDecoder(res.Body).Decode(o)
 	}
 }

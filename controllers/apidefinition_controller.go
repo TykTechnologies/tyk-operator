@@ -61,11 +61,12 @@ type ApiDefinitionReconciler struct {
 
 func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	namespacedName := req.NamespacedName
-
 	log := r.Log.WithValues("ApiDefinition", namespacedName.String())
 
 	log.Info("Reconciling ApiDefinition instance")
+
 	desired := &tykv1alpha1.ApiDefinition{}
+
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
@@ -77,29 +78,37 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	if desired.GetLabels()["template"] == "true" {
 		log.Info("Syncing template", "template", desired.Name)
+
 		res, err := r.syncTemplate(ctx, req.Namespace, desired)
 		if err != nil {
 			log.Error(err, "Failed to sync template")
 			return res, err
 		}
+
 		log.Info("Synced template", "template", desired.Name)
+
 		return ctrl.Result{}, nil
 	}
 
 	var queueA time.Duration
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			e, err := r.delete(ctx, desired)
 			queueA = e
 			return err
 		}
+
 		if desired.Spec.APIID == "" {
 			desired.Spec.APIID = encodeNS(req.NamespacedName.String())
 		}
+
 		if desired.Spec.OrgID == "" {
 			desired.Spec.OrgID = env.Org
 		}
+
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
+
 		for _, certName := range desired.Spec.CertificateSecretNames {
 			secret := v1.Secret{}
 			err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
@@ -131,9 +140,12 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			desired.Spec.Certificates = []string{tykCertID}
 			break
 		}
+
 		desired.Spec.CertificateSecretNames = nil
 		r.updateLinkedPolicies(ctx, desired)
+
 		targets := desired.Spec.CollectLoopingTarget()
+
 		if err := r.ensureTargets(ctx, desired.Namespace, targets); err != nil {
 			return err
 		}
@@ -142,18 +154,22 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			log.Error(err, "Failed to update looping targets")
 			return err
 		}
+
 		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			return r.create(ctx, desired, log)
 		}
+
 		return r.update(ctx, desired, log)
 	})
+
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
 	} else {
 		queueA = queueAfter
 	}
+
 	return ctrl.Result{RequeueAfter: queueA}, err
 }
 
@@ -163,17 +179,22 @@ func (r *ApiDefinitionReconciler) create(
 	log logr.Logger,
 ) error {
 	log.Info("Creating new  ApiDefinition")
+
 	_, err := klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 	if err != nil {
 		log.Error(err, "Failed to create api definition")
 		return err
 	}
+
 	desired.Status.ApiID = desired.Spec.APIID
+
 	err = r.Status().Update(ctx, desired)
 	if err != nil {
 		log.Error(err, "Could not update Status ID")
 	}
+
 	klient.Universal.HotReload(ctx)
+
 	return nil
 }
 
@@ -183,12 +204,15 @@ func (r *ApiDefinitionReconciler) update(
 	log logr.Logger,
 ) error {
 	log.Info("Updating ApiDefinition")
+
 	_, err := klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
 	if err != nil {
 		log.Error(err, "Failed to update api definition")
 		return err
 	}
+
 	klient.Universal.HotReload(ctx)
+
 	return nil
 }
 
@@ -200,6 +224,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 	if !a.DeletionTimestamp.IsZero() {
 		if util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
 			ls := netv1.IngressList{}
+
 			err := r.List(ctx, &ls,
 				client.InNamespace(ns),
 			)
@@ -208,48 +233,64 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 					return ctrl.Result{}, err
 				}
 			}
+
 			var refs []string
+
 			for _, v := range ls.Items {
 				if v.GetAnnotations()[keys.IngressTemplateAnnotation] == a.Name {
 					refs = append(refs, v.GetName())
 				}
 			}
+
 			if len(refs) > 0 {
 				return ctrl.Result{RequeueAfter: time.Second * 5}, fmt.Errorf("Can't delete %s %v depends on it", a.Name, refs)
 			}
+
 			util.RemoveFinalizer(a, keys.ApiDefTemplateFinalizerName)
+
 			return ctrl.Result{}, r.Update(ctx, a)
 		}
+
 		return ctrl.Result{}, nil
 	}
+
 	if !util.ContainsFinalizer(a, keys.ApiDefTemplateFinalizerName) {
 		util.AddFinalizer(a, keys.ApiDefTemplateFinalizerName)
+
 		return ctrl.Result{}, r.Update(ctx, a)
 	}
+
 	ls := netv1.IngressList{}
+
 	err := r.List(ctx, &ls,
 		client.InNamespace(ns),
 	)
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
 	for _, v := range ls.Items {
 		if v.GetAnnotations()[keys.IngressTemplateAnnotation] == a.Name {
 			key := client.ObjectKey{
 				Namespace: v.GetNamespace(),
 				Name:      v.GetName(),
 			}
+
 			r.Log.Info("Updating ingress " + key.String())
+
 			if v.Labels == nil {
 				v.Labels = make(map[string]string)
 			}
+
 			v.Labels[keys.IngressTaintLabel] = strconv.FormatInt(time.Now().UnixNano(), 10)
+
 			err = r.Update(ctx, &v)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -260,13 +301,16 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		if err := r.checkLinkedPolicies(ctx, desired); err != nil {
 			return queueAfter, err
 		}
+
 		if err := r.checkLoopingTargets(ctx, desired); err != nil {
 			return queueAfter, err
 		}
+
 		ns := model.Target{
 			Name:      desired.Name,
 			Namespace: desired.Namespace,
 		}
+
 		for _, target := range desired.Status.LinkedToAPIs {
 			err := r.updateStatus(ctx, desired.Namespace, target, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
 				ads.LinkedByAPIs = removeTarget(ads.LinkedByAPIs, ns)
@@ -275,12 +319,15 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 				return queueAfter, err
 			}
 		}
+
 		r.Log.Info("deleting api")
+
 		_, err := klient.Universal.Api().Delete(ctx, desired.Status.ApiID)
 		if err != nil {
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
+
 		err = klient.Universal.HotReload(ctx)
 		if err != nil {
 			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
@@ -290,6 +337,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		r.Log.Info("removing finalizer")
 		util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 	}
+
 	return 0, nil
 }
 
@@ -297,15 +345,19 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 // to this api defintion resource.
 func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("checking linked security policies")
+
 	if len(a.Status.LinkedByPolicies) == 0 {
 		return nil
 	}
+
 	for _, n := range a.Status.LinkedByPolicies {
 		var api tykv1alpha1.SecurityPolicy
+
 		if err := r.Get(ctx, n.NS(a.Namespace), &api); err == nil {
 			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
 		}
 	}
+
 	return nil
 }
 
@@ -314,6 +366,7 @@ func encodeIfNotBase64(s string) string {
 	if err == nil {
 		return s
 	}
+
 	return encodeNS(s)
 }
 
@@ -321,27 +374,32 @@ func encodeIfNotBase64(s string) string {
 // updated.
 func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
 	r.Log.Info("Updating linked policies")
+
 	for x := range a.Spec.JWTDefaultPolicies {
 		a.Spec.JWTDefaultPolicies[x] = encodeIfNotBase64(a.Spec.JWTDefaultPolicies[x])
 	}
+
 	for k, x := range a.Spec.JWTScopeToPolicyMapping {
 		a.Spec.JWTScopeToPolicyMapping[k] = encodeIfNotBase64(x)
 	}
-	return
 }
 
 // checkLoopingTargets Check if there is any other api's linking to a
 func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("checking linked api resources")
+
 	if len(a.Status.LinkedByAPIs) == 0 {
 		return nil
 	}
+
 	for _, n := range a.Status.LinkedByAPIs {
 		var api tykv1alpha1.ApiDefinition
+
 		if err := r.Get(ctx, n.NS(a.Namespace), &api); err == nil {
 			return fmt.Errorf("unable to delete api due to being depended by =%s", n)
 		}
 	}
+
 	return nil
 }
 
@@ -351,10 +409,12 @@ func (r *ApiDefinitionReconciler) ensureTargets(
 	targets []model.Target) error {
 	for _, target := range targets {
 		var api tykv1alpha1.ApiDefinition
+
 		if err := r.Get(ctx, target.NS(ns), &api); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -362,13 +422,16 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	a *tykv1alpha1.ApiDefinition, links []model.Target,
 ) error {
 	r.Log.Info("updating looping targets")
+
 	if len(links) == 0 {
 		return nil
 	}
+
 	ns := model.Target{
 		Name:      a.Name,
 		Namespace: a.Namespace,
 	}
+
 	for _, target := range links {
 		err := r.updateStatus(ctx, a.Namespace, target, false, func(ads *tykv1alpha1.ApiDefinitionStatus) {
 			ads.LinkedByAPIs = addTarget(ads.LinkedByAPIs, ns)
@@ -386,6 +449,7 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	for _, v := range links {
 		newTargets[v.String()] = v
 	}
+
 	for _, v := range a.Status.LinkedToAPIs {
 		if _, ok := newTargets[v.String()]; !ok {
 			err := r.updateStatus(ctx, a.Namespace, v, true, func(ads *tykv1alpha1.ApiDefinitionStatus) {
@@ -399,7 +463,9 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 			}
 		}
 	}
+
 	a.Status.LinkedToAPIs = links
+
 	return client.IgnoreNotFound(r.Status().Update(ctx, a))
 }
 
@@ -416,9 +482,12 @@ func (r *ApiDefinitionReconciler) updateStatus(
 				return nil
 			}
 		}
+
 		return fmt.Errorf("unable to get api %v %v", target.NS(ns), err)
 	}
+
 	fn(&api.Status)
+
 	return r.Status().Update(ctx, &api)
 }
 

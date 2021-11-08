@@ -20,12 +20,16 @@ func isKind() bool {
 	if kluster == "" {
 		kluster = "kind"
 	}
+
 	cmd := exec.Command("kind", "get", "clusters")
+
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
+
 	if err := cmd.Run(); err != nil {
 		return false
 	}
+
 	return strings.Contains(buf.String(), kluster)
 }
 
@@ -34,12 +38,15 @@ func kubeConf(o io.Writer) error {
 	if kluster == "" {
 		kluster = "kind"
 	}
+
 	cmd := exec.Command("kind", "get", "kubeconfig", "--name", kluster)
 	cmd.Stdout = o
 	cmd.Stderr = os.Stderr
+
 	if err := cmd.Run(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -47,16 +54,21 @@ func setupKind() (string, error) {
 	if !isKind() {
 		return "", errors.New("Missing kind cluster")
 	}
+
 	f, err := os.CreateTemp("", "operator-kind-kubeconf")
 	if err != nil {
 		return "", err
 	}
+
 	if err := kubeConf(f); err != nil {
 		f.Close()
 		os.RemoveAll(f.Name())
+
 		return "", err
 	}
+
 	defer f.Close()
+
 	return f.Name(), nil
 }
 
@@ -65,15 +77,19 @@ func setupk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	if err != nil {
 		return c1, err
 	}
+
 	client, err := klient.NewWithKubeConfigFile(kubecfg)
 	if err != nil {
 		return c1, err
 	}
+
 	c2.WithClient(client)
+
 	return context.WithValue(c1, kubeConfigKey{}, kubecfg), nil
 }
 
 func teardownk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	kubecfg := c1.Value(kubeConfigKey{}).(string)
+
 	return c1, os.RemoveAll(kubecfg)
 }

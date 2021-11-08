@@ -61,15 +61,17 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 	log := r.Log.WithValues("PortalAPICatalogue", req.NamespacedName.String())
 
 	log.Info("Reconciling PortalAPICatalogue instance")
+
 	defer func() {
 		if err == nil {
 			log.Info("Successfully reconciled PortalAPICatalogue")
 		} else {
 			result = ctrl.Result{RequeueAfter: queueAfter}
 		}
-
 	}()
+
 	desired := &tykv1alpha1.PortalAPICatalogue{}
+
 	if err = r.Get(ctx, req.NamespacedName, desired); err != nil {
 		err = client.IgnoreNotFound(err) // Ignore not-found errors
 		return
@@ -93,6 +95,7 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 		return r.create(ctx, desired, env, log)
 	})
+
 	return
 }
 
@@ -111,38 +114,49 @@ func (r *PortalAPICatalogueReconciler) model(
 		OrgId: desired.Spec.OrgID,
 		Email: desired.Spec.Email,
 	}
+
 	for _, desc := range desired.Spec.APIDescriptionList {
 		if desc.APIDescriptionRef != nil {
 			var a v1alpha1.APIDescription
 			if err := r.Get(ctx, desc.APIDescriptionRef.NS(desired.Namespace), &a); err != nil {
 				return nil, err
 			}
+
 			updateJSON(&desc, &a.Spec)
 		}
 
 		if desc.PolicyRef != nil {
 			// update security policy
 			log.Info("Updating PolicyID")
+
 			var sec v1alpha1.SecurityPolicy
+
 			if err := r.Get(ctx, desc.PolicyRef.NS(desired.Namespace), &sec); err != nil {
 				return nil, err
 			}
+
 			if sec.Status.PolID == "" {
 				return nil, fmt.Errorf("%q missing policy_id", desc.Name)
 			}
+
 			desc.PolicyID = sec.Spec.ID
 		}
+
 		if desc.PolicyID == "" {
 			return nil, fmt.Errorf("%q missing policy_id", desc.Name)
 		}
+
 		if err := r.sync(ctx, desired, env, desc); err != nil {
 			return nil, err
 		}
+
 		m.APIS = append(m.APIS, desc.APIDescription)
 	}
+
 	if err := r.consolidate(ctx, desired, env, log); err != nil {
 		return nil, err
 	}
+
 	return m, nil
 }
 
@@ -158,12 +172,15 @@ func (r *PortalAPICatalogueReconciler) sync(
 			Documentation:     a.APIDocumentation.Documentation,
 			APIID:             a.PolicyID,
 		}
+
 		res, err := klient.Universal.Portal().Documentation().Upload(ctx, d)
 		if err != nil {
 			return err
 		}
+
 		a.Documentation = res.Message
 	}
+
 	return nil
 }
 
@@ -181,10 +198,13 @@ func (r *PortalAPICatalogueReconciler) init(
 			if err != nil {
 				return "", err
 			}
+
 			return result.Message, nil
 		}
+
 		return "", err
 	}
+
 	return cat.Id, nil
 }
 
@@ -199,16 +219,21 @@ func (r *PortalAPICatalogueReconciler) create(
 	if err != nil {
 		return err
 	}
+
 	m, err := r.model(ctx, desired, env, log)
 	if err != nil {
 		return err
 	}
+
 	m.Id = catalogueID
+
 	_, err = klient.Universal.Portal().Catalogue().Update(ctx, m)
 	if err != nil {
 		return err
 	}
+
 	desired.Status.ID = catalogueID
+
 	return r.Status().Update(ctx, desired)
 }
 
@@ -222,11 +247,14 @@ func (r *PortalAPICatalogueReconciler) update(
 	if err != nil {
 		return err
 	}
+
 	m.Id = desired.Status.ID
+
 	_, err = klient.Universal.Portal().Catalogue().Update(ctx, m)
 	if err != nil {
 		return err
 	}
+
 	return r.Status().Update(ctx, desired)
 }
 
@@ -242,12 +270,15 @@ func (r *PortalAPICatalogueReconciler) consolidate(
 	if err != nil {
 		return err
 	}
+
 	m := make(map[string]struct{})
+
 	for _, v := range desired.Spec.APIDescriptionList {
 		if v.Documentation != "" {
 			m[v.Documentation] = struct{}{}
 		}
 	}
+
 	for _, v := range all.APIS {
 		if v.Documentation != "" {
 			_, ok := m[v.Documentation]
@@ -261,6 +292,7 @@ func (r *PortalAPICatalogueReconciler) consolidate(
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -271,14 +303,18 @@ func (r *PortalAPICatalogueReconciler) delete(
 	log logr.Logger,
 ) error {
 	log.Info("Deleting PortalAPICatalogue")
+
 	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		return err
 	}
+
 	log.Info("Deleting documentation published in this catalogue")
+
 	for _, v := range all.APIS {
 		if v.Documentation != "" {
 			log.Info("Deleting", "Target", v.Documentation)
+
 			_, err := klient.Universal.Portal().Documentation().Delete(ctx, v.Documentation)
 			if err != nil {
 				if !uc.IsNotFound(err) {
@@ -296,7 +332,9 @@ func (r *PortalAPICatalogueReconciler) delete(
 	if err != nil {
 		return err
 	}
+
 	util.RemoveFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
+
 	return nil
 }
 

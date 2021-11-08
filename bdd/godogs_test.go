@@ -31,11 +31,14 @@ var gwNS = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
 
 func runCMD(cmd *exec.Cmd) string {
 	a := fmt.Sprint(cmd.Args)
+
 	fmt.Println(a)
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		panic(fmt.Sprintf("failed %s with %v : %s", a, err, string(output)))
 	}
+
 	return string(output)
 }
 
@@ -46,6 +49,7 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 		if err != nil {
 			panic(err)
 		}
+
 		err = k8sutil.Create(context.Background(), "./custom_resources/workaround.yaml", namespace)
 		if err != nil {
 			panic(err)
@@ -66,24 +70,30 @@ func init() {
 
 func TestMain(t *testing.M) {
 	flag.Parse()
+
 	opts.Paths = flag.Args()
+
 	kill, err := k8sutil.Init(gwNS, os.Getenv("TYK_MODE"))
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	status := godog.TestSuite{
 		Name:                 "godogs",
 		TestSuiteInitializer: InitializeTestSuite,
 		ScenarioInitializer:  InitializeScenario,
 		Options:              opts,
 	}.Run()
+
 	if st := t.Run(); st > status {
 		status = st
 	}
+
 	err = kill()
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	os.Exit(status)
 }
 
@@ -99,6 +109,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	s := &store{
 		created: map[string]struct{}{},
 	}
+
 	ctx.AfterScenario(func(sc *godog.Scenario, err error) {
 		for fileName := range s.created {
 			ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
@@ -108,6 +119,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 			)
 		}
 	})
+
 	ctx.Step(`^there is a (\S+) resource$`, s.thereIsAResource)
 	ctx.Step(`^i create a (\S+) resource$`, s.iCreateAResource)
 	ctx.Step(`^i update a (\S+) resource$`, s.iUpdateAResource)
@@ -131,6 +143,7 @@ func (s *store) iRequestEndpointWithHeaderTimes(path string, headerKey string, h
 		duration := t2.Sub(t1)
 		s.responseTimes = append(s.responseTimes, duration)
 	}
+
 	return nil
 }
 
@@ -146,10 +159,12 @@ func (s *store) theFirstResponseShouldBeSlowest() error {
 			firstResponse = duration
 			continue
 		}
+
 		if duration > firstResponse {
 			return fmt.Errorf("first response was faster %d", i)
 		}
 	}
+
 	return nil
 }
 
@@ -157,27 +172,35 @@ func call(method, url string, body func() io.Reader,
 	fn func(*http.Request),
 	validate func(*http.Response) error) error {
 	var failed error
+
 	err := backoff.Retry(func() error {
 		req, err := http.NewRequest(method, url, body())
 		if err != nil {
 			failed = err
 			return nil
 		}
+
 		if fn != nil {
 			fn(req)
 		}
+
 		res, err := k8sutil.Do(req)
 		if err != nil {
 			fmt.Println("==========> Error making client call ", err)
 			return err
 		}
+
 		defer res.Body.Close()
+
 		failed = validate(res)
+
 		return nil
 	}, backoff.NewExponentialBackOff())
+
 	if err != nil {
 		return err
 	}
+
 	return failed
 }
 
@@ -220,7 +243,9 @@ func (s *store) iRequestEndpoint(path string) error {
 func (s *store) thereIsAResource(fileName string) error {
 	s.created[fileName] = struct{}{}
 	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+
 	defer cancel()
+
 	return wait(reconcileDelay)(
 		k8sutil.Create(ctx, fileName, namespace),
 	)
@@ -229,7 +254,9 @@ func (s *store) thereIsAResource(fileName string) error {
 func (s *store) iCreateAResource(fileName string) error {
 	s.created[fileName] = struct{}{}
 	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+
 	defer cancel()
+
 	return wait(reconcileDelay)(
 		k8sutil.Create(ctx, fileName, namespace),
 	)
@@ -237,7 +264,9 @@ func (s *store) iCreateAResource(fileName string) error {
 
 func (s *store) iUpdateAResource(fileName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+
 	defer cancel()
+
 	return wait(reconcileDelay)(
 		k8sutil.Configure(ctx, fileName, namespace),
 	)
@@ -245,8 +274,11 @@ func (s *store) iUpdateAResource(fileName string) error {
 
 func (s *store) iDeleteAResource(fileName string) error {
 	delete(s.created, fileName)
+
 	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+
 	defer cancel()
+
 	return wait(reconcileDelay)(
 		k8sutil.Delete(ctx, fileName, namespace),
 	)
@@ -257,9 +289,13 @@ func wait(ts time.Duration) func(err error) error {
 		if err != nil {
 			return err
 		}
+
 		time.Sleep(ts)
+
 		cmd := exec.CommandContext(context.Background(), "kubectl", "get", "tykapis", "-n", namespace)
+
 		fmt.Println(runCMD(cmd))
+
 		return nil
 	}
 }
@@ -275,13 +311,16 @@ func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {
 
 func (s *store) theResponseShouldContainJSONKeyValue(key string, expVal string) error {
 	m := map[string]interface{}{}
+
 	if err := json.Unmarshal(s.responseBody, &m); err != nil {
 		return err
 	}
+
 	got := fmt.Sprint(m[key])
 	if got != expVal {
 		return fmt.Errorf("expected %q got %q", expVal, got)
 	}
+
 	return nil
 }
 
@@ -304,8 +343,10 @@ func (s *store) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
 		println(string(s.responseBody))
 		println("EXPECTED")
 		println(body.Content)
+
 		return fmt.Errorf("expected JSON does not match actual, %v vs. %v", expected, actual)
 	}
+
 	return nil
 }
 
@@ -314,9 +355,11 @@ func (s *store) thereShouldBeAResponseHeader(key string, value string) error {
 	if !ok {
 		return fmt.Errorf("response header (%s) not set", key)
 	}
+
 	headerVal := s.responseHeaders.Get(key)
 	if headerVal != value {
 		return fmt.Errorf("expected response header (%s), got (%s)", value, headerVal)
 	}
+
 	return nil
 }

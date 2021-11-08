@@ -21,6 +21,7 @@ func containsString(slice []string, s string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -30,6 +31,7 @@ func addTarget(slice []model.Target, s model.Target) (result []model.Target) {
 			return slice
 		}
 	}
+
 	return append(slice, s)
 }
 
@@ -38,8 +40,10 @@ func removeTarget(slice []model.Target, s model.Target) (result []model.Target) 
 		if item.Equal(s) {
 			continue
 		}
+
 		result = append(result, item)
 	}
+
 	return
 }
 
@@ -58,7 +62,9 @@ func httpContext(
 		if c == nil {
 			return nil
 		}
+
 		log.Info("Detected context for resource")
+
 		env, err := GetContext(
 			ctx, object.GetNamespace(), rClient, c, log,
 		)
@@ -66,11 +72,16 @@ func httpContext(
 			log.Error(err, "Failed to get context", "contextRef", c.String())
 			return err
 		}
+
 		log.Info("Successful acquired context", "contextRef", c.String())
+
 		e.Environment = *env.Spec.Env
+
 		return nil
 	}
+
 	var err error
+
 	switch o := object.(type) {
 	case *v1alpha1.ApiDefinition:
 		err = get(o.Spec.Context)
@@ -83,9 +94,11 @@ func httpContext(
 	case *v1alpha1.PortalConfig:
 		err = get(o.Spec.Context)
 	}
+
 	if err != nil {
 		return environmet.Env{}, nil, err
 	}
+
 	return e, client.SetContext(ctx, client.Context{
 		Env: e,
 		Log: log,
@@ -106,24 +119,32 @@ func GetContext(
 	log logr.Logger,
 ) (*v1alpha1.OperatorContext, error) {
 	newTarget := target.NS(ns)
+
 	log.Info("Getting context", "contextRef", newTarget.String())
+
 	var o v1alpha1.OperatorContext
+
 	err := client.Get(ctx, newTarget, &o)
 	if err != nil {
 		return nil, err
 	}
+
 	if o.Spec.Env == nil {
 		o.Spec.Env = &v1alpha1.Environment{}
 	}
+
 	if o.Spec.FromSecret != nil {
 		var secret v1.Secret
+
 		if err := client.Get(ctx, o.Spec.FromSecret.NS(o.Namespace), &secret); err != nil {
 			return nil, err
 		}
+
 		value := func(key string, fn func(string) error) error {
 			if v, ok := secret.Data[key]; ok {
 				return fn(string(v))
 			}
+
 			return nil
 		}
 		// we are setting all values that are not set on env but present in secret.
@@ -134,6 +155,7 @@ func GetContext(
 				return nil
 			})
 		}
+
 		if !e.InsecureSkipVerify {
 			err = value(v1alpha1.SkipVerify, func(s string) (err error) {
 				e.InsecureSkipVerify, err = strconv.ParseBool(s)
@@ -143,24 +165,28 @@ func GetContext(
 				return nil, err
 			}
 		}
+
 		if e.URL == "" {
 			value(v1alpha1.TykURL, func(s string) (err error) {
 				e.URL = s
 				return
 			})
 		}
+
 		if e.Auth == "" {
 			value(v1alpha1.TykAuth, func(s string) (err error) {
 				e.Auth = s
 				return
 			})
 		}
+
 		if e.Org == "" {
 			value(v1alpha1.TykORG, func(s string) (err error) {
 				e.Org = s
 				return
 			})
 		}
+
 		if e.Ingress.HTTPPort == 0 {
 			err = value(v1alpha1.IngressHTTPPort, func(s string) (err error) {
 				e.Ingress.HTTPPort, err = strconv.Atoi(s)
@@ -170,6 +196,7 @@ func GetContext(
 				return nil, err
 			}
 		}
+
 		if e.Ingress.HTTPSPort == 0 {
 			err = value(v1alpha1.IngressTLSPort, func(s string) (err error) {
 				e.Ingress.HTTPSPort, err = strconv.Atoi(s)
@@ -180,5 +207,6 @@ func GetContext(
 			}
 		}
 	}
+
 	return &o, nil
 }

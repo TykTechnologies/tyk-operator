@@ -53,8 +53,8 @@ type SecurityPolicyReconciler struct {
 // Reconcile reconciles SecurityPolicy custom resources
 func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("SecurityPolicy", req.NamespacedName.String())
-
 	ns := req.NamespacedName.String()
+
 	log.Info("Reconciling SecurityPolicy instance")
 
 	// Lookup policy object
@@ -69,6 +69,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	var reqA time.Duration
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(policy, policyFinalizer) {
@@ -76,10 +77,13 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			}
 			return nil
 		}
+
 		util.AddFinalizer(policy, policyFinalizer)
+
 		if policy.Spec.ID == "" {
 			policy.Spec.ID = encodeNS(ns)
 		}
+
 		if policy.Spec.OrgID == "" {
 			policy.Spec.OrgID = env.Org
 		}
@@ -88,13 +92,16 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		if policy.Status.PolID == "" {
 			return r.create(ctx, policy)
 		}
+
 		return r.update(ctx, policy)
 	})
+
 	if err == nil {
 		r.Log.Info("Completed reconciling SecurityPolicy instance")
 	} else {
 		reqA = queueAfter
 	}
+
 	return ctrl.Result{RequeueAfter: reqA}, err
 }
 
@@ -102,107 +109,138 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
 	spec := policy.Spec.DeepCopy()
 	spec.Context = nil
+
 	for i := 0; i < len(spec.AccessRightsArray); i++ {
 		err := r.updateAccess(ctx, spec.AccessRightsArray[i])
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	return spec, nil
 }
 
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 	a *tykv1.AccessDefinition) error {
 	api := &tykv1.ApiDefinition{}
+
 	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
 			r.Log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue",
 				"Name", a.Name,
 				"Namespace", a.Namespace,
 			)
+
 			return err
 		}
+
 		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
+
 		return err
 	}
+
 	if api.Status.ApiID == "" {
 		return opclient.ErrNotFound
 	}
+
 	a.APIID = api.Status.ApiID
 	a.APIName = api.Spec.Name
+
 	return nil
 }
 
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Deleting policy")
+
 	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		return err
 	}
+
 	for _, v := range all.APIS {
 		if v.PolicyID == policy.Status.PolID {
 			return fmt.Errorf("cannot delete policy due to catalogue %q dependency", all.Id)
 		}
 	}
+
 	util.RemoveFinalizer(policy, policyFinalizer)
+
 	if err := klient.Universal.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
 		if opclient.IsNotFound(err) {
 			r.Log.Info("Policy not found")
 			return nil
 		}
+
 		r.Log.Error(err, "Failed to delete resource")
+
 		return err
 	}
+
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
 		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
 	})
 	if err != nil {
 		return err
 	}
+
 	r.Log.Info("Successfully deleted Policy")
+
 	return nil
 }
 
 func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Updating  policy")
+
 	policy.Spec.MID = policy.Status.PolID
+
 	spec, err := r.spec(ctx, policy)
 	if err != nil {
 		return err
 	}
+
 	err = klient.Universal.Portal().Policy().Update(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to update policy")
 		return err
 	}
+
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
+
 	if err != nil {
 		return err
 	}
+
 	klient.Universal.HotReload(ctx)
 	r.Log.Info("Successfully updated Policy")
+
 	return nil
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Creating  policy")
+
 	spec, err := r.spec(ctx, policy)
 	if err != nil {
 		return err
 	}
+
 	err = klient.Universal.Portal().Policy().Create(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to create policy")
 		return err
 	}
+
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
+
 	r.Log.Info("Successful created Policy")
+
 	policy.Spec.MID = spec.MID
 	policy.Status.PolID = policy.Spec.MID
+
 	return r.Status().Update(ctx, policy)
 }
 
@@ -212,21 +250,28 @@ func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *
 	fn func(*tykv1.ApiDefinitionStatus, model.Target),
 ) error {
 	r.Log.Info("Updating linked api definitions")
+
 	ns := model.Target{
 		Namespace: policy.Namespace, Name: policy.Name,
 	}
+
 	for _, a := range policy.Spec.AccessRightsArray {
 		api := &tykv1.ApiDefinition{}
+
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 			r.Log.Error(err, "Failed to get linked api definition")
 			return err
 		}
+
 		fn(&api.Status, ns)
+
 		if err := r.Status().Update(ctx, api); err != nil {
 			r.Log.Error(err, "Failed to update linked api definition")
+
 			return err
 		}
 	}
+
 	return nil
 }
 

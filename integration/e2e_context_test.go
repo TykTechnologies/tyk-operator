@@ -60,10 +60,12 @@ func get(ctx context.Context) *E2EContext {
 
 func (e *E2EContext) CreateSuperUSer() error {
 	n := make([]byte, 4)
+
 	_, err := rand.Read(n)
 	if err != nil {
 		return err
 	}
+
 	// create super user
 	super := &User{
 		FirstName:    "super",
@@ -73,12 +75,15 @@ func (e *E2EContext) CreateSuperUSer() error {
 		OrgID:        "",
 		Active:       true,
 	}
+
 	access, err := e.createUser(super)
 	if err != nil {
 		return err
 	}
+
 	e.Super.Access = access
 	e.Super.User = super
+
 	return nil
 }
 
@@ -102,15 +107,18 @@ func (e *E2EContext) Setup() error {
 		if err := e.CreateOrganizations(); err != nil {
 			return err
 		}
+
 		if err := e.CreateUsers(); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (e *E2EContext) CreateOrganizations() error {
 	e.Orgs = make(map[string]*Organization)
+
 	for i := 0; i < 3; i++ {
 		o := &Organization{
 			Ownder:       fmt.Sprintf("%s-%d", orgOwner, i),
@@ -118,18 +126,21 @@ func (e *E2EContext) CreateOrganizations() error {
 			OwnerSlug:    fmt.Sprint(i),
 			Cname:        fmt.Sprintf("%d%v", i, portalCname),
 		}
+
 		if err := e.createOrg(o); err != nil {
 			return err
 		}
+
 		e.Orgs[o.ID] = o
 	}
+
 	return nil
 }
 
 func (e *E2EContext) CreateUsers() error {
-
 	e.Users = make(map[string]*User)
 	ek := "u"
+
 	for k, v := range e.Orgs {
 		ek += ek
 		o := &User{
@@ -140,12 +151,15 @@ func (e *E2EContext) CreateUsers() error {
 			OrgID:        k,
 			Active:       true,
 		}
+
 		access, err := e.createUser(o)
 		if err != nil {
 			return err
 		}
+
 		e.Users[access] = o
 	}
+
 	return nil
 }
 
@@ -158,6 +172,7 @@ type ApiError struct {
 
 func (e *E2EContext) createOrg(o *Organization) (err error) {
 	fmt.Print("Creating Organization "+o.Ownder, "...")
+
 	defer func() {
 		if err != nil {
 			fmt.Printf("ERROR %v\n", err)
@@ -165,26 +180,36 @@ func (e *E2EContext) createOrg(o *Organization) (err error) {
 			fmt.Printf("Ok %v\n", o.ID)
 		}
 	}()
+
 	var b bytes.Buffer
+
 	json.NewEncoder(&b).Encode(o)
+
 	var res *http.Response
+
 	res, err = e.AdminPost("/admin/organisations", b.Bytes())
 	if err != nil {
 		return
 	}
+
 	defer res.Body.Close()
+
 	var a ApiError
 	json.NewDecoder(res.Body).Decode(&a)
+
 	if strings.ToLower(a.Status) != "ok" {
 		err = errors.New(a.Message)
 		return
 	}
+
 	o.ID = a.Meta.(string)
+
 	return nil
 }
 
 func (e *E2EContext) createUser(o *User) (access string, err error) {
 	fmt.Print("Creating User "+o.FirstName, "...")
+
 	defer func() {
 		if err != nil {
 			fmt.Printf("ERROR %v\n", err)
@@ -192,21 +217,30 @@ func (e *E2EContext) createUser(o *User) (access string, err error) {
 			fmt.Printf("Ok %v\n", o.ID)
 		}
 	}()
+
 	var b bytes.Buffer
+
 	json.NewEncoder(&b).Encode(o)
+
 	var res *http.Response
+
 	res, err = e.AdminPost("/admin/users", b.Bytes())
 	if err != nil {
 		return
 	}
+
 	defer res.Body.Close()
 	var a ApiError
+
 	json.NewDecoder(res.Body).Decode(&a)
+
 	if strings.ToLower(a.Status) != "ok" {
 		return "", fmt.Errorf("%v", a)
 	}
+
 	o.ID = a.Meta.(map[string]interface{})["id"].(string)
 	access = a.Message
+
 	return
 }
 
@@ -214,18 +248,23 @@ func (e E2EContext) ListOrgs() error {
 	ls := struct {
 		Orgs []*Organization `json:"organisations"`
 	}{}
+
 	res, err := e.AdminGet("/admin/organisations", nil)
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
+
 	json.NewDecoder(res.Body).Decode(&ls)
+
 	for _, v := range ls.Orgs {
 		if strings.Contains(v.Ownder, orgOwner) {
 			e.deleteOrg(v.Ownder, v.ID)
 			continue
 		}
 	}
+
 	return nil
 }
 
@@ -248,13 +287,17 @@ func (e *E2EContext) adminReq(method string, url string, body []byte) (res *http
 		if body != nil {
 			rd = bytes.NewReader(body)
 		}
+
 		r, err := http.NewRequest(method, url, rd)
 		if err != nil {
 			return backoff.Permanent(err)
 		}
+
 		res, err = e.adminClient().Do(r)
+
 		return err
 	}, backoff.NewExponentialBackOff())
+
 	return
 }
 
@@ -274,15 +317,20 @@ func (e *E2EContext) ListUsers() error {
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
+
 	ls := struct {
 		ApiError
 		Users []*User `json:"users,omitempty"`
 	}{}
+
 	json.NewDecoder(res.Body).Decode(&ls)
+
 	if ls.Message != "" {
 		return fmt.Errorf("%v", ls)
 	}
+
 	for _, u := range ls.Users {
 		if strings.Contains(u.FirstName, orgOwner) {
 			if err := e.deleteUser(u); err != nil {
@@ -290,6 +338,7 @@ func (e *E2EContext) ListUsers() error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -300,6 +349,7 @@ func (e *E2EContext) adminClient() *e3eClient {
 			r.Header.Set("Authorization", e.Super.Access)
 		}}
 	}
+
 	return &e3eClient{modify: func(r *http.Request) {
 		r.Header.Set("X-Tyk-Authorization", ceAdminSecret)
 	}}
@@ -307,6 +357,7 @@ func (e *E2EContext) adminClient() *e3eClient {
 
 func (e *E2EContext) deleteUser(o *User) (err error) {
 	fmt.Print("Deleting User "+o.FirstName, "...")
+
 	defer func() {
 		if err != nil {
 			fmt.Printf("ERROR %v\n", err)
@@ -314,22 +365,28 @@ func (e *E2EContext) deleteUser(o *User) (err error) {
 			fmt.Printf("Ok %v\n", o.ID)
 		}
 	}()
+
 	var res *http.Response
+
 	res, err = e.AdminDelete("/api/users/"+o.ID, nil)
 	if err != nil {
 		return
 	}
 	var a ApiError
+
 	json.NewDecoder(res.Body).Decode(&a)
 	res.Body.Close()
+
 	if strings.ToLower(a.Status) != "ok" {
 		err = fmt.Errorf("%v", err)
 	}
+
 	return
 }
 
 func (e *E2EContext) deleteOrg(name, id string) (err error) {
 	fmt.Print("Deleting Organization "+name, "...")
+
 	defer func() {
 		if err != nil {
 			fmt.Printf("ERROR %v\n", err)
@@ -337,17 +394,23 @@ func (e *E2EContext) deleteOrg(name, id string) (err error) {
 			fmt.Printf("Ok %v\n", id)
 		}
 	}()
+
 	var res *http.Response
+
 	res, err = e.AdminDelete("/admin/organisations/"+id, nil)
 	if err != nil {
 		return
 	}
+
 	var a ApiError
+
 	json.NewDecoder(res.Body).Decode(&a)
 	res.Body.Close()
+
 	if strings.ToLower(a.Status) != "ok" {
 		err = fmt.Errorf("%v", err)
 	}
+
 	return
 }
 
@@ -356,20 +419,25 @@ func (e *E2EContext) Cleanup() error {
 		for _, u := range e.Users {
 			e.deleteUser(u)
 		}
+
 		for _, v := range e.Orgs {
 			e.deleteOrg(v.Ownder, v.ID)
 		}
+
 		return e.deleteUser(e.Super.User)
 	}
+
 	return nil
 }
 
 func setupE2E(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	e := &E2EContext{}
+
 	err := e.Setup()
 	if err != nil {
 		return c1, fmt.Errorf("Failed setting up e2e contex %e", err)
 	}
+
 	return set(c1, e), nil
 }
 

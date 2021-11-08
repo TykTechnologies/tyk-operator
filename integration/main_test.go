@@ -16,10 +16,13 @@ var (
 
 func TestMain(t *testing.M) {
 	e.Parse()
+
 	if e.Mode == "" {
 		log.Fatal("Missing TYK_MODE")
 	}
+
 	testenv = env.New()
+
 	testenv.Setup(
 		setupk8s,
 		setupTyk,
@@ -31,5 +34,6 @@ func TestMain(t *testing.M) {
 		teardownTyk,
 		teardownk8s,
 	)
+
 	os.Exit(testenv.Run(t))
 }

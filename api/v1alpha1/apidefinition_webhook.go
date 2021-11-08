@@ -63,15 +63,16 @@ func (in *ApiDefinition) Default() {
 				},
 			},
 		}
-
 	}
 
 	if in.Spec.UseStandardAuth {
 		if in.Spec.AuthConfigs == nil {
 			in.Spec.AuthConfigs = make(map[string]model.AuthConfig)
 		}
+
 		if _, ok := in.Spec.AuthConfigs["authToken"]; !ok {
 			apidefinitionlog.Info("applying default auth_config as not set & use_standard_auth enabled")
+
 			in.Spec.AuthConfigs["authToken"] = model.AuthConfig{
 				AuthHeaderName: "Authorization",
 			}
@@ -91,14 +92,17 @@ func (in *ApiDefinition) ValidateCreate() error {
 
 func path(n ...string) *field.Path {
 	x := field.NewPath("spec")
+
 	for _, v := range n {
 		x = x.Child(v)
 	}
+
 	return x
 }
 
 func (in *ApiDefinition) validate() error {
 	var all field.ErrorList
+
 	spec := in.Spec
 
 	// auth
@@ -163,13 +167,16 @@ func (in *ApiDefinition) validate() error {
 			}
 		}
 	}
+
 	// proxy
 	if a := in.validateTarget(); len(a) > 0 {
 		all = append(all, a...)
 	}
+
 	if len(all) == 0 {
 		return nil
 	}
+
 	return apierrors.NewInvalid(
 		schema.GroupKind{
 			Group: "tyk.tyk.io",
@@ -204,6 +211,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 			),
 		)
 	}
+
 	for _, v := range in.Spec.VersionData.Versions {
 		if v.ExtendedPaths != nil {
 			for _, u := range v.ExtendedPaths.URLRewrite {
@@ -214,6 +222,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 						),
 					)
 				}
+
 				for _, t := range u.Triggers {
 					if t.RewriteTo == "" && t.RewriteToInternal == nil {
 						all = append(all,
@@ -226,5 +235,6 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 			}
 		}
 	}
+
 	return all
 }

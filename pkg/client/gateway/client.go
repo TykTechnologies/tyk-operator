@@ -37,8 +37,11 @@ func (c Client) HotReload(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
+
 	var resMsg ResponseMsg
+
 	if err := client.JSON(res, &resMsg); err != nil {
 		return err
 	}

@@ -25,9 +25,11 @@ func main() {
 		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
 		{"tykio/tyk-operator:latest", "{{ .Values.image.repository }}:{{ .Values.image.tag }}"},
 	}
+
 	for _, v := range m {
 		a = bytes.ReplaceAll(a, []byte(v.key), []byte(v.value))
 	}
+
 	os.Stdout.Write(a)
 }
 

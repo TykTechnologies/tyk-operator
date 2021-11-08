@@ -48,9 +48,10 @@ type SecretCertReconciler struct {
 
 func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("cert", req.NamespacedName)
+	desired := &v1.Secret{}
 
 	log.Info("getting secret resource")
-	desired := &v1.Secret{}
+
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
@@ -78,6 +79,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			certID := orgID + certFingerPrint
 
 			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
+
 			if err := klient.Universal.Certificate().Delete(ctx, certID); err != nil {
 				log.Error(err, "unable to delete certificate")
 				return ctrl.Result{RequeueAfter: time.Second * 5}, err
@@ -89,29 +91,35 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 			log.Info("removing finalizer from secret")
 			util.RemoveFinalizer(desired, certFinalizerName)
+
 			if err := r.Update(ctx, desired); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 
 		log.Info("secret successfully deleted")
+
 		return ctrl.Result{}, nil
 	}
 
 	log.Info("checking secret type is tls")
+
 	if desired.Type != secretType {
 		// it's not for us
 		return ctrl.Result{}, nil
 	}
 
 	log.Info("ensuring tls.key is present")
+
 	tlsKey, ok := desired.Data["tls.key"]
 	if !ok {
 		// cert doesn't exist yet
 		log.Info("missing tls.key, we don't care about it yet")
 		return ctrl.Result{}, nil
 	}
+
 	log.Info("ensuring tls.crt is present")
+
 	tlsCrt, ok := desired.Data["tls.crt"]
 	if !ok {
 		// cert doesn't exist yet
@@ -124,6 +132,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
 	}
+
 	if err := r.List(ctx, &apiDefList, opts...); err != nil {
 		log.Info("unable to list api definitions")
 		return ctrl.Result{}, err
@@ -135,9 +144,11 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	ret := true
+
 	for _, apiDef := range apiDefList.Items {
 		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
 			log.Info("apidefinition references this secret", "apiid", apiDef.Status.ApiID)
+
 			ret = false
 		}
 	}
@@ -163,6 +174,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	log.Info("uploaded certificate to Tyk", "certID", certID)
+
 	for _, apiDef := range apiDefList.Items {
 		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
 			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
@@ -198,7 +210,6 @@ type mySecretType struct {
 }
 
 func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
-
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 		json.Unmarshal(jsBytes, &secret)

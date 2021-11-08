@@ -170,6 +170,7 @@ func (r *RoutingTrigger) collectLoopingTarget(fn func(Target)) {
 		x := r.RewriteToInternal.Target
 		r.RewriteTo = r.RewriteToInternal.String()
 		r.RewriteToInternal = nil
+
 		fn(x)
 	}
 }
@@ -195,8 +196,10 @@ func (u *URLRewriteMeta) collectLoopingTarget(fn func(Target)) {
 		x := u.RewriteToInternal.Target
 		u.RewriteTo = u.RewriteToInternal.String()
 		u.RewriteToInternal = nil
+
 		fn(x)
 	}
+
 	for i := 0; i < len(u.Triggers); i++ {
 		u.Triggers[i].collectLoopingTarget(fn)
 	}
@@ -227,6 +230,7 @@ func (i TargetInternal) String() string {
 		RawPath:  i.Path,
 		RawQuery: i.Query,
 	}
+
 	return u.String()
 }
 
@@ -254,6 +258,7 @@ func (i RewriteToInternal) String() string {
 		Path:     i.Path,
 		RawQuery: i.Query,
 	}
+
 	return u.String()
 }
 
@@ -287,6 +292,7 @@ func (t Target) NS(defaultNS string) types.NamespacedName {
 	if t.Namespace != "" {
 		defaultNS = t.Namespace
 	}
+
 	return types.NamespacedName{Namespace: defaultNS, Name: t.Name}
 }
 
@@ -345,6 +351,7 @@ func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
 	if e == nil {
 		return
 	}
+
 	for i := 0; i < len(e.URLRewrite); i++ {
 		e.URLRewrite[i].collectLoopingTarget(fn)
 	}
@@ -724,8 +731,10 @@ func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
 	fn := func(t Target) {
 		targets = append(targets, t)
 	}
+
 	a.Proxy.collectLoopingTarget(fn)
 	a.VersionData.collectLoopingTarget(fn)
+
 	return
 }
 
@@ -783,6 +792,7 @@ func (p *Proxy) collectLoopingTarget(fn func(Target)) {
 		x := p.TargeInternal.Target
 		p.TargetURL = p.TargeInternal.String()
 		p.TargeInternal = nil
+
 		fn(x)
 	}
 }
@@ -1027,11 +1037,15 @@ type ListAPIOptions struct {
 // Params returns url.Values that matches what the admin api expects from ls.
 func (ls ListAPIOptions) Params() url.Values {
 	o := make(map[string]interface{})
+
 	b, _ := json.Marshal(ls)
 	json.Unmarshal(b, &o)
+
 	u := make(url.Values)
+
 	for k, v := range o {
 		u[k] = []string{fmt.Sprint(v)}
 	}
+
 	return u
 }
