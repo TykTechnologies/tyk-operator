@@ -168,13 +168,12 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 	values := []interface{}{
 		"Method", method, "URL", url,
 	}
+
 	if res != nil {
 		values = append(values, "Status", res.StatusCode)
 	} else {
 		values = append(values, "Status", err.Error())
 	}
-
-	values = append(values)
 
 	rctx.Log.Info("Call", values...)
 
