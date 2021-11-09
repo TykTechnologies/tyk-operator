@@ -702,7 +702,7 @@ type APIDefinitionSpec struct {
 	// Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint. Use CertificateSecretNames if using cert-manager
 	Certificates []string `json:"certificates,omitempty"`
 
-	// CertificateSecretNames represents the names of the secrets that the controller should look for in the in the current
+	// CertificateSecretNames represents the names of the secrets that the controller should look for in the current
 	// namespace which contain the certificates.
 	CertificateSecretNames []string `json:"certificate_secret_names,omitempty"`
 

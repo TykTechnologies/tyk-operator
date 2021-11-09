@@ -228,7 +228,7 @@ spec:
                 - cache_timeout
                 type: object
               certificate_secret_names:
-                description: CertificateSecretNames represents the names of the secrets that the controller should look for in the in the current namespace which contain the certificates.
+                description: CertificateSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates.
                 items:
                   type: string
                 type: array
