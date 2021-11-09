@@ -229,12 +229,17 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	err = klient.Universal.Portal().Policy().Create(ctx, spec)
 	if err != nil {
 		r.Log.Error(err, "Failed to create policy")
+
 		return err
 	}
 
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
+
+	if err != nil {
+		r.Log.Error(err, "failed to update linkedAPI status")
+	}
 
 	r.Log.Info("Successful created Policy")
 
@@ -260,6 +265,7 @@ func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *
 
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 			r.Log.Error(err, "Failed to get linked api definition")
+
 			return err
 		}
 

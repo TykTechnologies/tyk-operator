@@ -249,7 +249,8 @@ func initFn(ns string) (func() error, error) {
 var api TykAPI
 
 func setup(ns string) error {
-	label := "name=tyk"
+	var label string
+
 	mode := os.Getenv("TYK_MODE")
 
 	switch mode {
