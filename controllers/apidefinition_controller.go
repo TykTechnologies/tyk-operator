@@ -109,22 +109,29 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 
-		for _, certName := range desired.Spec.CertificateSecretNames {
+		// we support only one certificate secret name for mvp
+		if len(desired.Spec.CertificateSecretNames) != 0 {
+			certName := desired.Spec.CertificateSecretNames[0]
 			secret := v1.Secret{}
+
 			err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
 			if err != nil {
 				log.Error(err, "requeueing because secret not found")
+
 				return err
 			}
+
 			pemCrtBytes, ok := secret.Data["tls.crt"]
 			if !ok {
 				log.Error(err, "requeueing because cert not found in secret")
+
 				return err
 			}
 
 			pemKeyBytes, ok := secret.Data["tls.key"]
 			if !ok {
 				log.Error(err, "requeueing because key not found in secret")
+
 				return err
 			}
 
@@ -137,8 +144,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					return err
 				}
 			}
+
 			desired.Spec.Certificates = []string{tykCertID}
-			break
 		}
 
 		desired.Spec.CertificateSecretNames = nil
