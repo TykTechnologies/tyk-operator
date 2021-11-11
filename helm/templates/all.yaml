@@ -141,6 +141,20 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - operatorcontexts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - operatorcontexts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - portalapicatalogues
   verbs:
   - create

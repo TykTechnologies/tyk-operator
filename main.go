@@ -188,6 +188,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "PortalConfig")
 		os.Exit(1)
 	}
+	if err = (&controllers.OperatorContextReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Log:    ctrl.Log.WithName("controllers").WithName("OperatorContext"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OperatorContext")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
