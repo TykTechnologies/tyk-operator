@@ -82,7 +82,13 @@ type Ingress struct {
 }
 
 // OperatorContextStatus defines the observed state of OperatorContext
-type OperatorContextStatus struct{}
+type OperatorContextStatus struct {
+	LinkedApiDefinitions      []model.Target `json:"linked_api_definitions,omitempty"`
+	LinkedApiDescriptions     []model.Target `json:"linked_api_descriptions,omitempty"`
+	LinkedPortalAPICatalogues []model.Target `json:"linked_portal_catalogues,omitempty"`
+	LinkedSecurityPolicies    []model.Target `json:"linked_security_policies,omitempty"`
+	LinkedPortalConfigs       []model.Target `json:"linked_portal_configs,omitempty"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
