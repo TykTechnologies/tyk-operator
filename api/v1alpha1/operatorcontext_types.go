@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -69,11 +70,11 @@ type OperatorContextSpec struct {
 
 type Environment struct {
 	Mode               OperatorContextMode `json:"mode,omitempty"`
-	InsecureSkipVerify bool                `json:"insecureSkipVerify,omitempty"`
 	URL                string              `json:"url,omitempty"`
 	Auth               string              `json:"auth,omitempty"`
 	Org                string              `json:"org,omitempty"`
 	Ingress            Ingress             `json:"ingress,omitempty"`
+	InsecureSkipVerify bool                `json:"insecureSkipVerify,omitempty"`
 }
 
 type Ingress struct {
@@ -115,4 +116,54 @@ type OperatorContextList struct {
 
 func init() {
 	SchemeBuilder.Register(&OperatorContext{}, &OperatorContextList{})
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedAPIDefinition(target model.Target, log logr.Logger) {
+	for i, apiDef := range opStatus.LinkedApiDefinitions {
+		if apiDef.Namespace == target.Namespace && apiDef.Name == target.Name {
+			opStatus.LinkedApiDefinitions = append(opStatus.LinkedApiDefinitions[:i], opStatus.LinkedApiDefinitions[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedSecurityPolicies(target model.Target) {
+	for i, sp := range opStatus.LinkedSecurityPolicies {
+		if sp.Namespace == target.Namespace && sp.Name == target.Name {
+			opStatus.LinkedSecurityPolicies = append(opStatus.LinkedSecurityPolicies[:i], opStatus.LinkedSecurityPolicies[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedApiDescriptions(target model.Target) {
+	for i, apiDes := range opStatus.LinkedApiDescriptions {
+		if apiDes.Namespace == target.Namespace && apiDes.Name == target.Name {
+			opStatus.LinkedApiDescriptions = append(opStatus.LinkedApiDescriptions[:i], opStatus.LinkedApiDescriptions[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedPortalAPICatalogues(target model.Target) {
+	for i, pcat := range opStatus.LinkedPortalAPICatalogues {
+		if pcat.Namespace == target.Namespace && pcat.Name == target.Name {
+			opStatus.LinkedPortalAPICatalogues = append(opStatus.LinkedPortalAPICatalogues[:i], opStatus.LinkedPortalAPICatalogues[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedPortalConfig(target model.Target) {
+	for i, pconf := range opStatus.LinkedPortalAPICatalogues {
+		if pconf.Namespace == target.Namespace && pconf.Name == target.Name {
+			opStatus.LinkedPortalConfigs = append(opStatus.LinkedPortalConfigs[:i], opStatus.LinkedPortalConfigs[i+1:]...)
+
+			return
+		}
+	}
 }

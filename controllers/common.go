@@ -11,6 +11,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -60,6 +61,12 @@ func httpContext(
 ) (environmet.Env, context.Context, error) {
 	get := func(c *model.Target) error {
 		if c == nil {
+			// To handle the case where operator context was used previously
+			// but was removed in update operation
+			if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+				log.Error(err, "Failed to update status of operator contexts")
+			}
+
 			return nil
 		}
 
@@ -70,12 +77,17 @@ func httpContext(
 		)
 		if err != nil {
 			log.Error(err, "Failed to get context", "contextRef", c.String())
+
 			return err
 		}
 
 		log.Info("Successful acquired context", "contextRef", c.String())
 
 		e.Environment = *env.Spec.Env
+
+		if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+			log.Error(err, "Failed to update status of operator contexts")
+		}
 
 		return nil
 	}
@@ -103,6 +115,106 @@ func httpContext(
 		Env: e,
 		Log: log,
 	}), nil
+}
+
+func updateOperatorContextStatus(
+	ctx context.Context,
+	rClient runtimeClient.Client,
+	e environmet.Env,
+	object runtimeClient.Object,
+	log logr.Logger,
+	ctxRef *model.Target,
+) error {
+	target := model.Target{
+		Name:      object.GetName(),
+		Namespace: object.GetNamespace(),
+	}
+
+	// Remove link from other operator context, if any,
+	// as we do not know if object was referencing to different context previously
+	var opCtxList v1alpha1.OperatorContextList
+
+	if err := rClient.List(ctx, &opCtxList); err != nil {
+		return err
+	}
+
+	switch object.(type) {
+	case *v1alpha1.ApiDefinition:
+		for _, opctx := range opCtxList.Items {
+			opctx.Status.RemoveLinkedAPIDefinition(target, log)
+
+			err := rClient.Status().Update(ctx, &opctx)
+			if err != nil {
+				log.Error(err, "Failed to remove link of APIDefintion from operator context", "operatorContext", opctx.Name, "apidefinition", target.Name)
+			}
+		}
+	case *v1alpha1.SecurityPolicy:
+		for _, opctx := range opCtxList.Items {
+			opctx.Status.RemoveLinkedSecurityPolicies(target)
+
+			err := rClient.Status().Update(ctx, &opctx)
+			if err != nil {
+				return err
+			}
+		}
+	case *v1alpha1.PortalAPICatalogue:
+		for _, opctx := range opCtxList.Items {
+			opctx.Status.RemoveLinkedPortalAPICatalogues(target)
+
+			err := rClient.Status().Update(ctx, &opctx)
+			if err != nil {
+				return err
+			}
+		}
+	case *v1alpha1.APIDescription:
+		for _, opctx := range opCtxList.Items {
+			opctx.Status.RemoveLinkedApiDescriptions(target)
+
+			err := rClient.Status().Update(ctx, &opctx)
+			if err != nil {
+				return err
+			}
+		}
+	case *v1alpha1.PortalConfig:
+		for _, opctx := range opCtxList.Items {
+			opctx.Status.RemoveLinkedPortalConfig(target)
+
+			err := rClient.Status().Update(ctx, &opctx)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Add reference to the refered operator context
+	// only if object is not marked for deletion
+	if object.GetDeletionTimestamp().IsZero() && ctxRef != nil {
+		// add reference to operator context
+		var operatorContext v1alpha1.OperatorContext
+
+		key := types.NamespacedName{Name: ctxRef.Name, Namespace: ctxRef.Namespace}
+
+		if err := rClient.Get(ctx, key, &operatorContext); err != nil {
+			return err
+		}
+
+		switch object.(type) {
+		case *v1alpha1.ApiDefinition:
+			operatorContext.Status.LinkedApiDefinitions = append(operatorContext.Status.LinkedApiDefinitions, target)
+		case *v1alpha1.SecurityPolicy:
+			operatorContext.Status.LinkedSecurityPolicies = append(operatorContext.Status.LinkedSecurityPolicies, target)
+		case *v1alpha1.PortalAPICatalogue:
+			operatorContext.Status.LinkedPortalAPICatalogues = append(operatorContext.Status.LinkedPortalAPICatalogues, target)
+		case *v1alpha1.APIDescription:
+			operatorContext.Status.LinkedApiDescriptions = append(operatorContext.Status.LinkedApiDescriptions, target)
+		case *v1alpha1.PortalConfig:
+			operatorContext.Status.LinkedPortalConfigs = append(operatorContext.Status.LinkedPortalConfigs, target)
+		}
+
+		return rClient.Status().Update(ctx, &operatorContext)
+	}
+
+	return nil
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=operatorcontexts,verbs=get;list;watch;create;update;patch;delete
