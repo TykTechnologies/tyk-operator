@@ -103,7 +103,7 @@ spec:
                   type: string
                 type: array
               api_id:
-                description: Only set this field if you are referring To an existing API in def. The Operator will use this API ID to link the CRD with the API in Tyk Note the values in the CRD will become the new source of truth, overriding the existing API Definition
+                description: Only set this field if you are referring to an existing API in def. The Operator will use this API ID to link the CR with the API in Tyk Note the values in the CR will become the new source of truth, overriding the existing API Definition
                 type: string
               auth:
                 properties:

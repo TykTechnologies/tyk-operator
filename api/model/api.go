@@ -504,9 +504,9 @@ type APIDefinitionSpec struct {
 	ID string `json:"id,omitempty"`
 
 	// Only set this field if you are referring
-	// To an existing API in def.
-	// The Operator will use this API ID to link the CRD with the API in Tyk
-	// Note the values in the CRD will become the new source of truth, overriding the existing API Definition
+	// to an existing API def.
+	// The Operator will use this APIID to link the CR with the API in Tyk
+	// Note: The values in the CR will become the new source of truth, overriding the existing API Definition
 	APIID string `json:"api_id,omitempty"`
 
 	Name string `json:"name"`
