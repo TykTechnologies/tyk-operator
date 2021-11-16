@@ -54,45 +54,38 @@ func (r *OperatorContextReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	logger.Info("Reconciling OperatorContext instance")
 
-	var list v1alpha1.ApiDefinitionList
 	var desired v1alpha1.OperatorContext
 
 	if err := r.Get(ctx, req.NamespacedName, &desired); err != nil {
-		logger.Error(err, "failed to fetch operator context object")
+		logger.Error(err, "Failed to fetch operator context object")
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if !desired.DeletionTimestamp.IsZero() {
-		err := r.List(ctx, &list, client.InNamespace(req.Namespace))
-		if err != nil {
-			logger.Error(err, "failed to fetch apidefinitions in current namespace")
+		if len(desired.Status.LinkedApiDefinitions) != 0 || len(desired.Status.LinkedApiDescriptions) != 0 || len(desired.Status.LinkedPortalAPICatalogues) != 0 || len(desired.Status.LinkedSecurityPolicies) != 0 || len(desired.Status.LinkedPortalConfigs) != 0 {
+			err := errors.New("Operator context is used by other resources. Please check operator context status to find exact list of resources")
+
+			logger.Error(err, "Cannot delete operator context")
 
 			return ctrl.Result{}, err
 		}
 
-		canBeDeleted := true
+		// delete resource
+		logger.Info("No resource linked. Deleting operator context")
 
-		for _, apiDef := range list.Items {
-			if apiDef.Spec.Context != nil && apiDef.Spec.Context.Name == desired.Name {
-				canBeDeleted = false
-				break
-			}
+		if err := r.Client.Delete(ctx, &desired); err != nil {
+			logger.Error(err, "Failed to delete operator context resource", "name", desired.Name, "namespace", desired.Namespace)
+
+			return ctrl.Result{}, err
 		}
 
-		if !canBeDeleted {
-			logger.Error(errors.New("cannot delete operator context while it is being referenced by other resources"), "failed to delete operator context")
-
-			return ctrl.Result{Requeue: true}, nil
-		}
-
-		util.RemoveFinalizer(&desired, keys.OperatorContextFinalizerName)
-
-		return ctrl.Result{}, r.Update(ctx, &desired)
+		return ctrl.Result{}, nil
 	}
 
 	if !util.ContainsFinalizer(&desired, keys.OperatorContextFinalizerName) {
-		logger.Info("Obj doesn't have finalizer. Adding one")
+		logger.Info("Adding finalizer to operator context resource")
+
 		util.AddFinalizer(&desired, keys.OperatorContextFinalizerName)
 
 		return ctrl.Result{}, r.Update(ctx, &desired)
