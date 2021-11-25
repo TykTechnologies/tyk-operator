@@ -435,7 +435,7 @@ func setupE2E(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 
 	err := e.Setup()
 	if err != nil {
-		return c1, fmt.Errorf("Failed setting up e2e contex %e", err)
+		return c1, fmt.Errorf("Failed setting up e2e context %e", err)
 	}
 
 	return set(c1, e), nil

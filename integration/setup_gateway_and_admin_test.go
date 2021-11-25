@@ -52,7 +52,7 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 	}
 
 	if a == -1 || g == -1 {
-		return errors.New("Failed to find tyk  or dashboard service")
+		return errors.New("Failed to find tyk or dashboard service")
 	}
 
 	return createServices(ctx, c2, &ls.Items[g], &ls.Items[a])
