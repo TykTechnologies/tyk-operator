@@ -68,14 +68,15 @@ func (r *OperatorContextReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 			logger.Error(err, "Cannot delete operator context")
 
-			return ctrl.Result{}, err
+			return ctrl.Result{RequeueAfter: queueAfter}, err
 		}
 
-		// delete resource
 		logger.Info("No resource linked. Deleting operator context")
 
-		if err := r.Client.Delete(ctx, &desired); err != nil {
-			logger.Error(err, "Failed to delete operator context resource", "name", desired.Name, "namespace", desired.Namespace)
+		util.RemoveFinalizer(&desired, keys.OperatorContextFinalizerName)
+
+		if err := r.Update(ctx, &desired); err != nil {
+			logger.Error(err, "failed to remove operator context finalizer")
 
 			return ctrl.Result{}, err
 		}
