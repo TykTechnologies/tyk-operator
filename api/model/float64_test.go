@@ -6,7 +6,7 @@ import (
 )
 
 func TestPercent(t *testing.T) {
-	r := regexp.MustCompile("^0\\.\\d+|1\\.0$")
+	r := regexp.MustCompile(`^0\.\d+|1\.0$`)
 	s := []struct {
 		v  string
 		ok bool

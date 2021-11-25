@@ -262,10 +262,13 @@ func GetContext(
 		// we are setting all values that are not set on env but present in secret.
 		e := o.Spec.Env
 		if e.Mode == "" {
-			value(v1alpha1.TykMode, func(s string) error {
+			err := value(v1alpha1.TykMode, func(s string) error {
 				e.Mode = v1alpha1.OperatorContextMode(s)
 				return nil
 			})
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if !e.InsecureSkipVerify {
@@ -279,24 +282,33 @@ func GetContext(
 		}
 
 		if e.URL == "" {
-			value(v1alpha1.TykURL, func(s string) (err error) {
+			err := value(v1alpha1.TykURL, func(s string) (err error) {
 				e.URL = s
 				return
 			})
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if e.Auth == "" {
-			value(v1alpha1.TykAuth, func(s string) (err error) {
+			err := value(v1alpha1.TykAuth, func(s string) (err error) {
 				e.Auth = s
 				return
 			})
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if e.Org == "" {
-			value(v1alpha1.TykORG, func(s string) (err error) {
+			err := value(v1alpha1.TykORG, func(s string) (err error) {
 				e.Org = s
 				return
 			})
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if e.Ingress.HTTPPort == 0 {
