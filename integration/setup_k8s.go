@@ -9,6 +9,10 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/e2e-framework/klient"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
@@ -79,6 +83,19 @@ func setupk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	}
 
 	client, err := klient.NewWithKubeConfigFile(kubecfg)
+	if err != nil {
+		return c1, err
+	}
+
+	conf := client.RESTConfig()
+	conf.ContentConfig.GroupVersion = &v1alpha1.GroupVersion
+	conf.APIPath = "/apis"
+	v1alpha1.AddToScheme(scheme.Scheme)
+
+	conf.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
+	conf.UserAgent = rest.DefaultKubernetesUserAgent()
+
+	client, err = klient.New(conf)
 	if err != nil {
 		return c1, err
 	}
