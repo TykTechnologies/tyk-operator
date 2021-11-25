@@ -670,13 +670,19 @@ make clean
 ```
 
 ## Run tests
-To run test boot up CE or pro setup.
+To run tests, boot up either of the following setups:
 
-```
-make boot-ce/boot-pro
-export TYK_MODE=ce/pro
-make test-all
-```
+### CE
+ 
+    ```shell
+    TYK_MODE=ce make boot-ce test-all
+    ```
+
+### Pro 
+
+    ```shell
+    TYK_MODE=pro make boot-pro test-all
+    ```
 
 
 
