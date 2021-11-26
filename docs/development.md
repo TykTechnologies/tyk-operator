@@ -21,7 +21,7 @@ Note that these are tools which we use for development of this project.
 ### 0 Create cluster
 
 ```shell
-kind create cluster --config hack/kind.yml
+make create-kind-cluster
 ```
 
 This will create a 3 node cluster. 1 control-plane and 2 worker nodes.
@@ -659,6 +659,30 @@ This will
 - load the image to kind cluster
 - uninstall the previous controller deployment
 - install the new controller  deployment
+
+
+## Delete cluster
+
+Delete kind cluster using following command
+
+```
+make clean
+```
+
+## Run tests
+To run tests, boot up either of the following setups:
+
+### CE
+ 
+    ```shell
+    TYK_MODE=ce make boot-ce test-all
+    ```
+
+### Pro 
+
+    ```shell
+    TYK_MODE=pro make boot-pro test-all
+    ```
 
 
 
