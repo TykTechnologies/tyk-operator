@@ -45,13 +45,13 @@ func TestOperatorContextDelete(t *testing.T) {
 			is := is.New(t)
 			client := envConf.Client()
 
-			// create api definition
-			apiDef, err := createTestAPIDef(ctx, testNS, envConf)
-			is.NoErr(err) // failed to create apiDefinition
-
 			// create operator context
 			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create operatorcontext
+
+			// create api definition
+			apiDef, err := createTestAPIDef(ctx, testNS, envConf)
+			is.NoErr(err) // failed to create apiDefinition
 
 			time.Sleep(reconcileDelay)
 
@@ -85,13 +85,13 @@ func TestOperatorContextDelete(t *testing.T) {
 			is := is.New(t)
 			client := envConf.Client()
 
-			// create api definition
-			apidef, err := createTestAPIDef(ctx, testNS, envConf)
-			is.NoErr(err) // failed to create apiDefinition
-
 			// create operator context
 			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create operatorcontext
+
+			// create api definition
+			apidef, err := createTestAPIDef(ctx, testNS, envConf)
+			is.NoErr(err) // failed to create apiDefinition
 
 			time.Sleep(reconcileDelay)
 
