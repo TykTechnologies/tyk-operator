@@ -161,7 +161,7 @@ func createTestOperatorContext(ctx context.Context, namespace string, envConf *e
 	operatorCtx.Namespace = namespace
 	operatorCtx.Spec.FromSecret = &model.Target{
 		Name:      "tyk-operator-conf",
-		Namespace: envNS(),
+		Namespace: operatorNamespace,
 	}
 
 	err := client.Resources(namespace).Create(ctx, &operatorCtx)
