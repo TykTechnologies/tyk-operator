@@ -157,7 +157,7 @@ install-cert-manager: ## Install cert manager
 
 .PHONY: install-operator-helm
 install-operator-helm: cross-build-image manifests helm	## Install operator using helm
-	@echo "===> installing operator with helmr"
+	@echo "===> installing operator with helm"
 	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
 	helm install ci ./helm --values ./ci/helm_values.yaml --set image.tag=${TAG} -n tyk-operator-system --wait
 
