@@ -1,12 +1,9 @@
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: httpbin2
+  name: httpbin
 spec:
-  name: httpbin2
-  contextRef: 
-    name: mycontext3
-    namespace: default
+  name: httpbin
   use_keyless: true
   protocol: http
   active: true
