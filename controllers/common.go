@@ -141,7 +141,7 @@ func updateOperatorContextStatus(
 	switch object.(type) {
 	case *v1alpha1.ApiDefinition:
 		for _, opctx := range opCtxList.Items {
-			opctx.Status.RemoveLinkedAPIDefinition(target, log)
+			opctx.Status.RemoveLinkedAPIDefinition(target)
 
 			err := rClient.Status().Update(ctx, &opctx)
 			if err != nil {
