@@ -18,7 +18,7 @@ Note that these are tools which we use for development of this project.
 | Docker| 19.03.13+|
 
 
-### 0 Create cluster
+### 0. Create cluster
 
 ```shell
 make create-kind-cluster
@@ -26,16 +26,7 @@ make create-kind-cluster
 
 This will create a 3 node cluster. 1 control-plane and 2 worker nodes.
 
-### 1. boot strap the dev environment
-
-The operator needs a couple of env vars so that it knows how to speak to the Tyk apis.
-
-```shell
-export TYK_AUTH=REPLACE_WITH_DASH_USER_KEY_OR_FOR_COMMUNITY_EDITION_GW_SECRET
-export TYK_ORG=REPLACE_WITH_ORG_ID
-export TYK_MODE=pro|ce
-export TYK_URL=REPLACE_WITH_DASHBOARD_URL_OR_GATEWAY_ADMIN_URL
-```
+### 1. Boot strap the dev environment
 
 #### Booting tyk community edition
 
@@ -472,23 +463,23 @@ This will
 - setup secret that will be used by the operator to access the deployed dashboard
 
 
-### 2 Checking if the environment is working
+### 2. Checking if the environment is working
 
 
-#### PRO
+#### For PRO mode
 
 ***expose our gateway locally***
 
 Run this in a separate terminal
 
 ```
-kubectl port-forward svc/gw 8000:8000  -n tykpro-control-plane
+kubectl port-forward svc/gateway-svc-pro-tyk-pro 8080:8080  -n tykpro-control-plane
 ```
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
 <pre>
-Forwarding from 127.0.0.1:8000 -> 8000
-Forwarding from [::1]:8000 -> 8000
+Forwarding from 127.0.0.1:8080 -> 8080
+Forwarding from [::1]:8080 -> 8080
 </pre>
 </p>
 </details>
@@ -498,7 +489,7 @@ Forwarding from [::1]:8000 -> 8000
 In a separate terminal run
 
 ```
-curl http://localhost:8000/hello
+curl http://localhost:8080/hello
 ```
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
@@ -542,7 +533,7 @@ apidefinition.tyk.tyk.io/httpbin created
 check that your api definition was applied and it works
 
 ```
-curl http://localhost:8000/httpbin/headers
+curl http://localhost:8080/httpbin/headers
 ```
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
@@ -562,20 +553,20 @@ curl http://localhost:8000/httpbin/headers
 </details>
 
 
-#### Community edition
+#### For CE(Community edition) mode
 
 ***expose our gateway locally***
 
 Run this in a separate terminal
 
 ```
-kubectl port-forward svc/gw 8000:8000  -n tykce-control-plane
+kubectl port-forward svc/gateway-svc-ce-tyk-headless 8080:8080  -n tykce-control-plane
 ```
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
 <pre>
-Forwarding from 127.0.0.1:8000 -> 8000
-Forwarding from [::1]:8000 -> 8000
+Forwarding from 127.0.0.1:8080 -> 8080
+Forwarding from [::1]:8080 -> 8080
 </pre>
 </p>
 </details>
@@ -585,7 +576,7 @@ Forwarding from [::1]:8000 -> 8000
 In a separate terminal run
 
 ```
-curl http://localhost:8000/hello
+curl http://localhost:8080/hello
 ```
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
@@ -624,7 +615,7 @@ apidefinition.tyk.tyk.io/httpbin created
 check that your api definition was applied and it works
 
 ```
-curl http://localhost:8000/httpbin/headers
+curl http://localhost:8080/httpbin/headers
 ```
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
