@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func retryOperation(timeout time.Duration, interval time.Duration, fn func() err
 		}
 
 	case <-timeoutTick.C:
-		return err
+		return fmt.Errorf("Timeout: failed to complete operation:%v", err)
 	}
 
 	return nil

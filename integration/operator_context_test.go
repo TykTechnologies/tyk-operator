@@ -58,6 +58,10 @@ func TestOperatorContextDelete(t *testing.T) {
 				var opCtx v1alpha1.OperatorContext
 				// shouldn't get deleted
 				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx)
+				if err != nil {
+					return err
+				}
+
 				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
 					return errors.New("operator context status is not updated yet")
 				}
@@ -124,6 +128,10 @@ func TestOperatorContextDelete(t *testing.T) {
 				var opCtx v1alpha1.OperatorContext
 				// shouldn't get deleted
 				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx)
+				if err != nil {
+					return err
+				}
+
 				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
 					return errors.New("operator context status is not updated yet")
 				}
