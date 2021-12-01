@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 	"time"
@@ -53,7 +54,19 @@ func TestOperatorContextDelete(t *testing.T) {
 			apiDef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			time.Sleep(reconcileDelay)
+			err = retryOperation(time.Hour, reconcileDelay, func() error {
+				var opCtx v1alpha1.OperatorContext
+				// shouldn't get deleted
+				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx)
+				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
+					return errors.New("operator context status is not updated yet")
+				}
+
+				return nil
+			})
+			is.NoErr(err)
+
+			//time.Sleep(reconcileDelay)
 
 			// try to delete operator context
 			err = client.Resources().Delete(ctx, operatorCtx)
@@ -70,11 +83,24 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Delete(ctx, apiDef)
 			is.NoErr(err)
 
-			time.Sleep(reconcileDelay)
+			//time.Sleep(reconcileDelay)
+
+			err = retryOperation(time.Hour, reconcileDelay, func() error {
+				var result v1alpha1.OperatorContext
+				// shouldn't get deleted
+				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
+				if err != nil {
+					return nil
+				}
+
+				return errors.New("Should get deleted")
+			})
+			is.NoErr(err)
 
 			// once api defintions referring to it get deleted, operator context gets deleted
-			err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
-			is.True(err != nil)
+			/*	err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
+				is.True(err != nil)
+			*/
 
 			return ctx
 		}).Feature()
@@ -93,7 +119,18 @@ func TestOperatorContextDelete(t *testing.T) {
 			apidef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			time.Sleep(reconcileDelay)
+			//time.Sleep(reconcileDelay)
+			err = retryOperation(time.Hour, reconcileDelay, func() error {
+				var opCtx v1alpha1.OperatorContext
+				// shouldn't get deleted
+				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx)
+				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
+					return errors.New("operator context status is not updated yet")
+				}
+
+				return nil
+			})
+			is.NoErr(err)
 
 			// try to delete operator context
 			err = client.Resources().Delete(ctx, operatorCtx)
@@ -114,10 +151,24 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Update(ctx, apidef)
 			is.NoErr(err)
 
-			time.Sleep(reconcileDelay)
+			//time.Sleep(reconcileDelay)
 
-			err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
-			is.True(err != nil)
+			err = retryOperation(time.Hour, reconcileDelay, func() error {
+				var result v1alpha1.OperatorContext
+				// shouldn't get deleted
+				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
+				if err != nil {
+					return nil
+				}
+
+				return errors.New("Should get deleted")
+			})
+			is.NoErr(err)
+
+			/*
+				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
+				is.True(err != nil)
+			*/
 
 			return ctx
 		}).Feature()
