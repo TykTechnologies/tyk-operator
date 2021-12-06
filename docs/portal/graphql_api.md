@@ -1,6 +1,6 @@
 ## Publish GraphQL API to Portal
 
-This example publishes GraphQL API on Tyk Portal
+This example publish GraphQL API on Tyk Portal.
 
 ### 1. Create GraphQL API
 GraphQL API can be deployed by setting `graphql` field of API Definitions.
@@ -55,6 +55,9 @@ spec:
  - Default
 ```
 
+`access_rights_array` contains details of API created in previous step.
+
+
 ### 3. Create API Description
 Create API Description object, which will be used for creating portal catalogue resource in next step.
 
@@ -73,6 +76,8 @@ spec:
  show: true
  version: v2
 ```
+
+`policyRef` contains details of security policy created in previous step.
 
 ### 4. Create Portal Catalogue
 Create a portal catalogue.
