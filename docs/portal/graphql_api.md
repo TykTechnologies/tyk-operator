@@ -3,16 +3,17 @@
 This example publishes GraphQL API on Tyk Portal
 
 ### 1. Create GraphQL API
-    GraphQL API can be deployed by setting graphql field of API Definitions.
+GraphQL API can be deployed by setting `graphql` field of API Definitions.
      
-    It has following mandatory subfields
-    1. enabled: Enabled indicates if GraphQL proxy should be enabled.
-    2. execution_mode: The mode of a GraphQL API. There are two types: `proxyOnly` and `executionEngine`.
-    - proxyOnly: There is one single upstream which is a GraphQL API and Tyk proxies it.
-    - executionEngine: It lets you to configure your own GraphQL API with multiple data sources. This means that you will compose your own schema.
-    3. schema: The GraphQL schema of your API is saved in this variable in SDL format.
+It has following mandatory subfields
+* **enabled:** Enabled indicates if GraphQL proxy should be enabled.
+* **execution_mode:** The mode of a GraphQL API. There are two types: `proxyOnly` and `executionEngine`.
+    - **proxyOnly:** There is one single upstream which is a GraphQL API and Tyk proxies it.
+    - **executionEngine:** It lets you to configure your own GraphQL API with multiple data sources. This means that you will compose your own schema.
+* **schema:** The GraphQL schema of your API is saved in this variable in SDL format.
 
-    Here is an example which creates GraphQL API which proxies request to [https://countries.trevorblades.com/](https://countries.trevorblades.com/) and has Standard Auth type.
+#### Example
+Here is an example which creates GraphQL API which proxies request to [https://countries.trevorblades.com/](https://countries.trevorblades.com/) and has standard auth type.
 
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1
@@ -36,7 +37,7 @@ spec:
 ```
 
 ### 2. Create Security Policy
-    Create a security policy for publishing the above API to the portal.
+Create a security policy for publishing the above API to the portal.
 
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1
@@ -55,7 +56,7 @@ spec:
 ```
 
 ### 3. Create API Description
-    Create API Description object, which will be used for creating portal catalogue resource in next step.
+Create API Description object, which will be used for creating portal catalogue resource in next step.
 
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1
@@ -74,7 +75,7 @@ spec:
 ```
 
 ### 4. Create Portal Catalogue
-    Create a portal catalogue.
+Create a portal catalogue.
 
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1
@@ -88,12 +89,14 @@ spec:
     namespace: default
 ```
 
-    Your API is not published to your Portal!!
+Your API is now published to your Portal!!
+
 
 
 ## Protected GraphQL Catalogue
 
-If you have a protected API, your users won’t be able to inspect the GraphQL schema or make API calls until they add their API Key to the Headers section
+If you have a protected API, your users won’t be able to inspect the GraphQL schema or make API calls until they add their API Key to the Headers section.
+
 
 
 ## CORS
