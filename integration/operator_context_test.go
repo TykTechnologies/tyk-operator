@@ -56,10 +56,10 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			err = retryOperation(time.Hour, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
+
 				// shouldn't get deleted
-				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx)
-				if err != nil {
-					return err
+				if errGet := client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx); errGet != nil {
+					return errGet
 				}
 
 				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
@@ -87,9 +87,9 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			err = retryOperation(time.Hour, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
-				// shouldn't get deleted
-				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
-				if err != nil {
+
+				// should get deleted
+				if errGet := client.Resources().Get(ctx, operatorCtx.Name, testNS, &result); errGet != nil {
 					return nil
 				}
 
@@ -117,9 +117,8 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = retryOperation(time.Hour, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
 				// shouldn't get deleted
-				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx)
-				if err != nil {
-					return err
+				if errGet := client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx); errGet != nil {
+					return errGet
 				}
 
 				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
@@ -151,9 +150,9 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			err = retryOperation(time.Hour, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
-				// shouldn't get deleted
-				err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result)
-				if err != nil {
+
+				// should get deleted
+				if err = client.Resources().Get(ctx, operatorCtx.Name, testNS, &result); err != nil {
 					return nil
 				}
 
