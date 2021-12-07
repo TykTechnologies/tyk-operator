@@ -17,15 +17,14 @@ func retryOperation(timeout time.Duration, interval time.Duration, fn func() err
 		return nil
 	}
 
-	select {
-	case <-intervalTick.C:
-		if err = fn(); err == nil {
-			return nil
+	for {
+		select {
+		case <-intervalTick.C:
+			if err = fn(); err == nil {
+				return nil
+			}
+		case <-timeoutTick.C:
+			return fmt.Errorf("Timeout: failed to complete operation:%v", err)
 		}
-
-	case <-timeoutTick.C:
-		return fmt.Errorf("Timeout: failed to complete operation:%v", err)
 	}
-
-	return nil
 }
