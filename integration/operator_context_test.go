@@ -54,7 +54,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			apiDef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			err = retryOperation(time.Hour, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
 
 				// shouldn't get deleted
@@ -89,7 +89,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Delete(ctx, apiDef)
 			is.NoErr(err)
 
-			err = retryOperation(time.Hour, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
 
 				// should get deleted
@@ -118,7 +118,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			apidef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			err = retryOperation(time.Hour, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
 				// shouldn't get deleted
 				if errGet := client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx); errGet != nil {
@@ -152,7 +152,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Update(ctx, apidef)
 			is.NoErr(err)
 
-			err = retryOperation(time.Hour, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
 
 				// should get deleted
