@@ -59,12 +59,16 @@ func TestOperatorContextDelete(t *testing.T) {
 
 				// shouldn't get deleted
 				if errGet := client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx); errGet != nil {
+					t.Log(errGet)
 					return errGet
 				}
 
 				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
+					t.Log("operator context status is not updated yet")
 					return errors.New("operator context status is not updated yet")
 				}
+
+				t.Log("Operation completed successfully")
 
 				return nil
 			})
