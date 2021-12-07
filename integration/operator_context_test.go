@@ -27,11 +27,22 @@ func TestOperatorContextCreate(t *testing.T) {
 			_, err = createTestOperatorContext(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create operatorcontext
 
-			time.Sleep(reconcileDelay)
+			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
+				resp, getErr := http.Get("http://localhost:7000/httpbin/get")
+				if getErr != nil {
+					t.Log(getErr)
+					return getErr
+				}
 
-			resp, err := http.Get("http://localhost:7000/httpbin/get")
+				if resp.StatusCode != 200 {
+					t.Log("API is not created yet")
+					return errors.New("API is not created yet")
+				}
+
+				return nil
+			})
+
 			is.NoErr(err)
-			is.Equal(resp.StatusCode, 200)
 
 			return ctx
 		}).Feature()
@@ -54,7 +65,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			apiDef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
 
 				// shouldn't get deleted
@@ -89,7 +100,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Delete(ctx, apiDef)
 			is.NoErr(err)
 
-			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
 
 				// should get deleted
@@ -118,7 +129,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			apidef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
 				// shouldn't get deleted
 				if errGet := client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx); errGet != nil {
@@ -152,7 +163,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Update(ctx, apidef)
 			is.NoErr(err)
 
-			err = retryOperation(time.Minute*10, reconcileDelay, func() error {
+			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
 
 				// should get deleted
