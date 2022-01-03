@@ -25,8 +25,17 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+// +kubebuilder:pruning:PreserveUnknownFields
+//type ConfigDataType unstructured.Unstructured
+
+type ConfigDataType struct {
+	// +kubebuilder:pruning:PreserveUnknownFields
+	unstructured.Unstructured
+}
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
 type AuthProviderCode string
@@ -708,7 +717,7 @@ type APIDefinitionSpec struct {
 	// Context Variables are available in the url rewriter, modify headers and body transforms.
 	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
-	//ConfigData MapStringInterface `json:"config_data"`
+	ConfigData ConfigDataType `json:"config_data"`
 
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
@@ -730,7 +739,6 @@ func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
 }
 
 // Proxy outlines the API proxying functionality.
-
 type Proxy struct {
 	// If PreserveHostHeader is set to true then the host header in the outbound request is retained to be the
 	// inbound hostname of the proxy.
@@ -1034,4 +1042,31 @@ func (ls ListAPIOptions) Params() url.Values {
 		u[k] = []string{fmt.Sprint(v)}
 	}
 	return u
+}
+
+func (in *ConfigDataType) DeepCopyInto(out *ConfigDataType) {
+	// controller-gen cannot handle the interface{} type of an aliased Unstructured, thus we write our own DeepCopyInto function.
+	if out != nil {
+		casted := unstructured.Unstructured(in.Unstructured)
+		deepCopy := casted.DeepCopy()
+		out.Object = deepCopy.Object
+	}
+}
+
+func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
+	fmt.Println("===== Inside ConfigDataType unmarshalJson")
+
+	fmt.Println("==== data=", string(data))
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+
+	in.Object = m
+
+	fmt.Println("===== configData=", in)
+
+	fmt.Println("===== Dome ConfigDataType unmarshalJson")
+	return nil
 }
