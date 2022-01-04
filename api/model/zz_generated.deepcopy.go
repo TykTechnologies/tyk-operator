@@ -113,7 +113,10 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	in.ConfigData.DeepCopyInto(&out.ConfigData)
+	if in.ConfigData != nil {
+		in, out := &in.ConfigData, &out.ConfigData
+		*out = (*in).DeepCopy()
+	}
 	if in.GraphQL != nil {
 		in, out := &in.GraphQL, &out.GraphQL
 		*out = new(GraphQLConfig)
