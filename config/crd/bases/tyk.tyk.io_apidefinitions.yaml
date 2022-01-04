@@ -275,6 +275,9 @@ spec:
                 items:
                   type: string
                 type: array
+              config_data:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
               contextRef:
                 description: Context specify namespace/name of the OperatorContext
                   object used for reconciling this APIDefinition
