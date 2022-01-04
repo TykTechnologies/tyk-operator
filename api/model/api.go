@@ -29,12 +29,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// +kubebuilder:pruning:PreserveUnknownFields
-//type ConfigDataType unstructured.Unstructured
-
 type ConfigDataType struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
-	unstructured.Unstructured
+	unstructured.Unstructured `json:",inline"`
 }
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
