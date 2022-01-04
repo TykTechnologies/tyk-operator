@@ -65,7 +65,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Feature | Supported | Comments |
 | ----------- | --------- | --------- |
 | API Tagging | ✅ | - |
-| Config Data | ❌ | Not Implemented |
+| Config Data | ✅ | - |
 | Context Variables | ✅ | - |
 | [Cross Origin Resource Sharing (CORS)](./../config/samples/httpbin_cors.yaml) | ⚠️  | [See ISSUE #3396 ](https://github.com/TykTechnologies/tyk/issues/3396) |
 | Custom Plugins - Go | ⚠️ | Untested |
