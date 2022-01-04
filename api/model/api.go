@@ -714,6 +714,7 @@ type APIDefinitionSpec struct {
 	// Context Variables are available in the url rewriter, modify headers and body transforms.
 	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
+	// +optional
 	ConfigData ConfigDataType `json:"config_data"`
 
 	//TagHeaders              []string        `json:"tag_headers"`
