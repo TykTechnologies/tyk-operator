@@ -715,7 +715,7 @@ type APIDefinitionSpec struct {
 	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
 	// +optional
-	ConfigData ConfigDataType `json:"config_data"`
+	ConfigData *ConfigDataType `json:"config_data"`
 
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
@@ -1052,10 +1052,6 @@ func (in *ConfigDataType) DeepCopyInto(out *ConfigDataType) {
 }
 
 func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
-	fmt.Println("===== Inside ConfigDataType unmarshalJson")
-
-	fmt.Println("==== data=", string(data))
-
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
@@ -1063,8 +1059,13 @@ func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
 
 	in.Object = m
 
-	fmt.Println("===== configData=", in)
-
-	fmt.Println("===== Dome ConfigDataType unmarshalJson")
 	return nil
+}
+
+func (in *ConfigDataType) MarshalJSON() (data []byte, err error) {
+	var m map[string]interface{}
+
+	m = in.Object
+
+	return json.Marshal(m)
 }
