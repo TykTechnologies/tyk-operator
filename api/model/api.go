@@ -1043,7 +1043,8 @@ func (ls ListAPIOptions) Params() url.Values {
 }
 
 func (in *ConfigDataType) DeepCopyInto(out *ConfigDataType) {
-	// controller-gen cannot handle the interface{} type of an aliased Unstructured, thus we write our own DeepCopyInto function.
+	// controller-gen cannot handle the interface{} type of an aliased Unstructured,
+	// thus we write our own DeepCopyInto function.
 	if out != nil {
 		casted := unstructured.Unstructured(in.Unstructured)
 		deepCopy := casted.DeepCopy()
@@ -1063,9 +1064,7 @@ func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
 }
 
 func (in *ConfigDataType) MarshalJSON() (data []byte, err error) {
-	var m map[string]interface{}
-
-	m = in.Object
+	m := in.Object
 
 	return json.Marshal(m)
 }
