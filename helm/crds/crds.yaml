@@ -238,6 +238,7 @@ spec:
                   type: string
                 type: array
               config_data:
+                nullable: true
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               contextRef:

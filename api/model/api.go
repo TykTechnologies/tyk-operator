@@ -715,6 +715,7 @@ type APIDefinitionSpec struct {
 	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
 	// +optional
+	// +nullable
 	ConfigData *ConfigDataType `json:"config_data"`
 
 	//TagHeaders              []string        `json:"tag_headers"`
