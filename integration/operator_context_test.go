@@ -14,6 +14,8 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+const retryOperationTimeout = 10 * time.Minute
+
 func TestOperatorContextCreate(t *testing.T) {
 	opCreate := features.New("Operator Context").
 		Assess("Create", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
@@ -27,7 +29,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			_, err = createTestOperatorContext(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create operatorcontext
 
-			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
+			err = retryOperation(retryOperationTimeout, reconcileDelay, func() error {
 				resp, getErr := http.Get("http://localhost:7000/httpbin/get")
 				if getErr != nil {
 					t.Log(getErr)
@@ -65,7 +67,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			apiDef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
+			err = retryOperation(retryOperationTimeout, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
 
 				// shouldn't get deleted
@@ -100,7 +102,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Delete(ctx, apiDef)
 			is.NoErr(err)
 
-			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
+			err = retryOperation(retryOperationTimeout, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
 
 				// should get deleted
@@ -129,7 +131,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			apidef, err := createTestAPIDef(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
+			err = retryOperation(retryOperationTimeout, reconcileDelay, func() error {
 				var opCtx v1alpha1.OperatorContext
 				// shouldn't get deleted
 				if errGet := client.Resources().Get(ctx, operatorCtx.Name, testNS, &opCtx); errGet != nil {
@@ -163,7 +165,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			err = client.Resources().Update(ctx, apidef)
 			is.NoErr(err)
 
-			err = retryOperation(time.Minute*5, reconcileDelay, func() error {
+			err = retryOperation(retryOperationTimeout, reconcileDelay, func() error {
 				var result v1alpha1.OperatorContext
 
 				// should get deleted
