@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -11,6 +12,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/golang-jwt/jwt"
 )
 
 var preloadImagesList = []struct{ name, image, version string }{
@@ -330,6 +333,22 @@ func createMongo() {
 func helm() {
 	say("Installing helm chart ...")
 	if !hasTykChart() {
+		if config.Tyk.Mode == "pro" {
+			if config.Tyk.License == "" {
+				exit(errors.New("Dashboard license is empty"))
+			}
+
+			token, _, err := new(jwt.Parser).ParseUnverified(config.Tyk.License, jwt.MapClaims{})
+			if err != nil {
+				exit(err)
+			}
+
+			c := token.Claims.(jwt.MapClaims)
+			if err := c.Valid(); err != nil {
+				exit(err)
+			}
+		}
+
 		cmd := exec.Command("helm", "install", config.Tyk.Mode,
 			"-f", config.Values(),
 			config.Chart(),
