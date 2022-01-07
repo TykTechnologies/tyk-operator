@@ -69,11 +69,11 @@ type OperatorContextSpec struct {
 
 type Environment struct {
 	Mode               OperatorContextMode `json:"mode,omitempty"`
-	InsecureSkipVerify bool                `json:"insecureSkipVerify,omitempty"`
 	URL                string              `json:"url,omitempty"`
 	Auth               string              `json:"auth,omitempty"`
 	Org                string              `json:"org,omitempty"`
 	Ingress            Ingress             `json:"ingress,omitempty"`
+	InsecureSkipVerify bool                `json:"insecureSkipVerify,omitempty"`
 }
 
 type Ingress struct {
@@ -82,7 +82,13 @@ type Ingress struct {
 }
 
 // OperatorContextStatus defines the observed state of OperatorContext
-type OperatorContextStatus struct{}
+type OperatorContextStatus struct {
+	LinkedApiDefinitions      []model.Target `json:"linked_api_definitions,omitempty"`
+	LinkedApiDescriptions     []model.Target `json:"linked_api_descriptions,omitempty"`
+	LinkedPortalAPICatalogues []model.Target `json:"linked_portal_catalogues,omitempty"`
+	LinkedSecurityPolicies    []model.Target `json:"linked_security_policies,omitempty"`
+	LinkedPortalConfigs       []model.Target `json:"linked_portal_configs,omitempty"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -109,4 +115,36 @@ type OperatorContextList struct {
 
 func init() {
 	SchemeBuilder.Register(&OperatorContext{}, &OperatorContextList{})
+}
+
+func removeLinkedResource(target model.Target, from []model.Target) []model.Target {
+	for i, item := range from {
+		if item.Namespace == target.Namespace && item.Name == target.Name {
+			from = append(from[:i], from[i+1:]...)
+
+			return from
+		}
+	}
+
+	return from
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedAPIDefinition(target model.Target) {
+	opStatus.LinkedApiDefinitions = removeLinkedResource(target, opStatus.LinkedApiDefinitions)
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedSecurityPolicies(target model.Target) {
+	opStatus.LinkedSecurityPolicies = removeLinkedResource(target, opStatus.LinkedSecurityPolicies)
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedApiDescriptions(target model.Target) {
+	opStatus.LinkedApiDescriptions = removeLinkedResource(target, opStatus.LinkedApiDescriptions)
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedPortalAPICatalogues(target model.Target) {
+	opStatus.LinkedPortalAPICatalogues = removeLinkedResource(target, opStatus.LinkedPortalAPICatalogues)
+}
+
+func (opStatus *OperatorContextStatus) RemoveLinkedPortalConfig(target model.Target) {
+	opStatus.LinkedPortalConfigs = removeLinkedResource(target, opStatus.LinkedPortalConfigs)
 }

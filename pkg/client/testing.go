@@ -31,6 +31,7 @@ func (r *RequestKase) verify(t *testing.T, req *http.Request) {
 	comparesString(t, "path", r.Path, req.URL.Path)
 	comparesString(t, "method", r.Method, req.Method)
 	compareHeaders(t, r.Headers, req.Header)
+
 	if r.Callback != nil {
 		r.Callback(t, req)
 	}
@@ -50,6 +51,7 @@ func (r *ResponseKase) verify(t *testing.T, res *http.Response, body string) {
 		normalizeBody(t, r.Body),
 		normalizeBody(t, body),
 	)
+
 	if r.Callback != nil {
 		r.Callback(t, res)
 	}
@@ -59,15 +61,19 @@ func normalizeBody(t *testing.T, body string) string {
 	if body == "" {
 		return body
 	}
+
 	o := make(map[string]interface{})
+
 	err := json.Unmarshal([]byte(body), &o)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	b, err := json.Marshal(o)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return string(b)
 }
 
@@ -80,6 +86,7 @@ func comparesString(t *testing.T, field, expect, got string) {
 
 func compareHeaders(t *testing.T, expect map[string]string, r http.Header) {
 	t.Helper()
+
 	for k, v := range expect {
 		x := r.Get(k)
 		if x != v {
@@ -93,10 +100,12 @@ func compareHeaders(t *testing.T, expect map[string]string, r http.Header) {
 // only validates we are sending correct path/method/headers
 func RunRequestKase(t *testing.T, e environmet.Env, fn func(context.Context) error, kase ...Kase) {
 	t.Helper()
+
 	var request []*http.Request
 	var response []*http.Response
 	var body []string
 	var doErr []error
+
 	x := Context{
 		Env: e,
 		Log: log.NullLogger{},
@@ -117,19 +126,23 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(context.Context) err
 			return res, nil
 		},
 	}
+
 	err := fn(SetContext(context.Background(), x))
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
 	if request == nil {
 		t.Error("no api call was made")
 		return
 	}
+
 	if len(request) != len(kase) {
 		t.Errorf("Mismatch expectations want %d got %d", len(kase), len(request))
 		return
 	}
+
 	for i := 0; i < len(kase); i++ {
 		k := kase[i]
 		t.Run(k.Name, func(t *testing.T) {
@@ -137,7 +150,9 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(context.Context) err
 				t.Error(doErr[i])
 				return
 			}
+
 			k.Request.verify(t, request[i])
+
 			if k.Response != nil {
 				if response[i] == nil {
 					t.Error(doErr[i])

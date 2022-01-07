@@ -16,12 +16,14 @@ type Catalogue struct{}
 
 func (Catalogue) Get(ctx context.Context) (*model.APICatalogue, error) {
 	var o model.APICatalogue
+
 	err := client.Data(&o)(
 		client.Get(ctx, endpointCatalogue, nil),
 	)
 	if err != nil {
 		return nil, err
 	}
+
 	return &o, nil
 }
 

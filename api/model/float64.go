@@ -23,8 +23,10 @@ func (f Float64) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return json.Marshal(v)
 	}
+
 	return json.Marshal(string(f))
 }
 
@@ -34,6 +36,7 @@ func (f *Float64) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
+
 	switch e := v.(type) {
 	case float64:
 		*f = Float64(fmt.Sprint(e))
@@ -43,7 +46,9 @@ func (f *Float64) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			return err
 		}
+
 		*f = Float64(e)
+
 		return nil
 	default:
 		return fmt.Errorf("operator: failed to decode type %#T to a Float64", e)
@@ -54,10 +59,12 @@ func (f *Float64) UnmarshalJSON(b []byte) error {
 func Marshal(v interface{}) ([]byte, error) {
 	numMu.Lock()
 	number = true
+
 	defer func() {
 		number = false
 		numMu.Unlock()
 	}()
+
 	return json.Marshal(v)
 }
 
@@ -74,10 +81,13 @@ func (p Percent) MarshalJSON() ([]byte, error) {
 
 func (f *Percent) UnmarshalJSON(b []byte) error {
 	var x Float64
+
 	err := x.UnmarshalJSON(b)
 	if err != nil {
 		return err
 	}
+
 	*f = Percent(x)
+
 	return nil
 }

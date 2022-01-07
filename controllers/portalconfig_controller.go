@@ -53,17 +53,20 @@ type PortalConfigReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *PortalConfigReconciler) Reconcile(
-	ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
-
+func (r *PortalConfigReconciler) Reconcile(ctx context.Context,
+	req ctrl.Request) (result ctrl.Result, err error) {
 	log := r.Log.WithValues("PortalConfig", req.NamespacedName.String())
+
 	log.Info("Reconciling PortalConfig instance")
+
 	defer func() {
 		if err == nil {
 			log.Info("Completed reconciling PortalConfig instance")
 		}
 	}()
+
 	desired := &tykv1alpha1.PortalConfig{}
+
 	if err = r.Get(ctx, req.NamespacedName, desired); err != nil {
 		err = client.IgnoreNotFound(err) // Ignore not-found errors
 		return
@@ -78,12 +81,16 @@ func (r *PortalConfigReconciler) Reconcile(
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			return r.delete(ctx, desired, env, log)
 		}
+
 		util.AddFinalizer(desired, keys.PortalConfigurationFinalizerName)
+
 		if desired.Status.ID == "" {
 			return r.create(ctx, desired, env, log)
 		}
+
 		return r.update(ctx, desired, env, log)
 	})
+
 	return
 }
 
@@ -106,19 +113,26 @@ func (r *PortalConfigReconciler) create(
 		if err != nil {
 			return err
 		}
+
 		desired.Status.ID = res.Message
+
 		return r.Status().Update(ctx, desired)
 	}
+
 	log.Info("Found existing portal configuration")
+
 	d := desired.Spec.PortalModelPortalConfig
 	d.Id = conf.Id
 	d.OrgID = conf.OrgID
+
 	_, err = klient.Universal.Portal().Configuration().Update(ctx, &d)
 	if err != nil {
 		log.Error(err, "Failed updating portal configuration")
 		return err
 	}
+
 	desired.Status.ID = conf.Id
+
 	return r.Status().Update(ctx, desired)
 }
 
@@ -129,10 +143,12 @@ func (r *PortalConfigReconciler) update(
 	log logr.Logger,
 ) error {
 	log.Info("Updating portal configuration object")
+
 	d := desired.Spec.PortalModelPortalConfig
 	d.Id = desired.Status.ID
 	d.OrgID = env.Org
 	_, err := klient.Universal.Portal().Configuration().Update(ctx, &d)
+
 	return err
 }
 
@@ -143,7 +159,9 @@ func (r *PortalConfigReconciler) delete(
 	log logr.Logger,
 ) error {
 	log.Info("Deleting portal configuration resource")
+
 	util.RemoveFinalizer(desired, keys.PortalConfigurationFinalizerName)
+
 	return nil
 }
 

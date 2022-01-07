@@ -28,6 +28,7 @@ func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error
 	if err := client.JSON(res, &response); err != nil {
 		return nil, err
 	}
+
 	return response.Policies, nil
 }
 
@@ -37,11 +38,15 @@ func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicyS
 	if err != nil {
 		return nil, err
 	}
+
 	defer res.Body.Close()
+
 	var o v1.SecurityPolicySpec
+
 	if err := client.JSON(res, &o); err != nil {
 		return nil, err
 	}
+
 	return &o, nil
 }
 
@@ -51,14 +56,18 @@ func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
+
 	if res.StatusCode != http.StatusOK {
 		return client.Error(res)
 	}
+
 	var msg ResponseMsg
 	if err := client.JSON(res, &msg); err != nil {
 		return err
 	}
+
 	switch strings.ToLower(msg.Status) {
 	case "ok":
 		def.MID = msg.Message
@@ -74,10 +83,13 @@ func (p SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) 
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
+
 	if res.StatusCode != http.StatusOK {
 		return client.Error(res)
 	}
+
 	return client.JSON(res, def)
 }
 
@@ -87,10 +99,12 @@ func (p SecurityPolicy) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return client.Error(res)
 	}
+
 	return nil
 }
