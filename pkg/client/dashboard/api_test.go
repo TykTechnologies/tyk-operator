@@ -17,6 +17,7 @@ const testAPIID = "ZGVmYXVsdC9odHRwYmlu"
 
 func TestAPI(t *testing.T) {
 	var e environmet.Env
+
 	h := mockDash(t,
 		&route{
 			path:   "/api/apis",
@@ -55,7 +56,9 @@ func TestAPI(t *testing.T) {
 		},
 	)
 	svr := httptest.NewServer(h)
+
 	defer svr.Close()
+
 	e.URL = svr.URL
 	e = env().Merge(e)
 	requestAPI(t, e, "Create",
@@ -154,7 +157,6 @@ func TestAPI(t *testing.T) {
 				Body: ReadSample(t, "api.Delete.body"),
 			},
 		})
-
 }
 
 func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase) {

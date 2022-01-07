@@ -214,14 +214,18 @@ func TestTargetInternal(t *testing.T) {
 func TestEncodeIfNotBase64(t *testing.T) {
 	in := "default/httpbin-security-policy"
 	s := encodeIfNotBase64(in)
+
 	out, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+
 	if string(out) != in {
 		t.Fatal("out should be in")
 	}
+
 	in = "ZGVmYXVsdC9odHRwYmluLXNlY3VyaXR5LXBvbGljeQ"
+
 	s = encodeIfNotBase64(in)
 	if s != in {
 		t.Fatalf("expect %s, got %s", in, s)

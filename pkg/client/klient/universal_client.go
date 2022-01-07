@@ -20,6 +20,7 @@ func get(ctx context.Context) universal.Client {
 	if r.Env.Mode == "pro" {
 		return dashboard.Client{}
 	}
+
 	return gateway.Client{}
 }
 

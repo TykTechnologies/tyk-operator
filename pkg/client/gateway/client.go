@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -11,12 +10,7 @@ import (
 
 const (
 	endpointAPIs   = "/tyk/apis"
-	endpointCerts  = "/tyk/certs"
 	endpointReload = "/tyk/reload/group"
-)
-
-var (
-	notFoundError = errors.New("api not found")
 )
 
 var _ universal.Client = (*Client)(nil)
@@ -43,8 +37,11 @@ func (c Client) HotReload(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
+
 	var resMsg ResponseMsg
+
 	if err := client.JSON(res, &resMsg); err != nil {
 		return err
 	}

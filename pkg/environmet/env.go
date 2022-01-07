@@ -19,27 +19,35 @@ func (e Env) Merge(n Env) Env {
 	if n.Namespace != "" {
 		e.Namespace = n.Namespace
 	}
+
 	if n.Mode != "" {
 		e.Mode = n.Mode
 	}
+
 	if n.URL != "" {
 		e.URL = n.URL
 	}
+
 	if n.Auth != "" {
 		e.Auth = n.Auth
 	}
+
 	if n.Org != "" {
 		e.Org = n.Org
 	}
+
 	if n.IngressClass != "" {
 		e.IngressClass = n.IngressClass
 	}
+
 	if n.Ingress.HTTPSPort != 0 {
 		e.Ingress.HTTPSPort = n.Ingress.HTTPSPort
 	}
+
 	if n.Ingress.HTTPPort != 0 {
 		e.Ingress.HTTPPort = n.Ingress.HTTPPort
 	}
+
 	return e
 }
 
@@ -54,6 +62,7 @@ func (e *Env) Parse() {
 	e.Ingress.HTTPSPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressTLSPort))
 	e.Ingress.HTTPPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressHTTPPort))
 	e.IngressClass = os.Getenv(v1alpha1.IngressClass)
+
 	if e.Ingress.HTTPSPort == 0 {
 		e.Ingress.HTTPSPort = 8443
 	}

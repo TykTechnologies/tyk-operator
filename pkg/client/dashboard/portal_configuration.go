@@ -16,12 +16,15 @@ type Configuration struct{}
 
 func (Configuration) Get(ctx context.Context) (*model.PortalModelPortalConfig, error) {
 	var o model.PortalModelPortalConfig
+
 	err := client.Data(&o)(
 		client.Get(ctx, endpointConfiguration, nil),
 	)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &o, nil
 }
 

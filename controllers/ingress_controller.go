@@ -72,14 +72,18 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	key, ok := desired.Annotations[keys.IngressTemplateAnnotation]
 	template := r.keyless()
+
 	if ok {
 		template = &v1alpha1.ApiDefinition{}
+
 		err := r.Get(ctx, types.NamespacedName{Name: key, Namespace: req.Namespace}, template)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 	}
+
 	nsl.Info("Sync ingress")
+
 	op, err := util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.DeletionTimestamp.IsZero() {
 			if util.ContainsFinalizer(desired, keys.IngressFinalizerName) {
@@ -87,26 +91,33 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			}
 			return nil
 		}
+
 		if !util.ContainsFinalizer(desired, keys.IngressFinalizerName) {
 			util.AddFinalizer(desired, keys.IngressFinalizerName)
 			return nil
 		}
+
 		return nil
 	})
+
 	if err != nil {
 		nsl.Error(err, "failed to update ingress object", "Op", op)
 		return ctrl.Result{}, err
 	}
+
 	if !desired.DeletionTimestamp.IsZero() {
 		nsl.Info("Deleted ingress resource")
 		return ctrl.Result{}, nil
 	}
+
 	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, env)
 	if err != nil {
 		nsl.Error(err, "failed to create api's")
 		return ctrl.Result{}, err
 	}
+
 	nsl.Info("Sync ingress OK")
+
 	return ctrl.Result{}, nil
 }
 
@@ -146,7 +157,9 @@ func (r *IngressReconciler) createAPI(
 					Namespace: ns,
 				},
 			}
+
 			lg.Info("sync api definition", "name", name)
+
 			op, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
 				api.SetLabels(map[string]string{
 					keys.IngressLabel: desired.Name,
@@ -183,14 +196,18 @@ func (r *IngressReconciler) createAPI(
 				}
 				return util.SetControllerReference(desired, api, r.Scheme)
 			})
+
 			if err != nil {
 				lg.Error(err, "failed to sync api definition", "name", name, "op", op)
 				return nil
 			}
+
 			lg.Info("successful sync api defintion", "name", name, "op", op)
 		}
 	}
+
 	lg.Info("deleting orphan api's")
+
 	return r.deleteOrphanAPI(ctx, lg, ns, desired)
 }
 
@@ -200,29 +217,38 @@ func (r *IngressReconciler) translateHost(host string) string {
 
 func (r *IngressReconciler) deleteOrphanAPI(ctx context.Context, lg logr.Logger, ns string, desired *netV1.Ingress) error {
 	var ids []string
+
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
 			hash := shortHash(rule.Host + p.Path)
 			ids = append(ids, hash)
 		}
 	}
+
 	s := labels.NewSelector()
+
 	exists, err := labels.NewRequirement(keys.APIDefLabel, selection.Exists, []string{})
 	if err != nil {
 		return err
 	}
+
 	s = s.Add(*exists)
+
 	notIn, err := labels.NewRequirement(keys.APIDefLabel, selection.NotIn, ids)
 	if err != nil {
 		return err
 	}
+
 	name, err := labels.NewRequirement(keys.IngressLabel, selection.DoubleEquals, []string{desired.Name})
 	if err != nil {
 		return err
 	}
+
 	s = s.Add(*name)
 	s = s.Add(*notIn)
+
 	lg.Info("deleting orphan api definitions", "selector", s, "count", len(ids))
+
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
 			ListOptions: client.ListOptions{
@@ -241,14 +267,17 @@ func (r *IngressReconciler) buildAPIName(nameSpace, name, hash string) string {
 func shortHash(txt string) string {
 	h := sha256.New()
 	h.Write([]byte(txt))
+
 	return fmt.Sprintf("%x", h.Sum(nil))[:9]
 }
 
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	watch := keys.DefaultIngressClassAnnotationValue
+
 	if overide := r.Env.IngressClass; overide != "" {
 		watch = overide
 	}
+
 	isOurIngress := func(o runtime.Object) bool {
 		switch e := o.(type) {
 		case *netV1.Ingress:
@@ -257,6 +286,7 @@ func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 			return false
 		}
 	}
+
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return isOurIngress(e.Object)

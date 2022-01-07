@@ -7,3 +7,5 @@ nodes:
         hostPort: 7000
       - containerPort: 31900
         hostPort: 7200
+  - role: worker
+  - role: worker
