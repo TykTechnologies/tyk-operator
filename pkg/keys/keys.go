@@ -7,6 +7,7 @@ const (
 	PortalAPICatalogueFinalizerName   = "finalizers.tyk.io/portalapicatalogue"
 	PortalAPIDescriptionFinalizerName = "finalizers.tyk.io/portalapidescription"
 	PortalConfigurationFinalizerName  = "finalizers.tyk.io/portalconfiguration"
+	OperatorContextFinalizerName      = "finalizers.tyk.io/operatorcontext"
 )
 
 //Ingress

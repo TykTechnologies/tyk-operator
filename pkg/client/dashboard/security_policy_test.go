@@ -15,6 +15,7 @@ const testSecurityPolicyID = "5fd202b669710900018bc19c"
 
 func TestSecurityPolicy(t *testing.T) {
 	var e environmet.Env
+
 	e = env().Merge(e)
 	h := mockDash(t,
 		&route{
@@ -43,8 +44,11 @@ func TestSecurityPolicy(t *testing.T) {
 			body:   "policy.Delete.body",
 		},
 	)
+
 	svr := httptest.NewServer(h)
+
 	defer svr.Close()
+
 	e.URL = svr.URL
 
 	requestSecurityPolicy(t, e, Kase{
@@ -61,6 +65,7 @@ func TestSecurityPolicy(t *testing.T) {
 			Body: ReadSample(t, "policy.Create.body"),
 		},
 	})
+
 	requestSecurityPolicy(t, e, Kase{
 		Name: "All",
 		Request: RequestKase{
@@ -90,6 +95,7 @@ func TestSecurityPolicy(t *testing.T) {
 			Body: ReadSample(t, "policy.Get.body"),
 		},
 	})
+
 	requestSecurityPolicy(t, e, Kase{
 		Name: "Update",
 		Request: RequestKase{
@@ -104,6 +110,7 @@ func TestSecurityPolicy(t *testing.T) {
 			Body: ReadSample(t, "policy.Update.body"),
 		},
 	})
+
 	requestSecurityPolicy(t, e, Kase{
 		Name: "Delete",
 		Request: RequestKase{
@@ -118,11 +125,11 @@ func TestSecurityPolicy(t *testing.T) {
 			Body: ReadSample(t, "policy.Delete.body"),
 		},
 	})
-
 }
 
 func requestSecurityPolicy(t *testing.T, e environmet.Env, kase client.Kase) {
 	t.Helper()
+
 	switch kase.Name {
 	case "All":
 		client.RunRequestKase(t, e,

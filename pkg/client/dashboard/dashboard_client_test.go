@@ -37,11 +37,14 @@ func newKlient() universal.Client {
 // Sample loads sample file
 func Sample(t *testing.T, name string, out interface{}) {
 	x := filepath.Join("./samples/", name+".json")
+
 	f, err := os.Open(x)
 	if err != nil {
 		t.Fatalf("%s: failed to open sample file %v", x, err)
 	}
+
 	defer f.Close()
+
 	err = json.NewDecoder(f).Decode(out)
 	if err != nil {
 		t.Fatalf("%v: Failed td decode object ", x)
@@ -50,30 +53,38 @@ func Sample(t *testing.T, name string, out interface{}) {
 
 func LoadSampleFile(t *testing.T, name string) *os.File {
 	x := filepath.Join("./samples/", name)
+
 	f, err := os.Open(x)
 	if err != nil {
 		t.Fatalf("%s: failed to open sample file %v", x, err)
 	}
+
 	return f
 }
 
 func ReadSample(t *testing.T, name string) string {
 	f := LoadSampleFile(t, name+".json")
+
 	defer f.Close()
+
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return string(b)
 }
 
 func ReadSampleFile(t *testing.T, name string) string {
 	f := LoadSampleFile(t, name)
+
 	defer f.Close()
+
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return string(b)
 }
 
@@ -90,20 +101,27 @@ func (r *route) Serve(t *testing.T, w http.ResponseWriter) {
 	if code == 0 {
 		code = http.StatusOK
 	}
+
 	for k, v := range r.headers {
 		w.Header().Set(k, v)
 	}
+
 	w.WriteHeader(code)
+
 	f := LoadSampleFile(t, r.body+".json")
+
 	defer f.Close()
+
 	io.Copy(w, f)
 }
 
 func mockDash(t *testing.T, r ...*route) http.Handler {
 	xm := make(map[string][]*route)
+
 	for _, v := range r {
 		xm[v.method] = append(xm[v.method], v)
 	}
+
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if a, ok := xm[r.Method]; ok {
 			for _, i := range a {

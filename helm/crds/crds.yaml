@@ -103,7 +103,7 @@ spec:
                   type: string
                 type: array
               api_id:
-                description: Only set this field if you are referring To an existing API in def. The Operator will use this API ID to link the CRD with the API in Tyk Note the values in the CRD will become the new source of truth, overriding the existing API Definition
+                description: 'Only set this field if you are referring to an existing API def. The Operator will use this APIID to link the CR with the API in Tyk Note: The values in the CR will become the new source of truth, overriding the existing API Definition'
                 type: string
               auth:
                 properties:
@@ -228,7 +228,7 @@ spec:
                 - cache_timeout
                 type: object
               certificate_secret_names:
-                description: CertificateSecretNames represents the names of the secrets that the controller should look for in the in the current namespace which contain the certificates.
+                description: CertificateSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates.
                 items:
                   type: string
                 type: array
@@ -1983,6 +1983,72 @@ spec:
             type: object
           status:
             description: OperatorContextStatus defines the observed state of OperatorContext
+            properties:
+              linked_api_definitions:
+                items:
+                  properties:
+                    name:
+                      description: k8s resource name
+                      type: string
+                    namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              linked_api_descriptions:
+                items:
+                  properties:
+                    name:
+                      description: k8s resource name
+                      type: string
+                    namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              linked_portal_catalogues:
+                items:
+                  properties:
+                    name:
+                      description: k8s resource name
+                      type: string
+                    namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              linked_portal_configs:
+                items:
+                  properties:
+                    name:
+                      description: k8s resource name
+                      type: string
+                    namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              linked_security_policies:
+                items:
+                  properties:
+                    name:
+                      description: k8s resource name
+                      type: string
+                    namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
             type: object
         type: object
     served: true
