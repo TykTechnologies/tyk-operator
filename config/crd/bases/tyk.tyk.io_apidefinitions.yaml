@@ -276,6 +276,9 @@ spec:
                   type: string
                 type: array
               config_data:
+                description: ConfigData can be used to pass custom attributes (a JSON
+                  object) into your middleware, such as a virtual endpoint or header
+                  transform.
                 nullable: true
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
