@@ -88,10 +88,20 @@ spec:
            number: 8000
 ```
 
-The above ingress resource will create an ApiDefinition inside Tyk's Gateway. The ApiDefinition will offer path-based
- routing listening on /httpbin. Because the referenced template is `myapideftemplate`, the IngressReconciler will
- retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard
- auth enabled.
+The above ingress resource will create an ApiDefinition inside Tyk's Gateway. Because the referenced template is `myapideftemplate`, the IngressReconciler will retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard auth enabled.
+The ApiDefinition will offer path-based routing listening on /httpbin. Each path in an Ingress must have its particular path type. Kubernetes offers three types of path types: `ImplementationSpecific`, `Exact`, and `Prefix`. Currently, not all path types are supported. The below table shows the unsupported path types based on the examples in [Kubernetes Ingress documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#examples).
+
+```
+| Kind   | Path(s)                         | Request path(s)               | Matches?                           | Works as Expected                                        |
+|--------|---------------------------------|-------------------------------|------------------------------------|----------------------------------------------------------|
+| Exact  | `/foo`                          | `/foo/`                       | No                                 | No                                                       |
+| Prefix | `/foo/`                         | `/foo`, `/foo/`               | Yes                                | `/foo/` works, `/foo` doesn't                            | 
+| Prefix | `/aaa/bb`                       | `/aaa/bbb`                    | No                                 | No, the request forwarded to `/httpbin` as `/httpbin/b`  |
+| Prefix | `/aaa/bbb/`                     | `/aaa/bbb`                    | Yes, ignores trailing slash        | No, `/aaa/bbb` does not match.                           | 
+| Prefix | `/aaa/bbb`                      | `/aaa/bbbxyz`                 | No, does not match string prefix   | No, `/aaa/bbbxyz` forwards request to `httpbin` service  |
+```
+
+Please, bear in mind that if `proxy.strip_listen_path` is set to true on API Definition, Tyk strips listen-path (for the Ingress example above, the listen-path is /httpbin) with an empty string.
 
 ## Sample HTTPS Ingress resource
 
