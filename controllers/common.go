@@ -70,6 +70,11 @@ func httpContext(
 			return nil
 		}
 
+		// If namespace is not specified in contextDef, use default namespace
+		if c.Namespace == "" {
+			c.Namespace = "default"
+		}
+
 		log.Info("Detected context for resource")
 
 		env, err := GetContext(
