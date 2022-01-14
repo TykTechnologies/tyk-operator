@@ -18,8 +18,12 @@ var (
 	testenv env.Environment
 )
 
-const reconcileDelay = time.Second * 5
-const ctxNSKey = "test-ns"
+const (
+	reconcileDelay        = time.Second * 5
+	retryOperationTimeout = 5 * time.Minute
+
+	ctxNSKey = "test-ns"
+)
 
 func TestMain(t *testing.M) {
 	e.Parse()

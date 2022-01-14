@@ -13,10 +13,6 @@ func retryOperation(timeout time.Duration, interval time.Duration, fn func() err
 
 	var err error
 
-	if fn() == nil {
-		return nil
-	}
-
 	for {
 		select {
 		case <-intervalTick.C:
