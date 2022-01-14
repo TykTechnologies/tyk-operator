@@ -13,5 +13,5 @@ require (
 	k8s.io/utils v0.0.0-20210527160623-6fdb442a123b
 	moul.io/http2curl/v2 v2.2.2
 	sigs.k8s.io/controller-runtime v0.9.0
-	sigs.k8s.io/e2e-framework v0.0.2
+	sigs.k8s.io/e2e-framework v0.0.5
 )
