@@ -2,14 +2,16 @@ package integration
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/matryer/is"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
@@ -21,7 +23,7 @@ const (
 
 func TestOperatorContextCreate(t *testing.T) {
 	opCreate := features.New("Operator Context").
-		Assess("Create", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
 			is := is.New(t)
 
@@ -37,60 +39,78 @@ func TestOperatorContextCreate(t *testing.T) {
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			err = retryOperation(retryOperationTimeout, reconcileDelay, func() error {
-				resp, getErr := http.Get("http://localhost:7000/httpbin/get")
-				if getErr != nil {
-					t.Log(getErr)
-					return getErr
-				}
-
-				if resp.StatusCode != 200 {
-					t.Log("API is not created yet")
-					return errors.New("API is not created yet")
-				}
-
-				return nil
-			})
-			is.NoErr(err)
-
-			// remove namespace from operator context and see if it still works
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = "empty-ns"
 				apiDef.Spec.Context = &model.Target{Name: opCtx.Name}
 				apiDef.Spec.Proxy.ListenPath = "/empty-ns"
 			}, envConf)
 
-			err = retryOperation(retryOperationTimeout, reconcileDelay, func() error {
-				k8sClient := envConf.Client()
-
-				var apiDef v1alpha1.ApiDefinition
-
-				k8sErr := k8sClient.Resources(testNS).Get(ctx, "empty-ns", testNS, &apiDef)
-				if k8sErr != nil {
-					t.Log(k8sErr)
-					return k8sErr
-				}
-
-				resp, getErr := http.Get("http://localhost:7000/empty-ns/get")
-				if getErr != nil {
-					t.Log(getErr)
-					return getErr
-				}
-
-				if resp.StatusCode != 404 {
-					return errors.New("API definition should not be created on dashbaord")
-				}
-
-				return nil
-			})
-
-			is.NoErr(err)
+			is.NoErr(err) // failed to create apiDefinition
 
 			return ctx
-		}).Feature()
+		}).
+		Assess("context status is updated", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string)
+			client := envConf.Client()
+
+			opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: testOperatorCtx, Namespace: testNS}}
+
+			wait.For(conditions.New(client.Resources()).ResourceMatch(&opCtx, func(object k8s.Object) bool {
+				operatCtx := object.(*v1alpha1.OperatorContext)
+
+				if len(operatCtx.Status.LinkedApiDefinitions) != 1 {
+					return false
+				}
+
+				if operatCtx.Status.LinkedApiDefinitions[0].Namespace != testNS || operatCtx.Status.LinkedApiDefinitions[0].Name != testApiDef {
+					return false
+				}
+
+				return true
+			}))
+
+			return ctx
+		}).Assess("apidef was created in dashboard", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+		wait.For(func() (done bool, err error) {
+			resp, getErr := http.Get("http://localhost:7000/httpbin/get")
+			if getErr != nil {
+				t.Log(getErr)
+				return false, nil
+			}
+
+			if resp.StatusCode != 200 {
+				t.Log("API is not created yet")
+				return false, nil
+			}
+
+			return true, nil
+		}, wait.WithTimeout(retryOperationTimeout))
+
+		return ctx
+
+	}).Assess("apidef was created in dashboard", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+		wait.For(func() (done bool, err error) {
+			resp, getErr := http.Get("http://localhost:7000/empty-ns/get")
+			if getErr != nil {
+				t.Log(getErr)
+				return false, nil
+			}
+
+			if resp.StatusCode != 404 {
+				t.Log("API definition should not be created on dashbaord")
+				return false, nil
+			}
+
+			return true, nil
+		}, wait.WithTimeout(retryOperationTimeout))
+
+		return ctx
+	}).Feature()
 
 	testenv.Test(t, opCreate)
 }
+
+/*
 
 func TestOperatorContextDelete(t *testing.T) {
 	delApiDef := features.New("Operator Context Delete").
@@ -231,6 +251,7 @@ func TestOperatorContextDelete(t *testing.T) {
 	testenv.Test(t, delApiDef)
 	testenv.Test(t, updateApiDef)
 }
+*/
 
 func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition), envConf *envconf.Config) (*v1alpha1.ApiDefinition, error) {
 	client := envConf.Client()

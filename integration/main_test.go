@@ -44,16 +44,16 @@ func TestMain(t *testing.M) {
 		teardownE2E,
 		teardownTyk,
 		teardownk8s,
-	).BeforeTest(
+	).BeforeEachTest(
 		createNamespace,
-	).AfterTest(
+	).AfterEachTest(
 		deleteNamespace,
 	)
 
 	os.Exit(testenv.Run(t))
 }
 
-func createNamespace(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
+func createNamespace(ctx context.Context, cfg *envconf.Config, t *testing.T) (context.Context, error) {
 	name := envconf.RandomName("tyk-operator", 16)
 
 	ctx = context.WithValue(ctx, ctxNSKey, name)
@@ -63,7 +63,7 @@ func createNamespace(ctx context.Context, cfg *envconf.Config) (context.Context,
 	return ctx, cfg.Client().Resources().Create(ctx, &nsObj)
 }
 
-func deleteNamespace(ctx context.Context, envconf *envconf.Config) (context.Context, error) {
+func deleteNamespace(ctx context.Context, envconf *envconf.Config, t *testing.T) (context.Context, error) {
 	name := ctx.Value(ctxNSKey)
 
 	nsObj := v1.Namespace{}
