@@ -1,0 +1,73 @@
+linters:
+  enable:
+    - errcheck
+    - gocritic
+    - gofmt
+    - gofumpt
+    - goimports
+    - govet
+    - lll
+    - whitespace
+    - wsl
+
+linters-settings:
+  errcheck:
+    # Report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`.
+    check-blank: true
+
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    check-type-assertions: true
+
+  gocritic:
+    # See https://go-critic.github.io/overview#checks-overview
+    # To check which checks are enabled run `GL_DEBUG=gocritic golangci-lint run`
+    enabled-tags:
+      - performance
+
+  gofmt:
+    # Simplify code with '-s' option
+    simplify: true
+
+  gofumpt:
+    # Choose whether or not to use the extra rules that are disabled by default
+    extra-rules: true
+
+    # Select the Go version to target.
+    lang-version: "1.15"
+
+  lll:
+    # Max line length; lines longer will be reported
+    # '\t' is counted as 1 character by default, and can be changed with the 'tab-width' option
+    line-length: 120
+    # Tab width in spaces
+    tab-width: 2
+
+  whitespace:
+    multi-if: false # Enforces newlines (or comments) after every multi-line if statement
+    multi-func: false # Enforces newlines (or comments) after every multi-line function signature
+
+  wsl:
+    # Controls if you may cuddle assignments and anything without needing an empty line between them.
+    allow-assign-and-anything: false
+    # Allow calls and assignments to be cuddled as long as the lines have any matching variables, fields or types.
+    # Default is true.
+    allow-assign-and-call: true
+    # Controls if you may end case statements with a whitespace.
+    allow-case-trailing-whitespace: true
+    # Allow declarations (var) to be cuddled.
+    allow-cuddle-declarations: true
+    # Allow multiline assignments to be cuddled. Default is true.
+    allow-multiline-assign: true
+    # This option allows whitespace after each comment group that begins a block.
+    allow-separated-leading-comment: false
+    # Allow trailing comments in ending of blocks
+    allow-trailing-comment: false
+    # Enforces that an if statement checking an error variable is cuddled with the line that assigned that error variable.
+    enforce-err-cuddling: true
+    # Force newlines in end of case at this limit (0 = never).
+    force-case-trailing-whitespace: 0
+    # Enforces that an assignment which is actually a short declaration (using :=) is only allowed to cuddle with other short declarations, and not plain assignments, blocks, etc.
+    force-short-decl-cuddling: false
+    # Append is only allowed to be cuddled if appending value is matching variables, fields or types on line above.
+    # Default is true.
+    strict-append: true
