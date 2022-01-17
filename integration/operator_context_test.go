@@ -165,8 +165,8 @@ func TestOperatorContextDelete(t *testing.T) {
 			return ctx
 		}).Assess("context ref should not get deleted while it is still been refered",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(ctxNSKey).(string)       //nolint:errcheck
-			opCtxName := ctx.Value("opCtxName").(string) //nolint:errcheck
+			testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
+			opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
 
 			client := envConf.Client()
 			is := is.New(t)
@@ -183,9 +183,9 @@ func TestOperatorContextDelete(t *testing.T) {
 		}).
 		Assess("delete api def should delete operator context",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				testNS := ctx.Value(ctxNSKey).(string)         //nolint:errcheck
-				opCtxName := ctx.Value("opCtxName").(string)   //nolint:errcheck
-				apiDefName := ctx.Value("apiDefName").(string) //nolint:errcheck
+				testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
+				opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
+				apiDefName := ctx.Value(ctxApiName).(string)  //nolint:errcheck
 
 				client := envConf.Client()
 				is := is.New(t)
@@ -240,8 +240,8 @@ func TestOperatorContextDelete(t *testing.T) {
 			return ctx
 		}).Assess("context ref should not get deleted while it is still been refered",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(ctxNSKey).(string)       //nolint:errcheck
-			opCtxName := ctx.Value("opCtxName").(string) //nolint:errcheck
+			testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
+			opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
 
 			client := envConf.Client()
 			is := is.New(t)
@@ -258,9 +258,9 @@ func TestOperatorContextDelete(t *testing.T) {
 		}).
 		Assess("removing reference from apiDefinition should delete operator context",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				testNS := ctx.Value(ctxNSKey).(string)         //nolint:errcheck
-				opCtxName := ctx.Value("opCtxName").(string)   //nolint:errcheck
-				apiDefName := ctx.Value("apiDefName").(string) //nolint:errcheck
+				testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
+				opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
+				apiDefName := ctx.Value(ctxApiName).(string)  //nolint:errcheck
 
 				client := envConf.Client()
 				is := is.New(t)
