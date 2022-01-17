@@ -50,7 +50,7 @@ Create a `k8s` secret `tyk-operator-conf` with our sensitive info for auth and o
 ```sh
 kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "TYK_AUTH=foo" \
-  --from-literal "TYK_ORG=myorg" \
+  --from-literal "TYK_ORG=myorg"
 ```
 
 We can now reference our secret in the `OperatorContext` resource with `.spec.secretRef`
