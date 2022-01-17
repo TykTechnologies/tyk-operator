@@ -13,6 +13,37 @@ The value of the `kubernetes.io/ingress.class` annotation that identifies Ingres
 Tyk Operator by default looks for the value `tyk` and will ignore all other ingress classes. If you wish to override this default behaviour,
  you may do so by setting the environment variable `WATCH_INGRESS_CLASS` in the operator manager deployment. See https://github.com/TykTechnologies/tyk-operator/blob/master/docs/installation/installation.md for further info.
 
+## Ingress Path Types
+
+Each path in an Ingress must have its own particular path type. Kubernetes offers three types of path types: `ImplementationSpecific`, `Exact`, and `Prefix`. Currently, not all path types are supported. The below table shows the unsupported path types for [Sample HTTP Ingress Resource](#sample-http-ingress-resource) based on the examples in the [Kubernetes Ingress documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#examples).
+
+| Kind   | Path(s)   | Request path(s) | Expected to match?               | Works as Expected                       |
+|--------|-----------|-----------------|----------------------------------|-----------------------------------------|
+| Exact  | /foo      | /foo/           | No                               | No.                                     |
+| Prefix | /foo/     | /foo, /foo/     | Yes                              | No, /foo/ matches, /foo does not match. | 
+| Prefix | /aaa/bb   | /aaa/bbb        | No                               | No, the request forwarded to service.   |
+| Prefix | /aaa/bbb/ | /aaa/bbb        | Yes, ignores trailing slash      | No, /aaa/bbb does not match.            | 
+| Prefix | /aaa/bbb  | /aaa/bbbxyz     | No, does not match string prefix | No, the request forwarded to service.   |
+
+Please bear in mind that if `proxy.strip_listen_path` is set to true on API Definition, Tyk strips the listen-path (for example, the listen-path for the Ingress under [Sample HTTP Ingress Resource](#sample-http-ingress-resource) is /httpbin) with an empty string.
+
+The following table shows an example of path matching if the listen-path is set to `/httpbin` or `/httpbin/`.
+
+| Kind                   | Path(s)   | Request path(s)           | Matches?                                              |
+|------------------------|-----------|---------------------------|-------------------------------------------------------|
+| Exact                  | /httpbin  | /httpbin, /httpbin/       | Yes. The request forwarded as `/` to your service.    |
+| Prefix                 | /httpbin  | /httpbin, /httpbin/       | Yes. The request forwarded as `/` to your service.    | 
+| ImplementationSpecific | /httpbin  | /httpbin, /httpbin/       | Yes. The request forwarded as `/` to your service.    |
+| Exact                  | /httpbin  | /httpbinget, /httpbin/get | Yes. The request forwarded as `/get` to your service. |
+| Prefix                 | /httpbin  | /httpbinget, /httpbin/get | Yes. The request forwarded as `/get` to your service. | 
+| ImplementationSpecific | /httpbin  | /httpbinget, /httpbin/get | Yes. The request forwarded as `/get` to your service. |
+| Exact                  | /httpbin/ | /httpbin/,  /httpbin/get  | Yes. The request forwarded as `/get` to your service. |
+| Prefix                 | /httpbin/ | /httpbin/,  /httpbin/get  | Yes. The request forwarded as `/get` to your service. | 
+| ImplementationSpecific | /httpbin/ | /httpbin/,  /httpbin/get  | Yes. The request forwarded as `/get` to your service. |
+| Exact                  | /httpbin/ | /httpbin                  | No. Ingress cannot find referenced service.           |
+| Prefix                 | /httpbin/ | /httpbin                  | No. Ingress cannot find referenced service.           |  
+| ImplementationSpecific | /httpbin/ | /httpbin                  | No. Ingress cannot find referenced service.           | 
+
 ## Quickstart / Samples
 
 * [HTTP Host-Based](./../config/samples/01-ingress)
@@ -88,10 +119,7 @@ spec:
            number: 8000
 ```
 
-The above ingress resource will create an ApiDefinition inside Tyk's Gateway. The ApiDefinition will offer path-based
- routing listening on /httpbin. Because the referenced template is `myapideftemplate`, the IngressReconciler will
- retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard
- auth enabled.
+The above ingress resource will create an ApiDefinition inside Tyk's Gateway. The ApiDefinition will offer path-based routing listening on /httpbin. Because the referenced template is `myapideftemplate`, the IngressReconciler will retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard auth enabled.
 
 ## Sample HTTPS Ingress resource
 
