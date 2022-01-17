@@ -73,6 +73,7 @@ func httpContext(
 		// If namespace is not specified in contextDef, use default namespace
 		if c.Namespace == "" {
 			log.Info("Context namespace is not specified, using default")
+
 			c.Namespace = "default"
 		}
 

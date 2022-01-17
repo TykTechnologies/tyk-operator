@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	v1 "k8s.io/api/core/v1"
@@ -18,11 +17,12 @@ var (
 	testenv env.Environment
 )
 
-const (
-	reconcileDelay        = time.Second * 5
-	retryOperationTimeout = 5 * time.Minute
+type ctxKey string
 
-	ctxNSKey = "test-ns"
+const (
+	ctxNSKey     ctxKey = "namespaceName"
+	ctxApiName   ctxKey = "apiName"
+	ctxOpCtxName ctxKey = "opCtxName"
 )
 
 func TestMain(t *testing.M) {

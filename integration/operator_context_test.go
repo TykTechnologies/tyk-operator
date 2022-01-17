@@ -35,7 +35,8 @@ func TestOperatorContextCreate(t *testing.T) {
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.Context = &model.Target{
 					Name:      opCtx.Name,
-					Namespace: opCtx.Namespace}
+					Namespace: opCtx.Namespace,
+				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
@@ -50,65 +51,77 @@ func TestOperatorContextCreate(t *testing.T) {
 
 			return ctx
 		}).
-		Assess("context status is updated", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(ctxNSKey).(string)
-			client := envConf.Client()
+		Assess("context status is updated",
+			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+				client := envConf.Client()
+				is := is.New(t)
 
-			opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: testOperatorCtx, Namespace: testNS}}
+				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: testOperatorCtx, Namespace: testNS}}
 
-			wait.For(conditions.New(client.Resources()).ResourceMatch(&opCtx, func(object k8s.Object) bool {
-				operatCtx := object.(*v1alpha1.OperatorContext)
+				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&opCtx, func(object k8s.Object) bool {
+					operatCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
 
-				// only one apidef will get linked
-				// other one has empty namespace
-				if len(operatCtx.Status.LinkedApiDefinitions) != 1 {
-					return false
+					// only one apidef will get linked
+					// other one has empty namespace
+					if len(operatCtx.Status.LinkedApiDefinitions) != 1 {
+						return false
+					}
+
+					if operatCtx.Status.LinkedApiDefinitions[0].Namespace != testNS ||
+						operatCtx.Status.LinkedApiDefinitions[0].Name != testApiDef {
+						return false
+					}
+
+					return true
+				}))
+				is.NoErr(err)
+
+				return ctx
+			}).Assess("apidef was created in dashboard",
+		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			is := is.New(t)
+
+			err := wait.For(func() (done bool, err error) {
+				resp, getErr := http.Get("http://localhost:7000/httpbin/get")
+				if getErr != nil {
+					t.Log(getErr)
+					return false, nil
 				}
 
-				if operatCtx.Status.LinkedApiDefinitions[0].Namespace != testNS || operatCtx.Status.LinkedApiDefinitions[0].Name != testApiDef {
-					return false
+				if resp.StatusCode != 200 {
+					t.Log("API is not created yet")
+					return false, nil
 				}
 
-				return true
-			}))
+				return true, nil
+			})
+			is.NoErr(err)
 
 			return ctx
-		}).Assess("apidef was created in dashboard", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-		wait.For(func() (done bool, err error) {
-			resp, getErr := http.Get("http://localhost:7000/httpbin/get")
-			if getErr != nil {
-				t.Log(getErr)
-				return false, nil
-			}
+		}).Assess("apidef with empty namespace in contextRef was not created in dashboard",
+		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			is := is.New(t)
 
-			if resp.StatusCode != 200 {
-				t.Log("API is not created yet")
-				return false, nil
-			}
+			err := wait.For(func() (done bool, err error) {
+				resp, getErr := http.Get("http://localhost:7000/empty-ns/get")
+				if getErr != nil {
+					t.Log(getErr)
+					return false, nil
+				}
 
-			return true, nil
-		})
+				if resp.StatusCode != 404 {
+					t.Log("API definition should not be created on dashbaord")
+					return false, nil
+				}
 
-		return ctx
+				return true, nil
+			})
 
-	}).Assess("apidef with empty namespace in contextRef was not created in dashboard", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-		wait.For(func() (done bool, err error) {
-			resp, getErr := http.Get("http://localhost:7000/empty-ns/get")
-			if getErr != nil {
-				t.Log(getErr)
-				return false, nil
-			}
+			is.NoErr(err)
 
-			if resp.StatusCode != 404 {
-				t.Log("API definition should not be created on dashbaord")
-				return false, nil
-			}
-
-			return true, nil
-		})
-
-		return ctx
-	}).Feature()
+			return ctx
+		}).Feature()
 
 	testenv.Test(t, opCreate)
 }
@@ -123,20 +136,21 @@ func TestOperatorContextDelete(t *testing.T) {
 			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create operatorcontext
 
-			ctx = context.WithValue(ctx, "opCtxName", operatorCtx.Name)
+			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
 
 			// create api definition
 			def, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.Context = &model.Target{
 					Name:      operatorCtx.Name,
-					Namespace: operatorCtx.Namespace}
+					Namespace: operatorCtx.Namespace,
+				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			ctx = context.WithValue(ctx, "apiDefName", def.Name)
+			ctx = context.WithValue(ctx, ctxApiName, def.Name)
 
 			err = wait.For(conditions.New(client.Resources()).ResourceMatch(operatorCtx, func(object k8s.Object) bool {
-				opCtx := object.(*v1alpha1.OperatorContext)
+				opCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
 
 				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
 					t.Log(opCtx)
@@ -151,8 +165,8 @@ func TestOperatorContextDelete(t *testing.T) {
 			return ctx
 		}).Assess("context ref should not get deleted while it is still been refered",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(ctxNSKey).(string)
-			opCtxName := ctx.Value("opCtxName").(string)
+			testNS := ctx.Value(ctxNSKey).(string)       //nolint:errcheck
+			opCtxName := ctx.Value("opCtxName").(string) //nolint:errcheck
 
 			client := envConf.Client()
 			is := is.New(t)
@@ -169,9 +183,9 @@ func TestOperatorContextDelete(t *testing.T) {
 		}).
 		Assess("delete api def should delete operator context",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				testNS := ctx.Value(ctxNSKey).(string)
-				opCtxName := ctx.Value("opCtxName").(string)
-				apiDefName := ctx.Value("apiDefName").(string)
+				testNS := ctx.Value(ctxNSKey).(string)         //nolint:errcheck
+				opCtxName := ctx.Value("opCtxName").(string)   //nolint:errcheck
+				apiDefName := ctx.Value("apiDefName").(string) //nolint:errcheck
 
 				client := envConf.Client()
 				is := is.New(t)
@@ -198,20 +212,21 @@ func TestOperatorContextDelete(t *testing.T) {
 			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
 			is.NoErr(err) // failed to create operatorcontext
 
-			ctx = context.WithValue(ctx, "opCtxName", operatorCtx.Name)
+			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
 
 			// create api definition
 			def, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.Context = &model.Target{
 					Name:      operatorCtx.Name,
-					Namespace: operatorCtx.Namespace}
+					Namespace: operatorCtx.Namespace,
+				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			ctx = context.WithValue(ctx, "apiDefName", def.Name)
+			ctx = context.WithValue(ctx, ctxApiName, def.Name)
 
 			err = wait.For(conditions.New(client.Resources()).ResourceMatch(operatorCtx, func(object k8s.Object) bool {
-				opCtx := object.(*v1alpha1.OperatorContext)
+				opCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
 
 				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
 					return false
@@ -225,8 +240,8 @@ func TestOperatorContextDelete(t *testing.T) {
 			return ctx
 		}).Assess("context ref should not get deleted while it is still been refered",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(ctxNSKey).(string)
-			opCtxName := ctx.Value("opCtxName").(string)
+			testNS := ctx.Value(ctxNSKey).(string)       //nolint:errcheck
+			opCtxName := ctx.Value("opCtxName").(string) //nolint:errcheck
 
 			client := envConf.Client()
 			is := is.New(t)
@@ -243,9 +258,9 @@ func TestOperatorContextDelete(t *testing.T) {
 		}).
 		Assess("removing reference from apiDefinition should delete operator context",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				testNS := ctx.Value(ctxNSKey).(string)
-				opCtxName := ctx.Value("opCtxName").(string)
-				apiDefName := ctx.Value("apiDefName").(string)
+				testNS := ctx.Value(ctxNSKey).(string)         //nolint:errcheck
+				opCtxName := ctx.Value("opCtxName").(string)   //nolint:errcheck
+				apiDefName := ctx.Value("apiDefName").(string) //nolint:errcheck
 
 				client := envConf.Client()
 				is := is.New(t)
@@ -273,7 +288,8 @@ func TestOperatorContextDelete(t *testing.T) {
 	testenv.Test(t, updateApiDef)
 }
 
-func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition), envConf *envconf.Config) (*v1alpha1.ApiDefinition, error) {
+func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
+	envConf *envconf.Config) (*v1alpha1.ApiDefinition, error) {
 	client := envConf.Client()
 	var apiDef v1alpha1.ApiDefinition
 
