@@ -665,15 +665,15 @@ To run tests, boot up either of the following setups:
 
 ### CE
  
-    ```shell
-    TYK_MODE=ce make boot-ce test-all
-    ```
+```shell
+TYK_MODE=ce make boot-ce test-all
+```
 
 ### Pro 
 
-    ```shell
-    TYK_MODE=pro make boot-pro test-all
-    ```
+```shell
+TYK_MODE=pro make boot-pro test-all
+```
 
 
 
