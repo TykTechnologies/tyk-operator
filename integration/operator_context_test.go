@@ -111,7 +111,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				if resp.StatusCode != 404 {
-					t.Log("API definition should not be created on dashbaord")
+					t.Log("API definition should not be created on dashboard")
 					return false, nil
 				}
 
@@ -170,7 +170,6 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			client := envConf.Client()
 			is := is.New(t)
-
 			opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
 			err := client.Resources().Delete(ctx, &opCtx)
