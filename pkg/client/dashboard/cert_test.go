@@ -15,6 +15,7 @@ const testCertID = "5fd08e0f69710900018bc19568492b39a512286d3e71c4c673faa7f094ff
 
 func TestCert(t *testing.T) {
 	var e environmet.Env
+
 	h := mockDash(t,
 		&route{
 			path:   "/api/certs",
@@ -32,8 +33,11 @@ func TestCert(t *testing.T) {
 			body:   "cert.Upload.body",
 		},
 	)
+
 	svr := httptest.NewServer(h)
+
 	defer svr.Close()
+
 	e.URL = svr.URL
 	e = env().Merge(e)
 	requestCert(t, e, Kase{
@@ -50,6 +54,7 @@ func TestCert(t *testing.T) {
 			Body: ReadSample(t, "cert.All.body"),
 		},
 	})
+
 	requestCert(t, e, Kase{
 		Name: "Exist",
 		Request: RequestKase{
@@ -64,6 +69,7 @@ func TestCert(t *testing.T) {
 			Body: ReadSample(t, "cert.Exist.body"),
 		},
 	})
+
 	requestCert(t, e, Kase{
 		Name: "Upload",
 		Request: RequestKase{
@@ -88,6 +94,7 @@ func TestCert(t *testing.T) {
 
 func requestCert(t *testing.T, e environmet.Env, kase client.Kase) {
 	t.Helper()
+
 	switch kase.Name {
 	case "All":
 		client.RunRequestKase(t, e,

@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	gatewaySVC       = "tyk-operator-local-gateway-service"
-	adminSVC         = "tyk-operator-local-gateway-admin-service"
-	gatewayLocalhost = "http://localhost:7000"
-	adminLocalhost   = "http://localhost:7200"
+	gatewaySVC     = "tyk-operator-local-gateway-service"
+	adminSVC       = "tyk-operator-local-gateway-admin-service"
+	adminLocalhost = "http://localhost:7200"
+
+	operatorNamespace = "tyk-operator-system"
 )
 
 func setupTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
@@ -28,27 +29,34 @@ func teardownTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error
 // createLocalServices creates a service that binds no nodeport
 func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 	var ls v1.ServiceList
+
 	err := c2.Client().Resources(envNS()).
 		List(ctx, &ls)
 	if err != nil {
 		return err
 	}
+
 	g := int(-1)
 	a := int(-1)
+
 	for k, gw := range ls.Items {
 		if strings.HasPrefix(gw.Name, "gateway") {
 			g = k
 		}
+
 		if strings.HasPrefix(gw.Name, "dashboard") {
 			a = k
 		}
 	}
+
 	if isCE() {
 		a = g
 	}
+
 	if a == -1 || g == -1 {
-		return errors.New("Failed to find tyk  or dashboard service")
+		return errors.New("Failed to find tyk or dashboard service")
 	}
+
 	return createServices(ctx, c2, &ls.Items[g], &ls.Items[a])
 }
 
@@ -57,11 +65,13 @@ func deleteLocalServices(ctx context.Context, c2 *envconf.Config) error {
 		s := v1.Service{}
 		s.Name = n
 		s.Namespace = envNS()
+
 		if err := c2.Client().Resources().
 			Delete(ctx, &s); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -84,11 +94,13 @@ func createServices(ctx context.Context, c2 *envconf.Config, gw, admin *v1.Servi
 				NodePort:   31000,
 			},
 		}
+
 		err := c2.Client().Resources(gw.Namespace).Create(ctx, &s)
 		if err != nil {
 			return err
 		}
 	}
+
 	// create admin service
 	o := admin.Spec.Ports[0]
 	s := v1.Service{}
@@ -103,6 +115,7 @@ func createServices(ctx context.Context, c2 *envconf.Config, gw, admin *v1.Servi
 			NodePort:   31900,
 		},
 	}
+
 	return c2.Client().Resources(gw.Namespace).Create(ctx, &s)
 }
 

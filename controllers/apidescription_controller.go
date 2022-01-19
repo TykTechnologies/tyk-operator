@@ -52,13 +52,17 @@ type APIDescriptionReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	log := r.Log.WithValues("APICatalogue", req.NamespacedName.String())
+
 	log.Info("Reconciling APIDescription instance")
+
 	defer func() {
 		if err == nil {
 			log.Info("Successfully reconciled APIDescription")
 		}
 	}()
+
 	desired := &tykv1alpha1.APIDescription{}
+
 	if err = r.Get(ctx, req.NamespacedName, desired); err != nil {
 		err = client.IgnoreNotFound(err) // Ignore not-found errors
 		return
@@ -68,13 +72,17 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 			return r.delete(ctx, desired, env, log)
 		}
+
 		util.AddFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
+
 		return r.sync(ctx, desired, env, log)
 	})
+
 	return
 }
 
@@ -88,18 +96,23 @@ func (r *APIDescriptionReconciler) delete(
 	// we find all api catalogues referencing this and update it to reflect the
 	// change
 	log.Info("Fetching APICatalogueList ...")
+
 	var ls v1alpha1.PortalAPICatalogueList
+
 	err := r.List(ctx, &ls, &client.ListOptions{
 		Namespace: desired.Namespace,
 	})
 	if err != nil {
 		return client.IgnoreNotFound(err)
 	}
+
 	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
+
 	target := model.Target{
 		Name:      desired.Name,
 		Namespace: desired.Namespace,
 	}
+
 	for _, catalogue := range ls.Items {
 		for _, desc := range catalogue.Spec.APIDescriptionList {
 			if desc.APIDescriptionRef != nil && target.Equal(*desc.APIDescriptionRef) {
@@ -109,7 +122,9 @@ func (r *APIDescriptionReconciler) delete(
 			}
 		}
 	}
+
 	util.RemoveFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
+
 	return nil
 }
 
@@ -123,23 +138,29 @@ func (r *APIDescriptionReconciler) sync(
 	// we find all api catalogues referencing this and update it to reflect the
 	// change
 	log.Info("Fetching APICatalogueList ...")
+
 	var ls v1alpha1.PortalAPICatalogueList
+
 	err := r.List(ctx, &ls, &client.ListOptions{
 		Namespace: desired.Namespace,
 	})
 	if err != nil {
 		return client.IgnoreNotFound(err)
 	}
+
 	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
+
 	target := model.Target{
 		Name:      desired.Name,
 		Namespace: desired.Namespace,
 	}
+
 	for _, catalogue := range ls.Items {
 		if catalogue.Status.ID == "" {
 			// Skip all unpublished catalogues
 			continue
 		}
+
 		for _, desc := range catalogue.Spec.APIDescriptionList {
 			if desc.APIDescriptionRef != nil &&
 				target.Equal(*desc.APIDescriptionRef) {
@@ -151,13 +172,16 @@ func (r *APIDescriptionReconciler) sync(
 				v, _ := strconv.Atoi(catalogue.Labels["updates"])
 				catalogue.Labels["updates"] = strconv.Itoa(v + 1)
 				ns := model.Target{Name: catalogue.Name, Namespace: catalogue.Namespace}
+
 				log.Info("Updating catalogue", "resource", ns.String())
+
 				if err := r.Update(ctx, &catalogue); err != nil {
 					return err
 				}
 			}
 		}
 	}
+
 	return nil
 }
 

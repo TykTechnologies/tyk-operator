@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -11,6 +12,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/golang-jwt/jwt"
 )
 
 var preloadImagesList = []struct{ name, image, version string }{
@@ -51,6 +54,7 @@ func (c *Config) bind(mode string) {
 	if err != nil {
 		exit(err)
 	}
+
 	c.WorkDir = filepath.Join(wd, "ci")
 	env(&c.WorkDir, "TYK_OPERATOR_WORK_DIR")
 	c.Tyk.bind(c.WorkDir, mode)
@@ -78,6 +82,7 @@ func (t *Tyk) ce() {
 
 func (t *Tyk) helm(workdir string) {
 	t.Charts = filepath.Join(workdir, "charts")
+
 	if t.Mode == "pro" {
 		t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
 	} else {
@@ -94,11 +99,13 @@ func (t *Tyk) pro() {
 
 func (t *Tyk) bind(workdir, mode string) {
 	t.Mode = mode
+
 	if mode == "pro" {
 		t.pro()
 	} else {
 		t.ce()
 	}
+
 	t.helm(workdir)
 	env(&t.URL, "TYK_URL")
 	env(&t.Org, "TYK_ORG")
@@ -178,17 +185,22 @@ func main() {
 
 func submodule() {
 	say("Setup helm charts submodule ...")
+
 	cmd := exec.Command("git", "submodule", "init")
 	cmd.Stderr = os.Stderr
+
 	if *debug {
 		cmd.Stdout = os.Stdout
 	}
+
 	exit(cmd.Run())
 	cmd = exec.Command("git", "submodule", "update")
 	cmd.Stderr = os.Stderr
+
 	if *debug {
 		cmd.Stdout = os.Stdout
 	}
+
 	exit(cmd.Run())
 	ok()
 }
@@ -218,9 +230,11 @@ func kf(fn func(*exec.Cmd), args ...string) error {
 	cmd := exec.Command("kubectl", args...)
 	cmd.Dir = config.WorkDir
 	fn(cmd)
+
 	if *debug {
 		fmt.Println("==>", cmd.Args)
 	}
+
 	return cmd.Run()
 }
 
@@ -232,17 +246,21 @@ func kf(fn func(*exec.Cmd), args ...string) error {
 // multiple times
 func ns() {
 	say("Creating namespaces ...")
+
 	if !hasNS(config.Tyk.Namespace) {
 		exit(kl("create", "namespace", config.Tyk.Namespace))
 	}
+
 	if !hasNS(config.Operator.Namespace) {
 		exit(kl("create", "namespace", config.Operator.Namespace))
 	}
+
 	ok()
 }
 
 func createSecret() {
 	say("Creating Secret ... ")
+
 	if !hasOperatorSecret() {
 		pro(func() {
 			var buf bytes.Buffer
@@ -263,6 +281,7 @@ func createSecret() {
 			config.Tyk.Mode = o.Data["TYK_MODE"]
 			config.Tyk.URL = o.Data["TYK_URL"]
 		})
+
 		exit(kl("create", "secret",
 			"-n", config.Operator.Namespace,
 			"generic", config.Operator.SecretName,
@@ -272,6 +291,7 @@ func createSecret() {
 			"--from-literal", fmt.Sprintf("TYK_URL=%s", config.Tyk.URL),
 		))
 	}
+
 	ok()
 }
 
@@ -295,6 +315,7 @@ func exit(err error) {
 
 func createRedis() {
 	say("Creating Redis ....")
+
 	if !hasRedis() {
 		f := filepath.Join(config.WorkDir, deployDir(), "redis")
 		exit(kl(
@@ -307,11 +328,13 @@ func createRedis() {
 			"rollout", "status", "deployment/redis", "-n", config.Tyk.Namespace,
 		))
 	}
+
 	ok()
 }
 
 func createMongo() {
 	say("Creating Mongo ....")
+
 	if !hasMongo() {
 		f := filepath.Join(config.WorkDir, deployDir(), "mongo")
 		exit(kl(
@@ -324,12 +347,30 @@ func createMongo() {
 			"rollout", "status", "deployment/mongo", "-n", config.Tyk.Namespace,
 		))
 	}
+
 	ok()
 }
 
 func helm() {
 	say("Installing helm chart ...")
+
 	if !hasTykChart() {
+		if config.Tyk.Mode == "pro" {
+			if config.Tyk.License == "" {
+				exit(errors.New("Dashboard license is empty"))
+			}
+
+			token, _, err := new(jwt.Parser).ParseUnverified(config.Tyk.License, jwt.MapClaims{})
+			if err != nil {
+				exit(err)
+			}
+
+			c := token.Claims.(jwt.MapClaims)
+			if err := c.Valid(); err != nil {
+				exit(err)
+			}
+		}
+
 		cmd := exec.Command("helm", "install", config.Tyk.Mode,
 			"-f", config.Values(),
 			config.Chart(),
@@ -338,32 +379,33 @@ func helm() {
 			"--wait",
 		)
 		cmd.Stderr = os.Stderr
+
 		if *debug {
 			cmd.Stdout = os.Stdout
 			fmt.Println(cmd.Args)
 		}
+
 		exit(cmd.Run())
 	}
+
 	ok()
 }
 
 func hasTykChart() bool {
+	var buf bytes.Buffer
+
 	cmd := exec.Command("helm", "list",
 		"-n", config.Tyk.Namespace,
 	)
 	cmd.Dir = config.WorkDir
-	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	exit(cmd.Run())
+
 	return strings.Contains(buf.String(), config.Tyk.Mode)
 }
 
 func hasNS(name string) bool {
 	return k("get", "ns", name) == nil
-}
-
-func hasSecret(name string) bool {
-	return k("get", "secret", "-n", config.Tyk.Namespace, name) == nil
 }
 
 func hasOperatorSecret() bool {
@@ -390,12 +432,9 @@ func hasCertManager() bool {
 	return k("get", "deployment/cert-manager", "-n", config.Operator.CertManagerNamespace) == nil
 }
 
-func hasConfigMap(name string) bool {
-	return k("get", "configmap", name, "-n", config.Tyk.Namespace) == nil
-}
-
 func createCertManager() {
 	say("Installing cert-manager ...")
+
 	if !hasCertManager() {
 		exit(kl(
 			"apply",
@@ -415,6 +454,7 @@ func createCertManager() {
 		))
 		ok()
 	}
+
 	ok()
 }
 
@@ -432,6 +472,7 @@ func operator() {
 
 func deployHTTPBIN() {
 	say("Deploying httpbin ...")
+
 	if !hasHTTPBIN() {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "upstreams")))
 		ok()
@@ -440,11 +481,13 @@ func deployHTTPBIN() {
 			"rollout", "status", "--timeout", "1m", "deployment/httpbin",
 		))
 	}
+
 	ok()
 }
 
 func deployGRPCPlugin() {
 	say("Deploying grpc-plugin ...")
+
 	if !hasGRPCPlugin() {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "grpc-plugin"), "-n", config.Tyk.Namespace))
 		ok()
@@ -453,16 +496,20 @@ func deployGRPCPlugin() {
 			"rollout", "status", "deployment/grpc-plugin", "-n", config.Tyk.Namespace,
 		))
 	}
+
 	ok()
 }
 
 func isKind() bool {
-	cmd := exec.Command("kind", "get", "clusters")
 	var buf bytes.Buffer
+
+	cmd := exec.Command("kind", "get", "clusters")
 	cmd.Stdout = &buf
+
 	if err := cmd.Run(); err != nil {
 		return false
 	}
+
 	return strings.Contains(buf.String(), *cluster)
 }
 
@@ -470,6 +517,7 @@ func preloadImages() {
 	if !isKind() {
 		return
 	}
+
 	for _, v := range preloadImagesList {
 		loadImage(v.name, v.image, v.version)
 	}
@@ -479,6 +527,7 @@ func loadImage(name, image, version string) {
 	if version == "" {
 		version = "latest"
 	}
+
 	img := image + ":" + version
 	sayn("==> preloading image ", img)
 	{

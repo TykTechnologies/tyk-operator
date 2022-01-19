@@ -51,26 +51,29 @@ func init() {
 
 func main() {
 	var configFile string
+	var env environmet.Env
+	var err error
+
 	flag.StringVar(&configFile, "config", "",
 		"The controller will load its initial configuration from this file. "+
 			"Omit this flag to use the default configuration values. "+
 			"Command-line flags override configuration from this file.")
+
 	opts := zap.Options{
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
-
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
-	var env environmet.Env
 	env.Parse()
+
 	if env.Namespace == "" {
 		setupLog.Info("unable to get WatchNamespace, " +
 			"the manager will watch and manage resources in all Namespaces")
 	}
 
-	var err error
 	options := ctrl.Options{Scheme: scheme, Namespace: env.Namespace}
+
 	if configFile != "" {
 		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
 		if err != nil {
@@ -94,6 +97,7 @@ func main() {
 	}
 
 	a := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
+
 	if err = (&controllers.ApiDefinitionReconciler{
 		Client:   mgr.GetClient(),
 		Log:      a,
@@ -106,6 +110,7 @@ func main() {
 	}
 
 	il := ctrl.Log.WithName("controllers").WithName("Ingress")
+
 	if err = (&controllers.IngressReconciler{
 		Client:   mgr.GetClient(),
 		Log:      il,
@@ -118,6 +123,7 @@ func main() {
 	}
 
 	sl := ctrl.Log.WithName("controllers").WithName("SecretCert")
+
 	if err = (&controllers.SecretCertReconciler{
 		Client: mgr.GetClient(),
 		Log:    sl,
@@ -127,7 +133,9 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
 		os.Exit(1)
 	}
+
 	sp := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
+
 	if err = (&controllers.SecurityPolicyReconciler{
 		Client:   mgr.GetClient(),
 		Log:      sp,
@@ -144,6 +152,7 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ApiDefinition")
 			os.Exit(1)
 		}
+
 		if err = (&tykv1alpha1.SecurityPolicy{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "SecurityPolicy")
 			os.Exit(1)
@@ -169,6 +178,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "PortalAPICatalogue")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.PortalConfigReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("PortalConfig"),
@@ -178,17 +188,28 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "PortalConfig")
 		os.Exit(1)
 	}
+	if err = (&controllers.OperatorContextReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Log:    ctrl.Log.WithName("controllers").WithName("OperatorContext"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OperatorContext")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
+
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+
 	setupLog.Info("starting manager")
+
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

@@ -27,10 +27,19 @@ spec:
   state: active
   active: true
   access_rights_array:
-    - name: new-httpbin-api
-      namespace: default
+    - name: new-httpbin-api # name of your ApiDefinition object.
+      namespace: default    # namespace of your ApiDefinition object.
       versions:
         - Default
+```
+
+The `spec.access_rights_array` field of the YAML must refer to the ApiDefinition object that the policy identified by the id will affect.
+
+In order to find available ApiDefinition objects:
+```bash
+$ kubectl get tykapis -A
+NAMESPACE   NAME               DOMAIN   LISTENPATH   PROXY.TARGETURL      ENABLED
+default     new-httpbin-api             /httpbin     http://httpbin.org   true
 ```
 
 3. And then apply this file:

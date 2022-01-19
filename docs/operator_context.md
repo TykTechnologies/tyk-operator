@@ -8,6 +8,8 @@ When a custom resource is applied with `contextRef` set then all the operations
 conducted by the operator will use the `OperatorContext` supplied by the `contextRef` 
 to perform reconciliation.
 
+**Note**: If namespace is not specified in contextRef, `default` namespace will be used.
+
 # Defining OperatorContext
 
 Annotated `OperatorContext` for a community edition deployment looks like this
@@ -44,12 +46,13 @@ spec:
 # Using secret for sensitive information
 
 Whilst it is possible to set `.spec.env.auth` directly in the `OperatorContext` object, better security can be achieved by replacing sensitive data with values contained within a referenced secret.
-Create a `k8s` secret `tyk-operator-system` with our sensitive info for auth and values
+
+Create a `k8s` secret `tyk-operator-conf` with our sensitive info for auth and org
 
 ```sh
 kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "TYK_AUTH=foo" \
-  --from-literal "TYK_ORG=myorg" \
+  --from-literal "TYK_ORG=myorg"
 ```
 
 We can now reference our secret in the `OperatorContext` resource with `.spec.secretRef`
@@ -85,7 +88,7 @@ Mappings between `.spec.env` properties and secret `.spec.data` keys
 
 # Referencing OperatorContext in ApiDefinion
 
-We can refer  to the `OperatorContext` we created above to `ApiDefinion` resource using `context.ref` property like
+We can refer  to the `OperatorContext` we created above to `ApiDefinition` resource using `contextRef` property like
 
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1

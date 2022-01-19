@@ -64,6 +64,7 @@ func Init(ns, env string) (func() error, error) {
 	default:
 		return nil, fmt.Errorf("Unknown TYK_ENV=%q", env)
 	}
+
 	return cmd.Init(ns)
 }
 
@@ -105,6 +106,7 @@ func (fn CB) Init(ns string) (func() error, error) {
 	if fn.InitFN == nil {
 		return nil, ErrNotImplemented
 	}
+
 	return fn.InitFN(ns)
 }
 
@@ -112,6 +114,7 @@ func (fn CB) Create(ctx context.Context, file string, namespace string) error {
 	if fn.CreateFn == nil {
 		return ErrNotImplemented
 	}
+
 	return fn.CreateFn(ctx, file, namespace)
 }
 
@@ -119,6 +122,7 @@ func (fn CB) CreateNS(ctx context.Context, namespace string) error {
 	if fn.CreateNSFn == nil {
 		return ErrNotImplemented
 	}
+
 	return fn.CreateNSFn(ctx, namespace)
 }
 
@@ -126,6 +130,7 @@ func (fn CB) DeleteNS(ctx context.Context, namespace string) error {
 	if fn.DeleteNSFn == nil {
 		return ErrNotImplemented
 	}
+
 	return fn.DeleteNSFn(ctx, namespace)
 }
 
@@ -133,6 +138,7 @@ func (fn CB) Delete(ctx context.Context, file string, namespace string) error {
 	if fn.DeleteFn == nil {
 		return ErrNotImplemented
 	}
+
 	return fn.DeleteFn(ctx, file, namespace)
 }
 
@@ -140,16 +146,20 @@ func (fn CB) Configure(ctx context.Context, file string, namespace string) error
 	if fn.ConfigureFn == nil {
 		return ErrNotImplemented
 	}
+
 	return fn.ConfigureFn(ctx, file, namespace)
 }
 
 func runCMD(cmd *exec.Cmd) (string, error) {
 	a := fmt.Sprint(cmd.Args)
+
 	fmt.Println("===> EXEC ", a)
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("failed %s with %v : %s", a, err, string(output))
 	}
+
 	return string(output), nil
 }
 
@@ -159,25 +169,31 @@ func create(ctx context.Context, file string, ns string) error {
 
 func createNS(ctx context.Context, ns string) error {
 	cmd := exec.CommandContext(ctx, "kubectl", "create", "ns", ns)
+
 	o, err := runCMD(cmd)
 	if err != nil {
 		return err
 	}
+
 	if !strings.Contains(o, Created.String()) {
 		return fmt.Errorf("k8sutil: expected ns to be %v got :%q", Created, o)
 	}
+
 	return nil
 }
 
 func deleteNS(ctx context.Context, ns string) error {
 	cmd := exec.CommandContext(ctx, "kubectl", "delete", "ns", ns)
+
 	o, err := runCMD(cmd)
 	if err != nil {
 		return err
 	}
+
 	if !strings.Contains(o, Deleted.String()) {
 		return fmt.Errorf("k8sutil: expected ns to be %v got :%q", Deleted, o)
 	}
+
 	return nil
 }
 
@@ -191,15 +207,18 @@ func del(ctx context.Context, file string, ns string) error {
 
 func runFile(ctx context.Context, op, file string, ns string) (OpExpect, error) {
 	cmd := exec.CommandContext(ctx, "kubectl", op, "-f", file, "-n", ns)
+
 	o, err := runCMD(cmd)
 	if err != nil {
 		return 0, err
 	}
+
 	for _, v := range []OpExpect{Created, Configured, Deleted} {
 		if strings.Contains(o, v.String()) {
 			return v, nil
 		}
 	}
+
 	return 0, fmt.Errorf("k8sutil: unexpected output for cmd: %v output:%q", cmd.Args, o)
 }
 
@@ -208,13 +227,17 @@ func expect(have ...OpExpect) func(OpExpect, error) error {
 		if e != nil {
 			return e
 		}
+
 		var h []string
+
 		for _, v := range have {
 			if v == oe {
 				return nil
 			}
+
 			h = append(h, v.String())
 		}
+
 		return fmt.Errorf("expected %v got %v", h, oe)
 	}
 }
@@ -223,17 +246,13 @@ func initFn(ns string) (func() error, error) {
 	return func() error { return nil }, setup(ns)
 }
 
-type writeFn func([]byte) (int, error)
-
-func (fn writeFn) Write(b []byte) (int, error) {
-	return fn(b)
-}
-
 var api TykAPI
 
 func setup(ns string) error {
-	label := "name=tyk"
+	var label string
+
 	mode := os.Getenv("TYK_MODE")
+
 	switch mode {
 	case "ce":
 		label = "app=gateway-ce-tyk-headless"
@@ -244,21 +263,27 @@ func setup(ns string) error {
 	default:
 		return fmt.Errorf("unknown mode %q", mode)
 	}
+
 	e := exec.Command(
 		"kubectl", "get", "pods", "-l", label, "-n", ns,
 		"-o", "jsonpath={.items..metadata.name}",
 	)
+
 	o, err := e.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%v:%v", err, string(o))
 	}
+
 	pod := string(bytes.TrimSpace(o))
+
 	pod = strings.Split(pod, " ")[0]
 	if pod == "" {
 		return fmt.Errorf("failed to get tyk pod cmd=%v", e.Args)
 	}
+
 	api.Namespace = ns
 	api.Pod = pod
+
 	return nil
 }
 
@@ -274,6 +299,7 @@ func unquote(s string) string {
 	if s[0] == '\'' {
 		return s[1 : len(s)-1]
 	}
+
 	return s
 }
 
@@ -284,27 +310,36 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	cs := []string(*c)
+
 	for i := 0; i < len(cs); i++ {
 		cs[i] = unquote(cs[i])
 	}
+
 	e := exec.Command("kubectl", append(
 		t.commands(), cs[1:]...,
 	)...)
 	if err != nil {
 		return nil, err
 	}
+
 	fmt.Println(e.Args)
+
 	var buf bytes.Buffer
+
 	e.Stderr = os.Stderr
 	e.Stdout = &buf
+
 	if err := e.Run(); err != nil {
 		return nil, err
 	}
+
 	res, err := http.ReadResponse(bufio.NewReader(&buf), r)
 	if err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
