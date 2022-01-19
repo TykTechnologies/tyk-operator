@@ -70,6 +70,13 @@ func httpContext(
 			return nil
 		}
 
+		// If namespace is not specified in contextDef, use default namespace
+		if c.Namespace == "" {
+			log.Info("Context namespace is not specified, using default")
+
+			c.Namespace = "default"
+		}
+
 		log.Info("Detected context for resource")
 
 		env, err := GetContext(
@@ -141,6 +148,12 @@ func updateOperatorContextStatus(
 	switch object.(type) {
 	case *v1alpha1.ApiDefinition:
 		for _, opctx := range opCtxList.Items {
+			// do not remove link if apidef is still refering to same context and is not marked for deletion
+			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+				object.GetDeletionTimestamp().IsZero() {
+				continue
+			}
+
 			opctx.Status.RemoveLinkedAPIDefinition(target)
 
 			err := rClient.Status().Update(ctx, &opctx)
@@ -150,6 +163,12 @@ func updateOperatorContextStatus(
 		}
 	case *v1alpha1.SecurityPolicy:
 		for _, opctx := range opCtxList.Items {
+			// do not remove link if apidef is still refering to context and is not marked for deletion
+			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+				object.GetDeletionTimestamp().IsZero() {
+				continue
+			}
+
 			opctx.Status.RemoveLinkedSecurityPolicies(target)
 
 			err := rClient.Status().Update(ctx, &opctx)
@@ -159,6 +178,12 @@ func updateOperatorContextStatus(
 		}
 	case *v1alpha1.PortalAPICatalogue:
 		for _, opctx := range opCtxList.Items {
+			// do not remove link if apidef is still refering to context and is not marked for deletion
+			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+				object.GetDeletionTimestamp().IsZero() {
+				continue
+			}
+
 			opctx.Status.RemoveLinkedPortalAPICatalogues(target)
 
 			err := rClient.Status().Update(ctx, &opctx)
@@ -168,6 +193,12 @@ func updateOperatorContextStatus(
 		}
 	case *v1alpha1.APIDescription:
 		for _, opctx := range opCtxList.Items {
+			// do not remove link if apidef is still refering to context and is not marked for deletion
+			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+				object.GetDeletionTimestamp().IsZero() {
+				continue
+			}
+
 			opctx.Status.RemoveLinkedApiDescriptions(target)
 
 			err := rClient.Status().Update(ctx, &opctx)
@@ -177,6 +208,12 @@ func updateOperatorContextStatus(
 		}
 	case *v1alpha1.PortalConfig:
 		for _, opctx := range opCtxList.Items {
+			// do not remove link if apidef is still refering to context and is not marked for deletion
+			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+				object.GetDeletionTimestamp().IsZero() {
+				continue
+			}
+
 			opctx.Status.RemoveLinkedPortalConfig(target)
 
 			err := rClient.Status().Update(ctx, &opctx)
@@ -190,25 +227,28 @@ func updateOperatorContextStatus(
 	// only if object is not marked for deletion
 	if object.GetDeletionTimestamp().IsZero() && ctxRef != nil {
 		// add reference to operator context
+		log.Info("Adding link to apiContext", "key", ctxRef.String())
+
 		var operatorContext v1alpha1.OperatorContext
 
 		key := types.NamespacedName{Name: ctxRef.Name, Namespace: ctxRef.Namespace}
 
 		if err := rClient.Get(ctx, key, &operatorContext); err != nil {
+			log.Error(err, "failed to get operator context")
 			return err
 		}
 
 		switch object.(type) {
 		case *v1alpha1.ApiDefinition:
-			operatorContext.Status.LinkedApiDefinitions = append(operatorContext.Status.LinkedApiDefinitions, target)
+			operatorContext.Status.AddLinkedAPIDefinition(target)
 		case *v1alpha1.SecurityPolicy:
-			operatorContext.Status.LinkedSecurityPolicies = append(operatorContext.Status.LinkedSecurityPolicies, target)
+			operatorContext.Status.AddLinkedSecurityPolicies(target)
 		case *v1alpha1.PortalAPICatalogue:
-			operatorContext.Status.LinkedPortalAPICatalogues = append(operatorContext.Status.LinkedPortalAPICatalogues, target)
+			operatorContext.Status.AddLinkedPortalAPICatalogues(target)
 		case *v1alpha1.APIDescription:
-			operatorContext.Status.LinkedApiDescriptions = append(operatorContext.Status.LinkedApiDescriptions, target)
+			operatorContext.Status.AddLinkedApiDescriptions(target)
 		case *v1alpha1.PortalConfig:
-			operatorContext.Status.LinkedPortalConfigs = append(operatorContext.Status.LinkedPortalConfigs, target)
+			operatorContext.Status.AddLinkedPortalConfig(target)
 		}
 
 		return rClient.Status().Update(ctx, &operatorContext)

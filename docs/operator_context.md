@@ -8,6 +8,8 @@ When a custom resource is applied with `contextRef` set then all the operations
 conducted by the operator will use the `OperatorContext` supplied by the `contextRef` 
 to perform reconciliation.
 
+**Note**: If namespace is not specified in contextRef, `default` namespace will be used.
+
 # Defining OperatorContext
 
 Annotated `OperatorContext` for a community edition deployment looks like this
