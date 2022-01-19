@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	v1 "k8s.io/api/core/v1"
@@ -18,8 +17,13 @@ var (
 	testenv env.Environment
 )
 
-const reconcileDelay = time.Second * 5
-const ctxNSKey = "test-ns"
+type ctxKey string
+
+const (
+	ctxNSKey     ctxKey = "namespaceName"
+	ctxApiName   ctxKey = "apiName"
+	ctxOpCtxName ctxKey = "opCtxName"
+)
 
 func TestMain(t *testing.M) {
 	e.Parse()
@@ -40,16 +44,16 @@ func TestMain(t *testing.M) {
 		teardownE2E,
 		teardownTyk,
 		teardownk8s,
-	).BeforeTest(
+	).BeforeEachTest(
 		createNamespace,
-	).AfterTest(
+	).AfterEachTest(
 		deleteNamespace,
 	)
 
 	os.Exit(testenv.Run(t))
 }
 
-func createNamespace(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
+func createNamespace(ctx context.Context, cfg *envconf.Config, t *testing.T) (context.Context, error) {
 	name := envconf.RandomName("tyk-operator", 16)
 
 	ctx = context.WithValue(ctx, ctxNSKey, name)
@@ -59,7 +63,7 @@ func createNamespace(ctx context.Context, cfg *envconf.Config) (context.Context,
 	return ctx, cfg.Client().Resources().Create(ctx, &nsObj)
 }
 
-func deleteNamespace(ctx context.Context, envconf *envconf.Config) (context.Context, error) {
+func deleteNamespace(ctx context.Context, envconf *envconf.Config, t *testing.T) (context.Context, error) {
 	name := ctx.Value(ctxNSKey)
 
 	nsObj := v1.Namespace{}

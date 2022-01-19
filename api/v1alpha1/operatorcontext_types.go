@@ -148,3 +148,28 @@ func (opStatus *OperatorContextStatus) RemoveLinkedPortalAPICatalogues(target mo
 func (opStatus *OperatorContextStatus) RemoveLinkedPortalConfig(target model.Target) {
 	opStatus.LinkedPortalConfigs = removeLinkedResource(target, opStatus.LinkedPortalConfigs)
 }
+
+func (opStatus *OperatorContextStatus) AddLinkedAPIDefinition(target model.Target) {
+	opStatus.RemoveLinkedAPIDefinition(target)
+	opStatus.LinkedApiDefinitions = append(opStatus.LinkedApiDefinitions, target)
+}
+
+func (opStatus *OperatorContextStatus) AddLinkedSecurityPolicies(target model.Target) {
+	opStatus.RemoveLinkedSecurityPolicies(target)
+	opStatus.LinkedSecurityPolicies = append(opStatus.LinkedSecurityPolicies, target)
+}
+
+func (opStatus *OperatorContextStatus) AddLinkedApiDescriptions(target model.Target) {
+	opStatus.RemoveLinkedApiDescriptions(target)
+	opStatus.LinkedApiDescriptions = append(opStatus.LinkedApiDescriptions, target)
+}
+
+func (opStatus *OperatorContextStatus) AddLinkedPortalAPICatalogues(target model.Target) {
+	opStatus.RemoveLinkedPortalAPICatalogues(target)
+	opStatus.LinkedPortalAPICatalogues = append(opStatus.LinkedPortalAPICatalogues, target)
+}
+
+func (opStatus *OperatorContextStatus) AddLinkedPortalConfig(target model.Target) {
+	opStatus.RemoveLinkedPortalConfig(target)
+	opStatus.LinkedPortalConfigs = append(opStatus.LinkedPortalConfigs, target)
+}
