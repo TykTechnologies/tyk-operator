@@ -721,7 +721,7 @@ type APIDefinitionSpec struct {
 	// Context Variables are available in the url rewriter, modify headers and body transforms.
 	EnableContextVars bool `json:"enable_context_vars,omitempty"`
 
-	//ConfigData can be used to pass custom attributes (a JSON object) into your middleware, such
+	// ConfigData can be used to pass custom attributes (a JSON object) into your middleware, such
 	// as a virtual endpoint or header transform.
 	// +optional
 	// +nullable
