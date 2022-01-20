@@ -1081,7 +1081,5 @@ func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
 }
 
 func (in *ConfigDataType) MarshalJSON() (data []byte, err error) {
-	m := in.Object
-
-	return json.Marshal(m)
+	return json.Marshal(in.Object)
 }
