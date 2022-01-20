@@ -65,7 +65,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Feature | Supported | Comments |
 | ----------- | --------- | --------- |
 | API Tagging | ✅ | - |
-| Config Data | ❌ | Not Implemented |
+| [Config Data](./../config/samples/config_data_virtual_endpoint.yaml) | ✅ | - |
 | Context Variables | ✅ | - |
 | [Cross Origin Resource Sharing (CORS)](./../config/samples/httpbin_cors.yaml) | ⚠️  | [See ISSUE #3396 ](https://github.com/TykTechnologies/tyk/issues/3396) |
 | Custom Plugins - Go | ⚠️ | Untested |
@@ -91,7 +91,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | [Headers - Global Response Add](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
 | [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml) | ✅ | - |
 | [Performance - Cache](./../config/samples/httpbin_cache.yaml) | ✅ | - |
-| [Plugin - Virtual Endpoint](./api_definitions/custom_plugin.md) | ✅ | - |
+| [Plugin - Virtual Endpoint](./../config/samples/config_data_virtual_endpoint.yaml) | ✅ | - |
 | Security - Allow list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
 | Security - Block list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
 | Security - Ignore list | ⚠️ | [Untested #92](https://github.com/TykTechnologies/tyk-operator/issues/93) |
