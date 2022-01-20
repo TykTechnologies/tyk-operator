@@ -51,8 +51,8 @@ spec:
  access_rights_array:
  - name: graph-test
    namespace: default
- versions:
- - Default
+   versions:
+     - Default
 ```
 
 `access_rights_array` contains details of API created in previous step.
