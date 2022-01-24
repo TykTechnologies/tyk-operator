@@ -49,21 +49,22 @@ All we ask is that the management URLs are accessible by Tyk Operator.
 
 ## Tyk Operator Configuration
 
-Operator configurations are all stored in the secret `tyk-operator-conf`.
+Operator configurations are all stored in the secret `tyk-operator-conf`. Tyk Operator configuration can be modified through `tyk-operator-conf` secret object.
+Moreover, you can add or update your environment variables through [`values.yaml`](https://github.com/TykTechnologies/tyk-operator/blob/master/helm/values.yaml) file's `envVars` field.
 
-| Key                            | Example Value                              | Description                                                                                                |
-| ------------------------------ | ------------------------------------------ | ------------------------- |
-| `TYK_ORG`                      | `5e9d9544a1dcd60001d0ed20`                 | Operator User ORG ID                                                                                       |
-| `TYK_AUTH`                     | `2d095c2155774fe36d77e5cbe3ac963b`         | Operator User API Key or Gateway Management API Key                                                        |
-| `TYK_MODE`                     | `ce`                                       | Tyk Open Source mode                                                                                       |
-| `TYK_MODE`                     | `pro`                                      | Tyk Pro mode                                                                                               |
-| `TYK_URL`                      | `http://dashboard.tykpro.svc:3000`         | Management URL of Tyk Dashboard                                               
-| `TYK_URL`                      | `http://gateway-control.tykce.svc:9696`    | Management URL of Tyk Gateway (CE)
-| `TYK_TLS_INSECURE_SKIP_VERIFY` | `true`                                     | If the Tyk URL is HTTPS and has a self-signed certificate; defaults to `false`                             |
-| `WATCH_NAMESPACE`              | `foo,bar`                                  | Comma separated list of namespaces for Operator to operate on; defaults to all namespaces if not specified |
-| `WATCH_INGRESS_CLASS`          | `customclass`                              | Default `tyk` if omitted; allows Tyk Operator to watch a different ingress class                           |
-| `TYK_HTTPS_INGRESS_PORT`          | `8443`                              | Default `8443` if omitted; sets ListenPort for HTTPS ingress
-| `TYK_HTTP_INGRESS_PORT`          | `8080`                              | Default `8080` if omitted; sets ListenPort for HTTP ingress
+| Key                            | Example Value                           | Description                                                                                                |
+|--------------------------------|-----------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `TYK_ORG`                      | `5e9d9544a1dcd60001d0ed20`              | Operator User ORG ID                                                                                       |
+| `TYK_AUTH`                     | `2d095c2155774fe36d77e5cbe3ac963b`      | Operator User API Key or Gateway Management API Key                                                        |
+| `TYK_MODE`                     | `ce`                                    | Tyk Open Source mode                                                                                       |
+| `TYK_MODE`                     | `pro`                                   | Tyk Pro mode                                                                                               |
+| `TYK_URL`                      | `http://dashboard.tykpro.svc:3000`      | Management URL of Tyk Dashboard                                                                            |
+| `TYK_URL`                      | `http://gateway-control.tykce.svc:9696` | Management URL of Tyk Gateway (CE)                                                                         |
+| `TYK_TLS_INSECURE_SKIP_VERIFY` | `true`                                  | If the Tyk URL is HTTPS and has a self-signed certificate; defaults to `false`                             |
+| `WATCH_NAMESPACE`              | `foo,bar`                               | Comma separated list of namespaces for Operator to operate on; defaults to all namespaces if not specified |
+| `WATCH_INGRESS_CLASS`          | `customclass`                           | Default `tyk` if omitted; allows Tyk Operator to watch a different ingress class                           |
+| `TYK_HTTPS_INGRESS_PORT`       | `8443`                                  | Default `8443` if omitted; sets ListenPort for HTTPS ingress                                               |
+| `TYK_HTTP_INGRESS_PORT`        | `8080`                                  | Default `8080` if omitted; sets ListenPort for HTTP ingress                                                |
 
 ### Connecting Tyk Operator to Tyk Gateway
 
@@ -231,5 +232,5 @@ Did we do something wrong? Create a [GitHub issue](https://github.com/TykTechnol
 can try to improve your experience, and that of others.
 
 ```bash
-helm delete foo
+helm delete foo -n tyk-operator-system
 ```
