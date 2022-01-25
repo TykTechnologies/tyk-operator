@@ -5,6 +5,8 @@
 - [Installing Tyk](#installing-tyk)
 - [Tyk Operator Configuration](#tyk-operator-configuration)
   - [Connecting Tyk Operator to Tyk Gateway](#connecting-tyk-operator-to-tyk-gateway)
+    - [Tyk Pro](#tyk-pro)
+    - [Tyk CE](#tyk-ce)
   - [Watching Namespaces](#watching-namespaces)
   - [Watching custom ingress class](#watching-custom-ingress-class)
   - [Installing cert-manager](#installing-cert-manager)
@@ -95,6 +97,47 @@ kubectl get secret/tyk-operator-conf -n tyk-operator-system -o json | jq '.data'
   "TYK_URL": "aHR0cDovL2Rhc2hib2FyZC50eWtwcm8tY29udHJvbC1wbGFuZS5zdmMuY2x1c3Rlci5sb2NhbDozMDAw",
   "TYK_TLS_INSECURE_SKIP_VERIFY": "dHJ1ZQ=="
 }
+```
+
+#### Tyk Pro
+
+- If you installed Tyk Pro using Helm, by default `tyk-operator-conf` is created with the following keys; `TYK_AUTH`, `TYK_MODE`, `TYK_ORG`, and `TYK_URL`. 
+
+The following command shows how you can access the value of `TYK_ORG` assuming that Tyk Pro is installed in the `tyk` namespace:
+```bash
+kubectl get secrets -n tyk tyk-operator-conf --template={{.data.TYK_ORG}} | base64 -d
+```
+
+- If you installed Tyk Pro manually, then you can access `TYK_AUTH` and `TYK_ORG` values from the dashboard as well.
+
+Under the Users page, click on any user to find associated values for that particular user.
+
+![tyk-dashboard](../img/tyk-dashboard-values.png)
+
+`TYK_AUTH` corresponds to `Tyk Dashboard API Access Credentials` in the above image, indicated by `1`.
+
+`TYK_ORG` corresponds to `Organisation ID` in the above image, indicated by `2`.
+
+#### Tyk CE
+
+If Tyk CE is deployed, `tyk-operator-conf`, Kubernetes Secret object, should be created through kubectl.
+
+
+Suppose, Tyk CE is installed in the `tykce-control-plane` namespace through Helm based on [values.yaml](https://github.com/TykTechnologies/tyk-operator/blob/master/ci/helm/tyk-headless/values.yaml).
+- `TYK_AUTH` corresponds to the value of the `secrets.APISecret`,
+- `TYK_ORG` corresponds to the value of the `secrets.OrgID`,
+- `TYK_MODE` corresponds to `ce`, since Tyk CE is deployed,
+- `TYK_URL` corresponds to the management URL of Tyk Gateway.
+
+Therefore, according to this particular [values.yaml](https://github.com/TykTechnologies/tyk-operator/blob/master/ci/helm/tyk-headless/values.yaml) configuration, the following secret should be created in order to connect Tyk Operator to Tyk Gateway.
+
+```bash
+kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
+--from-literal "TYK_AUTH=foo" \
+--from-literal "TYK_ORG=myorg" \
+--from-literal "TYK_URL=http://gateway-svc-tyk-ce-tyk-headless.tykce-control-plane.svc.cluster.local:8080" \
+--from-literal "TYK_TLS_INSECURE_SKIP_VERIFY=true" \
+--from-literal "TYK_MODE=ce"
 ```
 
 ### Watching Namespaces
