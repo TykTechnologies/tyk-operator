@@ -124,6 +124,7 @@ If Tyk CE is deployed, `tyk-operator-conf`, Kubernetes Secret object, should be 
 
 Suppose, Tyk CE is installed in the `tykce-control-plane` namespace through Helm based on [values.yaml](https://github.com/TykTechnologies/tyk-operator/blob/master/ci/helm/tyk-headless/values.yaml).
 - `TYK_AUTH` corresponds to the value of the `secrets.APISecret`,
+- `TYK_ORG` corresponds to the value of the `secrets.OrgID`,
 - `TYK_MODE` corresponds to `ce`, since Tyk CE is deployed,
 - `TYK_URL` corresponds to the management URL of Tyk Gateway.
 
@@ -132,6 +133,7 @@ Therefore, according to this particular [values.yaml](https://github.com/TykTech
 ```bash
 kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
 --from-literal "TYK_AUTH=foo" \
+--from-literal "TYK_ORG=myorg" \
 --from-literal "TYK_URL=http://gateway-svc-tyk-ce-tyk-headless.tykce-control-plane.svc.cluster.local:8080" \
 --from-literal "TYK_TLS_INSECURE_SKIP_VERIFY=true" \
 --from-literal "TYK_MODE=ce"
