@@ -1,6 +1,6 @@
 replicaCount:
   1
-  # loads enviroment variables to the operator.
+  # loads environment variables to the operator.
 envFrom:
   - secretRef:
       name: tyk-operator-conf
