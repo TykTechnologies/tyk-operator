@@ -318,14 +318,21 @@ type MethodTransformMeta struct {
 	ToMethod HttpMethod `json:"to_method"`
 }
 
-type ValidatePathMeta struct {
-	// Allows override of default 422 Unprocessible Entity response code for validation errors.
-	ErrorResponseCode int        `json:"error_response_code"`
-	Path              string     `json:"path"`
-	Method            HttpMethod `json:"method"`
-	SchemaB64         string     `json:"schema_b64,omitempty"`
+// JSONValidationSchema represents 'schema' field of the 'validate_json'.
+// Validate JSON verifies user requests against a specified JSON schema and
+// check that the data sent to your API by a consumer is in the right format.
+type JSONValidationSchema struct {
+	//+kubebuilder:pruning:PreserveUnknownFields
+	unstructured.Unstructured `json:",inline"`
+}
 
-	//Schema    ExtraFields `json:"schema,omitempty"`
+type ValidatePathMeta struct {
+	// Allows override of default 422 Unprocessable Entity response code for validation errors.
+	ErrorResponseCode int                   `json:"error_response_code"`
+	Path              string                `json:"path"`
+	Method            HttpMethod            `json:"method"`
+	SchemaB64         string                `json:"schema_b64,omitempty"`
+	Schema            *JSONValidationSchema `json:"schema,omitempty"`
 }
 
 type ExtendedPathsSet struct {
@@ -349,8 +356,8 @@ type ExtendedPathsSet struct {
 	MethodTransforms        []MethodTransformMeta `json:"method_transforms,omitempty"`
 	TrackEndpoints          []TrackEndpointMeta   `json:"track_endpoints,omitempty"`
 	DoNotTrackEndpoints     []TrackEndpointMeta   `json:"do_not_track_endpoints,omitempty"`
-	//ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"` //  Breaking integration test?
-	Internal []InternalMeta `json:"internal,omitempty"`
+	ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
+	Internal                []InternalMeta        `json:"internal,omitempty"`
 }
 
 func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
@@ -503,7 +510,7 @@ type OpenIDOptions struct {
 	SegregateByClient bool                `json:"segregate_by_client"`
 }
 
-// APIDefinition represents the configuration for a single proxied API and it's versions.
+// APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
 
 	// For server use only, do not use
@@ -1081,5 +1088,28 @@ func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
 }
 
 func (in *ConfigDataType) MarshalJSON() (data []byte, err error) {
+	return json.Marshal(in.Object)
+}
+
+func (in *JSONValidationSchema) DeepCopyInto(out *JSONValidationSchema) {
+	if out != nil {
+		casted := unstructured.Unstructured(in.Unstructured)
+		deepCopy := casted.DeepCopy()
+		out.Object = deepCopy.Object
+	}
+}
+
+func (in *JSONValidationSchema) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+
+	in.Object = m
+
+	return nil
+}
+
+func (in *JSONValidationSchema) MarshalJSON() (data []byte, err error) {
 	return json.Marshal(in.Object)
 }

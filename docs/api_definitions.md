@@ -104,7 +104,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Transform - Response Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
 | [Transform - URL Rewrite Basic](../config/samples/url_rewrite_basic.yaml) | ✅️ | - |
 | Transform - URL Rewrite Advanced | ⚠️ | Untested |
-| [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | ❌️ | [Issue #59](https://github.com/TykTechnologies/tyk-operator/issues/59) |
+| [Validate - JSON Schema](../config/samples/httpbin_json_schema_validation.yaml) | ✅ | - |
 | [Validate - Limit Request Size](../config/samples/request_size.yaml) | ✅️ | - |
 
 ## APIDefinition - Migrating Existing APIs

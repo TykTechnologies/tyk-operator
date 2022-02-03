@@ -953,7 +953,6 @@ spec:
                                 type: object
                               type: array
                             internal:
-                              description: ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"` //  Breaking integration test?
                               items:
                                 properties:
                                   method:
@@ -1417,6 +1416,39 @@ spec:
                                     type: array
                                 required:
                                 - match_pattern
+                                - method
+                                - path
+                                type: object
+                              type: array
+                            validate_json:
+                              items:
+                                properties:
+                                  error_response_code:
+                                    description: Allows override of default 422 Unprocessable Entity response code for validation errors.
+                                    type: integer
+                                  method:
+                                    description: Method represents HTTP request method
+                                    enum:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                    - HEAD
+                                    - CONNECT
+                                    - TRACE
+                                    type: string
+                                  path:
+                                    type: string
+                                  schema:
+                                    description: JSONValidationSchema represents 'schema' field of the 'validate_json'. Validate JSON verifies user requests against a specified JSON schema and check that the data sent to your API by a consumer is in the right format.
+                                    type: object
+                                    x-kubernetes-preserve-unknown-fields: true
+                                  schema_b64:
+                                    type: string
+                                required:
+                                - error_response_code
                                 - method
                                 - path
                                 type: object
