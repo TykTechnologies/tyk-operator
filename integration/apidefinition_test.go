@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,19 +25,25 @@ const (
 	apiDefWithJSONValidationName = "apidef-json-validation"
 	apiDefListenPath             = "/validation"
 	defaultVersion               = "Default"
-	validationSchemaKey          = "key"
-	validationSchemaValue        = "value"
+	errorResponseCode            = 422
 	defaultTimeout               = 1 * time.Minute
 )
 
 func TestApiDefinitionCreate(t *testing.T) {
 	eps := &model.ExtendedPathsSet{
 		ValidateJSON: []model.ValidatePathMeta{{
-			ErrorResponseCode: 422,
+			ErrorResponseCode: errorResponseCode,
 			Path:              "/get",
 			Method:            http.MethodGet,
 			Schema: &model.JSONValidationSchema{Unstructured: unstructured.Unstructured{
-				Object: map[string]interface{}{validationSchemaKey: validationSchemaValue},
+				Object: map[string]interface{}{
+					"properties": map[string]interface{}{
+						"key": map[string]interface{}{
+							"type":      "string",
+							"minLength": 2,
+						},
+					},
+				},
 			}},
 		}},
 	}
@@ -76,21 +83,14 @@ func TestApiDefinitionCreate(t *testing.T) {
 
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-
 					// 'validate_json' field must exist in the ApiDefinition object.
-					if len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) != 1 {
-						return false
-					}
-
-					// Check if 'schema' field is written into ApiDefinition as expected.
-					return apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON[0].
-						Schema.UnstructuredContent()[validationSchemaKey] == validationSchemaValue
+					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
 				}), wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
 				return ctx
 			}).
-		Assess("ApiDefinition must verify user requests",
+		Assess("ApiDefinition must exists in the Gateway",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				is := is.New(t)
 
@@ -102,6 +102,40 @@ func TestApiDefinitionCreate(t *testing.T) {
 					}
 
 					if resp.StatusCode != 200 {
+						return false, nil
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultTimeout))
+				is.NoErr(err)
+
+				return ctx
+			}).
+		Assess("ApiDefinition must verify user requests",
+			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+				is := is.New(t)
+
+				err := wait.For(func() (done bool, err error) {
+					hc := &http.Client{}
+
+					// invalidJSONBody does not meet the requirements of the Schema because
+					// Schema requires the "key" field to have a length of 2 at least.
+					invalidJSONBody := strings.NewReader(`{"key": "a"}`)
+
+					req, err := http.NewRequest(
+						http.MethodGet,
+						fmt.Sprintf("%s%s/get", gatewayLocalhost, apiDefListenPath),
+						invalidJSONBody,
+					)
+					is.NoErr(err)
+					req.Header.Add("Content-type", "application/json")
+
+					// Since the following request does not match with the JSON Validation Schema,
+					// the response status code must be 422 as indicated in the ErrorResponseCode of the ValidatePathMeta.
+					resp, err := hc.Do(req)
+					is.NoErr(err)
+
+					if resp.StatusCode != errorResponseCode {
 						return false, nil
 					}
 
