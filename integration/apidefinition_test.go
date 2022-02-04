@@ -21,15 +21,15 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-const (
-	apiDefWithJSONValidationName = "apidef-json-validation"
-	apiDefListenPath             = "/validation"
-	defaultVersion               = "Default"
-	errorResponseCode            = 422
-	defaultTimeout               = 1 * time.Minute
-)
-
 func TestApiDefinitionCreate(t *testing.T) {
+	var (
+		apiDefWithJSONValidationName = "apidef-json-validation"
+		apiDefListenPath             = "/validation"
+		defaultVersion               = "Default"
+		errorResponseCode            = 422
+		defaultTimeout               = 1 * time.Minute
+	)
+
 	eps := &model.ExtendedPathsSet{
 		ValidateJSON: []model.ValidatePathMeta{{
 			ErrorResponseCode: errorResponseCode,
@@ -86,27 +86,6 @@ func TestApiDefinitionCreate(t *testing.T) {
 					// 'validate_json' field must exist in the ApiDefinition object.
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
 				}), wait.WithTimeout(defaultTimeout))
-				is.NoErr(err)
-
-				return ctx
-			}).
-		Assess("ApiDefinition must exists in the Gateway",
-			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
-
-				err := wait.For(func() (done bool, err error) {
-					resp, getErr := http.Get(fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath))
-					if getErr != nil {
-						t.Log(getErr)
-						return false, nil
-					}
-
-					if resp.StatusCode != 200 {
-						return false, nil
-					}
-
-					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
 				return ctx
