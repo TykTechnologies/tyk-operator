@@ -35,7 +35,7 @@ func TestApiDefinitionCreate(t *testing.T) {
 			ErrorResponseCode: errorResponseCode,
 			Path:              "/get",
 			Method:            http.MethodGet,
-			Schema: &model.JSONValidationSchema{Unstructured: unstructured.Unstructured{
+			Schema: &model.MapStringInterfaceType{Unstructured: unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"properties": map[string]interface{}{
 						"key": map[string]interface{}{

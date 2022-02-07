@@ -29,7 +29,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type ConfigDataType struct {
+// MapStringInterfaceType represents a generic struct used as a map[string]interface{}. Since an arbitrary
+// JSON fields defined as map[string]interface{} is not feasible to use as a Kubernetes CRD, unstructured.Unstructured
+// type is used.
+type MapStringInterfaceType struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	unstructured.Unstructured `json:",inline"`
 }
@@ -318,21 +321,15 @@ type MethodTransformMeta struct {
 	ToMethod HttpMethod `json:"to_method"`
 }
 
-// JSONValidationSchema represents 'schema' field of the 'validate_json'.
-// Validate JSON verifies user requests against a specified JSON schema and
-// check that the data sent to your API by a consumer is in the right format.
-type JSONValidationSchema struct {
-	//+kubebuilder:pruning:PreserveUnknownFields
-	unstructured.Unstructured `json:",inline"`
-}
-
 type ValidatePathMeta struct {
 	// Allows override of default 422 Unprocessable Entity response code for validation errors.
-	ErrorResponseCode int                   `json:"error_response_code"`
-	Path              string                `json:"path"`
-	Method            HttpMethod            `json:"method"`
-	SchemaB64         string                `json:"schema_b64,omitempty"`
-	Schema            *JSONValidationSchema `json:"schema,omitempty"`
+	ErrorResponseCode int        `json:"error_response_code"`
+	Path              string     `json:"path"`
+	Method            HttpMethod `json:"method"`
+	SchemaB64         string     `json:"schema_b64,omitempty"`
+	// Schema represents schema field that verifies user requests against a specified
+	// JSON schema and check that the data sent to your API by a consumer is in the right format.
+	Schema *MapStringInterfaceType `json:"schema,omitempty"`
 }
 
 type ExtendedPathsSet struct {
@@ -732,7 +729,7 @@ type APIDefinitionSpec struct {
 	// as a virtual endpoint or header transform.
 	// +optional
 	// +nullable
-	ConfigData *ConfigDataType `json:"config_data"`
+	ConfigData *MapStringInterfaceType `json:"config_data"`
 
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
@@ -1066,7 +1063,7 @@ func (ls ListAPIOptions) Params() url.Values {
 	return u
 }
 
-func (in *ConfigDataType) DeepCopyInto(out *ConfigDataType) {
+func (in *MapStringInterfaceType) DeepCopyInto(out *MapStringInterfaceType) {
 	// controller-gen cannot handle the interface{} type of an aliased Unstructured,
 	// thus we write our own DeepCopyInto function.
 	if out != nil {
@@ -1076,7 +1073,7 @@ func (in *ConfigDataType) DeepCopyInto(out *ConfigDataType) {
 	}
 }
 
-func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
+func (in *MapStringInterfaceType) UnmarshalJSON(data []byte) error {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
@@ -1087,29 +1084,6 @@ func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (in *ConfigDataType) MarshalJSON() (data []byte, err error) {
-	return json.Marshal(in.Object)
-}
-
-func (in *JSONValidationSchema) DeepCopyInto(out *JSONValidationSchema) {
-	if out != nil {
-		casted := unstructured.Unstructured(in.Unstructured)
-		deepCopy := casted.DeepCopy()
-		out.Object = deepCopy.Object
-	}
-}
-
-func (in *JSONValidationSchema) UnmarshalJSON(data []byte) error {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(data, &m); err != nil {
-		return err
-	}
-
-	in.Object = m
-
-	return nil
-}
-
-func (in *JSONValidationSchema) MarshalJSON() (data []byte, err error) {
+func (in *MapStringInterfaceType) MarshalJSON() (data []byte, err error) {
 	return json.Marshal(in.Object)
 }

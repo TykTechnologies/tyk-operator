@@ -1614,8 +1614,7 @@ spec:
                                   path:
                                     type: string
                                   schema:
-                                    description: JSONValidationSchema represents 'schema'
-                                      field of the 'validate_json'. Validate JSON
+                                    description: Schema represents schema field that
                                       verifies user requests against a specified JSON
                                       schema and check that the data sent to your
                                       API by a consumer is in the right format.
