@@ -147,9 +147,13 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 	const blackListedPath = "/blacklisted"
 	eps := &model.ExtendedPathsSet{
 		BlackList: []model.EndPointMeta{{
-			Path:          blackListedPath,
-			IgnoreCase:    true,
-			MethodActions: map[string]model.EndpointMethodMeta{"GET": {Action: "no_action", Code: 200, Data: "", Headers: make(map[string]string)}},
+			Path:       blackListedPath,
+			IgnoreCase: true,
+			MethodActions: map[string]model.EndpointMethodMeta{
+				"GET": {
+					Action: "no_action",
+					Code:   200, Data: "",
+					Headers: make(map[string]string)}},
 		}},
 	}
 
@@ -265,14 +269,22 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 	const ignoredPath = "/ignored"
 	eps := &model.ExtendedPathsSet{
 		WhiteList: []model.EndPointMeta{{
-			Path:          whiteListedPath,
-			IgnoreCase:    true,
-			MethodActions: map[string]model.EndpointMethodMeta{"GET": {Action: "no_action", Code: 200, Data: "", Headers: make(map[string]string)}},
+			Path:       whiteListedPath,
+			IgnoreCase: true,
+			MethodActions: map[string]model.EndpointMethodMeta{
+				"GET": {
+					Action: "no_action",
+					Code:   200, Data: "",
+					Headers: make(map[string]string)}},
 		}},
 		Ignored: []model.EndPointMeta{{
-			Path:          ignoredPath,
-			IgnoreCase:    true,
-			MethodActions: map[string]model.EndpointMethodMeta{"GET": {Action: "no_action", Code: 200, Data: "", Headers: make(map[string]string)}},
+			Path:       ignoredPath,
+			IgnoreCase: true,
+			MethodActions: map[string]model.EndpointMethodMeta{
+				"GET": {
+					Action: "no_action",
+					Code:   200, Data: "",
+					Headers: make(map[string]string)}},
 		}},
 	}
 
