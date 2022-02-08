@@ -30,9 +30,15 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 	const whiteListedPath = "/whitelisted"
 	eps := &model.ExtendedPathsSet{
 		WhiteList: []model.EndPointMeta{{
-			Path:          whiteListedPath,
-			IgnoreCase:    true,
-			MethodActions: map[string]model.EndpointMethodMeta{"GET": {Action: "no_action", Code: 200, Data: "", Headers: make(map[string]string)}},
+			Path:       whiteListedPath,
+			IgnoreCase: true,
+			MethodActions: map[string]model.EndpointMethodMeta{
+				"GET": {
+					Action: "no_action",
+					Code:   200, Data: "",
+					Headers: make(map[string]string),
+				},
+			},
 		}},
 	}
 
@@ -153,7 +159,9 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				"GET": {
 					Action: "no_action",
 					Code:   200, Data: "",
-					Headers: make(map[string]string)}},
+					Headers: make(map[string]string),
+				},
+			},
 		}},
 	}
 
@@ -275,7 +283,9 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				"GET": {
 					Action: "no_action",
 					Code:   200, Data: "",
-					Headers: make(map[string]string)}},
+					Headers: make(map[string]string),
+				},
+			},
 		}},
 		Ignored: []model.EndPointMeta{{
 			Path:       ignoredPath,
@@ -284,7 +294,9 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				"GET": {
 					Action: "no_action",
 					Code:   200, Data: "",
-					Headers: make(map[string]string)}},
+					Headers: make(map[string]string),
+				},
+			},
 		}},
 	}
 
