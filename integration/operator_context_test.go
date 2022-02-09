@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -22,6 +23,7 @@ const (
 )
 
 func TestOperatorContextCreate(t *testing.T) {
+	fmt.Println("fake commit")
 	opCreate := features.New("Operator Context").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
