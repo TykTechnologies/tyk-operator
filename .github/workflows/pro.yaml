@@ -42,3 +42,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ORG_GH_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name : show all files
+        run: ls -R
