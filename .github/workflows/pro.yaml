@@ -44,3 +44,5 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name : show all files
         run: ls -R
+      - name: list coverage
+        run: cat coverage.out
