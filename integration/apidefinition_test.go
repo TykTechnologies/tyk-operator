@@ -47,7 +47,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
-			// Create ApiDefinition with JSON Schema Validation support.
+			// Create ApiDefinition with whitelist extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
@@ -170,7 +170,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
-			// Create ApiDefinition with JSON Schema Validation support.
+			// Create ApiDefinition with whitelist extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithBlacklist
 				apiDef.Spec.Proxy = model.Proxy{
@@ -305,7 +305,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
-			// Create ApiDefinition with JSON Schema Validation support.
+			// Create ApiDefinition with whitelist + ingored extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
@@ -350,7 +350,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath+ignoredPath+"asd"),
+						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath+ignoredPath),
 						nil,
 					)
 					is.NoErr(err)
