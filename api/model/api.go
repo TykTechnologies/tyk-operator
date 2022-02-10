@@ -766,7 +766,7 @@ type Proxy struct {
 	ListenPath string `json:"listen_path,omitempty"`
 
 	// TargetURL defines the target URL that the request should be proxied to.
-	TargetURL     string          `json:"target_url,omitempty"`
+	TargetURL     string          `json:"target_url"`
 	TargeInternal *TargetInternal `json:"target_internal,omitempty"`
 
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
