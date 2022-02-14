@@ -37,3 +37,8 @@ jobs:
         shell: bash
         run: |
           TYK_MODE=pro CLUSTER_NAME=chart-testing  make test-all
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.ORG_GH_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
