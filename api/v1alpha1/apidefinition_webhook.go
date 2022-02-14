@@ -206,7 +206,6 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 	// API, or we are targeting internal API by its name and namespace.
 	if in.Spec.Proxy.TargetURL == "" {
 		if in.Spec.GraphQL != nil {
-			// Graphql
 			if !in.Spec.GraphQL.Enabled {
 				all = append(all,
 					field.Required(path("proxy", "target_url"),
@@ -229,7 +228,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 				if u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
 					all = append(all,
 						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
-							"can't be emptry",
+							"can't be empty",
 						),
 					)
 				}
@@ -238,7 +237,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 					if t.RewriteTo == "" && t.RewriteToInternal == nil {
 						all = append(all,
 							field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
-								"can't be emptry",
+								"can't be empty",
 							),
 						)
 					}
