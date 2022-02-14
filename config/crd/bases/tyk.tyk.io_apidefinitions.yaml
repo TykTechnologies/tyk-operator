@@ -852,6 +852,8 @@ spec:
                         - 772
                         type: integer
                     type: object
+                required:
+                - target_url
                 type: object
               response_processors:
                 items:

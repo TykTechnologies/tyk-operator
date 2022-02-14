@@ -23,7 +23,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 			Spec: tykv1alpha1.APIDefinitionSpec{
 				APIDefinitionSpec: model.APIDefinitionSpec{
 					Proxy: model.Proxy{
-						TargeInternal: target,
+						TargetInternal: target,
 					},
 				},
 			},
@@ -41,7 +41,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 			t.Errorf("expected %q got %q", target.String(), a.Spec.Proxy.TargetURL)
 		}
 		// make sure we the looping target was set to null
-		if a.Spec.Proxy.TargeInternal != nil {
+		if a.Spec.Proxy.TargetInternal != nil {
 			t.Errorf("expected .spec.proxy.target_internal to be nil ")
 		}
 	})
@@ -158,7 +158,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 			Spec: tykv1alpha1.APIDefinitionSpec{
 				APIDefinitionSpec: model.APIDefinitionSpec{
 					Proxy: model.Proxy{
-						TargeInternal: target1,
+						TargetInternal: target1,
 					},
 					VersionData: model.VersionData{
 						Versions: map[string]model.VersionInfo{
