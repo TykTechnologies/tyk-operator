@@ -29,7 +29,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type ConfigDataType struct {
+// MapStringInterfaceType represents a generic struct used as a map[string]interface{}. Since an arbitrary
+// JSON fields defined as map[string]interface{} is not feasible to use as a Kubernetes CRD, unstructured.Unstructured
+// type is used.
+type MapStringInterfaceType struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	unstructured.Unstructured `json:",inline"`
 }
@@ -319,13 +322,13 @@ type MethodTransformMeta struct {
 }
 
 type ValidatePathMeta struct {
-	// Allows override of default 422 Unprocessible Entity response code for validation errors.
+	// Allows override of default 422 Unprocessable Entity response code for validation errors.
 	ErrorResponseCode int        `json:"error_response_code"`
 	Path              string     `json:"path"`
 	Method            HttpMethod `json:"method"`
-	SchemaB64         string     `json:"schema_b64,omitempty"`
-
-	//Schema    ExtraFields `json:"schema,omitempty"`
+	// Schema represents schema field that verifies user requests against a specified
+	// JSON schema and check that the data sent to your API by a consumer is in the right format.
+	Schema *MapStringInterfaceType `json:"schema"`
 }
 
 type ExtendedPathsSet struct {
@@ -349,8 +352,8 @@ type ExtendedPathsSet struct {
 	MethodTransforms        []MethodTransformMeta `json:"method_transforms,omitempty"`
 	TrackEndpoints          []TrackEndpointMeta   `json:"track_endpoints,omitempty"`
 	DoNotTrackEndpoints     []TrackEndpointMeta   `json:"do_not_track_endpoints,omitempty"`
-	//ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"` //  Breaking integration test?
-	Internal []InternalMeta `json:"internal,omitempty"`
+	ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
+	Internal                []InternalMeta        `json:"internal,omitempty"`
 }
 
 func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
@@ -503,7 +506,7 @@ type OpenIDOptions struct {
 	SegregateByClient bool                `json:"segregate_by_client"`
 }
 
-// APIDefinition represents the configuration for a single proxied API and it's versions.
+// APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
 
 	// For server use only, do not use
@@ -725,7 +728,7 @@ type APIDefinitionSpec struct {
 	// as a virtual endpoint or header transform.
 	// +optional
 	// +nullable
-	ConfigData *ConfigDataType `json:"config_data"`
+	ConfigData *MapStringInterfaceType `json:"config_data"`
 
 	//TagHeaders              []string        `json:"tag_headers"`
 	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
@@ -1059,7 +1062,7 @@ func (ls ListAPIOptions) Params() url.Values {
 	return u
 }
 
-func (in *ConfigDataType) DeepCopyInto(out *ConfigDataType) {
+func (in *MapStringInterfaceType) DeepCopyInto(out *MapStringInterfaceType) {
 	// controller-gen cannot handle the interface{} type of an aliased Unstructured,
 	// thus we write our own DeepCopyInto function.
 	if out != nil {
@@ -1069,7 +1072,7 @@ func (in *ConfigDataType) DeepCopyInto(out *ConfigDataType) {
 	}
 }
 
-func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
+func (in *MapStringInterfaceType) UnmarshalJSON(data []byte) error {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
@@ -1080,6 +1083,6 @@ func (in *ConfigDataType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (in *ConfigDataType) MarshalJSON() (data []byte, err error) {
+func (in *MapStringInterfaceType) MarshalJSON() (data []byte, err error) {
 	return json.Marshal(in.Object)
 }

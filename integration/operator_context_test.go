@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -17,8 +18,9 @@ import (
 )
 
 const (
-	testApiDef      = "test-http"
-	testOperatorCtx = "mycontext"
+	testApiDef       = "test-http"
+	testOperatorCtx  = "mycontext"
+	gatewayLocalhost = "http://localhost:7000"
 )
 
 func TestOperatorContextCreate(t *testing.T) {
@@ -83,7 +85,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			is := is.New(t)
 
 			err := wait.For(func() (done bool, err error) {
-				resp, getErr := http.Get("http://localhost:7000/httpbin/get")
+				resp, getErr := http.Get(fmt.Sprintf("%s/httpbin/get", gatewayLocalhost))
 				if getErr != nil {
 					t.Log(getErr)
 					return false, nil
@@ -104,7 +106,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			is := is.New(t)
 
 			err := wait.For(func() (done bool, err error) {
-				resp, getErr := http.Get("http://localhost:7000/empty-ns/get")
+				resp, getErr := http.Get(fmt.Sprintf("%s/empty-ns/get", gatewayLocalhost))
 				if getErr != nil {
 					t.Log(getErr)
 					return false, nil
