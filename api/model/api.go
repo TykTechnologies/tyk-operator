@@ -326,10 +326,9 @@ type ValidatePathMeta struct {
 	ErrorResponseCode int        `json:"error_response_code"`
 	Path              string     `json:"path"`
 	Method            HttpMethod `json:"method"`
-	SchemaB64         string     `json:"schema_b64,omitempty"`
 	// Schema represents schema field that verifies user requests against a specified
 	// JSON schema and check that the data sent to your API by a consumer is in the right format.
-	Schema *MapStringInterfaceType `json:"schema,omitempty"`
+	Schema *MapStringInterfaceType `json:"schema"`
 }
 
 type ExtendedPathsSet struct {
