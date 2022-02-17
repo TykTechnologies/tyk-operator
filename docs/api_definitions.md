@@ -11,15 +11,15 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | ❌️ | Not currently supported |
 
 ## API Types
+| Type                                                                   | Support | Comments                                                      |
+|------------------------------------------------------------------------|---------|---------------------------------------------------------------|
+| [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅       | -                                                             |
+| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml)       | ⚠️      | 3.1 GraphQL schema is supported. V2 Engine & API ETA Jul 2022 |
+| HTTP                                                                   | ✅       | -                                                             |
+| [HTTPS](./../config/samples/01-tls/example.yaml)️                      | ✅       | -                                                             |
+| TCP                                                                    | ✅       | -                                                             |
+| TLS                                                                    | ✅       | -                                                             |
 
-| Type | Support | Comments |
-| --------- | --------- | --------- |
-| [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅ | - |
-| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml) | ⚠️ | V2 Engine & API ETA Feb 2021 |
-| HTTP | ✅ | - |
-| [HTTPS](./../config/samples/01-tls/example.yaml)️ | ✅️ | - |
-| TCP | ✅ | - |
-| TLS | ✅ | - |
 
 ## Routing
 
@@ -104,7 +104,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Transform - Response Body JQ | ⚠️ | Untested - Requires JQ on Gateway Docker Image |
 | [Transform - URL Rewrite Basic](../config/samples/url_rewrite_basic.yaml) | ✅️ | - |
 | Transform - URL Rewrite Advanced | ⚠️ | Untested |
-| [Validate - JSON Schema](../config/samples/httpbin_validate.yaml) | ❌️ | [Issue #59](https://github.com/TykTechnologies/tyk-operator/issues/59) |
+| [Validate - JSON Schema](../config/samples/httpbin_json_schema_validation.yaml) | ✅ | - |
 | [Validate - Limit Request Size](../config/samples/request_size.yaml) | ✅️ | - |
 
 ## APIDefinition - Migrating Existing APIs
