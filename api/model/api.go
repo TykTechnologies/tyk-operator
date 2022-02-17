@@ -766,8 +766,8 @@ type Proxy struct {
 	ListenPath string `json:"listen_path,omitempty"`
 
 	// TargetURL defines the target URL that the request should be proxied to.
-	TargetURL     string          `json:"target_url,omitempty"`
-	TargeInternal *TargetInternal `json:"target_internal,omitempty"`
+	TargetURL      string          `json:"target_url"`
+	TargetInternal *TargetInternal `json:"target_internal,omitempty"`
 
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
 	// when `true` a request to http://foo.bar/baz/ will be retained.
@@ -800,10 +800,10 @@ type Proxy struct {
 }
 
 func (p *Proxy) collectLoopingTarget(fn func(Target)) {
-	if p.TargeInternal != nil {
-		x := p.TargeInternal.Target
-		p.TargetURL = p.TargeInternal.String()
-		p.TargeInternal = nil
+	if p.TargetInternal != nil {
+		x := p.TargetInternal.Target
+		p.TargetURL = p.TargetInternal.String()
+		p.TargetInternal = nil
 
 		fn(x)
 	}

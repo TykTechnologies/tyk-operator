@@ -245,7 +245,7 @@ spec:
         data_source:
           kind: HTTPJSONDataSource
           data_source_config:
-            url: "https://restcountries.eu/rest/v2/alpha/{{ .object.code }}"
+            url: "https://restcountries.com/v2/alpha/{{ .object.code }}"
             method: GET
             default_type_name: RestCountry
             status_code_type_name_mappings:
