@@ -143,8 +143,32 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name: "valid ApiDefinition, targeting internal API",
+			apiDef: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						Proxy: model.Proxy{TargetURL: "", TargetInternal: &model.TargetInternal{
+							Target: model.Target{Name: "resource-name", Namespace: "resource-ns"},
+						}},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
 			name:        "invalid ApiDefinition, missing proxy.target_url",
 			apiDef:      ApiDefinition{},
+			expectedErr: &missingTargetURLErr,
+		},
+		{
+			name: "invalid ApiDefinition, empty proxy.target_url",
+			apiDef: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						Proxy: model.Proxy{TargetURL: ""},
+					},
+				},
+			},
 			expectedErr: &missingTargetURLErr,
 		},
 		{
