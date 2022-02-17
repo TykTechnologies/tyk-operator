@@ -41,7 +41,7 @@ UNIT_TEST=$(shell go list ./... | grep -v bdd)
 test: generate fmt vet manifests
 	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 	setup-envtest use
-	go test ${UNIT_TEST}  -coverprofile coverage.out --timeout 30m
+	go test ${UNIT_TEST}  -coverprofile test_coverage.out --timeout 30m
 
 
 manager: generate fmt vet	## build manager binary
@@ -188,7 +188,7 @@ boot-ce:setup-ce install-operator-helm	## Install Tyk CE and  Operator
 
 .PHONY: bdd
 bdd:
-	go test -timeout 400s -v  ./bdd
+	go test -timeout 400s -coverprofile bdd_coverage.out -v  ./bdd
 
 .PHONY: test-all
 test-all: test bdd ## Run tests
