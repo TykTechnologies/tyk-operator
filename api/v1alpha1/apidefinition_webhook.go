@@ -140,7 +140,7 @@ func (in *ApiDefinition) validate() error {
 						all = append(all,
 							field.Invalid(path("graphql", "type_field_configurations", "data_source", "url"),
 								"",
-								"can't be emptry",
+								"can't be empty",
 							),
 						)
 					} else {
@@ -159,7 +159,7 @@ func (in *ApiDefinition) validate() error {
 						all = append(all,
 							field.Invalid(path("graphql", "type_field_configurations", "data_source", "method"),
 								string(src.Config.Method),
-								"can't be emptry",
+								"can't be empty",
 							),
 						)
 					}
@@ -202,14 +202,22 @@ func (in *ApiDefinition) ValidateDelete() error {
 
 func (in *ApiDefinition) validateTarget() field.ErrorList {
 	var all field.ErrorList
-	// we make sure targets are properly set. We can either have a normal url
-	// darget or a looping target or both.
-	if in.Spec.Proxy.TargetURL == "" && in.Spec.Proxy.TargeInternal == nil {
-		all = append(all,
-			field.Required(path("proxy", "target_url"),
-				"can't be emptry",
-			),
-		)
+	// TargetURL is only allowed to be an empty string when we have GraphQL
+	// API, or we are targeting internal API by its name and namespace.
+	if in.Spec.Proxy.TargetURL == "" {
+		if in.Spec.GraphQL != nil && !in.Spec.GraphQL.Enabled {
+			all = append(all,
+				field.Required(path("proxy", "target_url"),
+					"can't be empty",
+				),
+			)
+		} else if in.Spec.Proxy.TargetInternal == nil {
+			all = append(all,
+				field.Required(path("proxy", "target_url"),
+					"can't be empty",
+				),
+			)
+		}
 	}
 
 	for _, v := range in.Spec.VersionData.Versions {
@@ -218,7 +226,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 				if u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
 					all = append(all,
 						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
-							"can't be emptry",
+							"can't be empty",
 						),
 					)
 				}
@@ -227,7 +235,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 					if t.RewriteTo == "" && t.RewriteToInternal == nil {
 						all = append(all,
 							field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
-								"can't be emptry",
+								"can't be empty",
 							),
 						)
 					}
