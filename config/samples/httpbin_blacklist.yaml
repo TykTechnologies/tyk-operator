@@ -1,9 +1,9 @@
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: httpbin
+  name: httpbin-blacklist
 spec:
-  name: httpbin
+  name: httpbin-blacklist
   use_keyless: true
   protocol: http
   active: true
