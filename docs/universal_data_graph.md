@@ -1,6 +1,6 @@
 # Universal Data Graph (UDG)
 
-> At the moment, Tyk Operator does not support the *3.2 (latest)* GraphQL schema for Tyk API definitions.
+> At the moment, Tyk Operator does not support the **V2 GraphQL Engine** introduced in 3.2 Tyk release.
 
 The Universal Data Graph (UDG) lets you combine multiple APIs into one universal interface. With the help of GraphQL you’re able to access multiple APIs with a single query.
 
@@ -138,11 +138,11 @@ Thus, we specify an empty target URL in the `proxy.target_url` field.
    3. `spec.graphql.schema`: In schema, we need to specify our GraphQL schema in GraphQL SDL format. Since we designed our API above, we directly set this field to the schema that we designed.
    4. `spec.graphql.type_field_configurations`: A list of configurations used when execution_mode is executionEngine.
       - `type_name`: The type name that we are referring to.
-      - `field_name`: The name of the field that the data source applies to. For example, we set "field_name" to "restCountry." 
-      Hence, the restCountry field will be loaded from the data source defined under data_source of that particular type_name.
-      - `mapping`: We set this to false because we do not need to remap anything in the response of the data source. So that root of the object
+      - `field_name`: The name of the field that the data source applies to. For example, we set `field_name` to `restCountry.` 
+      Hence, the `restCountry` field will be loaded from the data source defined under `data_source` of that particular `type_name`.
+      - `mapping`: We set this to false because we do not need to remap anything in the response of the data source.
       - `data_source`: Responsible for configuring data source.
-        1. `kind`: Kind of the upstream. It can be one of HTTPJSONDataSource, GraphQLDataSource.
+        1. `kind`: Kind of the upstream. It can be one of `HTTPJSONDataSource`, `GraphQLDataSource`.
         2. `data_source_config`: Defines details of your data source.
            - `url`: The URL of the upstream data source. We can use Arguments to pass parameters or object details to upstream URL as follows;
             ```yaml
@@ -151,8 +151,8 @@ Thus, we specify an empty target URL in the `proxy.target_url` field.
            where `{{ .object.code }}` belongs to `code` field of the object which is a type of `Country`.
            - `method`: HTTP request method which the upstream server waits for the url e.g. GET, POST, UPDATE, DELETE.
 4. In order to enable the GraphQL playground to test our GraphQL API, we configure `playground` field.
-   1. enabled: If it is true, it means the playground will be exposed.
-   2. path: The path of playground. In our example, we set `path` to `/playground`. 
+   1. `enabled`: If it is true, it means the playground will be exposed.
+   2. `path`: The path of playground. In our example, we set `path` to `/playground`. 
    Since our proxy is configured to listen `/udg` through `proxy.listen_path` field, we can access to the playground by `<TYK GATEWAY ADDRESS>/udg/playground`.
 
 Now, we are ready to apply [udg_1.yaml](../config/samples/udg_1.yaml).
@@ -167,3 +167,5 @@ $ kubectl get tykapis
 NAME      DOMAIN   LISTENPATH   PROXY.TARGETURL      ENABLED
 udg                /udg                              true
 ```
+
+Now, you can go to the GraphQL Playground (defined under `spec.graphql.playground` of the [udg_1.yaml](../config/samples/udg_1.yaml) file) and test the Universal Data Graph.

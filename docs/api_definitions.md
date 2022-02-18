@@ -11,14 +11,14 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | ❌️ | Not currently supported |
 
 ## API Types
-| Type                                                                   | Support | Comments                                                      |
-|------------------------------------------------------------------------|---------|---------------------------------------------------------------|
-| [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅       | -                                                             |
-| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml)       | ⚠️      | 3.1 GraphQL schema is supported. V2 Engine & API ETA Jul 2022 |
-| HTTP                                                                   | ✅       | -                                                             |
-| [HTTPS](./../config/samples/01-tls/example.yaml)️                      | ✅       | -                                                             |
-| TCP                                                                    | ✅       | -                                                             |
-| TLS                                                                    | ✅       | -                                                             |
+| Type                                                                   | Support | Comments                     |
+|------------------------------------------------------------------------|---------|------------------------------|
+| [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅       | -                            |
+| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml)       | ⚠️      | V2 Engine & API ETA Jul 2022 |
+| HTTP                                                                   | ✅       | -                            |
+| [HTTPS](./../config/samples/01-tls/example.yaml)️                      | ✅       | -                            |
+| TCP                                                                    | ✅       | -                            |
+| TLS                                                                    | ✅       | -                            |
 
 
 ## Routing
