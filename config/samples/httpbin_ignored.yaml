@@ -4,7 +4,8 @@ metadata:
   name: httpbin-ignored
 spec:
   name: httpbin-ignored
-  use_keyless: true
+  use_keyless: false
+  use_standard_auth: true
   protocol: http
   active: true
   proxy:
@@ -19,9 +20,9 @@ spec:
         name: Default
         use_extended_paths: true
         paths:
-          black_list: [ ]
-          ignored: [ ]
-          white_list: [ ]
+          black_list: []
+          ignored: []
+          white_list: []
         extended_paths:
           ignored:
             - ignore_case: true
@@ -30,5 +31,5 @@ spec:
                   action: "no_action"
                   code: 200
                   data: ""
-                  headers: { }
-              path: "/ignored_example/"
+                  headers: {}
+              path: "/get"
