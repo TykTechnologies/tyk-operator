@@ -19,9 +19,9 @@ spec:
         name: Default
         use_extended_paths: true
         paths:
-          black_list: [ ]
-          ignored: [ ]
-          white_list: [ ]
+          black_list: []
+          ignored: []
+          white_list: []
         extended_paths:
           black_list:
             - ignore_case: true
@@ -30,5 +30,5 @@ spec:
                   action: "no_action"
                   code: 200
                   data: ""
-                  headers: { }
+                  headers: {}
               path: "/blacklist_example/"
