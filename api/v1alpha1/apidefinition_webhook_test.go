@@ -143,6 +143,18 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name: "valid ApiDefinition for UDG",
+			apiDef: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						Proxy:   model.Proxy{TargetURL: ""},
+						GraphQL: &model.GraphQLConfig{Enabled: true},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
 			name: "valid ApiDefinition, targeting internal API",
 			apiDef: ApiDefinition{
 				Spec: APIDefinitionSpec{
@@ -176,7 +188,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			apiDef: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						GraphQL: &model.GraphQLConfig{Enabled: true},
+						GraphQL: &model.GraphQLConfig{Enabled: false},
 					},
 				},
 			},

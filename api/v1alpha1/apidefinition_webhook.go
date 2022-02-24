@@ -205,12 +205,14 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 	// TargetURL is only allowed to be an empty string when we have GraphQL
 	// API, or we are targeting internal API by its name and namespace.
 	if in.Spec.Proxy.TargetURL == "" {
-		if in.Spec.GraphQL != nil && !in.Spec.GraphQL.Enabled {
-			all = append(all,
-				field.Required(path("proxy", "target_url"),
-					"can't be empty",
-				),
-			)
+		if in.Spec.GraphQL != nil {
+			if !in.Spec.GraphQL.Enabled {
+				all = append(all,
+					field.Required(path("proxy", "target_url"),
+						"can't be empty",
+					),
+				)
+			}
 		} else if in.Spec.Proxy.TargetInternal == nil {
 			all = append(all,
 				field.Required(path("proxy", "target_url"),
