@@ -70,7 +70,7 @@ We can see that our ApiDefinition has been created. Now let's verify that our AP
 
 **NOTE**: The verification step may vary based on your environment, such as the type of your Tyk installation and Kubernetes cluster.
 - If you are using local Kubernetes cluster such as [KinD](https://kind.sigs.k8s.io/) and [Minikube](https://minikube.sigs.k8s.io/docs/start/), 
-you can do port-forwarding to access objects within the cluster.
+you can do port-forwarding to access resources/services within the cluster.
 - If you are using Kubernetes clusters provided by cloud providers, you need to configure your cluster to make it accessible.
   
 For the scope of this example, we are using a local Kubernetes cluster. Port-forwarding details can be found in the 
@@ -102,8 +102,11 @@ The Tyk Gateway is accessible from your local cluster's 8080 port (e.g., `localh
 Since Tyk CE does not come with the Dashboard, you can list APIs using [Tyk Gateway API](https://tyk.io/docs/tyk-gateway-api/).
 
 ```bash
-$ curl -H "x-tyk-authorization: foo" localhost:8080/tyk/apis/
+$ curl -H "x-tyk-authorization: {your-secret}" localhost:8080/tyk/apis/
 ```
+
+> Your Tyk Gateway API secret is stored in your `tyk.conf` file, the property is called `secret`, you will need to use this 
+as a header called `x-tyk-authorization` to make calls to the Gateway API.
 
 Let's make a request to verify that our API is working.
 
