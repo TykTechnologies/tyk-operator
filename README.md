@@ -29,6 +29,7 @@ Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/e
 and documentation for each of these custom resources are available:
 
 - [Installing Tyk Operator](./docs/installation/installation.md)
+- [Getting Started](./docs/getting-started.md)
 - [Ingress Controller](./docs/ingress.md)
 - [API Definitions](./docs/api_definitions.md)
 - [Security Policies](./docs/policies.md)
