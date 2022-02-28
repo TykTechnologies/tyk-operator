@@ -24,7 +24,7 @@ that is accessible from the Kubernetes cluster that will host the Tyk Operator, 
 Creating an API takes the same approach whether you are using Tyk CE or Tyk Pro. In the first place, an `ApiDefinition` 
 file must be created in the YAML format. Then, Tyk Operator handles the creation of the API.
 
-1. Define your API in the YAML format,
+1. Define APIDefinition resource in the YAML format,
 2. Create a Kubernetes resource based on this YAML file,
 3. Tyk Operator handles the creation of your API.
 
