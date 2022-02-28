@@ -5,7 +5,7 @@
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
-all the features of Kubernetes like kubectl, security, API services, RBAC. You can use Tyk Customer Resources to manage 
+all the features of Kubernetes like kubectl, security, API services, RBAC. You can use Tyk Custom Resources to manage 
 and secure REST, TCP, gRPC, GraphQL, and SOAP services. You can even take an existing REST based API and define a GraphQL 
 schema to tell the GraphQL execution engine how to map those REST responses into the GraphQL schema, without a line of code.
 
