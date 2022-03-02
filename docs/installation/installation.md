@@ -192,7 +192,9 @@ This cert-manager version is the minimum version that works with kubernetes vers
 For kubernetes versions below 1.22, earlier releases of cert-manager  should work. 
 Furthermore we have tested and our operator works with the latest cert-manager version (currently v1.7.1).
 However, if running into cert-manager related errors please ensure that the desired version of k8s works with the
-chosen version of cert-manager.
+chosen version of cert-manager by visiting the [supported releases page](https://cert-manager.io/docs/installation/supported-releases/).
+
+
 
 [cert-manager documentation](https://cert-manager.io/docs/installation/kubernetes/)
 
