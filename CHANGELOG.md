@@ -13,7 +13,7 @@
 - apidef: introduce allow\_list, block\_list and ignore\_list [\#92](https://github.com/TykTechnologies/tyk-operator/issues/92)
 - mw: JSON Schema Validation support [\#59](https://github.com/TykTechnologies/tyk-operator/issues/59)
 
-**Fixed**
+**Fixed:**
 
 - deleting an OperatorContext error/requeue if it is referenced by other resources [\#347](https://github.com/TykTechnologies/tyk-operator/issues/347)
 
@@ -35,7 +35,7 @@
 
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.7.2...v0.8.0)
 
-**Fixed**
+**Fixed:**
 
 - 404 not found [\#351](https://github.com/TykTechnologies/tyk-operator/issues/351)
 - Error when adding a graphQL API  [\#315](https://github.com/TykTechnologies/tyk-operator/issues/315)
@@ -52,7 +52,7 @@
 
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.7.1...v0.7.2)
 
-**Fixed**
+**Fixed:**
 
 - Operator context not picked up by the operator [\#340](https://github.com/TykTechnologies/tyk-operator/issues/340)
 - Security policies not created using Operator Context [\#344](https://github.com/TykTechnologies/tyk-operator/issues/344)
@@ -82,7 +82,7 @@
 - Add documentation on how to upgrade the operator with helm [\#293](https://github.com/TykTechnologies/tyk-operator/issues/293)
 - Support for updating the API Catalog [\#266](https://github.com/TykTechnologies/tyk-operator/issues/266)
 
-**Fixed**
+**Fixed:**
 
 - Version apiextensions.k8s.io/v1beta1:CustomResourceDefinition is deprecated [\#273](https://github.com/TykTechnologies/tyk-operator/issues/273)
 - track: gateway hello endpoint not always available [\#205](https://github.com/TykTechnologies/tyk-operator/issues/205)
@@ -102,7 +102,7 @@
 - Does the scope capability in JWT works [\#265](https://github.com/TykTechnologies/tyk-operator/issues/265)
 - ingress gateway tls port should be customisable [\#213](https://github.com/TykTechnologies/tyk-operator/issues/213)
 
-**Fixed**
+**Fixed:**
 
 - deleting an api definition should fail if a security policy grants access to it [\#286](https://github.com/TykTechnologies/tyk-operator/issues/286)
 - TLS ingress should not try to open 443 on the Tyk container [\#284](https://github.com/TykTechnologies/tyk-operator/issues/284)
@@ -128,7 +128,7 @@
 - docs, examples, validation for JWT auth [\#247](https://github.com/TykTechnologies/tyk-operator/issues/247)
 - apidef: introduce method tranform middlewares to the API Definition Object [\#93](https://github.com/TykTechnologies/tyk-operator/issues/93)
 
-**Fixed**
+**Fixed:**
 
 - JWT default policy key creation issue [\#257](https://github.com/TykTechnologies/tyk-operator/issues/257)
 - helm chart hardcoded resources [\#241](https://github.com/TykTechnologies/tyk-operator/issues/241)
@@ -148,7 +148,7 @@
 - document and support hostname wildcards [\#210](https://github.com/TykTechnologies/tyk-operator/issues/210)
 - modify template api definition should trigger update in ingress resource [\#208](https://github.com/TykTechnologies/tyk-operator/issues/208)
 
-**Fixed**
+**Fixed:**
 
 - track: deleting API leaves artifacts inside the organization document [\#71](https://github.com/TykTechnologies/tyk-operator/issues/71)
 - api ids should be deterministic [\#231](https://github.com/TykTechnologies/tyk-operator/issues/231)
@@ -174,7 +174,7 @@
 - synchronise certs stored in K8s secrets into the Tyk API Manager [\#105](https://github.com/TykTechnologies/tyk-operator/issues/105)
 - research: support ingress resources [\#89](https://github.com/TykTechnologies/tyk-operator/issues/89)
 
-**Fixed**
+**Fixed:**
 
 - api resource is created even when there is error with universal client [\#186](https://github.com/TykTechnologies/tyk-operator/issues/186)
 - track: issues with Policies created through Operator in Tyk Dashboard [\#114](https://github.com/TykTechnologies/tyk-operator/issues/114)
@@ -194,7 +194,7 @@
 - docs: how to configure JetBrains & VS code intellisense & validation plugins [\#171](https://github.com/TykTechnologies/tyk-operator/issues/171)
 - make helm should be interoperable with Mac & Linux [\#170](https://github.com/TykTechnologies/tyk-operator/issues/170)
 
-**Fixed**
+**Fixed:**
 
 - bug: permissions issue with events [\#166](https://github.com/TykTechnologies/tyk-operator/issues/166)
 
@@ -213,7 +213,7 @@
 - docs: active flag in ApiDefinition resource is Pro feature [\#151](https://github.com/TykTechnologies/tyk-operator/issues/151)
 - ci: deploy Tyk Pro for CI integration testing [\#68](https://github.com/TykTechnologies/tyk-operator/issues/68)
 
-**Fixed**
+**Fixed:**
 
 - bug: deleting all apis in the gateway should return 404 not found. [\#148](https://github.com/TykTechnologies/tyk-operator/issues/148)
 
@@ -231,7 +231,7 @@
 - apidef: introduce udg support [\#98](https://github.com/TykTechnologies/tyk-operator/issues/98)
 - apidef: introduce GraphQL proxy support [\#95](https://github.com/TykTechnologies/tyk-operator/issues/95)
 
-**Fixed**
+**Fixed:**
 
 - bug: unable to deploy operator inside cluster when webhooks enabled [\#90](https://github.com/TykTechnologies/tyk-operator/issues/90)
 
