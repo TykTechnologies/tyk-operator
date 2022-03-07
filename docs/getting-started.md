@@ -2,6 +2,7 @@
 
 - [Install](#install)
 - [Create an API](#create-an-api)
+- [Access an API](#access-an-api)
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
@@ -172,3 +173,222 @@ $ curl -i localhost:8080/httpbin/get
   "url": "http://httpbin.org/get"
 }
 ```
+
+## Access an API
+
+Our `httpbin` API is keyless, as you might already have realized. If you check the APIDefinition's spec, the `use_keyless` field is set to `true`.
+
+> Tyk keyless access represents completely open access for your API and causes Tyk to bypass any session-based middleware 
+(middleware that requires access to token-related metadata). Keyless access will allow all requests through. 
+> 
+You can disable keyless access by setting `use_keyless` to false. Let's update `httpbin` API to see it in action.
+
+In order to update `httpbin` API, either update your `httpbin.yaml` file as follows:
+```yaml
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: false
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+```
+
+and apply changes :
+```bash
+kubectl apply -f config/samples/httpbin.yaml
+
+apidefinition.tyk.tyk.io/httpbin configured
+```
+
+Or,
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+    name: httpbin
+spec:
+    name: httpbin
+    use_keyless: false
+    protocol: http
+    active: true
+    proxy:
+        target_url: http://httpbin.org
+        listen_path: /httpbin
+        strip_listen_path: true
+EOF
+
+apidefinition.tyk.tyk.io/httpbin configured
+```
+
+In order to access `httpbin` API, you need to include a key to the header.
+
+> **Note**: All supported authentication types by Tyk Operator are listed [here](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/api_definitions.md#client-to-gateway-authentication).
+Authentication token is the default one if you have set `use_keyless` to false and haven't specified any other Authentication mode.
+
+```bash
+curl -i localhost:8080/httpbin/get
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+X-Generator: tyk.io
+Date: Thu, 03 Mar 2022 15:47:30 GMT
+Content-Length: 46
+
+{
+    "error": "Authorization field missing"
+}%
+```
+
+We need to generate a key to access the `httpbin` API. Generating a key depends on which type of Tyk installation you have.
+
+### Tyk CE
+
+To create an API Key, we will need the API ID that we wish to grant the key access to, then creating the key is a very simple API call to the endpoint.
+
+> **Prerequisite**: You will need your API secret, this is the `secret` property of the tyk.conf file.
+Once you have this value, you can use them to access the Gateway API
+
+In order to obtain API ID, we can describe ApiDefinition resource that represents our `httpbin` API.
+
+```bash
+kubectl describe tykapis httpbin
+Name:         httpbin
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+API Version:  tyk.tyk.io/v1alpha1
+Kind:         ApiDefinition
+Metadata:
+  ...
+Spec:
+  ...
+  api_id:  ZGVmYXVsdC9odHRwYmlu
+  ...
+Status:
+  api_id:  ZGVmYXVsdC9odHRwYmlu
+Events:    <none>
+```
+
+Once you describe `httpbin` ApiDefinition, the API ID is represented in the `status.api_id` field.
+
+In our example,
+- `{API-NAME}`: httpbin
+- `{API-ID}`: ZGVmYXVsdC9odHRwYmlu
+
+The below curl command will generate a key for our API:
+
+```bash
+curl -X POST -H "x-tyk-authorization: {API-SECRET}" \
+  -s \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d '{
+    "allowance": 1000,
+    "rate": 1000,
+    "per": 1,
+    "expires": -1,
+    "quota_max": -1,
+    "org_id": "1",
+    "quota_renews": 1449051461,
+    "quota_remaining": -1,
+    "quota_renewal_rate": 60,
+    "access_rights": {
+      "{API-ID}": {
+        "api_id": "{API-ID}",
+        "api_name": "{API-NAME}",
+        "versions": ["Default"]
+      }
+    },
+    "meta_data": {}
+  }' http://localhost:8080/tyk/keys/create | python -mjson.tool
+```
+```json
+{
+"action": "added",
+"key": "eyJvcmciOiIxIiwiaWQiOiIxZTNhMTNhNGU4MGQ0ZWIxOGMzNjhlNzkyMjY5ODBmYiIsImgiOiJtdXJtdXIxMjgifQ==",
+"key_hash": "9d8b101625d77f93153f2eeb0d2ae365",
+"status": "ok"
+}
+```
+
+That’s it, we have created a key - now we can try and use it.
+
+```bash
+curl -H "Authorization: Bearer eyJvcmciOiIxIiwiaWQiOiIxZTNhMTNhNGU4MGQ0ZWIxOGMzNjhlNzkyMjY5ODBmYiIsImgiOiJtdXJtdXIxMjgifQ==" localhost:8080/httpbin/get
+```
+```json
+{
+  "args": {},
+  "headers": {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip",
+    "Authorization": "Bearer eyJvcmciOiIxIiwiaWQiOiIxZTNhMTNhNGU4MGQ0ZWIxOGMzNjhlNzkyMjY5ODBmYiIsImgiOiJtdXJtdXIxMjgifQ==",
+    "Host": "httpbin.org",
+    "User-Agent": "curl/7.77.0",
+    "X-Amzn-Trace-Id": "Root=1-6221e1e5-084139824f22e88542ab9246"
+  },
+  "origin": "127.0.0.1, 176.42.143.200",
+  "url": "http://httpbin.org/get"
+}
+```
+
+### Tyk Pro
+
+Select `Keys` from the `System Management` section and click `ADD KEY` as shown in the image below.
+
+![dashboard-keys-page](./img/getting-started-keys.png)
+
+
+You have the option to create a new key either by selecting an existing Policy created for your API or by simply selecting your API. For this tutorial we are going to use an API.
+
+To select `httpbin` API:
+
+- Scroll through your `API Name` list,
+- Use the `Search` field
+- Select the `httpbin` API that was previously created.
+
+You can leave all other options at their default settings.
+
+![dashboard-keys-page-2](./img/getting-started-keys-2.png)
+
+Now, we will add configurations details to set an expiry time after which the key will expire, using `Configuration` section indicated by `3` in the above image.
+
+![dashboard-keys-page-3](./img/getting-started-keys-3.png)
+
+Once you click `CREATE KEY`, a Key successfully generated pop-up will be displayed with the key. 
+> You must save this somewhere for future reference as it will not be displayed again. 
+Click `Copy to clipboard` and paste into a text document.
+
+![dashboard-keys-page-4](./img/getting-started-keys-4.png)
+
+That’s it, we have created a key - now we can try and use it.
+
+```bash
+curl -H "Authorization: Bearer {Key ID}" localhost:8080/httpbin/get
+```
+
+```json
+{
+  "args": {},
+  "headers": {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip",
+    "Authorization": "Bearer {Key ID}",
+    "Host": "httpbin.org",
+    "User-Agent": "curl/7.77.0",
+    "X-Amzn-Trace-Id": "Root=1-6221de2a-01aa10dd56f6f13f420ba313"
+  },
+  "origin": "127.0.0.1, 176.42.143.200",
+  "url": "http://httpbin.org/get"
+}
+```
+
+Since we have provided a valid key along with our request, we do not have `HTTP 401 Unauthorized` response. 
