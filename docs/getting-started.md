@@ -232,7 +232,7 @@ apidefinition.tyk.tyk.io/httpbin configured
 In order to access `httpbin` API, you need to include a key to the header.
 
 > **Note**: All supported authentication types by Tyk Operator are listed [here](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/api_definitions.md#client-to-gateway-authentication).
-Authentication token is the default one if you are using keyless API.
+Authentication token is the default one if you have set `use_keyless` to false and haven't specified any other Authentication mode.
 
 ```bash
 curl -i localhost:8080/httpbin/get
@@ -309,11 +309,13 @@ curl -X POST -H "x-tyk-authorization: {API-SECRET}" \
     },
     "meta_data": {}
   }' http://localhost:8080/tyk/keys/create | python -mjson.tool
+```
+```json
 {
-    "action": "added",
-    "key": "eyJvcmciOiIxIiwiaWQiOiIxZTNhMTNhNGU4MGQ0ZWIxOGMzNjhlNzkyMjY5ODBmYiIsImgiOiJtdXJtdXIxMjgifQ==",
-    "key_hash": "9d8b101625d77f93153f2eeb0d2ae365",
-    "status": "ok"
+"action": "added",
+"key": "eyJvcmciOiIxIiwiaWQiOiIxZTNhMTNhNGU4MGQ0ZWIxOGMzNjhlNzkyMjY5ODBmYiIsImgiOiJtdXJtdXIxMjgifQ==",
+"key_hash": "9d8b101625d77f93153f2eeb0d2ae365",
+"status": "ok"
 }
 ```
 
@@ -321,6 +323,8 @@ That’s it, we have created a key - now we can try and use it.
 
 ```bash
 curl -H "Authorization: Bearer eyJvcmciOiIxIiwiaWQiOiIxZTNhMTNhNGU4MGQ0ZWIxOGMzNjhlNzkyMjY5ODBmYiIsImgiOiJtdXJtdXIxMjgifQ==" localhost:8080/httpbin/get
+```
+```json
 {
   "args": {},
   "headers": {
@@ -343,9 +347,9 @@ Select `Keys` from the `System Management` section and click `ADD KEY` as shown 
 ![dashboard-keys-page](./img/getting-started-keys.png)
 
 
-You have the option to add your new key to either an existing Policy or an existing individual API. For this tutorial we are going to use an API.
+You have the option to create a new key either by selecting an existing Policy created for your API or by simply selecting your API. For this tutorial we are going to use an API.
 
-To select `httpbin` API, you can either:
+To select `httpbin` API:
 
 - Scroll through your `API Name` list,
 - Use the `Search` field
@@ -369,6 +373,9 @@ That’s it, we have created a key - now we can try and use it.
 
 ```bash
 curl -H "Authorization: Bearer {Key ID}" localhost:8080/httpbin/get
+```
+
+```json
 {
   "args": {},
   "headers": {
