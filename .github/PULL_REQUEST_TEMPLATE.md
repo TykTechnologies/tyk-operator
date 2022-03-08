@@ -28,6 +28,7 @@
 <!-- If you're unsure about any of these, don't hesitate to ask; we're here to help! -->
 - [ ] Make sure you are requesting to **pull a topic/feature/bugfix branch** (right side). If PRing from your fork, don't come from your `master`!
 - [ ] Make sure you are making a pull request against our **`master` branch** (left side). Also, it would be best if you started *your change* off *our latest `master`*.
+- [ ] Make sure you are updating [CHANGELOG.md](../CHANGELOG.md) based on your changes.
 - [ ] My change requires a change to the documentation.
   - [ ] If you've changed APIs, describe what needs to be updated in the documentation.
 - [ ] I have updated the documentation accordingly.
