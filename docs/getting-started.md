@@ -399,7 +399,7 @@ Since we have provided a valid key along with our request, we do not have `HTTP 
 You can access a secured API by creating a key. Key can be created by specifing security policy. A security policy encapsulates several options that can be applied to a key. It acts as a template that can
 override individual sections of an API key (or identity) in Tyk.
 
-Imagine you have issued mutiple keys and later if you want to change access rights, rate limits or quotas. you will have to update all the keys manually. Security policy comes handy in this scenario. You just need to update security policy linked to the keys once. 
+Imagine you have issued mutiple keys and later if you want to change access rights, rate limits or quotas, you will have to update all the keys manually. Security policy comes handy in this scenario. You just need to update security policy linked to the keys once. 
 
 Let's create an API and security policy for that API. 
 
