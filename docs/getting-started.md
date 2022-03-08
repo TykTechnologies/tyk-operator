@@ -403,6 +403,8 @@ Imagine you have issued mutiple keys and later if you want to change access righ
 
 Let's create an API and security policy for that API. 
 
+> **Security policy resources are currently only supported when using Tyk Pro mode. You can get round this by mounting the policy object as a volume into the gateway container.**
+
 You can do so either by applying manifest defined in our repo 
 
 ```bash
@@ -452,7 +454,7 @@ spec:
 EOF
 ```
 
-Ensure policy is created successfully
+Ensure policy is created
 
 ```
 $ kubectl get securitypolicy
@@ -460,12 +462,12 @@ NAME      AGE
 httpbin   10s
 ```
 
-We have created `httpbin` security policy for `httpbin` API. Policy also sets global usage quota, rate limits and throttling.
+We have successfully created `httpbin` security policy for `httpbin` API. Policy also sets global usage quota, rate limits and throttling.
 
 Let's dive into fields we have set in the policy
-- **name**: Name of security policy
-- **active**
-- **state**: Starting from Tyk v3.0, you can set this field instead of `active` or `is_inactive`. It can have value `active`, `draft`,`deny`.
+- **name**: Name of security policy.
+- **active**: Marks policy as active.
+- **state**: It can have value `active`, `draft`,`deny`.
 - **access_right_array**: List of APIs security policy has access to.
 
 Usage Quota fields
@@ -480,7 +482,8 @@ Throttling fields:
 - **throttle_interval**:  Interval (in seconds) between each request retry.
 - **throttle_retry_limit**: Total request retry number.
 
-Now you can create a key using this security policy and access your API.
+
+Now you can create a key, using this security policy, and access your API.
 
 > We are continously adding support for new features which you can track [here](./policies.md)
 
