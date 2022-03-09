@@ -510,7 +510,7 @@ When you publish an API to the Portal, Tyk actually publishes a way for develope
 
 For this we can create a file called `securityPolicyHttpBin.yaml` with the following contents :
 
-```bash
+```yaml
 apiVersion: tyk.tyk.io/v1alpha1
 kind: SecurityPolicy
 metadata:
@@ -532,7 +532,7 @@ and then run:
 kubectl apply -f securityPolicyHttpBin.yaml
 ```
 
-The following command will create the most basic security policy possible and attribute it to the httpbin API we previously created.
+The above command will create the most basic security policy possible and attribute it to the httpbin API we previously created.
 
 
 ### 2. Creating an API description
@@ -541,7 +541,7 @@ The portal serves as a visual description of an API and therefore we need to let
 
 For this we can create a file called `apiDescriptionHttpbin.yaml` with the following contents:
 
-```bash
+```yaml
 apiVersion: tyk.tyk.io/v1alpha1
 kind: APIDescription
 metadata:
@@ -567,7 +567,7 @@ kubectl apply -f apiDescriptionHttpbin.yaml
 Here we can observe that the API description is tied to the SecurityPolicy
 in the lines
 
-```bash
+```yaml
  policyRef:
   name: standard-pol
 ```
@@ -578,7 +578,7 @@ Furthermore, in the "documentation" field we have the swagger API definition of 
 
 For this step all we need to do is to create a PortalAPICatalogue resource that ties everything together. In our case, the yaml file we need should have the following contents:
 
-```bash
+```yaml
 apiVersion: tyk.tyk.io/v1alpha1
 kind: PortalAPICatalogue
 metadata:
