@@ -508,7 +508,7 @@ Asumming that you have created the httpbin example API using the steps above, we
 
 When you publish an API to the Portal, Tyk actually publishes a way for developers to enrol in a policy, not into the API directly. Therefore, we must also apply a SecurityPolicy CRD before proceeding with the publishing.
 
-For this we can create a file called "securityPolicyHttpBin.yaml" with the following contents :
+For this we can create a file called `securityPolicyHttpBin.yaml` with the following contents :
 
 ```bash
 apiVersion: tyk.tyk.io/v1alpha1
@@ -539,7 +539,7 @@ The following command will create the most basic security policy possible and at
 
 The portal serves as a visual description of an API and therefore we need to let the Tyk Portal know (via Tyk Operator) some details about the API we want to publish.
 
-For this we can create a file called "apiDescriptionHttpbin.yaml" with the following contents:
+For this we can create a file called `apiDescriptionHttpbin.yaml` with the following contents:
 
 ```bash
 apiVersion: tyk.tyk.io/v1alpha1
@@ -572,7 +572,7 @@ in the lines
   name: standard-pol
 ```
 
-Furthermore, in the "documentation" field we have a the swagger API definition of httpbin encoded in base64. All documentation descriptions need to be encoded base64.
+Furthermore, in the "documentation" field we have the swagger API definition of httpbin encoded in base64. All documentation descriptions need to be encoded base64.
 
 ### 3. Publishing the API to the Tyk Portal
 
@@ -591,7 +591,7 @@ spec:
 ```
 
 As we can observe, we just need to reference the name of the apiDescription and the Tyk Operator will handle everything for us.
-Assuming you have added the contents of the code block above to a file called "portalHttpbin.yaml", to create the new resource we need to run:
+Assuming you have added the contents of the code block above to a file called `portalHttpbin.yaml`, to create the new resource we need to run:
 
 
 ```bash
@@ -599,13 +599,13 @@ kubectl apply -f portalHttpbin.yaml
 ```
 
 After this is all done, if we go to the default TykPortal implementation
-(generally located at "tyk-portal.local") we should observe something like this in the API Catalogue section:
+(generally located at `tyk-portal.local`) we should observe something like this in the API Catalogue section:
 
 
 ![api-catalogue-httpbin](./img/api-catalogue-httpbin.png)
 
 
-And if we click on "view documentation" we should have:
+And if we click on `View documentation` we should have:
 
 
 ![httpbin-swagger-portal](./img/httpbin-swagger-portal.png)
