@@ -3,6 +3,7 @@
 - [Install](#install)
 - [Create an API](#create-an-api)
 - [Access an API](#access-an-api)
+- [Secure an API](#secure-an-api)
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
@@ -392,3 +393,98 @@ curl -H "Authorization: Bearer {Key ID}" localhost:8080/httpbin/get
 ```
 
 Since we have provided a valid key along with our request, we do not have `HTTP 401 Unauthorized` response. 
+
+## Secure an API
+
+You can access a secured API by creating a key. Key can be created by specifing security policy. A security policy encapsulates several options that can be applied to a key. It acts as a template that can
+override individual sections of an API key (or identity) in Tyk.
+
+Imagine you have issued mutiple keys and later if you want to change access rights, rate limits or quotas, you will have to update all the keys manually. Security policy comes handy in this scenario. You just need to update security policy linked to the keys once. 
+
+Let's create an API and security policy for that API. 
+
+> **Security policy resources are currently only supported when using Tyk Pro mode. You can get round this by mounting the policy object as a volume into the gateway container.**
+
+You can do so either by applying manifest defined in our repo 
+
+```bash
+kubectl apply -f docs/policies/ratelimit.yaml
+```
+
+Or create it by running following command
+
+```bash 
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin protected
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  use_standard_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: Authorization
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: httpbin
+spec:
+  name: Rate Limit, Quota and Throttling policy
+  state: active
+  active: true
+  access_rights_array:
+    - name: httpbin
+      namespace: default
+      versions:
+        - Default
+  quota_max: 10
+  quota_renewal_rate: 60
+  rate: 5
+  per: 5
+  throttle_interval: 2
+  throttle_retry_limit: 2
+EOF
+```
+
+Ensure policy is created
+
+```
+$ kubectl get securitypolicy
+NAME      AGE
+httpbin   10s
+```
+
+We have successfully created `httpbin` security policy for `httpbin` API. Policy also sets global usage quota, rate limits and throttling.
+
+Let's dive into fields we have set in the policy
+- **name**: Name of security policy.
+- **active**: Marks policy as active.
+- **state**: It can have value `active`, `draft`,`deny`.
+- **access_right_array**: List of APIs security policy has access to.
+
+Usage Quota fields
+- **quota_max**: The maximum number of allowed requests over a quota period.
+- **quota_renewal_rate**: Time, in seconds, after which quota will be renewed.
+
+Rate limiting fields
+- **rate**: The number of requests to allow per period. 
+- **per**: Time in seconds.
+
+Throttling fields:
+- **throttle_interval**:  Interval (in seconds) between each request retry.
+- **throttle_retry_limit**: Total request retry number.
+
+
+Now you can create a key, using this security policy, and access your API.
+
+> We are continously adding support for new features which you can track [here](./policies.md)
+
+

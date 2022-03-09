@@ -13,7 +13,7 @@
 - Document allow_list, block_list and ignore_list middleware [\#92](https://github.com/TykTechnologies/tyk-operator/issues/92)
 - Added JSON Schema Validation support [\#59](https://github.com/TykTechnologies/tyk-operator/issues/59)
 - Document current UDG support 
-- Add Getting started docs
+- Added Getting-Started docs
 
 
 **Fixed:**
