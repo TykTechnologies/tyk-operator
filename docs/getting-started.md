@@ -268,6 +268,7 @@ spec:
     target_url: http://httpbin.default.svc:8000
     listen_path: /httpbin
     strip_listen_path: true
+EOF
 ```
 
 Please pay attention to the value of `spec.proxy.target_url` field. 
