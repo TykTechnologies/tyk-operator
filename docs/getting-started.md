@@ -189,11 +189,11 @@ For example, if you have a service called `httpbin` in `default` namespace, you 
 `httpbin.default.svc` DNS record in the cluster, instead of IP addresses. 
 Please visit the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/) for more details.
 
-Suppose we want to create a Deployment of popular [`httpbin` service](https://hub.docker.com/r/kennethreitz/httpbin/) 
+Suppose we want to create a Deployment of [`httpbin`](https://hub.docker.com/r/kennethreitz/httpbin/) service
 using [`ci/upstreams/httpbin.yaml`](../ci/upstreams/httpbin.yaml) file. We are going to expose the application through port `8000` as described under
 the Service [specification](https://github.com/TykTechnologies/tyk-operator/blob/master/ci/upstreams/httpbin.yaml#L10).
 
-First, let's create Service and Deployment either applying the manifest defined in our repository
+First, let's create Service and Deployment by either applying the manifest defined in our repository
 
 ```bash
 kubectl apply -f ci/upstreams/httpbin.yaml
@@ -244,7 +244,7 @@ EOF
 
 > Please wait awhile until all pods reach READY `1/1` and STATUS `Running` state.
 
-Once the pod is ready, we can update our `httpbin` API's `target_url` field for proxying our requests to the Service that we've created above.
+Once the pod is ready, we can update our `httpbin` API's `target_url` field to proxy our requests to the Service that we've created above.
 
 > You can check all Services in the `<ns>` namespace as follows;
 ```bash
@@ -271,7 +271,7 @@ spec:
 EOF
 ```
 
-Please pay attention to the value of `spec.proxy.target_url` field. 
+Please pay attention to the value of the `spec.proxy.target_url` field. 
 It is set to `http://httpbin.default.svc:8000` by following the convention described above (`<service_name>.<namespace>.svc:<service_port>`).
 
 Now, if you send your request to the `/httpbin` endpoint, the request will be proxied to the `httpbin Service`.
