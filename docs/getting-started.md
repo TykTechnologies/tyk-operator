@@ -178,6 +178,120 @@ $ curl -i localhost:8080/httpbin/get
 }
 ```
 
+### Kubernetes Service as an Upstream Target
+
+Tyk Operator allows accessing your Kubernetes service as an upstream proxy target.
+Thus, you can set the `proxy.target_url` as a Kubernetes Service following [DNS for Services and Pods guideline](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/), 
+so that the requests will be proxied to your service.
+
+> In general, Kubernetes Services have `<service-name>.<namespace-name>.svc.cluster.local` DNS entry once they are created. 
+For example, if you have a service called `httpbin` in `default` namespace, you can contact `httpbin` service with 
+`httpbin.default.svc` DNS record in the cluster, instead of IP addresses. 
+Please visit the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/) for more details.
+
+Suppose we want to create a Deployment of [`httpbin`](https://hub.docker.com/r/kennethreitz/httpbin/) service
+using [`ci/upstreams/httpbin.yaml`](../ci/upstreams/httpbin.yaml) file. We are going to expose the application through port `8000` as described under
+the Service [specification](https://github.com/TykTechnologies/tyk-operator/blob/master/ci/upstreams/httpbin.yaml#L10).
+
+First, let's create Service and Deployment by either applying the manifest defined in our repository
+
+```bash
+kubectl apply -f ci/upstreams/httpbin.yaml
+```
+
+Or,
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  labels:
+    app: httpbin
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+  selector:
+    app: httpbin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        version: v1
+    spec:
+      containers:
+        - image: docker.io/kennethreitz/httpbin
+          imagePullPolicy: IfNotPresent
+          name: httpbin
+          ports:
+            - containerPort: 80
+EOF
+```
+
+> Please wait awhile until all pods reach READY `1/1` and STATUS `Running` state.
+
+Once the pod is ready, we can update our `httpbin` API's `target_url` field to proxy our requests to the Service that we've created above.
+
+> You can check all Services in the `<ns>` namespace as follows;
+```bash
+kubectl get service -n <ns>
+```
+
+Let's update our `httpbin`:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.default.svc:8000
+    listen_path: /httpbin
+    strip_listen_path: true
+EOF
+```
+
+Please pay attention to the value of the `spec.proxy.target_url` field. 
+It is set to `http://httpbin.default.svc:8000` by following the convention described above (`<service_name>.<namespace>.svc:<service_port>`).
+
+Now, if you send your request to the `/httpbin` endpoint of the Tyk Gateway, the request will be proxied to the `httpbin Service`.
+
+```bash
+curl -sS http://localhost:8080/httpbin/headers
+```
+```json
+{
+  "headers": {
+    "Accept": "*/*", 
+    "Accept-Encoding": "gzip", 
+    "Host": "httpbin.default.svc:8000", 
+    "User-Agent": "curl/7.68.0"
+  }
+}
+```
+
+As you can see from the response, the host that our request should be proxied to is `httpbin.default.svc:8000`.
+
 ## Access an API
 
 Our `httpbin` API is keyless, as you might already have realized. If you check the APIDefinition's spec, the `use_keyless` field is set to `true`.
@@ -491,14 +605,9 @@ Now you can create a key, using this security policy, and access your API.
 > We are continously adding support for new features which you can track [here](./policies.md)
 
 
-
-
-
-
-
 ## Publish an API to the Tyk Portal
 
-Asumming that you have created the httpbin example API using the steps above, we can easily publish it to the Tyk Portal by applying a few specs:
+Assuming that you have created the httpbin example API using the steps above, we can easily publish it to the Tyk Portal by applying a few specs:
 1. SecurityPolicy spec
 2. APIDescription spec
 3. PortalAPICatalogue spec
