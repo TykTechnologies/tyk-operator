@@ -274,7 +274,7 @@ EOF
 Please pay attention to the value of the `spec.proxy.target_url` field. 
 It is set to `http://httpbin.default.svc:8000` by following the convention described above (`<service_name>.<namespace>.svc:<service_port>`).
 
-Now, if you send your request to the `/httpbin` endpoint, the request will be proxied to the `httpbin Service`.
+Now, if you send your request to the `/httpbin` endpoint of the Tyk Gateway, the request will be proxied to the `httpbin Service`.
 
 ```bash
 curl -sS http://localhost:8080/httpbin/headers
