@@ -1,12 +1,12 @@
 # Getting Started
 
-| Features| CE | PRO
-|-------|-----| ------
-|- [Install](#install)| ✅ | ✅
-|- [Create an API](#create-an-api)| ✅ | ✅
-|- [Access an API](#access-an-api)| ✅ | ✅
-|- [Secure an API](#secure-an-api)| ✅ | ✅
-|- [Publish an API](#publish-an-api-to-the-tyk-portal)| ❌ | ✅
+| Features                                              | CE  | PRO |
+|-------------------------------------------------------|-----|-----|
+| - [Install](#install)                                 | ✅   | ✅   |
+| - [Create an API](#create-an-api)                     | ✅   | ✅   |
+| - [Access an API](#access-an-api)                     | ✅   | ✅   |
+| - [Secure an API](#secure-an-api)                     | ❌   | ✅   |
+| - [Publish an API](#publish-an-api-to-the-tyk-portal) | ❌   | ✅   |
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
@@ -14,8 +14,9 @@ all the features of Kubernetes like kubectl, security, API services, RBAC. You c
 and secure REST, TCP, gRPC, GraphQL, and SOAP services. You can even take an existing REST based API and define a GraphQL 
 schema to tell the GraphQL execution engine how to map those REST responses into the GraphQL schema, without a line of code.
 
-This tutorial walks through creating an API using the Tyk Operator.
-You can find all available example ApiDefinition files in the [samples](../config/samples) directory.
+The following tutorials walk through how to describe the entire API management system declaratively, from API definitions 
+and security policies through to developer portal configurations and API service catalogue publishing, using the Tyk Operator.
+You can find all the available example manifest files in the [samples](../config/samples) directory.
 
 ## Install
 
