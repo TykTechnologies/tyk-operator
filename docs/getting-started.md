@@ -2,11 +2,11 @@
 
 | Features                                              | CE  | PRO |
 |-------------------------------------------------------|-----|-----|
-| - [Install](#install)                                 | ✅   | ✅   |
-| - [Create an API](#create-an-api)                     | ✅   | ✅   |
-| - [Access an API](#access-an-api)                     | ✅   | ✅   |
-| - [Secure an API](#secure-an-api)                     | ❌   | ✅   |
-| - [Publish an API](#publish-an-api-to-the-tyk-portal) | ❌   | ✅   |
+| [Install](#install)                                 | ✅   | ✅   |
+| [Create an API](#create-an-api)                     | ✅   | ✅   |
+| [Access an API](#access-an-api)                     | ✅   | ✅   |
+| [Secure an API](#secure-an-api)                     | ❌   | ✅   |
+| [Publish an API](#publish-an-api-to-the-tyk-portal) | ❌   | ✅   |
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
