@@ -1,5 +1,10 @@
 # Policies
 
+### Support for CE mode
+Security policy resources are currently only supported when using Tyk PRO mode.
+
+You can get round this by mounting the policy object as a volume into the gateway container.
+
 ### Dashboard Version
 
 In order to manage Policies with the Tyk Operator, you must use Tyk Dashboard version `3.x.x+`

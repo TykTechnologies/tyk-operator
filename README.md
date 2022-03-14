@@ -54,6 +54,7 @@ metadata:
   name: httpbin
 spec:
   name: httpbin
+  do_not_track: false
   use_keyless: true
   protocol: http
   active: true

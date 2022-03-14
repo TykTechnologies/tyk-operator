@@ -1,8 +1,12 @@
 # Getting Started
 
-- [Install](#install)
-- [Create an API](#create-an-api)
-- [Access an API](#access-an-api)
+| Features| CE | PRO
+|-------|-----| ------
+|- [Install](#install)| ✅ | ✅
+|- [Create an API](#create-an-api)| ✅ | ✅
+|- [Access an API](#access-an-api)| ✅ | ✅
+|- [Secure an API](#secure-an-api)| ✅ | ✅
+|- [Publish an API](#publish-an-api-to-the-tyk-portal)| ❌ | ✅
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
@@ -173,6 +177,120 @@ $ curl -i localhost:8080/httpbin/get
   "url": "http://httpbin.org/get"
 }
 ```
+
+### Kubernetes Service as an Upstream Target
+
+Tyk Operator allows accessing your Kubernetes service as an upstream proxy target.
+Thus, you can set the `proxy.target_url` as a Kubernetes Service following [DNS for Services and Pods guideline](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/), 
+so that the requests will be proxied to your service.
+
+> In general, Kubernetes Services have `<service-name>.<namespace-name>.svc.cluster.local` DNS entry once they are created. 
+For example, if you have a service called `httpbin` in `default` namespace, you can contact `httpbin` service with 
+`httpbin.default.svc` DNS record in the cluster, instead of IP addresses. 
+Please visit the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/) for more details.
+
+Suppose we want to create a Deployment of [`httpbin`](https://hub.docker.com/r/kennethreitz/httpbin/) service
+using [`ci/upstreams/httpbin.yaml`](../ci/upstreams/httpbin.yaml) file. We are going to expose the application through port `8000` as described under
+the Service [specification](https://github.com/TykTechnologies/tyk-operator/blob/master/ci/upstreams/httpbin.yaml#L10).
+
+First, let's create Service and Deployment by either applying the manifest defined in our repository
+
+```bash
+kubectl apply -f ci/upstreams/httpbin.yaml
+```
+
+Or,
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  labels:
+    app: httpbin
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+  selector:
+    app: httpbin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        version: v1
+    spec:
+      containers:
+        - image: docker.io/kennethreitz/httpbin
+          imagePullPolicy: IfNotPresent
+          name: httpbin
+          ports:
+            - containerPort: 80
+EOF
+```
+
+> Please wait awhile until all pods reach READY `1/1` and STATUS `Running` state.
+
+Once the pod is ready, we can update our `httpbin` API's `target_url` field to proxy our requests to the Service that we've created above.
+
+> You can check all Services in the `<ns>` namespace as follows;
+```bash
+kubectl get service -n <ns>
+```
+
+Let's update our `httpbin`:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.default.svc:8000
+    listen_path: /httpbin
+    strip_listen_path: true
+EOF
+```
+
+Please pay attention to the value of the `spec.proxy.target_url` field. 
+It is set to `http://httpbin.default.svc:8000` by following the convention described above (`<service_name>.<namespace>.svc:<service_port>`).
+
+Now, if you send your request to the `/httpbin` endpoint of the Tyk Gateway, the request will be proxied to the `httpbin Service`.
+
+```bash
+curl -sS http://localhost:8080/httpbin/headers
+```
+```json
+{
+  "headers": {
+    "Accept": "*/*", 
+    "Accept-Encoding": "gzip", 
+    "Host": "httpbin.default.svc:8000", 
+    "User-Agent": "curl/7.68.0"
+  }
+}
+```
+
+As you can see from the response, the host that our request should be proxied to is `httpbin.default.svc:8000`.
 
 ## Access an API
 
@@ -392,3 +510,198 @@ curl -H "Authorization: Bearer {Key ID}" localhost:8080/httpbin/get
 ```
 
 Since we have provided a valid key along with our request, we do not have `HTTP 401 Unauthorized` response. 
+
+## Secure an API
+
+You can access a secured API by creating a key. Key can be created by specifing security policy. A security policy encapsulates several options that can be applied to a key. It acts as a template that can
+override individual sections of an API key (or identity) in Tyk.
+
+Imagine you have issued mutiple keys and later if you want to change access rights, rate limits or quotas, you will have to update all the keys manually. Security policy comes handy in this scenario. You just need to update security policy linked to the keys once. 
+
+Let's create an API and security policy for that API. 
+
+> **Security policy resources are currently only supported when using Tyk Pro mode. You can get round this by mounting the policy object as a volume into the gateway container.**
+
+You can do so either by applying manifest defined in our repo 
+
+```bash
+kubectl apply -f docs/policies/ratelimit.yaml
+```
+
+Or create it by running following command
+
+```bash 
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin protected
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  use_standard_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: Authorization
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: httpbin
+spec:
+  name: Rate Limit, Quota and Throttling policy
+  state: active
+  active: true
+  access_rights_array:
+    - name: httpbin
+      namespace: default
+      versions:
+        - Default
+  quota_max: 10
+  quota_renewal_rate: 60
+  rate: 5
+  per: 5
+  throttle_interval: 2
+  throttle_retry_limit: 2
+EOF
+```
+
+Ensure policy is created
+
+```
+$ kubectl get securitypolicy
+NAME      AGE
+httpbin   10s
+```
+
+We have successfully created `httpbin` security policy for `httpbin` API. Policy also sets global usage quota, rate limits and throttling.
+
+Let's dive into fields we have set in the policy
+- **name**: Name of security policy.
+- **active**: Marks policy as active.
+- **state**: It can have value `active`, `draft`,`deny`.
+- **access_right_array**: List of APIs security policy has access to.
+
+Usage Quota fields
+- **quota_max**: The maximum number of allowed requests over a quota period.
+- **quota_renewal_rate**: Time, in seconds, after which quota will be renewed.
+
+Rate limiting fields
+- **rate**: The number of requests to allow per period. 
+- **per**: Time in seconds.
+
+Throttling fields:
+- **throttle_interval**:  Interval (in seconds) between each request retry.
+- **throttle_retry_limit**: Total request retry number.
+
+
+Now you can create a key, using this security policy, and access your API.
+
+> We are continously adding support for new features which you can track [here](./policies.md)
+
+
+## Publish an API to the Tyk Portal
+
+Assuming that you have created the httpbin example API using the steps above, we can easily publish it to the Tyk Portal by applying a few specs:
+1. SecurityPolicy spec
+2. APIDescription spec
+3. PortalAPICatalogue spec
+
+
+### 1. Adding a security policy via Tyk Operator
+
+When you publish an API to the Portal, Tyk actually publishes a way for developers to enrol in a policy, not into the API directly. Therefore, we must also apply a SecurityPolicy CRD before proceeding with the publishing.
+
+For this we can use the following command:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+ name: standard-pol
+spec:
+ name: standard-pol
+ active: true
+ state: active
+ access_rights_array:
+ - name: httpbin
+   namespace: default
+   versions:
+     - Default
+EOF
+```
+
+The above command will create the most basic security policy possible and attribute it to the httpbin API we previously created.
+
+
+### 2. Creating an API description
+
+The portal serves as a visual description of an API and therefore we need to let the Tyk Portal know (via Tyk Operator) some details about the API we want to publish.
+
+For this we can run the following command:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: APIDescription
+metadata:
+ name: standard-desc
+spec:
+ name: HTTPBIN API
+ policyRef:
+  name: standard-pol
+  namespace: default
+ docs: 
+  doc_type: swagger
+  documentation: "ewogICAgInN3YWdnZXIiOiAiMi4wIiwKICAgICJpbmZvIjogewogICAgICAgICJ0aXRsZSI6ICJodHRwYmluLm9yZyIsCiAgICAgICAgImRlc2NyaXB0aW9uIjogIkEgc2ltcGxlIEhUVFAgUmVxdWVzdCAmIFJlc3BvbnNlIFNlcnZpY2UuIiwKICAgICAgICAidmVyc2lvbiI6ICIxLjAiCiAgICB9LAogICAgImhvc3QiOiAiaHR0cGJpbi5vcmciLAogICAgInNjaGVtZXMiOiBbCiAgICAgICAgImh0dHAiLAogICAgICAgICJodHRwcyIKICAgIF0sCiAgICAicGF0aHMiOiB7CiAgICAgICAgIi9zdGF0dXMve2NvZGV9IjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIlJldHVybnMgcHJvdmlkZWQgSFRUUCBTdGF0dXMgY29kZS4iLAogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9zdGF0dXMiLAogICAgICAgICAgICAgICAgInBhcmFtZXRlcnMiOiBbewogICAgICAgICAgICAgICAgICAgICJuYW1lIjogImNvZGUiLAogICAgICAgICAgICAgICAgICAgICJpbiI6ICJwYXRoIiwKICAgICAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiSFRUUCBjb2RlIHRvIHJldHVybi4iLAogICAgICAgICAgICAgICAgICAgICJyZXF1aXJlZCI6IHRydWUsCiAgICAgICAgICAgICAgICAgICAgInR5cGUiOiAibnVtYmVyIiwKICAgICAgICAgICAgICAgICAgICAiZGVmYXVsdCI6IDIwMCwKICAgICAgICAgICAgICAgICAgICAiZW51bSI6IFsKICAgICAgICAgICAgICAgICAgICAgICAgMjAwCiAgICAgICAgICAgICAgICAgICAgXQogICAgICAgICAgICAgICAgfV0sCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9nZXQiOiB7CiAgICAgICAgICAgICJnZXQiOiB7CiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiUmV0dXJucyBHRVQgZGF0YS4iLAogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9nZXQiLAogICAgICAgICAgICAgICAgInJlc3BvbnNlcyI6IHt9CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICIvcG9zdCI6IHsKICAgICAgICAgICAgInBvc3QiOiB7CiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiUmV0dXJucyBQT1NUIGRhdGEuIiwKICAgICAgICAgICAgICAgICJvcGVyYXRpb25JZCI6ICIvcG9zdCIsCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9wYXRjaCI6IHsKICAgICAgICAgICAgInBhdGNoIjogewogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIlJldHVybnMgUEFUQ0ggZGF0YS4iLAogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9wYXRjaCIsCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9wdXQiOiB7CiAgICAgICAgICAgICJwdXQiOiB7CiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiUmV0dXJucyBQVVQgZGF0YS4iLAogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9wdXQiLAogICAgICAgICAgICAgICAgInJlc3BvbnNlcyI6IHt9CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICIvZGVsZXRlIjogewogICAgICAgICAgICAiZGVsZXRlIjogewogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIlJldHVybnMgREVMRVRFIGRhdGEuIiwKICAgICAgICAgICAgICAgICJvcGVyYXRpb25JZCI6ICIvZGVsZXRlIiwKICAgICAgICAgICAgICAgICJyZXNwb25zZXMiOiB7fQogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgICAiL3htbCI6IHsKICAgICAgICAgICAgImdldCI6IHsKICAgICAgICAgICAgICAgICJkZXNjcmlwdGlvbiI6ICJSZXR1cm5zIHNvbWUgWE1MLiIsCiAgICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiL3htbCIsCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9pcCI6IHsKICAgICAgICAgICAgImdldCI6IHsKICAgICAgICAgICAgICAgICJkZXNjcmlwdGlvbiI6ICJSZXR1cm5zIG9yaWdpbiBJUC4iLAogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9pcCIsCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi91c2VyLWFnZW50IjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIlJldHVybnMgdXNlciBhZ2VudCBzdHJpbmcuIiwKICAgICAgICAgICAgICAgICJvcGVyYXRpb25JZCI6ICIvdXNlci1hZ2VudCIsCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9oZWFkZXJzIjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIlJldHVybnMgaGVhZGVycyBkaWN0aW9uYXJ5LiIsCiAgICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiL2hlYWRlcnMiLAogICAgICAgICAgICAgICAgInJlc3BvbnNlcyI6IHt9CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICIvZGVsYXkve3NlY29uZHN9IjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIkRlbGF5cyByZXNwb25kaW5nIGZvciBu4oCTMTAgc2Vjb25kcy4iLAogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9kZWxheSIsCiAgICAgICAgICAgICAgICAicGFyYW1ldGVycyI6IFt7CiAgICAgICAgICAgICAgICAgICAgIm5hbWUiOiAic2Vjb25kcyIsCiAgICAgICAgICAgICAgICAgICAgImluIjogInBhdGgiLAogICAgICAgICAgICAgICAgICAgICJkZXNjcmlwdGlvbiI6ICIiLAogICAgICAgICAgICAgICAgICAgICJyZXF1aXJlZCI6IHRydWUsCiAgICAgICAgICAgICAgICAgICAgInR5cGUiOiAic3RyaW5nIiwKICAgICAgICAgICAgICAgICAgICAiZGVmYXVsdCI6IDIsCiAgICAgICAgICAgICAgICAgICAgImVudW0iOiBbCiAgICAgICAgICAgICAgICAgICAgICAgIDIKICAgICAgICAgICAgICAgICAgICBdCiAgICAgICAgICAgICAgICB9XSwKICAgICAgICAgICAgICAgICJyZXNwb25zZXMiOiB7fQogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgICAiL2NhY2hlL3ttYXhBZ2V9IjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9jYWNoZSIsCiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiU2V0cyBhIENhY2hlLUNvbnRyb2wgaGVhZGVyIGZvciBuIHNlY29uZHMuIiwKICAgICAgICAgICAgICAgICJwYXJhbWV0ZXJzIjogW3sKICAgICAgICAgICAgICAgICAgICAibmFtZSI6ICJtYXhBZ2UiLAogICAgICAgICAgICAgICAgICAgICJpbiI6ICJwYXRoIiwKICAgICAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiIiwKICAgICAgICAgICAgICAgICAgICAicmVxdWlyZWQiOiB0cnVlLAogICAgICAgICAgICAgICAgICAgICJ0eXBlIjogInN0cmluZyIsCiAgICAgICAgICAgICAgICAgICAgImRlZmF1bHQiOiAxMCwKICAgICAgICAgICAgICAgICAgICAiZW51bSI6IFsKICAgICAgICAgICAgICAgICAgICAgICAgMTAKICAgICAgICAgICAgICAgICAgICBdCiAgICAgICAgICAgICAgICB9XSwKICAgICAgICAgICAgICAgICJyZXNwb25zZXMiOiB7fQogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgICAiL3V1aWQiOiB7CiAgICAgICAgICAgICJnZXQiOiB7CiAgICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiL3V1aWQiLAogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIlJldHVybnMgVVVJRDQuIiwKICAgICAgICAgICAgICAgICJyZXNwb25zZXMiOiB7fQogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgICAiL2FueXRoaW5nIjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9hbnl0aGluZyIsCiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiUmV0dXJucyByZXF1ZXN0IGRhdGEsIGluY2x1ZGluZyBtZXRob2QgdXNlZC4iLAogICAgICAgICAgICAgICAgInJlc3BvbnNlcyI6IHt9CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICIvZ3ppcCI6IHsKICAgICAgICAgICAgImdldCI6IHsKICAgICAgICAgICAgICAgICJvcGVyYXRpb25JZCI6ICIvZ3ppcCIsCiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiUmV0dXJucyBnemlwLWVuY29kZWQgZGF0YS4iLAogICAgICAgICAgICAgICAgInJlc3BvbnNlcyI6IHt9CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICIvYmFzZTY0L3t2YWx1ZX0iOiB7CiAgICAgICAgICAgICJnZXQiOiB7CiAgICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiL2Jhc2U2NCIsCiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiRGVjb2RlcyBiYXNlNjR1cmwtZW5jb2RlZCBzdHJpbmcuIiwKICAgICAgICAgICAgICAgICJwYXJhbWV0ZXJzIjogW3sKICAgICAgICAgICAgICAgICAgICAibmFtZSI6ICJ2YWx1ZSIsCiAgICAgICAgICAgICAgICAgICAgImluIjogInBhdGgiLAogICAgICAgICAgICAgICAgICAgICJkZXNjcmlwdGlvbiI6ICJCYXNlNjQgZW5jb2RlZCBzdHJpbmcuIiwKICAgICAgICAgICAgICAgICAgICAicmVxdWlyZWQiOiB0cnVlLAogICAgICAgICAgICAgICAgICAgICJ0eXBlIjogInN0cmluZyIsCiAgICAgICAgICAgICAgICAgICAgImRlZmF1bHQiOiAiYUdWc2JHOGdkMjl5YkdRTkNnJTNEJTNEIgogICAgICAgICAgICAgICAgfV0sCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9kZWZsYXRlIjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9kZWZsYXRlIiwKICAgICAgICAgICAgICAgICJkZXNjcmlwdGlvbiI6ICJSZXR1cm5zIGRlZmxhdGUtZW5jb2RlZCBkYXRhLiIsCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9icm90bGkiOiB7CiAgICAgICAgICAgICJnZXQiOiB7CiAgICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiL2Jyb3RsaSIsCiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiUmV0dXJucyBicm90bGktZW5jb2RlZCBkYXRhLiIsCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9yZXNwb25zZS1oZWFkZXJzIjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9yZXNwb25zZS1oZWFkZXJzIiwKICAgICAgICAgICAgICAgICJkZXNjcmlwdGlvbiI6ICJSZXR1cm5zIGtleS12YWx1ZSBxdWVyeSBwYXJhbWV0ZXJzIGFzIHJlc3BvbnNlIGhlYWRlcnMuIiwKICAgICAgICAgICAgICAgICJyZXNwb25zZXMiOiB7fQogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgICAiL2J5dGVzL3tudW1iZXJ9IjogewogICAgICAgICAgICAiZ2V0IjogewogICAgICAgICAgICAgICAgIm9wZXJhdGlvbklkIjogIi9ieXRlcyIsCiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiR2VuZXJhdGVzIG4gcmFuZG9tIGJ5dGVzIG9mIGJpbmFyeSBkYXRhIiwKICAgICAgICAgICAgICAgICJwYXJhbWV0ZXJzIjogW3sKICAgICAgICAgICAgICAgICAgICAibmFtZSI6ICJudW1iZXIiLAogICAgICAgICAgICAgICAgICAgICJpbiI6ICJwYXRoIiwKICAgICAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiTnVtYmVyIG9mIGJ5dGVzIHRvIHJldHVybi4iLAogICAgICAgICAgICAgICAgICAgICJyZXF1aXJlZCI6IHRydWUsCiAgICAgICAgICAgICAgICAgICAgInR5cGUiOiAic3RyaW5nIiwKICAgICAgICAgICAgICAgICAgICAiZGVmYXVsdCI6ICIxMDI0IgogICAgICAgICAgICAgICAgfV0sCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9yZWRpcmVjdC10byI6IHsKICAgICAgICAgICAgImdldCI6IHsKICAgICAgICAgICAgICAgICJvcGVyYXRpb25JZCI6ICIvcmVkaXJlY3QtdG8iLAogICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIjMwMiByZWRpcmVjdHMgdG8gYSBVUkwgcHJvdmlkZWQgaW4gcXVlcnkiLAogICAgICAgICAgICAgICAgInBhcmFtZXRlcnMiOiBbewogICAgICAgICAgICAgICAgICAgICJuYW1lIjogInVybCIsCiAgICAgICAgICAgICAgICAgICAgImluIjogInF1ZXJ5IiwKICAgICAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiUmVkaXJlY3QgdGFyZ2V0IiwKICAgICAgICAgICAgICAgICAgICAicmVxdWlyZWQiOiB0cnVlLAogICAgICAgICAgICAgICAgICAgICJ0eXBlIjogInN0cmluZyIsCiAgICAgICAgICAgICAgICAgICAgImRlZmF1bHQiOiAiaHR0cDovL2V4YW1wbGUuY29tIgogICAgICAgICAgICAgICAgfV0sCiAgICAgICAgICAgICAgICAicmVzcG9uc2VzIjoge30KICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgIi9zdHJlYW0ve251bWJlcn0iOiB7CiAgICAgICAgICAgICJnZXQiOiB7CiAgICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiL3N0cmVhbSIsCiAgICAgICAgICAgICAgICAiZGVzY3JpcHRpb24iOiAiU3RyZWFtcyBtaW4obnVtYmVyLCAxMDApIGxpbmVzLiIsCiAgICAgICAgICAgICAgICAicGFyYW1ldGVycyI6IFt7CiAgICAgICAgICAgICAgICAgICAgIm5hbWUiOiAibnVtYmVyIiwKICAgICAgICAgICAgICAgICAgICAiaW4iOiAicGF0aCIsCiAgICAgICAgICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogIk51bWJlciBvZiBsaW5lcyB0byBzdHJlYW0uIiwKICAgICAgICAgICAgICAgICAgICAicmVxdWlyZWQiOiB0cnVlLAogICAgICAgICAgICAgICAgICAgICJ0eXBlIjogIm51bWJlciIsCiAgICAgICAgICAgICAgICAgICAgImRlZmF1bHQiOiAiMTAiCiAgICAgICAgICAgICAgICB9XSwKICAgICAgICAgICAgICAgICJyZXNwb25zZXMiOiB7fQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgfQp9Cg=="
+ show: true
+ version: v2
+EOF
+```
+
+Here we can observe that the API description is tied to the SecurityPolicy
+in the lines
+
+```yaml
+ policyRef:
+  name: standard-pol
+```
+
+Furthermore, in the "documentation" field we have the swagger API definition of httpbin encoded in base64. All documentation descriptions need to be encoded base64.
+
+### 3. Publishing the API to the Tyk Portal
+
+For this step all we need to do is to create a PortalAPICatalogue resource that ties everything together. In our case, the command we need to run is:
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: tyk.tyk.io/v1alpha1
+kind: PortalAPICatalogue
+metadata:
+ name: test-httpbin-api
+spec:
+ apis:
+ - apiDescriptionRef:
+    name: standard-desc
+    namespace: default
+EOF
+```
+
+As we can observe above, we just need to reference the name of the apiDescription and the Tyk Operator will handle everything for us.
+
+After this is all done, if we go to the default TykPortal implementation
+(generally located at `tyk-portal.local`) we should observe something like this in the API Catalogue section:
+
+
+![api-catalogue-httpbin](./img/api-catalogue-httpbin.png)
+
+
+And if we click on `View documentation` we should have:
+
+
+![httpbin-swagger-portal](./img/httpbin-swagger-portal.png)
