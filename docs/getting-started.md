@@ -1,12 +1,12 @@
 # Getting Started
 
-| Features                                            | CE  | PRO | Description                                                            |
-|-----------------------------------------------------|-----|-----|------------------------------------------------------------------------|
-| [Install](#install)                                 | ✅   | ✅   | -                                                                      |
-| [Create an API](#create-an-api "hover")             | ✅   | ✅   | -                                                                      |
-| [Access an API](#access-an-api)                     | ✅   | ✅   | -                                                                      |
-| [Secure an API](#secure-an-api)                     | ❌   | ✅   | `Secure an API` is not yet supported for CE.                           |
-| [Publish an API](#publish-an-api-to-the-tyk-portal) | ❌   | ✅   | `Publish an API` is a PRO feature and therefore not applicable for CE. |
+| Features                                            | CE  | PRO | Description                                                                                                                                       |
+|-----------------------------------------------------|-----|-----|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Install](#install)                                 | ✅   | ✅   | -                                                                                                                                                 |
+| [Create an API](#create-an-api "hover")             | ✅   | ✅   | -                                                                                                                                                 |
+| [Access an API](#access-an-api)                     | ✅   | ✅   | -                                                                                                                                                 |
+| [Secure an API](#secure-an-api)                     | ⚠️  | ✅   | Security Policies are not yet implemented for Tyk CE, and a link to the issue: [#357](https://github.com/TykTechnologies/tyk-operator/issues/357) |
+| [Publish an API](#publish-an-api-to-the-tyk-portal) | ❌   | ✅   | `Publish an API` is a PRO feature and therefore not applicable for CE.                                                                            |
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
