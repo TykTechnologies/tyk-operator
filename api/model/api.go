@@ -570,7 +570,11 @@ type APIDefinitionSpec struct {
 	//BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
 	//ClientCertificates         []string              `json:"client_certificates"`
-	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
+
+	//here
+
+	UpstreamCertificates map[string]string `json:"upstream_certificates,omitempty"`
+	UpstreamCertificateName
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
 	// EnableJWT set JWT as the access method for this API.

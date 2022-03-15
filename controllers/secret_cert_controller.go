@@ -196,7 +196,22 @@ func (r *SecretCertReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Secret{}).
 		WithEventFilter(r.ignoreNonTLSPredicate()).
+		WithEventFilter(r.triggerUploadOfNewOrUpdatedCertificate()).
 		Complete(r)
+}
+
+func (r *SecretCertReconciler) triggerUploadOfNewOrUpdatedCertificate() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			return true
+		},
+		CreateFunc: func(createEvent event.CreateEvent) bool {
+			return true
+		},
+		DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
+			return false
+		},
+	}
 }
 
 type mySecretType struct {
