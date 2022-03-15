@@ -24,7 +24,7 @@ gateway:
   tags: ""
   image:
     repository: tykio/tyk-gateway
-    tag: v3.1.2
+    tag: v4.0.0
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
