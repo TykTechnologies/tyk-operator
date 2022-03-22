@@ -25,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -983,9 +982,6 @@ type GraphQLConfig struct {
 
 	// GraphQLPlayground is the Playground specific configuration.
 	GraphQLPlayground GraphQLPlayground `json:"playground,omitempty"`
-
-	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
-	LastSchemaUpdate *metav1.Time `bson:"last_schema_update" json:"last_schema_update,omitempty"`
 
 	// Proxy holds the configuration for a proxy only api.
 	Proxy GraphQLProxyConfig `bson:"proxy" json:"proxy,omitempty"`

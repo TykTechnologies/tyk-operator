@@ -714,10 +714,6 @@ func (in *GraphQLConfig) DeepCopyInto(out *GraphQLConfig) {
 		}
 	}
 	out.GraphQLPlayground = in.GraphQLPlayground
-	if in.LastSchemaUpdate != nil {
-		in, out := &in.LastSchemaUpdate, &out.LastSchemaUpdate
-		*out = (*in).DeepCopy()
-	}
 	in.Proxy.DeepCopyInto(&out.Proxy)
 }
 
