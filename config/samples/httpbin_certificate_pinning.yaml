@@ -1,0 +1,38 @@
+# Certificate Pinning
+#
+# Certificate pinning is a feature which allows you to whitelist public keys used to generate certificates. For more
+# details, please visit official Tyk Documentation https://tyk.io/docs/security/certificate-pinning/.
+#
+# Public keys can be defined via an ApiDefinition object's `pinned_public_keys` field, using the following format:
+#  pinned_public_keys:
+#    "foo.com": "<key_id>",
+#    "*": "<key_id-1>,<key_id-2>"
+# Public keys are stored inside the Tyk certificate storage, so you can use Certificate API to manage them. For key-id
+# you should set the ID returned after you upload the public key using the Certificate API.
+#
+# In this example, we have an HTTPS upstream target as `https://httpbin.org`. The public key of httpbin.org is uploaded
+# using the Certificate API and its ID is used in the `pinned_public_keys` field for all domains, since wildcard domains
+# are supported. Hence, if you target any other URL than https://httpbin.org (for instance https://github.com/), you will
+# face a 'public key pinning error' for that particular domain.
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-certificate-pinning
+spec:
+  name: httpbin - Certificate Pinning
+  use_keyless: true
+  protocol: http
+  active: true
+  pinned_public_keys:
+    "*": 62397d1af55f8f000100536ff8a4b344441b021f60a982cb1a97c21be700cbb3f1dff42693f7bc120c3277ba # the id of the httpbin.org public key.
+  proxy:
+    target_url: https://httpbin.org
+    listen_path: /pinning
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default

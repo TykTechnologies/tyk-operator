@@ -36,7 +36,7 @@ const (
 	secretType        = "kubernetes.io/tls"
 )
 
-// CertReconciler reconciles a Cert object
+// SecretCertReconciler reconciles a Cert object
 type SecretCertReconciler struct {
 	client.Client
 	Log    logr.Logger

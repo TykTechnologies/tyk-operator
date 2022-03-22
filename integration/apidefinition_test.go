@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-func TestApiDefinitionCreate(t *testing.T) {
+func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 	var (
 		apiDefWithJSONValidationName = "apidef-json-validation"
 		apiDefListenPath             = "/validation"
@@ -501,6 +501,70 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultTimeout))
+				is.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, adCreate)
+}
+
+func TestApiDefinitionCertificatePinning(t *testing.T) {
+	var (
+		apiDefCertificatePinningName = "apidef-certificate-pinning"
+		publicKeyID                  = "test-public-key-id"
+		defaultTimeout               = 1 * time.Minute
+	)
+
+	adCreate := features.New("Create an ApiDefinition for Certificate Pinning").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			is := is.New(t)
+
+			// Create ApiDefinition with Certificate Pinning.
+			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefCertificatePinningName
+				apiDef.Spec.PinnedPublicKeys = &model.MapStringInterfaceType{
+					Unstructured: unstructured.Unstructured{
+						Object: map[string]interface{}{"*": publicKeyID},
+					},
+				}
+			}, envConf)
+			is.NoErr(err) // failed to create apiDefinition
+
+			return ctx
+		}).
+		Assess("ApiDefinition must have Certificate Pinning field defined",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				client := cfg.Client()
+
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+				desiredApiDef := v1alpha1.ApiDefinition{
+					ObjectMeta: metav1.ObjectMeta{Name: apiDefCertificatePinningName, Namespace: testNS},
+				}
+
+				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
+					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
+
+					if apiDef.Spec.PinnedPublicKeys == nil {
+						t.Log("PinnedPublicKeys field is undefined.")
+						return false
+					}
+
+					// 'pinned_public_keys' field must exist in the ApiDefinition object.
+					val, found, err := unstructured.NestedString(apiDef.Spec.PinnedPublicKeys.Object, "*")
+					if err != nil {
+						t.Log(err)
+						return false
+					}
+					if !found {
+						t.Log("cannot find a public key for domain '*'.")
+						return false
+					}
+
+					return val == publicKeyID
+				}), wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
 				return ctx
