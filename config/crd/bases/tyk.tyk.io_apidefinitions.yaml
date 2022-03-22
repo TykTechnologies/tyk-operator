@@ -462,6 +462,11 @@ spec:
                     - proxyOnly
                     - executionEngine
                     type: string
+                  last_schema_update:
+                    description: LastSchemaUpdate contains the date and time of the
+                      last triggered schema update to the upstream.
+                    format: date-time
+                    type: string
                   playground:
                     description: GraphQLPlayground is the Playground specific configuration.
                     properties:
@@ -476,6 +481,15 @@ spec:
                     required:
                     - enabled
                     - path
+                    type: object
+                  proxy:
+                    description: Proxy holds the configuration for a proxy only api.
+                    properties:
+                      auth_headers:
+                        additionalProperties:
+                          type: string
+                        nullable: true
+                        type: object
                     type: object
                   schema:
                     description: Schema is the GraphQL Schema exposed by the GraphQL

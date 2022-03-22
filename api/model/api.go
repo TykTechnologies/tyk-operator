@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -969,7 +970,6 @@ type RequestSigningMeta struct {
 // GraphQLConfig is the root config object for a GraphQL API.
 
 type GraphQLConfig struct {
-
 	// Enabled indicates if GraphQL proxy should be enabled.
 	Enabled bool `json:"enabled"`
 
@@ -983,6 +983,17 @@ type GraphQLConfig struct {
 
 	// GraphQLPlayground is the Playground specific configuration.
 	GraphQLPlayground GraphQLPlayground `json:"playground,omitempty"`
+
+	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
+	LastSchemaUpdate *metav1.Time `bson:"last_schema_update" json:"last_schema_update,omitempty"`
+
+	// Proxy holds the configuration for a proxy only api.
+	Proxy GraphQLProxyConfig `bson:"proxy" json:"proxy,omitempty"`
+}
+
+type GraphQLProxyConfig struct {
+	// +nullable
+	AuthHeaders map[string]string `bson:"auth_headers" json:"auth_headers,omitempty"`
 }
 
 type TypeFieldConfiguration struct {
@@ -1022,7 +1033,6 @@ type MappingConfiguration struct {
 }
 
 // GraphQLPlayground represents the configuration for the public playground which will be hosted alongside the api.
-
 type GraphQLPlayground struct {
 	// Enabled indicates if the playground should be enabled.
 	Enabled bool `json:"enabled"`
