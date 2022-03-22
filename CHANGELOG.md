@@ -1,8 +1,15 @@
 # Changelog
 
-## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...HEAD)
 
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.1...HEAD)
+**Added:**
+- Added Support of Auth Headers while creating GraphQL ProxyOnly API 
+
+**Documentation**
+- Added document for GraphQL ProxyOnly API
+
+
+## [v0.8.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.8.2) (2022-03-14)
 
 **Added:**
 
