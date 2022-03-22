@@ -6,7 +6,7 @@
 - Added Support of Auth Headers while creating GraphQL ProxyOnly API 
 
 **Documentation**
-- Added document for GraphQL ProxyOnly API
+- Added documentation for GraphQL ProxyOnly API
 
 
 ## [v0.8.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.8.2) (2022-03-14)
