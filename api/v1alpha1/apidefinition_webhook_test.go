@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/matryer/is"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
 )
@@ -237,4 +240,79 @@ func hasError(errs field.ErrorList, needle string) bool {
 	}
 
 	return false
+}
+
+func TestApiDefinition_Validate_Auth(t *testing.T) {
+	is := is.New(t)
+
+	tests := map[string]struct {
+		ApiDefinition ApiDefinition
+		ReturnErr     bool
+		ErrCause      field.ErrorType
+	}{
+		"set both keyless and auth type": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						UseStandardAuth:  true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+			ReturnErr: true,
+			ErrCause:  field.ErrorTypeForbidden,
+		},
+		"set keyless auth type": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+			ReturnErr: false,
+		},
+		"set standard auth without auth details": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseStandardAuth: true,
+						Proxy:           model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+			ReturnErr: true,
+			ErrCause:  field.ErrorTypeNotFound,
+		},
+		"set standard auth with auth details": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseStandardAuth: true,
+						AuthConfigs: map[string]model.AuthConfig{
+							"authToken": {
+								AuthHeaderName: "Authorization",
+							},
+						},
+						Proxy: model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+			ReturnErr: false,
+		},
+	}
+
+	for n, tc := range tests {
+		t.Run(n, func(t *testing.T) {
+			err := tc.ApiDefinition.validate()
+
+			is.Equal(tc.ReturnErr, err != nil)
+			if err != nil {
+				is.True(apierrors.IsInvalid(err))
+				is.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
+			}
+		})
+	}
 }
