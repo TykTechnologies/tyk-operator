@@ -984,12 +984,11 @@ type GraphQLConfig struct {
 	GraphQLPlayground GraphQLPlayground `json:"playground,omitempty"`
 
 	// Proxy holds the configuration for a proxy only api.
-	Proxy GraphQLProxyConfig `bson:"proxy" json:"proxy,omitempty"`
+	Proxy GraphQLProxyConfig `json:"proxy,omitempty"`
 }
 
 type GraphQLProxyConfig struct {
-	// +nullable
-	AuthHeaders map[string]string `bson:"auth_headers" json:"auth_headers,omitempty"`
+	AuthHeaders map[string]string `json:"auth_headers"`
 }
 
 type TypeFieldConfiguration struct {

@@ -431,8 +431,9 @@ spec:
                       auth_headers:
                         additionalProperties:
                           type: string
-                        nullable: true
                         type: object
+                    required:
+                    - auth_headers
                     type: object
                   schema:
                     description: Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
