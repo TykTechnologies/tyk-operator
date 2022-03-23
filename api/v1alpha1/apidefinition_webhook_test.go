@@ -50,7 +50,7 @@ func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
 	in.Default()
 
 	if *in.Spec.DoNotTrack != true {
-		t.Fatalf("expected DoNotTrack to be true by default, got %v", *in.Spec.DoNotTrack)
+		t.Fatalf("expected DoNotTrack to be true as explicitly set, got %v", *in.Spec.DoNotTrack)
 	}
 
 	in = ApiDefinition{
@@ -64,7 +64,7 @@ func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
 	in.Default()
 
 	if *in.Spec.DoNotTrack != true {
-		t.Fatalf("expected DoNotTrack to be true as explicitly set, got %v", *in.Spec.DoNotTrack)
+		t.Fatalf("expected DoNotTrack to be true by default, got %v", *in.Spec.DoNotTrack)
 	}
 
 	in = ApiDefinition{
