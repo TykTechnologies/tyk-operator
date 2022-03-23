@@ -116,7 +116,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {
 			certName := desired.Spec.CertificateSecretNames[0]
-			tykCertID, err2, done := r.checkSecretAndUpload(ctx, certName, namespacedName, log, env)
+			tykCertID, err2, done := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
 			if done {
 				return err2
 			}
@@ -156,7 +156,13 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{RequeueAfter: queueA}, err
 }
 
-func (r *ApiDefinitionReconciler) checkSecretAndUpload(ctx context.Context, certName string, namespacedName types.NamespacedName, log logr.Logger, env environmet.Env) (string, error, bool) {
+func (r *ApiDefinitionReconciler) checkSecretAndUpload(
+	ctx context.Context,
+	certName string,
+	namespacedName types.NamespacedName,
+	log logr.Logger,
+	env *environmet.Env,
+) (string, error, bool) {
 	secret := v1.Secret{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
@@ -182,6 +188,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(ctx context.Context, cert
 
 	tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
 	exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
+
 	if !exists {
 		// upload the certificate
 		tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
@@ -189,6 +196,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(ctx context.Context, cert
 			return "", err, true
 		}
 	}
+
 	return tykCertID, nil, false
 }
 
