@@ -483,6 +483,7 @@ spec:
                       auth_headers:
                         additionalProperties:
                           type: string
+                        nullable: true
                         type: object
                     required:
                     - auth_headers

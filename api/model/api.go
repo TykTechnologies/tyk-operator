@@ -810,7 +810,6 @@ func (p *Proxy) collectLoopingTarget(fn func(Target)) {
 }
 
 type ProxyTransport struct {
-
 	// SSLInsecureSkipVerify controls whether it is possible to use self-signed certificates when connecting to the
 	// upstream. This is applied to `TykMakeHttpRequest` & `TykMakeBatchRequest` in virtual endpoint middleware.
 	SSLInsecureSkipVerify bool `json:"ssl_insecure_skip_verify,omitempty"`
@@ -988,6 +987,7 @@ type GraphQLConfig struct {
 }
 
 type GraphQLProxyConfig struct {
+	// +nullable
 	AuthHeaders map[string]string `json:"auth_headers"`
 }
 
