@@ -549,6 +549,7 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 						}
 					}, c)
 
+					t.Log("Error=", err)
 					is.Equal(tc.ReturnErr, err != nil)
 				})
 			}
