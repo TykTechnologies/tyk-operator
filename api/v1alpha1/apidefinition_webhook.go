@@ -32,6 +32,7 @@ import (
 
 // log is for logging in this package.
 var apidefinitionlog = logf.Log.WithName("apidefinition-resource")
+var ErrEmptyValue = "can't be empty"
 
 func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -138,9 +139,8 @@ func (in *ApiDefinition) validate() error {
 					src := typeFieldConfig.DataSource
 					if src.Config.URL == "" {
 						all = append(all,
-							field.Invalid(path("graphql", "type_field_configurations", "data_source", "url"),
-								"",
-								"can't be empty",
+							field.Required(path("graphql", "type_field_configurations", "data_source", "url"),
+								ErrEmptyValue,
 							),
 						)
 					} else {
@@ -157,9 +157,8 @@ func (in *ApiDefinition) validate() error {
 
 					if src.Config.Method == "" {
 						all = append(all,
-							field.Invalid(path("graphql", "type_field_configurations", "data_source", "method"),
-								string(src.Config.Method),
-								"can't be empty",
+							field.Required(path("graphql", "type_field_configurations", "data_source", "method"),
+								ErrEmptyValue,
 							),
 						)
 					}
@@ -209,14 +208,14 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 			if !in.Spec.GraphQL.Enabled {
 				all = append(all,
 					field.Required(path("proxy", "target_url"),
-						"can't be empty",
+						ErrEmptyValue,
 					),
 				)
 			}
 		} else if in.Spec.Proxy.TargetInternal == nil {
 			all = append(all,
 				field.Required(path("proxy", "target_url"),
-					"can't be empty",
+					ErrEmptyValue,
 				),
 			)
 		}
@@ -228,7 +227,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 				if u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
 					all = append(all,
 						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
-							"can't be empty",
+							ErrEmptyValue,
 						),
 					)
 				}
@@ -237,7 +236,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 					if t.RewriteTo == "" && t.RewriteToInternal == nil {
 						all = append(all,
 							field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
-								"can't be empty",
+								ErrEmptyValue,
 							),
 						)
 					}

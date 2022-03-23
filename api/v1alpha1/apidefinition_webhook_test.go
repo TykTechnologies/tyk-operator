@@ -119,11 +119,10 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 		},
 	}
 
-	errorDetail := "can't be empty"
 	missingTargetURLErr := field.Error{
 		Type:   field.ErrorTypeRequired,
 		Field:  path("proxy", "target_url").String(),
-		Detail: errorDetail,
+		Detail: ErrEmptyValue,
 	}
 
 	cases := []struct {
@@ -200,7 +199,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			expectedErr: &field.Error{
 				Type:   field.ErrorTypeRequired,
 				Field:  path("version_data", "versions", "", "extended_paths", "url_rewrites", "rewrite_to").String(),
-				Detail: errorDetail,
+				Detail: ErrEmptyValue,
 			},
 		},
 		{
@@ -211,7 +210,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 				Field: path(
 					"version_data", "versions", "", "extended_paths", "url_rewrites", "triggers", "rewrite_to",
 				).String(),
-				Detail: errorDetail,
+				Detail: ErrEmptyValue,
 			},
 		},
 	}
