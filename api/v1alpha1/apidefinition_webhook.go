@@ -162,6 +162,13 @@ func (in *ApiDefinition) validate() error {
 							),
 						)
 					}
+				default:
+					all = append(all,
+						field.Invalid(path("graphql", "type_field_configurations", "data_source", "kind"),
+							typeFieldConfig.DataSource.Kind,
+							"invalid data source kind type",
+						),
+					)
 				}
 			}
 		}
