@@ -92,7 +92,7 @@ func (t *Tyk) helm(workdir string) {
 
 func (t *Tyk) pro() {
 	t.Mode = "pro"
-	t.URL = "http://dashboard.tykpro-control-plane.svc.cluster.local:3000"
+	t.URL = "http://dashboard-svc-pro-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
 	t.Namespace = "tykpro-control-plane"
 	t.AdminSecret = "54321"
 }
@@ -175,7 +175,7 @@ func deployDir() string {
 func main() {
 	flag.Parse()
 	config.bind(*mode)
-	preloadImages()
+	//preloadImages()
 	submodule()
 	ns()
 	common()
@@ -289,6 +289,7 @@ func createSecret() {
 			"--from-literal", fmt.Sprintf("TYK_ORG=%s", config.Tyk.Org),
 			"--from-literal", fmt.Sprintf("TYK_MODE=%s", config.Tyk.Mode),
 			"--from-literal", fmt.Sprintf("TYK_URL=%s", config.Tyk.URL),
+			"--from-literal", "TYK_TLS_INSECURE_SKIP_VERIFY=true",
 		))
 	}
 

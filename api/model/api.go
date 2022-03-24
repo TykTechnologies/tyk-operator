@@ -571,10 +571,12 @@ type APIDefinitionSpec struct {
 	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
 	//ClientCertificates         []string              `json:"client_certificates"`
 
-	//here
-
+	// UpstreamCertificates is a kv map of domains and certificate ids
 	UpstreamCertificates map[string]string `json:"upstream_certificates,omitempty"`
-	UpstreamCertificateName
+
+	// used to show what name to pick
+	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_name,omitempty"`
+
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
 	// EnableJWT set JWT as the access method for this API.

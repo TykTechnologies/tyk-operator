@@ -15,6 +15,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -36,7 +37,7 @@ const (
 	secretType        = "kubernetes.io/tls"
 )
 
-// CertReconciler reconciles a Cert object
+// SecretCertReconciler reconciles a Cert object
 type SecretCertReconciler struct {
 	client.Client
 	Log    logr.Logger
@@ -143,6 +144,40 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	for _, apiDef := range apiDefList.Items {
+		for domain, certName := range apiDef.Spec.UpstreamCertificateRefs {
+			if req.Name == certName {
+				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+				if err != nil {
+					return ctrl.Result{Requeue: true}, err
+				}
+
+				if apiDef.Spec.UpstreamCertificates == nil {
+					apiDef.Spec.UpstreamCertificates = make(map[string]string)
+				}
+				apiDef.Spec.UpstreamCertificates[domain] = certID
+
+				err = r.Update(ctx, &apiDef)
+				if apierrors.IsConflict(err) {
+					// The Pod has been updated since we read it.
+					// Requeue the Pod to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+				if apierrors.IsNotFound(err) {
+					// The Pod has been deleted since we read it.
+					// Requeue the Pod to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+				if err != nil {
+					log.Error(err, "unable to update ApiDef")
+				}
+				log.Info("api def updated succesfully")
+
+				return ctrl.Result{}, nil
+			}
+		}
+	}
+
 	ret := true
 
 	for _, apiDef := range apiDefList.Items {
@@ -196,22 +231,7 @@ func (r *SecretCertReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Secret{}).
 		WithEventFilter(r.ignoreNonTLSPredicate()).
-		WithEventFilter(r.triggerUploadOfNewOrUpdatedCertificate()).
 		Complete(r)
-}
-
-func (r *SecretCertReconciler) triggerUploadOfNewOrUpdatedCertificate() predicate.Predicate {
-	return predicate.Funcs{
-		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-			return true
-		},
-		CreateFunc: func(createEvent event.CreateEvent) bool {
-			return true
-		},
-		DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
-			return false
-		},
-	}
 }
 
 type mySecretType struct {
@@ -223,10 +243,32 @@ type mySecretType struct {
 	} `json:"MetaNew"`
 }
 
+type NewSecretType struct {
+	ObjectOld struct {
+		Type string `json:"type"`
+	} `json:"ObjectOld"`
+	ObjectNew struct {
+		Type string `json:"type"`
+	} `json:"ObjectNew"`
+}
+
 func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
-		json.Unmarshal(jsBytes, &secret)
+		err := json.Unmarshal(jsBytes, &secret)
+		if err != nil {
+			return false
+		}
+
+		if secret.MetaNew.Type == "" && secret.Meta.Type == "" {
+			newSecret := NewSecretType{}
+
+			err := json.Unmarshal(jsBytes, &newSecret)
+			if err != nil {
+				return false
+			}
+			return newSecret.ObjectNew.Type == secretType
+		}
 
 		// if Update
 		if secret.MetaNew.Type != "" {
