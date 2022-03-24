@@ -2,7 +2,7 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
-- Added a fix for a bug in which ApiDefinition CRDs were wrongly mutated ([])
+- Added a fix for a bug in which ApiDefinition CRDs were wrongly mutated 
 
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.1...HEAD)
 
