@@ -1,3 +1,6 @@
+#  `Track Endpoint` allows you to manually select each endpoint for tracking.
+#  In this example, /get and /headers endpoints will be tracked. After these endpoints receive requests, you can track
+#  them through the Dashboard.
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
