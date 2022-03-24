@@ -527,7 +527,10 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 
 			is.Equal(tc.ReturnErr, err != nil)
 			if err != nil {
-				statusErr := err.(*apierrors.StatusError)
+				statusErr, ok := err.(*apierrors.StatusError)
+				if !ok {
+					t.Fatal("invalid error type")
+				}
 				is.True(apierrors.IsInvalid(err))
 
 				t.Log(statusErr.Status().Details.Causes)
