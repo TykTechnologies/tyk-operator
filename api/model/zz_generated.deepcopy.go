@@ -67,7 +67,10 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 	}
 	if in.PinnedPublicKeys != nil {
 		in, out := &in.PinnedPublicKeys, &out.PinnedPublicKeys
-		*out = (*in).DeepCopy()
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.JWTDefaultPolicies != nil {
 		in, out := &in.JWTDefaultPolicies, &out.JWTDefaultPolicies

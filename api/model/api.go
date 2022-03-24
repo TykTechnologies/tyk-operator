@@ -574,7 +574,7 @@ type APIDefinitionSpec struct {
 
 	// PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in
 	// case an upstream certificate is compromised.
-	PinnedPublicKeys *MapStringInterfaceType `json:"pinned_public_keys,omitempty"`
+	PinnedPublicKeys map[string]string `json:"pinned_public_keys,omitempty"`
 
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
