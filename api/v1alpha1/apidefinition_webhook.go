@@ -31,8 +31,10 @@ import (
 )
 
 // log is for logging in this package.
-var apidefinitionlog = logf.Log.WithName("apidefinition-resource")
-var ErrEmptyValue = "can't be empty"
+var (
+	apidefinitionlog = logf.Log.WithName("apidefinition-resource")
+	ErrEmptyValue    = "can't be empty"
+)
 
 func (in *ApiDefinition) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
