@@ -116,9 +116,9 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {
 			certName := desired.Spec.CertificateSecretNames[0]
-			tykCertID, err2, done := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
-			if done {
-				return err2
+			tykCertID, err, shouldRequeue := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
+			if shouldRequeue {
+				return err
 			}
 
 			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
