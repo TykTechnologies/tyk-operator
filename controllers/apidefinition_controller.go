@@ -116,8 +116,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {
 			certName := desired.Spec.CertificateSecretNames[0]
-			tykCertID, err, shouldRequeue := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
-			if shouldRequeue {
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
+			if err != nil {
 				return err
 			}
 
@@ -162,28 +162,29 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	namespacedName types.NamespacedName,
 	log logr.Logger,
 	env *environmet.Env,
-) (string, error, bool) {
+) (string, error) {
 	secret := v1.Secret{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
 	if err != nil {
 		log.Error(err, "requeueing because secret not found")
-
-		return "", err, true
+		return "", err
 	}
 
 	pemCrtBytes, ok := secret.Data["tls.crt"]
 	if !ok {
+		err = fmt.Errorf("%s", "requeueing because cert not found in secret")
 		log.Error(err, "requeueing because cert not found in secret")
 
-		return "", err, true
+		return "", err
 	}
 
 	pemKeyBytes, ok := secret.Data["tls.key"]
 	if !ok {
+		err = fmt.Errorf("%s", "requeueing because key not found in secret")
 		log.Error(err, "requeueing because key not found in secret")
 
-		return "", err, true
+		return "", err
 	}
 
 	tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
@@ -193,11 +194,11 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 		// upload the certificate
 		tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
 		if err != nil {
-			return "", err, true
+			return "", err
 		}
 	}
 
-	return tykCertID, nil, false
+	return tykCertID, nil
 }
 
 func (r *ApiDefinitionReconciler) create(
