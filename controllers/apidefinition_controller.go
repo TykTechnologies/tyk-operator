@@ -115,8 +115,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
 			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
-				tykCertID, err, done := r.checkSecretOrUpload(ctx, certName, namespacedName, log, env)
-				if done {
+				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
+				if err != nil {
 					return err
 				}
 				if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
