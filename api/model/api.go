@@ -571,10 +571,12 @@ type APIDefinitionSpec struct {
 	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
 	//ClientCertificates         []string              `json:"client_certificates"`
 
-	// UpstreamCertificates is a kv map of domains and certificate ids
+	// UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk
+	// Gateway to provide mTLS support for upstreams
 	UpstreamCertificates map[string]string `json:"upstream_certificates,omitempty"`
 
-	// used to show what name to pick
+	// UpstreamCertificateRefs is a map of domains and secret names that is used internally
+	// to obtain certificates from secrets in order to establish mTLS support for upstreams
 	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_name,omitempty"`
 
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
