@@ -343,7 +343,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 		ReturnErr     bool
 		ErrCause      field.ErrorType
 	}{
-
 		"empty data source kind": {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
