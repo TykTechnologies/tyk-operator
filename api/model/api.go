@@ -573,8 +573,12 @@ type APIDefinitionSpec struct {
 	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
 
 	// PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in
-	// case an upstream certificate is compromised.
+	// case an upstream certificate is compromised. Please use PinnedPublicKeysSecretNames if using cert-manager.
 	PinnedPublicKeys map[string]string `json:"pinned_public_keys,omitempty"`
+
+	// PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current
+	// namespace which contain the certificates for Certificate Pinning feature.
+	PinnedPublicKeysSecretNames []string `json:"pinned_public_keys_secret_names,omitempty"`
 
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`

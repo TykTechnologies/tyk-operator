@@ -600,8 +600,13 @@ spec:
               pinned_public_keys:
                 additionalProperties:
                   type: string
-                description: PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in case an upstream certificate is compromised.
+                description: PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in case an upstream certificate is compromised. Please use PinnedPublicKeysSecretNames if using cert-manager.
                 type: object
+              pinned_public_keys_secret_names:
+                description: PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates for Certificate Pinning feature.
+                items:
+                  type: string
+                type: array
               protocol:
                 description: APIProtocol is the network transport protocol supported by the gateway
                 enum:
