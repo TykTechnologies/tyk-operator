@@ -155,22 +155,29 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				if apiDef.Spec.UpstreamCertificates == nil {
 					apiDef.Spec.UpstreamCertificates = make(map[string]string)
 				}
+
 				apiDef.Spec.UpstreamCertificates[domain] = certID
 
 				err = r.Update(ctx, &apiDef)
+
 				if apierrors.IsConflict(err) {
 					// The Pod has been updated since we read it.
 					// Requeue the Pod to try to reconciliate again.
+
 					return ctrl.Result{Requeue: true}, nil
 				}
+
 				if apierrors.IsNotFound(err) {
 					// The Pod has been deleted since we read it.
 					// Requeue the Pod to try to reconciliate again.
+
 					return ctrl.Result{Requeue: true}, nil
 				}
+
 				if err != nil {
 					log.Error(err, "unable to update ApiDef")
 				}
+
 				log.Info("api def updated succesfully")
 
 				return ctrl.Result{}, nil
