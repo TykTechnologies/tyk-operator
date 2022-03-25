@@ -70,6 +70,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
+
+	upstreamRequestStruct := &tykv1alpha1.ApiDefinition{}
+	desired.DeepCopyInto(upstreamRequestStruct)
+
 	// set context for all api calls inside this reconciliation loop
 	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
 	if err != nil {
@@ -100,11 +104,11 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		if desired.Spec.APIID == "" {
-			desired.Spec.APIID = encodeNS(req.NamespacedName.String())
+			upstreamRequestStruct.Spec.APIID = encodeNS(req.NamespacedName.String())
 		}
 
 		if desired.Spec.OrgID == "" {
-			desired.Spec.OrgID = env.Org
+			upstreamRequestStruct.Spec.OrgID = env.Org
 		}
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
@@ -112,44 +116,16 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {
 			certName := desired.Spec.CertificateSecretNames[0]
-			secret := v1.Secret{}
-
-			err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
 			if err != nil {
-				log.Error(err, "requeueing because secret not found")
-
 				return err
 			}
 
-			pemCrtBytes, ok := secret.Data["tls.crt"]
-			if !ok {
-				log.Error(err, "requeueing because cert not found in secret")
-
-				return err
-			}
-
-			pemKeyBytes, ok := secret.Data["tls.key"]
-			if !ok {
-				log.Error(err, "requeueing because key not found in secret")
-
-				return err
-			}
-
-			tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
-			exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
-			if !exists {
-				// upload the certificate
-				tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
-				if err != nil {
-					return err
-				}
-			}
-
-			desired.Spec.Certificates = []string{tykCertID}
+			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
 		}
 
-		desired.Spec.CertificateSecretNames = nil
-		r.updateLinkedPolicies(ctx, desired)
+		upstreamRequestStruct.Spec.CertificateSecretNames = nil
+		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
 
 		targets := desired.Spec.CollectLoopingTarget()
 
@@ -165,10 +141,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		desired.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
-			return r.create(ctx, desired, log)
+			return r.create(ctx, upstreamRequestStruct, log)
 		}
 
-		return r.update(ctx, desired, log)
+		return r.update(ctx, upstreamRequestStruct, log)
 	})
 
 	if err == nil {
@@ -178,6 +154,51 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
+}
+
+func (r *ApiDefinitionReconciler) checkSecretAndUpload(
+	ctx context.Context,
+	certName string,
+	namespacedName types.NamespacedName,
+	log logr.Logger,
+	env *environmet.Env,
+) (string, error) {
+	secret := v1.Secret{}
+
+	err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
+	if err != nil {
+		log.Error(err, "requeueing because secret not found")
+		return "", err
+	}
+
+	pemCrtBytes, ok := secret.Data["tls.crt"]
+	if !ok {
+		err = fmt.Errorf("%s", "requeueing because cert not found in secret")
+		log.Error(err, "requeueing because cert not found in secret")
+
+		return "", err
+	}
+
+	pemKeyBytes, ok := secret.Data["tls.key"]
+	if !ok {
+		err = fmt.Errorf("%s", "requeueing because key not found in secret")
+		log.Error(err, "requeueing because key not found in secret")
+
+		return "", err
+	}
+
+	tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
+	exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
+
+	if !exists {
+		// upload the certificate
+		tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return tykCertID, nil
 }
 
 func (r *ApiDefinitionReconciler) create(
