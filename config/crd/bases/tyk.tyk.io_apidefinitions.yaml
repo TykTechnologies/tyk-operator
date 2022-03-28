@@ -885,13 +885,16 @@ spec:
               upstream_certificate_name:
                 additionalProperties:
                   type: string
-                description: used to show what name to pick
+                description: UpstreamCertificateRefs is a map of domains and secret
+                  names that is used internally to obtain certificates from secrets
+                  in order to establish mTLS support for upstreams
                 type: object
               upstream_certificates:
                 additionalProperties:
                   type: string
-                description: UpstreamCertificates is a kv map of domains and certificate
-                  ids
+                description: UpstreamCertificates is a map of domains and certificate
+                  IDs that is used by the Tyk Gateway to provide mTLS support for
+                  upstreams
                 type: object
               use_keyless:
                 description: UseKeylessAccess will switch off all key checking. Some

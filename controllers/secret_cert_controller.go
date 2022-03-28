@@ -144,8 +144,8 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	for _, apiDef := range apiDefList.Items {
-		for domain, certName := range apiDef.Spec.UpstreamCertificateRefs {
+	for idx, apiDef := range apiDefList.Items {
+		for domain, certName := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == certName {
 				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
@@ -163,14 +163,12 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				if apierrors.IsConflict(err) {
 					// The Pod has been updated since we read it.
 					// Requeue the Pod to try to reconciliate again.
-
 					return ctrl.Result{Requeue: true}, nil
 				}
 
 				if apierrors.IsNotFound(err) {
 					// The Pod has been deleted since we read it.
 					// Requeue the Pod to try to reconciliate again.
-
 					return ctrl.Result{Requeue: true}, nil
 				}
 
@@ -263,6 +261,7 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 		err := json.Unmarshal(jsBytes, &secret)
+
 		if err != nil {
 			return false
 		}
@@ -274,6 +273,7 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 			if err != nil {
 				return false
 			}
+
 			return newSecret.ObjectNew.Type == secretType
 		}
 

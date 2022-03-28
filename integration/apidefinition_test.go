@@ -3,6 +3,9 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
+	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"strings"
 	"testing"
@@ -500,6 +503,98 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					}
 
 					return true, nil
+				}, wait.WithTimeout(defaultTimeout))
+				is.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, adCreate)
+}
+
+func TestApiDefinitionUpstreamCertificates(t *testing.T) {
+	var (
+		apiDefUpstreamCerts = "apidef-upstream-certs"
+		defaultVersion      = "Default"
+
+		defaultTimeout = 3 * time.Minute
+	)
+
+	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+
+			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
+			is := is.New(t)
+
+			_, err := createTestTlsSecret(ctx, testNS, func(secret *v1.Secret) {}, envConf)
+			is.NoErr(err)
+
+			return ctx
+		}).
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			is := is.New(t)
+
+			// Create ApiDefinition with Certificate Pinning.
+			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				certName := "test-tls-secret-name"
+				apiDef.Spec.OrgID = "test-org"
+				apiDef.Name = apiDefUpstreamCerts
+				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
+					"*": certName,
+				}
+				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
+				apiDef.Spec.VersionData.NotVersioned = true
+				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
+					defaultVersion: {Name: defaultVersion},
+				}
+			}, envConf)
+			is.NoErr(err) // failed to create apiDefinition
+
+			return ctx
+		}).
+		Assess("ApiDefinition must have upstream field defined",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				client := cfg.Client()
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+
+				//err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
+				err := wait.For(func() (done bool, err error) {
+					//apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
+					//
+					//if apiDef.Spec.UpstreamCertificateRefs == nil {
+					//	t.Log("UpstreamCertificateRefs field is undefined.")
+					//	return false
+					//}
+
+					//certIdFromSpec, ok := apiDef.Spec.UpstreamCertificates["*"]
+					//fmt.Printf("%v", apiDef.Spec.UpstreamCertificates)
+
+					//secretMeta := metav1.ObjectMeta{Name:"test-tls-secret-name"}
+					tlsSecret := v1.Secret{}
+					err2 := client.Resources().Get(ctx, "test-tls-secret-name", testNS, &tlsSecret)
+					if err2 != nil {
+						return false, nil
+					}
+
+					certPemBytes, ok := tlsSecret.Data["tls.crt"]
+					if !ok {
+						return false, nil
+					}
+
+					certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
+
+					calculatedCertID := "test-org" + certFingerPrint
+					t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
+					exists := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
+
+					if !exists {
+						t.Log("cannot find a tyk cert store certId for domain '*'.")
+						return false, nil
+					}
+					return true, nil
+
 				}, wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
