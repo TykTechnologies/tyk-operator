@@ -125,6 +125,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		if len(desired.Spec.PinnedPublicKeysSecretNames) != 0 {
+			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
+				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
+			}
+
 			for domain, keySecret := range desired.Spec.PinnedPublicKeysSecretNames {
 				tykCertID, err := r.checkSecretAndUpload(ctx, keySecret.SecretName, keySecret.SecretNamespace,
 					log, &env, keySecret.PublicKeySecretField,
@@ -133,7 +137,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					return err
 				}
 
-				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{domain: tykCertID}
+				upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
 			}
 
 			// To prevent API object validation failures, set additional property 'pinned_public_keys_secret_names' to nil.

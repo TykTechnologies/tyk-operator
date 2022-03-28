@@ -35,8 +35,6 @@ type: Opaque
 data:
   httpbin.org-public-key: | # this field name must match with ApiDefinition's spec.pinned_public_keys_secret_names.public_key_secret_field.
     LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
-  github.org-public-key: | # this field name must match with ApiDefinition's spec.pinned_public_keys_secret_names.public_key_secret_field.
-    LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -48,12 +46,10 @@ spec:
   protocol: http
   active: true
   pinned_public_keys_secret_names:
-    "httpbin.org":
+    "*":
       secret_name: httpbin-secret
       secret_namespace: httpbin-secrets-ns
       public_key_secret_field: httpbin.org-public-key # same as your secret's data field where public key resides.
-    "github.com":
-      public_key_secret_field:
   proxy:
     target_url: https://httpbin.org
     listen_path: /pinning
