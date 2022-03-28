@@ -171,7 +171,7 @@ scrap: generate manifests helm cross-build-image ## Re-install operator with hel
 
 .PHONY: setup-pro
 setup-pro:	## Install Tyk Pro
-	go run hack/bootstrap/create/main.go --debug  --mode pro -cluster=testing
+	go run hack/bootstrap/create/main.go --debug  --mode pro -cluster=${CLUSTER_NAME}
 
 .PHONY: setup-ce
 setup-ce:	## Install Tyk CE
