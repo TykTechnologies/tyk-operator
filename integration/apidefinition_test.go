@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
 	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"os"
@@ -577,7 +577,9 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 					calculatedCertID := os.Getenv("TYK_ORG") + certFingerPrint
 					t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
-					exists := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
+					//exists := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
+
+					exists := dashboard.Cert{}.Exists(ctx, calculatedCertID)
 
 					if !exists {
 						t.Log("cannot find a tyk cert store certId for domain '*'.")
