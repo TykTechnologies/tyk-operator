@@ -150,7 +150,7 @@ cross-build-image: ## Build docker image
 .PHONY: install-cert-manager
 install-cert-manager: ## Install cert manager
 	@echo "===> installing cert-manager"
-	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.4/cert-manager.yaml
+	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
 	kubectl rollout status  deployment/cert-manager -n cert-manager
 	kubectl rollout status  deployment/cert-manager-cainjector -n cert-manager
 	kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
@@ -171,7 +171,7 @@ scrap: generate manifests helm cross-build-image ## Re-install operator with hel
 
 .PHONY: setup-pro
 setup-pro:	## Install Tyk Pro
-	go run hack/bootstrap/create/main.go --debug  --mode pro -cluster=${CLUSTER_NAME}
+	go run hack/bootstrap/create/main.go --debug  --mode pro -cluster=testing
 
 .PHONY: setup-ce
 setup-ce:	## Install Tyk CE

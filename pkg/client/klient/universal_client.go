@@ -5,9 +5,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/gateway"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 )
 
@@ -16,12 +14,12 @@ var _ universal.Client = (*Client)(nil)
 var Universal = Client{}
 
 func get(ctx context.Context) universal.Client {
-	r := client.GetContext(ctx)
-	if r.Env.Mode == "pro" {
-		return dashboard.Client{}
-	}
+	//r := client.GetContext(ctx)
+	//if r.Env.Mode == "pro" {
+	return dashboard.Client{}
+	//}
 
-	return gateway.Client{}
+	//return gateway.Client{}
 }
 
 // Implements universal.Client but picks the correct client dynamically based on
