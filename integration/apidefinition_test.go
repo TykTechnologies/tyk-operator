@@ -524,11 +524,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 			// Create ApiDefinition with Certificate Pinning.
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefCertificatePinningName
-				apiDef.Spec.PinnedPublicKeys = &model.MapStringInterfaceType{
-					Unstructured: unstructured.Unstructured{
-						Object: map[string]interface{}{"*": publicKeyID},
-					},
-				}
+				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
@@ -553,13 +549,9 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 					}
 
 					// 'pinned_public_keys' field must exist in the ApiDefinition object.
-					val, found, err := unstructured.NestedString(apiDef.Spec.PinnedPublicKeys.Object, "*")
-					if err != nil {
-						t.Log(err)
-						return false
-					}
-					if !found {
-						t.Log("cannot find a public key for domain '*'.")
+					val, ok := apiDef.Spec.PinnedPublicKeys["*"]
+					if !ok {
+						t.Log("cannot find a public key for the domain '*'")
 						return false
 					}
 

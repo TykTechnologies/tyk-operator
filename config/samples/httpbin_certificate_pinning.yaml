@@ -15,6 +15,15 @@
 # are supported. Hence, if you target any other URL than https://httpbin.org (for instance https://github.com/), you will
 # face a 'public key pinning error' for that particular domain.
 
+apiVersion: v1
+kind: Secret
+metadata:
+  name: httpbin-secret
+  namespace: httpbin-secrets-ns
+type: Opaque
+data:
+  httpbin.org-public-key: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -24,8 +33,11 @@ spec:
   use_keyless: true
   protocol: http
   active: true
-  pinned_public_keys:
-    "*": 62397d1af55f8f000100536ff8a4b344441b021f60a982cb1a97c21be700cbb3f1dff42693f7bc120c3277ba # the id of the httpbin.org public key.
+  pinned_public_keys_secret_names:
+    "*":
+      secret_name: httpbin-secret
+      secret_namespace: httpbin-secrets-ns
+      public_key_secret_field: httpbin.org-public-key
   proxy:
     target_url: https://httpbin.org
     listen_path: /pinning

@@ -506,6 +506,15 @@ type OpenIDOptions struct {
 	SegregateByClient bool                `json:"segregate_by_client"`
 }
 
+// PinnedPublicKeySecret holds information about a Kubernetes Secret object called 'SecretName' residing in
+// 'SecretNamespace' namespace that includes the public key of the domain, defined through 'PublicKeySecretField' field.
+type PinnedPublicKeySecret struct {
+	SecretName string `json:"secret_name"`
+	// +kubebuilder:default:=default
+	SecretNamespace      string `json:"secret_namespace"`
+	PublicKeySecretField string `json:"public_key_secret_field"`
+}
+
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
 
@@ -578,7 +587,9 @@ type APIDefinitionSpec struct {
 
 	// PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current
 	// namespace which contain the certificates for Certificate Pinning feature.
-	PinnedPublicKeysSecretNames []string `json:"pinned_public_keys_secret_names,omitempty"`
+	// PinnedPublicKeysSecretNames expects a domain name as the key and the secret name as value. For example,
+	// map[string]string{"foo.com": "foo-com-secret-name"}.
+	PinnedPublicKeysSecretNames map[string]PinnedPublicKeySecret `json:"pinned_public_keys_secret_names,omitempty"`
 
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`

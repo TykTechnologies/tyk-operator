@@ -696,12 +696,31 @@ spec:
                   if using cert-manager.
                 type: object
               pinned_public_keys_secret_names:
-                description: PinnedPublicKeysSecretNames represents the names of the
-                  secrets that the controller should look for in the current namespace
+                additionalProperties:
+                  description: PinnedPublicKeySecret holds information about a Kubernetes
+                    Secret object called 'SecretName' residing in 'SecretNamespace'
+                    namespace that includes the public key of the domain, defined
+                    through 'PublicKeySecretField' field.
+                  properties:
+                    public_key_secret_field:
+                      type: string
+                    secret_name:
+                      type: string
+                    secret_namespace:
+                      default: default
+                      type: string
+                  required:
+                  - public_key_secret_field
+                  - secret_name
+                  - secret_namespace
+                  type: object
+                description: 'PinnedPublicKeysSecretNames represents the names of
+                  the secrets that the controller should look for in the current namespace
                   which contain the certificates for Certificate Pinning feature.
-                items:
-                  type: string
-                type: array
+                  PinnedPublicKeysSecretNames expects a domain name as the key and
+                  the secret name as value. For example, map[string]string{"foo.com":
+                  "foo-com-secret-name"}.'
+                type: object
               protocol:
                 description: APIProtocol is the network transport protocol supported
                   by the gateway
