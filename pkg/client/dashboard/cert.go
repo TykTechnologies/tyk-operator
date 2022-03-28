@@ -19,6 +19,10 @@ type CertificateList struct {
 	Pages   int      `json:"pages"`
 }
 
+func Certificate() Cert {
+	return Cert{}
+}
+
 // All returns a list of all certificates ID's
 func (c Cert) All(ctx context.Context) ([]string, error) {
 	res, err := client.Get(ctx, endpointCerts, nil)

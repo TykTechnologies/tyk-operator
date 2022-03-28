@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
 	"sort"
 	"strconv"
 	"time"
@@ -202,7 +203,8 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	}
 
 	tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
-	exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
+	//exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
+	exists := dashboard.Certificate().Exists(ctx, tykCertID)
 
 	if !exists {
 		// upload the certificate
