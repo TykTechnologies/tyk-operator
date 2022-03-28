@@ -587,8 +587,6 @@ type APIDefinitionSpec struct {
 
 	// PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current
 	// namespace which contain the certificates for Certificate Pinning feature.
-	// PinnedPublicKeysSecretNames expects a domain name as the key and the secret name as value. For example,
-	// map[string]string{"foo.com": "foo-com-secret-name"}.
 	PinnedPublicKeysSecretNames map[string]PinnedPublicKeySecret `json:"pinned_public_keys_secret_names,omitempty"`
 
 	// EnableJWT set JWT as the access method for this API.
