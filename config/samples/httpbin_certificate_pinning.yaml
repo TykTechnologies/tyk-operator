@@ -3,18 +3,29 @@
 # Certificate pinning is a feature which allows you to whitelist public keys used to generate certificates. For more
 # details, please visit official Tyk Documentation https://tyk.io/docs/security/certificate-pinning/.
 #
-# Public keys can be defined via an ApiDefinition object's `pinned_public_keys` field, using the following format:
+# Public keys can be defined in two ways:
+# 1) Through ApiDefinition object's `pinned_public_keys` field, using the following format:
 #  pinned_public_keys:
 #    "foo.com": "<key_id>",
 #    "*": "<key_id-1>,<key_id-2>"
+#
 # Public keys are stored inside the Tyk certificate storage, so you can use Certificate API to manage them. For key-id
 # you should set the ID returned after you upload the public key using the Certificate API.
 #
-# In this example, we have an HTTPS upstream target as `https://httpbin.org`. The public key of httpbin.org is uploaded
-# using the Certificate API and its ID is used in the `pinned_public_keys` field for all domains, since wildcard domains
-# are supported. Hence, if you target any other URL than https://httpbin.org (for instance https://github.com/), you will
-# face a 'public key pinning error' for that particular domain.
-
+# 2) Through ApiDefinition object's 'pinned_public_keys_secret_names' field, using the following format:
+#  "domain.org":
+#    secret_name: secret-name                       # the name of the Kubernetes Secret Object that holds the public key for the 'domain.org'.
+#    secret_namespace: secret-ns                    # the namespace of the Kubernetes Secret Object.
+#    public_key_secret_field: domain.org-public-key # the field name in the Secret object, that includes the public key.
+#
+#
+# In this example, we have an HTTPS upstream target as `https://httpbin.org`. The public key of httpbin.org is obtained
+# with the following command: openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null | openssl x509 -pubkey -noout
+# We are creating a secret called 'httpbin-secret' in the 'httpbin-secrets-ns' namespace. In the 'httpbin.org-public-key'
+# field, we are specifying the public key of the httpbin.org obtained with above openssl command, in the decoded manner.
+# Now, in the ApiDefinition, we are using this public key for all domains as '*' (Wildcard domains are also supported.).
+# If you target any other URL than https://httpbin.org (for instance https://github.com/), you will face a 'public key pinning error'
+# for that particular domain because the public key of httpbin.org is used for all domains.
 apiVersion: v1
 kind: Secret
 metadata:
@@ -22,7 +33,8 @@ metadata:
   namespace: httpbin-secrets-ns
 type: Opaque
 data:
-  httpbin.org-public-key: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+  httpbin.org-public-key: | # this field name must match with ApiDefinition's spec.pinned_public_keys_secret_names.public_key_secret_field.
+    LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -37,7 +49,7 @@ spec:
     "*":
       secret_name: httpbin-secret
       secret_namespace: httpbin-secrets-ns
-      public_key_secret_field: httpbin.org-public-key
+      public_key_secret_field: httpbin.org-public-key # same as your secret's data field where public key resides.
   proxy:
     target_url: https://httpbin.org
     listen_path: /pinning
