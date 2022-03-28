@@ -560,20 +560,9 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				client := cfg.Client()
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
-				//err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 				err := wait.For(func() (done bool, err error) {
-					//apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					//
-					//if apiDef.Spec.UpstreamCertificateRefs == nil {
-					//	t.Log("UpstreamCertificateRefs field is undefined.")
-					//	return false
-					//}
 
-					//certIdFromSpec, ok := apiDef.Spec.UpstreamCertificates["*"]
-					//fmt.Printf("%v", apiDef.Spec.UpstreamCertificates)
-
-					//secretMeta := metav1.ObjectMeta{Name:"test-tls-secret-name"}
-					tlsSecret := v1.Secret{}
+					tlsSecret := v1.Secret{} //nolint:errcheck
 					err2 := client.Resources().Get(ctx, "test-tls-secret-name", testNS, &tlsSecret)
 					if err2 != nil {
 						return false, nil
