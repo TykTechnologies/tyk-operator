@@ -230,7 +230,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 
 	pubKey, ok := secret.Data[field]
 	if !ok {
-		err = fmt.Errorf("requeueing because %s not found in secret", "field")
+		err = fmt.Errorf("requeueing because %s not found in secret", field)
 		log.Error(err, "requeueing because key not found in secret")
 
 		return "", err
