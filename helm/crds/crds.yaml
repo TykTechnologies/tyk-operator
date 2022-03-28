@@ -618,7 +618,7 @@ spec:
                   - secret_name
                   - secret_namespace
                   type: object
-                description: 'PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates for Certificate Pinning feature. PinnedPublicKeysSecretNames expects a domain name as the key and the secret name as value. For example, map[string]string{"foo.com": "foo-com-secret-name"}.'
+                description: PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates for Certificate Pinning feature.
                 type: object
               protocol:
                 description: APIProtocol is the network transport protocol supported by the gateway
