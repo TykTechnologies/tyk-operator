@@ -7,6 +7,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	v1 "k8s.io/api/core/v1"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -538,7 +539,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			// Create ApiDefinition with Certificate Pinning.
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				certName := "test-tls-secret-name"
-				apiDef.Spec.OrgID = "test-org"
+				//apiDef.Spec.OrgID = "test-org"
 				apiDef.Name = apiDefUpstreamCerts
 				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
 					"*": certName,
@@ -585,7 +586,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 					certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
-					calculatedCertID := "test-org" + certFingerPrint
+					calculatedCertID := os.Getenv("TYK_ORG") + certFingerPrint
 					t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
 					exists := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
 
