@@ -3,8 +3,8 @@ package gateway
 import (
 	"context"
 	"fmt"
-
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 )
 
@@ -55,5 +55,5 @@ func (c Client) HotReload(ctx context.Context) error {
 
 // TODO: Certificate Requires implementation
 func (c Client) Certificate() universal.Certificate {
-	panic("implement me")
+	return dashboard.Cert{}
 }

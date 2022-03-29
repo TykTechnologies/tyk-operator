@@ -57,7 +57,7 @@ type ApiDefinitionReconciler struct {
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete;deletecollection
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;update;create
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
 func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -114,7 +114,9 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 
+		log.Info("andrei203 check")
 		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
+			log.Info("andreitest101")
 			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
 				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
 				if err != nil {
@@ -179,6 +181,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	env *environmet.Env,
 ) (string, error) {
 	secret := v1.Secret{}
+	log.Info("andreitest102")
 
 	err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
 	if err != nil {
@@ -201,13 +204,17 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 
 		return "", err
 	}
+	log.Info("andreitest103")
 
 	tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
 	//exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
 	exists := dashboard.Certificate().Exists(ctx, tykCertID)
+	log.Info("andreitest104")
 
 	if !exists {
 		// upload the certificate
+		log.Info("andreitest104")
+
 		tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
 		if err != nil {
 			return "", err

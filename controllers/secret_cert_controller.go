@@ -54,13 +54,16 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log.Info("getting secret resource")
 
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
+		log.Info("andreitest0")
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
+	log.Info("andreitest1")
 	// set context for all api calls inside this reconciliation loop
 	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	log.Info("andreitest2")
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -147,6 +150,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	for idx, apiDef := range apiDefList.Items {
 		for domain, certName := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == certName {
+				log.Info("we got it andrei123")
 				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
 					return ctrl.Result{Requeue: true}, err
