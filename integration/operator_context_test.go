@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	testApiDef       = "test-http"
-	testOperatorCtx  = "mycontext"
-	gatewayLocalhost = "http://localhost:7000"
+	testApiDef         = "test-http"
+	testOperatorCtx    = "mycontext"
+	gatewayLocalhost   = "http://localhost:7000"
+	dashboardLocalHost = "http://localhost:3000"
 )
 
 //func TestOperatorContextCreate(t *testing.T) {

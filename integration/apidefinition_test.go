@@ -2,13 +2,15 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/matryer/is"
+	"io"
 	v1 "k8s.io/api/core/v1"
+	"net/http"
 	"os"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -554,22 +556,10 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				client := cfg.Client()
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
-				//err := wait.For(func() (done bool, err error) {
-
 				tlsSecret := v1.Secret{} //nolint:errcheck
-				//tlsSecret.Name = "test-tls-secret-name"
-				//tlsSecret.Namespace = testNS
+
 				err2 := client.Resources(testNS).Get(ctx, "test-tls-secret-name", testNS, &tlsSecret)
 				is.NoErr(err2)
-
-				//err2 := wait.For(conditions.New(client.Resources()).ResourceMatch(&tlsSecret, func(object k8s.Object) bool {
-				//	secret := object.(*v1.Secret) //nolint:errcheck
-				//	return secret.Name == "test-tls-secret-name"
-				//}), wait.WithTimeout(defaultTimeout))
-
-				//if err2 != nil {
-				//	return false
-				//}
 
 				certPemBytes, ok := tlsSecret.Data["tls.crt"]
 				if !ok {
@@ -579,26 +569,44 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 				calculatedCertID := os.Getenv("TYK_ORG") + certFingerPrint
 				t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
-				//exists := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
 
-				wfResult := wait.For(func() (done bool, err error) {
+				err := wait.For(func() (done bool, err error) {
+					hc := &http.Client{}
 
-					//exists := dashboard.Cert{}.Exists(ctx, calculatedCertID)
-					exists := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
-					if !exists {
+					req, err := http.NewRequest(
+						http.MethodGet,
+						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, os.Getenv("TYK_ORG")),
+						nil,
+					)
+					is.NoErr(err)
+					req.Header.Add("Content-type", "application/json")
+					req.Header.Add("authorization", os.Getenv("TYK_AUTH"))
+
+					resp, err := hc.Do(req)
+					is.NoErr(err)
+
+					response, err := io.ReadAll(resp.Body)
+
+					if err != nil {
+						return false, nil
+					}
+
+					certResponse := struct {
+						Certs []string `json:"certs"`
+						Pages int      `json:"pages"`
+					}{}
+					err = json.Unmarshal(response, &certResponse)
+					if err != nil {
+						return false, nil
+					}
+
+					if len(certResponse.Certs) != 1 {
 						return false, nil
 					}
 					return true, nil
 
 				})
-
-				if wfResult != nil {
-					t.Log("cannot find a tyka cert store certId for domain '*'.")
-					is.Fail()
-				}
-
-				//is.NoErr(err)
-
+				is.NoErr(err)
 				return ctx
 			}).Feature()
 
