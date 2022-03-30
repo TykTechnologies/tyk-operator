@@ -567,7 +567,8 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				}
 				certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
-				calculatedCertID := os.Getenv("TYK_ORG") + certFingerPrint
+				orgId := os.Getenv("TYK_ORG")
+				calculatedCertID := orgId + certFingerPrint
 				t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
 
 				err := wait.For(func() (done bool, err error) {
@@ -575,7 +576,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, os.Getenv("TYK_ORG")),
+						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, orgId),
 						nil,
 					)
 					is.NoErr(err)
