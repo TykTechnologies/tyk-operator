@@ -318,9 +318,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 
 	for n, tc := range tests {
 		t.Run(n, func(t *testing.T) {
-			err := tc.ApiDefinition.validate()
-
-			if err != nil {
+			if err := tc.ApiDefinition.validate(); err != nil {
 				is.True(apierrors.IsInvalid(err))
 				is.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
 			}
@@ -355,7 +353,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ErrCause:  field.ErrorTypeInvalid,
+			ErrCause: field.ErrorTypeInvalid,
 		},
 		"invalid data source kind": {
 			ApiDefinition: ApiDefinition{
@@ -377,7 +375,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ErrCause:  field.ErrorTypeInvalid,
+			ErrCause: field.ErrorTypeInvalid,
 		},
 		"valid data source with empty URL": {
 			ApiDefinition: ApiDefinition{
@@ -400,7 +398,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ErrCause:  field.ErrorTypeRequired,
+			ErrCause: field.ErrorTypeRequired,
 		},
 		"valid data source with invalid URL": {
 			ApiDefinition: ApiDefinition{
@@ -426,7 +424,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ErrCause:  field.ErrorTypeInvalid,
+			ErrCause: field.ErrorTypeInvalid,
 		},
 		"valid data source with empty method": {
 			ApiDefinition: ApiDefinition{
@@ -451,7 +449,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ErrCause:  field.ErrorTypeRequired,
+			ErrCause: field.ErrorTypeRequired,
 		},
 		"valid api with HTTP DataSource": {
 			ApiDefinition: ApiDefinition{
@@ -507,9 +505,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 
 	for n, tc := range tests {
 		t.Run(n, func(t *testing.T) {
-			err := tc.ApiDefinition.validate()
-
-			if err != nil {
+			if err := tc.ApiDefinition.validate(); err != nil {
 				statusErr, ok := err.(*apierrors.StatusError)
 				if !ok {
 					t.Fatal("invalid error type")
