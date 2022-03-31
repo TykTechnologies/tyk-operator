@@ -575,11 +575,6 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				err3 := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
 				is.NoErr(err3)
 
-				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
-				if !ok {
-					is.Fail()
-				}
-
 				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
 				if !ok {
 					is.Fail()
@@ -592,12 +587,12 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, string(tykOrg)),
+						fmt.Sprintf("%s/tyk/certs/?certId=%s&org_id=%s", gatewayLocalhost, calculatedCertID, string(tykOrg)),
 						nil,
 					)
 					is.NoErr(err)
 					req.Header.Add("Content-type", "application/json")
-					req.Header.Add("authorization", string(tykAuth))
+					req.Header.Add("x-tyk-authorization", "CHANGEME")
 
 					resp, err := hc.Do(req)
 					is.NoErr(err)
