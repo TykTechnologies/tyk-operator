@@ -1,3 +1,17 @@
+##### How to use upstream certificate:
+# Firstly apply "config/samples/tls_self_signed_issuer.yaml" to generate a self signed certificate using the command:
+# "kubectl apply -f config/samples/tls_self_signed_issuer.yaml"
+#
+# This should generate a secret called "my-test-tls" which is also refferenced in our ApiDefinition below
+#
+# Now apply this manifest using the command
+# "kubectl apply -f config/samples/httpbin_upstream_cert.yaml"
+#
+# An ApiDefinition should be created and the associated certificate should be uploaded into the tyk-cert-store
+
+# NOTE: the upstream_certificate_refs cand hold references to multiple secrets which are used for the domain
+# mentioned in the key (currently "*" is used as a wildcard for all the domains)
+
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -5,7 +19,7 @@ metadata:
 spec:
   name: httpbin
   use_keyless: true
-  upstream_certificate_name:
+  upstream_certificate_refs:
     "*": my-test-tls
   protocol: http
   active: true

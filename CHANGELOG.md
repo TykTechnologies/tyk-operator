@@ -6,6 +6,7 @@
 
 **Added:**
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
+- Added support for [upstream mTLS certificates](./config/samples/httpbin_upstream_cert.yaml)
 
 **Fixed:**
 - Fixed a bug in which ApiDefinition CRDs were wrongly mutated

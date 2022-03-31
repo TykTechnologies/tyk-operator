@@ -577,7 +577,7 @@ type APIDefinitionSpec struct {
 
 	// UpstreamCertificateRefs is a map of domains and secret names that is used internally
 	// to obtain certificates from secrets in order to establish mTLS support for upstreams
-	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_name,omitempty"`
+	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
 
 	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
