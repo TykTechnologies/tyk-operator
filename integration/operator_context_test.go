@@ -300,6 +300,11 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	apiDef.Spec.Protocol = "http"
 	apiDef.Spec.UseKeylessAccess = true
 	apiDef.Spec.Active = true
+	apiDef.Spec.VersionData = model.VersionData{
+		DefaultVersion: "Default",
+		NotVersioned:   true,
+		Versions:       map[string]model.VersionInfo{"Default": {Name: "Default"}},
+	}
 	apiDef.Spec.Proxy = model.Proxy{
 		ListenPath:      "/httpbin",
 		TargetURL:       "http://httpbin.default.svc:8000",

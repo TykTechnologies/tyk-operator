@@ -147,18 +147,18 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		upstreamRequestStruct.Spec.CertificateSecretNames = nil
 		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
 
-		targets := desired.Spec.CollectLoopingTarget()
+		targets := upstreamRequestStruct.Spec.CollectLoopingTarget()
 
-		if err := r.ensureTargets(ctx, desired.Namespace, targets); err != nil {
+		if err := r.ensureTargets(ctx, upstreamRequestStruct.Namespace, targets); err != nil {
 			return err
 		}
-		err := r.updateLoopingTargets(ctx, desired, targets)
+		err := r.updateLoopingTargets(ctx, upstreamRequestStruct, targets)
 		if err != nil {
 			log.Error(err, "Failed to update looping targets")
 			return err
 		}
 
-		desired.Spec.CollectLoopingTarget()
+		upstreamRequestStruct.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			return r.create(ctx, upstreamRequestStruct, log)
@@ -208,8 +208,8 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	}
 
 	// 'field' holds Secret object's data field that we are going to check.
-	// If kubernetes.io/tls type Secret is used, there is no need to provide fields since kubernetes.io/tls types have
-	// already defined fields called as 'tls.crt' and 'tls.key'. However, if you provide any other type of secrets such
+	// If kubernetes.io/tls type Secret is used, there is no need to provide 'field' since kubernetes.io/tls types have
+	// already defined fields called 'tls.crt' and 'tls.key'. However, if you provide any other type of secrets such
 	// as Opaque (as we do in Public Key Certificate pinning), you need to provide field that controller should check,
 	// through 'public_key_secret_field'.
 	if secret.Type == secretType {

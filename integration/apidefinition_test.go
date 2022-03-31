@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/matryer/is"
@@ -511,22 +513,93 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 func TestApiDefinitionCertificatePinning(t *testing.T) {
 	var (
-		apiDefCertificatePinningName = "apidef-certificate-pinning"
-		publicKeyID                  = "test-public-key-id"
-		defaultTimeout               = 1 * time.Minute
+		apiDefPinning = "apidef-certificate-pinning"
+
+		apiDefPinningViaSecret           = "apidef-with-secret"
+		apiDefPinningViaSecretListenPath = "/secret"
+
+		invalidApiDef           = "invalid-proxy-apidef"
+		invalidApiDefListenPath = "/invalid"
+
+		secretName             = "secret"
+		publicKeyFieldInSecret = "httpbin-org-public-key"
+
+		publicKeyID    = "test-public-key-id"
+		defaultTimeout = 30 * time.Second
+		pubKeyPem      = []byte(`-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhOQnpezrwA0vHzf47Pa+
+O84fWue/562TqQrVirtf+3fsGQd3MmwnId+ksAGQvWN4M1/hSelYJb246pFqGB7t
++ZI+vjBYH4/J6CiFsKwzusqkSF63ftQh8Ox0OasB9HvRlOPHT/B5Dskh8HNiJ+1l
+ExSZEaO9zsQ9wO62bsGHsMX/UP3VQByXLVBZu0DMKsl2hGaUNy9+LgZv4/iVpWDP
+Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
+5ph610hWmVQKIrCAPsAUMM9m6+iDb64NjrMjWV/bkm36r+FBMz9L8HfEB4hxlwwg
+5QIDAQAB
+-----END PUBLIC KEY-----`)
 	)
 
-	adCreate := features.New("Create an ApiDefinition for Certificate Pinning").
+	adCreate := features.New("Create ApiDefinition objects for Certificate Pinning").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			client := envConf.Client()
 			is := is.New(t)
 
-			// Create ApiDefinition with Certificate Pinning.
+			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
+			// It contains a dummy public key which is not valid to be used.
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				apiDef.Name = apiDefCertificatePinningName
+				apiDef.Name = apiDefPinning
 				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			is.NoErr(err)
+
+			// Create a secret to store the public key of httpbin.org.
+			secret := &v1.Secret{
+				Type: v1.SecretTypeOpaque,
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      secretName,
+					Namespace: testNS,
+				},
+				Data: map[string][]byte{
+					publicKeyFieldInSecret: pubKeyPem,
+				},
+			}
+
+			err = client.Resources(testNS).Create(ctx, secret)
+			is.NoErr(err)
+
+			pbks := map[string]model.PinnedPublicKeySecret{
+				// For all domains (`*`), use following secret that contains the public key of the httpbin.org
+				// So, if you make any requests to addresses except httpbin.org, we should get proxy errors because
+				// of pinned public key.
+				"*": {SecretName: secretName, SecretNamespace: testNS, PublicKeySecretField: publicKeyFieldInSecret},
+			}
+
+			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
+			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefPinningViaSecret
+				apiDef.Spec.Name = "valid"
+				apiDef.Spec.Proxy = model.Proxy{
+					ListenPath:      apiDefPinningViaSecretListenPath,
+					TargetURL:       "https://httpbin.org/",
+					StripListenPath: true,
+				}
+				apiDef.Spec.PinnedPublicKeysSecretNames = pbks
+			}, envConf)
+			is.NoErr(err)
+
+			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
+			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
+			// to reach github.com, which must fail due to proxy error.
+			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = invalidApiDef
+				apiDef.Spec.Proxy = model.Proxy{
+					ListenPath:      invalidApiDefListenPath,
+					TargetURL:       "https://github.com/",
+					StripListenPath: true,
+				}
+				apiDef.Spec.Name = "invalid"
+				apiDef.Spec.PinnedPublicKeysSecretNames = pbks
+			}, envConf)
+			is.NoErr(err)
 
 			return ctx
 		}).
@@ -537,7 +610,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefCertificatePinningName, Namespace: testNS},
+					ObjectMeta: metav1.ObjectMeta{Name: apiDefPinning, Namespace: testNS},
 				}
 
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
@@ -560,7 +633,60 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 				is.NoErr(err)
 
 				return ctx
-			}).Feature()
+			}).
+		Assess("Allow making requests based on the pinned public key defined via secret",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				err := wait.For(func() (done bool, err error) {
+					hc := &http.Client{}
+					req, err := http.NewRequest(
+						http.MethodGet,
+						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefPinningViaSecretListenPath),
+						nil,
+					)
+					is.NoErr(err)
+
+					resp, err := hc.Do(req)
+					is.NoErr(err)
+
+					if resp.StatusCode != 200 {
+						t.Log("expected to access httpbin.org since it is pinned via public key.")
+						return false, nil
+					}
+
+					return true, nil
+				})
+				is.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Prevent making requests to disallowed addresses based on the pinned public key defined via secret",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				err := wait.For(func() (done bool, err error) {
+					hc := &http.Client{}
+					req, err := http.NewRequest(
+						http.MethodGet,
+						fmt.Sprintf("%s%s", gatewayLocalhost, invalidApiDefListenPath),
+						nil,
+					)
+					is.NoErr(err)
+
+					resp, err := hc.Do(req)
+					is.NoErr(err)
+
+					if resp.StatusCode == 200 {
+						t.Log("unexpected access to invalid address")
+						return false, nil
+					}
+
+					return true, nil
+				})
+				is.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
 
 	testenv.Test(t, adCreate)
 }
