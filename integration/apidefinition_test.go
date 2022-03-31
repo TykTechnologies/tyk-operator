@@ -519,6 +519,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 	var (
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
+		defaultTimeout      = 3 * time.Minute
 	)
 
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
@@ -619,7 +620,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						return false, nil
 					}
 					return true, nil
-				})
+				}, wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 				return ctx
 			}).Feature()
