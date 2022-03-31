@@ -56,7 +56,7 @@ type ApiDefinitionReconciler struct {
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete;deletecollection
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;update;create
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
 func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -112,6 +112,20 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
+
+		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
+			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
+				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
+				if err != nil {
+					return err
+				}
+				if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
+					upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
+				}
+				upstreamRequestStruct.Spec.UpstreamCertificates[domain] = tykCertID
+			}
+		}
+		upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
 
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {

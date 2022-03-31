@@ -2,7 +2,11 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	"io"
+	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"strings"
 	"testing"
@@ -503,6 +507,129 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				}, wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, adCreate)
+}
+
+func TestApiDefinitionUpstreamCertificates(t *testing.T) {
+	var (
+		apiDefUpstreamCerts = "apidef-upstream-certs"
+		defaultVersion      = "Default"
+
+		//defaultTimeout = 3 * time.Minute
+	)
+
+	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+
+			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
+			is := is.New(t)
+			t.Log(testNS)
+			_, err := createTestTlsSecret(ctx, testNS, nil, envConf)
+			is.NoErr(err)
+
+			return ctx
+		}).
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			is := is.New(t)
+
+			//_, err := createTestTlsSecret(ctx, testNS, func(secret *v1.Secret) {}, envConf)
+			//is.NoErr(err) // failed to create apiDefinition
+
+			// Create ApiDefinition with Certificate Pinning.
+			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				certName := "test-tls-secret-name"
+				//apiDef.Spec.OrgID = "test-org"
+				apiDef.Name = apiDefUpstreamCerts
+				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
+					"*": certName,
+				}
+				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
+				apiDef.Spec.VersionData.NotVersioned = true
+				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
+					defaultVersion: {Name: defaultVersion},
+				}
+			}, envConf)
+			is.NoErr(err) // failed to create apiDefinition
+
+			return ctx
+		}).
+		Assess("ApiDefinition must have upstream field defined",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				client := cfg.Client()
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+
+				tlsSecret := v1.Secret{} //nolint:errcheck
+
+				err2 := client.Resources(testNS).Get(ctx, "test-tls-secret-name", testNS, &tlsSecret)
+				is.NoErr(err2)
+
+				certPemBytes, ok := tlsSecret.Data["tls.crt"]
+				if !ok {
+					is.Fail()
+				}
+				certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
+
+				opConfSecret := v1.Secret{}
+				opNs := "tyk-operator-system"
+				err3 := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+				is.NoErr(err3)
+
+				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
+				if !ok {
+					is.Fail()
+				}
+
+				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
+				if !ok {
+					is.Fail()
+				}
+
+				calculatedCertID := string(tykOrg) + certFingerPrint
+				t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
+				//existsTest := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
+
+				err := wait.For(func() (done bool, err error) {
+					hc := &http.Client{}
+
+					req, err := http.NewRequest(
+						http.MethodGet,
+						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, string(tykOrg)),
+						nil,
+					)
+					is.NoErr(err)
+					req.Header.Add("Content-type", "application/json")
+					req.Header.Add("authorization", string(tykAuth))
+
+					resp, err := hc.Do(req)
+					is.NoErr(err)
+
+					response, err := io.ReadAll(resp.Body)
+
+					if err != nil {
+						return false, nil
+					}
+
+					certResponse := struct {
+						Certs []string `json:"certs"`
+						Pages int      `json:"pages"`
+					}{}
+					err = json.Unmarshal(response, &certResponse)
+					if err != nil {
+						return false, nil
+					}
+
+					if len(certResponse.Certs) != 1 {
+						return false, nil
+					}
+					return true, nil
+
+				})
+				is.NoErr(err)
 				return ctx
 			}).Feature()
 
