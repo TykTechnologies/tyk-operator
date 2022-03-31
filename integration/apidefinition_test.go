@@ -11,7 +11,6 @@ import (
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"net/http"
-	"os"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
@@ -567,8 +566,22 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				}
 				certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
-				orgId := os.Getenv("TYK_ORG")
-				calculatedCertID := orgId + certFingerPrint
+				opConfSecret := v1.Secret{}
+				opNs := "tyk-operator-system"
+				err3 := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+				is.NoErr(err3)
+
+				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
+				if !ok {
+					is.Fail()
+				}
+
+				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
+				if !ok {
+					is.Fail()
+				}
+
+				calculatedCertID := string(tykOrg) + certFingerPrint
 				t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
 
 				err := wait.For(func() (done bool, err error) {
@@ -576,12 +589,12 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, orgId),
+						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, string(tykOrg)),
 						nil,
 					)
 					is.NoErr(err)
 					req.Header.Add("Content-type", "application/json")
-					req.Header.Add("authorization", os.Getenv("TYK_AUTH"))
+					req.Header.Add("authorization", string(tykAuth))
 
 					resp, err := hc.Do(req)
 					is.NoErr(err)
