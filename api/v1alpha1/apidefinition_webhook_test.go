@@ -248,7 +248,6 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 
 	tests := map[string]struct {
 		ApiDefinition ApiDefinition
-		ReturnErr     bool
 		ErrCause      field.ErrorType
 	}{
 		"set both keyless and auth type": {
@@ -261,8 +260,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
-			ErrCause:  field.ErrorTypeForbidden,
+			ErrCause: field.ErrorTypeForbidden,
 		},
 		"set keyless auth type": {
 			ApiDefinition: ApiDefinition{
@@ -273,7 +271,6 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: false,
 		},
 		"set standard auth without auth details": {
 			ApiDefinition: ApiDefinition{
@@ -284,8 +281,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
-			ErrCause:  field.ErrorTypeNotFound,
+			ErrCause: field.ErrorTypeNotFound,
 		},
 		"set standard auth without authToken details": {
 			ApiDefinition: ApiDefinition{
@@ -301,8 +297,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
-			ErrCause:  field.ErrorTypeNotFound,
+			ErrCause: field.ErrorTypeNotFound,
 		},
 		"set standard auth with authToken details": {
 			ApiDefinition: ApiDefinition{
@@ -318,7 +313,6 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: false,
 		},
 	}
 
@@ -326,7 +320,6 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			err := tc.ApiDefinition.validate()
 
-			is.Equal(tc.ReturnErr, err != nil)
 			if err != nil {
 				is.True(apierrors.IsInvalid(err))
 				is.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
@@ -340,7 +333,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 
 	tests := map[string]struct {
 		ApiDefinition ApiDefinition
-		ReturnErr     bool
 		ErrCause      field.ErrorType
 	}{
 		"empty data source kind": {
@@ -363,7 +355,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
 			ErrCause:  field.ErrorTypeInvalid,
 		},
 		"invalid data source kind": {
@@ -386,7 +377,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
 			ErrCause:  field.ErrorTypeInvalid,
 		},
 		"valid data source with empty URL": {
@@ -410,7 +400,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
 			ErrCause:  field.ErrorTypeRequired,
 		},
 		"valid data source with invalid URL": {
@@ -437,7 +426,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
 			ErrCause:  field.ErrorTypeInvalid,
 		},
 		"valid data source with empty method": {
@@ -463,7 +451,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: true,
 			ErrCause:  field.ErrorTypeRequired,
 		},
 		"valid api with HTTP DataSource": {
@@ -490,7 +477,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: false,
 		},
 		"valid api with GraphQL DataSource": {
 			ApiDefinition: ApiDefinition{
@@ -516,7 +502,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 					},
 				},
 			},
-			ReturnErr: false,
 		},
 	}
 
@@ -524,7 +509,6 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			err := tc.ApiDefinition.validate()
 
-			is.Equal(tc.ReturnErr, err != nil)
 			if err != nil {
 				statusErr, ok := err.(*apierrors.StatusError)
 				if !ok {
