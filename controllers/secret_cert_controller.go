@@ -261,8 +261,8 @@ type NewSecretType struct {
 func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
-		err := json.Unmarshal(jsBytes, &secret)
 
+		err := json.Unmarshal(jsBytes, &secret)
 		if err != nil {
 			return false
 		}
