@@ -519,8 +519,6 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 	var (
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
-
-		// defaultTimeout = 3 * time.Minute
 	)
 
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
@@ -537,13 +535,9 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
-			//_, err := createTestTlsSecret(ctx, testNS, func(secret *v1.Secret) {}, envConf)
-			//is.NoErr(err) // failed to create apiDefinition
-
 			// Create ApiDefinition with Certificate Pinning.
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				certName := "test-tls-secret-name"
-				// apiDef.Spec.OrgID = "test-org"
 				apiDef.Name = apiDefUpstreamCerts
 				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
 					"*": certName,
