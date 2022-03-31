@@ -61,6 +61,7 @@ type Configuration struct{}
 func (Configuration) Get(ctx context.Context) (*model.PortalModelPortalConfig, error) {
 	return nil, client.ErrTODO
 }
+
 func (Configuration) Create(
 	ctx context.Context, o *model.PortalModelPortalConfig,
 ) (*model.Result, error) {

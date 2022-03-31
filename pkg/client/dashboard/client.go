@@ -8,7 +8,7 @@ import (
 
 const (
 	endpointCerts = "/api/certs"
-	//endpointReload   = "/tyk/reload/group"
+	// endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"
 )
 

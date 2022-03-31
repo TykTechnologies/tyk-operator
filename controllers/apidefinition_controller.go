@@ -448,7 +448,8 @@ func (r *ApiDefinitionReconciler) checkLoopingTargets(ctx context.Context, a *ty
 func (r *ApiDefinitionReconciler) ensureTargets(
 	ctx context.Context,
 	ns string,
-	targets []model.Target) error {
+	targets []model.Target,
+) error {
 	for _, target := range targets {
 		var api tykv1alpha1.ApiDefinition
 
@@ -516,7 +517,8 @@ func (r *ApiDefinitionReconciler) updateStatus(
 	ns string,
 	target model.Target,
 	ignoreNotFound bool,
-	fn func(*tykv1alpha1.ApiDefinitionStatus)) error {
+	fn func(*tykv1alpha1.ApiDefinitionStatus),
+) error {
 	var api tykv1alpha1.ApiDefinition
 	if err := r.Get(ctx, target.NS(ns), &api); err != nil {
 		if errors.IsNotFound(err) {

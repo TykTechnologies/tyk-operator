@@ -10,7 +10,7 @@ const (
 	OperatorContextFinalizerName      = "finalizers.tyk.io/operatorcontext"
 )
 
-//Ingress
+// Ingress
 const (
 	IngressLabel                       = "tyk.io/ingress"
 	IngressTaintLabel                  = "tyk.io/taint"

@@ -81,7 +81,6 @@ func (c Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, er
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("cert", "cert.pem")
-
 	if err != nil {
 		return "", err
 	}

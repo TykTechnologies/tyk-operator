@@ -146,9 +146,11 @@ func (o *Operator) bind(mode string) {
 
 var config Config
 
-var mode = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
-var debug = flag.Bool("debug", false, "prints lots of details")
-var cluster = flag.String("cluster", "", "cluster name")
+var (
+	mode    = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
+	debug   = flag.Bool("debug", false, "prints lots of details")
+	cluster = flag.String("cluster", "", "cluster name")
+)
 
 func chartDir() string {
 	switch config.Tyk.Mode {

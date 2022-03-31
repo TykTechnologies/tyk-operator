@@ -20,7 +20,6 @@ func (Configuration) Get(ctx context.Context) (*model.PortalModelPortalConfig, e
 	err := client.Data(&o)(
 		client.Get(ctx, endpointConfiguration, nil),
 	)
-
 	if err != nil {
 		return nil, err
 	}

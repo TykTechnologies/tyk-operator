@@ -170,7 +170,8 @@ func (s *store) theFirstResponseShouldBeSlowest() error {
 
 func call(method, url string, body func() io.Reader,
 	fn func(*http.Request),
-	validate func(*http.Response) error) error {
+	validate func(*http.Response) error,
+) error {
 	var failed error
 
 	err := backoff.Retry(func() error {
@@ -196,7 +197,6 @@ func call(method, url string, body func() io.Reader,
 
 		return nil
 	}, backoff.NewExponentialBackOff())
-
 	if err != nil {
 		return err
 	}

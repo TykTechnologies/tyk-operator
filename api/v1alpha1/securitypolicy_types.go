@@ -86,9 +86,9 @@ type SecurityPolicySpec struct {
 	KeyExpiresIn int64             `json:"key_expires_in,omitempty"`
 	Partitions   *PolicyPartitions `json:"partitions,omitempty"`
 
-	//LastUpdated                   string                           `json:"last_updated"`
+	// LastUpdated                   string                           `json:"last_updated"`
 	MetaData map[string]string `json:"meta_data,omitempty"`
-	//GraphQL                       map[string]GraphAccessDefinition `json:"graphql_access_rights"`
+	// GraphQL                       map[string]GraphAccessDefinition `json:"graphql_access_rights"`
 }
 
 // from tyk/session.go
@@ -104,8 +104,8 @@ type AccessDefinition struct {
 	// TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource
 	APIID    string   `json:"api_id,omitempty"`
 	Versions []string `json:"versions,omitempty"`
-	//RestrictedTypes []graphql.Type `json:"restricted_types"`
-	//Limit          APILimit     `json:"limit,omitempty"`
+	// RestrictedTypes []graphql.Type `json:"restricted_types"`
+	// Limit          APILimit     `json:"limit,omitempty"`
 	AllowanceScope string       `json:"allowance_scope,omitempty"`
 	AllowedURLs    []AccessSpec `json:"allowed_urls,omitempty"` // mapped string MUST be a valid regex
 }

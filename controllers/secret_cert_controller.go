@@ -15,8 +15,9 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -262,7 +263,6 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 		err := json.Unmarshal(jsBytes, &secret)
-
 		if err != nil {
 			return false
 		}
@@ -288,8 +288,8 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			//obj := runtime.Object
-			//return e.Meta.Type == "kubernetes.io/tls"
+			// obj := runtime.Object
+			// return e.Meta.Type == "kubernetes.io/tls"
 			eBytes, _ := json.Marshal(e)
 			return isTLSType(eBytes)
 		},

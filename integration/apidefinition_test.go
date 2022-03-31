@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"io"
-	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -518,12 +520,11 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
 
-		//defaultTimeout = 3 * time.Minute
+		// defaultTimeout = 3 * time.Minute
 	)
 
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-
 			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
 			is := is.New(t)
 			t.Log(testNS)
@@ -542,7 +543,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			// Create ApiDefinition with Certificate Pinning.
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				certName := "test-tls-secret-name"
-				//apiDef.Spec.OrgID = "test-org"
+				// apiDef.Spec.OrgID = "test-org"
 				apiDef.Name = apiDefUpstreamCerts
 				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
 					"*": certName,
@@ -591,7 +592,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 				calculatedCertID := string(tykOrg) + certFingerPrint
 				t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
-				//existsTest := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
+				// existsTest := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -609,7 +610,6 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 					is.NoErr(err)
 
 					response, err := io.ReadAll(resp.Body)
-
 					if err != nil {
 						return false, nil
 					}
@@ -627,7 +627,6 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						return false, nil
 					}
 					return true, nil
-
 				})
 				is.NoErr(err)
 				return ctx

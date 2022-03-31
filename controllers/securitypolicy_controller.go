@@ -121,7 +121,8 @@ func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.Secur
 }
 
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
-	a *tykv1.AccessDefinition) error {
+	a *tykv1.AccessDefinition,
+) error {
 	api := &tykv1.ApiDefinition{}
 
 	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {

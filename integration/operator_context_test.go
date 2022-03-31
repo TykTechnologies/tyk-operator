@@ -3,9 +3,10 @@ package integration
 import (
 	"context"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"testing"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -292,7 +293,8 @@ func TestOperatorContextDelete(t *testing.T) {
 }
 
 func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
-	envConf *envconf.Config) (*v1alpha1.ApiDefinition, error) {
+	envConf *envconf.Config,
+) (*v1alpha1.ApiDefinition, error) {
 	client := envConf.Client()
 	var apiDef v1alpha1.ApiDefinition
 
@@ -335,8 +337,8 @@ func createTestOperatorContext(ctx context.Context, namespace string, envConf *e
 }
 
 func createTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v1.Secret),
-	envConf *envconf.Config) (*v1.Secret, error) {
-
+	envConf *envconf.Config,
+) (*v1.Secret, error) {
 	client := envConf.Client()
 	var tlsSecret v1.Secret
 
@@ -354,5 +356,4 @@ func createTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v
 	err := client.Resources(namespace).Create(ctx, &tlsSecret)
 
 	return &tlsSecret, err
-
 }
