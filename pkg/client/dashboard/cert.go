@@ -74,7 +74,7 @@ func (c Cert) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (c Cert) Upload(ctx context.Context, key []byte, crt []byte) (id string, err error) {
+func (c Cert) Upload(ctx context.Context, key, crt []byte) (id string, err error) {
 	combined := make([]byte, 0)
 	combined = append(combined, key...)
 	combined = append(combined, crt...)

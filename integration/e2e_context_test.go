@@ -280,7 +280,7 @@ func (e E2EContext) AdminPost(path string, body []byte) (*http.Response, error) 
 	return e.adminReq(http.MethodPost, path, body)
 }
 
-func (e *E2EContext) adminReq(method string, url string, body []byte) (res *http.Response, err error) {
+func (e *E2EContext) adminReq(method, url string, body []byte) (res *http.Response, err error) {
 	url = adminLocalhost + url
 	err = backoff.Retry(func() error {
 		var rd io.Reader

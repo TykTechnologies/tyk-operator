@@ -134,7 +134,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the response should match JSON:$`, s.theResponseShouldMatchJSON)
 }
 
-func (s *store) iRequestEndpointWithHeaderTimes(path string, headerKey string, headerValue string, times int) error {
+func (s *store) iRequestEndpointWithHeaderTimes(path, headerKey, headerValue string, times int) error {
 	for i := 0; i < times; i++ {
 		t1 := time.Now()
 		_ = s.iRequestEndpointWithHeader(path, headerKey, headerValue)
@@ -204,7 +204,7 @@ func call(method, url string, body func() io.Reader,
 	return failed
 }
 
-func (s *store) iRequestEndpointWithHeader(path string, headerKey string, headerValue string) error {
+func (s *store) iRequestEndpointWithHeader(path, headerKey, headerValue string) error {
 	return call(
 		http.MethodGet,
 		createURL(path),
@@ -309,7 +309,7 @@ func (s *store) thereShouldBeHttpResponseCode(expectedCode int) error {
 	return nil
 }
 
-func (s *store) theResponseShouldContainJSONKeyValue(key string, expVal string) error {
+func (s *store) theResponseShouldContainJSONKeyValue(key, expVal string) error {
 	m := map[string]interface{}{}
 
 	if err := json.Unmarshal(s.responseBody, &m); err != nil {
@@ -350,7 +350,7 @@ func (s *store) theResponseShouldMatchJSON(body *godog.DocString) (err error) {
 	return nil
 }
 
-func (s *store) thereShouldBeAResponseHeader(key string, value string) error {
+func (s *store) thereShouldBeAResponseHeader(key, value string) error {
 	_, ok := s.responseHeaders[key]
 	if !ok {
 		return fmt.Errorf("response header (%s) not set", key)

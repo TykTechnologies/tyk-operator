@@ -154,7 +154,7 @@ func (Certificate) All(ctx context.Context) ([]string, error) {
 	return get(ctx).Certificate().All(ctx)
 }
 
-func (Certificate) Upload(ctx context.Context, key []byte, crt []byte) (id string, err error) {
+func (Certificate) Upload(ctx context.Context, key, crt []byte) (id string, err error) {
 	return get(ctx).Certificate().Upload(ctx, key, crt)
 }
 

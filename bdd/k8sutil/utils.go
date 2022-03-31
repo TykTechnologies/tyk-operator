@@ -44,9 +44,9 @@ type CMD interface {
 	Init(ns string) (cancel func() error, err error)
 	CreateNS(ctx context.Context, ns string) error
 	DeleteNS(ctx context.Context, ns string) error
-	Create(ctx context.Context, file string, namespace string) error
-	Configure(ctx context.Context, file string, namespace string) error
-	Delete(ctx context.Context, file string, namespace string) error
+	Create(ctx context.Context, file, namespace string) error
+	Configure(ctx context.Context, file, namespace string) error
+	Delete(ctx context.Context, file, namespace string) error
 }
 
 var cmd CMD = CB{
@@ -69,7 +69,7 @@ func Init(ns, env string) (func() error, error) {
 }
 
 // Create applies file to k8s cluster and ensure that thr resource is created
-func Create(ctx context.Context, file string, namespace string) error {
+func Create(ctx context.Context, file, namespace string) error {
 	return cmd.Create(ctx, file, namespace)
 }
 
@@ -82,12 +82,12 @@ func DeleteNS(ctx context.Context, namespace string) error {
 }
 
 // Delete applies file to k8s cluster and ensure that thr resource is deleted
-func Delete(ctx context.Context, file string, namespace string) error {
+func Delete(ctx context.Context, file, namespace string) error {
 	return cmd.Delete(ctx, file, namespace)
 }
 
 // Configure applies file to k8s cluster and ensure that thr resource is configured
-func Configure(ctx context.Context, file string, namespace string) error {
+func Configure(ctx context.Context, file, namespace string) error {
 	return cmd.Configure(ctx, file, namespace)
 }
 
@@ -95,9 +95,9 @@ func Configure(ctx context.Context, file string, namespace string) error {
 // callbacks for respective CMD method call.
 type CB struct {
 	InitFN      func(ns string) (func() error, error)
-	CreateFn    func(ctx context.Context, file string, namespace string) error
-	DeleteFn    func(ctx context.Context, file string, namespace string) error
-	ConfigureFn func(ctx context.Context, file string, namespace string) error
+	CreateFn    func(ctx context.Context, file, namespace string) error
+	DeleteFn    func(ctx context.Context, file, namespace string) error
+	ConfigureFn func(ctx context.Context, file, namespace string) error
 	CreateNSFn  func(ctx context.Context, ns string) error
 	DeleteNSFn  func(ctx context.Context, ns string) error
 }
@@ -110,7 +110,7 @@ func (fn CB) Init(ns string) (func() error, error) {
 	return fn.InitFN(ns)
 }
 
-func (fn CB) Create(ctx context.Context, file string, namespace string) error {
+func (fn CB) Create(ctx context.Context, file, namespace string) error {
 	if fn.CreateFn == nil {
 		return ErrNotImplemented
 	}
@@ -134,7 +134,7 @@ func (fn CB) DeleteNS(ctx context.Context, namespace string) error {
 	return fn.DeleteNSFn(ctx, namespace)
 }
 
-func (fn CB) Delete(ctx context.Context, file string, namespace string) error {
+func (fn CB) Delete(ctx context.Context, file, namespace string) error {
 	if fn.DeleteFn == nil {
 		return ErrNotImplemented
 	}
@@ -142,7 +142,7 @@ func (fn CB) Delete(ctx context.Context, file string, namespace string) error {
 	return fn.DeleteFn(ctx, file, namespace)
 }
 
-func (fn CB) Configure(ctx context.Context, file string, namespace string) error {
+func (fn CB) Configure(ctx context.Context, file, namespace string) error {
 	if fn.ConfigureFn == nil {
 		return ErrNotImplemented
 	}
@@ -163,7 +163,7 @@ func runCMD(cmd *exec.Cmd) (string, error) {
 	return string(output), nil
 }
 
-func create(ctx context.Context, file string, ns string) error {
+func create(ctx context.Context, file, ns string) error {
 	return expect(Created, Configured)(runFile(ctx, "apply", file, ns))
 }
 
@@ -197,15 +197,15 @@ func deleteNS(ctx context.Context, ns string) error {
 	return nil
 }
 
-func config(ctx context.Context, file string, ns string) error {
+func config(ctx context.Context, file, ns string) error {
 	return expect(Configured)(runFile(ctx, "apply", file, ns))
 }
 
-func del(ctx context.Context, file string, ns string) error {
+func del(ctx context.Context, file, ns string) error {
 	return expect(Deleted)(runFile(ctx, "delete", file, ns))
 }
 
-func runFile(ctx context.Context, op, file string, ns string) (OpExpect, error) {
+func runFile(ctx context.Context, op, file, ns string) (OpExpect, error) {
 	cmd := exec.CommandContext(ctx, "kubectl", op, "-f", file, "-n", ns)
 
 	o, err := runCMD(cmd)
