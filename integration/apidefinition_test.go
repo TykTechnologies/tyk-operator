@@ -583,6 +583,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 				calculatedCertID := string(tykOrg) + certFingerPrint
 				t.Log(fmt.Sprintf("certId is %s", calculatedCertID))
+				//existsTest := klient.Universal.Certificate().Exists(ctx, calculatedCertID)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
