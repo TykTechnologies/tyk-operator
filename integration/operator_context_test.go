@@ -353,6 +353,7 @@ func createTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v
 	if mutateFn != nil {
 		mutateFn(&tlsSecret)
 	}
+
 	err := client.Resources(namespace).Create(ctx, &tlsSecret)
 
 	return &tlsSecret, err

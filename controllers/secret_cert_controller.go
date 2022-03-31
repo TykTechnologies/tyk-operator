@@ -145,21 +145,21 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	for idx, apiDef := range apiDefList.Items {
-		for domain, _ := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
+	for idx := range apiDefList.Items {
+		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
 				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
 					return ctrl.Result{Requeue: true}, err
 				}
 
-				if apiDef.Spec.UpstreamCertificates == nil {
-					apiDef.Spec.UpstreamCertificates = make(map[string]string)
+				if apiDefList.Items[idx].Spec.UpstreamCertificates == nil {
+					apiDefList.Items[idx].Spec.UpstreamCertificates = make(map[string]string)
 				}
 
-				apiDef.Spec.UpstreamCertificates[domain] = certID
+				apiDefList.Items[idx].Spec.UpstreamCertificates[domain] = certID
 
-				err = r.Update(ctx, &apiDef)
+				err = r.Update(ctx, &apiDefList.Items[idx])
 
 				if apierrors.IsConflict(err) {
 					// The Pod has been updated since we read it.
@@ -262,6 +262,7 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 		err := json.Unmarshal(jsBytes, &secret)
+
 		if err != nil {
 			return false
 		}
@@ -287,8 +288,6 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			// obj := runtime.Object
-			// return e.Meta.Type == "kubernetes.io/tls"
 			eBytes, _ := json.Marshal(e)
 			return isTLSType(eBytes)
 		},
