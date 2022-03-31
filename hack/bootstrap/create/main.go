@@ -132,7 +132,7 @@ type Operator struct {
 func (o *Operator) defaults() {
 	o.Namespace = "tyk-operator-system"
 	o.SecretName = "tyk-operator-conf"
-	o.CertManager = "https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml"
+	o.CertManager = "https://github.com/jetstack/cert-manager/releases/download/v1.5.1/cert-manager.yaml"
 	o.CertManagerNamespace = "cert-manager"
 }
 
