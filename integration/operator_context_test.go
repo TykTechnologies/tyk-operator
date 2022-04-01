@@ -265,6 +265,7 @@ func TestOperatorContextDelete(t *testing.T) {
 
 				client := envConf.Client()
 				is := is.New(t)
+				_ = is.New(t)
 
 				var apiDef v1alpha1.ApiDefinition
 				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
