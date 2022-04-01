@@ -513,7 +513,6 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 }
 
 func TestApiDefinitionCertificatePinning(t *testing.T) {
-
 	if strings.TrimSpace(os.Getenv("TYK_MODE")) == "ce" {
 		t.Log("CE is not feasible to test at the moment.")
 		return
