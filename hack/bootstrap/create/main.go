@@ -26,9 +26,9 @@ var preloadImagesList = []struct{ name, image, version string }{
 	{"bash", "bash", "5.1"},
 	{"busybox", "busybox", "1.32"},
 	{"grpc", "mangomm/tyk-grpc-plugin", ""},
-	{"cert-manager-cainjector", "quay.io/jetstack/cert-manager-cainjector", "v1.5.1"},
-	{"cert-manager-controller", "quay.io/jetstack/cert-manager-controller", "v1.5.1"},
-	{"cert-manager-webhook", "quay.io/jetstack/cert-manager-webhook", "v1.5.1"},
+	{"cert-manager-cainjector", "quay.io/jetstack/cert-manager-cainjector", "v1.3.1"},
+	{"cert-manager-controller", "quay.io/jetstack/cert-manager-controller", "v1.3.1"},
+	{"cert-manager-webhook", "quay.io/jetstack/cert-manager-webhook", "v1.3.1"},
 }
 
 // Config configuration for booting operator environment
@@ -132,7 +132,7 @@ type Operator struct {
 func (o *Operator) defaults() {
 	o.Namespace = "tyk-operator-system"
 	o.SecretName = "tyk-operator-conf"
-	o.CertManager = "https://github.com/jetstack/cert-manager/releases/download/v1.5.1/cert-manager.yaml"
+	o.CertManager = "https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml"
 	o.CertManagerNamespace = "cert-manager"
 }
 

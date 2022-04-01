@@ -150,7 +150,7 @@ cross-build-image: ## Build docker image
 .PHONY: install-cert-manager
 install-cert-manager: ## Install cert manager
 	@echo "===> installing cert-manager"
-	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.1/cert-manager.yaml
+	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.yaml
 	kubectl rollout status  deployment/cert-manager -n cert-manager
 	kubectl rollout status  deployment/cert-manager-cainjector -n cert-manager
 	kubectl rollout status  deployment/cert-manager-webhook -n cert-manager
