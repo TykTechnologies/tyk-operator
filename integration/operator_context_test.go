@@ -22,7 +22,7 @@ import (
 const (
 	testApiDef       = "test-http"
 	testOperatorCtx  = "mycontext"
-	gatewayLocalhost = "http://localhost:7200"
+	gatewayLocalhost = "http://localhost:7000"
 	//dashboardLocalHost = "http://localhost:7200"
 )
 
