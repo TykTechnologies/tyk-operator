@@ -42,7 +42,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			// create api defintion with empty namespace for contextRef
+			// create api definition with empty namespace for contextRef
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = "empty-ns"
 				apiDef.Spec.Context = &model.Target{Name: opCtx.Name}
