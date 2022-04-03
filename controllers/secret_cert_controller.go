@@ -17,6 +17,8 @@ import (
 	"encoding/json"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
@@ -36,7 +38,7 @@ const (
 	secretType        = "kubernetes.io/tls"
 )
 
-// CertReconciler reconciles a Cert object
+// SecretCertReconciler reconciles a Cert object
 type SecretCertReconciler struct {
 	client.Client
 	Log    logr.Logger
@@ -143,6 +145,45 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	for idx := range apiDefList.Items {
+		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
+			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
+				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+				if err != nil {
+					return ctrl.Result{Requeue: true}, err
+				}
+
+				if apiDefList.Items[idx].Spec.UpstreamCertificates == nil {
+					apiDefList.Items[idx].Spec.UpstreamCertificates = make(map[string]string)
+				}
+
+				apiDefList.Items[idx].Spec.UpstreamCertificates[domain] = certID
+
+				err = r.Update(ctx, &apiDefList.Items[idx])
+
+				if apierrors.IsConflict(err) {
+					// The Pod has been updated since we read it.
+					// Requeue the Pod to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+
+				if apierrors.IsNotFound(err) {
+					// The Pod has been deleted since we read it.
+					// Requeue the Pod to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+
+				if err != nil {
+					log.Error(err, "unable to update ApiDef")
+				}
+
+				log.Info("api def updated succesfully")
+
+				return ctrl.Result{}, nil
+			}
+		}
+	}
+
 	ret := true
 
 	for _, apiDef := range apiDefList.Items {
@@ -208,10 +249,34 @@ type mySecretType struct {
 	} `json:"MetaNew"`
 }
 
+type NewSecretType struct {
+	ObjectOld struct {
+		Type string `json:"type"`
+	} `json:"ObjectOld"`
+	ObjectNew struct {
+		Type string `json:"type"`
+	} `json:"ObjectNew"`
+}
+
 func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
-		json.Unmarshal(jsBytes, &secret)
+
+		err := json.Unmarshal(jsBytes, &secret)
+		if err != nil {
+			return false
+		}
+
+		if secret.MetaNew.Type == "" && secret.Meta.Type == "" {
+			newSecret := NewSecretType{}
+
+			err := json.Unmarshal(jsBytes, &newSecret)
+			if err != nil {
+				return false
+			}
+
+			return newSecret.ObjectNew.Type == secretType
+		}
 
 		// if Update
 		if secret.MetaNew.Type != "" {
@@ -223,8 +288,6 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			//obj := runtime.Object
-			//return e.Meta.Type == "kubernetes.io/tls"
 			eBytes, _ := json.Marshal(e)
 			return isTLSType(eBytes)
 		},

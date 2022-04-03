@@ -39,17 +39,20 @@ type MapStringInterfaceType struct {
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
 type AuthProviderCode string
-type SessionProviderCode string
-type StorageEngineCode string
-type TykEvent string
-type TykEventHandlerName string
-type EndpointMethodAction string
-type TemplateMode string
-type MiddlewareDriver string
-type IdExtractorSource string
-type IdExtractorType string
-type AuthTypeEnum string
-type RoutingTriggerOnType string
+
+type (
+	SessionProviderCode  string
+	StorageEngineCode    string
+	TykEvent             string
+	TykEventHandlerName  string
+	EndpointMethodAction string
+	TemplateMode         string
+	MiddlewareDriver     string
+	IdExtractorSource    string
+	IdExtractorType      string
+	AuthTypeEnum         string
+	RoutingTriggerOnType string
+)
 
 // Method represents HTTP request method
 // +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE;OPTIONS;HEAD;CONNECT;TRACE
@@ -95,7 +98,7 @@ type TemplateData struct {
 	Mode           TemplateMode     `json:"template_mode"`
 	EnableSession  bool             `json:"enable_session"`
 	TemplateSource string           `json:"template_source"`
-	//FromDashboard  bool             `json:"from_dashboard"`
+	// FromDashboard  bool             `json:"from_dashboard"`
 }
 
 type TemplateMeta struct {
@@ -394,18 +397,18 @@ type VersionInfoPaths struct {
 type AuthProviderMeta struct {
 	Name          AuthProviderCode  `json:"name"`
 	StorageEngine StorageEngineCode `json:"storage_engine"`
-	//Meta          map[string]interface{} `json:"meta"`
+	// Meta          map[string]interface{} `json:"meta"`
 }
 
 type SessionProviderMeta struct {
 	Name          SessionProviderCode `json:"name"`
 	StorageEngine StorageEngineCode   `json:"storage_engine"`
-	//Meta          map[string]interface{} `json:"meta"`
+	// Meta          map[string]interface{} `json:"meta"`
 }
 
 type EventHandlerTriggerConfig struct {
 	Handler TykEventHandlerName `json:"handler_name"`
-	//HandlerMeta map[string]interface{} `json:"handler_meta"`
+	// HandlerMeta map[string]interface{} `json:"handler_meta"`
 }
 
 type EventHandlerMetaConfig struct {
@@ -464,7 +467,7 @@ type CacheOptions struct {
 
 type ResponseProcessor struct {
 	Name string `json:"name"`
-	//Options interface{} `json:"options"`
+	// Options interface{} `json:"options"`
 }
 
 type HostCheckObject struct {
@@ -508,7 +511,6 @@ type OpenIDOptions struct {
 
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
-
 	// For server use only, do not use
 	ID string `json:"id,omitempty"`
 
@@ -552,8 +554,8 @@ type APIDefinitionSpec struct {
 	//+optional
 	Oauth2Meta *OAuth2Meta `json:"oauth_meta,omitempty"`
 
-	//UseOpenID           bool          `json:"use_openid"`
-	//OpenIDOptions       OpenIDOptions `json:"openid_options"`
+	// UseOpenID           bool          `json:"use_openid"`
+	// OpenIDOptions       OpenIDOptions `json:"openid_options"`
 
 	// StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
 	StripAuthData bool `json:"strip_auth_data,omitempty"`
@@ -566,17 +568,25 @@ type APIDefinitionSpec struct {
 	// UseStandardAuth enables simple bearer token authentication
 	UseStandardAuth bool `json:"use_standard_auth,omitempty"`
 
-	//UseBasicAuth               bool                  `json:"use_basic_auth"`
-	//BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
-	//UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
-	//ClientCertificates         []string              `json:"client_certificates"`
-	//UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
-	//PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
+	// UseBasicAuth               bool                  `json:"use_basic_auth"`
+	// BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
+	// UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
+	// ClientCertificates         []string              `json:"client_certificates"`
+
+	// UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk
+	// Gateway to provide mTLS support for upstreams
+	UpstreamCertificates map[string]string `json:"upstream_certificates,omitempty"`
+
+	// UpstreamCertificateRefs is a map of domains and secret names that is used internally
+	// to obtain certificates from secrets in order to establish mTLS support for upstreams
+	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
+
+	// PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
 
-	//UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
+	// UseGoPluginAuth            bool                  `json:"use_go_plugin_auth"`
 
 	EnableCoProcessAuth bool `json:"enable_coprocess_auth,omitempty"`
 
@@ -648,20 +658,20 @@ type APIDefinitionSpec struct {
 	// By default the value is "scope"
 	JWTScopeClaimName string `json:"jwt_scope_claim_name,omitempty"`
 
-	//NotificationsDetails       NotificationsManager  `json:"notifications"`
-	//EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
-	//HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
-	//HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
-	//RequestSigning             RequestSigningMeta    `json:"request_signing"`
-	//BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
+	// NotificationsDetails       NotificationsManager  `json:"notifications"`
+	// EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
+	// HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
+	// HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
+	// RequestSigning             RequestSigningMeta    `json:"request_signing"`
+	// BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
 
 	VersionDefinition VersionDefinition `json:"definition,omitempty"`
 
 	VersionData VersionData `json:"version_data,omitempty"`
 
-	//UptimeTests                UptimeTests           `json:"uptime_tests"`
-	//DisableRateLimit       bool                `json:"disable_rate_limit"`
-	//DisableQuota           bool                `json:"disable_quota"`
+	// UptimeTests                UptimeTests           `json:"uptime_tests"`
+	// DisableRateLimit       bool                `json:"disable_rate_limit"`
+	// DisableQuota           bool                `json:"disable_quota"`
 
 	CustomMiddleware       MiddlewareSection `json:"custom_middleware,omitempty"`
 	CustomMiddlewareBundle string            `json:"custom_middleware_bundle,omitempty"`
@@ -702,8 +712,9 @@ type APIDefinitionSpec struct {
 	// returned. The IP address can be IPv4 or IPv6. IP in CIDR notation is also
 	// supported.
 	BlacklistedIPs []string `json:"blacklisted_ips,omitempty"`
-	//DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
-	//ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"` // must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
+	// DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
+	// ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"`
+	// must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
 
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
 	CORS               CORS                `json:"CORS,omitempty"`
@@ -730,8 +741,8 @@ type APIDefinitionSpec struct {
 	// +nullable
 	ConfigData *MapStringInterfaceType `json:"config_data"`
 
-	//TagHeaders              []string        `json:"tag_headers"`
-	//GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
+	// TagHeaders              []string        `json:"tag_headers"`
+	// GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
 
 	// EnableDetailedRecording instructs Tyk store the inbound request and outbound response data in HTTP Wire format
 	// as part of the Analytics data
@@ -810,7 +821,6 @@ func (p *Proxy) collectLoopingTarget(fn func(Target)) {
 }
 
 type ProxyTransport struct {
-
 	// SSLInsecureSkipVerify controls whether it is possible to use self-signed certificates when connecting to the
 	// upstream. This is applied to `TykMakeHttpRequest` & `TykMakeBatchRequest` in virtual endpoint middleware.
 	SSLInsecureSkipVerify bool `json:"ssl_insecure_skip_verify,omitempty"`
@@ -834,7 +844,6 @@ type ProxyTransport struct {
 // CORS cors settings
 
 type CORS struct {
-
 	// Enable when set to true it enables the cors middleware for the api
 	Enable bool `json:"enable,omitempty"`
 
@@ -906,7 +915,6 @@ type BasicAuthMeta struct {
 }
 
 type OAuth2Meta struct {
-
 	// AllowedAccessTypes are an array of allowable access types.
 	AllowedAccessTypes []AccessTypeEnum `json:"allowed_access_types"` // osin.AccessRequestType
 
@@ -969,7 +977,6 @@ type RequestSigningMeta struct {
 // GraphQLConfig is the root config object for a GraphQL API.
 
 type GraphQLConfig struct {
-
 	// Enabled indicates if GraphQL proxy should be enabled.
 	Enabled bool `json:"enabled"`
 

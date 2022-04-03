@@ -15,9 +15,11 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 )
 
-type Kase = client.Kase
-type RequestKase = client.RequestKase
-type ResponseKase = client.ResponseKase
+type (
+	Kase         = client.Kase
+	RequestKase  = client.RequestKase
+	ResponseKase = client.ResponseKase
+)
 
 func env() environmet.Env {
 	return environmet.Env{

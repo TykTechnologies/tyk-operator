@@ -23,7 +23,6 @@ import (
 
 // PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
 type PortalAPICatalogueSpec struct {
-
 	// OrgID is the organization ID
 	OrgID string `json:"org_id,omitempty"`
 
