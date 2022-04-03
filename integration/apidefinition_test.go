@@ -8,6 +8,7 @@ import (
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -518,7 +519,15 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
 		defaultTimeout      = 3 * time.Minute
+		opNs                = "tyk-operator-system"
+		certName            = "test-tls-secret-name"
+		dashboardLocalHost  = "http://localhost:7200"
 	)
+
+	if strings.TrimSpace(os.Getenv("TYK_MODE")) == "ce" {
+		t.Log("CE is not feasible to test at the moment.")
+		return
+	}
 
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
@@ -534,9 +543,8 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
-			// Create ApiDefinition with Certificate Pinning.
+			// Create ApiDefinition with Upstream certificate
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				certName := "test-tls-secret-name"
 				apiDef.Name = apiDefUpstreamCerts
 				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
 					"*": certName,
@@ -559,8 +567,8 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 				tlsSecret := v1.Secret{} //nolint:errcheck
 
-				err2 := client.Resources(testNS).Get(ctx, "test-tls-secret-name", testNS, &tlsSecret)
-				is.NoErr(err2)
+				err := client.Resources(testNS).Get(ctx, certName, testNS, &tlsSecret)
+				is.NoErr(err)
 
 				certPemBytes, ok := tlsSecret.Data["tls.crt"]
 				if !ok {
@@ -569,9 +577,13 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
 				opConfSecret := v1.Secret{}
-				opNs := "tyk-operator-system"
-				err3 := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
-				is.NoErr(err3)
+				err = client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+				is.NoErr(err)
+
+				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
+				if !ok {
+					is.Fail()
+				}
 
 				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
 				if !ok {
@@ -580,17 +592,17 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 				calculatedCertID := string(tykOrg) + certFingerPrint
 
-				err := wait.For(func() (done bool, err error) {
+				err = wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s/tyk/certs/?certId=%s&org_id=%s", gatewayLocalhost, calculatedCertID, string(tykOrg)),
+						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, string(tykOrg)),
 						nil,
 					)
 					is.NoErr(err)
 					req.Header.Add("Content-type", "application/json")
-					req.Header.Add("x-tyk-authorization", "foo")
+					req.Header.Add("authorization", string(tykAuth))
 
 					resp, err := hc.Do(req)
 					is.NoErr(err)
