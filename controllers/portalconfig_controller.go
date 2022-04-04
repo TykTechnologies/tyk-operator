@@ -54,7 +54,8 @@ type PortalConfigReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *PortalConfigReconciler) Reconcile(ctx context.Context,
-	req ctrl.Request) (result ctrl.Result, err error) {
+	req ctrl.Request,
+) (result ctrl.Result, err error) {
 	log := r.Log.WithValues("PortalConfig", req.NamespacedName.String())
 
 	log.Info("Reconciling PortalConfig instance")
