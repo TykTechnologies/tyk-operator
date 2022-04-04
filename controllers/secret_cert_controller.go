@@ -15,6 +15,8 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,7 +37,8 @@ import (
 
 const (
 	certFinalizerName = "finalizers.tyk.io/certs"
-	secretType        = "kubernetes.io/tls"
+	TLSSecretType     = "kubernetes.io/tls"
+	opaqueSecretType  = v1.SecretTypeOpaque
 )
 
 // SecretCertReconciler reconciles a Cert object
@@ -104,28 +107,55 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("checking secret type is tls")
+	log.Info("checking secret type is kubernetes.io/tls or Opaque")
 
-	if desired.Type != secretType {
+	var (
+		tlsKey []byte
+		tlsCrt []byte
+	)
+
+	switch desired.Type {
+	case TLSSecretType:
+		ok := false
+
+		log.Info("ensuring tls.key is present")
+		tlsKey, ok = desired.Data["tls.key"]
+		if !ok {
+			// cert doesn't exist yet
+			log.Info("missing tls.key, we don't care about it yet")
+			return ctrl.Result{}, nil
+		}
+
+		log.Info("ensuring tls.crt is present")
+
+		tlsCrt, ok = desired.Data["tls.crt"]
+		if !ok {
+			// cert doesn't exist yet
+			log.Info("missing tls.crt, we don't care about it yet")
+			return ctrl.Result{}, nil
+		}
+	case opaqueSecretType:
+		var (
+			ok                        = false
+			publicKeyFieldName        = "public-key"
+			publicKeyEnabledFieldName = "public-key-enabled"
+		)
+		// public-key-enabled field indicates that this resource will be tracked by the secret controller.
+		enabled, exists := desired.Data[publicKeyEnabledFieldName]
+		if !exists {
+			return ctrl.Result{}, nil
+		}
+		if strings.TrimSpace(string(enabled)) == "" {
+			return ctrl.Result{}, nil
+		}
+
+		tlsCrt, ok = desired.Data[publicKeyFieldName]
+		if !ok {
+			log.Info("missing public-key field in your Opaque secret to enable public key pinning.")
+			return ctrl.Result{}, nil
+		}
+	default:
 		// it's not for us
-		return ctrl.Result{}, nil
-	}
-
-	log.Info("ensuring tls.key is present")
-
-	tlsKey, ok := desired.Data["tls.key"]
-	if !ok {
-		// cert doesn't exist yet
-		log.Info("missing tls.key, we don't care about it yet")
-		return ctrl.Result{}, nil
-	}
-
-	log.Info("ensuring tls.crt is present")
-
-	tlsCrt, ok := desired.Data["tls.crt"]
-	if !ok {
-		// cert doesn't exist yet
-		log.Info("missing tls.crt, we don't care about it yet")
 		return ctrl.Result{}, nil
 	}
 
@@ -177,7 +207,52 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					log.Error(err, "unable to update ApiDef")
 				}
 
-				log.Info("api def updated succesfully")
+				log.Info("api def updated successfully")
+
+				return ctrl.Result{}, nil
+			}
+		}
+
+		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames {
+			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretName &&
+				desired.Namespace == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretNamespace {
+
+				tykCertID := env.Org + cert.CalculateFingerPrint(tlsCrt)
+				if exists := klient.Universal.Certificate().Exists(ctx, tykCertID); exists {
+					log.Info(fmt.Sprintf("Certificate with %s ID already exists, for %s", tykCertID, desired.Name))
+					return ctrl.Result{}, nil
+				}
+
+				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+				if err != nil {
+					return ctrl.Result{Requeue: true}, err
+				}
+
+				if apiDefList.Items[idx].Spec.PinnedPublicKeys == nil {
+					apiDefList.Items[idx].Spec.PinnedPublicKeys = map[string]string{}
+				}
+
+				apiDefList.Items[idx].Spec.PinnedPublicKeys[domain] = certID
+
+				err = r.Update(ctx, &apiDefList.Items[idx])
+
+				if apierrors.IsConflict(err) {
+					// The Pod has been updated since we read it.
+					// Requeue the Pod to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+
+				if apierrors.IsNotFound(err) {
+					// The Pod has been deleted since we read it.
+					// Requeue the Pod to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+
+				if err != nil {
+					log.Error(err, "unable to update ApiDef")
+				}
+
+				log.Info("api def updated successfully")
 
 				return ctrl.Result{}, nil
 			}
@@ -236,7 +311,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *SecretCertReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Secret{}).
-		WithEventFilter(r.ignoreNonTLSPredicate()).
+		WithEventFilter(r.filterPredicates()).
 		Complete(r)
 }
 
@@ -249,6 +324,7 @@ type mySecretType struct {
 	} `json:"MetaNew"`
 }
 
+// NewSecretType represents a structure for new Kubernetes Secret Object.
 type NewSecretType struct {
 	ObjectOld struct {
 		Type string `json:"type"`
@@ -261,7 +337,7 @@ type NewSecretType struct {
 	} `json:"Object"`
 }
 
-func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
+func (r *SecretCertReconciler) filterPredicates() predicate.Predicate {
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 
@@ -278,15 +354,17 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 				return false
 			}
 
-			return newSecret.ObjectNew.Type == secretType || newSecret.Object.Type == secretType
+			// Currently, only TLS and Opaque types of Kubernetes secrets are supported.
+			return newSecret.ObjectNew.Type == TLSSecretType || newSecret.Object.Type == TLSSecretType ||
+				newSecret.Object.Type == string(opaqueSecretType) || newSecret.ObjectNew.Type == string(opaqueSecretType)
 		}
 
 		// if Update
 		if secret.MetaNew.Type != "" {
-			return secret.MetaNew.Type == secretType
+			return secret.MetaNew.Type == TLSSecretType
 		}
 		// then it's a create / delete op
-		return secret.Meta.Type == secretType
+		return secret.Meta.Type == TLSSecretType
 	}
 
 	return predicate.Funcs{

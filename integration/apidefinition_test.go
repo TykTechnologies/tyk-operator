@@ -12,16 +12,15 @@ import (
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	"github.com/google/uuid"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/google/uuid"
 	"github.com/matryer/is"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -581,7 +580,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 				// For all domains (`*`), use following secret that contains the public key of the httpbin.org
 				// So, if you make any requests to addresses except httpbin.org, we should get proxy errors because
 				// of pinned public key.
-				"*": {SecretName: secretName, SecretNamespace: testNS, PublicKeySecretField: publicKeyFieldInSecret},
+				"*": {SecretName: secretName, SecretNamespace: testNS},
 			}
 
 			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
@@ -666,7 +665,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return true, nil
-				})
+				}, wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
 				return ctx

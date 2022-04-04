@@ -513,8 +513,7 @@ type OpenIDOptions struct {
 type PinnedPublicKeySecret struct {
 	SecretName string `json:"secret_name"`
 	// +kubebuilder:default:=default
-	SecretNamespace      string `json:"secret_namespace"`
-	PublicKeySecretField string `json:"public_key_secret_field"`
+	SecretNamespace string `json:"secret_namespace"`
 }
 
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.

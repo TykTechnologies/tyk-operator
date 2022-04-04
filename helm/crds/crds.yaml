@@ -617,15 +617,12 @@ spec:
                 additionalProperties:
                   description: PinnedPublicKeySecret holds information about a Kubernetes Secret object called 'SecretName' residing in 'SecretNamespace' namespace that includes the public key of the domain, defined through 'PublicKeySecretField' field.
                   properties:
-                    public_key_secret_field:
-                      type: string
                     secret_name:
                       type: string
                     secret_namespace:
                       default: default
                       type: string
                   required:
-                  - public_key_secret_field
                   - secret_name
                   - secret_namespace
                   type: object

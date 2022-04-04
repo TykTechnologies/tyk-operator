@@ -147,7 +147,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 			for domain, keySecret := range desired.Spec.PinnedPublicKeysSecretNames {
 				tykCertID, err := r.checkSecretAndUpload(ctx, keySecret.SecretName, keySecret.SecretNamespace,
-					log, &env, keySecret.PublicKeySecretField,
+					log, &env, "public-key",
 				)
 				if err != nil {
 					return err
@@ -155,19 +155,19 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 				upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
 			}
-
-			// To prevent API object validation failures, set additional property 'pinned_public_keys_secret_names' to nil.
-			upstreamRequestStruct.Spec.PinnedPublicKeysSecretNames = nil
 		}
 
+		// To prevent API object validation failures, set additional properties to nil.
 		upstreamRequestStruct.Spec.CertificateSecretNames = nil
+		upstreamRequestStruct.Spec.PinnedPublicKeysSecretNames = nil
+
 		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
 
 		targets := upstreamRequestStruct.Spec.CollectLoopingTarget()
-
 		if err := r.ensureTargets(ctx, upstreamRequestStruct.Namespace, targets); err != nil {
 			return err
 		}
+
 		err := r.updateLoopingTargets(ctx, upstreamRequestStruct, targets)
 		if err != nil {
 			log.Error(err, "Failed to update looping targets")
@@ -228,7 +228,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	// already defined fields called 'tls.crt' and 'tls.key'. However, if you provide any other type of secrets such
 	// as Opaque (as we do in Public Key Certificate pinning), you need to provide field that controller should check,
 	// through 'public_key_secret_field'.
-	if secret.Type == secretType {
+	if secret.Type == TLSSecretType {
 		pemCrtBytes, ok := secret.Data["tls.crt"]
 		if !ok {
 			err = fmt.Errorf("%s", "requeueing because cert not found in secret")
