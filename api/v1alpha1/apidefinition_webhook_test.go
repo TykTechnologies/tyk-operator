@@ -1,9 +1,13 @@
 package v1alpha1
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/matryer/is"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
 )
@@ -50,7 +54,7 @@ func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
 	in.Default()
 
 	if *in.Spec.DoNotTrack != true {
-		t.Fatalf("expected DoNotTrack to be true by default, got %v", *in.Spec.DoNotTrack)
+		t.Fatalf("expected DoNotTrack to be true as explicitly set, got %v", *in.Spec.DoNotTrack)
 	}
 
 	in = ApiDefinition{
@@ -64,7 +68,7 @@ func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
 	in.Default()
 
 	if *in.Spec.DoNotTrack != true {
-		t.Fatalf("expected DoNotTrack to be true as explicitly set, got %v", *in.Spec.DoNotTrack)
+		t.Fatalf("expected DoNotTrack to be true by default, got %v", *in.Spec.DoNotTrack)
 	}
 
 	in = ApiDefinition{
@@ -119,11 +123,10 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 		},
 	}
 
-	errorDetail := "can't be empty"
 	missingTargetURLErr := field.Error{
 		Type:   field.ErrorTypeRequired,
 		Field:  path("proxy", "target_url").String(),
-		Detail: errorDetail,
+		Detail: ErrEmptyValue,
 	}
 
 	cases := []struct {
@@ -200,7 +203,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			expectedErr: &field.Error{
 				Type:   field.ErrorTypeRequired,
 				Field:  path("version_data", "versions", "", "extended_paths", "url_rewrites", "rewrite_to").String(),
-				Detail: errorDetail,
+				Detail: ErrEmptyValue,
 			},
 		},
 		{
@@ -211,7 +214,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 				Field: path(
 					"version_data", "versions", "", "extended_paths", "url_rewrites", "triggers", "rewrite_to",
 				).String(),
-				Detail: errorDetail,
+				Detail: ErrEmptyValue,
 			},
 		},
 	}
@@ -238,4 +241,281 @@ func hasError(errs field.ErrorList, needle string) bool {
 	}
 
 	return false
+}
+
+func TestApiDefinition_Validate_Auth(t *testing.T) {
+	is := is.New(t)
+
+	tests := map[string]struct {
+		ApiDefinition ApiDefinition
+		ErrCause      field.ErrorType
+	}{
+		"set both keyless and auth type": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						UseStandardAuth:  true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeForbidden,
+		},
+		"set keyless auth type": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+		},
+		"set standard auth without auth details": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseStandardAuth: true,
+						Proxy:           model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeNotFound,
+		},
+		"set standard auth without authToken details": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseStandardAuth: true,
+						AuthConfigs: map[string]model.AuthConfig{
+							"random": {
+								AuthHeaderName: "Authorization",
+							},
+						},
+						Proxy: model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeNotFound,
+		},
+		"set standard auth with authToken details": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseStandardAuth: true,
+						AuthConfigs: map[string]model.AuthConfig{
+							"authToken": {
+								AuthHeaderName: "Authorization",
+							},
+						},
+						Proxy: model.Proxy{TargetURL: "/test"},
+					},
+				},
+			},
+		},
+	}
+
+	for n, tc := range tests {
+		t.Run(n, func(t *testing.T) {
+			if err := tc.ApiDefinition.validate(); err != nil {
+				is.True(apierrors.IsInvalid(err))
+				is.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
+			}
+		})
+	}
+}
+
+func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
+	is := is.New(t)
+
+	tests := map[string]struct {
+		ApiDefinition ApiDefinition
+		ErrCause      field.ErrorType
+	}{
+		"empty data source kind": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+						GraphQL: &model.GraphQLConfig{
+							Enabled:       true,
+							ExecutionMode: "executionEngine",
+							TypeFieldConfigurations: []model.TypeFieldConfiguration{
+								{
+									DataSource: model.SourceConfig{
+										Kind: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeInvalid,
+		},
+		"invalid data source kind": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+						GraphQL: &model.GraphQLConfig{
+							Enabled:       true,
+							ExecutionMode: "executionEngine",
+							TypeFieldConfigurations: []model.TypeFieldConfiguration{
+								{
+									DataSource: model.SourceConfig{
+										Kind: "invalid",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeInvalid,
+		},
+		"valid data source with empty URL": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+						GraphQL: &model.GraphQLConfig{
+							Enabled:       true,
+							ExecutionMode: "executionEngine",
+							TypeFieldConfigurations: []model.TypeFieldConfiguration{
+								{
+									DataSource: model.SourceConfig{
+										Kind:   "HTTPJsonDataSource",
+										Config: model.DataSourceConfig{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeRequired,
+		},
+		"valid data source with invalid URL": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+						GraphQL: &model.GraphQLConfig{
+							Enabled:       true,
+							ExecutionMode: "executionEngine",
+							TypeFieldConfigurations: []model.TypeFieldConfiguration{
+								{
+									DataSource: model.SourceConfig{
+										Kind: "HTTPJsonDataSource",
+										Config: model.DataSourceConfig{
+											URL:    "hi/\there?",
+											Method: http.MethodGet,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeInvalid,
+		},
+		"valid data source with empty method": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+						GraphQL: &model.GraphQLConfig{
+							Enabled:       true,
+							ExecutionMode: "executionEngine",
+							TypeFieldConfigurations: []model.TypeFieldConfiguration{
+								{
+									DataSource: model.SourceConfig{
+										Kind: "HTTPJsonDataSource",
+										Config: model.DataSourceConfig{
+											URL: "http://httpbin.org",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			ErrCause: field.ErrorTypeRequired,
+		},
+		"valid api with HTTP DataSource": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+						GraphQL: &model.GraphQLConfig{
+							Enabled:       true,
+							ExecutionMode: "executionEngine",
+							TypeFieldConfigurations: []model.TypeFieldConfiguration{
+								{
+									DataSource: model.SourceConfig{
+										Kind: "HTTPJsonDataSource",
+										Config: model.DataSourceConfig{
+											URL:    "http://httpbin.org",
+											Method: http.MethodGet,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		"valid api with GraphQL DataSource": {
+			ApiDefinition: ApiDefinition{
+				Spec: APIDefinitionSpec{
+					APIDefinitionSpec: model.APIDefinitionSpec{
+						UseKeylessAccess: true,
+						Proxy:            model.Proxy{TargetURL: "/test"},
+						GraphQL: &model.GraphQLConfig{
+							Enabled:       true,
+							ExecutionMode: "executionEngine",
+							TypeFieldConfigurations: []model.TypeFieldConfiguration{
+								{
+									DataSource: model.SourceConfig{
+										Kind: "GraphQLDataSource",
+										Config: model.DataSourceConfig{
+											URL:    "http://httpbin.org",
+											Method: http.MethodGet,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for n, tc := range tests {
+		t.Run(n, func(t *testing.T) {
+			if err := tc.ApiDefinition.validate(); err != nil {
+				statusErr, ok := err.(*apierrors.StatusError)
+				if !ok {
+					t.Fatal("invalid error type")
+				}
+				is.True(apierrors.IsInvalid(err))
+
+				t.Log(statusErr.Status().Details.Causes)
+
+				is.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
+			}
+		})
+	}
 }
