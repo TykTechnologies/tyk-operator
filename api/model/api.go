@@ -38,9 +38,8 @@ type MapStringInterfaceType struct {
 }
 
 // ApiDefinitionSpec defines the desired state of ApiDefinition
-type AuthProviderCode string
-
 type (
+	AuthProviderCode     string
 	SessionProviderCode  string
 	StorageEngineCode    string
 	TykEvent             string
@@ -713,8 +712,9 @@ type APIDefinitionSpec struct {
 	// supported.
 	BlacklistedIPs []string `json:"blacklisted_ips,omitempty"`
 	// DontSetQuotasOnCreate bool                `json:"dont_set_quota_on_create"`
-	// ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"`
+
 	// must have an expireAt TTL index set (http://docs.mongodb.org/manual/tutorial/expire-data/)
+	// ExpireAnalyticsAfter  int64               `json:"expire_analytics_after"`
 
 	ResponseProcessors []ResponseProcessor `json:"response_processors,omitempty"`
 	CORS               CORS                `json:"CORS,omitempty"`
@@ -990,6 +990,14 @@ type GraphQLConfig struct {
 
 	// GraphQLPlayground is the Playground specific configuration.
 	GraphQLPlayground GraphQLPlayground `json:"playground,omitempty"`
+
+	// Proxy holds the configuration for a proxy only api.
+	Proxy GraphQLProxyConfig `json:"proxy,omitempty"`
+}
+
+type GraphQLProxyConfig struct {
+	// +nullable
+	AuthHeaders map[string]string `json:"auth_headers"`
 }
 
 type TypeFieldConfiguration struct {
@@ -1029,7 +1037,6 @@ type MappingConfiguration struct {
 }
 
 // GraphQLPlayground represents the configuration for the public playground which will be hosted alongside the api.
-
 type GraphQLPlayground struct {
 	// Enabled indicates if the playground should be enabled.
 	Enabled bool `json:"enabled"`

@@ -1,12 +1,15 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...HEAD)
 
 **Added:**
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
-- Added support for [upstream mTLS certificates](./config/samples/httpbin_upstream_cert.yaml)
+- Added Support of Auth Headers while creating GraphQL ProxyOnly API
+  ci-tyk-operator-controller-manager-67b6cfd544-cdtsf
+
+**Documentation**
+- Added documentation for GraphQL ProxyOnly API
 
 **Fixed:**
 - Fixed a bug in which ApiDefinition CRDs were wrongly mutated
