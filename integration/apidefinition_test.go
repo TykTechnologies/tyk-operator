@@ -531,8 +531,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 		invalidApiDef           = "invalid-proxy-apidef"
 		invalidApiDefListenPath = "/invalid"
 
-		secretName             = "secret"
-		publicKeyFieldInSecret = "httpbin-org-public-key"
+		secretName = "secret"
 
 		publicKeyID    = "test-public-key-id"
 		defaultTimeout = 30 * time.Second
@@ -569,7 +568,8 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					Namespace: testNS,
 				},
 				Data: map[string][]byte{
-					publicKeyFieldInSecret: pubKeyPem,
+					"public-key":         pubKeyPem,
+					"public-key-enabled": pubKeyPem,
 				},
 			}
 
@@ -578,7 +578,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 
 			pbks := map[string]model.PinnedPublicKeySecret{
 				// For all domains (`*`), use following secret that contains the public key of the httpbin.org
-				// So, if you make any requests to addresses except httpbin.org, we should get proxy errors because
+				// So, if you make any requests to any addresses except httpbin.org, we should get proxy errors because
 				// of pinned public key.
 				"*": {SecretName: secretName, SecretNamespace: testNS},
 			}
