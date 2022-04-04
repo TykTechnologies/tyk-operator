@@ -115,7 +115,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
 			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
-				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
+				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env, "")
 				if err != nil {
 					// we should log the missing secret but we should still create the API definition
 					log.Info(fmt.Sprintf("cert name %s is missing", certName))
