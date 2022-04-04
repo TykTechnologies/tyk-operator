@@ -809,7 +809,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						return false, nil
 					}
 
-					if len(certResponse.Certs) != 1 {
+					if len(certResponse.Certs) < 1 {
 						return false, nil
 					}
 					return true, nil
