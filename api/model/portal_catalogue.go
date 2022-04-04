@@ -12,7 +12,6 @@ type APICatalogue struct {
 type AuthType string
 
 type APIDescription struct {
-
 	// Name is the title of the API that you wish to be published to the catalogue
 	Name string `json:"name,omitempty"`
 
@@ -56,7 +55,6 @@ type APIDescription struct {
 }
 
 type PortalModelPortalConfig struct {
-
 	// Set by the server. DO NOT set this field it is read only.
 	Id string `json:"id,omitempty"`
 
@@ -137,7 +135,6 @@ type ResponseTypeEnum string
 
 // DCROptions are the configuration metadata for dynamic client registration. To enable DCR, ensure EnableDCR is true.
 type DCROptions struct {
-
 	// IDPHost is the fully qualified hostname of the Identity Provider.
 	// e.g. https://mysubdomain.eu.auth0.com
 	IDPHost string `json:"idp_host"`

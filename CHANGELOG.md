@@ -5,7 +5,8 @@
 
 **Added:**
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
-- Added Support of Auth Headers while creating GraphQL ProxyOnly API 
+- Added Support of Auth Headers while creating GraphQL ProxyOnly API
+  ci-tyk-operator-controller-manager-67b6cfd544-cdtsf
 
 **Documentation**
 - Added documentation for GraphQL ProxyOnly API

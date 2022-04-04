@@ -510,7 +510,6 @@ type OpenIDOptions struct {
 
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
-
 	// For server use only, do not use
 	ID string `json:"id,omitempty"`
 
@@ -572,7 +571,15 @@ type APIDefinitionSpec struct {
 	// BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 	// UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
 	// ClientCertificates         []string              `json:"client_certificates"`
-	// UpstreamCertificates       map[string]string     `json:"upstream_certificates"`
+
+	// UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk
+	// Gateway to provide mTLS support for upstreams
+	UpstreamCertificates map[string]string `json:"upstream_certificates,omitempty"`
+
+	// UpstreamCertificateRefs is a map of domains and secret names that is used internally
+	// to obtain certificates from secrets in order to establish mTLS support for upstreams
+	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
+
 	// PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
 	// EnableJWT set JWT as the access method for this API.
@@ -837,7 +844,6 @@ type ProxyTransport struct {
 // CORS cors settings
 
 type CORS struct {
-
 	// Enable when set to true it enables the cors middleware for the api
 	Enable bool `json:"enable,omitempty"`
 
@@ -909,7 +915,6 @@ type BasicAuthMeta struct {
 }
 
 type OAuth2Meta struct {
-
 	// AllowedAccessTypes are an array of allowable access types.
 	AllowedAccessTypes []AccessTypeEnum `json:"allowed_access_types"` // osin.AccessRequestType
 
