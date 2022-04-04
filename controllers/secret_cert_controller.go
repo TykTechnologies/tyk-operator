@@ -186,7 +186,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	if apiDefUpstreamCertificateHasBeenUpdated != false {
+	if apiDefUpstreamCertificateHasBeenUpdated {
 		// we can skip the rest here as the secret was required only for the upstream certificate uploading
 		return ctrl.Result{}, nil
 	}
