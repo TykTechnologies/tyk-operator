@@ -116,10 +116,11 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	switch desired.Type {
 	case TLSSecretType:
-		ok := false
-
 		log.Info("ensuring tls.key is present")
+
+		ok := false
 		tlsKey, ok = desired.Data["tls.key"]
+
 		if !ok {
 			// cert doesn't exist yet
 			log.Info("missing tls.key, we don't care about it yet")
@@ -129,6 +130,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		log.Info("ensuring tls.crt is present")
 
 		tlsCrt, ok = desired.Data["tls.crt"]
+
 		if !ok {
 			// cert doesn't exist yet
 			log.Info("missing tls.crt, we don't care about it yet")
@@ -136,7 +138,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	case opaqueSecretType:
 		var (
-			ok                        = false
+			ok                        bool
 			publicKeyFieldName        = "public-key"
 			publicKeyEnabledFieldName = "public-key-enabled"
 		)
@@ -145,6 +147,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if !exists {
 			return ctrl.Result{}, nil
 		}
+
 		if strings.TrimSpace(string(enabled)) == "" {
 			return ctrl.Result{}, nil
 		}
@@ -216,7 +219,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames {
 			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretName &&
 				desired.Namespace == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretNamespace {
-
 				tykCertID := env.Org + cert.CalculateFingerPrint(tlsCrt)
 				if exists := klient.Universal.Certificate().Exists(ctx, tykCertID); exists {
 					log.Info(fmt.Sprintf("Certificate with %s ID already exists, for %s", tykCertID, desired.Name))
