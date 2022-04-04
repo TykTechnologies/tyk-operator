@@ -1,12 +1,15 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...HEAD)
 
 **Added:**
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
+- Added Support of Auth Headers while creating GraphQL ProxyOnly API 
 - Added [Certificate Pinning](https://tyk.io/docs/security/certificate-pinning/) support in the Tyk Operator [#405](https://github.com/TykTechnologies/tyk-operator/issues/405)
+
+**Documentation**
+- Added documentation for GraphQL ProxyOnly API
 
 **Fixed:**
 - Fixed a bug in which ApiDefinition CRDs were wrongly mutated
