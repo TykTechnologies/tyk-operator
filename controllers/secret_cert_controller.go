@@ -256,6 +256,9 @@ type NewSecretType struct {
 	ObjectNew struct {
 		Type string `json:"type"`
 	} `json:"ObjectNew"`
+	Object struct {
+		Type string `json:"type"`
+	} `json:"Object"`
 }
 
 func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
@@ -275,7 +278,7 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 				return false
 			}
 
-			return newSecret.ObjectNew.Type == secretType
+			return newSecret.ObjectNew.Type == secretType || newSecret.Object.Type == secretType
 		}
 
 		// if Update

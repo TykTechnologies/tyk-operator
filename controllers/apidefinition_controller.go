@@ -117,12 +117,14 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
 				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
 				if err != nil {
-					return err
+					//we should log the missing secret but we should still create the API definition
+					log.Info(fmt.Sprintf("cert name %s is missing", certName))
+				} else {
+					if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
+						upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
+					}
+					upstreamRequestStruct.Spec.UpstreamCertificates[domain] = tykCertID
 				}
-				if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
-					upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
-				}
-				upstreamRequestStruct.Spec.UpstreamCertificates[domain] = tykCertID
 			}
 		}
 		upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
@@ -210,6 +212,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 		if err != nil {
 			return "", err
 		}
+
 	}
 
 	return tykCertID, nil
