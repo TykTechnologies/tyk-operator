@@ -4,15 +4,17 @@
 # First apply this manifest using the command
 # "kubectl apply -f config/samples/httpbin_upstream_cert.yaml"
 #
-# The operator will try to create the ApiDefinition but it will fail as the required secret is not present
-# in the cluster
-
+# The operator will try to create the ApiDefinition and will succed but will log an error that a certificate is missing
+# in the cluster for an upstream
 
 # Generate your public-private key pair , for test use you can use the following command to obtain one fast:
 # "openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out tls.crt -keyout tls.key"
 
-# Apply your new TLS certificate using the following command:
-# "kubectl create secret tls my-test-tls --key="tls.key" --cert="tls.crt" -n default -o yaml --dry-run=client | kubectl apply -f -"
+# Run the following command to obtain the values that must be put inside the yaml that contians the secret resource:
+# "kubectl create secret tls my-test-tls --key="tls.key" --cert="tls.crt" -n default -o yaml --dry-run=client"
+
+# Apply your TLS certificate using the following command: (we already have an example one in our repo)
+# "kubectl apply -f config/sample/simple_tls_secret.yaml"
 
 # NOTE: the upstream_certificate_refs can hold references to multiple secrets which are used for the domain
 # mentioned in the key (currently "*" is used as a wildcard for all the domains)
