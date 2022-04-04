@@ -805,8 +805,6 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						Pages int      `json:"pages"`
 					}{}
 					err = json.Unmarshal(response, &certResponse)
-buraksekili marked this conversation as resolved.
-Show resolved
 					if err != nil {
 						return false, nil
 					}
