@@ -17,7 +17,7 @@ type Policy interface {
 	Create(ctx context.Context, def *v1alpha1.SecurityPolicySpec) error
 	// Update this will update an existing policy
 	Update(ctx context.Context, def *v1alpha1.SecurityPolicySpec) error
-	//Delete deletes policy id id
+	// Delete deletes policy id id
 	Delete(ctx context.Context, id string) error
 }
 

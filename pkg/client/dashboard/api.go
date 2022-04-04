@@ -73,7 +73,6 @@ func (a Api) update(ctx context.Context, result *model.Result, spec *model.APIDe
 			ApiDefinition: *spec,
 		},
 	))
-
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +86,6 @@ func (a Api) Delete(ctx context.Context, id string) (*model.Result, error) {
 	err := client.Data(&o)(
 		client.Delete(ctx, client.Join(endpointAPIs, id), nil),
 	)
-
 	if err != nil {
 		return nil, err
 	}

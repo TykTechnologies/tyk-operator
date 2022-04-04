@@ -35,6 +35,7 @@ func (Client) HotReload(ctx context.Context) error {
 func (Client) Api() universal.Api {
 	return Api{}
 }
+
 func (Client) Portal() universal.Portal {
 	return Portal{}
 }
@@ -48,6 +49,7 @@ type Api struct{}
 func (Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
 	return get(ctx).Api().Create(ctx, def)
 }
+
 func (Api) Get(ctx context.Context, id string) (*model.APIDefinitionSpec, error) {
 	return get(ctx).Api().Get(ctx, id)
 }
@@ -55,9 +57,11 @@ func (Api) Get(ctx context.Context, id string) (*model.APIDefinitionSpec, error)
 func (Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.Result, error) {
 	return get(ctx).Api().Update(ctx, spec)
 }
+
 func (Api) Delete(ctx context.Context, id string) (*model.Result, error) {
 	return get(ctx).Api().Delete(ctx, id)
 }
+
 func (Api) List(ctx context.Context, options ...model.ListAPIOptions) (*model.APIDefinitionSpecList, error) {
 	return get(ctx).Api().List(ctx, options...)
 }
@@ -67,12 +71,15 @@ type Portal struct{}
 func (Portal) Policy() universal.Policy {
 	return Policy{}
 }
+
 func (Portal) Documentation() universal.Documentation {
 	return Documentation{}
 }
+
 func (Portal) Catalogue() universal.Catalogue {
 	return Catalogue{}
 }
+
 func (Portal) Configuration() universal.Configuration {
 	return Configuration{}
 }
@@ -82,12 +89,15 @@ type Policy struct{}
 func (Policy) All(ctx context.Context) ([]v1alpha1.SecurityPolicySpec, error) {
 	return get(ctx).Portal().Policy().All(ctx)
 }
+
 func (Policy) Get(ctx context.Context, id string) (*v1alpha1.SecurityPolicySpec, error) {
 	return get(ctx).Portal().Policy().Get(ctx, id)
 }
+
 func (Policy) Create(ctx context.Context, def *v1alpha1.SecurityPolicySpec) error {
 	return get(ctx).Portal().Policy().Create(ctx, def)
 }
+
 func (Policy) Update(ctx context.Context, def *v1alpha1.SecurityPolicySpec) error {
 	return get(ctx).Portal().Policy().Update(ctx, def)
 }
@@ -125,11 +135,13 @@ type Configuration struct{}
 func (Configuration) Get(ctx context.Context) (*model.PortalModelPortalConfig, error) {
 	return get(ctx).Portal().Configuration().Get(ctx)
 }
+
 func (Configuration) Create(
 	ctx context.Context, o *model.PortalModelPortalConfig,
 ) (*model.Result, error) {
 	return get(ctx).Portal().Configuration().Create(ctx, o)
 }
+
 func (Configuration) Update(
 	ctx context.Context, o *model.PortalModelPortalConfig,
 ) (*model.Result, error) {
@@ -141,9 +153,11 @@ type Certificate struct{}
 func (Certificate) All(ctx context.Context) ([]string, error) {
 	return get(ctx).Certificate().All(ctx)
 }
-func (Certificate) Upload(ctx context.Context, key []byte, crt []byte) (id string, err error) {
+
+func (Certificate) Upload(ctx context.Context, key, crt []byte) (id string, err error) {
 	return get(ctx).Certificate().Upload(ctx, key, crt)
 }
+
 func (Certificate) Delete(ctx context.Context, id string) error {
 	return get(ctx).Certificate().Delete(ctx, id)
 }

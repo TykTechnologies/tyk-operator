@@ -43,6 +43,7 @@ metadata:
 
 const annotation = `      annotations:
         POD-ANNOTATION: POD-ANNOTATION`
+
 const annotationTPL = `{{- with .Values.podAnnotations }}
       annotations:
 {{- toYaml . | nindent 8 }}
@@ -51,6 +52,7 @@ const annotationTPL = `{{- with .Values.podAnnotations }}
 const envFrom = `        envFrom:
         - secretRef:
             name: OPERATOR_ENV_CONFIG`
+
 const envFromTPL = `{{- with .Values.envFrom }}
         envFrom:
 {{- toYaml . | nindent 10 }}
@@ -61,6 +63,7 @@ const envVars = `        env:
           value: PORT_HTTPS_INGRESS
         - name: TYK_HTTP_INGRESS_PORT
           value: PORT_HTTP_INGRESS`
+
 const envVarsTPL = `{{- with .Values.envVars }}
         env:
 {{- toYaml . | nindent 10 }}
@@ -73,6 +76,7 @@ const resources = `        resources:
           requests:
             cpu: 100m
             memory: 20Mi`
+
 const resourcesTPL = `{{- with .Values.resources }}
         resources:
 {{- toYaml . | nindent 10 }}
@@ -93,6 +97,7 @@ const resourcesRBACTPL = `{{- with .Values.rbac.resources }}
 
 const securityContext = `        securityContext:
           allowPrivilegeEscalation: false`
+
 const securityContextTPL = `{{- with .Values.securityContext }}
         securityContext:
 {{- toYaml . | nindent 10 }}
