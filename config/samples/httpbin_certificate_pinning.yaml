@@ -16,11 +16,15 @@
 #  "domain.org":
 #    secret_name: secret-name                       # the name of the Kubernetes Secret Object that holds the public key for the 'domain.org'.
 #    secret_namespace: secret-ns                    # the namespace of the Kubernetes Secret Object.
-#    public_key_secret_field: domain.org-public-key # the field name in the Secret object, that includes the public key.
 #
+# In this way, you can refer Kubernetes Secret Objects through 'pinned_public_keys_secret_names' field.
+#
+# NOTE: For now, only Opaque type of Secret Objects are allowed. Also, please use 'public-key' and 'public-key-enabled'
+# fields in your Secret object's data field (see the below example).
 #
 # In this example, we have an HTTPS upstream target as `https://httpbin.org`. The public key of httpbin.org is obtained
-# with the following command: openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null | openssl x509 -pubkey -noout
+# with the following command:
+#   openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null | openssl x509 -pubkey -noout
 # We are creating a secret called 'httpbin-secret' in the 'httpbin-secrets-ns' namespace. In the 'httpbin.org-public-key'
 # field, we are specifying the public key of the httpbin.org obtained with above openssl command, in the decoded manner.
 # Now, in the ApiDefinition, we are using this public key for all domains as '*' (Wildcard domains are also supported.).
@@ -30,12 +34,12 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: httpbin-secret
-  namespace: default
+  namespace: httpbin-secret-ns
 type: Opaque
 data:
   public-key-enabled: dHJ1ZQo=
   public-key: | # This field name is fixed and shouldn't be changed. Secret controller strictly checks for `public-key` field.
-   LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+    LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -49,7 +53,7 @@ spec:
   pinned_public_keys_secret_names:
     "*":
       secret_name: httpbin-secret
-      secret_namespace: default
+      secret_namespace: httpbin-secret-ns
   proxy:
     target_url: https://httpbin.org
     listen_path: /pinning

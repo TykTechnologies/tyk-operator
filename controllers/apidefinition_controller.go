@@ -117,8 +117,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
 				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env, "")
 				if err != nil {
-					// we should log the missing secret but we should still create the API definition
-					log.Info(fmt.Sprintf("cert name %s is missing", certName))
+					// we should log the missing secret, but we should still create the API definition
+					log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
 				} else {
 					if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
 						upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
@@ -140,6 +140,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
 		}
 
+		// Check Pinned Public keys
 		if len(desired.Spec.PinnedPublicKeysSecretNames) != 0 {
 			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
 				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
@@ -150,7 +151,12 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					log, &env, "public-key",
 				)
 				if err != nil {
-					return err
+					// we should log the missing secret, but we should still create the API definition
+					log.Info(
+						fmt.Sprintf("cert %s/%s is missing", keySecret.SecretName, keySecret.SecretNamespace),
+						"error", err,
+					)
+					continue
 				}
 
 				upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
