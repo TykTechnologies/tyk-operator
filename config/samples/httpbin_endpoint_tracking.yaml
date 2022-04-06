@@ -1,6 +1,8 @@
-#  `Track Endpoint` allows you to manually select each endpoint for tracking.
-#  In this example, /get and /headers endpoints will be tracked. After these endpoints receive requests, you can track
-#  them through the Dashboard.
+#
+# `Track Endpoint` allows you to manually select each endpoint for tracking.
+# In this example, /get and /headers endpoints will be tracked. After these endpoints receive requests, you can track
+# them through the Dashboard.
+# In order to see analytics, you need to have Tyk Pump up and running.
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -10,6 +12,7 @@ spec:
   use_keyless: true
   protocol: http
   active: true
+  do_not_track: false
   proxy:
     target_url: http://httpbin.org/
     listen_path: /httpbin

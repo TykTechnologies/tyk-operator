@@ -71,6 +71,7 @@ tib:
   extraEnvs: []
   configMap:
     profiles: tyk-tib-profiles-conf
+
 dash:
   replicaCount: 1
   hostName: "localhost"
@@ -116,6 +117,7 @@ portal:
     hosts:
       - tyk-portal.local
     tls: []
+
 gateway:
   kind: DaemonSet
   replicaCount: 1
@@ -153,11 +155,11 @@ gateway:
       value: "tcp://grpc-plugin.tykpro-control-plane.svc.cluster.local:9999"
 
 pump:
-  enabled: false
+  enabled: true
   replicaCount: 1
   image:
     repository: tykio/tyk-pump-docker-pub
-    tag: v1.2.0
+    tag: v1.4.0
     pullPolicy: IfNotPresent
   annotations: {}
   resources: {}
