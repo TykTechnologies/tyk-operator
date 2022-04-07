@@ -13,7 +13,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 ## API Types
 | Type                                                                   | Support | Comments                     |
 |------------------------------------------------------------------------|---------|------------------------------|
-| [GraphQL - Proxy](./../config/samples/trevorblades_graphql_proxy.yaml) | ✅       | -                            |
+| [GraphQL - Proxy](./../config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml) | ✅       | -                            |
 | [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml)       | ⚠️      | V2 Engine & API ETA Jul 2022 |
 | HTTP                                                                   | ✅       | -                            |
 | [HTTPS](./../config/samples/01-tls/example.yaml)️                      | ✅       | -                            |
@@ -57,7 +57,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Type | Supported | Comments |
 | ----------- | --------- | --------- |
 | Public Key Certificate Pinning | ❌ | Not implemented |
-| Upstream Certificates mTLS | ❌ | Not implemented |
+| Upstream Certificates mTLS | ✅ | Not implemented |
 | Request Signing | ❌ | Not implemented |
 
 ## Features
@@ -81,31 +81,31 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 ## APIDefinition - Endpoint Middleware
 
-| Endpoint Middleware                                                                | Supported | Comments                                                               |
-|------------------------------------------------------------------------------------|-----------|------------------------------------------------------------------------|
-| Analytics - Endpoint Tracking                                                      | ⚠️        | Untested                                                               |
-| [Availability - Circuit Breaker](./../config/samples/httpbin_timeout.yaml)         | ✅         | -                                                                      |
-| [Availability - Enforced Timeouts](./../config/samples/httpbin_timeout.yaml)       | ✅         | -                                                                      |
-| [Headers - Global Request Add](../config/samples/httpbin_global-headers.yaml)      | ✅         | -                                                                      |
-| [Headers - Global Request Remove](../config/samples/httpbin_global-headers.yaml)   | ✅         | -                                                                      |
-| [Headers - Global Response Add](../config/samples/httpbin_global-headers.yaml)     | ✅         | -                                                                      |
-| [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml)  | ✅         | -                                                                      |
-| [Performance - Cache](./../config/samples/httpbin_cache.yaml)                      | ✅         | -                                                                      |
-| [Plugin - Virtual Endpoint](./../config/samples/config_data_virtual_endpoint.yaml) | ✅         | -                                                                      |
-| [Security - Allow list](./../config/samples/httpbin_whitelist.yaml)                | ✅️        | -                                                                      |
-| [Security - Block list](./../config/samples/httpbin_blacklist.yaml)                | ✅️        | -                                                                      |
-| [Security - Ignore list](./../config/samples/httpbin_ignored.yaml)                 | ✅         | -                                                                      |
-| Transform - Internal                                                               | ⚠️        | Untested                                                               |
-| [Transform - Method](../bdd/custom_resources/transform/method.yaml)                | ✅         | -                                                                      |
-| Transform - Mock                                                                   | ⚠️        | Untested                                                               |
-| [Transform - Request Body](../config/samples/httpbin_transform.yaml)               | ✅         | -                                                                      |
-| [Transform - Response Body](../config/samples/httpbin_transform.yaml)              | ✅         | -                                                                      |
-| Transform - Request Body JQ                                                        | ⚠️        | Untested - Requires JQ on Gateway Docker Image                         |
-| Transform - Response Body JQ                                                       | ⚠️        | Untested - Requires JQ on Gateway Docker Image                         |
-| [Transform - URL Rewrite Basic](../config/samples/url_rewrite_basic.yaml)          | ✅️        | -                                                                      |
-| Transform - URL Rewrite Advanced                                                   | ⚠️        | Untested                                                               |
-| [Validate - JSON Schema](../config/samples/httpbin_json_schema_validation.yaml) | ✅ | - |
-| [Validate - Limit Request Size](../config/samples/request_size.yaml)               | ✅️        | -                                                                      |
+| Endpoint Middleware                                                                | Supported | Comments                                       |
+|------------------------------------------------------------------------------------|-----------|------------------------------------------------|
+| [Analytics - Endpoint Tracking](../config/samples/httpbin_endpoint_tracking.yaml)  | ✅         |                                                |
+| [Availability - Circuit Breaker](./../config/samples/httpbin_timeout.yaml)         | ✅         | -                                              |
+| [Availability - Enforced Timeouts](./../config/samples/httpbin_timeout.yaml)       | ✅         | -                                              |
+| [Headers - Global Request Add](../config/samples/httpbin_global-headers.yaml)      | ✅         | -                                              |
+| [Headers - Global Request Remove](../config/samples/httpbin_global-headers.yaml)   | ✅         | -                                              |
+| [Headers - Global Response Add](../config/samples/httpbin_global-headers.yaml)     | ✅         | -                                              |
+| [Headers - Global Response Remove](../config/samples/httpbin_global-headers.yaml)  | ✅         | -                                              |
+| [Performance - Cache](./../config/samples/httpbin_cache.yaml)                      | ✅         | -                                              |
+| [Plugin - Virtual Endpoint](./../config/samples/config_data_virtual_endpoint.yaml) | ✅         | -                                              |
+| [Security - Allow list](./../config/samples/httpbin_whitelist.yaml)                | ✅️        | -                                              |
+| [Security - Block list](./../config/samples/httpbin_blacklist.yaml)                | ✅️        | -                                              |
+| [Security - Ignore list](./../config/samples/httpbin_ignored.yaml)                 | ✅         | -                                              |
+| Transform - Internal                                                               | ⚠️        | Untested                                       |
+| [Transform - Method](../bdd/custom_resources/transform/method.yaml)                | ✅         | -                                              |
+| Transform - Mock                                                                   | ⚠️        | Untested                                       |
+| [Transform - Request Body](../config/samples/httpbin_transform.yaml)               | ✅         | -                                              |
+| [Transform - Response Body](../config/samples/httpbin_transform.yaml)              | ✅         | -                                              |
+| Transform - Request Body JQ                                                        | ⚠️        | Untested - Requires JQ on Gateway Docker Image |
+| Transform - Response Body JQ                                                       | ⚠️        | Untested - Requires JQ on Gateway Docker Image |
+| [Transform - URL Rewrite Basic](../config/samples/url_rewrite_basic.yaml)          | ✅️        | -                                              |
+| Transform - URL Rewrite Advanced                                                   | ⚠️        | Untested                                       |
+| [Validate - JSON Schema](../config/samples/httpbin_json_schema_validation.yaml)    | ✅         | -                                              |
+| [Validate - Limit Request Size](../config/samples/request_size.yaml)               | ✅️        | -                                              |
 
 ## APIDefinition - Migrating Existing APIs
 

@@ -9,8 +9,10 @@ import (
 	"strings"
 )
 
-var image = flag.String("image", "", "docker image for the operator")
-var cluster = flag.String("cluster", "", "cluster name")
+var (
+	image   = flag.String("image", "", "docker image for the operator")
+	cluster = flag.String("cluster", "", "cluster name")
+)
 
 func main() {
 	flag.Parse()

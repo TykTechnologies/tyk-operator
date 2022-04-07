@@ -425,6 +425,17 @@ spec:
                     - enabled
                     - path
                     type: object
+                  proxy:
+                    description: Proxy holds the configuration for a proxy only api.
+                    properties:
+                      auth_headers:
+                        additionalProperties:
+                          type: string
+                        nullable: true
+                        type: object
+                    required:
+                    - auth_headers
+                    type: object
                   schema:
                     description: Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
                     type: string
@@ -742,6 +753,16 @@ spec:
                 items:
                   type: string
                 type: array
+              upstream_certificate_refs:
+                additionalProperties:
+                  type: string
+                description: UpstreamCertificateRefs is a map of domains and secret names that is used internally to obtain certificates from secrets in order to establish mTLS support for upstreams
+                type: object
+              upstream_certificates:
+                additionalProperties:
+                  type: string
+                description: UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk Gateway to provide mTLS support for upstreams
+                type: object
               use_keyless:
                 description: UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting, quotas and security policies will not be possible (there is no session to attach requests to).
                 type: boolean

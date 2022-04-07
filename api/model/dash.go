@@ -8,7 +8,7 @@ type Result struct {
 	Message string
 	Meta    string
 
-	//from tyk api
+	// from tyk api
 	Key     string `json:"key"`
 	Action  string `json:"action"`
 	KeyHash string `json:"key_hash,omitempty"`

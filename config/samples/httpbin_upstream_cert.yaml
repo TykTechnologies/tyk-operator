@@ -1,0 +1,40 @@
+##### How to use upstream certificate:
+
+#
+# First apply this manifest using the command
+# "kubectl apply -f config/samples/httpbin_upstream_cert.yaml"
+#
+# The operator will try to create the ApiDefinition but it will fail as the required secret is not present
+# in the cluster
+
+
+# Generate your public-private key pair , for test use you can use the following command to obtain one fast:
+# "openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out tls.crt -keyout tls.key"
+
+# Apply your new TLS certificate using the following command:
+# "kubectl create secret tls my-test-tls --key="tls.key" --cert="tls.crt" -n default -o yaml --dry-run=client | kubectl apply -f -"
+
+# NOTE: the upstream_certificate_refs can hold references to multiple secrets which are used for the domain
+# mentioned in the key (currently "*" is used as a wildcard for all the domains)
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: true
+  upstream_certificate_refs:
+    "*": my-test-tls
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default

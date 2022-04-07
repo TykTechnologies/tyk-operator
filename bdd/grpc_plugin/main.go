@@ -16,9 +16,7 @@ const (
 	listenAddress = ":9999"
 )
 
-var (
-	out = os.Stdout
-)
+var out = os.Stdout
 
 func main() {
 	lis, err := net.Listen("tcp", listenAddress)
