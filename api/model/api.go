@@ -512,8 +512,10 @@ type OpenIDOptions struct {
 // 'SecretNamespace' namespace that includes the public key of the domain, defined through 'PublicKeySecretField' field.
 type PinnedPublicKeySecret struct {
 	SecretName string `json:"secret_name"`
+
+	// +optional
 	// +kubebuilder:default:=default
-	SecretNamespace string `json:"secret_namespace"`
+	SecretNamespace string `json:"secret_namespace,omitempty"`
 }
 
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.

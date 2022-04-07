@@ -624,7 +624,6 @@ spec:
                       type: string
                   required:
                   - secret_name
-                  - secret_namespace
                   type: object
                 description: PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates for Certificate Pinning feature.
                 type: object

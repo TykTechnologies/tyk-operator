@@ -15,8 +15,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -138,23 +136,13 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	case opaqueSecretType:
 		var (
-			ok                        bool
-			publicKeyFieldName        = "public-key"
-			publicKeyEnabledFieldName = "public-key-enabled"
+			ok                 bool
+			publicKeyFieldName = "public-key"
 		)
-		// public-key-enabled field indicates that this resource will be tracked by the secret controller.
-		enabled, exists := desired.Data[publicKeyEnabledFieldName]
-		if !exists {
-			return ctrl.Result{}, nil
-		}
-
-		if strings.TrimSpace(string(enabled)) == "" {
-			return ctrl.Result{}, nil
-		}
 
 		tlsCrt, ok = desired.Data[publicKeyFieldName]
 		if !ok {
-			log.Info("missing public-key field in your Opaque secret to enable public key pinning.")
+			log.Info("missing 'public-key' field in your Opaque secret to enable public key pinning.")
 			return ctrl.Result{}, nil
 		}
 	default:
@@ -219,11 +207,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames {
 			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretName &&
 				desired.Namespace == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretNamespace {
-				tykCertID := env.Org + cert.CalculateFingerPrint(tlsCrt)
-				if exists := klient.Universal.Certificate().Exists(ctx, tykCertID); exists {
-					log.Info(fmt.Sprintf("Certificate with %s ID already exists, for %s", tykCertID, desired.Name))
-					return ctrl.Result{}, nil
-				}
 
 				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
@@ -340,7 +323,9 @@ type NewSecretType struct {
 }
 
 func (r *SecretCertReconciler) filterPredicates() predicate.Predicate {
-	isTLSType := func(jsBytes []byte) bool {
+	// isDesiredSecretType filters created secret resources based on its type. Right now, only allowed secret types are
+	// kubernetes.io/tls and Opaque.
+	isDesiredSecretType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 
 		err := json.Unmarshal(jsBytes, &secret)
@@ -372,11 +357,11 @@ func (r *SecretCertReconciler) filterPredicates() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			eBytes, _ := json.Marshal(e)
-			return isTLSType(eBytes)
+			return isDesiredSecretType(eBytes)
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			eBytes, _ := json.Marshal(e)
-			return isTLSType(eBytes)
+			return isDesiredSecretType(eBytes)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			return true
