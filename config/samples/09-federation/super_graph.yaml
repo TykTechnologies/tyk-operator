@@ -1,9 +1,9 @@
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: trevorblades
+  name: federation-supergraph
 spec:
-  name: trevorblades-supergraph
+  name: Federation - Supergraph
   use_keyless: true
   protocol: http
   active: true

@@ -712,12 +712,8 @@ spec:
                     type: string
                 required:
                 - enabled
-                - engine
                 - execution_mode
                 - schema
-                - subgraph
-                - supergraph
-                - version
                 type: object
               id:
                 description: For server use only, do not use

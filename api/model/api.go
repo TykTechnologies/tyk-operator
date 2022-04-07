@@ -1065,16 +1065,16 @@ type GraphQLConfig struct {
 	Proxy GraphQLProxyConfig `json:"proxy,omitempty"`
 
 	// Engine holds the configuration for engine v2 and upwards.
-	Engine GraphQLEngineConfig `json:"engine"`
+	Engine GraphQLEngineConfig `json:"engine,omitempty"`
 
 	// Subgraph holds the configuration for a GraphQL federation subgraph.
-	Subgraph GraphQLSubgraphConfig `json:"subgraph"`
+	Subgraph GraphQLSubgraphConfig `json:"subgraph,omitempty"`
 
 	// Supergraph holds the configuration for a GraphQL federation supergraph.
-	Supergraph GraphQLSupergraphConfig `json:"supergraph"`
+	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`
 
 	// Version defines the version of the GraphQL config and engine to be used.
-	Version GraphQLConfigVersion `json:"version"`
+	Version GraphQLConfigVersion `json:"version,omitempty"`
 
 	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
 	LastSchemaUpdate *metav1.Time `json:"last_schema_update,omitempty"`
