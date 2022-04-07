@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/golang-jwt/jwt"
@@ -33,9 +34,10 @@ var preloadImagesList = []struct{ name, image, version string }{
 
 // Config configuration for booting operator environment
 type Config struct {
-	WorkDir  string
-	Tyk      Tyk
-	Operator Operator
+	WorkDir       string
+	PreloadImages bool
+	Tyk           Tyk
+	Operator      Operator
 }
 
 // Chart returns path to the helm chart to install
@@ -57,6 +59,16 @@ func (c *Config) bind(mode string) {
 
 	c.WorkDir = filepath.Join(wd, "ci")
 	env(&c.WorkDir, "TYK_OPERATOR_WORK_DIR")
+
+	var strPreloadImages string
+	env(&strPreloadImages, "TYK_OPERATOR_PRELOAD_IMAGES")
+
+	c.PreloadImages, err = strconv.ParseBool(strPreloadImages)
+	if err != nil {
+		// set default value to false
+		c.PreloadImages = false
+	}
+
 	c.Tyk.bind(c.WorkDir, mode)
 	c.Operator.bind(mode)
 }
@@ -175,7 +187,9 @@ func deployDir() string {
 func main() {
 	flag.Parse()
 	config.bind(*mode)
-	//preloadImages()
+	if config.PreloadImages {
+		preloadImages()
+	}
 	submodule()
 	ns()
 	common()
