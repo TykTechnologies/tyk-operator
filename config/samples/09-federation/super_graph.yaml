@@ -1,0 +1,147 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: trevorblades
+spec:
+  name: trevorblades-supergraph
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: https://countries.trevorblades.com
+    listen_path: /trevorblades
+    strip_listen_path: true
+  graphql:
+    schema: |-
+      type Query {
+        topProducts(first: Int = 5): [Product]
+        me: User
+      }
+
+      type Subscription {
+        updatedPrice: Product!
+        updateProductPrice(upc: String!): Product!
+        stock: [Product!]
+      }
+
+      type Product {
+        upc: String!
+        name: String!
+        price: Int!
+        inStock: Int!
+        reviews: [Review]
+      }
+
+      type Review {
+        body: String!
+        author: User!
+        product: Product!
+      }
+
+      type User {
+        id: ID!
+        username: String!
+        reviews: [Review]
+      }
+    enabled: true
+    engine:
+      field_configs: []
+      data_sources: []
+    type_field_configurations: []
+    execution_mode: supergraph
+    proxy:
+      auth_headers: {}
+    subgraph:
+      sdl: ''
+    supergraph:
+      updated_at: '2022-03-09T16:18:13.802+01:00'
+      subgraphs:
+        - api_id: f6eea60b7fcf4c376769230c0dbaf491
+          name: products
+          url: tyk://products
+          sdl: |-
+            extend type Query {
+                topProducts(first: Int = 5): [Product]
+            }
+
+            extend type Subscription {
+                updatedPrice: Product!
+                updateProductPrice(upc: String!): Product!
+                stock: [Product!]
+            }
+
+            type Product @key(fields: "upc") {
+                upc: String!
+                name: String!
+                price: Int!
+                inStock: Int!
+            }
+        - api_id: 3f5fda302c18426861b79ba99a7a0d5b
+          name: reviews
+          url: tyk://reviews
+          sdl: |
+            type Review {
+                body: String!
+                author: User! @provides(fields: "username")
+                product: Product!
+            }
+
+            extend type User @key(fields: "id") {
+                id: ID! @external
+                username: String! @external
+                reviews: [Review]
+            }
+
+            extend type Product @key(fields: "upc") {
+                upc: String! @external
+                reviews: [Review]
+            }
+        - api_id: b3187e7b004c489d59b1940c60d73df7
+          name: users
+          url: tyk://users
+          sdl: |
+            extend type Query {
+                me: User
+            }
+
+            type User @key(fields: "id") {
+                id: ID!
+                username: String!
+            }
+      merged_sdl: |-
+        type Query {
+          topProducts(first: Int = 5): [Product]
+          me: User
+        }
+
+        type Subscription {
+          updatedPrice: Product!
+          updateProductPrice(upc: String!): Product!
+          stock: [Product!]
+        }
+
+        type Product {
+          upc: String!
+          name: String!
+          price: Int!
+          inStock: Int!
+          reviews: [Review]
+        }
+
+        type Review {
+          body: String!
+          author: User!
+          product: Product!
+        }
+
+        type User {
+          id: ID!
+          username: String!
+          reviews: [Review]
+        }
+      global_headers: {}
+    version: '2'
+    playground:
+      enabled: true
+      path: /playground
+    last_schema_update: '2022-03-09T16:18:13.802+01:00'

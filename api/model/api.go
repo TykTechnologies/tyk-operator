@@ -25,6 +25,8 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -53,13 +55,28 @@ type (
 	RoutingTriggerOnType string
 )
 
-// Method represents HTTP request method
+// HttpMethod represents HTTP request method
 // +kubebuilder:validation:Enum=GET;POST;PUT;PATCH;DELETE;OPTIONS;HEAD;CONNECT;TRACE
 type HttpMethod string
 
-// ExecutionMode is the mode to define how an api behaves.
-// +kubebuilder:validation:Enum=proxyOnly;executionEngine
+// GraphQLExecutionMode is the mode to define how an api behaves.
+// +kubebuilder:validation:Enum=proxyOnly;executionEngine;supergraph;subgraph
 type GraphQLExecutionMode string
+
+const (
+	// GraphQLExecutionModeProxyOnly is the mode in which the GraphQL Middleware doesn't evaluate the GraphQL request
+	// In other terms, the GraphQL Middleware will not act as a GraphQL server in itself.
+	// The GraphQL Middleware will (optionally) validate the request and leave the execution up to the upstream.
+	GraphQLExecutionModeProxyOnly GraphQLExecutionMode = "proxyOnly"
+	// GraphQLExecutionModeExecutionEngine is the mode in which the GraphQL Middleware will evaluate every request.
+	// This means the Middleware will act as a independent GraphQL service which might delegate partial execution to upstreams.
+	GraphQLExecutionModeExecutionEngine GraphQLExecutionMode = "executionEngine"
+	// GraphQLExecutionModeSubgraph is the mode if the API is defined as a subgraph for usage in GraphQL federation.
+	// It will basically act the same as an API in proxyOnly mode but can be used in a supergraph.
+	GraphQLExecutionModeSubgraph GraphQLExecutionMode = "subgraph"
+	// GraphQLExecutionModeSupergraph is the mode where an API is able to use subgraphs to build a supergraph in GraphQL federation.
+	GraphQLExecutionModeSupergraph GraphQLExecutionMode = "supergraph"
+)
 
 // APIProtocol is the network transport protocol supported by the gateway
 // +kubebuilder:validation:Enum=h2c;tcp;tls;http;https;
@@ -974,8 +991,61 @@ type RequestSigningMeta struct {
 	SignatureHeader string   `json:"signature_header"`
 }
 
-// GraphQLConfig is the root config object for a GraphQL API.
+type GraphQLFieldConfig struct {
+	TypeName              string   ` json:"type_name"`
+	FieldName             string   ` json:"field_name"`
+	DisableDefaultMapping bool     ` json:"disable_default_mapping"`
+	Path                  []string `json:"path"`
+}
 
+type GraphQLEngineDataSourceKind string
+
+const (
+	GraphQLEngineDataSourceKindREST    = "REST"
+	GraphQLEngineDataSourceKindGraphQL = "GraphQL"
+)
+
+type GraphQLEngineDataSource struct {
+	// +kubebuilder:validation:Enum=REST;GraphQL
+	Kind       GraphQLEngineDataSourceKind `json:"kind"`
+	Name       string                      `json:"name"`
+	Internal   bool                        `json:"internal"`
+	RootFields []GraphQLTypeFields         `json:"root_fields"`
+	Config     json.RawMessage             `json:"config"`
+}
+
+type GraphQLTypeFields struct {
+	Type   string   `json:"type"`
+	Fields []string `json:"fields"`
+}
+
+type GraphQLEngineConfig struct {
+	FieldConfigs []GraphQLFieldConfig      `json:"field_configs"`
+	DataSources  []GraphQLEngineDataSource `json:"data_sources"`
+}
+
+type GraphQLSubgraphConfig struct {
+	SDL string `json:"sdl"`
+}
+
+type GraphQLSubgraphEntity struct {
+	APIID   string            `json:"api_id"`
+	Name    string            `json:"name"`
+	URL     string            `json:"url"`
+	SDL     string            `json:"sdl"`
+	Headers map[string]string `json:"headers,omitempty"`
+}
+
+type GraphQLSupergraphConfig struct {
+	// UpdatedAt contains the date and time of the last update of a supergraph API.
+	UpdatedAt            *metav1.Time            `json:"updated_at,omitempty"`
+	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs"`
+	MergedSDL            string                  `json:"merged_sdl"`
+	GlobalHeaders        map[string]string       `json:"global_headers"`
+	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
+}
+
+// GraphQLConfig is the root config object for a GraphQL API.
 type GraphQLConfig struct {
 	// Enabled indicates if GraphQL proxy should be enabled.
 	Enabled bool `json:"enabled"`
@@ -993,7 +1063,30 @@ type GraphQLConfig struct {
 
 	// Proxy holds the configuration for a proxy only api.
 	Proxy GraphQLProxyConfig `json:"proxy,omitempty"`
+
+	// Engine holds the configuration for engine v2 and upwards.
+	Engine GraphQLEngineConfig `json:"engine"`
+
+	// Subgraph holds the configuration for a GraphQL federation subgraph.
+	Subgraph GraphQLSubgraphConfig `json:"subgraph"`
+
+	// Supergraph holds the configuration for a GraphQL federation supergraph.
+	Supergraph GraphQLSupergraphConfig `json:"supergraph"`
+
+	// Version defines the version of the GraphQL config and engine to be used.
+	Version GraphQLConfigVersion `json:"version"`
+
+	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
+	LastSchemaUpdate *metav1.Time `json:"last_schema_update,omitempty"`
 }
+
+type GraphQLConfigVersion string
+
+const (
+	GraphQLConfigVersionNone GraphQLConfigVersion = ""
+	GraphQLConfigVersion1    GraphQLConfigVersion = "1"
+	GraphQLConfigVersion2    GraphQLConfigVersion = "2"
+)
 
 type GraphQLProxyConfig struct {
 	// +nullable

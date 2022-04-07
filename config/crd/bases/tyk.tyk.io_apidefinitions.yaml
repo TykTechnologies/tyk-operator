@@ -67,7 +67,7 @@ spec:
                     description: AllowedMethods is a list of methods to allow access
                       via.
                     items:
-                      description: Method represents HTTP request method
+                      description: HttpMethod represents HTTP request method
                       enum:
                       - GET
                       - POST
@@ -452,15 +452,93 @@ spec:
               enable_proxy_protocol:
                 type: boolean
               graphql:
+                description: GraphQLConfig is the root config object for a GraphQL
+                  API.
                 properties:
                   enabled:
                     description: Enabled indicates if GraphQL proxy should be enabled.
                     type: boolean
+                  engine:
+                    description: Engine holds the configuration for engine v2 and
+                      upwards.
+                    properties:
+                      data_sources:
+                        items:
+                          properties:
+                            config:
+                              description: RawMessage is a raw encoded JSON value.
+                                It implements Marshaler and Unmarshaler and can be
+                                used to delay JSON decoding or precompute a JSON encoding.
+                              format: byte
+                              type: string
+                            internal:
+                              type: boolean
+                            kind:
+                              enum:
+                              - REST
+                              - GraphQL
+                              type: string
+                            name:
+                              type: string
+                            root_fields:
+                              items:
+                                properties:
+                                  fields:
+                                    items:
+                                      type: string
+                                    type: array
+                                  type:
+                                    type: string
+                                required:
+                                - fields
+                                - type
+                                type: object
+                              type: array
+                          required:
+                          - config
+                          - internal
+                          - kind
+                          - name
+                          - root_fields
+                          type: object
+                        type: array
+                      field_configs:
+                        items:
+                          properties:
+                            disable_default_mapping:
+                              type: boolean
+                            field_name:
+                              type: string
+                            path:
+                              items:
+                                type: string
+                              type: array
+                            type_name:
+                              type: string
+                          required:
+                          - disable_default_mapping
+                          - field_name
+                          - path
+                          - type_name
+                          type: object
+                        type: array
+                    required:
+                    - data_sources
+                    - field_configs
+                    type: object
                   execution_mode:
-                    description: ExecutionMode is the mode to define how an api behaves.
+                    description: GraphQLExecutionMode is the mode to define how an
+                      api behaves.
                     enum:
                     - proxyOnly
                     - executionEngine
+                    - supergraph
+                    - subgraph
+                    type: string
+                  last_schema_update:
+                    description: LastSchemaUpdate contains the date and time of the
+                      last triggered schema update to the upstream.
+                    format: date-time
                     type: string
                   playground:
                     description: GraphQLPlayground is the Playground specific configuration.
@@ -492,6 +570,59 @@ spec:
                     description: Schema is the GraphQL Schema exposed by the GraphQL
                       API/Upstream/Engine.
                     type: string
+                  subgraph:
+                    description: Subgraph holds the configuration for a GraphQL federation
+                      subgraph.
+                    properties:
+                      sdl:
+                        type: string
+                    required:
+                    - sdl
+                    type: object
+                  supergraph:
+                    description: Supergraph holds the configuration for a GraphQL
+                      federation supergraph.
+                    properties:
+                      disable_query_batching:
+                        type: boolean
+                      global_headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      merged_sdl:
+                        type: string
+                      subgraphs:
+                        items:
+                          properties:
+                            api_id:
+                              type: string
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            name:
+                              type: string
+                            sdl:
+                              type: string
+                            url:
+                              type: string
+                          required:
+                          - api_id
+                          - name
+                          - sdl
+                          - url
+                          type: object
+                        type: array
+                      updated_at:
+                        description: UpdatedAt contains the date and time of the last
+                          update of a supergraph API.
+                        format: date-time
+                        type: string
+                    required:
+                    - global_headers
+                    - merged_sdl
+                    - subgraphs
+                    type: object
                   type_field_configurations:
                     description: TypeFieldConfigurations is a rule set of data source
                       and mapping of a schema field.
@@ -513,7 +644,8 @@ spec:
                                     type: string
                                   type: array
                                 method:
-                                  description: Method represents HTTP request method
+                                  description: HttpMethod represents HTTP request
+                                    method
                                   enum:
                                   - GET
                                   - POST
@@ -574,10 +706,18 @@ spec:
                       - type_name
                       type: object
                     type: array
+                  version:
+                    description: Version defines the version of the GraphQL config
+                      and engine to be used.
+                    type: string
                 required:
                 - enabled
+                - engine
                 - execution_mode
                 - schema
+                - subgraph
+                - supergraph
+                - version
                 type: object
               id:
                 description: For server use only, do not use
@@ -942,7 +1082,8 @@ spec:
                                       type: integer
                                     type: array
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1008,7 +1149,8 @@ spec:
                                   disable_half_open_state:
                                     type: boolean
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1048,7 +1190,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1071,7 +1214,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1130,7 +1274,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1153,7 +1298,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1168,7 +1314,8 @@ spec:
                                   path:
                                     type: string
                                   to_method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1190,7 +1337,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1217,7 +1365,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1240,7 +1389,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1290,7 +1440,8 @@ spec:
                                       type: string
                                     type: array
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1318,7 +1469,8 @@ spec:
                                   filter:
                                     type: string
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1344,7 +1496,8 @@ spec:
                                   filter:
                                     type: string
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1368,7 +1521,8 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1418,7 +1572,8 @@ spec:
                                       type: string
                                     type: array
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1448,7 +1603,8 @@ spec:
                                       pattern to match the path
                                     type: string
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1626,7 +1782,8 @@ spec:
                                       Entity response code for validation errors.
                                     type: integer
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
@@ -1662,7 +1819,8 @@ spec:
                                   function_source_uri:
                                     type: string
                                   method:
-                                    description: Method represents HTTP request method
+                                    description: HttpMethod represents HTTP request
+                                      method
                                     enum:
                                     - GET
                                     - POST
