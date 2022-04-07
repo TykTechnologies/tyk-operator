@@ -189,9 +189,11 @@ func deployDir() string {
 func main() {
 	flag.Parse()
 	config.bind(*mode)
+
 	if config.PreloadImages {
 		preloadImages()
 	}
+
 	submodule()
 	ns()
 	common()
