@@ -207,7 +207,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames {
 			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretName &&
 				desired.Namespace == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain].SecretNamespace {
-
 				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
 					return ctrl.Result{Requeue: true}, err
