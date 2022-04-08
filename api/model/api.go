@@ -508,16 +508,6 @@ type OpenIDOptions struct {
 	SegregateByClient bool                `json:"segregate_by_client"`
 }
 
-// PinnedPublicKeySecret holds information about a Kubernetes Secret object called 'SecretName' residing in
-// 'SecretNamespace' namespace that includes the public key of the domain, defined through 'PublicKeySecretField' field.
-type PinnedPublicKeySecret struct {
-	SecretName string `json:"secret_name"`
-
-	// +optional
-	// +kubebuilder:default:=default
-	SecretNamespace string `json:"secret_namespace,omitempty"`
-}
-
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
 	// For server use only, do not use
@@ -587,8 +577,9 @@ type APIDefinitionSpec struct {
 	PinnedPublicKeys map[string]string `json:"pinned_public_keys,omitempty"`
 
 	// PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current
-	// namespace which contain the certificates for Certificate Pinning feature.
-	PinnedPublicKeysSecretNames map[string]PinnedPublicKeySecret `json:"pinned_public_keys_secret_names,omitempty"`
+	// namespace which contain the public keys for given domain through key field. It takes domain name as a key and
+	// secret name as a value.
+	PinnedPublicKeysSecretNames map[string]string `json:"pinnedPublicKeysSecretNames,omitempty"`
 
 	// UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk
 	// Gateway to provide mTLS support for upstreams

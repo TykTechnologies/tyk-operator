@@ -146,14 +146,13 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
 			}
 
-			for domain, keySecret := range desired.Spec.PinnedPublicKeysSecretNames {
-				tykCertID, err := r.checkSecretAndUpload(ctx, keySecret.SecretName, keySecret.SecretNamespace,
-					log, &env, "public-key",
-				)
+			for domain, secretName := range desired.Spec.PinnedPublicKeysSecretNames {
+				// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
+				tykCertID, err := r.checkSecretAndUpload(ctx, secretName, req.Namespace, log, &env, "public-key")
 				if err != nil {
 					// we should log the missing secret, but we should still create the API definition
 					log.Info(
-						fmt.Sprintf("cert %s/%s is missing", keySecret.SecretName, keySecret.SecretNamespace),
+						fmt.Sprintf("cert %s/%s is missing", secretName, req.Namespace),
 						"error", err,
 					)
 					continue

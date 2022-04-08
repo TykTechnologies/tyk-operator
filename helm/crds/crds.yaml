@@ -613,19 +613,10 @@ spec:
                   type: string
                 description: PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in case an upstream certificate is compromised. Please use PinnedPublicKeysSecretNames if using cert-manager.
                 type: object
-              pinned_public_keys_secret_names:
+              pinnedPublicKeysSecretNames:
                 additionalProperties:
-                  description: PinnedPublicKeySecret holds information about a Kubernetes Secret object called 'SecretName' residing in 'SecretNamespace' namespace that includes the public key of the domain, defined through 'PublicKeySecretField' field.
-                  properties:
-                    secret_name:
-                      type: string
-                    secret_namespace:
-                      default: default
-                      type: string
-                  required:
-                  - secret_name
-                  type: object
-                description: PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates for Certificate Pinning feature.
+                  type: string
+                description: PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the public keys for given domain through key field. It takes domain name as a key and secret name as a value.
                 type: object
               protocol:
                 description: APIProtocol is the network transport protocol supported by the gateway

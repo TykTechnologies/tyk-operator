@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -23,6 +24,7 @@ const (
 	testApiDef       = "test-http"
 	testOperatorCtx  = "mycontext"
 	gatewayLocalhost = "http://localhost:7000"
+	defaultTimeout   = 30 * time.Second
 )
 
 func TestOperatorContextCreate(t *testing.T) {
@@ -78,7 +80,7 @@ func TestOperatorContextCreate(t *testing.T) {
 					}
 
 					return true
-				}))
+				}), wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
 				return ctx
@@ -99,7 +101,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				return true, nil
-			})
+			}, wait.WithTimeout(defaultTimeout))
 			is.NoErr(err)
 
 			return ctx
@@ -120,7 +122,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				return true, nil
-			})
+			}, wait.WithTimeout(defaultTimeout))
 
 			is.NoErr(err)
 
@@ -162,7 +164,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				}
 
 				return true
-			}))
+			}), wait.WithTimeout(defaultTimeout))
 
 			is.NoErr(err)
 
@@ -236,7 +238,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				}
 
 				return true
-			}))
+			}), wait.WithTimeout(defaultTimeout))
 
 			is.NoErr(err)
 

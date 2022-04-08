@@ -9,10 +9,10 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/google/uuid"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	v1 "k8s.io/api/core/v1"
@@ -34,7 +34,6 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 		apiDefListenPath             = "/validation"
 		defaultVersion               = "Default"
 		errorResponseCode            = 422
-		defaultTimeout               = 1 * time.Minute
 	)
 
 	eps := &model.ExtendedPathsSet{
@@ -141,7 +140,6 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 		apiDefListenPath         = "/test"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
-		defaultTimeout           = 1 * time.Minute
 	)
 
 	const whiteListedPath = "/whitelisted"
@@ -264,7 +262,6 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 		apiDefListenPath         = "/test"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
-		defaultTimeout           = 1 * time.Minute
 	)
 
 	const blackListedPath = "/blacklisted"
@@ -387,7 +384,6 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 		apiDefListenPath         = "/test"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
-		defaultTimeout           = 1 * time.Minute
 	)
 
 	const whiteListedPath = "/whitelisted"
@@ -533,9 +529,8 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 
 		secretName = "secret"
 
-		publicKeyID    = "test-public-key-id"
-		defaultTimeout = 30 * time.Second
-		pubKeyPem      = []byte(`-----BEGIN PUBLIC KEY-----
+		publicKeyID = "test-public-key-id"
+		pubKeyPem   = []byte(`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhOQnpezrwA0vHzf47Pa+
 O84fWue/562TqQrVirtf+3fsGQd3MmwnId+ksAGQvWN4M1/hSelYJb246pFqGB7t
 +ZI+vjBYH4/J6CiFsKwzusqkSF63ftQh8Ox0OasB9HvRlOPHT/B5Dskh8HNiJ+1l
@@ -567,21 +562,16 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					Name:      secretName,
 					Namespace: testNS,
 				},
-				Data: map[string][]byte{
-					"public-key":         pubKeyPem,
-					"public-key-enabled": pubKeyPem,
-				},
+				Data: map[string][]byte{"public-key": pubKeyPem},
 			}
 
 			err = client.Resources(testNS).Create(ctx, secret)
 			is.NoErr(err)
 
-			pbks := map[string]model.PinnedPublicKeySecret{
-				// For all domains (`*`), use following secret that contains the public key of the httpbin.org
-				// So, if you make any requests to any addresses except httpbin.org, we should get proxy errors because
-				// of pinned public key.
-				"*": {SecretName: secretName, SecretNamespace: testNS},
-			}
+			// For all domains (`*`), use following secret that contains the public key of the httpbin.org
+			// So, if you make any requests to any addresses except httpbin.org, we should get proxy errors because
+			// of pinned public key.
+			publicKeySecrets := map[string]string{"*": secretName}
 
 			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -592,7 +582,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					TargetURL:       "https://httpbin.org/",
 					StripListenPath: true,
 				}
-				apiDef.Spec.PinnedPublicKeysSecretNames = pbks
+				apiDef.Spec.PinnedPublicKeysSecretNames = publicKeySecrets
 			}, envConf)
 			is.NoErr(err)
 
@@ -607,7 +597,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					StripListenPath: true,
 				}
 				apiDef.Spec.Name = "invalid"
-				apiDef.Spec.PinnedPublicKeysSecretNames = pbks
+				apiDef.Spec.PinnedPublicKeysSecretNames = publicKeySecrets
 			}, envConf)
 			is.NoErr(err)
 
@@ -705,7 +695,6 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 	var (
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
-		defaultTimeout      = 3 * time.Minute
 		opNs                = "tyk-operator-system"
 		certName            = "test-tls-secret-name"
 		dashboardLocalHost  = "http://localhost:7200"
