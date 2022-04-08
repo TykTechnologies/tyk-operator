@@ -1,0 +1,121 @@
+# Create Service & Deployment of Users API
+apiVersion: v1
+kind: Service
+metadata:
+  name: users
+  labels:
+    app: users
+spec:
+  ports:
+    - name: http
+      port: 4001
+      targetPort: 4001
+  selector:
+    app: users
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: users
+        version: v1
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service
+          imagePullPolicy: Always
+          name: users
+          command: ["./users/server"]
+          env:
+            - name: PORT
+              value: "4001"
+
+# Create Service & Deployment of Posts API
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: posts
+  labels:
+    app: posts
+spec:
+  ports:
+    - name: http
+      port: 4002
+      targetPort: 4002
+  selector:
+    app: posts
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: posts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: posts
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: posts
+        version: v1
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service
+          imagePullPolicy: Always
+          name: users
+          command: ["./posts/server"]
+          env:
+            - name: PORT
+              value: "4002"
+
+# Create Service & Deployment of Comments API
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: comments
+  labels:
+    app: comments
+spec:
+  ports:
+    - name: http
+      port: 4003
+      targetPort: 4003
+  selector:
+    app: comments
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comments
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: comments
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: comments
+        version: v1
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service
+          imagePullPolicy: Always
+          name: users
+          command: ["./comments/server"]
+          env:
+            - name: PORT
+              value: "4003"

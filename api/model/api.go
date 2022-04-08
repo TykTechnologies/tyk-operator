@@ -1031,7 +1031,7 @@ type GraphQLSubgraphConfig struct {
 }
 
 type GraphQLSubgraphEntity struct {
-	APIID   string            `json:"api_id"`
+	APIID   string            `json:"api_id,omitempty"`
 	Name    string            `json:"name"`
 	URL     string            `json:"url"`
 	SDL     string            `json:"sdl"`
@@ -1041,9 +1041,9 @@ type GraphQLSubgraphEntity struct {
 type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
 	UpdatedAt            *metav1.Time            `json:"updated_at,omitempty"`
-	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs"`
-	MergedSDL            string                  `json:"merged_sdl"`
-	GlobalHeaders        map[string]string       `json:"global_headers"`
+	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
+	MergedSDL            string                  `json:"merged_sdl,omitempty"`
+	GlobalHeaders        map[string]string       `json:"global_headers,omitempty"`
 	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
 }
 

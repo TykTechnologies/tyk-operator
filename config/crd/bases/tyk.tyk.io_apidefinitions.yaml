@@ -607,7 +607,6 @@ spec:
                             url:
                               type: string
                           required:
-                          - api_id
                           - name
                           - sdl
                           - url
@@ -618,10 +617,6 @@ spec:
                           update of a supergraph API.
                         format: date-time
                         type: string
-                    required:
-                    - global_headers
-                    - merged_sdl
-                    - subgraphs
                     type: object
                   type_field_configurations:
                     description: TypeFieldConfigurations is a rule set of data source
