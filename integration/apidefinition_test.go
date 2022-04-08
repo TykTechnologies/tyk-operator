@@ -557,12 +557,12 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 
 			// Create a secret to store the public key of httpbin.org.
 			secret := &v1.Secret{
-				Type: v1.SecretTypeOpaque,
+				Type: v1.SecretTypeTLS,
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      secretName,
 					Namespace: testNS,
 				},
-				Data: map[string][]byte{"public-key": pubKeyPem},
+				Data: map[string][]byte{"tls.crt": pubKeyPem, "tls.key": []byte("")},
 			}
 
 			err = client.Resources(testNS).Create(ctx, secret)

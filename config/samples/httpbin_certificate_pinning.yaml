@@ -19,17 +19,17 @@
 #
 # In this way, you can refer Kubernetes Secret Objects through 'pinnedPublicKeysSecretNames' field.
 #
-# NOTE: For now, only Opaque type of Secret Objects are allowed. Also, please use 'public-key' field in your Secret object's
-#   data field (see the below example). Secret-Cert controller and ApiDefinition controller will check 'public-key' field
-#   of your Opaque secret for the public key.
-# NOTE: The secret that includes a public key must be in the same namespace as the ApiDefinition.
+# NOTE:
+# - Only kubernetes.io/tls type of Secret Objects are allowed. Also, please use 'tls.crt' field for the public key
+#  (see the below example).
+# - The secret that includes a public key must be in the same namespace as the ApiDefinition.
 #
 # In this example, we have an HTTPS upstream target as `https://httpbin.org`. The public key of httpbin.org is obtained
 # with the following command:
 #   $ openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null | openssl x509 -pubkey -noout
 #
-# We are creating a secret called 'httpbin-secret'. In the 'public-key' field, we are specifying the public key of the
-#  httpbin.org obtained with above `openssl` command, in the decoded manner.
+# We are creating a secret called 'httpbin-secret'. In the 'tls.crt' field of the secret, we are specifying the public key of the
+#  httpbin.org obtained through above `openssl` command, in the decoded manner.
 # Now, in the ApiDefinition, we are using this public key for all domains as '*' (wildcard domains are also supported).
 # If you target any other URL than https://httpbin.org (for instance https://github.com/), you will face a 'public key pinning error'
 # for that particular domain because the public key of httpbin.org is used for all domains.
@@ -37,10 +37,11 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: httpbin-secret
-type: Opaque
+type: kubernetes.io/tls
 data:
-  public-key: | # This field name is fixed and shouldn't be changed. Secret controller strictly checks for `public-key` field.
+  tls.crt: |  # Use tls.crt field for the public key.
     LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+  tls.key: ""
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
