@@ -227,7 +227,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 				if apierrors.IsNotFound(err) {
 					// The Pod has been deleted since we read it.
-					// Requeue the Pod to try to reconciliate again.
+					// Requeue to try to reconciliate again.
 					return ctrl.Result{Requeue: true}, nil
 				}
 
