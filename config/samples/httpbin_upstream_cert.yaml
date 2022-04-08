@@ -4,7 +4,7 @@
 # First apply this manifest using the command
 # "kubectl apply -f config/samples/httpbin_upstream_cert.yaml"
 #
-# The operator will try to create the ApiDefinition and will succed but will log an error that a certificate is missing
+# The operator will try to create the ApiDefinition and will succeed but will log an error that a certificate is missing
 # in the cluster for an upstream
 
 # Generate your public-private key pair , for test use you can use the following command to obtain one fast:
