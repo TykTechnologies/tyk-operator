@@ -57,7 +57,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Type                                                                                 | Supported | Comments        |
 |--------------------------------------------------------------------------------------|-----------|-----------------|
 | [Public Key Certificate Pinning](../config/samples/httpbin_certificate_pinning.yaml) | ✅         |                 |
-| Upstream Certificates mTLS                                                           | ✅          | Not implemented |
+| [Upstream Certificates mTLS](../config/samples/httpbin_upstream_cert.yaml)           | ✅         |                 |
 | Request Signing                                                                      | ❌         | Not implemented |
 
 ## Features

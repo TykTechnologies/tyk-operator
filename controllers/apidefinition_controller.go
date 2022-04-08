@@ -115,7 +115,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
 			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
-				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env, "")
+				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
 				if err != nil {
 					// we should log the missing secret, but we should still create the API definition
 					log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
@@ -132,7 +132,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {
 			certName := desired.Spec.CertificateSecretNames[0]
-			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env, "")
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
 			if err != nil {
 				return err
 			}
@@ -148,13 +148,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 			for domain, secretName := range desired.Spec.PinnedPublicKeysSecretNames {
 				// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
-				tykCertID, err := r.checkSecretAndUpload(ctx, secretName, req.Namespace, log, &env, "public-key")
+				tykCertID, err := r.checkSecretAndUpload(ctx, secretName, req.Namespace, log, &env)
 				if err != nil {
 					// we should log the missing secret, but we should still create the API definition
-					log.Info(
-						fmt.Sprintf("cert %s/%s is missing", secretName, req.Namespace),
-						"error", err,
-					)
+					log.Info("failed to upload pinned public key", "error", err)
 					continue
 				}
 
@@ -218,7 +215,6 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	ns string,
 	log logr.Logger,
 	env *environmet.Env,
-	field string,
 ) (string, error) {
 	secret := v1.Secret{}
 
@@ -228,40 +224,23 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 		return "", err
 	}
 
-	// 'field' holds Secret object's data field that we are going to check.
-	// If kubernetes.io/tls type Secret is used, there is no need to provide 'field' since kubernetes.io/tls types have
-	// already defined fields called 'tls.crt' and 'tls.key'. However, if you provide any other type of secrets such
-	// as Opaque (as we do in Public Key Certificate pinning), you need to provide field that controller should check,
-	// through 'public_key_secret_field'.
-	if secret.Type == TLSSecretType {
-		pemCrtBytes, ok := secret.Data["tls.crt"]
-		if !ok {
-			err = fmt.Errorf("%s", "requeueing because cert not found in secret")
-			log.Error(err, "requeueing because cert not found in secret")
+	pemCrtBytes, ok := secret.Data["tls.crt"]
+	if !ok {
+		err = fmt.Errorf("%s", "requeueing because cert not found in secret")
+		log.Error(err, "requeueing because cert not found in secret")
 
-			return "", err
-		}
-
-		pemKeyBytes, ok := secret.Data["tls.key"]
-		if !ok {
-			err = fmt.Errorf("%s", "requeueing because key not found in secret")
-			log.Error(err, "requeueing because key not found in secret")
-
-			return "", err
-		}
-
-		return uploadCert(ctx, env.Org, pemKeyBytes, pemCrtBytes)
+		return "", err
 	}
 
-	pubKey, ok := secret.Data[field]
+	pemKeyBytes, ok := secret.Data["tls.key"]
 	if !ok {
-		err = fmt.Errorf("requeueing because %s not found in secret", field)
+		err = fmt.Errorf("%s", "requeueing because key not found in secret")
 		log.Error(err, "requeueing because key not found in secret")
 
 		return "", err
 	}
 
-	return uploadCert(ctx, env.Org, []byte{}, pubKey)
+	return uploadCert(ctx, env.Org, pemKeyBytes, pemCrtBytes)
 }
 
 func (r *ApiDefinitionReconciler) create(
