@@ -420,8 +420,7 @@ spec:
                 - strip_path
                 type: object
               do_not_track:
-                description: DoNotTrack disables endpoint tracking for this API. Default
-                  is true, you need to explicitly set it to false
+                description: DoNotTrack disables endpoint tracking for this API
                 type: boolean
               domain:
                 description: Domain represents a custom host header that the gateway

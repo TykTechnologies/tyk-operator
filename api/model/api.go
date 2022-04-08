@@ -540,7 +540,7 @@ type APIDefinitionSpec struct {
 	// Domain represents a custom host header that the gateway will listen on for this API
 	Domain string `json:"domain,omitempty"`
 
-	// DoNotTrack disables endpoint tracking for this API. Default is true, you need to explicitly set it to false
+	// DoNotTrack disables endpoint tracking for this API
 	DoNotTrack *bool `json:"do_not_track,omitempty"`
 
 	// UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
