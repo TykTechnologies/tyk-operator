@@ -69,12 +69,14 @@ const (
 	// The GraphQL Middleware will (optionally) validate the request and leave the execution up to the upstream.
 	GraphQLExecutionModeProxyOnly GraphQLExecutionMode = "proxyOnly"
 	// GraphQLExecutionModeExecutionEngine is the mode in which the GraphQL Middleware will evaluate every request.
-	// This means the Middleware will act as a independent GraphQL service which might delegate partial execution to upstreams.
+	// This means the Middleware will act as an independent GraphQL service which might delegate partial execution to
+	// upstreams.
 	GraphQLExecutionModeExecutionEngine GraphQLExecutionMode = "executionEngine"
 	// GraphQLExecutionModeSubgraph is the mode if the API is defined as a subgraph for usage in GraphQL federation.
 	// It will basically act the same as an API in proxyOnly mode but can be used in a supergraph.
 	GraphQLExecutionModeSubgraph GraphQLExecutionMode = "subgraph"
-	// GraphQLExecutionModeSupergraph is the mode where an API is able to use subgraphs to build a supergraph in GraphQL federation.
+	// GraphQLExecutionModeSupergraph is the mode where an API is able to use subgraphs to build a supergraph in GraphQL
+	// federation.
 	GraphQLExecutionModeSupergraph GraphQLExecutionMode = "supergraph"
 )
 
