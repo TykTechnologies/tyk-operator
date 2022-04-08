@@ -36,7 +36,6 @@ import (
 const (
 	certFinalizerName = "finalizers.tyk.io/certs"
 	TLSSecretType     = "kubernetes.io/tls"
-	opaqueSecretType  = v1.SecretTypeOpaque
 )
 
 // SecretCertReconciler reconciles a Cert object
@@ -105,48 +104,28 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("checking secret type is kubernetes.io/tls or Opaque")
+	log.Info("checking secret type is kubernetes.io/tls")
 
-	var (
-		tlsKey []byte
-		tlsCrt []byte
-	)
-
-	switch desired.Type {
-	case TLSSecretType:
-		log.Info("ensuring tls.key is present")
-
-		ok := false
-		tlsKey, ok = desired.Data["tls.key"]
-
-		if !ok {
-			// cert doesn't exist yet
-			log.Info("missing tls.key, we don't care about it yet")
-			return ctrl.Result{}, nil
-		}
-
-		log.Info("ensuring tls.crt is present")
-
-		tlsCrt, ok = desired.Data["tls.crt"]
-
-		if !ok {
-			// cert doesn't exist yet
-			log.Info("missing tls.crt, we don't care about it yet")
-			return ctrl.Result{}, nil
-		}
-	case opaqueSecretType:
-		var (
-			ok                 bool
-			publicKeyFieldName = "public-key"
-		)
-
-		tlsCrt, ok = desired.Data[publicKeyFieldName]
-		if !ok {
-			log.Info("missing 'public-key' field in your Opaque secret to enable public key pinning.")
-			return ctrl.Result{}, nil
-		}
-	default:
+	if desired.Type != TLSSecretType {
 		// it's not for us
+		return ctrl.Result{}, nil
+	}
+
+	log.Info("ensuring tls.key is present")
+
+	tlsKey, ok := desired.Data["tls.key"]
+	if !ok {
+		// cert doesn't exist yet
+		log.Info("missing tls.key, we don't care about it yet")
+		return ctrl.Result{}, nil
+	}
+
+	log.Info("ensuring tls.crt is present")
+
+	tlsCrt, ok := desired.Data["tls.crt"]
+	if !ok {
+		// cert doesn't exist yet
+		log.Info("missing tls.crt, we don't care about it yet")
 		return ctrl.Result{}, nil
 	}
 
@@ -294,7 +273,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *SecretCertReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Secret{}).
-		WithEventFilter(r.filterPredicates()).
+		WithEventFilter(r.ignoreNonTLSPredicate()).
 		Complete(r)
 }
 
@@ -320,10 +299,10 @@ type NewSecretType struct {
 	} `json:"Object"`
 }
 
-func (r *SecretCertReconciler) filterPredicates() predicate.Predicate {
-	// isDesiredSecretType filters created secret resources based on its type. Right now, only allowed secret types are
-	// kubernetes.io/tls and Opaque.
-	isDesiredSecretType := func(jsBytes []byte) bool {
+func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
+	// isTLSType filters created secret resources based on its type. Right now, only allowed secret type is
+	// kubernetes.io/tls.
+	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 
 		err := json.Unmarshal(jsBytes, &secret)
@@ -339,9 +318,7 @@ func (r *SecretCertReconciler) filterPredicates() predicate.Predicate {
 				return false
 			}
 
-			// Currently, only TLS and Opaque types of Kubernetes secrets are supported.
-			return newSecret.ObjectNew.Type == TLSSecretType || newSecret.Object.Type == TLSSecretType ||
-				newSecret.Object.Type == string(opaqueSecretType) || newSecret.ObjectNew.Type == string(opaqueSecretType)
+			return newSecret.ObjectNew.Type == TLSSecretType || newSecret.Object.Type == TLSSecretType
 		}
 
 		// if Update
@@ -351,15 +328,14 @@ func (r *SecretCertReconciler) filterPredicates() predicate.Predicate {
 		// then it's a create / delete op
 		return secret.Meta.Type == TLSSecretType
 	}
-
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			eBytes, _ := json.Marshal(e)
-			return isDesiredSecretType(eBytes)
+			return isTLSType(eBytes)
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			eBytes, _ := json.Marshal(e)
-			return isDesiredSecretType(eBytes)
+			return isTLSType(eBytes)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			return true
