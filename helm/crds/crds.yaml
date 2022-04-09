@@ -447,6 +447,7 @@ spec:
                           - name
                           - root_fields
                           type: object
+                        nullable: true
                         type: array
                       field_configs:
                         items:
@@ -467,6 +468,7 @@ spec:
                           - path
                           - type_name
                           type: object
+                        nullable: true
                         type: array
                     required:
                     - data_sources

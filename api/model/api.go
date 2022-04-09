@@ -1022,8 +1022,10 @@ type GraphQLTypeFields struct {
 }
 
 type GraphQLEngineConfig struct {
-	FieldConfigs []GraphQLFieldConfig      `json:"field_configs"`
-	DataSources  []GraphQLEngineDataSource `json:"data_sources"`
+	// +nullable
+	FieldConfigs []GraphQLFieldConfig `json:"field_configs"`
+	// +nullable
+	DataSources []GraphQLEngineDataSource `json:"data_sources"`
 }
 
 type GraphQLSubgraphConfig struct {
