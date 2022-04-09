@@ -1000,15 +1000,10 @@ type GraphQLFieldConfig struct {
 	Path                  []string `json:"path"`
 }
 
+// +kubebuilder:validation:Enum=REST;GraphQL
 type GraphQLEngineDataSourceKind string
 
-const (
-	GraphQLEngineDataSourceKindREST    = "REST"
-	GraphQLEngineDataSourceKindGraphQL = "GraphQL"
-)
-
 type GraphQLEngineDataSource struct {
-	// +kubebuilder:validation:Enum=REST;GraphQL
 	Kind       GraphQLEngineDataSourceKind `json:"kind"`
 	Name       string                      `json:"name"`
 	Internal   bool                        `json:"internal"`
@@ -1049,6 +1044,10 @@ type GraphQLSupergraphConfig struct {
 	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=1;2
+// +nullable
+type GraphQLConfigVersion string
+
 // GraphQLConfig is the root config object for a GraphQL API.
 type GraphQLConfig struct {
 	// Enabled indicates if GraphQL proxy should be enabled.
@@ -1083,14 +1082,6 @@ type GraphQLConfig struct {
 	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
 	LastSchemaUpdate *metav1.Time `json:"last_schema_update,omitempty"`
 }
-
-type GraphQLConfigVersion string
-
-const (
-	GraphQLConfigVersionNone GraphQLConfigVersion = ""
-	GraphQLConfigVersion1    GraphQLConfigVersion = "1"
-	GraphQLConfigVersion2    GraphQLConfigVersion = "2"
-)
 
 type GraphQLProxyConfig struct {
 	// +nullable
