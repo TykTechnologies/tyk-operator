@@ -63,23 +63,6 @@ type HttpMethod string
 // +kubebuilder:validation:Enum=proxyOnly;executionEngine;supergraph;subgraph
 type GraphQLExecutionMode string
 
-const (
-	// GraphQLExecutionModeProxyOnly is the mode in which the GraphQL Middleware doesn't evaluate the GraphQL request
-	// In other terms, the GraphQL Middleware will not act as a GraphQL server in itself.
-	// The GraphQL Middleware will (optionally) validate the request and leave the execution up to the upstream.
-	GraphQLExecutionModeProxyOnly GraphQLExecutionMode = "proxyOnly"
-	// GraphQLExecutionModeExecutionEngine is the mode in which the GraphQL Middleware will evaluate every request.
-	// This means the Middleware will act as an independent GraphQL service which might delegate partial execution to
-	// upstreams.
-	GraphQLExecutionModeExecutionEngine GraphQLExecutionMode = "executionEngine"
-	// GraphQLExecutionModeSubgraph is the mode if the API is defined as a subgraph for usage in GraphQL federation.
-	// It will basically act the same as an API in proxyOnly mode but can be used in a supergraph.
-	GraphQLExecutionModeSubgraph GraphQLExecutionMode = "subgraph"
-	// GraphQLExecutionModeSupergraph is the mode where an API is able to use subgraphs to build a supergraph in GraphQL
-	// federation.
-	GraphQLExecutionModeSupergraph GraphQLExecutionMode = "supergraph"
-)
-
 // APIProtocol is the network transport protocol supported by the gateway
 // +kubebuilder:validation:Enum=h2c;tcp;tls;http;https;
 type APIProtocol string
@@ -1044,8 +1027,7 @@ type GraphQLSupergraphConfig struct {
 	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=1;2
-// +nullable
+// +kubebuilder:validation:Enum="1";"2"
 type GraphQLConfigVersion string
 
 // GraphQLConfig is the root config object for a GraphQL API.

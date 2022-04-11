@@ -707,8 +707,8 @@ spec:
                     description: Version defines the version of the GraphQL config
                       and engine to be used.
                     enum:
-                    - 1
-                    - 2
+                    - "1"
+                    - "2"
                     type: string
                 required:
                 - enabled
