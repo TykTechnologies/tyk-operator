@@ -155,11 +155,11 @@ gateway:
       value: "tcp://grpc-plugin.tykpro-control-plane.svc.cluster.local:9999"
 
 pump:
-  enabled: true
+  enabled: false
   replicaCount: 1
   image:
     repository: tykio/tyk-pump-docker-pub
-    tag: v1.4.0
+    tag: v1.2.0
     pullPolicy: IfNotPresent
   annotations: {}
   resources: {}
