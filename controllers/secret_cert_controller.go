@@ -199,22 +199,23 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				err = r.Update(ctx, &apiDefList.Items[idx])
 
 				if apierrors.IsConflict(err) {
-					// The Pod has been updated since we read it.
+					// The ApiDefinition has been updated since we read it.
 					// Requeue to try to reconciliate again.
 					return ctrl.Result{Requeue: true}, nil
 				}
 
 				if apierrors.IsNotFound(err) {
-					// The Pod has been deleted since we read it.
+					// The ApiDefinition has been deleted since we read it.
 					// Requeue to try to reconciliate again.
 					return ctrl.Result{Requeue: true}, nil
 				}
 
 				if err != nil {
 					log.Error(err, "unable to update ApiDef")
+					return ctrl.Result{Requeue: true}, nil
 				}
 
-				log.Info("api def updated successfully")
+				log.Info("ApiDefinition updated successfully")
 
 				return ctrl.Result{}, nil
 			}
