@@ -54,10 +54,10 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 ## Gateway to Upstream Authentication
 
-| Type | Supported | Comments |
-| ----------- | --------- | --------- |
+| Type | Supported | Comments        |
+| ----------- | --------- |-----------------|
 | Public Key Certificate Pinning | ❌ | Not implemented |
-| Upstream Certificates mTLS | ✅ | Not implemented |
+| Upstream Certificates mTLS | ✅ | -               |
 | Request Signing | ❌ | Not implemented |
 
 ## Features
