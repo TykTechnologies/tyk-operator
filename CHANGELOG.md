@@ -3,6 +3,10 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...HEAD)
 
+**Breaking Changes:**
+- `do_not_track` field's default value is changed from `true` to `false`, to make default behaviour inline with Tyk Dashboard/Gateway.
+Therefore, Analytics for API will be enabled by default from this version. A user have to explicitly disable it by setting `do_not_track` field value to `true`.
+
 **Added:**
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
 - Added Support of Auth Headers while creating GraphQL ProxyOnly API
