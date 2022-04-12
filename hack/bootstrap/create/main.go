@@ -480,7 +480,7 @@ func deployHTTPBIN() {
 		ok()
 		say("Waiting for httpbin to be ready ...")
 		exit(kl(
-			"rollout", "status", "--timeout", "1m", "deployment/httpbin",
+			"rollout", "status", "--timeout", "2m", "deployment/httpbin",
 		))
 	}
 
