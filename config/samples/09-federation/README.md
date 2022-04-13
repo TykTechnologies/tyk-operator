@@ -11,7 +11,7 @@ Tyk, with release *4.0* offers GraphQL federation that allows you to divide GQL 
 kubectl apply -f config/samples/09-federation/apis.yaml
 ```
 
-> Please wait until all pods become 
+> Please wait until all pods reach READY `1/1` and STATUS `Running` states.
 
 This will create Services and Deployments of the sample GraphQL APIs that will be used by the Federation.
 
