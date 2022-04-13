@@ -572,6 +572,15 @@ type APIDefinitionSpec struct {
 	// UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
 	// ClientCertificates         []string              `json:"client_certificates"`
 
+	// PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in
+	// case an upstream certificate is compromised. Please use PinnedPublicKeysSecretNames if using cert-manager.
+	PinnedPublicKeys map[string]string `json:"pinned_public_keys,omitempty"`
+
+	// PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current
+	// namespace which contain the public keys for given domain through key field. It takes domain name as a key and
+	// secret name as a value.
+	PinnedPublicKeysSecretNames map[string]string `json:"pinnedPublicKeysSecretNames,omitempty"`
+
 	// UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk
 	// Gateway to provide mTLS support for upstreams
 	UpstreamCertificates map[string]string `json:"upstream_certificates,omitempty"`

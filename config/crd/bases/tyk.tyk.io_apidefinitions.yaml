@@ -697,6 +697,22 @@ spec:
               org_id:
                 description: OrgID is overwritten - no point setting this
                 type: string
+              pinned_public_keys:
+                additionalProperties:
+                  type: string
+                description: PinnedPublicKeys allows you to whitelist public keys
+                  used to generate certificates, so you will be protected in case
+                  an upstream certificate is compromised. Please use PinnedPublicKeysSecretNames
+                  if using cert-manager.
+                type: object
+              pinnedPublicKeysSecretNames:
+                additionalProperties:
+                  type: string
+                description: PinnedPublicKeysSecretNames represents the names of the
+                  secrets that the controller should look for in the current namespace
+                  which contain the public keys for given domain through key field.
+                  It takes domain name as a key and secret name as a value.
+                type: object
               protocol:
                 description: APIProtocol is the network transport protocol supported
                   by the gateway

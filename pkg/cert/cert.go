@@ -12,6 +12,7 @@ func HexSHA256(cert []byte) string {
 }
 
 func CalculateFingerPrint(data []byte) string {
+	// TODO: publicKey might be returned as nil. if that's the case, the program panics.
 	publicKey, _ := pem.Decode(data)
 	return HexSHA256(publicKey.Bytes)
 }

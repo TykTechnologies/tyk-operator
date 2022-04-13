@@ -115,10 +115,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
 			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
-				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
+				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
 				if err != nil {
-					// we should log the missing secret but we should still create the API definition
-					log.Info(fmt.Sprintf("cert name %s is missing", certName))
+					// we should log the missing secret, but we should still create the API definition
+					log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
 				} else {
 					if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
 						upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
@@ -132,7 +132,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {
 			certName := desired.Spec.CertificateSecretNames[0]
-			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName, log, &env)
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
 			if err != nil {
 				return err
 			}
@@ -140,21 +140,43 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
 		}
 
+		// Check Pinned Public keys
+		if len(desired.Spec.PinnedPublicKeysSecretNames) != 0 {
+			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
+				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
+			}
+
+			for domain, secretName := range desired.Spec.PinnedPublicKeysSecretNames {
+				// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
+				tykCertID, err := r.checkSecretAndUpload(ctx, secretName, req.Namespace, log, &env)
+				if err != nil {
+					// we should log the missing secret, but we should still create the API definition
+					log.Info("failed to upload pinned public key", "error", err)
+					continue
+				}
+
+				upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
+			}
+		}
+
+		// To prevent API object validation failures, set additional properties to nil.
 		upstreamRequestStruct.Spec.CertificateSecretNames = nil
+		upstreamRequestStruct.Spec.PinnedPublicKeysSecretNames = nil
+
 		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
 
-		targets := desired.Spec.CollectLoopingTarget()
-
-		if err := r.ensureTargets(ctx, desired.Namespace, targets); err != nil {
+		targets := upstreamRequestStruct.Spec.CollectLoopingTarget()
+		if err := r.ensureTargets(ctx, upstreamRequestStruct.Namespace, targets); err != nil {
 			return err
 		}
-		err := r.updateLoopingTargets(ctx, desired, targets)
+
+		err := r.updateLoopingTargets(ctx, upstreamRequestStruct, targets)
 		if err != nil {
 			log.Error(err, "Failed to update looping targets")
 			return err
 		}
 
-		desired.Spec.CollectLoopingTarget()
+		upstreamRequestStruct.Spec.CollectLoopingTarget()
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			return r.create(ctx, upstreamRequestStruct, log)
@@ -172,16 +194,31 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{RequeueAfter: queueA}, err
 }
 
+func uploadCert(ctx context.Context, orgID string, pemKeyBytes, pemCrtBytes []byte) (tykCertID string, err error) {
+	tykCertID = orgID + cert.CalculateFingerPrint(pemCrtBytes)
+	exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
+
+	if !exists {
+		// upload the certificate
+		tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return tykCertID, nil
+}
+
 func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	ctx context.Context,
 	certName string,
-	namespacedName types.NamespacedName,
+	ns string,
 	log logr.Logger,
 	env *environmet.Env,
 ) (string, error) {
 	secret := v1.Secret{}
 
-	err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: namespacedName.Namespace}, &secret)
+	err := r.Get(ctx, types.NamespacedName{Name: certName, Namespace: ns}, &secret)
 	if err != nil {
 		log.Error(err, "requeueing because secret not found")
 		return "", err
@@ -203,18 +240,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 		return "", err
 	}
 
-	tykCertID := env.Org + cert.CalculateFingerPrint(pemCrtBytes)
-	exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
-
-	if !exists {
-		// upload the certificate
-		tykCertID, err = klient.Universal.Certificate().Upload(ctx, pemKeyBytes, pemCrtBytes)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return tykCertID, nil
+	return uploadCert(ctx, env.Org, pemKeyBytes, pemCrtBytes)
 }
 
 func (r *ApiDefinitionReconciler) create(

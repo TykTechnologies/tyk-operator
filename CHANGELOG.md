@@ -9,8 +9,9 @@ Therefore, Analytics for API will be enabled by default from this version. A use
 
 **Added:**
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
-- Added Support of Auth Headers while creating GraphQL ProxyOnly API
-  ci-tyk-operator-controller-manager-67b6cfd544-cdtsf
+- Added Support of Auth Headers while creating GraphQL ProxyOnly API 
+- Added [Certificate Pinning](https://tyk.io/docs/security/certificate-pinning/) support in the Tyk Operator [#405](https://github.com/TykTechnologies/tyk-operator/issues/405)
+- Added Upstream mTLS gateway parameters
 
 **Documentation**
 - Added documentation for GraphQL ProxyOnly API
