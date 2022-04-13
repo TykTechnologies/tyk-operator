@@ -54,7 +54,7 @@ func TestMain(t *testing.M) {
 }
 
 func createNamespace(ctx context.Context, cfg *envconf.Config, t *testing.T) (context.Context, error) {
-	name := envconf.RandomName("tyk-operator", 16)
+	name := envconf.RandomName("tyk-operator", 32)
 
 	ctx = context.WithValue(ctx, ctxNSKey, name)
 
