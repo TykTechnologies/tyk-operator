@@ -1,3 +1,43 @@
+# Create Service & Deployment of Users API
+apiVersion: v1
+kind: Service
+metadata:
+  name: users
+  labels:
+    app: users
+spec:
+  ports:
+    - name: http
+      port: 4001
+      targetPort: 4001
+  selector:
+    app: users
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: users
+        version: v1
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service
+          imagePullPolicy: Always
+          name: users
+          command: ["./users/server"]
+          env:
+            - name: PORT
+              value: "4001"
+---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -72,13 +112,7 @@ spec:
         company: Company!
       }
     enabled: true
-    engine:
-      field_configs: []
-      data_sources: []
-    type_field_configurations: []
     execution_mode: subgraph
-    proxy:
-      auth_headers: {}
     subgraph:
       sdl: |
         extend type Query {

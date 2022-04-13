@@ -4,17 +4,6 @@ Tyk, with release *4.0* offers GraphQL federation that allows you to divide GQL 
 
 > Tyk Operator does **_not_** yet fully support [GraphQL Federation](https://tyk.io/docs/getting-started/key-concepts/graphql-federation/). It is still in **_POC_** and under **_WIP_**.
 
-
-- Create sample APIs used by the Federation examples.
-
-```bash
-kubectl apply -f config/samples/09-federation/apis.yaml
-```
-
-> Please wait until all pods reach READY `1/1` and STATUS `Running` states.
-
-This will create Services and Deployments of the sample GraphQL APIs that will be used by the Federation.
-
 - Create subgraphs
 
 ```bash

@@ -1,3 +1,44 @@
+# Create Service & Deployment of Posts API
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: posts
+  labels:
+    app: posts
+spec:
+  ports:
+    - name: http
+      port: 4002
+      targetPort: 4002
+  selector:
+    app: posts
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: posts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: posts
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: posts
+        version: v1
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service
+          imagePullPolicy: Always
+          name: users
+          command: ["./posts/server"]
+          env:
+            - name: PORT
+              value: "4002"
+---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -55,13 +96,7 @@ spec:
         posts: [Post!]!
       }
     enabled: true
-    engine:
-      field_configs: []
-      data_sources: []
-    type_field_configurations: []
     execution_mode: subgraph
-    proxy:
-      auth_headers: {}
     subgraph:
       sdl: |
         extend type Query {

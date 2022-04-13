@@ -67,8 +67,7 @@ spec:
     supergraph:
       subgraphs:
         - name: Users subgraph
-          url: tyk://ZGVmYXVsdC9mZWRlcmF0aW9uLXVzZXJzLXN1YmdyYXBo
-#          url: tyk://Users-subgraph
+          url: tyk://federation-users-subgraph
           sdl: |
             extend type Query {
                 user(id: ID!): User!
@@ -105,8 +104,7 @@ spec:
                 bs: String!
             }
         - name: Posts Subgraph
-          url: tyk://ZGVmYXVsdC9mZWRlcmF0aW9uLXBvc3RzLXN1YmdyYXBo/
-#          url: tyk://Posts-subgraph
+          url: tyk://federation-posts-subgraph
           sdl: |
             extend type Query {
                 post(id: ID!): Post!
