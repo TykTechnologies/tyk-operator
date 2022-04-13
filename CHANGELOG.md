@@ -19,6 +19,9 @@ Therefore, Analytics for API will be enabled by default from this version. A use
 **Fixed:**
 - Fixed a bug in which ApiDefinition CRDs were wrongly mutated
 
+**Changed:**
+- Installation: Preloading of images during is turned off by default. It can turned on by setting `TYK_OPERATOR_PRELOAD_IMAGES` to true.
+
 ## [v0.8.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.8.2) (2022-03-14)
 
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.1...v0.8.2)

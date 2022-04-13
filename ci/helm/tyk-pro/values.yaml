@@ -119,7 +119,7 @@ portal:
     tls: []
 
 gateway:
-  kind: DaemonSet
+  kind: Deployment
   replicaCount: 1
   tags: "private"
   tls: false
