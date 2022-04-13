@@ -69,6 +69,20 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.PinnedPublicKeys != nil {
+		in, out := &in.PinnedPublicKeys, &out.PinnedPublicKeys
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.PinnedPublicKeysSecretNames != nil {
+		in, out := &in.PinnedPublicKeysSecretNames, &out.PinnedPublicKeysSecretNames
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.UpstreamCertificates != nil {
 		in, out := &in.UpstreamCertificates, &out.UpstreamCertificates
 		*out = make(map[string]string, len(*in))

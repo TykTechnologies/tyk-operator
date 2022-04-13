@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/golang-jwt/jwt"
@@ -33,9 +34,10 @@ var preloadImagesList = []struct{ name, image, version string }{
 
 // Config configuration for booting operator environment
 type Config struct {
-	WorkDir  string
-	Tyk      Tyk
-	Operator Operator
+	WorkDir       string
+	PreloadImages bool
+	Tyk           Tyk
+	Operator      Operator
 }
 
 // Chart returns path to the helm chart to install
@@ -57,6 +59,16 @@ func (c *Config) bind(mode string) {
 
 	c.WorkDir = filepath.Join(wd, "ci")
 	env(&c.WorkDir, "TYK_OPERATOR_WORK_DIR")
+
+	var strPreloadImages string
+	env(&strPreloadImages, "TYK_OPERATOR_PRELOAD_IMAGES")
+
+	c.PreloadImages, err = strconv.ParseBool(strPreloadImages)
+	if err != nil {
+		// set default value to false
+		c.PreloadImages = false
+	}
+
 	c.Tyk.bind(c.WorkDir, mode)
 	c.Operator.bind(mode)
 }
@@ -177,7 +189,11 @@ func deployDir() string {
 func main() {
 	flag.Parse()
 	config.bind(*mode)
-	// preloadImages()
+
+	if config.PreloadImages {
+		preloadImages()
+	}
+
 	submodule()
 	ns()
 	common()
@@ -247,7 +263,7 @@ func kf(fn func(*exec.Cmd), args ...string) error {
 // They will only be created if they don't exist yet so it is safe to run this
 // multiple times
 func ns() {
-	say("Creating namespaces ...")
+	say("Creating Namespaces ...")
 
 	if !hasNS(config.Tyk.Namespace) {
 		exit(kl("create", "namespace", config.Tyk.Namespace))
@@ -318,7 +334,7 @@ func exit(err error) {
 func createRedis() {
 	say("Creating Redis ....")
 
-	if !hasRedis() {
+	if !hasDeployment("deployment/redis", config.Tyk.Namespace) {
 		f := filepath.Join(config.WorkDir, deployDir(), "redis")
 		exit(kl(
 			"apply", "-f", f,
@@ -337,7 +353,7 @@ func createRedis() {
 func createMongo() {
 	say("Creating Mongo ....")
 
-	if !hasMongo() {
+	if !hasDeployment("deployment/mongo", config.Tyk.Namespace) {
 		f := filepath.Join(config.WorkDir, deployDir(), "mongo")
 		exit(kl(
 			"apply", "-f", f,
@@ -414,30 +430,14 @@ func hasOperatorSecret() bool {
 	return k("get", "secret", "-n", config.Operator.Namespace, config.Operator.SecretName) == nil
 }
 
-func hasRedis() bool {
-	return k("get", "deployment/redis", "-n", config.Tyk.Namespace) == nil
-}
-
-func hasMongo() bool {
-	return k("get", "deployment/mongo", "-n", config.Tyk.Namespace) == nil
-}
-
-func hasHTTPBIN() bool {
-	return k("get", "deployment/httpbin") == nil
-}
-
-func hasGRPCPlugin() bool {
-	return k("get", "deployment/grpc-plugin", "-n", config.Tyk.Namespace) == nil
-}
-
-func hasCertManager() bool {
-	return k("get", "deployment/cert-manager", "-n", config.Operator.CertManagerNamespace) == nil
+func hasDeployment(depName, namespace string) bool {
+	return k("get", depName, "-n", namespace) == nil
 }
 
 func createCertManager() {
 	say("Installing cert-manager ...")
 
-	if !hasCertManager() {
+	if !hasDeployment("deployment/cert-manager", config.Operator.CertManagerNamespace) {
 		exit(kl(
 			"apply",
 			"--validate=false",
@@ -475,7 +475,7 @@ func operator() {
 func deployHTTPBIN() {
 	say("Deploying httpbin ...")
 
-	if !hasHTTPBIN() {
+	if !hasDeployment("deployment/httpbin", "default") {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "upstreams")))
 		ok()
 		say("Waiting for httpbin to be ready ...")
@@ -490,7 +490,7 @@ func deployHTTPBIN() {
 func deployGRPCPlugin() {
 	say("Deploying grpc-plugin ...")
 
-	if !hasGRPCPlugin() {
+	if !hasDeployment("deployment/grpc-plugin", config.Tyk.Namespace) {
 		exit(k("apply", "-f", filepath.Join(config.WorkDir, "grpc-plugin"), "-n", config.Tyk.Namespace))
 		ok()
 		say("Waiting for grpc-plugin to be ready ...")

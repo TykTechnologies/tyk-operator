@@ -9,7 +9,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
 )
 
 func TestApiDefinition_Default(t *testing.T) {
@@ -39,50 +38,6 @@ func TestApiDefinition_Default(t *testing.T) {
 
 	if authConf.AuthHeaderName != "Authorization" {
 		t.Fatal("expected the authConf.AuthHeaderName to be Authorization, Got", authConf.AuthHeaderName)
-	}
-}
-
-func TestApiDefinition_Default_DoNotTrack(t *testing.T) {
-	in := ApiDefinition{
-		Spec: APIDefinitionSpec{
-			APIDefinitionSpec: model.APIDefinitionSpec{
-				UseStandardAuth: true,
-				DoNotTrack:      pointer.BoolPtr(true),
-			},
-		},
-	}
-	in.Default()
-
-	if *in.Spec.DoNotTrack != true {
-		t.Fatalf("expected DoNotTrack to be true as explicitly set, got %v", *in.Spec.DoNotTrack)
-	}
-
-	in = ApiDefinition{
-		Spec: APIDefinitionSpec{
-			APIDefinitionSpec: model.APIDefinitionSpec{
-				UseStandardAuth: true,
-				DoNotTrack:      nil,
-			},
-		},
-	}
-	in.Default()
-
-	if *in.Spec.DoNotTrack != true {
-		t.Fatalf("expected DoNotTrack to be true by default, got %v", *in.Spec.DoNotTrack)
-	}
-
-	in = ApiDefinition{
-		Spec: APIDefinitionSpec{
-			APIDefinitionSpec: model.APIDefinitionSpec{
-				UseStandardAuth: true,
-				DoNotTrack:      pointer.BoolPtr(false),
-			},
-		},
-	}
-	in.Default()
-
-	if *in.Spec.DoNotTrack != false {
-		t.Fatalf("expected DoNotTrack to be false as explicitly set, got %v", *in.Spec.DoNotTrack)
 	}
 }
 
