@@ -263,7 +263,7 @@ func kf(fn func(*exec.Cmd), args ...string) error {
 // They will only be created if they don't exist yet so it is safe to run this
 // multiple times
 func ns() {
-	say("Creating namespaces ...")
+	say("Creating Namespaces ...")
 
 	if !hasNS(config.Tyk.Namespace) {
 		exit(kl("create", "namespace", config.Tyk.Namespace))
@@ -480,7 +480,7 @@ func deployHTTPBIN() {
 		ok()
 		say("Waiting for httpbin to be ready ...")
 		exit(kl(
-			"rollout", "status", "--timeout", "1m", "deployment/httpbin",
+			"rollout", "status", "--timeout", "2m", "deployment/httpbin",
 		))
 	}
 

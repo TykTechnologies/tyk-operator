@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -23,6 +24,7 @@ const (
 	testApiDef       = "test-http"
 	testOperatorCtx  = "mycontext"
 	gatewayLocalhost = "http://localhost:7000"
+	defaultTimeout   = 30 * time.Second
 )
 
 func TestOperatorContextCreate(t *testing.T) {
@@ -44,7 +46,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
-			// create api defintion with empty namespace for contextRef
+			// create api definition with empty namespace for contextRef
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = "empty-ns"
 				apiDef.Spec.Context = &model.Target{Name: opCtx.Name}
@@ -78,7 +80,7 @@ func TestOperatorContextCreate(t *testing.T) {
 					}
 
 					return true
-				}))
+				}), wait.WithTimeout(defaultTimeout))
 				is.NoErr(err)
 
 				return ctx
@@ -99,7 +101,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				return true, nil
-			})
+			}, wait.WithTimeout(defaultTimeout))
 			is.NoErr(err)
 
 			return ctx
@@ -120,7 +122,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				return true, nil
-			})
+			}, wait.WithTimeout(defaultTimeout))
 
 			is.NoErr(err)
 
@@ -162,7 +164,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				}
 
 				return true
-			}))
+			}), wait.WithTimeout(defaultTimeout))
 
 			is.NoErr(err)
 
@@ -236,7 +238,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				}
 
 				return true
-			}))
+			}), wait.WithTimeout(defaultTimeout))
 
 			is.NoErr(err)
 
@@ -303,6 +305,11 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	apiDef.Spec.Protocol = "http"
 	apiDef.Spec.UseKeylessAccess = true
 	apiDef.Spec.Active = true
+	apiDef.Spec.VersionData = model.VersionData{
+		DefaultVersion: "Default",
+		NotVersioned:   true,
+		Versions:       map[string]model.VersionInfo{"Default": {Name: "Default"}},
+	}
 	apiDef.Spec.Proxy = model.Proxy{
 		ListenPath:      "/httpbin",
 		TargetURL:       "http://httpbin.default.svc:8000",
