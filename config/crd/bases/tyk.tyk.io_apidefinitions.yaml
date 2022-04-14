@@ -465,11 +465,13 @@ spec:
                         items:
                           properties:
                             config:
-                              description: RawMessage is a raw encoded JSON value.
-                                It implements Marshaler and Unmarshaler and can be
-                                used to delay JSON decoding or precompute a JSON encoding.
-                              format: byte
-                              type: string
+                              description: MapStringInterfaceType represents a generic
+                                struct used as a map[string]interface{}. Since an
+                                arbitrary JSON fields defined as map[string]interface{}
+                                is not feasible to use as a Kubernetes CRD, unstructured.Unstructured
+                                type is used.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
                             internal:
                               type: boolean
                             kind:

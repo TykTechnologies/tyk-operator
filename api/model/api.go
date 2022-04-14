@@ -1000,7 +1000,7 @@ type GraphQLEngineDataSource struct {
 	Name       string                      `json:"name"`
 	Internal   bool                        `json:"internal"`
 	RootFields []GraphQLTypeFields         `json:"root_fields"`
-	Config     json.RawMessage             `json:"config"`
+	Config     MapStringInterfaceType      `json:"config"`
 }
 
 type GraphQLTypeFields struct {
