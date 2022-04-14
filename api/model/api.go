@@ -540,7 +540,7 @@ type APIDefinitionSpec struct {
 	// Domain represents a custom host header that the gateway will listen on for this API
 	Domain string `json:"domain,omitempty"`
 
-	// DoNotTrack disables endpoint tracking for this API. Default is true, you need to explicitly set it to false
+	// DoNotTrack disables endpoint tracking for this API
 	DoNotTrack *bool `json:"do_not_track,omitempty"`
 
 	// UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
@@ -571,6 +571,15 @@ type APIDefinitionSpec struct {
 	// BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 	// UseMutualTLSAuth           bool                  `json:"use_mutual_tls_auth"`
 	// ClientCertificates         []string              `json:"client_certificates"`
+
+	// PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in
+	// case an upstream certificate is compromised. Please use PinnedPublicKeysSecretNames if using cert-manager.
+	PinnedPublicKeys map[string]string `json:"pinned_public_keys,omitempty"`
+
+	// PinnedPublicKeysSecretNames represents the names of the secrets that the controller should look for in the current
+	// namespace which contain the public keys for given domain through key field. It takes domain name as a key and
+	// secret name as a value.
+	PinnedPublicKeysSecretNames map[string]string `json:"pinnedPublicKeysSecretNames,omitempty"`
 
 	// UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk
 	// Gateway to provide mTLS support for upstreams

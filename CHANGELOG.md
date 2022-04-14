@@ -3,16 +3,24 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...HEAD)
 
+**Breaking Changes:**
+- `do_not_track` field's default value is changed from `true` to `false`, to make default behaviour inline with Tyk Dashboard/Gateway.
+Therefore, Analytics for API will be enabled by default from this version. A user have to explicitly disable it by setting `do_not_track` field value to `true`.
+
 **Added:**
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
-- Added Support of Auth Headers while creating GraphQL ProxyOnly API
-  ci-tyk-operator-controller-manager-67b6cfd544-cdtsf
+- Added Support of Auth Headers while creating GraphQL ProxyOnly API 
+- Added [Certificate Pinning](https://tyk.io/docs/security/certificate-pinning/) support in the Tyk Operator [#405](https://github.com/TykTechnologies/tyk-operator/issues/405)
+- Added Upstream mTLS gateway parameters
 
 **Documentation**
 - Added documentation for GraphQL ProxyOnly API
 
 **Fixed:**
 - Fixed a bug in which ApiDefinition CRDs were wrongly mutated
+
+**Changed:**
+- Installation: Preloading of images during is turned off by default. It can turned on by setting `TYK_OPERATOR_PRELOAD_IMAGES` to true.
 
 ## [v0.8.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.8.2) (2022-03-14)
 

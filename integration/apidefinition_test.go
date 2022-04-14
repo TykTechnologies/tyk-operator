@@ -9,19 +9,18 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	"github.com/google/uuid"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/google/uuid"
 	"github.com/matryer/is"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -29,7 +28,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-func TestApiDefinitionCreate(t *testing.T) {
+func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 	var (
 		apiDefWithJSONValidationName = "apidef-json-validation"
 		apiDefListenPath             = "/validation"
@@ -514,11 +513,189 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 	testenv.Test(t, adCreate)
 }
 
+func TestApiDefinitionCertificatePinning(t *testing.T) {
+	if strings.TrimSpace(os.Getenv("TYK_MODE")) == "ce" {
+		t.Log("CE is not feasible to test at the moment.")
+		return
+	}
+
+	var (
+		apiDefPinning = "apidef-certificate-pinning"
+
+		apiDefPinningViaSecret           = "apidef-with-secret"
+		apiDefPinningViaSecretListenPath = "/secret"
+
+		invalidApiDef           = "invalid-proxy-apidef"
+		invalidApiDefListenPath = "/invalid"
+
+		secretName = "secret"
+
+		publicKeyID = "test-public-key-id"
+		pubKeyPem   = []byte(`-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhOQnpezrwA0vHzf47Pa+
+O84fWue/562TqQrVirtf+3fsGQd3MmwnId+ksAGQvWN4M1/hSelYJb246pFqGB7t
++ZI+vjBYH4/J6CiFsKwzusqkSF63ftQh8Ox0OasB9HvRlOPHT/B5Dskh8HNiJ+1l
+ExSZEaO9zsQ9wO62bsGHsMX/UP3VQByXLVBZu0DMKsl2hGaUNy9+LgZv4/iVpWDP
+Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
+5ph610hWmVQKIrCAPsAUMM9m6+iDb64NjrMjWV/bkm36r+FBMz9L8HfEB4hxlwwg
+5QIDAQAB
+-----END PUBLIC KEY-----`)
+	)
+
+	adCreate := features.New("Create ApiDefinition objects for Certificate Pinning").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			client := envConf.Client()
+			is := is.New(t)
+
+			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
+			// It contains a dummy public key which is not valid to be used.
+			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefPinning
+				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
+			}, envConf)
+			is.NoErr(err)
+
+			// Create a secret to store the public key of httpbin.org.
+			secret := &v1.Secret{
+				Type: v1.SecretTypeTLS,
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      secretName,
+					Namespace: testNS,
+				},
+				Data: map[string][]byte{"tls.crt": pubKeyPem, "tls.key": []byte("")},
+			}
+
+			err = client.Resources(testNS).Create(ctx, secret)
+			is.NoErr(err)
+
+			// For all domains (`*`), use following secret that contains the public key of the httpbin.org
+			// So, if you make any requests to any addresses except httpbin.org, we should get proxy errors because
+			// of pinned public key.
+			publicKeySecrets := map[string]string{"*": secretName}
+
+			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
+			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefPinningViaSecret
+				apiDef.Spec.Name = "valid"
+				apiDef.Spec.Proxy = model.Proxy{
+					ListenPath:      apiDefPinningViaSecretListenPath,
+					TargetURL:       "https://httpbin.org/",
+					StripListenPath: true,
+				}
+				apiDef.Spec.PinnedPublicKeysSecretNames = publicKeySecrets
+			}, envConf)
+			is.NoErr(err)
+
+			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
+			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
+			// to reach github.com, which must fail due to proxy error.
+			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = invalidApiDef
+				apiDef.Spec.Proxy = model.Proxy{
+					ListenPath:      invalidApiDefListenPath,
+					TargetURL:       "https://github.com/",
+					StripListenPath: true,
+				}
+				apiDef.Spec.Name = "invalid"
+				apiDef.Spec.PinnedPublicKeysSecretNames = publicKeySecrets
+			}, envConf)
+			is.NoErr(err)
+
+			return ctx
+		}).
+		Assess("ApiDefinition must have Certificate Pinning field defined",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				client := cfg.Client()
+
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+				desiredApiDef := v1alpha1.ApiDefinition{
+					ObjectMeta: metav1.ObjectMeta{Name: apiDefPinning, Namespace: testNS},
+				}
+
+				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
+					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
+
+					if apiDef.Spec.PinnedPublicKeys == nil {
+						t.Log("PinnedPublicKeys field is undefined.")
+						return false
+					}
+
+					// 'pinned_public_keys' field must exist in the ApiDefinition object.
+					val, ok := apiDef.Spec.PinnedPublicKeys["*"]
+					if !ok {
+						t.Log("cannot find a public key for the domain '*'")
+						return false
+					}
+
+					return val == publicKeyID
+				}), wait.WithTimeout(defaultWaitTimeout))
+				is.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Allow making requests based on the pinned public key defined via secret",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				err := wait.For(func() (done bool, err error) {
+					hc := &http.Client{}
+					req, err := http.NewRequest(
+						http.MethodGet,
+						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefPinningViaSecretListenPath),
+						nil,
+					)
+					is.NoErr(err)
+
+					resp, err := hc.Do(req)
+					is.NoErr(err)
+
+					if resp.StatusCode != 200 {
+						t.Log("expected to access httpbin.org since it is pinned via public key.")
+						return false, nil
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout))
+				is.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Prevent making requests to disallowed addresses based on the pinned public key defined via secret",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				err := wait.For(func() (done bool, err error) {
+					hc := &http.Client{}
+					req, err := http.NewRequest(
+						http.MethodGet,
+						fmt.Sprintf("%s%s", gatewayLocalhost, invalidApiDefListenPath),
+						nil,
+					)
+					is.NoErr(err)
+
+					resp, err := hc.Do(req)
+					is.NoErr(err)
+
+					if resp.StatusCode == 200 {
+						t.Log("unexpected access to invalid address")
+						return false, nil
+					}
+
+					return true, nil
+				})
+				is.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Test(t, adCreate)
+}
+
 func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 	var (
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
-		waitTimeout         = 3 * time.Minute
 		opNs                = "tyk-operator-system"
 		certName            = "test-tls-secret-name"
 		dashboardLocalHost  = "http://localhost:7200"
@@ -621,11 +798,11 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						return false, nil
 					}
 
-					if len(certResponse.Certs) != 1 {
+					if len(certResponse.Certs) < 1 {
 						return false, nil
 					}
 					return true, nil
-				}, wait.WithTimeout(waitTimeout), wait.WithInterval(defaultWaitInterval))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx

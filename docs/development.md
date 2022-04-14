@@ -676,7 +676,13 @@ TYK_MODE=pro make boot-pro test-all
 ```
 
 
+## Loading images into kind cluster
+You can load images in the kind cluster required for Tyk Pro/CE installation. It will download all the images once and will be reused during next installtions, unless cluster is deleted.
 
-### Highlights
+You just need to set `TYK_OPERATOR_PRELOAD_IMAGES` environment variable to true before running make boot-ce/make boot-pro.
+
+
+
+## Highlights
 
 1. The Tyk-Operator uses the [finalizer](https://book.kubebuilder.io/reference/using-finalizers.html) pattern for deleting CRs from the cluster.

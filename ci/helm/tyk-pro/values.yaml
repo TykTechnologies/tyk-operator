@@ -71,6 +71,7 @@ tib:
   extraEnvs: []
   configMap:
     profiles: tyk-tib-profiles-conf
+
 dash:
   replicaCount: 1
   hostName: "localhost"
@@ -116,8 +117,9 @@ portal:
     hosts:
       - tyk-portal.local
     tls: []
+
 gateway:
-  kind: DaemonSet
+  kind: Deployment
   replicaCount: 1
   tags: "private"
   tls: false

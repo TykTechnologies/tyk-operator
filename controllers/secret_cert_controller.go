@@ -35,7 +35,7 @@ import (
 
 const (
 	certFinalizerName = "finalizers.tyk.io/certs"
-	secretType        = "kubernetes.io/tls"
+	TLSSecretType     = "kubernetes.io/tls"
 )
 
 // SecretCertReconciler reconciles a Cert object
@@ -104,9 +104,9 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("checking secret type is tls")
+	log.Info("checking secret type is kubernetes.io/tls")
 
-	if desired.Type != secretType {
+	if desired.Type != TLSSecretType {
 		// it's not for us
 		return ctrl.Result{}, nil
 	}
@@ -145,6 +145,8 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	apiDefUpstreamCertificateHasBeenUpdated := false
+
 	for idx := range apiDefList.Items {
 		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
@@ -177,11 +179,54 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					log.Error(err, "unable to update ApiDef")
 				}
 
-				log.Info("api def updated succesfully")
+				log.Info("api def updated successfully")
 
 				return ctrl.Result{}, nil
 			}
 		}
+
+		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames {
+			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysSecretNames[domain] {
+				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+				if err != nil {
+					return ctrl.Result{Requeue: true}, err
+				}
+
+				if apiDefList.Items[idx].Spec.PinnedPublicKeys == nil {
+					apiDefList.Items[idx].Spec.PinnedPublicKeys = map[string]string{}
+				}
+
+				apiDefList.Items[idx].Spec.PinnedPublicKeys[domain] = certID
+
+				err = r.Update(ctx, &apiDefList.Items[idx])
+
+				if apierrors.IsConflict(err) {
+					// The ApiDefinition has been updated since we read it.
+					// Requeue to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+
+				if apierrors.IsNotFound(err) {
+					// The ApiDefinition has been deleted since we read it.
+					// Requeue to try to reconciliate again.
+					return ctrl.Result{Requeue: true}, nil
+				}
+
+				if err != nil {
+					log.Error(err, "unable to update ApiDef")
+					return ctrl.Result{Requeue: true}, nil
+				}
+
+				log.Info("ApiDefinition updated successfully")
+
+				apiDefUpstreamCertificateHasBeenUpdated = true
+			}
+		}
+	}
+
+	if apiDefUpstreamCertificateHasBeenUpdated {
+		// we can skip the rest here as the secret was required only for the upstream certificate uploading
+		return ctrl.Result{}, nil
 	}
 
 	ret := true
@@ -249,6 +294,7 @@ type mySecretType struct {
 	} `json:"MetaNew"`
 }
 
+// NewSecretType represents a structure for new Kubernetes Secret Object.
 type NewSecretType struct {
 	ObjectOld struct {
 		Type string `json:"type"`
@@ -262,6 +308,8 @@ type NewSecretType struct {
 }
 
 func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
+	// isTLSType filters created secret resources based on its type. Right now, only allowed secret type is
+	// kubernetes.io/tls.
 	isTLSType := func(jsBytes []byte) bool {
 		secret := mySecretType{}
 
@@ -278,17 +326,16 @@ func (r *SecretCertReconciler) ignoreNonTLSPredicate() predicate.Predicate {
 				return false
 			}
 
-			return newSecret.ObjectNew.Type == secretType || newSecret.Object.Type == secretType
+			return newSecret.ObjectNew.Type == TLSSecretType || newSecret.Object.Type == TLSSecretType
 		}
 
 		// if Update
 		if secret.MetaNew.Type != "" {
-			return secret.MetaNew.Type == secretType
+			return secret.MetaNew.Type == TLSSecretType
 		}
 		// then it's a create / delete op
-		return secret.Meta.Type == secretType
+		return secret.Meta.Type == TLSSecretType
 	}
-
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			eBytes, _ := json.Marshal(e)
