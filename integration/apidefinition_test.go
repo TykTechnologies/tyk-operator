@@ -630,7 +630,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return val == publicKeyID
-				}), wait.WithTimeout(defaultWaitTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -656,7 +656,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultWaitTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -682,7 +682,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return true, nil
-				})
+				}, wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
 				is.NoErr(err)
 
 				return ctx
