@@ -78,7 +78,7 @@ func TestOperatorContextCreate(t *testing.T) {
 					}
 
 					return true
-				}))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -99,7 +99,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				return true, nil
-			})
+			}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 			is.NoErr(err)
 
 			return ctx
@@ -120,7 +120,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				return true, nil
-			})
+			}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
 			is.NoErr(err)
 
@@ -162,7 +162,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				}
 
 				return true
-			}))
+			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
 			is.NoErr(err)
 
@@ -199,7 +199,8 @@ func TestOperatorContextDelete(t *testing.T) {
 				err := client.Resources(testNS).Delete(ctx, &apiDef)
 				is.NoErr(err)
 
-				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx))
+				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx),
+					wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -236,7 +237,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				}
 
 				return true
-			}))
+			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
 			is.NoErr(err)
 
@@ -279,7 +280,8 @@ func TestOperatorContextDelete(t *testing.T) {
 				err = client.Resources(testNS).Update(ctx, &apiDef)
 				is.NoErr(err)
 
-				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx))
+				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx),
+					wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
 				is.NoErr(err)
 

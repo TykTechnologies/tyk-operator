@@ -35,7 +35,6 @@ func TestApiDefinitionCreate(t *testing.T) {
 		apiDefListenPath             = "/validation"
 		defaultVersion               = "Default"
 		errorResponseCode            = 422
-		defaultTimeout               = 1 * time.Minute
 	)
 
 	eps := &model.ExtendedPathsSet{
@@ -93,7 +92,7 @@ func TestApiDefinitionCreate(t *testing.T) {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					// 'validate_json' field must exist in the ApiDefinition object.
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -127,7 +126,7 @@ func TestApiDefinitionCreate(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -142,7 +141,6 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 		apiDefListenPath         = "/test"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
-		defaultTimeout           = 1 * time.Minute
 	)
 
 	const whiteListedPath = "/whitelisted"
@@ -196,7 +194,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -223,7 +221,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 				return ctx
 			}).
@@ -250,7 +248,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -265,7 +263,6 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 		apiDefListenPath         = "/test"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
-		defaultTimeout           = 1 * time.Minute
 	)
 
 	const blackListedPath = "/blacklisted"
@@ -319,7 +316,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -346,7 +343,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 				return ctx
 			}).
@@ -373,7 +370,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -388,7 +385,6 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 		apiDefListenPath         = "/test"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
-		defaultTimeout           = 1 * time.Minute
 	)
 
 	const whiteListedPath = "/whitelisted"
@@ -454,7 +450,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -481,8 +477,9 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
+
 				return ctx
 			}).
 		Assess("ApiDefinition must not allow traffic to other non whitelisted routes",
@@ -508,7 +505,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -521,7 +518,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 	var (
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
-		defaultTimeout      = 3 * time.Minute
+		waitTimeout         = 3 * time.Minute
 		opNs                = "tyk-operator-system"
 		certName            = "test-tls-secret-name"
 		dashboardLocalHost  = "http://localhost:7200"
@@ -628,8 +625,9 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						return false, nil
 					}
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(waitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
+
 				return ctx
 			}).Feature()
 
