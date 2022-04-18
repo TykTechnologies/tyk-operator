@@ -36,28 +36,28 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 		return err
 	}
 
-	g := int(-1)
-	a := int(-1)
+	gatewaySvcIndex := int(-1)
+	dashboardSvcIndex := int(-1)
 
 	for k, gw := range ls.Items {
 		if strings.HasPrefix(gw.Name, "gateway") {
-			g = k
+			gatewaySvcIndex = k
 		}
 
 		if strings.HasPrefix(gw.Name, "dashboard") {
-			a = k
+			dashboardSvcIndex = k
 		}
 	}
 
 	if isCE() {
-		a = g
+		dashboardSvcIndex = gatewaySvcIndex
 	}
 
-	if a == -1 || g == -1 {
+	if dashboardSvcIndex == -1 || gatewaySvcIndex == -1 {
 		return errors.New("Failed to find tyk or dashboard service")
 	}
 
-	list := []v1.Service{ls.Items[g], ls.Items[a]}
+	list := []v1.Service{ls.Items[gatewaySvcIndex], ls.Items[dashboardSvcIndex]}
 
 	return createServices(ctx, c2, list)
 }
