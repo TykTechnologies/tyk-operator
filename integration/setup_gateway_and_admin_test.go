@@ -26,7 +26,7 @@ func teardownTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error
 	return c1, deleteLocalServices(c1, c2)
 }
 
-// createLocalServices creates a service that binds no nodeport
+// createLocalServices creates a service that binds to nodeport
 func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 	var ls v1.ServiceList
 
@@ -59,7 +59,7 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 
 	list := []v1.Service{ls.Items[g], ls.Items[a]}
 
-	return createServiceNode(ctx, c2, list)
+	return createServices(ctx, c2, list)
 }
 
 func deleteLocalServices(ctx context.Context, c2 *envconf.Config) error {
@@ -81,7 +81,7 @@ func envNS() string {
 	return fmt.Sprintf("tyk%s-control-plane", e.Mode)
 }
 
-func createServiceNode(ctx context.Context, c2 *envconf.Config, list []v1.Service) error {
+func createServices(ctx context.Context, c2 *envconf.Config, list []v1.Service) error {
 	for index := range list {
 		o := list[index].Spec.Ports[0]
 		s := v1.Service{}
