@@ -24,7 +24,7 @@ const (
 
 type Organization struct {
 	ID           string `json:"id,omitempty"`
-	Ownder       string `json:"owner_name"`
+	Owner        string `json:"owner_name"`
 	OwnerSlug    string `json:"owner_slug"`
 	CnameEnabled bool   `json:"cname_enabled"`
 	Cname        string `json:"cname"`
@@ -94,12 +94,12 @@ func (e *E2EContext) Setup() error {
 			return err
 		}
 
-		err = e.ListOrgs()
+		err = e.DeleteExistingOrgs()
 		if err != nil {
 			return err
 		}
 
-		err = e.ListUsers()
+		err = e.DeleteExistingUsers()
 		if err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func (e *E2EContext) CreateOrganizations() error {
 
 	for i := 0; i < 3; i++ {
 		o := &Organization{
-			Ownder:       fmt.Sprintf("%s-%d", orgOwner, i),
+			Owner:        fmt.Sprintf("%s-%d", orgOwner, i),
 			CnameEnabled: true,
 			OwnerSlug:    fmt.Sprint(i),
 			Cname:        fmt.Sprintf("%d%v", i, portalCname),
@@ -144,8 +144,8 @@ func (e *E2EContext) CreateUsers() error {
 	for k, v := range e.Orgs {
 		ek += ek
 		o := &User{
-			FirstName:    v.Ownder,
-			LastName:     v.Ownder,
+			FirstName:    v.Owner,
+			LastName:     v.Owner,
 			EmailAddress: ek + "@example.com",
 			Password:     "newpassword",
 			OrgID:        k,
@@ -171,7 +171,7 @@ type ApiError struct {
 }
 
 func (e *E2EContext) createOrg(o *Organization) (err error) {
-	fmt.Print("Creating Organization "+o.Ownder, "...")
+	fmt.Print("Creating Organization "+o.Owner, "...")
 
 	defer func() {
 		if err != nil {
@@ -244,7 +244,7 @@ func (e *E2EContext) createUser(o *User) (access string, err error) {
 	return
 }
 
-func (e E2EContext) ListOrgs() error {
+func (e E2EContext) DeleteExistingOrgs() error {
 	ls := struct {
 		Orgs []*Organization `json:"organisations"`
 	}{}
@@ -259,9 +259,11 @@ func (e E2EContext) ListOrgs() error {
 	json.NewDecoder(res.Body).Decode(&ls)
 
 	for _, v := range ls.Orgs {
-		if strings.Contains(v.Ownder, orgOwner) {
-			e.deleteOrg(v.Ownder, v.ID)
-			continue
+		if strings.Contains(v.Owner, orgOwner) {
+			errDel := e.deleteOrg(v.Owner, v.ID)
+			if errDel != nil {
+				return errDel
+			}
 		}
 	}
 
@@ -312,7 +314,7 @@ func (e *e3eClient) Do(r *http.Request) (res *http.Response, err error) {
 	return client.Do(r)
 }
 
-func (e *E2EContext) ListUsers() error {
+func (e *E2EContext) DeleteExistingUsers() error {
 	res, err := e.AdminGet("/api/users", nil)
 	if err != nil {
 		return err
@@ -421,7 +423,10 @@ func (e *E2EContext) Cleanup() error {
 		}
 
 		for _, v := range e.Orgs {
-			e.deleteOrg(v.Ownder, v.ID)
+			err := e.deleteOrg(v.Owner, v.ID)
+			if err != nil {
+				return err
+			}
 		}
 
 		return e.deleteUser(e.Super.User)

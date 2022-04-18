@@ -26,7 +26,7 @@ func teardownTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error
 	return c1, deleteLocalServices(c1, c2)
 }
 
-// createLocalServices creates a service that binds no nodeport
+// createLocalServices creates a service that binds to nodeport
 func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 	var ls v1.ServiceList
 
@@ -36,28 +36,30 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 		return err
 	}
 
-	g := int(-1)
-	a := int(-1)
+	gatewaySvcIndex := int(-1)
+	dashboardSvcIndex := int(-1)
 
 	for k, gw := range ls.Items {
 		if strings.HasPrefix(gw.Name, "gateway") {
-			g = k
+			gatewaySvcIndex = k
 		}
 
 		if strings.HasPrefix(gw.Name, "dashboard") {
-			a = k
+			dashboardSvcIndex = k
 		}
 	}
 
 	if isCE() {
-		a = g
+		dashboardSvcIndex = gatewaySvcIndex
 	}
 
-	if a == -1 || g == -1 {
+	if dashboardSvcIndex == -1 || gatewaySvcIndex == -1 {
 		return errors.New("Failed to find tyk or dashboard service")
 	}
 
-	return createServices(ctx, c2, &ls.Items[g], &ls.Items[a])
+	list := []v1.Service{ls.Items[gatewaySvcIndex], ls.Items[dashboardSvcIndex]}
+
+	return createServices(ctx, c2, list)
 }
 
 func deleteLocalServices(ctx context.Context, c2 *envconf.Config) error {
@@ -79,46 +81,47 @@ func envNS() string {
 	return fmt.Sprintf("tyk%s-control-plane", e.Mode)
 }
 
-func createServices(ctx context.Context, c2 *envconf.Config, gw, admin *v1.Service) error {
-	{
-		o := gw.Spec.Ports[0]
+func createServices(ctx context.Context, c2 *envconf.Config, list []v1.Service) error {
+	for index := range list {
+		o := list[index].Spec.Ports[0]
 		s := v1.Service{}
-		s.Name = gatewaySVC
-		s.Namespace = gw.Namespace
-		s.Spec.Selector = gw.Spec.Selector
+
+		s.Namespace = list[index].Namespace
+		s.Spec.Selector = list[index].Spec.Selector
 		s.Spec.Type = v1.ServiceTypeNodePort
-		s.Spec.Ports = []v1.ServicePort{
-			{
-				Port:       9000,
-				TargetPort: o.TargetPort,
-				NodePort:   31000,
-			},
+
+		if strings.HasPrefix(list[index].Name, "gateway") {
+			s.Name = gatewaySVC
+			s.Spec.Ports = []v1.ServicePort{
+				{
+					Port:       9000,
+					TargetPort: o.TargetPort,
+					NodePort:   31000,
+				},
+			}
+		} else {
+			s.Name = adminSVC
+			s.Spec.Ports = []v1.ServicePort{
+				{
+					Port:       9900,
+					TargetPort: o.TargetPort,
+					NodePort:   31900,
+				},
+			}
 		}
 
-		err := c2.Client().Resources(gw.Namespace).Create(ctx, &s)
+		err := c2.Client().Resources(envNS()).Get(ctx, s.Name, list[index].Namespace, &s)
+		// Create service if it doesn't exists
 		if err != nil {
-			return err
+			err = c2.Client().Resources(list[index].Namespace).Create(ctx, &s)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	// create admin service
-	o := admin.Spec.Ports[0]
-	s := v1.Service{}
-	s.Name = adminSVC
-	s.Namespace = admin.Namespace
-	s.Spec.Selector = admin.Spec.Selector
-	s.Spec.Type = v1.ServiceTypeNodePort
-	s.Spec.Ports = []v1.ServicePort{
-		{
-			Port:       9900,
-			TargetPort: o.TargetPort,
-			NodePort:   31900,
-		},
-	}
-
-	return c2.Client().Resources(gw.Namespace).Create(ctx, &s)
+	return nil
 }
-
 func isCE() bool {
 	return e.Mode == "ce"
 }
