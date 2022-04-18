@@ -45,7 +45,7 @@ jobs:
             echo "got else"
             echo "${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}"
             echo "json_body=${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}" >> $GITHUB_ENV    
-         fi
+          fi
         env:
           REF: ${{ steps.setup-matrix-combinations-schedule.outputs.matrix-combinations }}
 
