@@ -35,7 +35,7 @@ jobs:
         - name: Decide which variable
           id: decider
           run: |
-            if [needs.setup-matrix-combinations-schedule.outputs.matrix-combinations]
+            if [steps.setup-matrix-combinations-schedule.outputs.matrix-combinations != ""]
             then 
               echo "got 1st if"
               echo "${{needs.setup-matrix-combinations-schedule.outputs.matrix-combinations}}"
