@@ -47,7 +47,7 @@ jobs:
             echo "::set-output name=matrix-combinations::{\"include\":[$MATRIX_VAR]}"
           fi
         env:
-          REF: ${{ steps.setup-matrix-combinations-schedule.outputs.matrix-combinations }}
+          REF: ${{ steps.setup-matrix-combinations-pr.outputs.matrix-combinations }}
           MATRIX_VAR: ${{env.matrix_params}}
     outputs:
       matrix-combinations: ${{ steps.decider.outputs.matrix-combinations }}
