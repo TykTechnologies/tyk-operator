@@ -7,15 +7,39 @@ on:
   push:
     branches:
       - master
+  schedule:
+  - cron: "*/5 * * * *"
 
 jobs:
+  matrix-generator:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Setup matrix combinations
+          id: setup-matrix-combinations
+          if: ${{ github.event_name }} == "schedule"
+          run: |
+            MATRIX_PARAMS_COMBINATIONS='
+                {"k8s": "kindest/node:v1.18.0"},
+                {"k8s": "kindest/node:v1.22.0"},
+                {"k8s": "kindest/node:v1.23.0"},
+            '
+            echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
+        - name: Setup matrix combinations pr
+          id: setup-matrix-combinations
+          if: ${{ github.event_name }} == "pull_request" || ${{ github.event_name }} == "push"
+          run: |
+            MATRIX_PARAMS_COMBINATIONS='
+                {"k8s": "kindest/node:v1.18.0"},
+            '
+            echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
+    outputs:
+      matrix-combinations: ${{ steps.setup-matrix-combinations.outputs.matrix-combinations }}
+
   pro-tests:
     runs-on: ubuntu-20.04
+    needs: setup-matrix
     strategy:
-      matrix:
-        k8s: ["kindest/node:v1.18.0", "kindest/node:v1.19.0",
-              "kindest/node:v1.20.0", "kindest/node:v1.21.0",
-              "kindest/node:v1.22.0", "kindest/node:v1.23.0"]
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix-combinations) }}
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
