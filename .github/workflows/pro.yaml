@@ -30,6 +30,7 @@ jobs:
           run: |
             MATRIX_PARAMS_COMBINATIONS='
                 {"k8s": "kindest/node:v1.18.0"},
+                {"k8s": "kindest/node:v1.19.0"},
             '
             echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
         - name: Decide which variable
