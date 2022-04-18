@@ -39,9 +39,11 @@ jobs:
           if [ $REF != ""]
           then 
             echo "got 1st if"
+            echo "$MATRIX_VAR"
             echo "::set-output name=matrix-combinations::{\"include\":[$MATRIX_VAR]}"
           else
             echo "got else"
+            echo "$MATRIX_VAR"
             echo "::set-output name=matrix-combinations::{\"include\":[$MATRIX_VAR]}"
           fi
         env:
