@@ -19,35 +19,34 @@ jobs:
         if: ${{ github.event_name }} == "schedule"
         run: |
           MATRIX_PARAMS_COMBINATIONS='
-              {"k8s": "kindest/node\:v1.18.0"},
-              {"k8s": "kindest/node\:v1.22.0"},
-              {"k8s": "kindest/node\:v1.23.0"},
+              {"k8s": "kindest/node:v1.18.0"},
+              {"k8s": "kindest/node:v1.22.0"},
+              {"k8s": "kindest/node:v1.23.0"},
           '
-          echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
+          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> GITHUB_ENV
       - name: Setup matrix combinations pr
         id: setup-matrix-combinations-pr
         if: ${{ github.event_name }} == "pull_request" || ${{ github.event_name }} == "push"
         run: |
           MATRIX_PARAMS_COMBINATIONS='
-              {"k8s": "kindest/node\:v1.18.0"},
-              {"k8s": "kindest/node\:v1.19.0"},
+              {"k8s": "kindest/node:v1.18.0"},
+              {"k8s": "kindest/node:v1.19.0"},
           '
-          echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
+          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> GITHUB_ENV
       - name: Decide which variable
         id: decider
         run: |
           if [ $REF != ""]
           then 
             echo "got 1st if"
-            echo "${{steps.setup-matrix-combinations-schedule.outputs.matrix-combinations}}"
-            echo "::set-output name=matrix-combinations::'${{steps.setup-matrix-combinations-schedule.outputs.matrix-combinations}}'"
+            echo "::set-output name=matrix-combinations::{\"include\":[$MATRIX_VAR]}"
           else
             echo "got else"
-            echo "${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}"
-            echo "::set-output name=matrix-combinations::'${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}'"
+            echo "::set-output name=matrix-combinations::{\"include\":[$MATRIX_VAR]}"
           fi
         env:
           REF: ${{ steps.setup-matrix-combinations-schedule.outputs.matrix-combinations }}
+          MATRIX_VAR: ${{env.matrix_params}}
     outputs:
       matrix-combinations: ${{ steps.decider.outputs.matrix-combinations }}
 
