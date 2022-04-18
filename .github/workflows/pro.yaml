@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: matrix-generator
     strategy:
-      matrix: ${{ fromJson(needs.matrix-generator.outputs.matrix-combinations) }}
+      matrix: ${{fromJSON(needs.matrix-generator.outputs.matrix-combinations)}}
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
