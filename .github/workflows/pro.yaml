@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Setup matrix combinations
-          id: setup-matrix-combinations
+          id: setup-matrix-combinations-schedule
           if: ${{ github.event_name }} == "schedule"
           run: |
             MATRIX_PARAMS_COMBINATIONS='
@@ -25,15 +25,23 @@ jobs:
             '
             echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
         - name: Setup matrix combinations pr
-          id: setup-matrix-combinations
+          id: setup-matrix-combinations-pr
           if: ${{ github.event_name }} == "pull_request" || ${{ github.event_name }} == "push"
           run: |
             MATRIX_PARAMS_COMBINATIONS='
                 {"k8s": "kindest/node:v1.18.0"},
             '
             echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
+        - name: Decide which variable
+          id: decider
+          run: |
+            if [needs.setup-matrix-combinations-schedule.outputs.matrix-combinations]
+            then 
+              echo "::set-output name=matrix-combinations::steps.setup-matrix-combinations-schedule.outputs.matrix-combinations"
+            else
+              echo "::set-output name=matrix-combinations::steps.setup-matrix-combinations-pr.outputs.matrix-combinations"
     outputs:
-      matrix-combinations: ${{ steps.setup-matrix-combinations.outputs.matrix-combinations }}
+      matrix-combinations: ${{ steps.decider.outputs.matrix-combinations }}
 
   pro-tests:
     runs-on: ubuntu-20.04
