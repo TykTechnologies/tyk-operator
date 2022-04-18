@@ -260,8 +260,10 @@ func (e E2EContext) DeleteExistingOrgs() error {
 
 	for _, v := range ls.Orgs {
 		if strings.Contains(v.Owner, orgOwner) {
-			e.deleteOrg(v.Owner, v.ID)
-			continue
+			errDel := e.deleteOrg(v.Owner, v.ID)
+			if errDel != nil {
+				return errDel
+			}
 		}
 	}
 
@@ -421,7 +423,10 @@ func (e *E2EContext) Cleanup() error {
 		}
 
 		for _, v := range e.Orgs {
-			e.deleteOrg(v.Owner, v.ID)
+			err := e.deleteOrg(v.Owner, v.ID)
+			if err != nil {
+				return err
+			}
 		}
 
 		return e.deleteUser(e.Super.User)
