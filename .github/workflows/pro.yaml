@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: matrix-generator
     strategy:
-      matrix: ${{ fromJson(env.json_body) }}
+      matrix: ${{ fromJSON(env.json_body) }}
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
