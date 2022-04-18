@@ -29,10 +29,6 @@ jobs:
       - name: Decide which variable
         id: decider
         run: |
-            echo "matrix var below"
-            echo "$MATRIX_VAR"
-            echo "${{env.matrix_params}}"
-            echo "matrix var above"
             echo "::set-output name=matrix-combinations::{\"include\":[$MATRIX_VAR]}"
         env:
           MATRIX_VAR: ${{env.matrix_params}}
