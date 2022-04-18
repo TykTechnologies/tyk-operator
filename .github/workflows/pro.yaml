@@ -45,7 +45,7 @@ jobs:
 
   pro-tests:
     runs-on: ubuntu-20.04
-    needs: setup-matrix
+    needs: matrix-generator
     strategy:
       matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix-combinations) }}
     steps:
