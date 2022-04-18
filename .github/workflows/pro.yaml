@@ -23,7 +23,7 @@ jobs:
               {"k8s": "kindest/node:v1.22.0"},
               {"k8s": "kindest/node:v1.23.0"},
           '
-          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> GITHUB_ENV
+          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> $GITHUB_ENV
       - name: Setup matrix combinations pr
         id: setup-matrix-combinations-pr
         if: ${{ github.event_name }} == "pull_request" || ${{ github.event_name }} == "push"
@@ -32,7 +32,7 @@ jobs:
               {"k8s": "kindest/node:v1.18.0"},
               {"k8s": "kindest/node:v1.19.0"},
           '
-          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> GITHUB_ENV
+          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> $GITHUB_ENV
       - name: Decide which variable
         id: decider
         run: |
