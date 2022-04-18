@@ -37,8 +37,12 @@ jobs:
           run: |
             if [needs.setup-matrix-combinations-schedule.outputs.matrix-combinations]
             then 
+              echo "got 1st if"
+              echo "${{needs.setup-matrix-combinations-schedule.outputs.matrix-combinations}}"
               echo "::set-output name=matrix-combinations::${{steps.setup-matrix-combinations-schedule.outputs.matrix-combinations}}"
             else
+              echo "got else"
+              echo "${{needs.setup-matrix-combinations-pr.outputs.matrix-combinations}}
               echo "::set-output name=matrix-combinations::${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}"
             fi
     outputs:
