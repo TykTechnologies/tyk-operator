@@ -19,9 +19,9 @@ jobs:
         if: ${{ github.event_name }} == "schedule"
         run: |
           MATRIX_PARAMS_COMBINATIONS='
-              {"k8s": "kindest/node:v1.18.0"},
-              {"k8s": "kindest/node:v1.22.0"},
-              {"k8s": "kindest/node:v1.23.0"},
+              {"k8s": "kindest/node\:v1.18.0"},
+              {"k8s": "kindest/node\:v1.22.0"},
+              {"k8s": "kindest/node\:v1.23.0"},
           '
           echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
       - name: Setup matrix combinations pr
@@ -29,8 +29,8 @@ jobs:
         if: ${{ github.event_name }} == "pull_request" || ${{ github.event_name }} == "push"
         run: |
           MATRIX_PARAMS_COMBINATIONS='
-              {"k8s": "kindest/node:v1.18.0"},
-              {"k8s": "kindest/node:v1.19.0"},
+              {"k8s": "kindest/node\:v1.18.0"},
+              {"k8s": "kindest/node\:v1.19.0"},
           '
           echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
       - name: Decide which variable
