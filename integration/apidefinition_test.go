@@ -91,7 +91,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					// 'validate_json' field must exist in the ApiDefinition object.
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -125,7 +125,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -193,7 +193,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -220,7 +220,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 				return ctx
 			}).
@@ -247,7 +247,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -315,7 +315,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -342,7 +342,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 				return ctx
 			}).
@@ -369,7 +369,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -449,7 +449,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -476,8 +476,9 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
+
 				return ctx
 			}).
 		Assess("ApiDefinition must not allow traffic to other non whitelisted routes",
@@ -503,7 +504,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -629,7 +630,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return val == publicKeyID
-				}), wait.WithTimeout(defaultTimeout))
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -655,7 +656,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -681,7 +682,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return true, nil
-				})
+				}, wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
 				is.NoErr(err)
 
 				return ctx
@@ -801,8 +802,9 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						return false, nil
 					}
 					return true, nil
-				}, wait.WithTimeout(defaultTimeout))
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
+
 				return ctx
 			}).Feature()
 

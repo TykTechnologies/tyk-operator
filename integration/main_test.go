@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	v1 "k8s.io/api/core/v1"
@@ -23,6 +24,11 @@ const (
 	ctxNSKey     ctxKey = "namespaceName"
 	ctxApiName   ctxKey = "apiName"
 	ctxOpCtxName ctxKey = "opCtxName"
+)
+
+const (
+	defaultWaitTimeout  = 30 * time.Second
+	defaultWaitInterval = 1 * time.Second
 )
 
 func TestMain(t *testing.M) {
