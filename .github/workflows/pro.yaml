@@ -35,7 +35,7 @@ jobs:
         - name: Decide which variable
           id: decider
           run: |
-            if [steps.setup-matrix-combinations-schedule.outputs.matrix-combinations != ""]
+            if [ $REF != ""]
             then 
               echo "got 1st if"
               echo "${{needs.setup-matrix-combinations-schedule.outputs.matrix-combinations}}"
@@ -45,6 +45,8 @@ jobs:
               echo "${{needs.setup-matrix-combinations-pr.outputs.matrix-combinations}}"
               echo "::set-output name=matrix-combinations::${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}"
             fi
+          env:
+            REF: ${{ steps.setup-matrix-combinations-schedule.outputs.matrix-combinations }}
     outputs:
       matrix-combinations: ${{ steps.decider.outputs.matrix-combinations }}
 
