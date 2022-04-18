@@ -40,21 +40,22 @@ jobs:
           then 
             echo "got 1st if"
             echo "${{steps.setup-matrix-combinations-schedule.outputs.matrix-combinations}}"
-            echo "json_body=${{steps.setup-matrix-combinations-schedule.outputs.matrix-combinations}}" >> $GITHUB_ENV
+            echo "::set-output name=matrix-combinations::'${{steps.setup-matrix-combinations-schedule.outputs.matrix-combinations}}'"
           else
             echo "got else"
             echo "${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}"
-            echo "json_body=${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}" >> $GITHUB_ENV    
+            echo "::set-output name=matrix-combinations::'${{steps.setup-matrix-combinations-pr.outputs.matrix-combinations}}'"
           fi
         env:
           REF: ${{ steps.setup-matrix-combinations-schedule.outputs.matrix-combinations }}
-
+    outputs:
+      matrix-combinations: ${{ steps.decider.outputs.matrix-combinations }}
 
   pro-tests:
     runs-on: ubuntu-20.04
     needs: matrix-generator
     strategy:
-      matrix: ${{ fromJSON(env.json_body) }}
+      matrix: ${{ fromJson(needs.matrix-generator.outputs.matrix-combinations) }}
     steps:
       - name: checkout tyk-operator
         uses: actions/checkout@v2
