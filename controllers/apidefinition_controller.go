@@ -219,16 +219,16 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 							return fmt.Errorf("cannot find ApiDefinition %s, err: %v", ref, err) // Ignore not-found errors
 						}
 
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs =
-							append(upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
-								model.GraphQLSubgraphEntity{
-									APIID:   encodeIfNotBase64(ref.SubgraphRef),
-									Name:    referencedApiDef.Name,
-									URL:     fmt.Sprintf("tyk://%s", namespaced[1]),
-									SDL:     referencedApiDef.Status.SDL,
-									Headers: ref.Headers,
-								},
-							)
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
+							upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
+							model.GraphQLSubgraphEntity{
+								APIID:   encodeIfNotBase64(ref.SubgraphRef),
+								Name:    referencedApiDef.Name,
+								URL:     fmt.Sprintf("tyk://%s", namespaced[1]),
+								SDL:     referencedApiDef.Status.SDL,
+								Headers: ref.Headers,
+							},
+						)
 					}
 
 					upstreamRequestStruct.Spec.GraphQL.Supergraph.SubgraphsRefs = nil
