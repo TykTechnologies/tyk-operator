@@ -197,12 +197,12 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					// be empty because it is the as spec.graphql.schema. However, if the Tyk CE is in use, merged_sdl
 					// should be provided.
 					if upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL == "" {
-						if env.Mode == "pro" {
-							upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
-						} else {
+						if env.Mode == "ce" {
 							// if Tyk CE gateway is used, merged_sdl should be provided through ApiDefinition YAML file.
 							return fmt.Errorf("expected to have merged_sdl declared for Tyk CE")
 						}
+						k
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
 					}
 
 					// Check if the supergraph has subgraph references declared or not.
