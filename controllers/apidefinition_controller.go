@@ -201,7 +201,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 							// if Tyk CE gateway is used, merged_sdl should be provided through ApiDefinition YAML file.
 							return fmt.Errorf("expected to have merged_sdl declared for Tyk CE")
 						}
-						k
+
 						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
 					}
 
