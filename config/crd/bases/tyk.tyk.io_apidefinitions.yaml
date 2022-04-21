@@ -617,20 +617,20 @@ spec:
                         type: array
                       subgraphs_refs:
                         items:
+                          description: GraphQLSubgraphEntityRefs holds subgraph's
+                            information.
                           properties:
                             headers:
                               additionalProperties:
                                 type: string
                               type: object
-                            subgraph_ref:
-                              description: 'SubgraphRef holds referenced subgraph''s
-                                information in "namespace/subgraph_name" format. For
-                                example, if you have a subgraph called ''sub'' in
-                                the ''default'' namespace, you can refer it as follows:
-                                - subgraph_ref: default/federation-users-subgraph'
+                            name:
+                              type: string
+                            namespace:
                               type: string
                           required:
-                          - subgraph_ref
+                          - name
+                          - namespace
                           type: object
                         type: array
                       updated_at:

@@ -1027,12 +1027,11 @@ type GraphQLSubgraphEntity struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
+// GraphQLSubgraphEntityRefs holds subgraph's information.
 type GraphQLSubgraphEntityRefs struct {
-	// SubgraphRef holds referenced subgraph's information in "namespace/subgraph_name" format.
-	// For example, if you have a subgraph called 'sub' in the 'default' namespace, you can refer it as follows:
-	// - subgraph_ref: default/federation-users-subgraph
-	SubgraphRef string            `json:"subgraph_ref"`
-	Headers     map[string]string `json:"headers,omitempty"`
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
+	Headers   map[string]string `json:"headers,omitempty"`
 }
 
 type GraphQLSupergraphConfig struct {

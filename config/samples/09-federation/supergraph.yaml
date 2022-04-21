@@ -58,8 +58,10 @@ spec:
     execution_mode: supergraph
     supergraph:
       subgraphs_refs:
-        - subgraph_ref: default/federation-users-subgraph
-        - subgraph_ref: default/federation-posts-subgraph
+        - name: federation-users-subgraph
+          namespace: default
+        - name: federation-posts-subgraph
+          namespace: default
     version: "2"
     playground:
       enabled: true

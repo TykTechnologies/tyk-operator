@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -189,7 +188,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					// TODO: implement introspection and update following code piece. So, the operator gets the subgraph's
 					// SDL from the introspection result, which will be used in the supergraph's
 					// spec.graphql.supergraph.subgraphs field.
-					if upstreamRequestStruct.Status.SDL != upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
+					if upstreamRequestStruct.Status.SDL !=
+						upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
 						upstreamRequestStruct.Status.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
 					}
 				case "supergraph":
@@ -202,19 +202,15 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 							return fmt.Errorf("expected to have merged_sdl declared for Tyk CE")
 						}
 
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL =
+							upstreamRequestStruct.Spec.GraphQL.Schema
 					}
 
 					// Check if the supergraph has subgraph references declared or not.
 					for _, ref := range upstreamRequestStruct.Spec.GraphQL.Supergraph.SubgraphsRefs {
-						namespaced := strings.Split(ref.SubgraphRef, "/")
-						if len(namespaced) != 2 {
-							return fmt.Errorf("invalid subgraph reference format given, %s", ref)
-						}
-
 						referencedApiDef := &tykv1alpha1.ApiDefinition{}
 
-						ns := types.NamespacedName{Namespace: namespaced[0], Name: namespaced[1]}
+						ns := types.NamespacedName{Namespace: ref.Namespace, Name: ref.Name}
 						if err := r.Get(ctx, ns, referencedApiDef); err != nil {
 							return fmt.Errorf("cannot find ApiDefinition %s, err: %v", ref, err) // Ignore not-found errors
 						}
@@ -222,9 +218,9 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
 							upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
 							model.GraphQLSubgraphEntity{
-								APIID:   encodeIfNotBase64(ref.SubgraphRef),
-								Name:    referencedApiDef.Name,
-								URL:     fmt.Sprintf("tyk://%s", namespaced[1]),
+								APIID:   encodeIfNotBase64(ns.String()),
+								Name:    referencedApiDef.Spec.Name,
+								URL:     fmt.Sprintf("tyk://%s", ref.Name),
 								SDL:     referencedApiDef.Status.SDL,
 								Headers: ref.Headers,
 							},
@@ -372,7 +368,8 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 			}
 
 			if len(refs) > 0 {
-				return ctrl.Result{RequeueAfter: time.Second * 5}, fmt.Errorf("Can't delete %s %v depends on it", a.Name, refs)
+				return ctrl.Result{RequeueAfter: time.Second * 5},
+					fmt.Errorf("Can't delete %s %v depends on it", a.Name, refs)
 			}
 
 			util.RemoveFinalizer(a, keys.ApiDefTemplateFinalizerName)
