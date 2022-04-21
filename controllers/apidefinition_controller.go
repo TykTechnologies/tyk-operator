@@ -202,8 +202,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 							return fmt.Errorf("expected to have merged_sdl declared for Tyk CE")
 						}
 
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL =
-							upstreamRequestStruct.Spec.GraphQL.Schema
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
 					}
 
 					// Check if the supergraph has subgraph references declared or not.
