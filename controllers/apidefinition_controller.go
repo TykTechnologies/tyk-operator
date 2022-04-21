@@ -177,6 +177,21 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		upstreamRequestStruct.Spec.CollectLoopingTarget()
+
+		if desired.Spec.GraphQL != nil {
+			if desired.Spec.GraphQL.Enabled && desired.Spec.GraphQL.ExecutionMode == "subgraph" {
+				// Update subgraph's status field with the introspection results. However, introspection has not been
+				// implemented yet. Therefore, we are populating the subgraph's status with the SDL given manually.
+
+				// TODO: implement introspection and update following code piece. So, the operator gets the subgraph's
+				// SDL from the introspection result, which will be used in the supergraph's spec.graphql.supergraph.subgraphs
+				// field.
+				if upstreamRequestStruct.Status.SDL != upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
+					upstreamRequestStruct.Status.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
+				}
+			}
+		}
+
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			return r.create(ctx, upstreamRequestStruct, log)

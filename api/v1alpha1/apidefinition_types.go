@@ -45,6 +45,10 @@ type ApiDefinitionStatus struct {
 	// LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource
 	// links to.
 	LinkedToAPIs []model.Target `json:"linked_to_apis,omitempty"`
+
+	// SDL holds introspection results of the subgraph. Therefore, spec.graphql.subgraph.sdl is no longer needed to be
+	// provided manually.
+	SDL string `json:"sdl,omitempty"`
 }
 
 // +kubebuilder:object:root=true

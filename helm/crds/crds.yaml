@@ -1784,6 +1784,8 @@ spec:
                   - name
                   type: object
                 type: array
+              sdl:
+                type: string
             required:
             - api_id
             type: object
