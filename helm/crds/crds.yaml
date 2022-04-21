@@ -553,6 +553,20 @@ spec:
                           - url
                           type: object
                         type: array
+                      subgraphs_refs:
+                        items:
+                          properties:
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            subgraph_ref:
+                              description: 'SubgraphRef holds referenced subgraph''s information in "namespace/subgraph_name" format. For example, if you have a subgraph called ''sub'' in the ''default'' namespace, you can refer it as follows: - subgraph_ref: default/federation-users-subgraph'
+                              type: string
+                          required:
+                          - subgraph_ref
+                          type: object
+                        type: array
                       updated_at:
                         description: UpdatedAt contains the date and time of the last update of a supergraph API.
                         format: date-time
@@ -1785,6 +1799,7 @@ spec:
                   type: object
                 type: array
               sdl:
+                description: SDL holds introspection results of the subgraph. Therefore, spec.graphql.subgraph.sdl is no longer needed to be provided manually.
                 type: string
             required:
             - api_id

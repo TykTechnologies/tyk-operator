@@ -44,7 +44,7 @@ metadata:
   name: federation-users-subgraph
 spec:
   name: Federation - Users Subgraph
-  protocol: 'http'
+  protocol: "http"
   do_not_track: false
   use_keyless: true
   active: true
@@ -149,10 +149,10 @@ spec:
             catchPhrase: String!
             bs: String!
         }
-    version: '2'
+    version: "2"
     playground:
       enabled: false
-      path: ''
+      path: ""
   proxy:
     target_url: http://users.default.svc:4001/query
     listen_path: /users-subgraph/

@@ -1027,13 +1027,23 @@ type GraphQLSubgraphEntity struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
+type GraphQLSubgraphEntityRefs struct {
+	// SubgraphRef holds referenced subgraph's information in "namespace/subgraph_name" format.
+	// For example, if you have a subgraph called 'sub' in the 'default' namespace, you can refer it as follows:
+	// - subgraph_ref: default/federation-users-subgraph
+	SubgraphRef string            `json:"subgraph_ref"`
+	Headers     map[string]string `json:"headers,omitempty"`
+}
+
 type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
-	UpdatedAt            *metav1.Time            `json:"updated_at,omitempty"`
-	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
-	MergedSDL            string                  `json:"merged_sdl,omitempty"`
-	GlobalHeaders        map[string]string       `json:"global_headers,omitempty"`
-	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
+	UpdatedAt *metav1.Time `json:"updated_at,omitempty"`
+
+	Subgraphs            []GraphQLSubgraphEntity     `json:"subgraphs,omitempty"`
+	SubgraphsRefs        []GraphQLSubgraphEntityRefs `json:"subgraphs_refs,omitempty"`
+	MergedSDL            string                      `json:"merged_sdl,omitempty"`
+	GlobalHeaders        map[string]string           `json:"global_headers,omitempty"`
+	DisableQueryBatching bool                        `json:"disable_query_batching,omitempty"`
 }
 
 // +kubebuilder:validation:Enum="1";"2"

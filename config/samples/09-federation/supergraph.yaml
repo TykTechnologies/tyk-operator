@@ -4,7 +4,7 @@ metadata:
   name: federation-supergraph
 spec:
   name: Federated - Social Media APIS
-  protocol: 'http'
+  protocol: "http"
   do_not_track: false
   use_keyless: true
   active: true
@@ -55,123 +55,16 @@ spec:
         body: String!
       }
     enabled: true
-    engine:
-      field_configs: []
-      data_sources: []
-    type_field_configurations: []
     execution_mode: supergraph
-    proxy:
-      auth_headers: {}
-    subgraph:
-      sdl: ''
     supergraph:
-      subgraphs:
-        - name: Users subgraph
-          url: tyk://federation-users-subgraph
-          sdl: |
-            extend type Query {
-                user(id: ID!): User!
-                users: [User!]!
-            }
-
-            type User @key(fields: "id") {
-                id: ID!
-                name: String!
-                username: String!
-                email: String!
-                address: Address!
-                phone: String!
-                website: String!
-                company: Company!
-            }
-
-            type Address {
-                street: String!
-                suite: String!
-                city: String!
-                zipcode: String!
-                geo: GeoLocation!
-            }
-
-            type GeoLocation {
-                lat: String!
-                lng: String!
-            }
-
-            type Company {
-                name: String!
-                catchPhrase: String!
-                bs: String!
-            }
-        - name: Posts Subgraph
-          url: tyk://federation-posts-subgraph
-          sdl: |
-            extend type Query {
-                post(id: ID!): Post!
-                posts: [Post!]!
-            }
-
-            type Post @key(fields: "id") {
-                id: ID!
-                userId: ID!
-                title: String!
-                body: String!
-            }
-
-            extend type User @key(fields: "id") {
-                id: ID! @external
-                posts: [Post!]!
-            }
-      merged_sdl: |-
-        type Query {
-          user(id: ID!): User!
-          users: [User!]!
-          post(id: ID!): Post!
-          posts: [Post!]!
-        }
-
-        type User {
-          id: ID!
-          name: String!
-          username: String!
-          email: String!
-          address: Address!
-          phone: String!
-          website: String!
-          company: Company!
-          posts: [Post!]!
-        }
-
-        type Address {
-          street: String!
-          suite: String!
-          city: String!
-          zipcode: String!
-          geo: GeoLocation!
-        }
-
-        type GeoLocation {
-          lat: String!
-          lng: String!
-        }
-
-        type Company {
-          name: String!
-          catchPhrase: String!
-          bs: String!
-        }
-
-        type Post {
-          id: ID!
-          userId: ID!
-          title: String!
-          body: String!
-        }
-    version: '2'
+      subgraphs_refs:
+        - subgraph_ref: default/federation-users-subgraph
+        - subgraph_ref: default/federation-posts-subgraph
+    version: "2"
     playground:
       enabled: true
       path: /playground
   proxy:
-    target_url: ''
+    target_url: ""
     strip_listen_path: true
     listen_path: /social-media-apis-federated/

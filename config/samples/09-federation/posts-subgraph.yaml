@@ -45,7 +45,7 @@ metadata:
   name: federation-posts-subgraph
 spec:
   name: Federation - Posts Subgraph
-  protocol: 'http'
+  protocol: "http"
   do_not_track: false
   use_keyless: true
   active: true
@@ -53,44 +53,44 @@ spec:
   graphql:
     schema: |
       directive @extends on OBJECT | INTERFACE
-      
+
       directive @external on FIELD_DEFINITION
-      
+
       directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
-      
+
       directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
-      
+
       directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
-      
+
       scalar _Any
-      
+
       union _Entity = Post | User
-      
+
       scalar _FieldSet
-      
+
       type _Service {
         sdl: String
       }
-      
+
       type Entity {
         findPostByID(id: ID!): Post!
         findUserByID(id: ID!): User!
       }
-      
+
       type Post {
         id: ID!
         userId: ID!
         title: String!
         body: String!
       }
-      
+
       type Query {
         post(id: ID!): Post!
         posts: [Post!]!
         _entities(representations: [_Any!]!): [_Entity]!
         _service: _Service!
       }
-      
+
       type User {
         id: ID!
         posts: [Post!]!
@@ -103,22 +103,22 @@ spec:
             post(id: ID!): Post!
             posts: [Post!]!
         }
-        
+
         type Post @key(fields: "id") {
             id: ID!
             userId: ID!
             title: String!
             body: String!
         }
-        
+
         extend type User @key(fields: "id") {
             id: ID! @external
             posts: [Post!]!
         }
-    version: '2'
+    version: "2"
     playground:
       enabled: false
-      path: ''
+      path: ""
   proxy:
     target_url: http://posts.default.svc:4002/query
     listen_path: /posts-subgraph/

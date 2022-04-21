@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -178,16 +179,59 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		upstreamRequestStruct.Spec.CollectLoopingTarget()
 
-		if desired.Spec.GraphQL != nil {
-			if desired.Spec.GraphQL.Enabled && desired.Spec.GraphQL.ExecutionMode == "subgraph" {
-				// Update subgraph's status field with the introspection results. However, introspection has not been
-				// implemented yet. Therefore, we are populating the subgraph's status with the SDL given manually.
+		if upstreamRequestStruct.Spec.GraphQL != nil {
+			if upstreamRequestStruct.Spec.GraphQL.Enabled {
+				switch upstreamRequestStruct.Spec.GraphQL.ExecutionMode {
+				case "subgraph":
+					// Update subgraph's status field with the introspection results. However, introspection has not been
+					// implemented yet. Therefore, we are populating the subgraph's status with the SDL given manually.
 
-				// TODO: implement introspection and update following code piece. So, the operator gets the subgraph's
-				// SDL from the introspection result, which will be used in the supergraph's spec.graphql.supergraph.subgraphs
-				// field.
-				if upstreamRequestStruct.Status.SDL != upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
-					upstreamRequestStruct.Status.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
+					// TODO: implement introspection and update following code piece. So, the operator gets the subgraph's
+					// SDL from the introspection result, which will be used in the supergraph's spec.graphql.supergraph.subgraphs
+					// field.
+					if upstreamRequestStruct.Status.SDL != upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
+						upstreamRequestStruct.Status.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
+					}
+				case "supergraph":
+					// Check if the supergraph's merged_sdl is valid or not. If the dashboard is in use, merged_sdl might
+					// be empty because it is the as spec.graphql.schema. However, if the Tyk CE is in use, merged_sdl
+					// should be provided.
+					if upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL == "" {
+						if env.Mode == "pro" {
+							upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
+						} else {
+							// if Tyk CE gateway is used, merged_sdl should be provided through ApiDefinition YAML file.
+							return fmt.Errorf("expected to have merged_sdl declared for Tyk CE")
+						}
+					}
+
+					// Check if the supergraph has subgraph references declared or not.
+					for _, ref := range upstreamRequestStruct.Spec.GraphQL.Supergraph.SubgraphsRefs {
+						namespaced := strings.Split(ref.SubgraphRef, "/")
+						if len(namespaced) != 2 {
+							return fmt.Errorf("invalid subgraph reference format given, %s", ref)
+						}
+
+						referencedApiDef := &tykv1alpha1.ApiDefinition{}
+
+						ns := types.NamespacedName{Namespace: namespaced[0], Name: namespaced[1]}
+						if err := r.Get(ctx, ns, referencedApiDef); err != nil {
+							return fmt.Errorf("cannot find ApiDefinition %s, err: %v", ref, err) // Ignore not-found errors
+						}
+
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs =
+							append(upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
+								model.GraphQLSubgraphEntity{
+									APIID:   encodeIfNotBase64(ref.SubgraphRef),
+									Name:    referencedApiDef.Name,
+									URL:     fmt.Sprintf("tyk://%s", namespaced[1]),
+									SDL:     referencedApiDef.Status.SDL,
+									Headers: ref.Headers,
+								},
+							)
+					}
+
+					upstreamRequestStruct.Spec.GraphQL.Supergraph.SubgraphsRefs = nil
 				}
 			}
 		}
