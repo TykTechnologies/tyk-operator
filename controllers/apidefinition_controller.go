@@ -187,8 +187,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					// implemented yet. Therefore, we are populating the subgraph's status with the SDL given manually.
 
 					// TODO: implement introspection and update following code piece. So, the operator gets the subgraph's
-					// SDL from the introspection result, which will be used in the supergraph's spec.graphql.supergraph.subgraphs
-					// field.
+					// SDL from the introspection result, which will be used in the supergraph's
+					// spec.graphql.supergraph.subgraphs field.
 					if upstreamRequestStruct.Status.SDL != upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
 						upstreamRequestStruct.Status.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
 					}

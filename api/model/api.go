@@ -1037,8 +1037,7 @@ type GraphQLSubgraphEntityRefs struct {
 
 type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
-	UpdatedAt *metav1.Time `json:"updated_at,omitempty"`
-
+	UpdatedAt            *metav1.Time                `json:"updated_at,omitempty"`
 	Subgraphs            []GraphQLSubgraphEntity     `json:"subgraphs,omitempty"`
 	SubgraphsRefs        []GraphQLSubgraphEntityRefs `json:"subgraphs_refs,omitempty"`
 	MergedSDL            string                      `json:"merged_sdl,omitempty"`
