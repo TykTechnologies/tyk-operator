@@ -12,12 +12,12 @@
 # Public keys are stored inside the Tyk certificate storage, so you can use Certificate API to manage them. For key-id
 # you should set the ID returned after you upload the public key using the Certificate API.
 #
-# 2) Through ApiDefinition object's 'pinnedPublicKeysSecretNames' field, using the following format:
+# 2) Through ApiDefinition object's 'pinned_public_keys_refs' field, using the following format:
 #  spec:
-#   pinnedPublicKeysSecretNames:
+#   pinned_public_keys_refs:
 #    "domain.org": <secret_name> # the name of the Kubernetes Secret Object that holds the public key for the 'domain.org'.
 #
-# In this way, you can refer Kubernetes Secret Objects through 'pinnedPublicKeysSecretNames' field.
+# In this way, you can refer Kubernetes Secret Objects through 'pinned_public_keys_refs' field.
 #
 # NOTE:
 # - Only kubernetes.io/tls type of Secret Objects are allowed. Also, please use 'tls.crt' field for the public key
@@ -52,7 +52,7 @@ spec:
   use_keyless: true
   protocol: http
   active: true
-  pinnedPublicKeysSecretNames:
+  pinned_public_keys_refs:
     "*": httpbin-secret
   proxy:
     target_url: https://httpbin.org
