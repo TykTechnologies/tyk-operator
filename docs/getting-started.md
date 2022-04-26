@@ -5,8 +5,8 @@
 | [Install](#install)                                 | ✅   | ✅   | -                                                                                                                                                 |
 | [Create an API](#create-an-api "hover")             | ✅   | ✅   | -                                                                                                                                                 |
 | [Access an API](#access-an-api)                     | ✅   | ✅   | -                                                                                                                                                 |
-| [Secure an API](#secure-an-api)                     | ⚠️  | ✅   | Security Policies are not yet implemented for Tyk CE, and a link to the issue: [#357](https://github.com/TykTechnologies/tyk-operator/issues/357) |
-| [Publish an API](#publish-an-api-to-the-tyk-portal) | ❌   | ✅   | It is a PRO feature and therefore not applicable for CE.                                                                            |
+| [Secure an API](#secure-an-api)                     | ⚠️  | ✅   | Security Policies are not implemented yet for Tyk CE, and there is a link to the issue: [#357](https://github.com/TykTechnologies/tyk-operator/issues/357) |
+| [Publish an API](#publish-an-api-to-the-tyk-portal) | ❌   | ✅   | It is a PRO feature and therefore it isn't applicable for CE.                                                                            |
 
 Tyk Operator extends Kubernetes API with Custom Resources. API Definitions, Security Policies, Authentication, 
 Authorization, Rate Limits, and other Tyk features can be managed just like other native Kubernetes objects, leveraging 
@@ -14,25 +14,25 @@ all the features of Kubernetes like kubectl, security, API services, RBAC. You c
 and secure REST, TCP, gRPC, GraphQL, and SOAP services. You can even take an existing REST based API and define a GraphQL 
 schema to tell the GraphQL execution engine how to map those REST responses into the GraphQL schema, without a line of code.
 
-The following tutorials walk through how to describe the entire API management system declaratively, from API definitions 
-and security policies through to developer portal configurations and API service catalogue publishing, using the Tyk Operator.
+The following tutorials walk you through how to describe the entire API management system declaratively, from API definitions 
+and security policies to developer portal configurations and API service catalogue publishing, using the Tyk Operator.
 You can find all the available example manifest files in the [samples](../config/samples) directory.
 
 ## Install
 
 Please follow the [installation documentation](./installation/installation.md) to set up Tyk Operator.
 
-In order to complete this tutorial, you need to have a fully functioning & bootstrapped Tyk installation (CE or Pro Licensed)
-that is accessible from the Kubernetes cluster that will host the Tyk Operator, as explained in the [installation documentation](./installation/installation.md).
+To complete this tutorial, you need to have a fully functioning and bootstrapped Tyk installation (CE or Pro Licensed)
+that is accessible to the Kubernetes cluster that will host the Tyk Operator, as explained in the [installation documentation](./installation/installation.md).
 
 ## Create an API
 
-Creating an API takes the same approach whether you are using Tyk CE or Tyk Pro. In the first place, an `ApiDefinition` 
-Custom Resource should be created in the YAML format. Then, Tyk Operator handles the creation of the API.
+Creating an API takes the same approach whether you are using Tyk CE or Tyk Pro. Firstly, an `ApiDefinition` 
+Custom Resource needs to be created in the YAML format. Then, Tyk Operator can handle the creation of the API.
 
-1. Define APIDefinition resource in the YAML format,
-2. Create a Kubernetes resource based on this YAML file,
-3. Tyk Operator handles the creation of your API.
+1. Define APIDefinition resource in the YAML format.
+2. Create a Kubernetes resource based on this YAML file.
+3. Tyk Operator can handle the creation of your API.
 
 We are going to create an ApiDefinition described in the [httpbin.yaml](../config/samples/httpbin.yaml) file, as follows: 
 
@@ -60,8 +60,8 @@ spec:
 EOF
 ```
 
-Let's walk through the ApiDefinition that we created. We have an ApiDefinition called `httpbin`, as specified in `spec.name` 
-field, that listens `/httpbin` and proxies requests to http://httpbin.org, as specified under `spec.proxy` field. Now, any 
+Let's walk you through the ApiDefinition that we created. We have an ApiDefinition called `httpbin`, as specified in a `spec.name` 
+field, which listens `/httpbin` and proxies requests to http://httpbin.org, as it's specified under a `spec.proxy` field. Now, any 
 requests coming to the `/httpbin` endpoint will be proxied to the target URL that we defined in `spec.proxy.target_url`, 
 which is http://httpbin.org in our example.
 
@@ -74,7 +74,7 @@ httpbin            /httpbin     http://httpbin.org   true
 
 We can see that our ApiDefinition has been created. Now let's verify that our API is working as expected.
 
-**NOTE**: The verification step may vary based on your environment, such as the type of your Tyk installation and Kubernetes cluster.
+**NOTE:** The verification step may vary based on your environment, such as the type of your Tyk installation and Kubernetes cluster.
 - If you are using local Kubernetes cluster such as [KinD](https://kind.sigs.k8s.io/) and [Minikube](https://minikube.sigs.k8s.io/docs/start/), 
 you can do port-forwarding to access resources/services within the cluster.
 - If you are using Kubernetes clusters provided by cloud providers, you need to configure your cluster to make it accessible.
@@ -95,7 +95,7 @@ gateway-svc-tyk-ce-tyk-headless   ClusterIP   10.96.38.138    <none>        8080
 redis                             ClusterIP   10.96.254.227   <none>        6379/TCP   22m
 ```
 
-In order to access Tyk Gateway, you can use the following port-forwarding command:
+To access Tyk Gateway, you can use the following port-forwarding command:
 ```bash
 kubectl port-forward service/gateway-svc-tyk-ce-tyk-headless -n <TYK_CE_NAMESPACE> 8080:8080
 ```
@@ -111,7 +111,7 @@ Since Tyk CE does not come with the Dashboard, you can list APIs using [Tyk Gate
 $ curl -H "x-tyk-authorization: {your-secret}" localhost:8080/tyk/apis/
 ```
 
-> Your Tyk Gateway API secret is stored in your `tyk.conf` file, the property is called `secret`, you will need to use this 
+> Your Tyk Gateway API secret is stored in your `tyk.conf` file. The property is called `secret`. You will need to use this 
 as a header called `x-tyk-authorization` to make calls to the Gateway API.
 
 Let's make a request to verify that our API is working.
@@ -147,7 +147,7 @@ mongo                   ClusterIP   10.96.12.192    <none>        27017/TCP     
 redis                   ClusterIP   10.96.66.91     <none>        6379/TCP         2d17h
 ```
 
-In order to access the Dashboard, you can use the following port-forwarding command:
+To access the Dashboard, you can use the following port-forwarding command:
 ```bash
 kubectl port-forward service/dashboard-svc-tyk-pro 3000:3000 -n TYK_PRO_NAMESPACE
 ```
@@ -245,7 +245,7 @@ EOF
 
 > Please wait awhile until all pods reach READY `1/1` and STATUS `Running` state.
 
-Once the pod is ready, we can update our `httpbin` API's `target_url` field to proxy our requests to the Service that we've created above.
+Once the pod is ready, we can update our `httpbin` API's `target_url` field to proxy our requests to the Service that we created above.
 
 > You can check all Services in the `<ns>` namespace as follows;
 ```bash
@@ -295,14 +295,14 @@ As you can see from the response, the host that our request should be proxied to
 
 ## Access an API
 
-Our `httpbin` API is keyless, as you might already have realized. If you check the APIDefinition's spec, the `use_keyless` field is set to `true`.
+Our `httpbin` API is keyless, as you might already have realized that. If you check the APIDefinition's spec, the `use_keyless` field is set to `true`.
 
 > Tyk keyless access represents completely open access for your API and causes Tyk to bypass any session-based middleware 
 (middleware that requires access to token-related metadata). Keyless access will allow all requests through. 
 > 
 You can disable keyless access by setting `use_keyless` to false. Let's update `httpbin` API to see it in action.
 
-In order to update `httpbin` API, either update your `httpbin.yaml` file as follows:
+To update `httpbin` API, either update your `httpbin.yaml` file as follows:
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -348,7 +348,7 @@ EOF
 apidefinition.tyk.tyk.io/httpbin configured
 ```
 
-In order to access `httpbin` API, you need to include a key to the header.
+To access `httpbin` API, you need to include a key to the header.
 
 > **Note**: All supported authentication types by Tyk Operator are listed [here](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/api_definitions.md#client-to-gateway-authentication).
 Authentication token is the default one if you have set `use_keyless` to false and haven't specified any other Authentication mode.
@@ -370,12 +370,12 @@ We need to generate a key to access the `httpbin` API. Generating a key depends 
 
 ### Tyk CE
 
-To create an API Key, we will need the API ID that we wish to grant the key access to, then creating the key is a very simple API call to the endpoint.
+To create an API Key, we will need the API ID that we wish to grant the key access to. Then creating the key is a very simple API call to the endpoint.
 
-> **Prerequisite**: You will need your API secret, this is the `secret` property of the tyk.conf file.
+> **Prerequisite**: You will need your API secret. This is the `secret` property of the tyk.conf file.
 Once you have this value, you can use them to access the Gateway API
 
-In order to obtain API ID, we can describe ApiDefinition resource that represents our `httpbin` API.
+To obtain API ID, we can describe ApiDefinition resource that represents our `httpbin` API.
 
 ```bash
 kubectl describe tykapis httpbin
@@ -438,7 +438,7 @@ curl -X POST -H "x-tyk-authorization: {API-SECRET}" \
 }
 ```
 
-That’s it, we have created a key - now we can try and use it.
+That’s it, we have created a key. Now we can try and use it.
 
 ```bash
 curl -H "Authorization: Bearer eyJvcmciOiIxIiwiaWQiOiIxZTNhMTNhNGU4MGQ0ZWIxOGMzNjhlNzkyMjY5ODBmYiIsImgiOiJtdXJtdXIxMjgifQ==" localhost:8080/httpbin/get
@@ -466,29 +466,29 @@ Select `Keys` from the `System Management` section and click `ADD KEY` as shown 
 ![dashboard-keys-page](./img/getting-started-keys.png)
 
 
-You have the option to create a new key either by selecting an existing Policy created for your API or by simply selecting your API. For this tutorial we are going to use an API.
+You have the option to create a new key either by selecting an existing Policy created for your API or by simply selecting your API. For this tutorial, we are going to use an API.
 
 To select `httpbin` API:
 
-- Scroll through your `API Name` list,
-- Use the `Search` field
+- Scroll through your `API Name` list.
+- Use the `Search` field.
 - Select the `httpbin` API that was previously created.
 
 You can leave all other options at their default settings.
 
 ![dashboard-keys-page-2](./img/getting-started-keys-2.png)
 
-Now, we will add configurations details to set an expiry time after which the key will expire, using `Configuration` section indicated by `3` in the above image.
+Now, we will add configurations details to set an expiry time. After the key expires, you can use `Configuration` section indicated by `3` in the image above.
 
 ![dashboard-keys-page-3](./img/getting-started-keys-3.png)
 
-Once you click `CREATE KEY`, a Key successfully generated pop-up will be displayed with the key. 
+Once you click `CREATE KEY`, a Key successfully generated. Then, a pop-up will be displayed with the key. 
 > You must save this somewhere for future reference as it will not be displayed again. 
-Click `Copy to clipboard` and paste into a text document.
+Click `Copy to clipboard` and paste it into a text document.
 
 ![dashboard-keys-page-4](./img/getting-started-keys-4.png)
 
-That’s it, we have created a key - now we can try and use it.
+That’s it, we have created a key. Now we can try and use it.
 
 ```bash
 curl -H "Authorization: Bearer {Key ID}" localhost:8080/httpbin/get
@@ -514,7 +514,7 @@ Since we have provided a valid key along with our request, we do not have `HTTP 
 
 ## Secure an API
 
-You can access a secured API by creating a key. Key can be created by specifing security policy. A security policy encapsulates several options that can be applied to a key. It acts as a template that can
+You can access a secured API by creating a key. A key can be created by specifing security policy. A security policy encapsulates several options that can be applied to a key. It acts as a template that can
 override individual sections of an API key (or identity) in Tyk.
 
 Imagine you have issued mutiple keys and later if you want to change access rights, rate limits or quotas, you will have to update all the keys manually. Security policy comes handy in this scenario. You just need to update security policy linked to the keys once. 
@@ -523,13 +523,13 @@ Let's create an API and security policy for that API.
 
 > **Security policy resources are currently only supported when using Tyk Pro mode. You can get round this by mounting the policy object as a volume into the gateway container.**
 
-You can do so either by applying manifest defined in our repo 
+You can do so either by applying manifest defined in our repo: 
 
 ```bash
 kubectl apply -f docs/policies/ratelimit.yaml
 ```
 
-Or create it by running following command
+Or creating it by running the following command:
 
 ```bash 
 cat <<EOF | kubectl apply -f -
@@ -572,7 +572,7 @@ spec:
 EOF
 ```
 
-Ensure policy is created
+To ensure policy is created:
 
 ```
 $ kubectl get securitypolicy
@@ -582,23 +582,23 @@ httpbin   10s
 
 We have successfully created `httpbin` security policy for `httpbin` API. Policy also sets global usage quota, rate limits and throttling.
 
-Let's dive into fields we have set in the policy
-- **name**: Name of security policy.
-- **active**: Marks policy as active.
-- **state**: It can have value `active`, `draft`,`deny`.
-- **access_right_array**: List of APIs security policy has access to.
+Let's dive into fields we have set in the policy:
+- **name:** The name of the security policy.
+- **active:** Marks policy as active.
+- **state:** It can have value `active`, `draft`,`deny`.
+- **access_right_array:** The list of APIs security policy has access to.
 
-Usage Quota fields
-- **quota_max**: The maximum number of allowed requests over a quota period.
-- **quota_renewal_rate**: Time, in seconds, after which quota will be renewed.
+Usage Quota fields:
+- **quota_max:** The maximum number of allowed requests over a quota period.
+- **quota_renewal_rate:** Time, in seconds, after which quota will be renewed.
 
-Rate limiting fields
-- **rate**: The number of requests to allow per period. 
-- **per**: Time in seconds.
+Rate limiting fields:
+- **rate:** The number of the requests to allow per period. 
+- **per:** Time in seconds.
 
 Throttling fields:
-- **throttle_interval**:  Interval (in seconds) between each request retry.
-- **throttle_retry_limit**: Total request retry number.
+- **throttle_interval:**  Interval (in seconds) between each request retry.
+- **throttle_retry_limit:** Total request retry number.
 
 
 Now you can create a key, using this security policy, and access your API.
@@ -618,7 +618,7 @@ Assuming that you have created the httpbin example API using the steps above, we
 
 When you publish an API to the Portal, Tyk actually publishes a way for developers to enrol in a policy, not into the API directly. Therefore, we must also apply a SecurityPolicy CRD before proceeding with the publishing.
 
-For this we can use the following command:
+For doing that, we can use the following command:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -643,9 +643,9 @@ The above command will create the most basic security policy possible and attrib
 
 ### 2. Creating an API description
 
-The portal serves as a visual description of an API and therefore we need to let the Tyk Portal know (via Tyk Operator) some details about the API we want to publish.
+The portal serves as a visual description of an API. Therefore, we need to let the Tyk Portal know (via Tyk Operator) some details about the API we want to publish.
 
-For this we can run the following command:
+For doing that, we can run the following command:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -667,7 +667,7 @@ EOF
 ```
 
 Here we can observe that the API description is tied to the SecurityPolicy
-in the lines
+in the lines:
 
 ```yaml
  policyRef:
