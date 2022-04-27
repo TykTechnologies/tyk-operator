@@ -11,10 +11,11 @@ Therefore, Analytics for API will be enabled by default from this version. A use
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
 - Added Support of Auth Headers while creating GraphQL ProxyOnly API 
 - Added [Certificate Pinning](https://tyk.io/docs/security/certificate-pinning/) support in the Tyk Operator [#405](https://github.com/TykTechnologies/tyk-operator/issues/405)
-- Added Upstream mTLS gateway parameters
+- Added Upstream mTLS gateway parameters that references a secret that contains the upstream certificate
 
 **Documentation**
 - Added documentation for GraphQL ProxyOnly API
+- Added documentation and examples for using manually uploaded certificates for upstream mTLS
 
 **Fixed:**
 - Fixed a bug in which ApiDefinition CRDs were wrongly mutated
