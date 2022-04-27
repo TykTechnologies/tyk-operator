@@ -40,32 +40,12 @@ We are going to create an ApiDefinition described in the [httpbin.yaml](../confi
 kubectl apply -f config/samples/httpbin.yaml
 ```
 
-Or,
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-    name: httpbin
-spec:
-    name: httpbin
-    use_keyless: true
-    protocol: http
-    active: true
-    proxy:
-        target_url: http://httpbin.org
-        listen_path: /httpbin
-        strip_listen_path: true
-EOF
-```
-
 Let's walk you through the ApiDefinition that we created. We have an ApiDefinition called `httpbin`, as specified in a `spec.name` 
 field, which listens `/httpbin` and proxies requests to http://httpbin.org, as it's specified under a `spec.proxy` field. Now, any 
 requests coming to the `/httpbin` endpoint will be proxied to the target URL that we defined in `spec.proxy.target_url`, 
 which is http://httpbin.org in our example.
 
-To find out about available ApiDefinition objects in your cluster:
+To find out about the available ApiDefinition objects in your cluster, you can run the following command:
 ```bash
 $ kubectl get tykapis
 NAME      DOMAIN   LISTENPATH   PROXY.TARGETURL      ENABLED
@@ -100,7 +80,7 @@ To access Tyk Gateway, you can use the following port-forwarding command:
 kubectl port-forward service/gateway-svc-tyk-ce-tyk-headless -n <TYK_CE_NAMESPACE> 8080:8080
 ```
 
-The Tyk Gateway is accessible from your local cluster's 8080 port (e.g., `localhost:8080`).
+Tyk Gateway is accessible from your local cluster's 8080 port (e.g., `localhost:8080`).
 
 </p>
 </details>
@@ -194,54 +174,12 @@ Suppose we want to create a Deployment of [`httpbin`](https://hub.docker.com/r/k
 using [`ci/upstreams/httpbin.yaml`](../ci/upstreams/httpbin.yaml) file. We are going to expose the application through port `8000` as described under
 the Service [specification](https://github.com/TykTechnologies/tyk-operator/blob/master/ci/upstreams/httpbin.yaml#L10).
 
-First, let's create Service and Deployment by either applying the manifest defined in our repository
+First, let's create Service and Deployment by either applying the manifest defined in our repository:
 
 ```bash
 kubectl apply -f ci/upstreams/httpbin.yaml
 ```
 
-Or,
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: httpbin
-  labels:
-    app: httpbin
-spec:
-  ports:
-    - name: http
-      port: 8000
-      targetPort: 80
-  selector:
-    app: httpbin
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: httpbin
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: httpbin
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: httpbin
-        version: v1
-    spec:
-      containers:
-        - image: docker.io/kennethreitz/httpbin
-          imagePullPolicy: IfNotPresent
-          name: httpbin
-          ports:
-            - containerPort: 80
-EOF
-```
 
 > Please wait awhile until all pods reach READY `1/1` and STATUS `Running` state.
 
@@ -298,11 +236,11 @@ As you can see from the response, the host that our request should be proxied to
 Our `httpbin` API is keyless, as you might already have realized that. If you check the APIDefinition's spec, the `use_keyless` field is set to `true`.
 
 > Tyk keyless access represents completely open access for your API and causes Tyk to bypass any session-based middleware 
-(middleware that requires access to token-related metadata). Keyless access will allow all requests through. 
+(middleware that requires access to token-related metadata). Keyless access will allow all requests through the gateway. 
 > 
 You can disable keyless access by setting `use_keyless` to false. Let's update `httpbin` API to see it in action.
 
-To update `httpbin` API, either update your `httpbin.yaml` file as follows:
+To update `httpbin` API, update your `httpbin.yaml` file as follows:
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -325,33 +263,12 @@ kubectl apply -f config/samples/httpbin.yaml
 
 apidefinition.tyk.tyk.io/httpbin configured
 ```
-
-Or,
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-    name: httpbin
-spec:
-    name: httpbin
-    use_keyless: false
-    protocol: http
-    active: true
-    proxy:
-        target_url: http://httpbin.org
-        listen_path: /httpbin
-        strip_listen_path: true
-EOF
-
-apidefinition.tyk.tyk.io/httpbin configured
-```
+    
 
 To access `httpbin` API, you need to include a key to the header.
 
 > **Note**: All supported authentication types by Tyk Operator are listed [here](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/api_definitions.md#client-to-gateway-authentication).
-Authentication token is the default one if you have set `use_keyless` to false and haven't specified any other Authentication mode.
+Authentication token is the default one if you have set `use_keyless` to false and haven't specified any other Authentication mode:
 
 ```bash
 curl -i localhost:8080/httpbin/get
@@ -372,10 +289,10 @@ We need to generate a key to access the `httpbin` API. Generating a key depends 
 
 To create an API Key, we will need the API ID that we wish to grant the key access to. Then creating the key is a very simple API call to the endpoint.
 
-> **Prerequisite**: You will need your API secret. This is the `secret` property of the tyk.conf file.
-Once you have this value, you can use them to access the Gateway API
+> **Prerequisite:** You will need your API secret. This is the `secret` property of the tyk.conf file.
+Once you have this value, you can use them to access the Gateway API.
 
-To obtain API ID, we can describe ApiDefinition resource that represents our `httpbin` API.
+To obtain API ID, we can describe ApiDefinition resource that represents our `httpbin` API:
 
 ```bash
 kubectl describe tykapis httpbin
@@ -478,12 +395,12 @@ You can leave all other options at their default settings.
 
 ![dashboard-keys-page-2](./img/getting-started-keys-2.png)
 
-Now, we will add configurations details to set an expiry time. After the key expires, you can use `Configuration` section indicated by `3` in the image above.
+Now, we will add configurations details to set expiry time. After the key expires, you can use `Configuration` section indicated by `3` in the image above.
 
 ![dashboard-keys-page-3](./img/getting-started-keys-3.png)
 
 Once you click `CREATE KEY`, a Key successfully generated. Then, a pop-up will be displayed with the key. 
-> You must save this somewhere for future reference as it will not be displayed again. 
+> You must save this somewhere for future reference as it won't be displayed again. 
 Click `Copy to clipboard` and paste it into a text document.
 
 ![dashboard-keys-page-4](./img/getting-started-keys-4.png)
@@ -514,8 +431,7 @@ Since we have provided a valid key along with our request, we do not have `HTTP 
 
 ## Secure an API
 
-You can access a secured API by creating a key. A key can be created by specifing security policy. A security policy encapsulates several options that can be applied to a key. It acts as a template that can
-override individual sections of an API key (or identity) in Tyk.
+You can access a secured API by creating a key. A key can be created by specifing security policy. A security policy encapsulates several options that can be applied to a key. It acts as a template that can override individual sections of an API key (or identity) in Tyk.
 
 Imagine you have issued mutiple keys and later if you want to change access rights, rate limits or quotas, you will have to update all the keys manually. Security policy comes handy in this scenario. You just need to update security policy linked to the keys once. 
 
@@ -590,7 +506,7 @@ Let's dive into fields we have set in the policy:
 
 Usage Quota fields:
 - **quota_max:** The maximum number of allowed requests over a quota period.
-- **quota_renewal_rate:** Time, in seconds, after which quota will be renewed.
+- **quota_renewal_rate:** The time, in seconds, of when the quota gets renewed (e.g. 86400 would represent 1 day).
 
 Rate limiting fields:
 - **rate:** The number of the requests to allow per period. 
