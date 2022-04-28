@@ -583,7 +583,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					TargetURL:       "https://httpbin.org/",
 					StripListenPath: true,
 				}
-				apiDef.Spec.PinnedPublicKeysSecretNames = publicKeySecrets
+				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			}, envConf)
 			is.NoErr(err)
 
@@ -598,7 +598,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					StripListenPath: true,
 				}
 				apiDef.Spec.Name = "invalid"
-				apiDef.Spec.PinnedPublicKeysSecretNames = publicKeySecrets
+				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			}, envConf)
 			is.NoErr(err)
 
