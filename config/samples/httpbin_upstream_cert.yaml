@@ -1,4 +1,4 @@
-##### How to use upstream certificate:
+##### How to use upstream certificate refs:
 
 #
 # First apply this manifest using the command
@@ -7,7 +7,7 @@
 # The operator will try to create the ApiDefinition and will succeed but will log an error that a certificate is missing
 # in the cluster for an upstream
 
-# Generate your public-private key pair , for test use you can use the following command to obtain one fast:
+# Generate your public-private key pair , for test you can use the following command to obtain one fast:
 # "openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out tls.crt -keyout tls.key"
 
 # Run the following command to obtain the values that must be put inside the yaml that contians the secret resource:
