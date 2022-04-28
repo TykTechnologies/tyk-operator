@@ -40,7 +40,7 @@ We are going to create an ApiDefinition described in the [httpbin.yaml](../confi
 kubectl apply -f config/samples/httpbin.yaml
 ```
 
-Or,
+Or , if you don’t have the manifest with you:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -200,7 +200,7 @@ First, let's create Service and Deployment by either applying the manifest defin
 kubectl apply -f ci/upstreams/httpbin.yaml
 ```
 
-Or,
+Or, if you don’t have the manifest with you:
 
 ```bash
 cat <<EOF | kubectl apply -f -
