@@ -10,7 +10,7 @@
 
 # Upload it to the tyk certificate store using the dashboard
 
-# Fill in the manifest with the certificate name that you see is given to it in the dashboard
+# Fill in the manifest with the certificate id (the long hash) that you see is given to it in the dashboard
 # (in place of "INSERT UPLOADED CERTIFICATE NAME FROM DASHBOARD HERE")
 # Optional: Change the domain from "*" to something more specific if you need to use different
 # upstream certificates for different domains
