@@ -10,7 +10,6 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
-
 jobs:
   matrix-generator:
     runs-on: ubuntu-latest
