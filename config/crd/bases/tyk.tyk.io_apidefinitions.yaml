@@ -858,16 +858,15 @@ spec:
                   type: string
                 description: PinnedPublicKeys allows you to whitelist public keys
                   used to generate certificates, so you will be protected in case
-                  an upstream certificate is compromised. Please use PinnedPublicKeysSecretNames
+                  an upstream certificate is compromised. Please use PinnedPublicKeysRefs
                   if using cert-manager.
                 type: object
-              pinnedPublicKeysSecretNames:
+              pinned_public_keys_refs:
                 additionalProperties:
                   type: string
-                description: PinnedPublicKeysSecretNames represents the names of the
-                  secrets that the controller should look for in the current namespace
-                  which contain the public keys for given domain through key field.
-                  It takes domain name as a key and secret name as a value.
+                description: PinnedPublicKeysRefs allows you to specify public keys
+                  using k8s secret. It takes domain name as a key and secret name
+                  as a value.
                 type: object
               protocol:
                 description: APIProtocol is the network transport protocol supported
