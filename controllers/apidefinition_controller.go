@@ -141,12 +141,12 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		// Check Pinned Public keys
-		if len(desired.Spec.PinnedPublicKeysSecretNames) != 0 {
+		if len(desired.Spec.PinnedPublicKeysRefs) != 0 {
 			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
 				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
 			}
 
-			for domain, secretName := range desired.Spec.PinnedPublicKeysSecretNames {
+			for domain, secretName := range desired.Spec.PinnedPublicKeysRefs {
 				// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
 				tykCertID, err := r.checkSecretAndUpload(ctx, secretName, req.Namespace, log, &env)
 				if err != nil {
@@ -161,7 +161,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		// To prevent API object validation failures, set additional properties to nil.
 		upstreamRequestStruct.Spec.CertificateSecretNames = nil
-		upstreamRequestStruct.Spec.PinnedPublicKeysSecretNames = nil
+		upstreamRequestStruct.Spec.PinnedPublicKeysRefs = nil
 
 		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
 
