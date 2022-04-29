@@ -1,7 +1,10 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.9.0...HEAD)
+
+## [v0.9.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.9.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...v0.9.0)
 
 **Breaking Changes:**
 - `do_not_track` field's default value is changed from `true` to `false`, to make default behaviour inline with Tyk Dashboard/Gateway.
