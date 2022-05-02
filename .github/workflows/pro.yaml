@@ -28,6 +28,9 @@ jobs:
 
   pro-tests:
     runs-on: ubuntu-20.04
+    env:
+      TYK_MODE: 'pro'
+      CLUSTER_NAME: 'chart-testing'
     needs: matrix-generator
     strategy:
       matrix: ${{fromJSON(needs.matrix-generator.outputs.k8s-matrix)}}
@@ -56,10 +59,10 @@ jobs:
         env:
           TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
         run: |
-          make boot-pro IMG=tykio/tyk-operator:test CLUSTER_NAME=chart-testing
+          make boot-pro IMG=tykio/tyk-operator:test 
       - name: bdd
         run: |
-          TYK_MODE=pro CLUSTER_NAME=chart-testing  make test-all
+          make test-all
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
