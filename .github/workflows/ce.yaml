@@ -4,9 +4,11 @@ on:
   pull_request:
     branches:
       - master
+
   push:
     branches:
       - master
+
   schedule:
     - cron: "0 0 * * *"
 
@@ -28,39 +30,50 @@ jobs:
 
   ce-tests:
     runs-on: ubuntu-20.04
+
     env:
       TYK_MODE: 'ce'
       CLUSTER_NAME: 'chart-testing'
+
     needs: matrix-generator
+
     strategy:
       matrix: ${{fromJSON(needs.matrix-generator.outputs.k8s-matrix)}}
+
     steps:
-      - name: checkout tyk-operator
+      - name: Checkout tyk-operator
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: create kind cluster
+
+      - name: Create Kind cluster
         uses: helm/kind-action@v1.2.0
         with:
           wait: 2m
           node_image: ${{ matrix.k8s }}
           config: hack/kind.yaml
+
       - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16.x
-      - uses: actions/cache@v2
+
+      - name: Cache Go Modules
+        uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: bootstrap tyk ce env
+
+      - name: Bootstrap Tyk CE environment
         run: |
           make boot-ce IMG=tykio/tyk-operator:test
-      - name: bdd
+
+      - name: Run tests
         run: |
           make test-all
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
