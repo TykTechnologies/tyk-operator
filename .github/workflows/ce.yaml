@@ -32,19 +32,23 @@ jobs:
     runs-on: ubuntu-20.04
 
     env:
-      TYK_MODE: 'ce'
       CLUSTER_NAME: 'chart-testing'
 
     needs: matrix-generator
 
     strategy:
-      matrix: ${{fromJSON(needs.matrix-generator.outputs.k8s-matrix)}}
+      matrix: 
+        k8s-version: ${{fromJSON(needs.matrix-generator.outputs.k8s-matrix)}}
+        mode: ['ce','pro']
 
     steps:
       - name: Checkout tyk-operator
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+        env:
+          TYK_MODE: ${{ matrix.mode }}
 
       - name: Create Kind cluster
         uses: helm/kind-action@v1.2.0
@@ -67,8 +71,16 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Bootstrap Tyk CE environment
+        if: ${{ env.TYK_MODE == 'ce' }}
         run: |
           make boot-ce IMG=tykio/tyk-operator:test
+
+      - name: Bootstrap Tyk PRO environment
+        if: ${{ env.TYK_MODE == 'pro' }}
+        env:
+          TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
+        run: |
+          make boot-pro IMG=tykio/tyk-operator:test
 
       - name: Run tests
         run: |
