@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   matrix-generator:
     uses: ./.github/workflows/setup_k8s_matrix.yaml
@@ -41,11 +45,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: bootstrap tyk ce env
-        shell: bash
         run: |
           make boot-ce IMG=tykio/tyk-operator:test CLUSTER_NAME=chart-testing
       - name: bdd
-        shell: bash
         run: |
           TYK_MODE=ce CLUSTER_NAME=chart-testing  make test-all
       - name: SonarCloud Scan
