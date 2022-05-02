@@ -28,13 +28,10 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 				},
 			},
 		}
-
 		got := a.Spec.CollectLoopingTarget()
-
 		if len(got) != 1 {
 			t.Fatalf("expected 1 target got %d", len(got))
 		}
-
 		if !got[0].Equal(target.Target) {
 			t.Fatalf("expected %v got %v", target.Target, got[0])
 		}
