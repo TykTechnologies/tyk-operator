@@ -3,7 +3,7 @@ name: Setup k8s matrix
 on:
   workflow_call:
     outputs:
-     k8s-matrix: ${{ jobs.setup-k8s-matrix.outputs.k8s-matrix}}
+     k8s-matrix: ${{ jobs.setup-k8s-matrix.outputs.k8s-matrix }}
 
 jobs:
    setup-k8s-matrix:
