@@ -12,7 +12,7 @@ on:
 
 jobs:
   matrix-generator:
-    uses: ./setup_k8s_matrix.yaml
+    uses: ./.github/workflows/setup_k8s_matrix.yaml
 
   ce-tests:
     runs-on: ubuntu-20.04
