@@ -1,0 +1,32 @@
+name: Setup k8s matrix
+
+on:
+  workflow_call:
+    outputs:
+     k8s-matrix: ${{ jobs.setup-k8s-matrix.outputs.k8s-matrix}}
+
+jobs:
+   setup-k8s-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup k8s matrix for scheduled run
+        id: setup-matrix-schedule
+        if: ${{ github.event_name }} == "schedule"
+        run: |
+          MATRIX_PARAMS_COMBINATIONS='{"k8s": "kindest/node:v1.18.0"},{"k8s": "kindest/node:v1.19.0"},{"k8s": "kindest/node:v1.20.0"},{"k8s": "kindest/node:v1.21.1"},{"k8s": "kindest/node:v1.22.0"},{"k8s": "kindest/node:v1.23.0"},'
+          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> $GITHUB_ENV
+      - name: Setup k8s matrix for pull request/push
+        id: setup-matrix-pr
+        if: ${{ github.event_name }} == "pull_request" || ${{ github.event_name }} == "push"
+        run: |
+          MATRIX_PARAMS_COMBINATIONS='{"k8s": "kindest/node:v1.19.11"},{"k8s": "kindest/node:v1.22.0"},'
+          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> $GITHUB_ENV
+      - name: Decide which matrix to use
+        id: decider
+        run: |
+          echo "::set-output name=k8s-matrix::{\"include\":[$MATRIX_VAR]}"
+        env:
+          MATRIX_VAR: ${{env.matrix_params}}
+    outputs:
+     k8s-matrix: ${{ steps.decider.outputs.k8s-matrix }}
+    
