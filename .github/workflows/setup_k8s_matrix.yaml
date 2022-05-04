@@ -26,7 +26,7 @@ jobs:
       - name: Decide which matrix to use
         id: decider
         run: |
-          echo "::set-output name=k8s-matrix::{\"include\":[$MATRIX_VAR]}"
+          echo "::set-output name=k8s-matrix::$MATRIX_VAR"
         env:
           MATRIX_VAR: ${{env.matrix_params}}
     outputs:
