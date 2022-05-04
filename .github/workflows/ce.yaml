@@ -1,4 +1,4 @@
-name: Tyk CE Tests
+name: Run tests
 
 on:
   pull_request:
@@ -28,7 +28,7 @@ jobs:
   matrix-generator:
     uses: ./.github/workflows/setup_k8s_matrix.yaml
 
-  ce-tests:
+  test:
     runs-on: ubuntu-20.04
 
     needs: matrix-generator
