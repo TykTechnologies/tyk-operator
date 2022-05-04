@@ -97,6 +97,11 @@ docker-push: ## Push the docker image
 
 
 release: ## Make release
+# fail if version is not specified
+	ifndef VERSION
+	$(error VERSION is not specified)
+	endif
+
 	git checkout master
 	sed -i -e "s|\(version\):.*|\1: ${VERSION} # version of the chart|" helm/Chart.yaml
 	git add helm/Chart.yaml
