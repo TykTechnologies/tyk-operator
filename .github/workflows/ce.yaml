@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix: 
         k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
-        mode: ['ce','pro']
+        mode: ['ce']
 
     env:
       CLUSTER_NAME: 'chart-testing'
