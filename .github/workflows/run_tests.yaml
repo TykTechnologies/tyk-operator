@@ -84,6 +84,29 @@ jobs:
         run: |
           make test-all
 
+      - name: Upload Coverage files
+        uses: actions/upload-artifact@v2
+        with:
+          name: test coverage files
+          path: ./*_coverage.go
+
+  sonarcloud:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout tyk-operator
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Download Coverage files
+        uses: actions/download-artifact@v2
+        with:
+          name: test coverage files
+          path: ./
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
