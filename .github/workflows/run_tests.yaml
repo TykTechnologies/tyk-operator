@@ -92,6 +92,7 @@ jobs:
 
   sonarcloud:
     runs-on: ubuntu-20.04
+    needs: test
     steps:
       - name: Checkout tyk-operator
         uses: actions/checkout@v3
