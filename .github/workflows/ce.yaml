@@ -38,7 +38,7 @@ jobs:
 
     strategy:
       matrix: 
-        version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
+        k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix.k8s) }}
         mode: ['ce','pro']
 
     steps:
@@ -54,7 +54,7 @@ jobs:
         uses: helm/kind-action@v1.2.0
         with:
           wait: 2m
-          node_image: ${{ matrix.k8s }}
+          node_image: ${{ matrix.k8s-version }}
           config: hack/kind.yaml
 
       - name: Install Go
