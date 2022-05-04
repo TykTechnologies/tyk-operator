@@ -88,7 +88,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: test coverage files
-          path: \*_coverage.out
+          path: '*_coverage.out'
 
   sonarcloud:
     runs-on: ubuntu-20.04
