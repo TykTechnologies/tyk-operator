@@ -31,9 +31,6 @@ jobs:
   ce-tests:
     runs-on: ubuntu-20.04
 
-    env:
-      CLUSTER_NAME: 'chart-testing'
-
     needs: matrix-generator
 
     strategy:
@@ -41,14 +38,15 @@ jobs:
         k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
         mode: ['ce','pro']
 
+    env:
+      CLUSTER_NAME: 'chart-testing'
+      TYK_MODE: ${{ matrix.mode }}
+
     steps:
       - name: Checkout tyk-operator
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-        env:
-          TYK_MODE: ${{ matrix.mode }}
 
       - name: Create Kind cluster
         uses: helm/kind-action@v1.2.0
