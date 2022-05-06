@@ -1,0 +1,116 @@
+name: Run tests
+
+on:
+  pull_request:
+    branches:
+      - master
+
+  push:
+    branches:
+      - master
+
+  schedule:
+    - cron: "0 0 * * *"
+
+defaults:
+  run:
+    shell: bash
+
+# Concurrency ensures that only a single workflow using the same concurrency group will run at a time.
+# When a workflow is queued in the same repository and concurrency group, any workflow in progress will be cancelled.
+# This concurrency group is keyed to the 'ref' property in the 'github' context, to map back to the branch/tag that
+# triggered this workflow run.
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  matrix-generator:
+    uses: ./.github/workflows/setup_k8s_matrix.yaml
+
+  test:
+    runs-on: ubuntu-20.04
+
+    needs: matrix-generator
+
+    strategy:
+      matrix: 
+        k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
+        mode: ['ce','pro']
+
+    env:
+      CLUSTER_NAME: 'chart-testing'
+      TYK_MODE: ${{ matrix.mode }}
+
+    steps:
+      - name: Checkout tyk-operator
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1.2.0
+        with:
+          wait: 2m
+          node_image: ${{ matrix.k8s-version }}
+          config: hack/kind.yaml
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+
+      - name: Cache Go Modules
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Bootstrap Tyk CE environment
+        if: ${{ env.TYK_MODE == 'ce' }}
+        run: |
+          make boot-ce IMG=tykio/tyk-operator:test
+
+      - name: Bootstrap Tyk PRO environment
+        if: ${{ env.TYK_MODE == 'pro' }}
+        env:
+          TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
+        run: |
+          make boot-pro IMG=tykio/tyk-operator:test
+
+      - name: Run tests
+        run: |
+          make test-all
+
+      - name: Upload Coverage files
+        uses: actions/upload-artifact@v2
+        with:
+          name: test coverage files
+          path: '*_coverage.out'
+
+  sonarcloud:
+    runs-on: ubuntu-20.04
+    if: ${{ github.event_name  == 'pull_request' ||  github.event_name == 'push' }}
+    needs: test
+    steps:
+      - name: Checkout tyk-operator
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Download Coverage files
+        uses: actions/download-artifact@v2
+        with:
+          name: test coverage files
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.ORG_GH_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
