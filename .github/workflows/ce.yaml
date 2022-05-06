@@ -14,17 +14,17 @@ jobs:
   matrix-generator:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup matrix combinations for scheduled run
-        id: setup-matrix-combinations-schedule
-        if: ${{ github.event_name }} == "schedule"
-        run: |
-          MATRIX_PARAMS_COMBINATIONS='{"k8s": "kindest/node:v1.18.0"},{"k8s": "kindest/node:v1.19.0"},{"k8s": "kindest/node:v1.20.0"},{"k8s": "kindest/node:v1.21.1"},{"k8s": "kindest/node:v1.22.0"},{"k8s": "kindest/node:v1.23.0"},'
-          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> $GITHUB_ENV
       - name: Setup matrix combinations for pull request/push
         id: setup-matrix-combinations-pr
-        if: ${{ github.event_name }} == "pull_request" || ${{ github.event_name }} == "push"
+        if: ${{ github.event_name  == 'pull_request' ||  github.event_name == 'push' }}
         run: |
           MATRIX_PARAMS_COMBINATIONS='{"k8s": "kindest/node:v1.19.11"},{"k8s": "kindest/node:v1.22.0"},'
+          echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> $GITHUB_ENV
+      - name: Setup matrix combinations for scheduled run
+        id: setup-matrix-combinations-schedule
+        if: ${{ github.event_name  == 'schedule' }}
+        run: |
+          MATRIX_PARAMS_COMBINATIONS='{"k8s": "kindest/node:v1.19.0"},{"k8s": "kindest/node:v1.20.0"},{"k8s": "kindest/node:v1.21.1"},{"k8s": "kindest/node:v1.22.0"},{"k8s": "kindest/node:v1.23.0"},'
           echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> $GITHUB_ENV
       - name: Decide which matrix to use
         id: decider
@@ -70,6 +70,7 @@ jobs:
         run: |
           TYK_MODE=ce CLUSTER_NAME=chart-testing  make test-all
       - name: SonarCloud Scan
+        if: ${{ github.event_name  == 'pull_request' ||  github.event_name == 'push' }}
         uses: sonarsource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.ORG_GH_TOKEN }}
