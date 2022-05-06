@@ -92,6 +92,7 @@ jobs:
 
   sonarcloud:
     runs-on: ubuntu-20.04
+    if: ${{ github.event_name  == 'pull_request' ||  github.event_name == 'push' }}
     needs: test
     steps:
       - name: Checkout tyk-operator
