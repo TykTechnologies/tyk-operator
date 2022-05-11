@@ -18,6 +18,11 @@ package controllers
 
 import (
 	"context"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -25,12 +30,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+
+	graphQlMerge "github.com/jensneuse/graphql-go-tools/pkg/federation/sdlmerge"
 )
 
 // SuperGraphReconciler reconciles a SuperGraph object
 type SuperGraphReconciler struct {
 	client.Client
+	Log    logr.Logger
 	Scheme *runtime.Scheme
+	Env    environmet.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=supergraphs,verbs=get;list;watch;create;update;patch;delete
@@ -50,6 +59,42 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
+	namespacedName := req.NamespacedName
+	log := r.Log.WithValues("SuperGraph", namespacedName.String())
+	log.Info("Reconciling SuperGraph instance")
+
+	desired := &tykv1alpha1.SuperGraph{}
+
+	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
+	}
+
+	var sdls []string
+
+	for _, subGraphRef := range desired.Spec.SubgraphsRefs {
+		subGraph := &tykv1alpha1.SubGraph{}
+		err := r.Client.Get(ctx, types.NamespacedName{
+			Namespace: req.Namespace,
+			Name:      subGraphRef.Name,
+		}, subGraph)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		sdls = append(sdls, subGraph.Spec.Subgraph.SDL)
+	}
+
+	mergedSdl, err := graphQlMerge.MergeSDLs(sdls...)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	desired.Spec.MergedSDL = mergedSdl
+
+	err = r.Update(ctx, desired)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -58,5 +103,22 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.SuperGraph{}).
+		WithEventFilter(r.ignoreSubGraphCreationEvents()).
+		Owns(&tykv1alpha1.SubGraph{}).
 		Complete(r)
+}
+
+func (r *SuperGraphReconciler) ignoreSubGraphCreationEvents() predicate.Predicate {
+
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return true
+		},
+	}
 }

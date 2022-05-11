@@ -134,6 +134,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	spg := ctrl.Log.WithName("controllers").WithName("SuperGraph")
+	if err = (&controllers.SuperGraphReconciler{
+		Client: mgr.GetClient(),
+		Log:    spg,
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
+		os.Exit(1)
+	}
+
 	sp := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
 
 	if err = (&controllers.SecurityPolicyReconciler{
