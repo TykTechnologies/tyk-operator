@@ -1,7 +1,10 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.9.0...HEAD)
+
+## [v0.9.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.9.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...v0.9.0)
 
 **Breaking Changes:**
 - `do_not_track` field's default value is changed from `true` to `false`, to make default behaviour inline with Tyk Dashboard/Gateway.
@@ -11,10 +14,11 @@ Therefore, Analytics for API will be enabled by default from this version. A use
 - Added an [example YAML manifest](./config/samples/httpbin_endpoint_tracking.yaml) for Endpoint Tracking.
 - Added Support of Auth Headers while creating GraphQL ProxyOnly API 
 - Added [Certificate Pinning](https://tyk.io/docs/security/certificate-pinning/) support in the Tyk Operator [#405](https://github.com/TykTechnologies/tyk-operator/issues/405)
-- Added Upstream mTLS gateway parameters
+- Added Upstream mTLS gateway parameters that references a secret that contains the upstream certificate
 
 **Documentation**
 - Added documentation for GraphQL ProxyOnly API
+- Added documentation and examples for using manually uploaded certificates for upstream mTLS
 
 **Fixed:**
 - Fixed a bug in which ApiDefinition CRDs were wrongly mutated
