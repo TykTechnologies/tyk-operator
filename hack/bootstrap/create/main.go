@@ -159,9 +159,10 @@ func (o *Operator) bind(mode string) {
 var config Config
 
 var (
-	mode    = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
-	debug   = flag.Bool("debug", false, "prints lots of details")
-	cluster = flag.String("cluster", "", "cluster name") //nolint
+	mode       = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
+	debug      = flag.Bool("debug", false, "prints lots of details")
+	cluster    = flag.String("cluster", "", "cluster name") //nolint
+	tykVersion = flag.String("tyk-version", "3.2", "tyk version to test against")
 )
 
 func chartDir() string {
@@ -393,6 +394,8 @@ func helm() {
 			"-f", config.Values(),
 			config.Chart(),
 			"--set", fmt.Sprintf("dash.license=%s", config.Tyk.License),
+			"--set", fmt.Sprintf("dash.image.tag=%s", *tykVersion),
+			"--set", fmt.Sprintf("gateway.image.tag=%s", *tykVersion),
 			"-n", config.Tyk.Namespace,
 			"--wait",
 		)
