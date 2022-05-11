@@ -36,8 +36,7 @@ type SubGraphSpec struct {
 
 // SubGraphStatus defines the observed state of SubGraph
 type SubGraphStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	APIID string `json:"APIID"`
 }
 
 //+kubebuilder:object:root=true

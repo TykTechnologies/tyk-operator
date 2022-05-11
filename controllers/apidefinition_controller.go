@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -56,7 +57,9 @@ type ApiDefinitionReconciler struct {
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete;deletecollection
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=subgraphs,verbs=get;list;watch;create;update;patch;delete;deletecollection
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=supergraphs,verbs=get;list;watch;create;update;patch;delete;deletecollection
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=subgraphs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;update;create
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
@@ -160,14 +163,69 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 
-		if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
-			subgraph := &tykv1alpha1.SubGraph{}
-			if err := r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: desired.Spec.GraphQL.SubgraphRef}, subgraph); err != nil {
-				return err
+		if upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
+			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
+				subgraph := &tykv1alpha1.SubGraph{}
+
+				err := r.Client.Get(ctx, types.NamespacedName{
+					Namespace: req.Namespace,
+					Name:      desired.Spec.GraphQL.GraphRef,
+				}, subgraph)
+				if err != nil {
+					return err
+				}
+
+				upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Subgraph.Schema
+				upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.Subgraph.SDL
+
+				subgraph.Status.APIID = upstreamRequestStruct.Spec.APIID
+				err = r.Status().Update(ctx, subgraph)
+				if err != nil {
+					log.Error(err, "Could not update Status APIID of SubGraph")
+					return err
+				}
 			}
 
-			upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Subgraph.Schema
-			upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.Subgraph.SDL
+			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SuperGraphExecutionMode {
+				supergraph := &tykv1alpha1.SuperGraph{}
+				err := r.Client.Get(ctx, types.NamespacedName{
+					Namespace: req.Namespace,
+					Name:      upstreamRequestStruct.Spec.GraphQL.GraphRef,
+				}, supergraph)
+				if err != nil {
+					return err
+				}
+
+				for _, ref := range supergraph.Spec.SubgraphsRefs {
+					sg := &tykv1alpha1.SubGraph{}
+					err := r.Client.Get(ctx, types.NamespacedName{
+						Namespace: req.Namespace,
+						Name:      ref.Name,
+					}, sg)
+					if err != nil {
+						return err
+					}
+
+					_, name := decodeID(sg.Status.APIID)
+
+					apidef := &tykv1alpha1.ApiDefinition{}
+					err = r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: name}, apidef)
+					if err != nil {
+						return err
+					}
+
+					upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
+						model.GraphQLSubgraphEntity{
+							APIID: sg.Status.APIID,
+							Name:  apidef.Spec.Name,
+							URL:   fmt.Sprintf("tyk://%s", apidef.Name),
+							SDL:   sg.Spec.Subgraph.SDL,
+						})
+				}
+
+				upstreamRequestStruct.Spec.GraphQL.Schema = supergraph.Spec.Schema
+			}
 		}
 
 		// To prevent API object validation failures, set additional properties to nil.
@@ -215,29 +273,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
 					}
-
-					// Check if the supergraph has subgraph references declared or not.
-					for _, ref := range upstreamRequestStruct.Spec.GraphQL.Supergraph.SubgraphsRefs {
-						referencedApiDef := &tykv1alpha1.ApiDefinition{}
-
-						ns := types.NamespacedName{Namespace: ref.Namespace, Name: ref.Name}
-						if err := r.Get(ctx, ns, referencedApiDef); err != nil {
-							return fmt.Errorf("cannot find ApiDefinition %s, err: %v", ref, err) // Ignore not-found errors
-						}
-
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
-							upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
-							model.GraphQLSubgraphEntity{
-								APIID:   encodeIfNotBase64(ns.String()),
-								Name:    referencedApiDef.Spec.Name,
-								URL:     fmt.Sprintf("tyk://%s", ref.Name),
-								SDL:     referencedApiDef.Status.SDL,
-								Headers: ref.Headers,
-							},
-						)
-					}
-
-					upstreamRequestStruct.Spec.GraphQL.Supergraph.SubgraphsRefs = nil
 				}
 			}
 		}
@@ -257,6 +292,27 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
+}
+
+func decodeID(encodedID string) (namespace, name string) {
+	// TODO: refactor this code and consider returning error.
+	if encodedID == "" {
+		return
+	}
+
+	b, err := base64.RawURLEncoding.DecodeString(encodedID)
+	if err != nil {
+		return
+	}
+
+	encoded := string(b)
+	namespacedName := strings.Split(encoded, "/")
+
+	if len(namespacedName) < 1 {
+		return
+	}
+
+	return namespacedName[0], namespacedName[1]
 }
 
 func uploadCert(ctx context.Context, orgID string, pemKeyBytes, pemCrtBytes []byte) (tykCertID string, err error) {

@@ -196,6 +196,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OperatorContext")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.SuperGraphReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

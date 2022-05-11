@@ -198,10 +198,19 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - subgraphs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - supergraphs
   verbs:
   - create
   - delete
+  - deletecollection
   - get
   - list
   - patch

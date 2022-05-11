@@ -20,23 +20,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// GraphQLSubgraphEntityRefs holds subgraph's information.
+type GraphQLSubgraphEntityRefs struct {
+	Name string `json:"name"`
+}
 
 // SuperGraphSpec defines the desired state of SuperGraph
 type SuperGraphSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of SuperGraph. Edit supergraph_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	SubgraphsRefs []GraphQLSubgraphEntityRefs `json:"subgraphs_refs"`
+	MergedSDL     string                      `json:"merged_sdl,omitempty"`
+	Schema        string                      `json:"schema,omitempty"`
 }
 
 // SuperGraphStatus defines the observed state of SuperGraph
-type SuperGraphStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-}
+type SuperGraphStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

@@ -1031,21 +1031,13 @@ type GraphQLSubgraphEntity struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
-// GraphQLSubgraphEntityRefs holds subgraph's information.
-type GraphQLSubgraphEntityRefs struct {
-	Name      string            `json:"name"`
-	Namespace string            `json:"namespace"`
-	Headers   map[string]string `json:"headers,omitempty"`
-}
-
 type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
-	UpdatedAt            *metav1.Time                `json:"updated_at,omitempty"`
-	Subgraphs            []GraphQLSubgraphEntity     `json:"subgraphs,omitempty"`
-	SubgraphsRefs        []GraphQLSubgraphEntityRefs `json:"subgraphs_refs,omitempty"`
-	MergedSDL            string                      `json:"merged_sdl,omitempty"`
-	GlobalHeaders        map[string]string           `json:"global_headers,omitempty"`
-	DisableQueryBatching bool                        `json:"disable_query_batching,omitempty"`
+	UpdatedAt            *metav1.Time            `json:"updated_at,omitempty"`
+	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
+	MergedSDL            string                  `json:"merged_sdl,omitempty"`
+	GlobalHeaders        map[string]string       `json:"global_headers,omitempty"`
+	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
 }
 
 // +kubebuilder:validation:Enum="1";"2"
@@ -1076,7 +1068,7 @@ type GraphQLConfig struct {
 	// Subgraph holds the configuration for a GraphQL federation subgraph.
 	Subgraph GraphQLSubgraphConfig `json:"subgraph,omitempty"`
 
-	SubgraphRef string `json:"subgraph_ref,omitempty"`
+	GraphRef string `json:"graph_ref,omitempty"`
 
 	// Supergraph holds the configuration for a GraphQL federation supergraph.
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`

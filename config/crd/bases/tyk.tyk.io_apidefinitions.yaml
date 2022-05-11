@@ -538,6 +538,8 @@ spec:
                     - supergraph
                     - subgraph
                     type: string
+                  graph_ref:
+                    type: string
                   last_schema_update:
                     description: LastSchemaUpdate contains the date and time of the
                       last triggered schema update to the upstream.
@@ -582,8 +584,6 @@ spec:
                     required:
                     - sdl
                     type: object
-                  subgraph_ref:
-                    type: string
                   supergraph:
                     description: Supergraph holds the configuration for a GraphQL
                       federation supergraph.
@@ -615,24 +615,6 @@ spec:
                           - name
                           - sdl
                           - url
-                          type: object
-                        type: array
-                      subgraphs_refs:
-                        items:
-                          description: GraphQLSubgraphEntityRefs holds subgraph's
-                            information.
-                          properties:
-                            headers:
-                              additionalProperties:
-                                type: string
-                              type: object
-                            name:
-                              type: string
-                            namespace:
-                              type: string
-                          required:
-                          - name
-                          - namespace
                           type: object
                         type: array
                       updated_at:

@@ -36,10 +36,22 @@ spec:
           spec:
             description: SuperGraphSpec defines the desired state of SuperGraph
             properties:
-              foo:
-                description: Foo is an example field of SuperGraph. Edit supergraph_types.go
-                  to remove/update
+              merged_sdl:
                 type: string
+              schema:
+                type: string
+              subgraphs_refs:
+                items:
+                  description: GraphQLSubgraphEntityRefs holds subgraph's information.
+                  properties:
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            required:
+            - subgraphs_refs
             type: object
           status:
             description: SuperGraphStatus defines the observed state of SuperGraph
