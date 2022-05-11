@@ -182,3 +182,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - supergraphs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - supergraphs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - supergraphs/status
+  verbs:
+  - get
+  - patch
+  - update

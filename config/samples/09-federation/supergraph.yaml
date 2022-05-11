@@ -9,6 +9,7 @@ spec:
   use_keyless: true
   active: true
   graphql:
+    supergraph_ref:
     schema: |-
       type Query {
         user(id: ID!): User!

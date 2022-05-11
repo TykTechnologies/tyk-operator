@@ -732,7 +732,6 @@ spec:
                 required:
                 - enabled
                 - execution_mode
-                - schema
                 type: object
               id:
                 description: For server use only, do not use

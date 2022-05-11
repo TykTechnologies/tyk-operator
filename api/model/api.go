@@ -63,6 +63,11 @@ type HttpMethod string
 // +kubebuilder:validation:Enum=proxyOnly;executionEngine;supergraph;subgraph
 type GraphQLExecutionMode string
 
+const (
+	SuperGraphExecutionMode GraphQLExecutionMode = "supergraph"
+	SubGraphExecutionMode   GraphQLExecutionMode = "subgraph"
+)
+
 // APIProtocol is the network transport protocol supported by the gateway
 // +kubebuilder:validation:Enum=h2c;tcp;tls;http;https;
 type APIProtocol string
@@ -1054,7 +1059,7 @@ type GraphQLConfig struct {
 	ExecutionMode GraphQLExecutionMode `json:"execution_mode"`
 
 	// Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
-	Schema string `json:"schema"`
+	Schema string `json:"schema,omitempty"`
 
 	// TypeFieldConfigurations is a rule set of data source and mapping of a schema field.
 	TypeFieldConfigurations []TypeFieldConfiguration `json:"type_field_configurations,omitempty"`
@@ -1070,6 +1075,8 @@ type GraphQLConfig struct {
 
 	// Subgraph holds the configuration for a GraphQL federation subgraph.
 	Subgraph GraphQLSubgraphConfig `json:"subgraph,omitempty"`
+
+	SubgraphRef string `json:"subgraph_ref,omitempty"`
 
 	// Supergraph holds the configuration for a GraphQL federation supergraph.
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`

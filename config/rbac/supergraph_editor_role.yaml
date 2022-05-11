@@ -1,0 +1,24 @@
+# permissions for end users to edit supergraphs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: supergraph-editor-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - supergraphs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - supergraphs/status
+  verbs:
+  - get

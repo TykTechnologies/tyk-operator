@@ -159,6 +159,16 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 
+		if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
+			subgraph := &tykv1alpha1.SubGraph{}
+			if err := r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: desired.Spec.GraphQL.SubgraphRef}, subgraph); err != nil {
+				return err
+			}
+
+			upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Subgraph.Schema
+			upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.Subgraph.SDL
+		}
+
 		// To prevent API object validation failures, set additional properties to nil.
 		upstreamRequestStruct.Spec.CertificateSecretNames = nil
 		upstreamRequestStruct.Spec.PinnedPublicKeysRefs = nil

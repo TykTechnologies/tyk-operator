@@ -1,0 +1,6 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SuperGraph
+metadata:
+  name: supergraph-sample
+spec:
+  # TODO(user): Add fields here

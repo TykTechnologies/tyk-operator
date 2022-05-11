@@ -1,0 +1,6 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SubGraph
+metadata:
+  name: subgraph-sample
+spec:
+  # TODO(user): Add fields here
