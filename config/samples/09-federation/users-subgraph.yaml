@@ -39,31 +39,6 @@ spec:
               value: "4001"
 ---
 apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-  name: federation-users-subgraph
-spec:
-  name: Federation - Users Subgraph
-  protocol: "http"
-  do_not_track: false
-  use_keyless: true
-  active: true
-  internal: true
-  graphql:
-    enabled: true
-    execution_mode: subgraph
-    subgraph_ref: users-subgraph
-    version: "2"
-    playground:
-      enabled: false
-      path: ""
-  proxy:
-    target_url: http://users.default.svc:4001/query
-    listen_path: /users-subgraph/
-    disable_strip_slash: true
-
----
-apiVersion: tyk.tyk.io/v1alpha1
 kind: SubGraph
 metadata:
   name: users-subgraph
@@ -131,38 +106,62 @@ spec:
         company: Company!
       }
     sdl: |
-        extend type Query {
-            user(id: ID!): User!
-            users: [User!]!
-        }
-        
-        type User @key(fields: "id") {
-            id: ID!
-            name: String!
-            username: String!
-            email: String!
-            address: Address!
-            phone: String!
-            website: String!
-            company: Company!
-        }
-        
-        type Address {
-            street: String!
-            suite: String!
-            city: String!
-            zipcode: String!
-            geo: GeoLocation!
-        }
-        
-        type GeoLocation {
-            lat: String!
-            lng: String!
-        }
-        
-        type Company {
-            name: String!
-            catchPhrase: String!
-            bs: String!
-        }
+      extend type Query {
+          user(id: ID!): User!
+          users: [User!]!
+      }
+      
+      type User @key(fields: "id") {
+          id: ID!
+          name: String!
+          username: String!
+          email: String!
+          address: Address!
+          phone: String!
+          website: String!
+          company: Company!
+      }
+      
+      type Address {
+          street: String!
+          suite: String!
+          city: String!
+          zipcode: String!
+          geo: GeoLocation!
+      }
+      
+      type GeoLocation {
+          lat: String!
+          lng: String!
+      }
+      
+      type Company {
+          name: String!
+          catchPhrase: String!
+          bs: String!
+      }
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: federation-users-subgraph
+spec:
+  name: Federation - Users Subgraph
+  protocol: "http"
+  do_not_track: false
+  use_keyless: true
+  active: true
+  internal: true
+  graphql:
+    enabled: true
+    execution_mode: subgraph
+    subgraph_ref: users-subgraph
+    version: "2"
+    playground:
+      enabled: false
+      path: ""
+  proxy:
+    target_url: http://users.default.svc:4001/query
+    listen_path: /users-subgraph/
+    disable_strip_slash: true
 

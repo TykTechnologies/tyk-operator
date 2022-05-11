@@ -582,6 +582,8 @@ spec:
                     required:
                     - sdl
                     type: object
+                  subgraph_ref:
+                    type: string
                   supergraph:
                     description: Supergraph holds the configuration for a GraphQL
                       federation supergraph.

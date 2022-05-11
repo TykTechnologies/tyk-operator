@@ -185,6 +185,19 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - subgraphs
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - supergraphs
   verbs:
   - create

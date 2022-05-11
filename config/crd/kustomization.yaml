@@ -8,8 +8,8 @@ resources:
   - bases/tyk.tyk.io_apidescriptions.yaml
   - bases/tyk.tyk.io_portalapicatalogues.yaml
   - bases/tyk.tyk.io_portalconfigs.yaml
-- bases/tyk.tyk.io_subgraphs.yaml
-- bases/tyk.tyk.io_supergraphs.yaml
+  - bases/tyk.tyk.io_subgraphs.yaml
+  - bases/tyk.tyk.io_supergraphs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
