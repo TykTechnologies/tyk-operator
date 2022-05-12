@@ -1,13 +1,13 @@
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: httpbin
+  name: httpbin-keyless
 spec:
-  name: httpbin
+  name: httpbin-keyless
   use_keyless: true
   protocol: http
   active: true
   proxy:
     target_url: http://httpbin.default.svc:8000
-    listen_path: /httpbin
+    listen_path: /httpbin-keyless
     strip_listen_path: true
