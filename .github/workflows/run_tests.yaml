@@ -34,6 +34,7 @@ jobs:
     needs: matrix-generator
 
     strategy:
+      fail-fast: false
       matrix: 
         k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
         tyk-version: ['v3.2', 'v4.0']
