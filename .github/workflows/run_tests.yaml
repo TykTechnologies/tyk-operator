@@ -73,14 +73,14 @@ jobs:
       - name: Bootstrap Tyk CE environment
         if: ${{ env.TYK_MODE == 'ce' }}
         run: |
-          TYK_VERSION= ${{ matrix.k8s-version}} make boot-ce IMG=tykio/tyk-operator:test
+          TYK_VERSION=${{ matrix.tyk-version}} make boot-ce IMG=tykio/tyk-operator:test
 
       - name: Bootstrap Tyk PRO environment
         if: ${{ env.TYK_MODE == 'pro' }}
         env:
           TYK_DB_LICENSEKEY: ${{ secrets.DASH_LICENSE }}
         run: |
-          TYK_VERSION= ${{ matrix.k8s-version}} make boot-pro IMG=tykio/tyk-operator:test
+          TYK_VERSION=${{ matrix.tyk-version}} make boot-pro IMG=tykio/tyk-operator:test
 
       - name: Run tests
         run: |
