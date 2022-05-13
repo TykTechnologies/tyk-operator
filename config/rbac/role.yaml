@@ -198,6 +198,12 @@ rules:
 - apiGroups:
   - tyk.tyk.io
   resources:
+  - subgraphs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
   - subgraphs/status
   verbs:
   - get

@@ -18,6 +18,10 @@ package controllers
 
 import (
 	"context"
+	"errors"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 
@@ -33,17 +37,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 
 	graphQlMerge "github.com/jensneuse/graphql-go-tools/pkg/federation/sdlmerge"
 )
 
 const SubgraphField = "subgraphs_refs"
+
+var (
+	ErrSuperGraphReference = errors.New("supergraph is referenced in apiDefinition")
+)
 
 // SuperGraphReconciler reconciles a SuperGraph object
 type SuperGraphReconciler struct {
@@ -59,16 +65,10 @@ type SuperGraphReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the SuperGraph object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
-
 	namespacedName := req.NamespacedName
 	log := r.Log.WithValues("SuperGraph", namespacedName.String())
 	log.Info("Reconciling SuperGraph instance")
@@ -77,6 +77,31 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
+	}
+
+	// supergraph is marked for deletion
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		// Check if supergraph is referenced in any apidefinition.
+		apiDefList := &tykv1alpha1.ApiDefinitionList{}
+		listOps := &client.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector(GraphKey, desired.GetName()),
+			Namespace:     desired.GetNamespace(),
+		}
+		if err := r.List(ctx, apiDefList, listOps); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		if len(apiDefList.Items) != 0 {
+			return ctrl.Result{}, ErrSuperGraphReference
+		}
+
+		util.RemoveFinalizer(desired, keys.SuperGraphFinalizerName)
+
+		if err := r.Update(ctx, desired); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, nil
 	}
 
 	var sdls []string
@@ -100,6 +125,10 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	desired.Spec.MergedSDL = mergedSdl
+
+	if !util.ContainsFinalizer(desired, keys.SuperGraphFinalizerName) {
+		util.AddFinalizer(desired, keys.SuperGraphFinalizerName)
+	}
 
 	err = r.Update(ctx, desired)
 	if err != nil {

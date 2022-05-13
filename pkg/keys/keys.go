@@ -8,6 +8,8 @@ const (
 	PortalAPIDescriptionFinalizerName = "finalizers.tyk.io/portalapidescription"
 	PortalConfigurationFinalizerName  = "finalizers.tyk.io/portalconfiguration"
 	OperatorContextFinalizerName      = "finalizers.tyk.io/operatorcontext"
+	SubGraphFinalizerName             = "finalizers.tyk.io/subgraph"
+	SuperGraphFinalizerName           = "finalizers.tyk.io/supergraph"
 )
 
 // Ingress
