@@ -73,11 +73,13 @@ func (r *SubGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// subgraph is marked for deletion
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		// Check if subgraph is referenced in any supergraph.
+		// TODO: support subgraphs in different namespaces.
 		superGraphList := &tykv1alpha1.SuperGraphList{}
 		listOps := &client.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector(SubgraphField, desired.GetName()),
 			Namespace:     desired.GetNamespace(),
 		}
+
 		if err := r.List(ctx, superGraphList, listOps); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -92,6 +94,7 @@ func (r *SubGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			FieldSelector: fields.OneTermEqualSelector(GraphKey, desired.GetName()),
 			Namespace:     desired.GetNamespace(),
 		}
+
 		if err := r.List(ctx, apiDefinitionList, listOps); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -114,6 +117,7 @@ func (r *SubGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	err := r.Update(ctx, desired)
+
 	return ctrl.Result{}, err
 }
 

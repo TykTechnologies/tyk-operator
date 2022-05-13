@@ -704,8 +704,7 @@ func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(apiDef client.Objec
 		FieldSelector: fields.OneTermEqualSelector(GraphKey, apiDef.GetName()),
 		Namespace:     apiDef.GetNamespace(),
 	}
-	err := r.List(context.TODO(), apiDefDeployments, listOps)
-	if err != nil {
+	if err := r.List(context.TODO(), apiDefDeployments, listOps); err != nil {
 		return []reconcile.Request{}
 	}
 
@@ -718,19 +717,25 @@ func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(apiDef client.Objec
 			},
 		}
 	}
+
 	return requests
 }
 
 // SetupWithManager initializes the api definition controller.
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &tykv1alpha1.ApiDefinition{}, GraphKey, func(rawObj client.Object) []string {
-		// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
-		apiDefDeployment := rawObj.(*tykv1alpha1.ApiDefinition)
-		if apiDefDeployment.Spec.GraphQL.GraphRef == "" {
-			return nil
-		}
-		return []string{apiDefDeployment.Spec.GraphQL.GraphRef}
-	}); err != nil {
+	err := mgr.GetFieldIndexer().IndexField(
+		context.Background(),
+		&tykv1alpha1.ApiDefinition{},
+		GraphKey,
+		func(rawObj client.Object) []string {
+			// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
+			apiDefDeployment := rawObj.(*tykv1alpha1.ApiDefinition) //nolint
+			if apiDefDeployment.Spec.GraphQL.GraphRef == "" {
+				return nil
+			}
+			return []string{apiDefDeployment.Spec.GraphQL.GraphRef}
+		})
+	if err != nil {
 		return err
 	}
 
@@ -751,7 +756,6 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *ApiDefinitionReconciler) ignoreGraphCreationEvents() predicate.Predicate {
-
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return false

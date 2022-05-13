@@ -47,9 +47,7 @@ import (
 
 const SubgraphField = "subgraphs_refs"
 
-var (
-	ErrSuperGraphReference = errors.New("supergraph is referenced in apiDefinition")
-)
+var ErrSuperGraphReference = errors.New("supergraph is referenced in apiDefinition")
 
 // SuperGraphReconciler reconciles a SuperGraph object
 type SuperGraphReconciler struct {
@@ -87,6 +85,7 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			FieldSelector: fields.OneTermEqualSelector(GraphKey, desired.GetName()),
 			Namespace:     desired.GetNamespace(),
 		}
+
 		if err := r.List(ctx, apiDefList, listOps); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -158,19 +157,24 @@ func (r *SuperGraphReconciler) findObjectsForSupergraph(superGraph client.Object
 			},
 		}
 	}
+
 	return requests
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	err := mgr.GetFieldIndexer().IndexField(context.Background(), &tykv1alpha1.SuperGraph{}, SubgraphField, func(object client.Object) []string {
-		sg := object.(*tykv1alpha1.SuperGraph)
-		if len(sg.Spec.SubgraphsRefs) == 0 {
-			return nil
-		}
+	err := mgr.GetFieldIndexer().IndexField(
+		context.Background(),
+		&tykv1alpha1.SuperGraph{},
+		SubgraphField,
+		func(object client.Object) []string {
+			sg := object.(*tykv1alpha1.SuperGraph) //nolint
+			if len(sg.Spec.SubgraphsRefs) == 0 {
+				return nil
+			}
 
-		return sg.Spec.SubgraphsRefs
-	})
+			return sg.Spec.SubgraphsRefs
+		})
 	if err != nil {
 		return err
 	}
@@ -186,7 +190,6 @@ func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *SuperGraphReconciler) ignoreSubGraphCreationEvents() predicate.Predicate {
-
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return false

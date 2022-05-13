@@ -155,7 +155,7 @@ spec:
   graphql:
     enabled: true
     execution_mode: subgraph
-    graph_ref: users-subgraph
+#    graph_ref: users-subgraph
     version: "2"
     playground:
       enabled: false
@@ -164,3 +164,9 @@ spec:
     target_url: http://users.default.svc:4001/query
     listen_path: /users-subgraph/
     disable_strip_slash: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default

@@ -135,6 +135,7 @@ func main() {
 	}
 
 	spg := ctrl.Log.WithName("controllers").WithName("SuperGraph")
+
 	if err = (&controllers.SuperGraphReconciler{
 		Client: mgr.GetClient(),
 		Log:    spg,
