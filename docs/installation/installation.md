@@ -185,18 +185,14 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
 If you don't have cert-manager installed, here is a quick install:
 
 ```bash
-kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.3.0/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
 ```
 
-This cert-manager version is the minimum version that works with kubernetes version 1.22 . 
-For kubernetes versions below 1.22, earlier releases of cert-manager  should work. 
-Furthermore we have tested and our operator works with the latest cert-manager version (currently v1.7.1).
-However, if running into cert-manager related errors please ensure that the desired version of k8s works with the
-chosen version of cert-manager by visiting the [supported releases page](https://cert-manager.io/docs/installation/supported-releases/).
+Tyk Operator supports Kubernetes 1.19, 1.20, 1.21, 1.22 and 1.23 versions. Therefore, cert-manager must be compatible with 
+the given Kubernetes versions.
 
-
-
-[cert-manager documentation](https://cert-manager.io/docs/installation/kubernetes/)
+If running into cert-manager related errors, please ensure that the desired version of Kubernetes version works with the 
+chosen version of cert-manager by visiting the [supported releases page](https://cert-manager.io/docs/installation/supported-releases/) and [cert-manager documentation](https://cert-manager.io/docs/installation/kubernetes/).
 
 <details><summary>Please wait for cert-manager to become available.</summary>
 <p>
