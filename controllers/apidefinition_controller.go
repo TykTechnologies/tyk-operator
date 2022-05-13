@@ -25,6 +25,16 @@ import (
 	"strings"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
@@ -44,7 +54,10 @@ import (
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const queueAfter = time.Second * 5
+const (
+	queueAfter = time.Second * 5
+	GraphKey   = "graph_ref"
+)
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {
@@ -685,10 +698,69 @@ func (r *ApiDefinitionReconciler) updateStatus(
 	return r.Status().Update(ctx, &api)
 }
 
+func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(apiDef client.Object) []reconcile.Request {
+	apiDefDeployments := &tykv1alpha1.ApiDefinitionList{}
+	listOps := &client.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector(GraphKey, apiDef.GetName()),
+		Namespace:     apiDef.GetNamespace(),
+	}
+	err := r.List(context.TODO(), apiDefDeployments, listOps)
+	if err != nil {
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, len(apiDefDeployments.Items))
+	for i, item := range apiDefDeployments.Items {
+		requests[i] = reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      item.GetName(),
+				Namespace: item.GetNamespace(),
+			},
+		}
+	}
+	return requests
+}
+
 // SetupWithManager initializes the api definition controller.
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &tykv1alpha1.ApiDefinition{}, GraphKey, func(rawObj client.Object) []string {
+		// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
+		apiDefDeployment := rawObj.(*tykv1alpha1.ApiDefinition)
+		if apiDefDeployment.Spec.GraphQL.GraphRef == "" {
+			return nil
+		}
+		return []string{apiDefDeployment.Spec.GraphQL.GraphRef}
+	}); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
 		Owns(&v1.Secret{}).
+		Watches(
+			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
+			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
+			builder.WithPredicates(r.ignoreGraphCreationEvents()),
+		).
+		Watches(
+			&source.Kind{Type: &tykv1alpha1.SuperGraph{}},
+			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
+			builder.WithPredicates(r.ignoreGraphCreationEvents()),
+		).
 		Complete(r)
+}
+
+func (r *ApiDefinitionReconciler) ignoreGraphCreationEvents() predicate.Predicate {
+
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return true
+		},
+	}
 }
