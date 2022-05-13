@@ -20,16 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GraphQLSubgraphEntityRefs holds subgraph's information.
-type GraphQLSubgraphEntityRefs struct {
-	Name string `json:"name"`
-}
-
 // SuperGraphSpec defines the desired state of SuperGraph
 type SuperGraphSpec struct {
-	SubgraphsRefs []GraphQLSubgraphEntityRefs `json:"subgraphs_refs"`
-	MergedSDL     string                      `json:"merged_sdl,omitempty"`
-	Schema        string                      `json:"schema,omitempty"`
+	SubgraphsRefs []string `json:"subgraphs_refs"`
+	MergedSDL     string   `json:"merged_sdl,omitempty"`
+	Schema        string   `json:"schema,omitempty"`
 }
 
 // SuperGraphStatus defines the observed state of SuperGraph

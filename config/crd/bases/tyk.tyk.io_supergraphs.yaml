@@ -42,13 +42,7 @@ spec:
                 type: string
               subgraphs_refs:
                 items:
-                  description: GraphQLSubgraphEntityRefs holds subgraph's information.
-                  properties:
-                    name:
-                      type: string
-                  required:
-                  - name
-                  type: object
+                  type: string
                 type: array
             required:
             - subgraphs_refs

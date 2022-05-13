@@ -200,7 +200,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					sg := &tykv1alpha1.SubGraph{}
 					err := r.Client.Get(ctx, types.NamespacedName{
 						Namespace: req.Namespace,
-						Name:      ref.Name,
+						Name:      ref,
 					}, sg)
 					if err != nil {
 						return err
