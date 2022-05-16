@@ -11,6 +11,8 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
+TYK_VERSION ?= v4.0
+
 # Image URL to use all building/pushing image targets
 IMG ?= tyk-operator:latest
 
@@ -176,11 +178,11 @@ scrap: generate manifests helm cross-build-image ## Re-install operator with hel
 
 .PHONY: setup-pro
 setup-pro:	## Install Tyk Pro
-	go run hack/bootstrap/create/main.go --debug  --mode pro -cluster=${CLUSTER_NAME}
+	go run hack/bootstrap/create/main.go -debug  -mode=pro -cluster=${CLUSTER_NAME} -tyk_version=$(TYK_VERSION)
 
 .PHONY: setup-ce
 setup-ce:	## Install Tyk CE
-	go run hack/bootstrap/create/main.go --debug -cluster=${CLUSTER_NAME}
+	go run hack/bootstrap/create/main.go -debug -mode=ce -cluster=${CLUSTER_NAME} -tyk_version=$(TYK_VERSION)
 
 
 .PHONY: boot-pro

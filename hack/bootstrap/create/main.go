@@ -159,9 +159,10 @@ func (o *Operator) bind(mode string) {
 var config Config
 
 var (
-	mode    = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
-	debug   = flag.Bool("debug", false, "prints lots of details")
-	cluster = flag.String("cluster", "", "cluster name") //nolint
+	mode       = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
+	debug      = flag.Bool("debug", false, "prints lots of details")
+	cluster    = flag.String("cluster", "", "cluster name") //nolint
+	tykVersion = flag.String("tyk_version", "v4.0", "tyk version to test against")
 )
 
 func chartDir() string {
@@ -195,9 +196,9 @@ func main() {
 	}
 
 	submodule()
-	ns()
+	createNamespaces()
 	common()
-	helm()
+	installTykStack()
 	operator()
 }
 
@@ -262,7 +263,7 @@ func kf(fn func(*exec.Cmd), args ...string) error {
 //
 // They will only be created if they don't exist yet so it is safe to run this
 // multiple times
-func ns() {
+func createNamespaces() {
 	say("Creating Namespaces ...")
 
 	if !hasNS(config.Tyk.Namespace) {
@@ -369,7 +370,7 @@ func createMongo() {
 	ok()
 }
 
-func helm() {
+func installTykStack() {
 	say("Installing helm chart ...")
 
 	if !hasTykChart() {
@@ -393,6 +394,8 @@ func helm() {
 			"-f", config.Values(),
 			config.Chart(),
 			"--set", fmt.Sprintf("dash.license=%s", config.Tyk.License),
+			"--set", fmt.Sprintf("dash.image.tag=%s", *tykVersion),
+			"--set", fmt.Sprintf("gateway.image.tag=%s", *tykVersion),
 			"-n", config.Tyk.Namespace,
 			"--wait",
 		)
