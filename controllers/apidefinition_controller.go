@@ -176,7 +176,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 
-		if upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
+		if upstreamRequestStruct.Spec.GraphQL != nil && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
 			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
 				subgraph := &tykv1alpha1.SubGraph{}
 
@@ -732,10 +732,19 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		GraphKey,
 		func(rawObj client.Object) []string {
 			// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
-			apiDefDeployment := rawObj.(*tykv1alpha1.ApiDefinition) //nolint
+			apiDefDeployment, ok := rawObj.(*tykv1alpha1.ApiDefinition)
+			if !ok {
+				r.Log.Info("Not ApiDefinition")
+				return nil
+			}
+			if apiDefDeployment.Spec.GraphQL == nil {
+				return nil
+			}
+
 			if apiDefDeployment.Spec.GraphQL.GraphRef == "" {
 				return nil
 			}
+
 			return []string{apiDefDeployment.Spec.GraphQL.GraphRef}
 		})
 	if err != nil {
