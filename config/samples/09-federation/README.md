@@ -110,7 +110,8 @@ spec:
 
 
 SuperGraph CRD takes subgraph_refs and schema values for your supergraph. `subgraph_refs` is an array of SubGraph CRD 
-references which expects the name and namespace of the referenced subgraph. 
+references which expects the name and namespace of the referenced subgraph. If `namespace` is not specified, Operator will
+check SubGraphs in the current namespace.
 
 Tyk Operator will update your SuperGraph ApiDefinition when one of the subgraphs that you reference in `subgraph_refs` changes.
 
@@ -194,7 +195,7 @@ subgraph in `graph_ref` field.
 Although the subgraph is not referenced in any ApiDefinition, if it is referenced in the SuperGraph, Tyk Operator will 
 not delete the subgraph again.
 
-In order to delete this subgraph, SuperGraph CRD should not have reference to corresponding subgraph in the `subgraphs_ref`.
+In order to delete this subgraph, SuperGraph CRD should not have reference to corresponding subgraph in the `subgraph_ref`.
 
 ## Deleting SuperGraph
 
