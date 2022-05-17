@@ -1,4 +1,5 @@
 # Create Service & Deployment of Users API
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -155,7 +156,7 @@ spec:
   graphql:
     enabled: true
     execution_mode: subgraph
-#    graph_ref: users-subgraph
+    graph_ref: users-subgraph
     version: "2"
     playground:
       enabled: false

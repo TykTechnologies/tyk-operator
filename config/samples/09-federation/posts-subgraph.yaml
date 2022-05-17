@@ -106,6 +106,7 @@ spec:
           id: ID! @external
           posts: [Post!]!
       }
+
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition

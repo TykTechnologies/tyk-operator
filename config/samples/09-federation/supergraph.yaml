@@ -63,9 +63,9 @@ spec:
   use_keyless: true
   active: true
   graphql:
-    graph_ref: social-media-supergraph
     enabled: true
     execution_mode: supergraph
+    graph_ref: social-media-supergraph
     version: "2"
     playground:
       enabled: true
