@@ -116,6 +116,7 @@ spec:
       type User @key(fields: "id") {
           id: ID!
           name: String!
+          username: String!
           email: String!
           address: Address!
           phone: String!
