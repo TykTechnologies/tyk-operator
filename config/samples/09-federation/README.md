@@ -1,8 +1,8 @@
 # GraphQL Federation with Tyk Operator
 
 - [Introduction](#introduction)
-- [Updating SubGraph](#tyk-licensing)
-- [Deleting SubGraph](#installing-tyk)
+- [Updating SubGraph](#updating-subgraph)
+- [Deleting SubGraph](#deleting-subgraph)
     - [SubGraph without any reference](#subgraph-without-any-reference)
     - [SubGraph referenced in ApiDefinition](#subgraph-referenced-in-apidefinition)
     - [SubGraph referenced in SuperGraph](#subgraph-referenced-in-supergraph)
