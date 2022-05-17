@@ -209,11 +209,13 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					return err
 				}
 
-				for _, ref := range supergraph.Spec.SubgraphsRefs {
+				for _, ref := range supergraph.Spec.SubgraphRefs {
+					ns := namespaceValue(ref.Namespace, supergraph.Namespace)
+
 					sg := &tykv1alpha1.SubGraph{}
 					err := r.Client.Get(ctx, types.NamespacedName{
 						Name:      ref.Name,
-						Namespace: ref.Namespace,
+						Namespace: ns,
 					}, sg)
 					if err != nil {
 						return err

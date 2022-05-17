@@ -3,11 +3,10 @@ kind: SuperGraph
 metadata:
   name: social-media-supergraph
 spec:
-  subgraphs_refs:
+  subgraph_refs:
     - name: users-subgraph
       namespace: users-ns
     - name: posts-subgraph
-      namespace: default
   schema: |-
     type Query {
       user(id: ID!): User!

@@ -104,11 +104,15 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	var sdls []string
 
-	for _, subGraphRef := range desired.Spec.SubgraphsRefs {
+	for _, subGraphRef := range desired.Spec.SubgraphRefs {
+		// In the subgraph_refs field of the SuperGraph, the namespace for referenced subgraphs is optional. If the
+		// namespace is not specified, use req.Namespace.
+		ns := namespaceValue(subGraphRef.Namespace, req.Namespace)
+
 		subGraph := &tykv1alpha1.SubGraph{}
 		if err := r.Client.Get(ctx, types.NamespacedName{
 			Name:      subGraphRef.Name,
-			Namespace: subGraphRef.Namespace,
+			Namespace: ns,
 		}, subGraph); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -133,6 +137,15 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// namespaceValue checks given namespace. If namespace is empty, returns fallback.
+func namespaceValue(ns, fallback string) string {
+	if ns == "" {
+		return fallback
+	}
+
+	return ns
 }
 
 func (r *SuperGraphReconciler) findObjectsForSubGraph(subGraph client.Object) []reconcile.Request {
@@ -166,12 +179,12 @@ func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		SubgraphField,
 		func(object client.Object) []string {
 			sg := object.(*tykv1alpha1.SuperGraph) //nolint
-			if len(sg.Spec.SubgraphsRefs) == 0 {
+			if len(sg.Spec.SubgraphRefs) == 0 {
 				return nil
 			}
 
 			keyIndexes := []string{}
-			for _, ref := range sg.Spec.SubgraphsRefs {
+			for _, ref := range sg.Spec.SubgraphRefs {
 				keyIndexes = append(keyIndexes, ref.Name)
 			}
 
