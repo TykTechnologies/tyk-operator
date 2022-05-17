@@ -107,11 +107,10 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	for _, subGraphRef := range desired.Spec.SubgraphsRefs {
 		subGraph := &tykv1alpha1.SubGraph{}
-		err := r.Client.Get(ctx, types.NamespacedName{
+		if err := r.Client.Get(ctx, types.NamespacedName{
 			Namespace: req.Namespace,
 			Name:      subGraphRef,
-		}, subGraph)
-		if err != nil {
+		}, subGraph); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -143,13 +142,13 @@ func (r *SuperGraphReconciler) findObjectsForSupergraph(superGraph client.Object
 		FieldSelector: fields.OneTermEqualSelector(SubgraphField, superGraph.GetName()),
 		Namespace:     superGraph.GetNamespace(),
 	}
-	err := r.List(context.TODO(), attachedSupergraphDeployments, listOps)
-	if err != nil {
+
+	if err := r.List(context.TODO(), attachedSupergraphDeployments, listOps); err != nil {
 		return []reconcile.Request{}
 	}
 
 	requests := make([]reconcile.Request, len(attachedSupergraphDeployments.Items))
-	for i, item := range attachedSupergraphDeployments.Items {
+	for i, item := range attachedSupergraphDeployments.Items { //nolint
 		requests[i] = reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      item.GetName(),
