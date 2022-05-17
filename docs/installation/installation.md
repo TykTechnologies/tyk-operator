@@ -188,7 +188,7 @@ If you don't have cert-manager installed, here is a quick install:
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
 ```
 
-Tyk Operator supports Kubernetes 1.19, 1.20, 1.21, 1.22 and 1.23 versions. Therefore, cert-manager must be compatible with 
+Tyk Operator supports Kubernetes v.19+. Ensure cert-manager is compatible with your Kubernetes version.
 the given Kubernetes versions.
 
 If running into cert-manager related errors, please ensure that the desired version of Kubernetes version works with the 
