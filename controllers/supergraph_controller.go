@@ -20,19 +20,18 @@ import (
 	"context"
 	"errors"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	"sigs.k8s.io/controller-runtime/pkg/builder"
-
-	"k8s.io/apimachinery/pkg/fields"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -45,7 +44,7 @@ import (
 	graphQlMerge "github.com/jensneuse/graphql-go-tools/pkg/federation/sdlmerge"
 )
 
-const SubgraphField = "subgraphs_refs"
+const SubgraphField = ".subgraphs_refs.name"
 
 var ErrSuperGraphReference = errors.New("supergraph is referenced in apiDefinition")
 
@@ -107,11 +106,10 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	for _, subGraphRef := range desired.Spec.SubgraphsRefs {
 		subGraph := &tykv1alpha1.SubGraph{}
-		err := r.Client.Get(ctx, types.NamespacedName{
-			Namespace: req.Namespace,
-			Name:      subGraphRef,
-		}, subGraph)
-		if err != nil {
+		if err := r.Client.Get(ctx, types.NamespacedName{
+			Name:      subGraphRef.Name,
+			Namespace: subGraphRef.Namespace,
+		}, subGraph); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -137,19 +135,18 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *SuperGraphReconciler) findObjectsForSupergraph(superGraph client.Object) []reconcile.Request {
+func (r *SuperGraphReconciler) findObjectsForSubGraph(subGraph client.Object) []reconcile.Request {
 	attachedSupergraphDeployments := &tykv1alpha1.SuperGraphList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(SubgraphField, superGraph.GetName()),
-		Namespace:     superGraph.GetNamespace(),
+		FieldSelector: fields.OneTermEqualSelector(SubgraphField, subGraph.GetName()),
 	}
-	err := r.List(context.TODO(), attachedSupergraphDeployments, listOps)
-	if err != nil {
+
+	if err := r.List(context.TODO(), attachedSupergraphDeployments, listOps); err != nil {
 		return []reconcile.Request{}
 	}
 
 	requests := make([]reconcile.Request, len(attachedSupergraphDeployments.Items))
-	for i, item := range attachedSupergraphDeployments.Items {
+	for i, item := range attachedSupergraphDeployments.Items { //nolint
 		requests[i] = reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      item.GetName(),
@@ -173,7 +170,12 @@ func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return nil
 			}
 
-			return sg.Spec.SubgraphsRefs
+			keyIndexes := []string{}
+			for _, ref := range sg.Spec.SubgraphsRefs {
+				keyIndexes = append(keyIndexes, ref.Name)
+			}
+
+			return keyIndexes
 		})
 	if err != nil {
 		return err
@@ -183,7 +185,7 @@ func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&tykv1alpha1.SuperGraph{}).
 		Watches(
 			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
-			handler.EnqueueRequestsFromMapFunc(r.findObjectsForSupergraph),
+			handler.EnqueueRequestsFromMapFunc(r.findObjectsForSubGraph),
 			builder.WithPredicates(r.ignoreSubGraphCreationEvents()),
 		).
 		Complete(r)

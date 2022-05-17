@@ -212,17 +212,17 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				for _, ref := range supergraph.Spec.SubgraphsRefs {
 					sg := &tykv1alpha1.SubGraph{}
 					err := r.Client.Get(ctx, types.NamespacedName{
-						Namespace: req.Namespace,
-						Name:      ref,
+						Name:      ref.Name,
+						Namespace: ref.Namespace,
 					}, sg)
 					if err != nil {
 						return err
 					}
 
-					_, name := decodeID(sg.Status.APIID)
+					ns, name := decodeID(sg.Status.APIID)
 
 					apidef := &tykv1alpha1.ApiDefinition{}
-					err = r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: name}, apidef)
+					err = r.Client.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, apidef)
 					if err != nil {
 						return err
 					}
@@ -704,12 +704,13 @@ func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(apiDef client.Objec
 		FieldSelector: fields.OneTermEqualSelector(GraphKey, apiDef.GetName()),
 		Namespace:     apiDef.GetNamespace(),
 	}
+
 	if err := r.List(context.TODO(), apiDefDeployments, listOps); err != nil {
 		return []reconcile.Request{}
 	}
 
 	requests := make([]reconcile.Request, len(apiDefDeployments.Items))
-	for i, item := range apiDefDeployments.Items {
+	for i, item := range apiDefDeployments.Items { //nolint
 		requests[i] = reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      item.GetName(),

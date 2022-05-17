@@ -43,6 +43,7 @@ apiVersion: tyk.tyk.io/v1alpha1
 kind: SubGraph
 metadata:
   name: users-subgraph
+  namespace: users-ns
 spec:
   subgraph:
     schema: |
@@ -115,7 +116,6 @@ spec:
       type User @key(fields: "id") {
           id: ID!
           name: String!
-          username: String!
           email: String!
           address: Address!
           phone: String!
@@ -146,6 +146,7 @@ apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: federation-users-subgraph
+  namespace: users-ns
 spec:
   name: Federation - Users Subgraph
   protocol: "http"

@@ -20,11 +20,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type SubGraphReference struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
 // SuperGraphSpec defines the desired state of SuperGraph
 type SuperGraphSpec struct {
-	SubgraphsRefs []string `json:"subgraphs_refs"`
-	MergedSDL     string   `json:"merged_sdl,omitempty"`
-	Schema        string   `json:"schema,omitempty"`
+	SubgraphsRefs []SubGraphReference `json:"subgraphs_refs"`
+	MergedSDL     string              `json:"merged_sdl,omitempty"`
+	Schema        string              `json:"schema,omitempty"`
 }
 
 // SuperGraphStatus defines the observed state of SuperGraph
