@@ -10,8 +10,9 @@
   - [Watching Namespaces](#watching-namespaces)
   - [Watching custom ingress class](#watching-custom-ingress-class)
   - [Installing cert-manager](#installing-cert-manager)
-- [Installing CRDs](#installing-crds)
-- [Installing Tyk Operator](#installing-tyk-operator)
+- [Installing Tyk Operator and CRDs](#installing-tyk-operator-and-crds)
+  - [Using Helm Chart](#helm-chart)
+  - [Tyk Operator Repository](#tyk-operator-repository)
 - [Upgrading Tyk Operator](#upgrading-tyk-operator)
 - [Uninstall](#uninstall)
 
@@ -182,14 +183,16 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
 
 ### Installing cert-manager
 
-If you don't have cert-manager installed, here is a quick install:
+According to [Kubebuilder documentation](https://book.kubebuilder.io/cronjob-tutorial/cert-manager.html#deploying-the-cert-manager),
+cert-manager is the suggested way for provisioning the certificates for the webhook server. If you don't have cert-manager
+installed, a quick installation is as follows:
 
 ```bash
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
 ```
 
-Tyk Operator supports Kubernetes v.19+. Ensure cert-manager is compatible with your Kubernetes version.
-the given Kubernetes versions.
+Since Tyk Operator supports Kubernetes v1.19+, minimum cert-manager version is 1.8. Ensure cert-manager is compatible 
+with Kubernetes v1.19+.
 
 If running into cert-manager related errors, please ensure that the desired version of Kubernetes version works with the 
 chosen version of cert-manager by visiting the [supported releases page](https://cert-manager.io/docs/installation/supported-releases/) and [cert-manager documentation](https://cert-manager.io/docs/installation/kubernetes/).
@@ -222,7 +225,22 @@ replicaset.apps/cert-manager-webhook-6d4c5c44bb      1         1         0      
 </p>
 </details>
 
-## Installing CRDs
+
+## Installing Tyk Operator and CRDs
+
+### Helm Chart
+
+You can install CRDs and Tyk Operator through Helm Chart.
+
+```bash
+helm repo add tyk-helm https://helm.tyk.io/public/helm/charts/
+helm repo update
+helm install tyk-operator tyk-helm/tyk-operator -n tyk-operator-system
+```
+
+### Tyk Operator Repository
+
+You can install CRDs and Operator through this GitHub repository.
 
 Installing CRDs is as simple as checking out this repo and running `kubectl apply`:
 
@@ -233,14 +251,12 @@ customresourcedefinition.apiextensions.k8s.io/securitypolicies.tyk.tyk.io config
 customresourcedefinition.apiextensions.k8s.io/webhooks.tyk.tyk.io configured
 ```
 
-## Installing Tyk Operator
-
 Run the following to deploy Tyk Operator.
 
 ```bash
-$ helm install foo ./helm -n tyk-operator-system
+$ helm install tyk-operator ./helm -n tyk-operator-system
 
-NAME: foo
+NAME: tyk-operator
 LAST DEPLOYED: Tue Nov 10 18:38:32 2020
 NAMESPACE: tyk-operator-system
 STATUS: deployed
@@ -252,15 +268,23 @@ You have deployed the tyk-operator! See https://github.com/TykTechnologies/tyk-o
 
 ## Upgrading Tyk Operator
 
+### Helm Chart
+
+```
+helm upgrade -n tyk-operator-system tyk-operator tyk-helm/tyk-operator  --wait
+```
+
+### Tyk Operator Repository
+
 Checkout the tag you want to upgrade to `git checkout tags/{.ReleaseTag}`
 
-for example if you are on `v0.6.0` and you wish to upgrade to `v0.6.1` 
+For example if you are on `v0.6.0` and you wish to upgrade to `v0.6.1` 
 
 ```bash
 git checkout tags/v0.6.1
 ```
 
-Upgrade crds
+Upgrade CRDs
 
 ```bash
 kubectl apply -f ./helm/crds
@@ -269,7 +293,7 @@ kubectl apply -f ./helm/crds
 Upgrade helm release
 
 ```bash
-helm upgrade foo ./helm -n tyk-operator-system
+helm upgrade tyk-operator ./helm -n tyk-operator-system
 ```
 
 ## Uninstall
@@ -278,5 +302,5 @@ Did we do something wrong? Create a [GitHub issue](https://github.com/TykTechnol
 can try to improve your experience, and that of others.
 
 ```bash
-helm delete foo -n tyk-operator-system
+helm delete tyk-operator -n tyk-operator-system
 ```
