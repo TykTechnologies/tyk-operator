@@ -26,7 +26,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Type | Supported | Comments |
 | ----------- | --------- | --------- |
 | [Path-Based](./../config/samples/httpbin.yaml) | ✅ | - |
-| [Host-Based](./../config/samples/httpbin_routing_by_hostname.yaml) | ⚠️ | Implemented - Untested |
+| [Host-Based](./../config/samples/httpbin_routing_by_hostname.yaml) | ✅ | - |
 | Version-Based (Header) | ⚠️ | Untested |
 | Version-Based (QueryString) | ⚠️ | Untested |
 | Version-Based (Subdomain) | ⚠️ | Untested |
