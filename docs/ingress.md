@@ -46,13 +46,13 @@ The following table shows an example of path matching if the listen-path is set 
 
 ## Quickstart / Samples
 
-* [HTTP Host-Based](./../config/samples/01-ingress)
-* [HTTP Path Based](./../config/samples/01-ingress)
-* [HTTP Host and Path](./../config/samples/01-ingress)
-* [HTTPS with Cert-Manager Integration](./../config/samples/02-ingress-tls)
-* [Multiple Ingress Resources](./../config/samples/03-ingress-multi)
-* [Wildcard Hosts](./../config/samples/04-ingress-wildcard-host)
-* [Istio Ingress Gateway](./../config/samples/05-istio-ingress-bookinfo)
+* [HTTP Host-Based](./../config/samples/ingress/ingress-httpbin/)
+* [HTTP Path Based](./../config/samples/ingress/ingress-httpbin/)
+* [HTTP Host and Path](./../config/samples/ingress/ingress-httpbin/)
+* [HTTPS with Cert-Manager Integration](./../config/samples/ingress/ingress-tls)
+* [Multiple Ingress Resources](./../config/samples/ingress/ingress-multi)
+* [Wildcard Hosts](./../config/samples/ingress/ingress-wildcard-host)
+* [Istio Ingress Gateway](./../config/samples/ingress/istio-ingress-bookinfo)
 
 ## Motivation
 
