@@ -7,7 +7,7 @@ metadata:
     tyk.io/template: myapideftemplate # <---------------- REFERENCE TO APIDEFINITION IN SAME NAMESPACE
 spec:
   rules:
-    - host: "httpbin.ahmet"
+    - host: httpbin.ahmet
       http:
         paths:
           - path: / # host routing: http://httpbin.ahmet/
