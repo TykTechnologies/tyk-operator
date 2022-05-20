@@ -3,6 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.9.0...HEAD)
 
+**Documentation**
+- Verified support of Host based routing
+
 ## [v0.9.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.9.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...v0.9.0)
 

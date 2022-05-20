@@ -5,7 +5,7 @@ this requires prior knowledge of the API_ID. Since the operator treats api's as 
 
 The operator will automatically generates the correct url before sending it to the gateway.
 
-[Full sample file](../../config/samples/06-looping/dynamic_auth.yaml)
+[Full sample file](../../config/samples/looping/dynamic_auth.yaml)
 
 # URL Rewriting
 

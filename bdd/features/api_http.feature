@@ -5,19 +5,19 @@ Feature: Managing http APIs
     And the gateway should reconcile accordingly
   Scenario: Create a keyless api
     Given there is a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
-    When i request /httpbin/get endpoint
+    When i request /httpbin-auth-test/get endpoint
     Then there should be a 200 http response code
 
   Scenario: Update an api from keyless to auth token
     Given there is a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
     When i update a ./custom_resources/httpbin.apikey.apidefinition.yaml resource
-    And i request /httpbin/get endpoint
+    And i request /httpbin-auth-test/get endpoint
     Then there should be a 401 http response code
 
   Scenario: Delete an API
     Given there is a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
     When i delete a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
-    And i request /httpbin/get endpoint
+    And i request /httpbin-auth-test/get endpoint
     Then there should be a 404 http response code
 
   Scenario: Transform xml to json
@@ -27,7 +27,7 @@ Feature: Managing http APIs
 
   Scenario: Blacklist IP address with blacklisted ip
     Given there is a ./custom_resources/ip/blacklist.yaml resource
-    When i request /httpbin/headers endpoint with header X-Real-IP: 127.0.0.2
+    When i request /httpbin-blacklist/headers endpoint with header X-Real-IP: 127.0.0.2
     Then there should be a 403 http response code
     And the response should match JSON:
       """
@@ -38,12 +38,12 @@ Feature: Managing http APIs
 
   Scenario: Blacklist IP address without blacklisted ip
     Given there is a ./custom_resources/ip/blacklist.yaml resource
-    When i request /httpbin/get endpoint
+    When i request /httpbin-blacklist/get endpoint
     Then there should be a 200 http response code
 
   Scenario: Whitelist IP address with blocked ip
     Given there is a ./custom_resources/ip/whitelist.yaml resource
-    When i request /httpbin/get endpoint
+    When i request /httpbin-whitelist/get endpoint
     Then there should be a 403 http response code
     And the response should match JSON:
       """
@@ -54,7 +54,7 @@ Feature: Managing http APIs
 
   Scenario: Whitelist IP address with whitelisted ip
     Given there is a ./custom_resources/ip/whitelist.yaml resource
-    When i request /httpbin/headers endpoint with header X-Real-IP: 127.0.0.2
+    When i request /httpbin-whitelist/headers endpoint with header X-Real-IP: 127.0.0.2
     Then there should be a 200 http response code
 
   Scenario: Method transform
