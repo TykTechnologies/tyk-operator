@@ -34,7 +34,6 @@ spec:
           metadata:
             type: object
           spec:
-            description: SuperGraphSpec defines the desired state of SuperGraph
             properties:
               merged_sdl:
                 type: string

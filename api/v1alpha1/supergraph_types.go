@@ -17,14 +17,12 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SuperGraphSpec defines the desired state of SuperGraph
 type SuperGraphSpec struct {
-	SubgraphsRefs []string `json:"subgraphs_refs"`
-	MergedSDL     string   `json:"merged_sdl,omitempty"`
-	Schema        string   `json:"schema,omitempty"`
+	model.SuperGraphSpec `json:",inline"`
 }
 
 // SuperGraphStatus defines the observed state of SuperGraph

@@ -238,6 +238,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				}
 
 				upstreamRequestStruct.Spec.GraphQL.Schema = supergraph.Spec.Schema
+				upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = supergraph.Spec.MergedSDL
 			}
 		}
 
@@ -259,36 +260,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		upstreamRequestStruct.Spec.CollectLoopingTarget()
-
-		if upstreamRequestStruct.Spec.GraphQL != nil {
-			if upstreamRequestStruct.Spec.GraphQL.Enabled {
-				switch upstreamRequestStruct.Spec.GraphQL.ExecutionMode {
-				case "subgraph":
-					// Update subgraph's status field with the introspection results. However, introspection has not been
-					// implemented yet. Therefore, we are populating the subgraph's status with the SDL given manually.
-
-					// TODO: implement introspection and update following code piece. So, the operator gets the subgraph's
-					// SDL from the introspection result, which will be used in the supergraph's
-					// spec.graphql.supergraph.subgraphs field.
-					if upstreamRequestStruct.Status.SDL !=
-						upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
-						upstreamRequestStruct.Status.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
-					}
-				case "supergraph":
-					// Check if the supergraph's merged_sdl is valid or not. If the dashboard is in use, merged_sdl might
-					// be empty because it is the as spec.graphql.schema. However, if the Tyk CE is in use, merged_sdl
-					// should be provided.
-					if upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL == "" {
-						if env.Mode == "ce" {
-							// if Tyk CE gateway is used, merged_sdl should be provided through ApiDefinition YAML file.
-							return fmt.Errorf("expected to have merged_sdl declared for Tyk CE")
-						}
-
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
-					}
-				}
-			}
-		}
 
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
