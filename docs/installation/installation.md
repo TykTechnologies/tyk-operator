@@ -269,13 +269,13 @@ You have deployed the tyk-operator! See https://github.com/TykTechnologies/tyk-o
 
 ## Upgrading Tyk Operator
 
-### <a id="upgrade-helm"></a> Helm Chart
+### Helm Chart
 
 ```
 helm upgrade -n tyk-operator-system tyk-operator tyk-helm/tyk-operator  --wait
 ```
 
-### <a id="upgrade-repo"></a>Tyk Operator Repository
+### Tyk Operator Repository
 
 Checkout the tag you want to upgrade to `git checkout tags/{.ReleaseTag}`
 
