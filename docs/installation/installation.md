@@ -14,8 +14,8 @@
   - [Helm Chart](#helm-chart)
   - [Tyk Operator Repository](#tyk-operator-repository)
 - [Upgrading Tyk Operator](#upgrading-tyk-operator)
-  - [Helm Chart](#a-id"upgrade-helm"a-helm-chart)
-  - [Tyk Operator Repository](#a-id"upgrade-repo"atyk-operator-repository)
+  - [Helm Chart](#-helm-chart)
+  - [Tyk Operator Repository](#tyk-operator-repository-1)
 - [Uninstall](#uninstall)
 
 ## Prerequisites
