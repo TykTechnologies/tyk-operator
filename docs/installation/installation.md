@@ -3,16 +3,19 @@
 - [Prerequisites](#prerequisites)
 - [Tyk Licensing](#tyk-licensing)
 - [Installing Tyk](#installing-tyk)
+- [Installing cert-manager](#installing-cert-manager)
 - [Tyk Operator Configuration](#tyk-operator-configuration)
   - [Connecting Tyk Operator to Tyk Gateway](#connecting-tyk-operator-to-tyk-gateway)
     - [Tyk Pro](#tyk-pro)
     - [Tyk CE](#tyk-ce)
   - [Watching Namespaces](#watching-namespaces)
   - [Watching custom ingress class](#watching-custom-ingress-class)
-  - [Installing cert-manager](#installing-cert-manager)
-- [Installing CRDs](#installing-crds)
-- [Installing Tyk Operator](#installing-tyk-operator)
+- [Installing Tyk Operator and CRDs](#installing-tyk-operator-and-crds)
+  - [Helm Chart](#helm-chart)
+  - [Tyk Operator Repository](#tyk-operator-repository)
 - [Upgrading Tyk Operator](#upgrading-tyk-operator)
+  - [Helm Chart](#a-id"upgrade-helm"a-helm-chart)
+  - [Tyk Operator Repository](#a-id"upgrade-repo"atyk-operator-repository)
 - [Uninstall](#uninstall)
 
 ## Prerequisites
@@ -32,6 +35,7 @@ Before running the operator
   "allow_explicit_policy_id": true
 },
 ```
+
 ## Tyk Licensing
 
 Tyk Operator and Tyk Gateway are both 100% Open Source. Tyk Operator will operate on a single gateway.
@@ -48,6 +52,49 @@ If not, head over to [tyk-helm-chart](https://github.com/TykTechnologies/tyk-hel
 
 Using Tyk Operator, you can manage APIs in any Tyk installation whether deployed on-premises, in Tyk Cloud or Hybrid, VMs or K8s.
 All we ask is that the management URLs are accessible by Tyk Operator.
+
+## Installing cert-manager
+
+According to [Kubebuilder documentation](https://book.kubebuilder.io/cronjob-tutorial/cert-manager.html#deploying-the-cert-manager),
+cert-manager is the suggested way for provisioning the certificates for the webhook server. If you don't have cert-manager
+installed, a quick installation is as follows:
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+```
+
+Since Tyk Operator supports Kubernetes v1.19+, minimum cert-manager version is 1.8.
+
+If running into cert-manager related errors, please ensure that the desired version of Kubernetes version works with the
+chosen version of cert-manager by visiting the [supported releases page](https://cert-manager.io/docs/installation/supported-releases/) and [cert-manager documentation](https://cert-manager.io/docs/installation/kubernetes/).
+
+<details><summary>Please wait for cert-manager to become available.</summary>
+<p>
+
+```bash
+$ kubectl get all -n cert-manager
+NAME                                           READY   STATUS    RESTARTS   AGE
+pod/cert-manager-79c5f9946-d5hfv               1/1     Running   0          14s
+pod/cert-manager-cainjector-76c9d55b6f-qmpmv   1/1     Running   0          14s
+pod/cert-manager-webhook-6d4c5c44bb-q9n9k      0/1     Running   0          14s
+
+NAME                           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/cert-manager           ClusterIP   10.245.61.87    <none>        9402/TCP   15s
+service/cert-manager-webhook   ClusterIP   10.245.96.198   <none>        443/TCP    15s
+
+NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cert-manager              1/1     1            1           14s
+deployment.apps/cert-manager-cainjector   1/1     1            1           14s
+deployment.apps/cert-manager-webhook      0/1     1            0           14s
+
+NAME                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/cert-manager-79c5f9946               1         1         1       14s
+replicaset.apps/cert-manager-cainjector-76c9d55b6f   1         1         1       14s
+replicaset.apps/cert-manager-webhook-6d4c5c44bb      1         1         0       14s
+```
+
+</p>
+</details>
 
 ## Tyk Operator Configuration
 
@@ -180,49 +227,21 @@ kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "WATCH_INGRESS_CLASS=foo"
 ```
 
-### Installing cert-manager
+## Installing Tyk Operator and CRDs
 
-If you don't have cert-manager installed, here is a quick install:
+### Helm Chart
 
-```bash
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
-```
-
-Tyk Operator supports Kubernetes v.19+. Ensure cert-manager is compatible with your Kubernetes version.
-the given Kubernetes versions.
-
-If running into cert-manager related errors, please ensure that the desired version of Kubernetes version works with the 
-chosen version of cert-manager by visiting the [supported releases page](https://cert-manager.io/docs/installation/supported-releases/) and [cert-manager documentation](https://cert-manager.io/docs/installation/kubernetes/).
-
-<details><summary>Please wait for cert-manager to become available.</summary>
-<p>
+You can install CRDs and Tyk Operator through Helm Chart.
 
 ```bash
-$ kubectl get all -n cert-manager
-NAME                                           READY   STATUS    RESTARTS   AGE
-pod/cert-manager-79c5f9946-d5hfv               1/1     Running   0          14s
-pod/cert-manager-cainjector-76c9d55b6f-qmpmv   1/1     Running   0          14s
-pod/cert-manager-webhook-6d4c5c44bb-q9n9k      0/1     Running   0          14s
-
-NAME                           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-service/cert-manager           ClusterIP   10.245.61.87    <none>        9402/TCP   15s
-service/cert-manager-webhook   ClusterIP   10.245.96.198   <none>        443/TCP    15s
-
-NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/cert-manager              1/1     1            1           14s
-deployment.apps/cert-manager-cainjector   1/1     1            1           14s
-deployment.apps/cert-manager-webhook      0/1     1            0           14s
-
-NAME                                                 DESIRED   CURRENT   READY   AGE
-replicaset.apps/cert-manager-79c5f9946               1         1         1       14s
-replicaset.apps/cert-manager-cainjector-76c9d55b6f   1         1         1       14s
-replicaset.apps/cert-manager-webhook-6d4c5c44bb      1         1         0       14s
+helm repo add tyk-helm https://helm.tyk.io/public/helm/charts/
+helm repo update
+helm install tyk-operator tyk-helm/tyk-operator -n tyk-operator-system
 ```
 
-</p>
-</details>
+### Tyk Operator Repository
 
-## Installing CRDs
+You can install CRDs and Operator through this GitHub repository.
 
 Installing CRDs is as simple as checking out this repo and running `kubectl apply`:
 
@@ -233,14 +252,12 @@ customresourcedefinition.apiextensions.k8s.io/securitypolicies.tyk.tyk.io config
 customresourcedefinition.apiextensions.k8s.io/webhooks.tyk.tyk.io configured
 ```
 
-## Installing Tyk Operator
-
 Run the following to deploy Tyk Operator.
 
 ```bash
-$ helm install foo ./helm -n tyk-operator-system
+$ helm install tyk-operator ./helm -n tyk-operator-system
 
-NAME: foo
+NAME: tyk-operator
 LAST DEPLOYED: Tue Nov 10 18:38:32 2020
 NAMESPACE: tyk-operator-system
 STATUS: deployed
@@ -252,15 +269,23 @@ You have deployed the tyk-operator! See https://github.com/TykTechnologies/tyk-o
 
 ## Upgrading Tyk Operator
 
+### <a id="upgrade-helm"></a> Helm Chart
+
+```
+helm upgrade -n tyk-operator-system tyk-operator tyk-helm/tyk-operator  --wait
+```
+
+### <a id="upgrade-repo"></a>Tyk Operator Repository
+
 Checkout the tag you want to upgrade to `git checkout tags/{.ReleaseTag}`
 
-for example if you are on `v0.6.0` and you wish to upgrade to `v0.6.1` 
+For example if you are on `v0.6.0` and you wish to upgrade to `v0.6.1` 
 
 ```bash
 git checkout tags/v0.6.1
 ```
 
-Upgrade crds
+Upgrade CRDs
 
 ```bash
 kubectl apply -f ./helm/crds
@@ -269,7 +294,7 @@ kubectl apply -f ./helm/crds
 Upgrade helm release
 
 ```bash
-helm upgrade foo ./helm -n tyk-operator-system
+helm upgrade tyk-operator ./helm -n tyk-operator-system
 ```
 
 ## Uninstall
@@ -278,5 +303,5 @@ Did we do something wrong? Create a [GitHub issue](https://github.com/TykTechnol
 can try to improve your experience, and that of others.
 
 ```bash
-helm delete foo -n tyk-operator-system
+helm delete tyk-operator -n tyk-operator-system
 ```
