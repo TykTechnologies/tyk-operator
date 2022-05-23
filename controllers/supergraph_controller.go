@@ -114,7 +114,7 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 
-		sdls = append(sdls, subGraph.Spec.Subgraph.SDL)
+		sdls = append(sdls, subGraph.Spec.SDL)
 	}
 
 	mergedSdl, err := graphQlMerge.MergeSDLs(sdls...)
