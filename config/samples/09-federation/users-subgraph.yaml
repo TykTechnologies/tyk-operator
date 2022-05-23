@@ -44,59 +44,74 @@ kind: SubGraph
 metadata:
   name: users-subgraph
 spec:
-  subgraph:
-    schema: |
-      directive @extends on OBJECT | INTERFACE
-      
-      directive @external on FIELD_DEFINITION
-      
-      directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
-      
-      directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
-      
-      directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
-      
-      scalar _Any
-      
-      union _Entity = User
-      
-      scalar _FieldSet
-      
-      type _Service {
-        sdl: String
-      }
-      
-      type Address {
-        street: String!
-        suite: String!
-        city: String!
-        zipcode: String!
-        geo: GeoLocation!
-      }
-      
-      type Company {
-        name: String!
-        catchPhrase: String!
-        bs: String!
-      }
-      
-      type Entity {
-        findUserByID(id: ID!): User!
-      }
-      
-      type GeoLocation {
-        lat: String!
-        lng: String!
-      }
-      
-      type Query {
+  schema: |
+    directive @extends on OBJECT | INTERFACE
+    
+    directive @external on FIELD_DEFINITION
+    
+    directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
+    
+    directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
+    
+    directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
+    
+    scalar _Any
+    
+    union _Entity = User
+    
+    scalar _FieldSet
+    
+    type _Service {
+      sdl: String
+    }
+    
+    type Address {
+      street: String!
+      suite: String!
+      city: String!
+      zipcode: String!
+      geo: GeoLocation!
+    }
+    
+    type Company {
+      name: String!
+      catchPhrase: String!
+      bs: String!
+    }
+    
+    type Entity {
+      findUserByID(id: ID!): User!
+    }
+    
+    type GeoLocation {
+      lat: String!
+      lng: String!
+    }
+    
+    type Query {
+      user(id: ID!): User!
+      users: [User!]!
+      _entities(representations: [_Any!]!): [_Entity]!
+      _service: _Service!
+    }
+    
+    type User {
+      id: ID!
+      name: String!
+      username: String!
+      email: String!
+      address: Address!
+      phone: String!
+      website: String!
+      company: Company!
+    }
+  sdl: |
+    extend type Query {
         user(id: ID!): User!
         users: [User!]!
-        _entities(representations: [_Any!]!): [_Entity]!
-        _service: _Service!
-      }
-      
-      type User {
+    }
+    
+    type User @key(fields: "id") {
         id: ID!
         name: String!
         username: String!
@@ -105,42 +120,26 @@ spec:
         phone: String!
         website: String!
         company: Company!
-      }
-    sdl: |
-      extend type Query {
-          user(id: ID!): User!
-          users: [User!]!
-      }
-      
-      type User @key(fields: "id") {
-          id: ID!
-          name: String!
-          username: String!
-          email: String!
-          address: Address!
-          phone: String!
-          website: String!
-          company: Company!
-      }
-      
-      type Address {
-          street: String!
-          suite: String!
-          city: String!
-          zipcode: String!
-          geo: GeoLocation!
-      }
-      
-      type GeoLocation {
-          lat: String!
-          lng: String!
-      }
-      
-      type Company {
-          name: String!
-          catchPhrase: String!
-          bs: String!
-      }
+    }
+    
+    type Address {
+        street: String!
+        suite: String!
+        city: String!
+        zipcode: String!
+        geo: GeoLocation!
+    }
+    
+    type GeoLocation {
+        lat: String!
+        lng: String!
+    }
+    
+    type Company {
+        name: String!
+        catchPhrase: String!
+        bs: String!
+    }
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition

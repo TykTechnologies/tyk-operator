@@ -1063,7 +1063,7 @@ type GraphQLConfig struct {
 	Proxy GraphQLProxyConfig `json:"proxy,omitempty"`
 
 	// Engine holds the configuration for engine v2 and upwards.
-	Engine GraphQLEngineConfig `json:"engine,omitempty"`
+	// Engine GraphQLEngineConfig `json:"engine,omitempty"`
 
 	// Subgraph holds the configuration for a GraphQL federation subgraph.
 	Subgraph GraphQLSubgraphConfig `json:"subgraph,omitempty"`

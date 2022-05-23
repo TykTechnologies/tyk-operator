@@ -176,7 +176,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 
-		if upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
+		if upstreamRequestStruct.Spec.GraphQL != nil && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
 			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
 				subgraph := &tykv1alpha1.SubGraph{}
 
@@ -188,8 +188,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					return err
 				}
 
-				upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Subgraph.Schema
-				upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.Subgraph.SDL
+				upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Schema
+				upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.SDL
 
 				subgraph.Status.APIID = upstreamRequestStruct.Spec.APIID
 				err = r.Status().Update(ctx, subgraph)
@@ -210,19 +210,19 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				}
 
 				for _, ref := range supergraph.Spec.SubgraphsRefs {
-					sg := &tykv1alpha1.SubGraph{}
+					subGraph := &tykv1alpha1.SubGraph{}
 					err := r.Client.Get(ctx, types.NamespacedName{
 						Namespace: req.Namespace,
 						Name:      ref,
-					}, sg)
+					}, subGraph)
 					if err != nil {
 						return err
 					}
 
-					_, name := decodeID(sg.Status.APIID)
+					_, name := decodeID(subGraph.Status.APIID)
 
-					apidef := &tykv1alpha1.ApiDefinition{}
-					err = r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: name}, apidef)
+					apiDef := &tykv1alpha1.ApiDefinition{}
+					err = r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: name}, apiDef)
 					if err != nil {
 						return err
 					}
@@ -230,14 +230,15 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
 						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
 						model.GraphQLSubgraphEntity{
-							APIID: sg.Status.APIID,
-							Name:  apidef.Spec.Name,
-							URL:   fmt.Sprintf("tyk://%s", apidef.Name),
-							SDL:   sg.Spec.Subgraph.SDL,
+							APIID: subGraph.Status.APIID,
+							Name:  apiDef.Spec.Name,
+							URL:   fmt.Sprintf("tyk://%s", apiDef.Name),
+							SDL:   subGraph.Spec.SDL,
 						})
 				}
 
 				upstreamRequestStruct.Spec.GraphQL.Schema = supergraph.Spec.Schema
+				upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = supergraph.Spec.MergedSDL
 			}
 		}
 
@@ -259,36 +260,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		upstreamRequestStruct.Spec.CollectLoopingTarget()
-
-		if upstreamRequestStruct.Spec.GraphQL != nil {
-			if upstreamRequestStruct.Spec.GraphQL.Enabled {
-				switch upstreamRequestStruct.Spec.GraphQL.ExecutionMode {
-				case "subgraph":
-					// Update subgraph's status field with the introspection results. However, introspection has not been
-					// implemented yet. Therefore, we are populating the subgraph's status with the SDL given manually.
-
-					// TODO: implement introspection and update following code piece. So, the operator gets the subgraph's
-					// SDL from the introspection result, which will be used in the supergraph's
-					// spec.graphql.supergraph.subgraphs field.
-					if upstreamRequestStruct.Status.SDL !=
-						upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL {
-						upstreamRequestStruct.Status.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
-					}
-				case "supergraph":
-					// Check if the supergraph's merged_sdl is valid or not. If the dashboard is in use, merged_sdl might
-					// be empty because it is the as spec.graphql.schema. However, if the Tyk CE is in use, merged_sdl
-					// should be provided.
-					if upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL == "" {
-						if env.Mode == "ce" {
-							// if Tyk CE gateway is used, merged_sdl should be provided through ApiDefinition YAML file.
-							return fmt.Errorf("expected to have merged_sdl declared for Tyk CE")
-						}
-
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Schema
-					}
-				}
-			}
-		}
 
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
@@ -704,12 +675,13 @@ func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(apiDef client.Objec
 		FieldSelector: fields.OneTermEqualSelector(GraphKey, apiDef.GetName()),
 		Namespace:     apiDef.GetNamespace(),
 	}
+
 	if err := r.List(context.TODO(), apiDefDeployments, listOps); err != nil {
 		return []reconcile.Request{}
 	}
 
 	requests := make([]reconcile.Request, len(apiDefDeployments.Items))
-	for i, item := range apiDefDeployments.Items {
+	for i, item := range apiDefDeployments.Items { //nolint
 		requests[i] = reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      item.GetName(),
@@ -729,10 +701,19 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		GraphKey,
 		func(rawObj client.Object) []string {
 			// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
-			apiDefDeployment := rawObj.(*tykv1alpha1.ApiDefinition) //nolint
+			apiDefDeployment, ok := rawObj.(*tykv1alpha1.ApiDefinition)
+			if !ok {
+				r.Log.Info("Not ApiDefinition")
+				return nil
+			}
+			if apiDefDeployment.Spec.GraphQL == nil {
+				return nil
+			}
+
 			if apiDefDeployment.Spec.GraphQL.GraphRef == "" {
 				return nil
 			}
+
 			return []string{apiDefDeployment.Spec.GraphQL.GraphRef}
 		})
 	if err != nil {
