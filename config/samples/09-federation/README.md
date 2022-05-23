@@ -51,11 +51,10 @@ kind: SubGraph
 metadata:
   name: users-subgraph
 spec:
-  subgraph:
-    schema: |
-      <Schema of your SubGraph>
-    sdl: |
-      <SDL of the SubGraph>
+  schema: |
+    <Schema of your SubGraph>
+  sdl: |
+    <SDL of the SubGraph>
 ```
 
 SubGraph CRD takes `schema` and `sdl` values for your subgraph. However, creating SubGraph CRD is inadequate to use it as 
