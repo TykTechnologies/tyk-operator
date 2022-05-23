@@ -1,0 +1,17 @@
+{
+  "file_list": [
+    "middleware.py"
+  ],
+  "custom_middleware": {
+    "driver": "python",
+    "pre": [
+      {
+        "name": "SetHeader",
+        "path": "/get",
+        "require_session": false,
+        "raw_body_only": false
+      }
+    ]
+  }
+}
+
