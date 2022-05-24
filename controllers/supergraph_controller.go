@@ -136,11 +136,11 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *SuperGraphReconciler) findObjectsForSupergraph(superGraph client.Object) []reconcile.Request {
+func (r *SuperGraphReconciler) findObjectsForSupergraph(subGraph client.Object) []reconcile.Request {
 	attachedSupergraphDeployments := &tykv1alpha1.SuperGraphList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(SubgraphField, superGraph.GetName()),
-		Namespace:     superGraph.GetNamespace(),
+		FieldSelector: fields.OneTermEqualSelector(SubgraphField, subGraph.GetName()),
+		Namespace:     subGraph.GetNamespace(),
 	}
 
 	if err := r.List(context.TODO(), attachedSupergraphDeployments, listOps); err != nil {

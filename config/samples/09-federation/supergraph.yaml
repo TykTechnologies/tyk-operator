@@ -74,9 +74,3 @@ spec:
     target_url: ""
     strip_listen_path: true
     listen_path: /social-media-apis-federated/
-  version_data:
-    default_version: Default
-    not_versioned: true
-    versions:
-      Default:
-        name: Default

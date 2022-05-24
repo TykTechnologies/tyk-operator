@@ -669,11 +669,11 @@ func (r *ApiDefinitionReconciler) updateStatus(
 	return r.Status().Update(ctx, &api)
 }
 
-func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(apiDef client.Object) []reconcile.Request {
+func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(graph client.Object) []reconcile.Request {
 	apiDefDeployments := &tykv1alpha1.ApiDefinitionList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(GraphKey, apiDef.GetName()),
-		Namespace:     apiDef.GetNamespace(),
+		FieldSelector: fields.OneTermEqualSelector(GraphKey, graph.GetName()),
+		Namespace:     graph.GetNamespace(),
 	}
 
 	if err := r.List(context.TODO(), apiDefDeployments, listOps); err != nil {
