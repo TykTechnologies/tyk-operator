@@ -279,6 +279,20 @@ Note: The extension should take effect immediately. In case it doesn't, simply r
 
 </details>
 
+### GoLand
+
+<details><summary>Steps</summary>
+
+1. Open `Plugins` settings following official GoLand documentation <https://www.jetbrains.com/help/go/managing-plugins.html>
+2. Install `Kubernetes` plugin (<https://plugins.jetbrains.com/plugin/10485-kubernetes>)
+3. Open GoLand `Preferences` as described [here](https://www.jetbrains.com/help/go/settings-preferences-dialog.html),
+4. Go to `Languages & Frameworks > Kubernetes`
+5. Click `Add URLs` and add <https://raw.githubusercontent.com/TykTechnologies/tyk-operator/master/helm/crds/crds.yaml>
+![goland-support](./docs/img/goland-support.gif)
+6. Apply and save changes.
+
+</details>
+
 ## Community
 
 Tyk Operator is under active development.
