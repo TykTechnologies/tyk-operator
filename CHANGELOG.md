@@ -3,6 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.9.0...HEAD)
 
+**Added**
+- PoC support of GraphQL Federation on Tyk Operator. It is still WIP.
+
 **Documentation**
 - Verified support of Host based routing
 

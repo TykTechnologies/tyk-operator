@@ -1,0 +1,166 @@
+# Create Service & Deployment of Users API
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users
+  labels:
+    app: users
+spec:
+  ports:
+    - name: http
+      port: 4001
+      targetPort: 4001
+  selector:
+    app: users
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: users
+        version: v1
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service
+          imagePullPolicy: Always
+          name: users
+          command: ["./users/server"]
+          env:
+            - name: PORT
+              value: "4001"
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SubGraph
+metadata:
+  name: users-subgraph
+spec:
+  schema: |
+    directive @extends on OBJECT | INTERFACE
+    
+    directive @external on FIELD_DEFINITION
+    
+    directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
+    
+    directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
+    
+    directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
+    
+    scalar _Any
+    
+    union _Entity = User
+    
+    scalar _FieldSet
+    
+    type _Service {
+      sdl: String
+    }
+    
+    type Address {
+      street: String!
+      suite: String!
+      city: String!
+      zipcode: String!
+      geo: GeoLocation!
+    }
+    
+    type Company {
+      name: String!
+      catchPhrase: String!
+      bs: String!
+    }
+    
+    type Entity {
+      findUserByID(id: ID!): User!
+    }
+    
+    type GeoLocation {
+      lat: String!
+      lng: String!
+    }
+    
+    type Query {
+      user(id: ID!): User!
+      users: [User!]!
+      _entities(representations: [_Any!]!): [_Entity]!
+      _service: _Service!
+    }
+    
+    type User {
+      id: ID!
+      name: String!
+      username: String!
+      email: String!
+      address: Address!
+      phone: String!
+      website: String!
+      company: Company!
+    }
+  sdl: |
+    extend type Query {
+        user(id: ID!): User!
+        users: [User!]!
+    }
+    
+    type User @key(fields: "id") {
+        id: ID!
+        name: String!
+        username: String!
+        email: String!
+        address: Address!
+        phone: String!
+        website: String!
+        company: Company!
+    }
+    
+    type Address {
+        street: String!
+        suite: String!
+        city: String!
+        zipcode: String!
+        geo: GeoLocation!
+    }
+    
+    type GeoLocation {
+        lat: String!
+        lng: String!
+    }
+    
+    type Company {
+        name: String!
+        catchPhrase: String!
+        bs: String!
+    }
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: federation-users-subgraph
+spec:
+  name: Federation - Users Subgraph
+  protocol: "http"
+  do_not_track: false
+  use_keyless: true
+  active: true
+  internal: true
+  graphql:
+    enabled: true
+    execution_mode: subgraph
+    graph_ref: users-subgraph
+    version: "2"
+    playground:
+      enabled: false
+      path: ""
+  proxy:
+    target_url: http://users.default.svc:4001/query
+    listen_path: /users-subgraph/
+    disable_strip_slash: true

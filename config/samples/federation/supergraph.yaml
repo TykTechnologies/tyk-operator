@@ -1,0 +1,76 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SuperGraph
+metadata:
+  name: social-media-supergraph
+spec:
+  subgraphs_refs:
+    - users-subgraph
+    - posts-subgraph
+  schema: |-
+    type Query {
+      user(id: ID!): User!
+      users: [User!]!
+      post(id: ID!): Post!
+      posts: [Post!]!
+    }
+    
+    type User {
+      id: ID!
+      name: String!
+      username: String!
+      email: String!
+      address: Address!
+      phone: String!
+      website: String!
+      company: Company!
+      posts: [Post!]!
+    }
+    
+    type Address {
+      street: String!
+      suite: String!
+      city: String!
+      zipcode: String!
+      geo: GeoLocation!
+    }
+    
+    type GeoLocation {
+      lat: String!
+      lng: String!
+    }
+    
+    type Company {
+      name: String!
+      catchPhrase: String!
+      bs: String!
+    }
+    
+    type Post {
+      id: ID!
+      userId: ID!
+      title: String!
+      body: String!
+    }
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: federation-supergraph
+spec:
+  name: Federated - Social Media APIS
+  protocol: "http"
+  do_not_track: false
+  use_keyless: true
+  active: true
+  graphql:
+    enabled: true
+    execution_mode: supergraph
+    graph_ref: social-media-supergraph
+    version: "2"
+    playground:
+      enabled: true
+      path: /playground
+  proxy:
+    target_url: ""
+    strip_listen_path: true
+    listen_path: /social-media-apis-federated/

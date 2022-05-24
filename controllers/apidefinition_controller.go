@@ -22,7 +22,18 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
@@ -43,7 +54,10 @@ import (
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const queueAfter = time.Second * 5
+const (
+	queueAfter = time.Second * 5
+	GraphKey   = "graph_ref"
+)
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
 type ApiDefinitionReconciler struct {
@@ -55,7 +69,10 @@ type ApiDefinitionReconciler struct {
 }
 
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions,verbs=get;list;watch;create;update;patch;delete;deletecollection
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=subgraphs,verbs=get;list;watch;create;update;patch;delete;deletecollection
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=supergraphs,verbs=get;list;watch;create;update;patch;delete;deletecollection
 // +kubebuilder:rbac:groups=tyk.tyk.io,resources=apidefinitions/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=subgraphs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;update;create
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
@@ -159,6 +176,73 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 
+		// Check GraphQL Federation
+		if upstreamRequestStruct.Spec.GraphQL != nil && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
+			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
+				subgraph := &tykv1alpha1.SubGraph{}
+
+				err := r.Client.Get(ctx, types.NamespacedName{
+					Namespace: req.Namespace,
+					Name:      desired.Spec.GraphQL.GraphRef,
+				}, subgraph)
+				if err != nil {
+					return err
+				}
+
+				upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Schema
+				upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.SDL
+
+				subgraph.Status.APIID = upstreamRequestStruct.Spec.APIID
+				err = r.Status().Update(ctx, subgraph)
+				if err != nil {
+					log.Error(err, "Could not update Status APIID of SubGraph")
+					return err
+				}
+			}
+
+			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SuperGraphExecutionMode {
+				supergraph := &tykv1alpha1.SuperGraph{}
+				err := r.Client.Get(ctx, types.NamespacedName{
+					Namespace: req.Namespace,
+					Name:      upstreamRequestStruct.Spec.GraphQL.GraphRef,
+				}, supergraph)
+				if err != nil {
+					return err
+				}
+
+				for _, ref := range supergraph.Spec.SubgraphsRefs {
+					subGraph := &tykv1alpha1.SubGraph{}
+					err := r.Client.Get(ctx, types.NamespacedName{
+						Namespace: req.Namespace,
+						Name:      ref,
+					}, subGraph)
+					if err != nil {
+						return err
+					}
+
+					_, name := decodeID(subGraph.Status.APIID)
+
+					apiDef := &tykv1alpha1.ApiDefinition{}
+					err = r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: name}, apiDef)
+					if err != nil {
+						return err
+					}
+
+					upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
+						model.GraphQLSubgraphEntity{
+							APIID: subGraph.Status.APIID,
+							Name:  apiDef.Spec.Name,
+							URL:   fmt.Sprintf("tyk://%s", apiDef.Name),
+							SDL:   subGraph.Spec.SDL,
+						})
+				}
+
+				upstreamRequestStruct.Spec.GraphQL.Schema = supergraph.Spec.Schema
+				upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = supergraph.Spec.MergedSDL
+			}
+		}
+
 		// To prevent API object validation failures, set additional properties to nil.
 		upstreamRequestStruct.Spec.CertificateSecretNames = nil
 		upstreamRequestStruct.Spec.PinnedPublicKeysRefs = nil
@@ -177,6 +261,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		upstreamRequestStruct.Spec.CollectLoopingTarget()
+
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
 			return r.create(ctx, upstreamRequestStruct, log)
@@ -192,6 +277,27 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
+}
+
+func decodeID(encodedID string) (namespace, name string) {
+	// TODO: refactor this code and consider returning error.
+	if encodedID == "" {
+		return
+	}
+
+	b, err := base64.RawURLEncoding.DecodeString(encodedID)
+	if err != nil {
+		return
+	}
+
+	encoded := string(b)
+	namespacedName := strings.Split(encoded, "/")
+
+	if len(namespacedName) < 1 {
+		return
+	}
+
+	return namespacedName[0], namespacedName[1]
 }
 
 func uploadCert(ctx context.Context, orgID string, pemKeyBytes, pemCrtBytes []byte) (tykCertID string, err error) {
@@ -313,7 +419,8 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 			}
 
 			if len(refs) > 0 {
-				return ctrl.Result{RequeueAfter: time.Second * 5}, fmt.Errorf("Can't delete %s %v depends on it", a.Name, refs)
+				return ctrl.Result{RequeueAfter: time.Second * 5},
+					fmt.Errorf("Can't delete %s %v depends on it", a.Name, refs)
 			}
 
 			util.RemoveFinalizer(a, keys.ApiDefTemplateFinalizerName)
@@ -563,10 +670,83 @@ func (r *ApiDefinitionReconciler) updateStatus(
 	return r.Status().Update(ctx, &api)
 }
 
+func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(graph client.Object) []reconcile.Request {
+	apiDefDeployments := &tykv1alpha1.ApiDefinitionList{}
+	listOps := &client.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector(GraphKey, graph.GetName()),
+		Namespace:     graph.GetNamespace(),
+	}
+
+	if err := r.List(context.TODO(), apiDefDeployments, listOps); err != nil {
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, len(apiDefDeployments.Items))
+	for i, item := range apiDefDeployments.Items { //nolint
+		requests[i] = reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      item.GetName(),
+				Namespace: item.GetNamespace(),
+			},
+		}
+	}
+
+	return requests
+}
+
 // SetupWithManager initializes the api definition controller.
 func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	err := mgr.GetFieldIndexer().IndexField(
+		context.Background(),
+		&tykv1alpha1.ApiDefinition{},
+		GraphKey,
+		func(rawObj client.Object) []string {
+			// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
+			apiDefDeployment, ok := rawObj.(*tykv1alpha1.ApiDefinition)
+			if !ok {
+				r.Log.Info("Not ApiDefinition")
+				return nil
+			}
+			if apiDefDeployment.Spec.GraphQL == nil {
+				return nil
+			}
+
+			if apiDefDeployment.Spec.GraphQL.GraphRef == "" {
+				return nil
+			}
+
+			return []string{apiDefDeployment.Spec.GraphQL.GraphRef}
+		})
+	if err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
 		Owns(&v1.Secret{}).
+		Watches(
+			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
+			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
+			builder.WithPredicates(r.ignoreGraphCreationEvents()),
+		).
+		Watches(
+			&source.Kind{Type: &tykv1alpha1.SuperGraph{}},
+			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
+			builder.WithPredicates(r.ignoreGraphCreationEvents()),
+		).
 		Complete(r)
+}
+
+func (r *ApiDefinitionReconciler) ignoreGraphCreationEvents() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return true
+		},
+	}
 }
