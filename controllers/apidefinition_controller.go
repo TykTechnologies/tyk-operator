@@ -210,20 +210,22 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					return err
 				}
 
-				for _, ref := range supergraph.Spec.SubgraphsRefs {
+				for _, ref := range supergraph.Spec.SubgraphRefs {
+					ns := namespaceValue(ref.Namespace, supergraph.Namespace)
+
 					subGraph := &tykv1alpha1.SubGraph{}
 					err := r.Client.Get(ctx, types.NamespacedName{
-						Namespace: req.Namespace,
-						Name:      ref,
+						Name:      ref.Name,
+						Namespace: ns,
 					}, subGraph)
 					if err != nil {
 						return err
 					}
 
-					_, name := decodeID(subGraph.Status.APIID)
+					ns, name := decodeID(subGraph.Status.APIID)
 
 					apiDef := &tykv1alpha1.ApiDefinition{}
-					err = r.Client.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: name}, apiDef)
+					err = r.Client.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, apiDef)
 					if err != nil {
 						return err
 					}

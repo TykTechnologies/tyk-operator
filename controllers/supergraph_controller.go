@@ -20,19 +20,18 @@ import (
 	"context"
 	"errors"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	"sigs.k8s.io/controller-runtime/pkg/builder"
-
-	"k8s.io/apimachinery/pkg/fields"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -45,7 +44,7 @@ import (
 	graphQlMerge "github.com/jensneuse/graphql-go-tools/pkg/federation/sdlmerge"
 )
 
-const SubgraphField = "subgraphs_refs"
+const SubgraphField = ".subgraphs_refs.name"
 
 var ErrSuperGraphReference = errors.New("supergraph is referenced in apiDefinition")
 
@@ -105,11 +104,15 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	var sdls []string
 
-	for _, subGraphRef := range desired.Spec.SubgraphsRefs {
+	for _, subGraphRef := range desired.Spec.SubgraphRefs {
+		// In the subgraph_refs field of the SuperGraph, the namespace for referenced subgraph is optional. If the
+		// namespace is not specified, use req.Namespace.
+		ns := namespaceValue(subGraphRef.Namespace, req.Namespace)
+
 		subGraph := &tykv1alpha1.SubGraph{}
 		if err := r.Client.Get(ctx, types.NamespacedName{
-			Namespace: req.Namespace,
-			Name:      subGraphRef,
+			Name:      subGraphRef.Name,
+			Namespace: ns,
 		}, subGraph); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -136,11 +139,19 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
+// namespaceValue checks given namespace. If namespace is empty, returns fallback.
+func namespaceValue(ns, fallback string) string {
+	if ns == "" {
+		return fallback
+	}
+
+	return ns
+}
+
 func (r *SuperGraphReconciler) findObjectsForSupergraph(subGraph client.Object) []reconcile.Request {
 	attachedSupergraphDeployments := &tykv1alpha1.SuperGraphList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(SubgraphField, subGraph.GetName()),
-		Namespace:     subGraph.GetNamespace(),
 	}
 
 	if err := r.List(context.TODO(), attachedSupergraphDeployments, listOps); err != nil {
@@ -168,11 +179,16 @@ func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		SubgraphField,
 		func(object client.Object) []string {
 			sg := object.(*tykv1alpha1.SuperGraph) //nolint
-			if len(sg.Spec.SubgraphsRefs) == 0 {
+			if len(sg.Spec.SubgraphRefs) == 0 {
 				return nil
 			}
 
-			return sg.Spec.SubgraphsRefs
+			keyIndexes := []string{}
+			for _, ref := range sg.Spec.SubgraphRefs {
+				keyIndexes = append(keyIndexes, ref.Name)
+			}
+
+			return keyIndexes
 		})
 	if err != nil {
 		return err
