@@ -105,7 +105,7 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	var sdls []string
 
 	for _, subGraphRef := range desired.Spec.SubgraphRefs {
-		// In the subgraph_refs field of the SuperGraph, the namespace for referenced subgraphs is optional. If the
+		// In the subgraph_refs field of the SuperGraph, the namespace for referenced subgraph is optional. If the
 		// namespace is not specified, use req.Namespace.
 		ns := namespaceValue(subGraphRef.Namespace, req.Namespace)
 
@@ -117,7 +117,7 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 
-		sdls = append(sdls, subGraph.Spec.Subgraph.SDL)
+		sdls = append(sdls, subGraph.Spec.SDL)
 	}
 
 	mergedSdl, err := graphQlMerge.MergeSDLs(sdls...)
@@ -148,7 +148,7 @@ func namespaceValue(ns, fallback string) string {
 	return ns
 }
 
-func (r *SuperGraphReconciler) findObjectsForSubGraph(subGraph client.Object) []reconcile.Request {
+func (r *SuperGraphReconciler) findObjectsForSupergraph(subGraph client.Object) []reconcile.Request {
 	attachedSupergraphDeployments := &tykv1alpha1.SuperGraphList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(SubgraphField, subGraph.GetName()),
@@ -198,7 +198,7 @@ func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&tykv1alpha1.SuperGraph{}).
 		Watches(
 			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
-			handler.EnqueueRequestsFromMapFunc(r.findObjectsForSubGraph),
+			handler.EnqueueRequestsFromMapFunc(r.findObjectsForSupergraph),
 			builder.WithPredicates(r.ignoreSubGraphCreationEvents()),
 		).
 		Complete(r)

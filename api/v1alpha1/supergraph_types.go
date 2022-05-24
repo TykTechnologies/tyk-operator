@@ -23,9 +23,7 @@ import (
 
 // SuperGraphSpec defines the desired state of SuperGraph
 type SuperGraphSpec struct {
-	SubgraphRefs []model.Target `json:"subgraph_refs"`
-	MergedSDL    string         `json:"merged_sdl,omitempty"`
-	Schema       string         `json:"schema,omitempty"`
+	model.SuperGraphSpec `json:",inline"`
 }
 
 // SuperGraphStatus defines the observed state of SuperGraph

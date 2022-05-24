@@ -6,7 +6,7 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
   @grpc
   Scenario: Pre middleware hook
     Given there is a ./custom_resources/httpbin.keyless.grpc-pre.apidefinition.yaml resource
-    When i request /httpbin/headers endpoint
+    When i request /httpbin-grpc-pre/headers endpoint
     Then there should be a 200 http response code
       And the response should match JSON:
         """
@@ -23,7 +23,7 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
   @grpc
   Scenario: Post middleware hook
     Given there is a ./custom_resources/httpbin.keyless.grpc-post.apidefinition.yaml resource
-    When i request /httpbin/headers endpoint
+    When i request /httpbin-grpc-post/headers endpoint
     Then there should be a 200 http response code
     And the response should match JSON:
       """
@@ -40,13 +40,13 @@ Feature: Support gRPC plugins in ApiDefinition custom resource
   @grpc
   Scenario: Auth middleware hook auth missing
     Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
-    When i request /httpbin/headers endpoint
+    When i request /httpbin-grpc-auth/headers endpoint
     Then there should be a 400 http response code
 
   @grpc
   Scenario: Auth middleware hook authentic
     Given there is a ./custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml resource
-    When i request /httpbin/headers endpoint with header Authorization: foobarbaz
+    When i request /httpbin-grpc-auth/headers endpoint with header Authorization: foobarbaz
     Then there should be a 200 http response code
 
   @grpc @undone

@@ -17,23 +17,18 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type SubgraphConfig struct {
-	SDL    string `json:"sdl"`
-	Schema string `json:"schema"`
-}
-
 // SubGraphSpec defines the desired state of SubGraph
 type SubGraphSpec struct {
-	// Subgraph holds the configuration for a GraphQL federation subgraph.
-	Subgraph SubgraphConfig `json:"subgraph,omitempty"`
+	model.SubGraphSpec `json:",inline"`
 }
 
 // SubGraphStatus defines the observed state of SubGraph
 type SubGraphStatus struct {
-	APIID string `json:"APIID"`
+	model.SubGraphStatus `json:",inline"`
 }
 
 //+kubebuilder:object:root=true

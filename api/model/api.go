@@ -1033,11 +1033,10 @@ type GraphQLSubgraphEntity struct {
 
 type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
-	UpdatedAt            *metav1.Time            `json:"updated_at,omitempty"`
-	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
-	MergedSDL            string                  `json:"merged_sdl,omitempty"`
-	GlobalHeaders        map[string]string       `json:"global_headers,omitempty"`
-	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
+	UpdatedAt     *metav1.Time            `json:"updated_at,omitempty"`
+	Subgraphs     []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
+	MergedSDL     string                  `json:"merged_sdl,omitempty"`
+	GlobalHeaders map[string]string       `json:"global_headers,omitempty"`
 }
 
 // +kubebuilder:validation:Enum="1";"2"
@@ -1063,7 +1062,7 @@ type GraphQLConfig struct {
 	Proxy GraphQLProxyConfig `json:"proxy,omitempty"`
 
 	// Engine holds the configuration for engine v2 and upwards.
-	Engine GraphQLEngineConfig `json:"engine,omitempty"`
+	// Engine GraphQLEngineConfig `json:"engine,omitempty"`
 
 	// Subgraph holds the configuration for a GraphQL federation subgraph.
 	Subgraph GraphQLSubgraphConfig `json:"subgraph,omitempty"`

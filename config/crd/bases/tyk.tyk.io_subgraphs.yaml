@@ -36,26 +36,21 @@ spec:
           spec:
             description: SubGraphSpec defines the desired state of SubGraph
             properties:
-              subgraph:
-                description: Subgraph holds the configuration for a GraphQL federation
-                  subgraph.
-                properties:
-                  schema:
-                    type: string
-                  sdl:
-                    type: string
-                required:
-                - schema
-                - sdl
-                type: object
+              schema:
+                type: string
+              sdl:
+                type: string
+            required:
+            - schema
+            - sdl
             type: object
           status:
             description: SubGraphStatus defines the observed state of SubGraph
             properties:
-              APIID:
+              api_id:
                 type: string
             required:
-            - APIID
+            - api_id
             type: object
         type: object
     served: true
