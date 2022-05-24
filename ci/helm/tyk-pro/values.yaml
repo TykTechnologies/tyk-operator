@@ -88,7 +88,7 @@ dash:
     cname: tyk-portal.local:3000/
   image:
     repository: tykio/tyk-dashboard
-    tag: v3.2.1
+    tag: v4.0.0
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -126,7 +126,7 @@ gateway:
   containerPort: 8080
   image:
     repository: tykio/tyk-gateway
-    tag: v3.1.2
+    tag: v4.0.0
     pullPolicy: Always
   service:
     type: ClusterIP

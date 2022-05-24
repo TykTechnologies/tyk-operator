@@ -134,6 +134,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	spg := ctrl.Log.WithName("controllers").WithName("SuperGraph")
+
+	if err = (&controllers.SuperGraphReconciler{
+		Client: mgr.GetClient(),
+		Log:    spg,
+		Scheme: mgr.GetScheme(),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SuperGraph")
+		os.Exit(1)
+	}
+
 	sp := ctrl.Log.WithName("controllers").WithName("SecurityPolicy")
 
 	if err = (&controllers.SecurityPolicyReconciler{
@@ -194,6 +206,16 @@ func main() {
 		Log:    ctrl.Log.WithName("controllers").WithName("OperatorContext"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OperatorContext")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.SubGraphReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Log:    ctrl.Log.WithName("controllers").WithName("SubGraph"),
+		Env:    env,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SubGraph")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
