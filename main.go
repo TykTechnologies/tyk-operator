@@ -142,7 +142,7 @@ func main() {
 		Scheme: mgr.GetScheme(),
 		Env:    env,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "SecretCert")
+		setupLog.Error(err, "unable to create controller", "controller", "SuperGraph")
 		os.Exit(1)
 	}
 
