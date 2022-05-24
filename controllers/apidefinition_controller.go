@@ -211,7 +211,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				}
 
 				for _, ref := range supergraph.Spec.SubgraphRefs {
-					ns := namespaceValue(ref.Namespace, supergraph.Namespace)
+					ns := ref.Namespace
+					if ns == "" {
+						ns = supergraph.Namespace
+					}
 
 					subGraph := &tykv1alpha1.SubGraph{}
 					err := r.Client.Get(ctx, types.NamespacedName{

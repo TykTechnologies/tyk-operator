@@ -107,7 +107,10 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	for _, subGraphRef := range desired.Spec.SubgraphRefs {
 		// In the subgraph_refs field of the SuperGraph, the namespace for referenced subgraph is optional. If the
 		// namespace is not specified, use req.Namespace.
-		ns := namespaceValue(subGraphRef.Namespace, req.Namespace)
+		ns := subGraphRef.Namespace
+		if ns == "" {
+			ns = req.Namespace
+		}
 
 		subGraph := &tykv1alpha1.SubGraph{}
 		if err := r.Client.Get(ctx, types.NamespacedName{
@@ -137,15 +140,6 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	return ctrl.Result{}, nil
-}
-
-// namespaceValue checks given namespace. If namespace is empty, returns fallback.
-func namespaceValue(ns, fallback string) string {
-	if ns == "" {
-		return fallback
-	}
-
-	return ns
 }
 
 func (r *SuperGraphReconciler) findObjectsForSupergraph(subGraph client.Object) []reconcile.Request {
