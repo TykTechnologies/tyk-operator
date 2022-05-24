@@ -516,8 +516,6 @@ spec:
                     description: Supergraph holds the configuration for a GraphQL
                       federation supergraph.
                     properties:
-                      disable_query_batching:
-                        type: boolean
                       global_headers:
                         additionalProperties:
                           type: string

@@ -20,14 +20,14 @@ services, while still exposing them all as a single graph for the consumers.
 - Create subgraphs
 
 ```bash
-kubectl apply -f config/samples/09-federation/users-subgraph.yaml
-kubectl apply -f config/samples/09-federation/posts-subgraph.yaml
+kubectl apply -f config/samples/federation/users-subgraph.yaml
+kubectl apply -f config/samples/federation/posts-subgraph.yaml
 ```
 
 - Create supergraph
 
 ```bash
-kubectl apply -f config/samples/09-federation/supergraph.yaml 
+kubectl apply -f config/samples/federation/supergraph.yaml 
 ```
 
 ## Updating SubGraph
