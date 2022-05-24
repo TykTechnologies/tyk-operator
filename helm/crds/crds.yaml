@@ -3053,10 +3053,10 @@ spec:
           status:
             description: SubGraphStatus defines the observed state of SubGraph
             properties:
-              APIID:
+              api_id:
                 type: string
             required:
-            - APIID
+            - api_id
             type: object
         type: object
     served: true

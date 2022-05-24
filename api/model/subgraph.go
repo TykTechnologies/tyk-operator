@@ -7,5 +7,5 @@ type SubGraphSpec struct {
 }
 
 type SubGraphStatus struct {
-	APIID string `json:"APIID"`
+	APIID string `json:"api_id"`
 }
