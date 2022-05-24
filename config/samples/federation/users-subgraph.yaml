@@ -1,9 +1,15 @@
-# Create Service & Deployment of Users API
+# Create Namespace & Service & Deployment for Users API
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: users-ns
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: users
+  namespace: users-ns
   labels:
     app: users
 spec:
@@ -18,6 +24,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: users
+  namespace: users-ns
 spec:
   replicas: 1
   selector:
@@ -43,6 +50,7 @@ apiVersion: tyk.tyk.io/v1alpha1
 kind: SubGraph
 metadata:
   name: users-subgraph
+  namespace: users-ns
 spec:
   schema: |
     directive @extends on OBJECT | INTERFACE
@@ -145,6 +153,7 @@ apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: federation-users-subgraph
+  namespace: users-ns
 spec:
   name: Federation - Users Subgraph
   protocol: "http"
@@ -161,6 +170,6 @@ spec:
       enabled: false
       path: ""
   proxy:
-    target_url: http://users.default.svc:4001/query
+    target_url: http://users.users-ns.svc:4001/query
     listen_path: /users-subgraph/
     disable_strip_slash: true
