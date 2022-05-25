@@ -148,8 +148,9 @@ An ApiDefinition must adhere to the following rules in order to represent an Api
 
 When you make an update on one of the subgraphs defined under your SuperGraph CRD's `subgraph_refs` field, Tyk Operator
 will update
-- Subgraph CRD,
+- Subgraph CR,
 - Subgraph's ApiDefinition,
+- SuperGraph CR,
 - SuperGraph's ApiDefinition.
 
 Therefore, once you make an update on SubGraph CRD, you do not need to update your supergraph. It will be updated by Tyk Operator.
