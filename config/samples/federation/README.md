@@ -186,7 +186,7 @@ kubectl delete subgraphs.tyk.tyk.io <SUBGRAPH_NAME>
 
 If you have a subgraph which is referenced in any ApiDefinition, Tyk Operator will not delete the SubGraph.
 
-In order to delete this subgraph, corresponding ApiDefinition CRD must be updated, such that it has no reference to the
+In order to delete this subgraph, corresponding ApiDefinition CR must be updated, such that it has no reference to the
 subgraph in `graph_ref` field.
 
 ### SubGraph referenced in SuperGraph
