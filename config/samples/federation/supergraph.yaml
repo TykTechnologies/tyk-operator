@@ -3,9 +3,10 @@ kind: SuperGraph
 metadata:
   name: social-media-supergraph
 spec:
-  subgraphs_refs:
-    - users-subgraph
-    - posts-subgraph
+  subgraph_refs:
+    - name: users-subgraph
+      namespace: users-ns
+    - name: posts-subgraph # Since namespace is not specified for posts-subgraph, Operator uses the namespace of this SuperGraph CRD which is default for our example.
   schema: |-
     type Query {
       user(id: ID!): User!
