@@ -194,7 +194,7 @@ subgraph in `graph_ref` field.
 Although the subgraph is not referenced in any ApiDefinition, if it is referenced in the SuperGraph, Tyk Operator will
 not delete the subgraph again.
 
-In order to delete this subgraph, SuperGraph CRD should not have reference to corresponding subgraph in the `subgraph_ref`.
+In order to delete this subgraph, SuperGraph CR should not have reference to corresponding subgraph in the `subgraph_ref`.
 
 ## Deleting SuperGraph
 
