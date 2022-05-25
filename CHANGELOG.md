@@ -8,6 +8,7 @@
 
 **Documentation**
 - Verified support of Host based routing
+- Added GoLand IDE integration
 
 ## [v0.9.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.9.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...v0.9.0)
