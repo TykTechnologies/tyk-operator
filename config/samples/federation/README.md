@@ -158,7 +158,7 @@ With this approach, multiple teams can work on SubGraph CRDs and Tyk Operator wi
 
 ## Updating SubGraph
 
-Updating SubGraph is an easy operation with new CRDs. Once you update your SubGraph CRD, Tyk Operator will update your
+Updating SubGraph is an easy operation with new CRDs. Once you update your SubGraph CR, Tyk Operator will update your
 SubGraph and Supergraph ApiDefinition that has a reference to the SubGraph you are updating.
 
 As an end-user, once you've updated the SubGraph, you do not need to update the SuperGraph ApiDefinition fields. The operator
