@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// SuperGraphSpec defines the desired state of SuperGraph
 type SuperGraphSpec struct {
 	model.SuperGraphSpec `json:",inline"`
 }

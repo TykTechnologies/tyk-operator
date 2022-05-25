@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -37,8 +38,8 @@ import (
 )
 
 var (
-	ErrSubgrapReferenceExistsInGraph  = errors.New("subgraph is referenced in supergraph")
-	ErrSubgrapReferenceExistsInApiDef = errors.New("subgraph is referenced in apiDefinition")
+	ErrSubgrapReferenceExistsInGraph  = errors.New("subgraph is referenced in SuperGraph")
+	ErrSubgrapReferenceExistsInApiDef = errors.New("subgraph is referenced in ApiDefinition")
 )
 
 // SubGraphReconciler reconciles a SubGraph object
@@ -72,12 +73,10 @@ func (r *SubGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// subgraph is marked for deletion
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		// Check if subgraph is referenced in any supergraph.
-		// TODO: support subgraphs in different namespaces.
+		// Check if subgraph is referenced in any SuperGraph located in any namespace.
 		superGraphList := &tykv1alpha1.SuperGraphList{}
 		listOps := &client.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector(SubgraphField, desired.GetName()),
-			Namespace:     desired.GetNamespace(),
 		}
 
 		if err := r.List(ctx, superGraphList, listOps); err != nil {
@@ -85,10 +84,14 @@ func (r *SubGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 
 		if len(superGraphList.Items) != 0 {
-			return ctrl.Result{}, ErrSubgrapReferenceExistsInGraph
+			return ctrl.Result{}, fmt.Errorf("%s %s/%s",
+				ErrSubgrapReferenceExistsInGraph.Error(),
+				superGraphList.Items[0].Namespace,
+				superGraphList.Items[0].Name,
+			)
 		}
 
-		// Check if subgraph is referenced in any apidefinition.
+		// Check if subgraph is referenced in any ApiDefinition located in the current namespace.
 		apiDefinitionList := &tykv1alpha1.ApiDefinitionList{}
 		listOps = &client.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector(GraphKey, desired.GetName()),
@@ -100,7 +103,11 @@ func (r *SubGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 
 		if len(apiDefinitionList.Items) != 0 {
-			return ctrl.Result{}, ErrSubgrapReferenceExistsInApiDef
+			return ctrl.Result{}, fmt.Errorf("%s %s/%s",
+				ErrSubgrapReferenceExistsInApiDef.Error(),
+				apiDefinitionList.Items[0].Namespace,
+				apiDefinitionList.Items[0].Name,
+			)
 		}
 
 		util.RemoveFinalizer(desired, keys.SubGraphFinalizerName)
