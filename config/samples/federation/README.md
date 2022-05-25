@@ -108,7 +108,7 @@ spec:
 ```
 
 
-SuperGraph CRD takes subgraph_refs and schema values for your supergraph. `subgraph_refs` is an array of SubGraph CRD
+SuperGraph CRD takes `subgraph_refs` and `schema` values for your supergraph. `subgraph_refs` is an array of SubGraph CRD
 references which expects the name and namespace of the referenced subgraph. If `namespace` is not specified, Operator will
 check SubGraphs in the current namespace.
 
