@@ -3,6 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.9.0...HEAD)
 
+**Helm chart**
+- Changed default version of operator tag from latest to latest stable release
+
 **Added**
 - PoC support of GraphQL Federation on Tyk Operator. It is still WIP.
 
