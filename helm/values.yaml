@@ -1,5 +1,4 @@
-replicaCount:
-  1
+replicaCount:  1
   # loads environment variables to the operator.
 envFrom:
   - secretRef:
@@ -13,7 +12,7 @@ envVars:
 image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "v0.9.0"
 
 imagePullSecrets: []
 nameOverride: ""
