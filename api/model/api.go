@@ -686,10 +686,10 @@ type APIDefinitionSpec struct {
 	// UptimeTests                UptimeTests           `json:"uptime_tests"`
 
 	// DisableRateLimit allows you to disable rate limits in a given API Definition.
-	DisableRateLimit bool `json:"disable_rate_limit"`
+	DisableRateLimit bool `json:"disable_rate_limit,omitempty"`
 
 	// DisableQuota allows you to disable quota middleware in a given API Definition.
-	DisableQuota bool `json:"disable_quota"`
+	DisableQuota bool `json:"disable_quota,omitempty"`
 
 	// GlobalRateLimit is an API Level Global Rate Limit, which assesses all traffic coming into the API from all
 	// sources and ensures that the overall rate limit is not exceeded.
@@ -764,7 +764,7 @@ type APIDefinitionSpec struct {
 	// +nullable
 	ConfigData *MapStringInterfaceType `json:"config_data"`
 
-	TagHeaders []string `json:"tag_headers"`
+	TagHeaders []string `json:"tag_headers,omitempty"`
 
 	// EnableDetailedRecording instructs Tyk store the inbound request and outbound response data in HTTP Wire format
 	// as part of the Analytics data
@@ -975,8 +975,11 @@ type SignatureConfig struct {
 }
 
 type GlobalRateLimit struct {
-	Rate json.Number `json:"rate"`
-	Per  json.Number `json:"per"`
+	// Rate represents the number of requests allowed within a specified time window (Per)
+	Rate int `json:"rate"`
+
+	// Per represents a time window in seconds
+	Per int `json:"per"`
 }
 
 type BundleManifest struct {
