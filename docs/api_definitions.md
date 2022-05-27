@@ -74,7 +74,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | [Custom Plugins - Javascript](./api_definitions/custom_plugin.md)             | ✅         | -                                                                      |
 | Custom Plugins - Lua                                                          | ⚠️        | Untested                                                               |
 | Custom Plugins - Python                                                       | ⚠️        | Untested                                                               |
-| Global Rate Limit                                                             | ⚠️        | Untested                                                               |
+| [Global Rate Limit](./../config/samples/httpbin_global_rate_limit.yaml)       | ⚠️        | Untested                                                               |
 | [Segment Tags](./../config/samples/httpbin_tagged.yaml)                       | ✅         | -                                                                      |
 | Tag Headers                                                                   | ❌         | Not Implemented                                                        |
 | [Webhooks](./webhooks.md)                                                     | ❌         | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   |

@@ -464,11 +464,12 @@ spec:
                   that the overall rate limit is not exceeded.
                 properties:
                   per:
-                    description: A Number represents a JSON number literal.
-                    type: string
+                    description: Per represents a time window in seconds
+                    type: integer
                   rate:
-                    description: A Number represents a JSON number literal.
-                    type: string
+                    description: Rate represents the number of requests allowed within
+                      a specified time window (Per)
+                    type: integer
                 required:
                 - per
                 - rate
@@ -1901,13 +1902,9 @@ spec:
                 - not_versioned
                 type: object
             required:
-            - disable_quota
-            - disable_rate_limit
-            - global_rate_limit
             - name
             - protocol
             - proxy
-            - tag_headers
             type: object
           status:
             description: ApiDefinitionStatus defines the observed state of ApiDefinition
