@@ -684,8 +684,16 @@ type APIDefinitionSpec struct {
 	VersionData VersionData `json:"version_data,omitempty"`
 
 	// UptimeTests                UptimeTests           `json:"uptime_tests"`
-	// DisableRateLimit       bool                `json:"disable_rate_limit"`
-	// DisableQuota           bool                `json:"disable_quota"`
+
+	// DisableRateLimit allows you to disable rate limits in a given API Definition.
+	DisableRateLimit bool `json:"disable_rate_limit"`
+
+	// DisableQuota allows you to disable quota middleware in a given API Definition.
+	DisableQuota bool `json:"disable_quota"`
+
+	// GlobalRateLimit is an API Level Global Rate Limit, which assesses all traffic coming into the API from all
+	// sources and ensures that the overall rate limit is not exceeded.
+	GlobalRateLimit GlobalRateLimit `json:"global_rate_limit"`
 
 	CustomMiddleware       MiddlewareSection `json:"custom_middleware,omitempty"`
 	CustomMiddlewareBundle string            `json:"custom_middleware_bundle,omitempty"`
@@ -756,8 +764,7 @@ type APIDefinitionSpec struct {
 	// +nullable
 	ConfigData *MapStringInterfaceType `json:"config_data"`
 
-	// TagHeaders              []string        `json:"tag_headers"`
-	// GlobalRateLimit         GlobalRateLimit `json:"global_rate_limit"`
+	TagHeaders []string `json:"tag_headers"`
 
 	// EnableDetailedRecording instructs Tyk store the inbound request and outbound response data in HTTP Wire format
 	// as part of the Analytics data
