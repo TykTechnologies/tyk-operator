@@ -63,22 +63,22 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 
 ## Features
 
-| Feature | Supported | Comments |
-| ----------- | --------- | --------- |
-| API Tagging | ✅ | - |
-| [Config Data](./../config/samples/config_data_virtual_endpoint.yaml) | ✅ | - |
-| Context Variables | ✅ | - |
+| Feature | Supported | Comments                                                               |
+| ----------- | --------- |------------------------------------------------------------------------|
+| API Tagging | ✅ | -                                                                      |
+| [Config Data](./../config/samples/config_data_virtual_endpoint.yaml) | ✅ | -                                                                      |
+| Context Variables | ✅ | -                                                                      |
 | [Cross Origin Resource Sharing (CORS)](./../config/samples/httpbin_cors.yaml) | ⚠️  | [See ISSUE #3396 ](https://github.com/TykTechnologies/tyk/issues/3396) |
-| Custom Plugins - Go | ⚠️ | Untested |
-| [Custom Plugins - gRPC](./../bdd/features/api_http_grpc_plugin.feature) | ✅ | - |
-| [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | - |
-| Custom Plugins - Lua | ⚠️ | Untested |
-| Custom Plugins - Python | ⚠️ | Untested |
-| Global Rate Limit | ❌ | Not Implemented |
-| [Segment Tags](./../config/samples/httpbin_tagged.yaml) | ✅ | - |
-| Tag Headers | ❌ | Not Implemented |
-| [Webhooks](./webhooks.md) | ❌ | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62) |
-| [Looping](./api_definitions/looping.md) | ⚠️ | Untested |
+| Custom Plugins - Go | ⚠️ | Untested                                                               |
+| [Custom Plugins - gRPC](./../bdd/features/api_http_grpc_plugin.feature) | ✅ | -                                                                      |
+| [Custom Plugins - Javascript](./api_definitions/custom_plugin.md) | ✅ | -                                                                      |
+| Custom Plugins - Lua | ⚠️ | Untested                                                               |
+| Custom Plugins - Python | ✅️ | -                                                                      |
+| Global Rate Limit | ❌ | Not Implemented                                                        |
+| [Segment Tags](./../config/samples/httpbin_tagged.yaml) | ✅ | -                                                                      |
+| Tag Headers | ❌ | Not Implemented                                                        |
+| [Webhooks](./webhooks.md) | ❌ | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   |
+| [Looping](./api_definitions/looping.md) | ⚠️ | Untested                                                               |
 
 ## APIDefinition - Endpoint Middleware
 
