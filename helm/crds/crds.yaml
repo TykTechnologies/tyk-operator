@@ -376,6 +376,12 @@ spec:
                 - location
                 - strip_path
                 type: object
+              disable_quota:
+                description: DisableQuota allows you to disable quota middleware in a given API Definition.
+                type: boolean
+              disable_rate_limit:
+                description: DisableRateLimit allows you to disable rate limits in a given API Definition.
+                type: boolean
               do_not_track:
                 description: DoNotTrack disables endpoint tracking for this API
                 type: boolean
@@ -401,6 +407,19 @@ spec:
                 type: boolean
               enable_proxy_protocol:
                 type: boolean
+              global_rate_limit:
+                description: GlobalRateLimit is an API Level Global Rate Limit, which assesses all traffic coming into the API from all sources and ensures that the overall rate limit is not exceeded.
+                properties:
+                  per:
+                    description: Per represents a time window in seconds
+                    type: integer
+                  rate:
+                    description: Rate represents the number of requests allowed within a specified time window (Per)
+                    type: integer
+                required:
+                - per
+                - rate
+                type: object
               graphql:
                 description: GraphQLConfig is the root config object for a GraphQL API.
                 properties:
@@ -815,6 +834,10 @@ spec:
               strip_auth_data:
                 description: StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
                 type: boolean
+              tag_headers:
+                items:
+                  type: string
+                type: array
               tags:
                 description: Tags are named gateway nodes which tell gateway clusters whether to load an API or not. for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
                 items:

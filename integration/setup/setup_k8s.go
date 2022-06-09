@@ -1,4 +1,4 @@
-package integration
+package setup
 
 import (
 	"bytes"
@@ -56,7 +56,7 @@ func kubeConf(o io.Writer) error {
 
 func setupKind() (string, error) {
 	if !isKind() {
-		return "", errors.New("Missing kind cluster")
+		return "", errors.New("missing kind cluster")
 	}
 
 	f, err := os.CreateTemp("", "operator-kind-kubeconf")
@@ -76,7 +76,7 @@ func setupKind() (string, error) {
 	return f.Name(), nil
 }
 
-func setupk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+func Kubernetes(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	kubecfg, err := setupKind()
 	if err != nil {
 		return c1, err
@@ -105,8 +105,7 @@ func setupk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	return context.WithValue(c1, kubeConfigKey{}, kubecfg), nil
 }
 
-func teardownk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+func TeardownKubernetes(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	kubecfg := c1.Value(kubeConfigKey{}).(string)
-
 	return c1, os.RemoveAll(kubecfg)
 }

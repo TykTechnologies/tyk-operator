@@ -1,4 +1,4 @@
-package integration
+package setup
 
 import (
 	"bytes"
@@ -66,7 +66,7 @@ func (e *E2EContext) CreateSuperUSer() error {
 		return err
 	}
 
-	// create super user
+	// create superuser
 	super := &User{
 		FirstName:    "super",
 		LastName:     "user",
@@ -435,17 +435,17 @@ func (e *E2EContext) Cleanup() error {
 	return nil
 }
 
-func setupE2E(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+func SetupE2E(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	e := &E2EContext{}
 
 	err := e.Setup()
 	if err != nil {
-		return c1, fmt.Errorf("Failed setting up e2e context %e", err)
+		return c1, fmt.Errorf("failed setting up e2e context %e", err)
 	}
 
 	return set(c1, e), nil
 }
 
-func teardownE2E(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+func TeardownE2E(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	return c1, get(c1).Cleanup()
 }

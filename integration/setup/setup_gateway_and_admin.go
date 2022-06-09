@@ -1,10 +1,12 @@
-package integration
+package setup
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/TykTechnologies/tyk-operator/integration/common"
 
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -14,15 +16,13 @@ const (
 	gatewaySVC     = "tyk-operator-local-gateway-service"
 	adminSVC       = "tyk-operator-local-gateway-admin-service"
 	adminLocalhost = "http://localhost:7200"
-
-	operatorNamespace = "tyk-operator-system"
 )
 
-func setupTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+func Tyk(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	return c1, createLocalServices(c1, c2)
 }
 
-func teardownTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
+func TeardownTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	return c1, deleteLocalServices(c1, c2)
 }
 
@@ -36,8 +36,8 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 		return err
 	}
 
-	gatewaySvcIndex := int(-1)
-	dashboardSvcIndex := int(-1)
+	gatewaySvcIndex := -1
+	dashboardSvcIndex := -1
 
 	for k, gw := range ls.Items {
 		if strings.HasPrefix(gw.Name, "gateway") {
@@ -54,7 +54,7 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 	}
 
 	if dashboardSvcIndex == -1 || gatewaySvcIndex == -1 {
-		return errors.New("Failed to find tyk or dashboard service")
+		return errors.New("failed to find tyk or dashboard service")
 	}
 
 	list := []v1.Service{ls.Items[gatewaySvcIndex], ls.Items[dashboardSvcIndex]}
@@ -78,7 +78,7 @@ func deleteLocalServices(ctx context.Context, c2 *envconf.Config) error {
 }
 
 func envNS() string {
-	return fmt.Sprintf("tyk%s-control-plane", e.Mode)
+	return fmt.Sprintf("tyk%s-control-plane", common.Env.Mode)
 }
 
 func createServices(ctx context.Context, c2 *envconf.Config, list []v1.Service) error {
@@ -111,7 +111,7 @@ func createServices(ctx context.Context, c2 *envconf.Config, list []v1.Service) 
 		}
 
 		err := c2.Client().Resources(envNS()).Get(ctx, s.Name, list[index].Namespace, &s)
-		// Create service if it doesn't exists
+		// Create service if it doesn't exist
 		if err != nil {
 			err = c2.Client().Resources(list[index].Namespace).Create(ctx, &s)
 			if err != nil {
@@ -123,9 +123,9 @@ func createServices(ctx context.Context, c2 *envconf.Config, list []v1.Service) 
 	return nil
 }
 func isCE() bool {
-	return e.Mode == "ce"
+	return common.Env.Mode == "ce"
 }
 
 func isPro() bool {
-	return e.Mode == "pro"
+	return common.Env.Mode == "pro"
 }

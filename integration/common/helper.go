@@ -1,4 +1,4 @@
-package integration
+package common
 
 import (
 	"context"
@@ -9,14 +9,14 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
-func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
+func CreateTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
 	envConf *envconf.Config,
 ) (*v1alpha1.ApiDefinition, error) {
 	client := envConf.Client()
 	var apiDef v1alpha1.ApiDefinition
 
-	apiDef.Name = testApiDef
-	apiDef.Spec.Name = testApiDef
+	apiDef.Name = TestApiDef
+	apiDef.Spec.Name = TestApiDef
 	apiDef.Namespace = namespace
 	apiDef.Spec.Protocol = "http"
 	apiDef.Spec.UseKeylessAccess = true
@@ -41,18 +41,18 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	return &apiDef, err
 }
 
-func createTestOperatorContext(ctx context.Context, namespace string,
+func CreateTestOperatorContext(ctx context.Context, namespace string,
 	envConf *envconf.Config,
 ) (*v1alpha1.OperatorContext, error) {
 	var operatorCtx v1alpha1.OperatorContext
 
 	client := envConf.Client()
 
-	operatorCtx.Name = testOperatorCtx
+	operatorCtx.Name = TestOperatorCtx
 	operatorCtx.Namespace = namespace
 	operatorCtx.Spec.FromSecret = &model.Target{
 		Name:      "tyk-operator-conf",
-		Namespace: operatorNamespace,
+		Namespace: OperatorNamespace,
 	}
 
 	err := client.Resources(namespace).Create(ctx, &operatorCtx)
@@ -60,7 +60,7 @@ func createTestOperatorContext(ctx context.Context, namespace string,
 	return &operatorCtx, err
 }
 
-func createTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v1.Secret),
+func CreateTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v1.Secret),
 	envConf *envconf.Config,
 ) (*v1.Secret, error) {
 	client := envConf.Client()
