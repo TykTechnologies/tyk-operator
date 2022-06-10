@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/integration/common"
+	"github.com/TykTechnologies/tyk-operator/integration/internal/common"
 
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"

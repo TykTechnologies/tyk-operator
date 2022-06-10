@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/integration/common"
+	common2 "github.com/TykTechnologies/tyk-operator/integration/internal/common"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -50,11 +50,11 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
 			// Create ApiDefinition with JSON Schema Validation support.
-			_, err := common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithJSONValidationName
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -76,7 +76,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 				is := is.New(t)
 				client := cfg.Client()
 
-				testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+				testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 				desiredApiDef := v1alpha1.ApiDefinition{
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithJSONValidationName, Namespace: testNS},
 				}
@@ -85,7 +85,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					// 'validate_json' field must exist in the ApiDefinition object.
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}), wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -103,7 +103,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s/get", common.GatewayLocalhost, apiDefListenPath),
+						fmt.Sprintf("%s%s/get", common2.GatewayLocalhost, apiDefListenPath),
 						invalidJSONBody,
 					)
 					is.NoErr(err)
@@ -119,7 +119,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -153,11 +153,11 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
-			_, err := common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -179,7 +179,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				is := is.New(t)
 				client := cfg.Client()
 
-				testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+				testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 				desiredApiDef := v1alpha1.ApiDefinition{
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
 				}
@@ -187,7 +187,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}), wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -201,7 +201,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+whiteListedPath),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, apiDefListenPath+whiteListedPath),
 						nil,
 					)
 					is.NoErr(err)
@@ -214,7 +214,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 				return ctx
 			}).
@@ -227,7 +227,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, apiDefListenPath),
 						nil,
 					)
 					is.NoErr(err)
@@ -241,7 +241,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -275,11 +275,11 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
-			_, err := common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithBlacklist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -301,7 +301,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				is := is.New(t)
 				client := cfg.Client()
 
-				testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+				testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 				desiredApiDef := v1alpha1.ApiDefinition{
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithBlacklist, Namespace: testNS},
 				}
@@ -309,7 +309,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}), wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -323,7 +323,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+blackListedPath),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, apiDefListenPath+blackListedPath),
 						nil,
 					)
 					is.NoErr(err)
@@ -336,7 +336,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 				return ctx
 			}).
@@ -349,7 +349,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, apiDefListenPath),
 						nil,
 					)
 					is.NoErr(err)
@@ -363,7 +363,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -409,11 +409,11 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
 			// Create ApiDefinition with whitelist + ignored extended path
-			_, err := common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -435,7 +435,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				is := is.New(t)
 				client := cfg.Client()
 
-				testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+				testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 				desiredApiDef := v1alpha1.ApiDefinition{
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
 				}
@@ -443,7 +443,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}), wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -457,7 +457,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+ignoredPath),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, apiDefListenPath+ignoredPath),
 						nil,
 					)
 					is.NoErr(err)
@@ -470,7 +470,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -484,7 +484,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+"/randomNonWhiteListedPath"),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, apiDefListenPath+"/randomNonWhiteListedPath"),
 						nil,
 					)
 					is.NoErr(err)
@@ -498,7 +498,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx

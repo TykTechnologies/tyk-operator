@@ -10,9 +10,10 @@ import (
 	"strings"
 	"testing"
 
+	common2 "github.com/TykTechnologies/tyk-operator/integration/internal/common"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/integration/common"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
@@ -55,13 +56,13 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 
 	adCreate := features.New("Create ApiDefinition objects for Certificate Pinning").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 			client := envConf.Client()
 			is := is.New(t)
 
 			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
 			// It contains a dummy public key which is not valid to be used.
-			_, err := common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefPinning
 				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
 			}, envConf)
@@ -86,7 +87,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 			publicKeySecrets := map[string]string{"*": secretName}
 
 			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
-			_, err = common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefPinningViaSecret
 				apiDef.Spec.Name = "valid"
 				apiDef.Spec.Proxy = model.Proxy{
@@ -101,7 +102,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
 			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
 			// to reach github.com, which must fail due to proxy error.
-			_, err = common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = invalidApiDef
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      invalidApiDefListenPath,
@@ -120,7 +121,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 				is := is.New(t)
 				client := cfg.Client()
 
-				testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+				testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 				desiredApiDef := v1alpha1.ApiDefinition{
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefPinning, Namespace: testNS},
 				}
@@ -141,7 +142,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return val == publicKeyID
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}), wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -153,7 +154,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					hc := &http.Client{}
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefPinningViaSecretListenPath),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, apiDefPinningViaSecretListenPath),
 						nil,
 					)
 					is.NoErr(err)
@@ -167,7 +168,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
@@ -179,7 +180,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					hc := &http.Client{}
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, invalidApiDefListenPath),
+						fmt.Sprintf("%s%s", common2.GatewayLocalhost, invalidApiDefListenPath),
 						nil,
 					)
 					is.NoErr(err)
@@ -193,7 +194,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					}
 
 					return true, nil
-				}, wait.WithInterval(common.DefaultWaitInterval), wait.WithTimeout(common.DefaultWaitTimeout))
+				}, wait.WithInterval(common2.DefaultWaitInterval), wait.WithTimeout(common2.DefaultWaitTimeout))
 				is.NoErr(err)
 
 				return ctx
@@ -219,20 +220,20 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(common.CtxNSKey).(string) //nolint: errcheck
+			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint: errcheck
 			is := is.New(t)
 			t.Log(testNS)
-			_, err := common.CreateTestTlsSecret(ctx, testNS, nil, envConf)
+			_, err := common2.CreateTestTlsSecret(ctx, testNS, nil, envConf)
 			is.NoErr(err)
 
 			return ctx
 		}).
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
 			// Create ApiDefinition with Upstream certificate
-			_, err := common.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := common2.CreateTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefUpstreamCerts
 				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
 					"*": certName,
@@ -251,7 +252,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 				is := is.New(t)
 				client := cfg.Client()
-				testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
+				testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
 
 				tlsSecret := v1.Secret{} //nolint:errcheck
 
@@ -313,7 +314,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 						return false, nil
 					}
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				}, wait.WithTimeout(common2.DefaultWaitTimeout), wait.WithInterval(common2.DefaultWaitInterval))
 				is.NoErr(err)
 
 				return ctx
