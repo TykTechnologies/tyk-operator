@@ -17,6 +17,7 @@ func CreateNamespace(ctx context.Context, cfg *envconf.Config, t *testing.T) (co
 
 	nsObj := v1.Namespace{}
 	nsObj.Name = name
+
 	return ctx, cfg.Client().Resources().Create(ctx, &nsObj)
 }
 
@@ -25,5 +26,6 @@ func DeleteNamespace(ctx context.Context, envconf *envconf.Config, t *testing.T)
 
 	nsObj := v1.Namespace{}
 	nsObj.Name = name.(string)
+
 	return ctx, envconf.Client().Resources().Delete(ctx, &nsObj)
 }

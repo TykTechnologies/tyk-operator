@@ -6,9 +6,7 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/integration/internal/common"
-
 	"github.com/TykTechnologies/tyk-operator/integration/internal/setup"
-
 	"sigs.k8s.io/e2e-framework/pkg/env"
 )
 

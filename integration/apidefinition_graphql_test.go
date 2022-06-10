@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	common2 "github.com/TykTechnologies/tyk-operator/integration/internal/common"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/integration/internal/common"
 	"github.com/google/uuid"
 	"github.com/matryer/is"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -18,7 +17,7 @@ import (
 func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 	createAPI := features.New("Create GraphQL API").
 		Assess("validate_executionMode", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			testNS := ctx.Value(common2.CtxNSKey).(string) //nolint:errcheck
+			testNS := ctx.Value(common.CtxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
 			tests := map[string]struct {
@@ -45,7 +44,7 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 
 			for n, tc := range tests {
 				t.Run(n, func(t *testing.T) {
-					_, err := common2.CreateTestAPIDef(ctx, testNS, func(ad *v1alpha1.ApiDefinition) {
+					_, err := common.CreateTestAPIDef(ctx, testNS, func(ad *v1alpha1.ApiDefinition) {
 						ad.Name = fmt.Sprintf("%s-%s", ad.Name, uuid.New().String())
 						ad.Spec.Name = ad.Name
 						ad.Spec.GraphQL = &model.GraphQLConfig{
