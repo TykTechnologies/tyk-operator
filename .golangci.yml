@@ -5,6 +5,10 @@ issues:
     - linters:
         - lll
       source: "^// "
+    - linters:
+        - errcheck
+      path: integration/
+
 linters:
   enable:
     - errcheck
@@ -16,6 +20,10 @@ linters:
     - lll
     - whitespace
     - wsl
+
+run:
+  skip-dirs:
+    - integration/setup
 
 linters-settings:
   errcheck:

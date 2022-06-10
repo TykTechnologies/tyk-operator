@@ -54,7 +54,12 @@ func TestOperatorContextCreate(t *testing.T) {
 				client := envConf.Client()
 				is := is.New(t)
 
-				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: common.TestOperatorCtx, Namespace: testNS}}
+				opCtx := v1alpha1.OperatorContext{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      common.TestOperatorCtx,
+						Namespace: testNS,
+					},
+				}
 
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&opCtx, func(object k8s.Object) bool {
 					operatCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
