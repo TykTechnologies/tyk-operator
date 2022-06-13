@@ -8,7 +8,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 )
 
 const contentJSON = "application/json"
@@ -16,7 +16,7 @@ const contentJSON = "application/json"
 const testAPIID = "ZGVmYXVsdC9odHRwYmlu"
 
 func TestAPI(t *testing.T) {
-	var e environmet.Env
+	var e environment.Env
 
 	h := mockDash(t,
 		&route{
@@ -159,7 +159,7 @@ func TestAPI(t *testing.T) {
 		})
 }
 
-func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase) {
+func requestAPI(t *testing.T, e environment.Env, name string, kase ...client.Kase) {
 	t.Helper()
 	t.Run(name, func(t *testing.T) {
 		switch name {

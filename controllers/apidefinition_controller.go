@@ -37,7 +37,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -64,7 +64,7 @@ type ApiDefinitionReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Env      environmet.Env
+	Env      environment.Env
 	Recorder record.EventRecorder
 }
 
@@ -325,7 +325,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	certName string,
 	ns string,
 	log logr.Logger,
-	env *environmet.Env,
+	env *environment.Env,
 ) (string, error) {
 	secret := v1.Secret{}
 

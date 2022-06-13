@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -98,7 +98,7 @@ func compareHeaders(t *testing.T, expect map[string]string, r http.Header) {
 // RunRequestKase this helps check if we are sending a correct request. This
 // assumes fn will only perform a single API call, this ignores the response it
 // only validates we are sending correct path/method/headers
-func RunRequestKase(t *testing.T, e environmet.Env, fn func(context.Context) error, kase ...Kase) {
+func RunRequestKase(t *testing.T, e environment.Env, fn func(context.Context) error, kase ...Kase) {
 	t.Helper()
 
 	var request []*http.Request

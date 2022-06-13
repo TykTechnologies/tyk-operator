@@ -31,7 +31,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
 
@@ -41,7 +41,7 @@ type APIDescriptionReconciler struct {
 	Log       logr.Logger
 	Scheme    *runtime.Scheme
 	Universal universal.Client
-	Env       environmet.Env
+	Env       environment.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=apidescriptions,verbs=get;list;watch;create;update;patch;delete
@@ -89,7 +89,7 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *APIDescriptionReconciler) delete(
 	ctx context.Context,
 	desired *v1alpha1.APIDescription,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Deleting APIDescription resource")
@@ -131,7 +131,7 @@ func (r *APIDescriptionReconciler) delete(
 func (r *APIDescriptionReconciler) sync(
 	ctx context.Context,
 	desired *v1alpha1.APIDescription,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Syncing changes to catalogues resource")

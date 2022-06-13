@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 )
 
 const testCertID = "5fd08e0f69710900018bc19568492b39a512286d3e71c4c673faa7f094ffef324d12bf3b485c295221e97150"
 
 func TestCert(t *testing.T) {
-	var e environmet.Env
+	var e environment.Env
 
 	h := mockDash(t,
 		&route{
@@ -92,7 +92,7 @@ func TestCert(t *testing.T) {
 	})
 }
 
-func requestCert(t *testing.T, e environmet.Env, kase client.Kase) {
+func requestCert(t *testing.T, e environment.Env, kase client.Kase) {
 	t.Helper()
 
 	switch kase.Name {

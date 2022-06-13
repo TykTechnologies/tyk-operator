@@ -3,10 +3,10 @@ package common
 import (
 	"time"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 )
 
-var Env environmet.Env
+var Env environment.Env
 
 type ctxKey string
 

@@ -8,7 +8,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -55,10 +55,10 @@ func encodeNS(decoded string) string {
 func httpContext(
 	ctx context.Context,
 	rClient runtimeClient.Client,
-	e environmet.Env,
+	e environment.Env,
 	object runtimeClient.Object,
 	log logr.Logger,
-) (environmet.Env, context.Context, error) {
+) (environment.Env, context.Context, error) {
 	get := func(c *model.Target) error {
 		if c == nil {
 			// To handle the case where operator context was used previously
@@ -115,7 +115,7 @@ func httpContext(
 	}
 
 	if err != nil {
-		return environmet.Env{}, nil, err
+		return environment.Env{}, nil, err
 	}
 
 	return e, client.SetContext(ctx, client.Context{
@@ -127,7 +127,7 @@ func httpContext(
 func updateOperatorContextStatus(
 	ctx context.Context,
 	rClient runtimeClient.Client,
-	e environmet.Env,
+	e environment.Env,
 	object runtimeClient.Object,
 	log logr.Logger,
 	ctxRef *model.Target,

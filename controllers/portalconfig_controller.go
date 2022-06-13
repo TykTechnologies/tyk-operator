@@ -28,7 +28,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
 
@@ -37,7 +37,7 @@ type PortalConfigReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-	Env    environmet.Env
+	Env    environment.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalconfigs,verbs=get;list;watch;create;update;patch;delete
@@ -98,7 +98,7 @@ func (r *PortalConfigReconciler) Reconcile(ctx context.Context,
 func (r *PortalConfigReconciler) create(
 	ctx context.Context,
 	desired *v1alpha1.PortalConfig,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Creating portal configuration object")
@@ -140,7 +140,7 @@ func (r *PortalConfigReconciler) create(
 func (r *PortalConfigReconciler) update(
 	ctx context.Context,
 	desired *v1alpha1.PortalConfig,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Updating portal configuration object")
@@ -156,7 +156,7 @@ func (r *PortalConfigReconciler) update(
 func (r *PortalConfigReconciler) delete(
 	ctx context.Context,
 	desired *v1alpha1.PortalConfig,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Deleting portal configuration resource")

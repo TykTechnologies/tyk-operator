@@ -32,7 +32,7 @@ import (
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	uc "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
 
@@ -41,7 +41,7 @@ type PortalAPICatalogueReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-	Env    environmet.Env
+	Env    environment.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=portalapicatalogues,verbs=get;list;watch;create;update;patch;delete
@@ -107,7 +107,7 @@ func updateJSON(a, b interface{}) {
 func (r *PortalAPICatalogueReconciler) model(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) (*model.APICatalogue, error) {
 	m := &model.APICatalogue{
@@ -163,7 +163,7 @@ func (r *PortalAPICatalogueReconciler) model(
 func (r *PortalAPICatalogueReconciler) sync(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environmet.Env,
+	env environment.Env,
 	a *v1alpha1.PortalCatalogueDescription,
 ) error {
 	if a.APIDocumentation != nil {
@@ -187,7 +187,7 @@ func (r *PortalAPICatalogueReconciler) sync(
 func (r *PortalAPICatalogueReconciler) init(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environmet.Env,
+	env environment.Env,
 ) (id string, err error) {
 	cat, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
@@ -211,7 +211,7 @@ func (r *PortalAPICatalogueReconciler) init(
 func (r *PortalAPICatalogueReconciler) create(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	// create an empty catalogue for the org
@@ -240,7 +240,7 @@ func (r *PortalAPICatalogueReconciler) create(
 func (r *PortalAPICatalogueReconciler) update(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	m, err := r.model(ctx, desired, env, log)
@@ -263,7 +263,7 @@ func (r *PortalAPICatalogueReconciler) update(
 func (r *PortalAPICatalogueReconciler) consolidate(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
@@ -299,7 +299,7 @@ func (r *PortalAPICatalogueReconciler) consolidate(
 func (r *PortalAPICatalogueReconciler) delete(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environmet.Env,
+	env environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Deleting PortalAPICatalogue")

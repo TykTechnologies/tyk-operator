@@ -30,7 +30,7 @@ import (
 
 	"github.com/go-logr/logr"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -46,7 +46,7 @@ var (
 type SubGraphReconciler struct {
 	client.Client
 	Log    logr.Logger
-	Env    environmet.Env
+	Env    environment.Env
 	Scheme *runtime.Scheme
 }
 

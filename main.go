@@ -33,7 +33,7 @@ import (
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -51,7 +51,7 @@ func init() {
 
 func main() {
 	var configFile string
-	var env environmet.Env
+	var env environment.Env
 	var err error
 
 	flag.StringVar(&configFile, "config", "",
