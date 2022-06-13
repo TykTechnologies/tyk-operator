@@ -80,11 +80,18 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithJSONValidationName, Namespace: testNS},
 				}
 
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					// 'validate_json' field must exist in the ApiDefinition object.
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				err := wait.For(
+					conditions.New(client.Resources()).
+						ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
+							apiDef, ok := object.(*v1alpha1.ApiDefinition)
+							is.True(ok)
+
+							// 'validate_json' field must exist in the ApiDefinition object.
+							return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
+						}),
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -118,7 +125,10 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				},
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -183,10 +193,17 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
 				}
 
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				err := wait.For(
+					conditions.New(client.Resources()).
+						ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
+							apiDef, ok := object.(*v1alpha1.ApiDefinition)
+							is.True(ok)
+
+							return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
+						}),
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -213,7 +230,10 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				},
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 				return ctx
 			}).
@@ -240,7 +260,10 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				},
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -305,10 +328,17 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithBlacklist, Namespace: testNS},
 				}
 
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				err := wait.For(
+					conditions.New(client.Resources()).
+						ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
+							apiDef, ok := object.(*v1alpha1.ApiDefinition)
+							is.True(ok)
+
+							return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
+						}),
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -335,7 +365,10 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				},
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 				return ctx
 			}).
@@ -362,7 +395,10 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					}
 
 					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				},
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -439,10 +475,17 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
 				}
 
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
-				}), wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+				err := wait.For(
+					conditions.New(client.Resources()).
+						ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
+							apiDef, ok := object.(*v1alpha1.ApiDefinition)
+							is.True(ok)
+
+							return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
+						}),
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -451,25 +494,29 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				is := is.New(t)
 
-				err := wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
+				err := wait.For(
+					func() (done bool, err error) {
+						hc := &http.Client{}
 
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+ignoredPath),
-						nil,
-					)
-					is.NoErr(err)
+						req, err := http.NewRequest(
+							http.MethodGet,
+							fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+ignoredPath),
+							nil,
+						)
+						is.NoErr(err)
 
-					resp, err := hc.Do(req)
-					is.NoErr(err)
+						resp, err := hc.Do(req)
+						is.NoErr(err)
 
-					if resp.StatusCode == errForbiddenResponseCode {
-						return false, nil
-					}
+						if resp.StatusCode == errForbiddenResponseCode {
+							return false, nil
+						}
 
-					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+						return true, nil
+					},
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
@@ -478,26 +525,30 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				is := is.New(t)
 
-				err := wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
+				err := wait.For(
+					func() (done bool, err error) {
+						hc := &http.Client{}
 
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+"/randomNonWhiteListedPath"),
-						nil,
-					)
-					is.NoErr(err)
-					req.Header.Add("Content-type", "application/json")
+						req, err := http.NewRequest(
+							http.MethodGet,
+							fmt.Sprintf("%s%s", common.GatewayLocalhost, apiDefListenPath+"/randomNonWhiteListedPath"),
+							nil,
+						)
+						is.NoErr(err)
+						req.Header.Add("Content-type", "application/json")
 
-					resp, err := hc.Do(req)
-					is.NoErr(err)
+						resp, err := hc.Do(req)
+						is.NoErr(err)
 
-					if resp.StatusCode != errForbiddenResponseCode {
-						return false, nil
-					}
+						if resp.StatusCode != errForbiddenResponseCode {
+							return false, nil
+						}
 
-					return true, nil
-				}, wait.WithTimeout(common.DefaultWaitTimeout), wait.WithInterval(common.DefaultWaitInterval))
+						return true, nil
+					},
+					wait.WithTimeout(common.DefaultWaitTimeout),
+					wait.WithInterval(common.DefaultWaitInterval),
+				)
 				is.NoErr(err)
 
 				return ctx
