@@ -84,16 +84,16 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.delete(ctx, desired, env, log)
+			return r.delete(ctx, desired, &env, log)
 		}
 		if desired.Spec.OrgID == "" {
 			desired.Spec.OrgID = env.Org
 		}
 		util.AddFinalizer(desired, keys.PortalAPICatalogueFinalizerName)
 		if desired.Status.ID != "" {
-			return r.update(ctx, desired, env, log)
+			return r.update(ctx, desired, &env, log)
 		}
-		return r.create(ctx, desired, env, log)
+		return r.create(ctx, desired, &env, log)
 	})
 
 	return
@@ -107,7 +107,7 @@ func updateJSON(a, b interface{}) {
 func (r *PortalAPICatalogueReconciler) model(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environment.Env,
+	env *environment.Env,
 	log logr.Logger,
 ) (*model.APICatalogue, error) {
 	m := &model.APICatalogue{
@@ -146,26 +146,21 @@ func (r *PortalAPICatalogueReconciler) model(
 			return nil, fmt.Errorf("%q missing policy_id", desc.Name)
 		}
 
-		if err := r.sync(ctx, desired, env, desc); err != nil {
+		if err := r.sync(ctx, desc); err != nil {
 			return nil, err
 		}
 
 		m.APIS = append(m.APIS, desc.APIDescription)
 	}
 
-	if err := r.consolidate(ctx, desired, env, log); err != nil {
+	if err := r.consolidate(ctx, desired); err != nil {
 		return nil, err
 	}
 
 	return m, nil
 }
 
-func (r *PortalAPICatalogueReconciler) sync(
-	ctx context.Context,
-	desired *tykv1alpha1.PortalAPICatalogue,
-	env environment.Env,
-	a *v1alpha1.PortalCatalogueDescription,
-) error {
+func (r *PortalAPICatalogueReconciler) sync(ctx context.Context, a *v1alpha1.PortalCatalogueDescription) error {
 	if a.APIDocumentation != nil {
 		d := &model.APIDocumentation{
 			DocumentationType: a.APIDocumentation.DocumentationType,
@@ -184,11 +179,7 @@ func (r *PortalAPICatalogueReconciler) sync(
 	return nil
 }
 
-func (r *PortalAPICatalogueReconciler) init(
-	ctx context.Context,
-	desired *tykv1alpha1.PortalAPICatalogue,
-	env environment.Env,
-) (id string, err error) {
+func (r *PortalAPICatalogueReconciler) init(ctx context.Context, env *environment.Env) (id string, err error) {
 	cat, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
 		if uc.IsNotFound(err) {
@@ -211,11 +202,11 @@ func (r *PortalAPICatalogueReconciler) init(
 func (r *PortalAPICatalogueReconciler) create(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environment.Env,
+	env *environment.Env,
 	log logr.Logger,
 ) error {
 	// create an empty catalogue for the org
-	catalogueID, err := r.init(ctx, desired, env)
+	catalogueID, err := r.init(ctx, env)
 	if err != nil {
 		return err
 	}
@@ -240,7 +231,7 @@ func (r *PortalAPICatalogueReconciler) create(
 func (r *PortalAPICatalogueReconciler) update(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environment.Env,
+	env *environment.Env,
 	log logr.Logger,
 ) error {
 	m, err := r.model(ctx, desired, env, log)
@@ -263,8 +254,6 @@ func (r *PortalAPICatalogueReconciler) update(
 func (r *PortalAPICatalogueReconciler) consolidate(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environment.Env,
-	log logr.Logger,
 ) error {
 	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
 	if err != nil {
@@ -299,7 +288,7 @@ func (r *PortalAPICatalogueReconciler) consolidate(
 func (r *PortalAPICatalogueReconciler) delete(
 	ctx context.Context,
 	desired *tykv1alpha1.PortalAPICatalogue,
-	env environment.Env,
+	env *environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Deleting PortalAPICatalogue")

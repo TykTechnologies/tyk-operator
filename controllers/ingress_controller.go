@@ -109,7 +109,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, env)
+	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, &env)
 	if err != nil {
 		nsl.Error(err, "failed to create api's")
 		return ctrl.Result{}, err
@@ -144,7 +144,7 @@ func (r *IngressReconciler) createAPI(
 	template *v1alpha1.ApiDefinition,
 	ns string,
 	desired *netV1.Ingress,
-	env environment.Env,
+	env *environment.Env,
 ) error {
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
@@ -272,8 +272,8 @@ func shortHash(txt string) string {
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	watch := keys.DefaultIngressClassAnnotationValue
 
-	if overide := r.Env.IngressClass; overide != "" {
-		watch = overide
+	if override := r.Env.IngressClass; override != "" {
+		watch = override
 	}
 
 	isOurIngress := func(o runtime.Object) bool {

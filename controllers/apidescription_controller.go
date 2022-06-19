@@ -68,19 +68,19 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
+	_, ctx, err = httpContext(ctx, r.Client, r.Env, desired, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.delete(ctx, desired, env, log)
+			return r.delete(ctx, desired, log)
 		}
 
 		util.AddFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
 
-		return r.sync(ctx, desired, env, log)
+		return r.sync(ctx, desired, log)
 	})
 
 	return
@@ -89,7 +89,6 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *APIDescriptionReconciler) delete(
 	ctx context.Context,
 	desired *v1alpha1.APIDescription,
-	env environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Deleting APIDescription resource")
@@ -128,12 +127,7 @@ func (r *APIDescriptionReconciler) delete(
 	return nil
 }
 
-func (r *APIDescriptionReconciler) sync(
-	ctx context.Context,
-	desired *v1alpha1.APIDescription,
-	env environment.Env,
-	log logr.Logger,
-) error {
+func (r *APIDescriptionReconciler) sync(ctx context.Context, desired *v1alpha1.APIDescription, log logr.Logger) error {
 	log.Info("Syncing changes to catalogues resource")
 	// we find all api catalogues referencing this and update it to reflect the
 	// change

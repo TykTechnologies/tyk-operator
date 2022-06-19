@@ -1,13 +1,17 @@
 issues:
   # Show only new issues created since branching away from default branch on the remote
-  new-from-rev: origin/master
+  new-from-rev: HEAD~1
   exclude-rules:
     - linters:
         - lll
       source: "^// "
     - linters:
+        - gocritic
+      path: "_test.go"
+    - linters:
         - errcheck
       path: integration/internal/setup
+
 linters:
   enable:
     - errcheck

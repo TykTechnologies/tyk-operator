@@ -80,27 +80,22 @@ func (r *PortalConfigReconciler) Reconcile(ctx context.Context,
 
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.delete(ctx, desired, env, log)
+			return r.delete(desired, log)
 		}
 
 		util.AddFinalizer(desired, keys.PortalConfigurationFinalizerName)
 
 		if desired.Status.ID == "" {
-			return r.create(ctx, desired, env, log)
+			return r.create(ctx, desired, log)
 		}
 
-		return r.update(ctx, desired, env, log)
+		return r.update(ctx, desired, &env, log)
 	})
 
 	return
 }
 
-func (r *PortalConfigReconciler) create(
-	ctx context.Context,
-	desired *v1alpha1.PortalConfig,
-	env environment.Env,
-	log logr.Logger,
-) error {
+func (r *PortalConfigReconciler) create(ctx context.Context, desired *v1alpha1.PortalConfig, log logr.Logger) error {
 	log.Info("Creating portal configuration object")
 	// Configuration is per organization. Since we can't delete this once created
 	// we can assume that this will still be present in the dashboard after kubectl
@@ -140,7 +135,7 @@ func (r *PortalConfigReconciler) create(
 func (r *PortalConfigReconciler) update(
 	ctx context.Context,
 	desired *v1alpha1.PortalConfig,
-	env environment.Env,
+	env *environment.Env,
 	log logr.Logger,
 ) error {
 	log.Info("Updating portal configuration object")
@@ -153,12 +148,7 @@ func (r *PortalConfigReconciler) update(
 	return err
 }
 
-func (r *PortalConfigReconciler) delete(
-	ctx context.Context,
-	desired *v1alpha1.PortalConfig,
-	env environment.Env,
-	log logr.Logger,
-) error {
+func (r *PortalConfigReconciler) delete(desired *v1alpha1.PortalConfig, log logr.Logger) error {
 	log.Info("Deleting portal configuration resource")
 
 	util.RemoveFinalizer(desired, keys.PortalConfigurationFinalizerName)
