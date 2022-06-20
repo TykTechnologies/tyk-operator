@@ -1,6 +1,6 @@
 issues:
   # Show only new issues created since branching away from default branch on the remote
-  new-from-rev: HEAD~1
+  new-from-rev: upstream/master
   exclude-rules:
     - linters:
         - lll

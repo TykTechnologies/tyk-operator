@@ -55,7 +55,7 @@ func encodeNS(decoded string) string {
 func httpContext(
 	ctx context.Context,
 	rClient runtimeClient.Client,
-	e environment.Env,
+	e environment.Env, //nolint:gocritic
 	object runtimeClient.Object,
 	log logr.Logger,
 ) (environment.Env, context.Context, error) {
@@ -63,7 +63,7 @@ func httpContext(
 		if c == nil {
 			// To handle the case where operator context was used previously
 			// but was removed in update operation
-			if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+			if err := updateOperatorContextStatus(ctx, rClient, object, log, c); err != nil {
 				log.Error(err, "Failed to update status of operator contexts")
 			}
 
@@ -92,7 +92,7 @@ func httpContext(
 
 		e.Environment = *env.Spec.Env
 
-		if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+		if err := updateOperatorContextStatus(ctx, rClient, object, log, c); err != nil {
 			log.Error(err, "Failed to update status of operator contexts")
 		}
 
@@ -127,7 +127,6 @@ func httpContext(
 func updateOperatorContextStatus(
 	ctx context.Context,
 	rClient runtimeClient.Client,
-	e environment.Env,
 	object runtimeClient.Object,
 	log logr.Logger,
 	ctxRef *model.Target,
