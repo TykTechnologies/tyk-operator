@@ -14,7 +14,8 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | Type                                                                   | Support | Comments                     |
 |------------------------------------------------------------------------|---------|------------------------------|
 | [GraphQL - Proxy](./../config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml) | ✅       | -                            |
-| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml)       | ⚠️      | V2 Engine & API ETA Jul 2022 |
+| [GraphQL - Universal Data Graph](./../config/samples/udg_1.yaml)       | ⚠️      | V2 Engine & API ETA Sep 2022 |
+| [GraphQL - Federation](./../config/samples/federation/README.md)       | ⚠️      | WIP ETA Sep 2022 |
 | HTTP                                                                   | ✅       | -                            |
 | [HTTPS](./../config/samples/tls/example.yaml)️                      | ✅       | -                            |
 | TCP                                                                    | ✅       | -                            |
