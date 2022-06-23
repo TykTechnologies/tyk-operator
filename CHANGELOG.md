@@ -8,6 +8,7 @@
 
 **Added**
 - PoC support of GraphQL Federation on Tyk Operator. It is still WIP.
+- Added support of [Global Rate-Limiting](https://github.com/TykTechnologies/tyk-operator/blob/master/config/samples/httpbin_global_rate_limit.yaml) at the API Level.
 
 **Documentation**
 - Verified support of Host based routing
