@@ -1,5 +1,3 @@
-# Current Operator version
-VERSION ?= 0.0.0
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -100,13 +98,14 @@ docker-push: ## Push the docker image
 
 release: ## Make release
 # fail if version is not specified
-	ifndef VERSION
+ifndef VERSION
 	$(error VERSION is not specified)
-	endif
+endif
 
 	git checkout master
-	sed -i -e "s|\(version\):.*|\1: ${VERSION} # version of the chart|" helm/Chart.yaml
-	git add helm/Chart.yaml
+	yq eval -i '.version="${VERSION}"' helm/Chart.yaml
+	yq eval -i '.image.tag="v${VERSION}"' helm/values.yaml
+	git add helm/Chart.yaml helm/values.yaml
 	git commit -m "version to: v${VERSION}"
 	git push origin master && git tag v${VERSION} && git push --tags
 
