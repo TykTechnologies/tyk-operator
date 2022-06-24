@@ -1,5 +1,5 @@
-replicaCount:  1
-  # loads environment variables to the operator.
+replicaCount: 1
+# loads environment variables to the operator.
 envFrom:
   - secretRef:
       name: tyk-operator-conf
@@ -8,22 +8,18 @@ envVars:
     value: "8443"
   - name: TYK_HTTP_INGRESS_PORT
     value: "8080"
-
 image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
-  tag: "v0.9.0"
-
+  tag: "v0.10.0"
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
-
 annotations: {}
 podAnnotations: {}
 podSecurityContext:
   allowPrivilegeEscalation: false
 resources: {}
-
 #specify necessary resources for kube-rbac-proxy container
 rbac:
   resources: {}
