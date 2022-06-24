@@ -13,6 +13,9 @@
 - Verified support of Host based routing
 - Added GoLand IDE integration
 
+**Changed**
+- Makefile: `release` target now replaces operator tag version with the release version in `helm/values.yaml` file.
+
 ## [v0.9.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.9.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.8.2...v0.9.0)
 
