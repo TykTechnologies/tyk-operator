@@ -2,4 +2,4 @@ apiVersion: v2
 name: tyk-operator
 description: A Helm chart to install the tyk-operator
 type: application
-version: 0.9.0 # version of the chart
+version: 0.10.0 # version of the chart
