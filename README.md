@@ -290,7 +290,7 @@ Note: The extension should take effect immediately. In case it doesn't, simply r
 5. Click `Add URLs` and add `https://raw.githubusercontent.com/TykTechnologies/tyk-operator/{version_tag}/helm/crds/crds.yaml`,
    1. For example, if you would like to use CRDs of `v0.9.0`, replace `{version_tag}` with `v0.9.0` and add <https://raw.githubusercontent.com/TykTechnologies/tyk-operator/v0.9.0/helm/crds/crds.yaml>
    2. Please add CRDs of `master` for latest CRDs, as follows <https://raw.githubusercontent.com/TykTechnologies/tyk-operator/master/helm/crds/crds.yaml>
-![goland-support](./docs/img/goland-support.gif)
+![goland-support](./docs/img/goland-ide-support.gif)
 6. Apply and save changes.
 
 </details>
