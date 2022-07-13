@@ -19,7 +19,7 @@ practices with Custom Resources and Kubernetes-native primitives.
 
 ---
 
-[Project Status](#project-status) | [Introduction] (#introduction) | [Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples)
+[Project Status](#project-status) | [Introduction](#introduction) | [Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples)
 | [IDE Integration](#ide-integration) | [Community](#community)
 
 ---
