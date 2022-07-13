@@ -1,11 +1,14 @@
 # Tyk Operator
 
-<p align="center">
+<!-- [![Build Status](https://travis-ci.org/TykTechnologies/tyk.svg?branch=master)](https://travis-ci.org/TykTechnologies/tyk) -->
+[![Go Report Card](https://goreportcard.com/badge/github.com/TykTechnologies/tyk-operator)](https://goreportcard.com/report/github.com/TykTechnologies/tyk-operator)
+
+<p>
 <a href="https://github.com/TykTechnologies/tyk" target="_blank">
 Tyk Gateway</a> is a modern, ultra-performant, purpose-built, open source API
 Gateway.
 </p>
-<p align="center">
+<p>
 Tyk Operator brings Full Lifecycle API Management capabilities to Kubernetes.
 Configure Ingress, APIs, Security Policies, Authentication, Authorization, Mediation and more - all using GitOps best
 practices with Custom Resources and Kubernetes-native primitives.
@@ -16,24 +19,44 @@ practices with Custom Resources and Kubernetes-native primitives.
 
 ---
 
-[Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples)
+[Project Status](#project-status) | [Introduction] (#introduction) | [Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples)
 | [IDE Integration](#ide-integration) | [Community](#community)
 
 ---
 
+## Project Status
+Tyk Operator is currently in beta. We follow the [Kubernetes definition of beta](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-stages). We welcome users to try it out and give us feedback [here](https://github.com/TykTechnologies/tyk-operator/discussions) or via support channel for existing Tyk customers.
+
+
+## Introduction
+
+### What can you do with Tyk Operator?
+
+Tyk Operator can configure Tyk Gateway as a drop-in replacement for standard [Kubernetes Ingress](./docs/ingress.md). You can manage your API definitions and security policies with it. It also works with the classic portal so you can manage your Classic Portal declaratively.
+
+Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and documentation for each of these custom resources are available [here](./docs/crd.md).
+
+
+### Why use Tyk Operator?
+
+You can get the benefits of GitOps with declarative API configurations:
+
+- **Security and Compliance**: All changes must go through peer review through pull requests. The configurations are versioned in your version control system and approved by your API Product Owner and Platform team.
+
+- **Kubernetes-Native Developer Experience**: API Developers enjoy a smoother Continuous Integration process as they can develop, test, and deploy the microservices and API configurations together using familiar development toolings and pipeline.
+
+- **Reliability**: With declarative API configurations, you have a single source of truth to recover after any system failures, reducing the meantime to recovery from hours to minutes.
+
+
+
 ## Documentation
 
-Read more about the [concepts here](./docs/concepts.md).
+Read more from our [Official doc site](https://tyk.io/docs/tyk-operator/).
 
-Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
-and documentation for each of these custom resources are available:
-
-- [Installing Tyk Operator](./docs/installation/installation.md)
-- [Getting Started](./docs/getting-started.md)
-- [Ingress Controller](./docs/ingress.md)
-- [API Definitions](./docs/api_definitions.md)
-- [Security Policies](./docs/policies.md)
-- [Multi Gateway with Operator Context](./docs/operator_context.md)
+- [Installing Tyk Operator](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/)
+- [Getting Started](https://tyk.io/docs/tyk-stack/tyk-operator/getting-started-tyk-operator/)
+- [Migration to Tyk Operator](https://tyk.io/docs/tyk-stack/tyk-operator/migration/)
+- [Using Tyk Operator to enable GitOps with Tyk](https://tyk.io/docs/getting-started/key-concepts/gitops-with-tyk/)
 
 ## Learning with Videos
 
@@ -259,6 +282,26 @@ spec:
 
 </p>
 </details>
+
+## Community
+
+Tyk Operator is under active development.
+
+We are building the operator to enable you to build and ship your APIs faster and more safely.
+
+If you find any defects, please [raise an issue](https://github.com/TykTechnologies/tyk-operator/issues/new). We welcome code contributions as well.
+
+If you require any features that we have not yet implemented, please take the time to [create a GitHub issue](https://github.com/TykTechnologies/tyk-operator/issues/new/choose) detailing your use case so that we may prioritise accordingly.
+
+For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new) in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions).
+
+- [Configuring your development environment](./docs/development.md)
+- [Request a feature](https://github.com/TykTechnologies/tyk-operator/issues)
+- [Got an Idea or RFC](https://github.com/TykTechnologies/tyk-operator/discussions/categories/ideas)
+- [Found a Defect](https://github.com/TykTechnologies/tyk-operator/issues)
+- [Got a Question](https://github.com/TykTechnologies/tyk-operator/discussions/categories/q-a)
+- [Show and Tell](https://github.com/TykTechnologies/tyk-operator/discussions/categories/show-and-tell)
+
 
 ## IDE Integration
 
