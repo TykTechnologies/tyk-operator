@@ -686,3 +686,41 @@ You just need to set `TYK_OPERATOR_PRELOAD_IMAGES` environment variable to true 
 ## Highlights
 
 1. The Tyk-Operator uses the [finalizer](https://book.kubebuilder.io/reference/using-finalizers.html) pattern for deleting CRs from the cluster.
+
+
+
+
+## IDE Integration
+
+This section details the steps required to add K8s extensions to popular IDEs.
+
+### VS Code
+
+[Watch video tutorial here](http://www.youtube.com/watch?v=Kdrfp6aAZEU).
+
+<details><summary>Steps</summary>
+
+1. Go to the following link: <https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools>
+2. Click on Install. This will prompt you to open Visual Studios.
+3. Click Open Visual Studios at the subsequent prompt. This will open VS Code and take you to the Extensions' section.
+4. Click Install in the Kubernetes extension page.
+
+Note: The extension should take effect immediately. In case it doesn't, simply restart VS Code.
+
+</details>
+
+### GoLand
+
+<details><summary>Steps</summary>
+
+1. Open `Plugins` settings following official GoLand documentation <https://www.jetbrains.com/help/go/managing-plugins.html>
+2. Install `Kubernetes` plugin (<https://plugins.jetbrains.com/plugin/10485-kubernetes>)
+3. Open GoLand `Preferences` as described [here](https://www.jetbrains.com/help/go/settings-preferences-dialog.html),
+4. Go to `Languages & Frameworks > Kubernetes`
+5. Click `Add URLs` and add `https://raw.githubusercontent.com/TykTechnologies/tyk-operator/{version_tag}/helm/crds/crds.yaml`,
+   1. For example, if you would like to use CRDs of `v0.9.0`, replace `{version_tag}` with `v0.9.0` and add <https://raw.githubusercontent.com/TykTechnologies/tyk-operator/v0.9.0/helm/crds/crds.yaml>
+   2. Please add CRDs of `master` for latest CRDs, as follows <https://raw.githubusercontent.com/TykTechnologies/tyk-operator/master/helm/crds/crds.yaml>
+![goland-support](./docs/img/goland-support.gif)
+6. Apply and save changes.
+
+</details>
