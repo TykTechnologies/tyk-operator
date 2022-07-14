@@ -63,7 +63,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := httpContext(ctx, r.Client, r.Env, policy, log)
+	env, ctx, err := HttpContext(ctx, r.Client, r.Env, policy, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

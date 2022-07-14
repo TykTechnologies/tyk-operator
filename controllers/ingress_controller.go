@@ -65,7 +65,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, nsl)
+	env, ctx, err := HttpContext(ctx, r.Client, r.Env, desired, nsl)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
