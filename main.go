@@ -17,10 +17,13 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/snapshot"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -54,10 +57,16 @@ func main() {
 	var env environmet.Env
 	var err error
 
+	var snapshotFile string
+
 	flag.StringVar(&configFile, "config", "",
 		"The controller will load its initial configuration from this file. "+
 			"Omit this flag to use the default configuration values. "+
 			"Command-line flags override configuration from this file.")
+
+	flag.StringVar(&snapshotFile, "snapshot", "",
+		"By passing an export flag, we are telling the Operator to connect to a"+
+			"Tyk installation in order to pull a snapshot from that environment and output as CR")
 
 	opts := zap.Options{
 		Development: true,
@@ -94,6 +103,21 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
+	}
+
+	if snapshotFile != "" {
+		snapshotLog := ctrl.Log.WithName("snapshot").WithName("ApiDefinition")
+
+		ctx := context.Background()
+		_, ctx, err := controllers.HttpContext(ctx, mgr.GetClient(), env, nil, snapshotLog)
+		if err != nil {
+			println(err.Error())
+			os.Exit(1)
+		}
+
+		snapshot.PrintSnapshot(ctx, snapshotFile)
+
+		os.Exit(0)
 	}
 
 	a := ctrl.Log.WithName("controllers").WithName("ApiDefinition")
