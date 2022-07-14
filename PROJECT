@@ -88,4 +88,8 @@ resources:
   kind: SuperGraph
   path: github.com/TykTechnologies/tyk-operator/api/v1alpha1
   version: v1alpha1
+- controller: true
+  domain: tyk.io
+  kind: Endpoints
+  version: v1
 version: "3"
