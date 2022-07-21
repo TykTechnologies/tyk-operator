@@ -19,9 +19,19 @@ func (a Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.R
 
 	var o model.Result
 
+	octx := client.GetContext(ctx)
+
+	octx.Log.Info("create request", "body", DashboardApi{
+		ApiDefinition:   *def,
+		UserOwners:      octx.Env.UserOwners,
+		UserGroupOwners: octx.Env.UserGroupOwners,
+	})
+
 	err = client.Data(&o)(client.PostJSON(ctx, endpointAPIs,
 		DashboardApi{
-			ApiDefinition: *def,
+			ApiDefinition:   *def,
+			UserOwners:      octx.Env.UserOwners,
+			UserGroupOwners: octx.Env.UserGroupOwners,
 		}))
 	if err != nil {
 		return nil, err
@@ -53,9 +63,13 @@ func (a Api) Get(ctx context.Context, id string) (*model.APIDefinitionSpec, erro
 func (a Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.Result, error) {
 	var o model.Result
 
+	octx := client.GetContext(ctx)
+
 	err := client.Data(&o)(client.PutJSON(
 		ctx, client.Join(endpointAPIs, spec.APIID), DashboardApi{
-			ApiDefinition: *spec,
+			ApiDefinition:   *spec,
+			UserOwners:      octx.Env.UserOwners,
+			UserGroupOwners: octx.Env.UserGroupOwners,
 		},
 	))
 	if err != nil {

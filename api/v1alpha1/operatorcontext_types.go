@@ -51,6 +51,10 @@ const (
 	IngressTLSPort = "TYK_HTTPS_INGRESS_PORT"
 
 	IngressHTTPPort = "TYK_HTTP_INGRESS_PORT"
+
+	TykUserOwners = "TYK_USER_OWNERS"
+
+	TykUserGroupOwners = "TYK_USER_GROUP_OWNERS"
 )
 
 // OperatorContextMode is the mode to which the admin api binding is done values are
@@ -74,6 +78,8 @@ type Environment struct {
 	Org                string              `json:"org,omitempty"`
 	Ingress            Ingress             `json:"ingress,omitempty"`
 	InsecureSkipVerify bool                `json:"insecureSkipVerify,omitempty"`
+	UserOwners         []string            `json:"user_owners"`
+	UserGroupOwners    []string            `json:"user_group_owners"`
 }
 
 type Ingress struct {

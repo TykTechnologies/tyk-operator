@@ -48,6 +48,14 @@ func (e Env) Merge(n Env) Env {
 		e.Ingress.HTTPPort = n.Ingress.HTTPPort
 	}
 
+	if n.UserOwners != nil {
+		e.UserOwners = append(e.UserOwners, n.UserOwners...)
+	}
+
+	if n.UserGroupOwners != nil {
+		e.UserGroupOwners = append(e.UserGroupOwners, n.UserGroupOwners...)
+	}
+
 	return e
 }
 
@@ -62,6 +70,19 @@ func (e *Env) Parse() {
 	e.Ingress.HTTPSPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressTLSPort))
 	e.Ingress.HTTPPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressHTTPPort))
 	e.IngressClass = os.Getenv(v1alpha1.IngressClass)
+
+	for _, user := range strings.Split(os.Getenv(v1alpha1.TykUserOwners), ",") {
+		o := strings.TrimSpace(user)
+		if o != "" {
+			e.UserOwners = append(e.UserOwners, o)
+		}
+	}
+	for _, group := range strings.Split(os.Getenv(v1alpha1.TykUserGroupOwners), ",") {
+		o := strings.TrimSpace(group)
+		if o != "" {
+			e.UserGroupOwners = append(e.UserGroupOwners, o)
+		}
+	}
 
 	if e.Ingress.HTTPSPort == 0 {
 		e.Ingress.HTTPSPort = 8443
