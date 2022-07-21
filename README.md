@@ -1,6 +1,5 @@
 # Tyk Operator
 
-<!-- [![Build Status](https://travis-ci.org/TykTechnologies/tyk.svg?branch=master)](https://travis-ci.org/TykTechnologies/tyk) -->
 [![Go Report Card](https://goreportcard.com/badge/github.com/TykTechnologies/tyk-operator)](https://goreportcard.com/report/github.com/TykTechnologies/tyk-operator)
 
 <p>
