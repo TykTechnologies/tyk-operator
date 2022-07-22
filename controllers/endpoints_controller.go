@@ -18,10 +18,12 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
@@ -152,6 +154,77 @@ func (r *EndpointsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// we need to introspect the graphql schema and create an API Defiinition inside Tyk
 	case "subgraph":
 		// we need to introspect the graphql schema and create a subgraph api definition. Propagate labels to the new apidefinition
+
+		ip := endpoints.Subsets[0].Addresses[0].IP
+		_ = ip
+		hostname := fmt.Sprintf("%s.%s.svc", req.Name, req.Namespace)
+		port := endpoints.Subsets[0].Ports[0].Port
+
+		url := fmt.Sprintf("http://%s:%d/query", hostname, port)
+
+		c := http.Client{Timeout: time.Duration(5) * time.Second}
+
+		sdlQuery := `{"query":"query {\n  _service {\n    sdl\n  }\n}"}`
+
+		res, err := c.Post(url, "application/json", strings.NewReader(sdlQuery))
+		if err != nil {
+			return ctrl.Result{Requeue: true}, fmt.Errorf("unable to get schema for %s", req.NamespacedName)
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != 200 {
+			return ctrl.Result{Requeue: true}, fmt.Errorf("unable to get sdl for %s, unexpected status %d", req.NamespacedName, res.StatusCode)
+		}
+
+		sdlBytes, _ := ioutil.ReadAll(res.Body)
+
+		type sdlRes struct {
+			Data struct {
+				Service struct {
+					SDL string `json:"sdl"`
+				} `json:"_service"`
+			} `json:"data"`
+		}
+
+		var sdlStruct sdlRes
+		json.Unmarshal(sdlBytes, &sdlStruct)
+
+		introspectionQuery := `{
+  "operationName": "IntrospectionQuery",
+  "variables": {},
+  "query": "query IntrospectionQuery { __schema { queryType { name } mutationType { name  }    subscriptionType {      name    }    types {      ...FullType    }    directives {      name      description      locations      args {        ...InputValue      }    }  }} fragment FullType on __Type {  kind  name  description  fields(includeDeprecated: true) {    name    description    args {      ...InputValue    }    type {      ...TypeRef    }    isDeprecated    deprecationReason  }  inputFields {    ...InputValue  }  interfaces {    ...TypeRef  }  enumValues(includeDeprecated: true) {    name    description    isDeprecated    deprecationReason  }  possibleTypes {    ...TypeRef  }}fragment InputValue on __InputValue {  name  description  type {    ...TypeRef  }  defaultValue}fragment TypeRef on __Type {  kind  name  ofType {    kind    name    ofType {      kind      name      ofType {        kind        name        ofType {          kind          name          ofType {            kind            name            ofType {              kind              name              ofType {                kind                name              }            }          }        }      }    }  }}"}
+}`
+		res, err = c.Post(url, "application/json", strings.NewReader(introspectionQuery))
+		if err != nil {
+			return ctrl.Result{Requeue: true}, fmt.Errorf("unable to get introspection for %s", req.NamespacedName)
+		}
+		defer res.Body.Close()
+
+		resBytes, _ := ioutil.ReadAll(res.Body)
+
+		subgraph := &v1alpha1.SubGraph{
+			Spec: v1alpha1.SubGraphSpec{
+				SubGraphSpec: model.SubGraphSpec{
+					SDL:    sdlStruct.Data.Service.SDL,
+					Schema: string(resBytes),
+				},
+			},
+		}
+		subgraph.Name = req.Name
+		subgraph.Namespace = req.Namespace
+		subgraph.Labels = endpoints.Labels
+		subgraph.Annotations = endpoints.Annotations
+
+		util.AddFinalizer(endpoints, keys.EndpointsFinalizerName)
+		err = r.Update(ctx, endpoints)
+		if err != nil {
+			println(err.Error())
+		}
+
+		if err := r.Create(ctx, subgraph); err != nil {
+			return ctrl.Result{Requeue: false}, nil
+		}
+
 	default:
 		return ctrl.Result{Requeue: false}, errors.New("endpoint discovery mode unsupported")
 	}

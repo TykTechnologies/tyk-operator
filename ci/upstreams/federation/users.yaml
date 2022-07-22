@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      subgraph: users
+  template:
+    metadata:
+      labels:
+        subgraph: users
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service:v1.0.0
+          imagePullPolicy: IfNotPresent
+          name: countries
+          command:
+            - ./users/server
+          ports:
+            - containerPort: 4001
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: users
+  labels:
+    subgraph: users
+    discovery.tyk.io: subgraph
+spec:
+  ports:
+    - name: http
+      port: 4001
+      targetPort: 4001
+  selector:
+    subgraph: users
