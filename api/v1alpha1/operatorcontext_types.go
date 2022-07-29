@@ -78,8 +78,8 @@ type Environment struct {
 	Org                string              `json:"org,omitempty"`
 	Ingress            Ingress             `json:"ingress,omitempty"`
 	InsecureSkipVerify bool                `json:"insecureSkipVerify,omitempty"`
-	UserOwners         []string            `json:"user_owners"`
-	UserGroupOwners    []string            `json:"user_group_owners"`
+	UserOwners         []string            `json:"user_owners,omitempty"`
+	UserGroupOwners    []string            `json:"user_group_owners,omitempty"`
 }
 
 type Ingress struct {
