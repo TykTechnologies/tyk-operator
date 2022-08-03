@@ -78,8 +78,7 @@ func (e *Env) Parse() {
 		}
 	}
 	for _, group := range strings.Split(os.Getenv(v1alpha1.TykUserGroupOwners), ",") {
-		o := strings.TrimSpace(group)
-		if o != "" {
+		if o := strings.TrimSpace(group); o != "" {
 			e.UserGroupOwners = append(e.UserGroupOwners, o)
 		}
 	}
