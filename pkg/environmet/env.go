@@ -72,11 +72,11 @@ func (e *Env) Parse() {
 	e.IngressClass = os.Getenv(v1alpha1.IngressClass)
 
 	for _, user := range strings.Split(os.Getenv(v1alpha1.TykUserOwners), ",") {
-		o := strings.TrimSpace(user)
-		if o != "" {
+		if o := strings.TrimSpace(user); o != "" {
 			e.UserOwners = append(e.UserOwners, o)
 		}
 	}
+
 	for _, group := range strings.Split(os.Getenv(v1alpha1.TykUserGroupOwners), ",") {
 		if o := strings.TrimSpace(group); o != "" {
 			e.UserGroupOwners = append(e.UserGroupOwners, o)
