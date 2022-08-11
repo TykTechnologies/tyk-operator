@@ -524,7 +524,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 }
 
 // checkLinkedPolicies checks if there are any policies that are still linking
-// to this api defintion resource.
+// to this api definition resource.
 func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("checking linked security policies")
 
@@ -552,7 +552,7 @@ func encodeIfNotBase64(s string) string {
 	return encodeNS(s)
 }
 
-// updateLinkedPolicies ensure that all policies needed by this api denition are
+// updateLinkedPolicies ensure that all policies needed by this api definition are
 // updated.
 func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
 	r.Log.Info("Updating linked policies")
