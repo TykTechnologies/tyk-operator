@@ -18,7 +18,7 @@ practices with Custom Resources and Kubernetes-native primitives.
 
 ---
 
-[Project Status](#project-status) | [Introduction](#introduction) | [Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples) | [Community](#community)
+[Project Status](#project-status) | [Introduction](#introduction) | [Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples) | [IDE Integration](#ide-integration) | [Community](#community)
 
 ---
 
@@ -287,7 +287,7 @@ spec:
 </p>
 </details>
 
-## For API Developers - IDE Integration
+## IDE Integration
 
 API developers may add K8s extensions to popular IDEs to enjoy auto-completion while editing Tyk CRD YAML files. Here's the detail steps.
 
