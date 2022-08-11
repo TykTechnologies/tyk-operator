@@ -1,5 +1,7 @@
 # Policies
 
+To check the supported features of the Security Policy CRD version you're currently using, please use the "Switch branches / tags" feature on GitHub and select corresponding version tag.
+
 ### Support for CE mode
 Security policy resources are currently only supported when using Tyk PRO mode.
 
