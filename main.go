@@ -107,15 +107,18 @@ func main() {
 
 	if snapshotFile != "" {
 		snapshotLog := ctrl.Log.WithName("snapshot").WithName("ApiDefinition")
-
 		ctx := context.Background()
+
 		_, ctx, err := controllers.HttpContext(ctx, mgr.GetClient(), env, nil, snapshotLog)
 		if err != nil {
-			println(err.Error())
+			snapshotLog.Error(err, "failed to set HTTP context")
 			os.Exit(1)
 		}
 
-		snapshot.PrintSnapshot(ctx, snapshotFile)
+		if err := snapshot.PrintSnapshot(ctx, snapshotFile); err != nil {
+			snapshotLog.Error(err, "failed to create snapshot file")
+			os.Exit(1)
+		}
 
 		os.Exit(0)
 	}

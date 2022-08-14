@@ -12,20 +12,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
 
-func PrintSnapshot(ctx context.Context, fileName string) {
+func PrintSnapshot(ctx context.Context, fileName string) error {
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return err
 	}
 
 	f, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
 	defer f.Close()
 
 	bw := bufio.NewWriter(f)
 
 	for i, v := range apiDefSpecList.Apis {
-
 		e := json.NewSerializerWithOptions(json.DefaultMetaFactory, nil, nil, json.SerializerOptions{
 			Yaml:   true,
 			Pretty: true,
@@ -44,10 +45,14 @@ func PrintSnapshot(ctx context.Context, fileName string) {
 		}
 		apiDef.Spec.APIDefinitionSpec = *v
 
-		e.Encode(&apiDef, bw)
+		if err := e.Encode(&apiDef, bw); err != nil {
+			return err
+		}
 
-		bw.Write([]byte("\n---\n\n"))
+		if _, err := bw.WriteString("\n---\n\n"); err != nil {
+			return err
+		}
 	}
 
-	bw.Flush()
+	return bw.Flush()
 }

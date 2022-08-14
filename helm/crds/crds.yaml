@@ -429,6 +429,7 @@ spec:
                   execution_mode:
                     description: GraphQLExecutionMode is the mode to define how an api behaves.
                     enum:
+                    - ""
                     - proxyOnly
                     - executionEngine
                     - supergraph
@@ -697,6 +698,7 @@ spec:
               protocol:
                 description: APIProtocol is the network transport protocol supported by the gateway
                 enum:
+                - ""
                 - h2c
                 - tcp
                 - tls
