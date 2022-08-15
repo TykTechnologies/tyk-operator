@@ -83,6 +83,11 @@ func main() {
 
 	options := ctrl.Options{Scheme: scheme, Namespace: env.Namespace}
 
+	if snapshotFile != "" {
+		// MetricsBindAddress can be set to "0" to disable the metrics serving.
+		options.MetricsBindAddress = "0"
+	}
+
 	if configFile != "" {
 		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
 		if err != nil {

@@ -22,7 +22,7 @@ go build
 
 3. Run snapshot
 ```bash
-ENABLE_WEBHOOKS=false TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> tyk-operator --snapshot output.yaml
+TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> tyk-operator --snapshot output.yaml
 ```
 where
 - `<TYK_URL>`: Management URL of your Tyk Dashboard.
