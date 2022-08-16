@@ -600,7 +600,7 @@ type APIDefinitionSpec struct {
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
 
-	// Enable Go Plugin Auth
+	// Enable Go Plugin Auth. Needs to be combined with "use_keyless:false"
 	UseGoPluginAuth bool `json:"use_go_plugin_auth,omitempty"`
 
 	EnableCoProcessAuth bool `json:"enable_coprocess_auth,omitempty"`

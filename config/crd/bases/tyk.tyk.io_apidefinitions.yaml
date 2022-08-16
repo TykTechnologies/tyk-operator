@@ -1015,7 +1015,7 @@ spec:
                   upstreams
                 type: object
               use_go_plugin_auth:
-                description: Enable Go Plugin Auth
+                description: Enable Go Plugin Auth. Needs to be combined with "use_keyless:false"
                 type: boolean
               use_keyless:
                 description: UseKeylessAccess will switch off all key checking. Some
