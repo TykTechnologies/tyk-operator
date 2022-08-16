@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -26,19 +27,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/jensneuse/graphql-go-tools/pkg/astprinter"
+	"github.com/jensneuse/graphql-go-tools/pkg/introspection"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // EndpointsReconciler reconciles a Endpoints object
@@ -47,9 +48,7 @@ type EndpointsReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=,resources=endpoints,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=,resources=endpoints/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=,resources=endpoints/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;update;patch;delete
 
 func (r *EndpointsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
@@ -69,9 +68,13 @@ func (r *EndpointsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		apiDef := &v1alpha1.ApiDefinition{}
 		apiDef.Name = req.Name
 		apiDef.Namespace = req.Namespace
-		if err := r.Delete(ctx, apiDef); err != nil {
-			return ctrl.Result{Requeue: false}, nil
-		}
+		r.Delete(ctx, apiDef)
+
+		subGraph := &v1alpha1.SubGraph{}
+		subGraph.Name = req.Name
+		subGraph.Namespace = req.Namespace
+		r.Delete(ctx, subGraph)
+
 		return ctrl.Result{}, nil
 	}
 
@@ -168,7 +171,7 @@ func (r *EndpointsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 		res, err := c.Post(url, "application/json", strings.NewReader(sdlQuery))
 		if err != nil {
-			return ctrl.Result{Requeue: true}, fmt.Errorf("unable to get schema for %s", req.NamespacedName)
+			return ctrl.Result{Requeue: true}, fmt.Errorf("unable to get schema for %s: %s", req.NamespacedName, err.Error())
 		}
 		defer res.Body.Close()
 
@@ -202,11 +205,18 @@ func (r *EndpointsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 		resBytes, _ := ioutil.ReadAll(res.Body)
 
+		converter := introspection.JsonConverter{}
+		buf := bytes.NewBuffer(resBytes)
+		doc, err := converter.GraphQLDocument(buf)
+
+		outWriter := &bytes.Buffer{}
+		err = astprinter.PrintIndent(doc, nil, []byte("  "), outWriter)
+
 		subgraph := &v1alpha1.SubGraph{
 			Spec: v1alpha1.SubGraphSpec{
 				SubGraphSpec: model.SubGraphSpec{
 					SDL:    sdlStruct.Data.Service.SDL,
-					Schema: string(resBytes),
+					Schema: outWriter.String(),
 				},
 			},
 		}
