@@ -39,7 +39,7 @@ func PrintSnapshot(ctx context.Context, fileName string) error {
 				APIVersion: "tyk.tyk.io/v1alpha1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("REPLACE_ME_%d", i),
+				Name: fmt.Sprintf("replace-me-%d", i),
 			},
 			Spec: tykv1alpha1.APIDefinitionSpec{},
 		}

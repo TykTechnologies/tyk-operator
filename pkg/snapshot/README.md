@@ -36,12 +36,12 @@ called `output.yaml`.
 
 Output file includes all of your ApiDefinitions in CRD YAML format. The only required
 change is .metadata.name field. By default, snapshot creates ApiDefinition CRs 
-called `REPLACE_ME_0`, `REPLACE_ME_1` and so on. You need to change these fields
+called `replace-me-0`, `replace-me-1` and so on. You need to change these fields
 according to your own preference.
 
 For example, to change all ApiDefinition CR names to `tyk-operator-api`,
 ```bash
-sed 's/REPLACE_ME_/operator-api-/g' output.yaml > apis.yaml
+sed 's/replace-me-/operator-api-/g' output.yaml > apis.yaml
 ```
 
 Then, you can simply create this new `apis.yaml` file, as follows:
