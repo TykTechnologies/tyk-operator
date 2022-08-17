@@ -58,6 +58,7 @@ func main() {
 	var err error
 
 	var snapshotFile string
+	var dumpAll bool
 
 	flag.StringVar(&configFile, "config", "",
 		"The controller will load its initial configuration from this file. "+
@@ -67,6 +68,8 @@ func main() {
 	flag.StringVar(&snapshotFile, "snapshot", "",
 		"By passing an export flag, we are telling the Operator to connect to a"+
 			"Tyk installation in order to pull a snapshot from that environment and output as CR")
+
+	flag.BoolVar(&dumpAll, "all", false, "Dump all APIs")
 
 	opts := zap.Options{
 		Development: true,
@@ -120,7 +123,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := snapshot.PrintSnapshot(ctx, snapshotFile); err != nil {
+		if err := snapshot.PrintSnapshot(ctx, snapshotFile, dumpAll); err != nil {
 			snapshotLog.Error(err, "failed to create snapshot file")
 			os.Exit(1)
 		}
