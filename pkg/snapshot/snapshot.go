@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
@@ -12,11 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
 
-const (
-	k8sKey = "k8sName"
-)
-
-func PrintSnapshot(ctx context.Context, fileName string, dumpAll bool) error {
+func PrintSnapshot(ctx context.Context, fileName, category string, dumpAll bool) error {
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
 		return err
@@ -67,25 +64,31 @@ func PrintSnapshot(ctx context.Context, fileName string, dumpAll bool) error {
 		return bw.Flush()
 	}
 
-	for _, v := range apiDefSpecList.Apis {
-		if v.ConfigData != nil {
-			val, ok := v.ConfigData.Object[k8sKey]
-			if ok {
-				if s, ok := val.(string); ok {
-					apiDefSpecName = s
-				}
+	generateCategoryName := func(cat string) string {
+		cat = strings.TrimSpace(cat)
+		if strings.HasPrefix(cat, "#") {
+			return cat
+		}
 
-				apiDef := createApiDef(apiDefSpecName)
-				apiDef.Spec.APIDefinitionSpec = *v
+		return fmt.Sprintf("#%s", cat)
+	}
 
-				if err := e.Encode(&apiDef, bw); err != nil {
-					return err
-				}
+	category = generateCategoryName(category)
 
-				if _, err := bw.WriteString("\n---\n\n"); err != nil {
-					return err
-				}
-			}
+	for i, v := range apiDefSpecList.Apis {
+		if contains := strings.Contains(v.Name, category); !contains {
+			continue
+		}
+
+		apiDef := createApiDef(fmt.Sprintf("%s-%d", apiDefSpecName, i))
+		apiDef.Spec.APIDefinitionSpec = *v
+
+		if err := e.Encode(&apiDef, bw); err != nil {
+			return err
+		}
+
+		if _, err := bw.WriteString("\n---\n\n"); err != nil {
+			return err
 		}
 	}
 

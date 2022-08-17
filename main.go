@@ -58,6 +58,7 @@ func main() {
 	var err error
 
 	var snapshotFile string
+	var category string
 	var dumpAll bool
 
 	flag.StringVar(&configFile, "config", "",
@@ -70,6 +71,8 @@ func main() {
 			"Tyk installation in order to pull a snapshot from that environment and output as CR")
 
 	flag.BoolVar(&dumpAll, "all", false, "Dump all APIs")
+
+	flag.StringVar(&category, "category", "operator", "Dump APIs from specified category.")
 
 	opts := zap.Options{
 		Development: true,
@@ -123,7 +126,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := snapshot.PrintSnapshot(ctx, snapshotFile, dumpAll); err != nil {
+		if err := snapshot.PrintSnapshot(ctx, snapshotFile, category, dumpAll); err != nil {
 			snapshotLog.Error(err, "failed to create snapshot file")
 			os.Exit(1)
 		}
