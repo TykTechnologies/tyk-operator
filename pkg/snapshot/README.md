@@ -1,8 +1,15 @@
-# Snapshot
+# Snapshot (WIP)
 
-snapshot package provides a CLI tool that allows dashboard users to export their 
-ApiDefinitions in CRD YAML format that can be used by Tyk Operator. So that it 
-facilitates migrations from existing ApiDefinitions to Kubernetes environment.
+The snapshot package provides a CLI tool that allows dashboard users to export their 
+existing Tyk APIs and Security Policies into CRD YAML format that can be used by Tyk Operator. 
+
+It can help you to migrate existing APIs and Policies to Kubernetes environment.
+
+> **Notes:** After the migration, please be reminded that you should stop using the Dashboard UI to manage the migrated APIs and Policies. Please see [Using Tyk Operator to enable GitOps with Tyk](https://tyk.io/docs/getting-started/key-concepts/gitops-with-tyk/) for more information.
+
+This tool is provided as PoC only and bear some limitations and restrictions. Please use with caution.
+
+| [Pre-requisite](#pre-requisite) | [Installation](#installation) | [Usage](#usage) | [Limitations](#limitation) |
 
 ## Installation
 
