@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: users
+  name: comments
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      subgraph: users
+      subgraph: comments
   template:
     metadata:
       labels:
-        subgraph: users
+        subgraph: comments
     spec:
       containers:
         - image: zalbiraw/go-api-test-service:v1.0.0
           imagePullPolicy: IfNotPresent
-          name: countries
+          name: comments
           command:
-            - ./users/server
+            - ./comments/server
           ports:
             - containerPort: 4001
 
@@ -26,26 +26,27 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: users
+  name: comments
   labels:
-    subgraph: users
+    subgraph: comments
     discovery.tyk.io: subgraph
+    supergraph: blog
 spec:
   ports:
     - name: http
       port: 4001
       targetPort: 4001
   selector:
-    subgraph: users
+    subgraph: comments
 
 ---
 
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: users
+  name: comments
 spec:
-  name: Users Subgraph
+  name: Comments Subgraph
   protocol: "http"
   do_not_track: false
   use_keyless: true
@@ -54,12 +55,12 @@ spec:
   graphql:
     enabled: true
     execution_mode: subgraph
-    graph_ref: users
+    graph_ref: comments
     version: "2"
     playground:
       enabled: false
       path: ""
   proxy:
-    target_url: http://users.federation.svc:4001/query
+    target_url: http://comments.federation.svc:4001/query
     listen_path: /
     disable_strip_slash: true
