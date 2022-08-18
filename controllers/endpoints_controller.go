@@ -100,7 +100,7 @@ func (r *EndpointsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		port := endpoints.Subsets[0].Ports[0].Port
 
 		url := fmt.Sprintf("http://%s:%d/spec.json", ip, port)
-		url = "http://httpbin.org/spec.json"
+		//url = "http://httpbin.org/spec.json"
 
 		c := http.Client{Timeout: time.Duration(5) * time.Second}
 		res, err := c.Get(url)
@@ -192,31 +192,42 @@ func (r *EndpointsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		var sdlStruct sdlRes
 		json.Unmarshal(sdlBytes, &sdlStruct)
 
-		introspectionQuery := `{
-  "operationName": "IntrospectionQuery",
-  "variables": {},
-  "query": "query IntrospectionQuery { __schema { queryType { name } mutationType { name  }    subscriptionType {      name    }    types {      ...FullType    }    directives {      name      description      locations      args {        ...InputValue      }    }  }} fragment FullType on __Type {  kind  name  description  fields(includeDeprecated: true) {    name    description    args {      ...InputValue    }    type {      ...TypeRef    }    isDeprecated    deprecationReason  }  inputFields {    ...InputValue  }  interfaces {    ...TypeRef  }  enumValues(includeDeprecated: true) {    name    description    isDeprecated    deprecationReason  }  possibleTypes {    ...TypeRef  }}fragment InputValue on __InputValue {  name  description  type {    ...TypeRef  }  defaultValue}fragment TypeRef on __Type {  kind  name  ofType {    kind    name    ofType {      kind      name      ofType {        kind        name        ofType {          kind          name          ofType {            kind            name            ofType {              kind              name              ofType {                kind                name              }            }          }        }      }    }  }}"}
-}`
+		introspectionQuery := `{"operationName":"IntrospectionQuery","variables":{},"query":"query IntrospectionQuery {\n  __schema {\n    queryType {\n      name\n    }\n    mutationType {\n      name\n    }\n    subscriptionType {\n      name\n    }\n    types {\n      ...FullType\n    }\n    directives {\n      name\n      description\n      locations\n      args {\n        ...InputValue\n      }\n    }\n  }\n}\n\nfragment FullType on __Type {\n  kind\n  name\n  description\n  fields(includeDeprecated: true) {\n    name\n    description\n    args {\n      ...InputValue\n    }\n    type {\n      ...TypeRef\n    }\n    isDeprecated\n    deprecationReason\n  }\n  inputFields {\n    ...InputValue\n  }\n  interfaces {\n    ...TypeRef\n  }\n  enumValues(includeDeprecated: true) {\n    name\n    description\n    isDeprecated\n    deprecationReason\n  }\n  possibleTypes {\n    ...TypeRef\n  }\n}\n\nfragment InputValue on __InputValue {\n  name\n  description\n  type {\n    ...TypeRef\n  }\n  defaultValue\n}\n\nfragment TypeRef on __Type {\n  kind\n  name\n  ofType {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"}`
 		res, err = c.Post(url, "application/json", strings.NewReader(introspectionQuery))
 		if err != nil {
 			return ctrl.Result{Requeue: true}, fmt.Errorf("unable to get introspection for %s", req.NamespacedName)
 		}
 		defer res.Body.Close()
 
+		type introspectionRes struct {
+			Data json.RawMessage `json:"data"`
+		}
+
 		resBytes, _ := ioutil.ReadAll(res.Body)
 
+		var introspectionResponse introspectionRes
+		json.Unmarshal(resBytes, &introspectionResponse)
+
 		converter := introspection.JsonConverter{}
-		buf := bytes.NewBuffer(resBytes)
+		buf := bytes.NewBuffer(introspectionResponse.Data)
 		doc, err := converter.GraphQLDocument(buf)
 
 		outWriter := &bytes.Buffer{}
 		err = astprinter.PrintIndent(doc, nil, []byte("  "), outWriter)
 
+		schema := outWriter.String()
+
+		schema = strings.Replace(schema, "scalar String", "", -1)
+		schema = strings.Replace(schema, "scalar Int", "", -1)
+		schema = strings.Replace(schema, "scalar ID", "", -1)
+		schema = strings.Replace(schema, "scalar Float", "", -1)
+		schema = strings.Replace(schema, "scalar Boolean", "", -1)
+
 		subgraph := &v1alpha1.SubGraph{
 			Spec: v1alpha1.SubGraphSpec{
 				SubGraphSpec: model.SubGraphSpec{
 					SDL:    sdlStruct.Data.Service.SDL,
-					Schema: outWriter.String(),
+					Schema: schema,
 				},
 			},
 		}
