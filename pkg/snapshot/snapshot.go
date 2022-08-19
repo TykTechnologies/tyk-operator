@@ -3,14 +3,19 @@ package snapshot
 import (
 	"bufio"
 	"context"
+	jsonEncoding "encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
-
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
@@ -25,18 +30,29 @@ const (
 	DefaultNs    = "default"
 )
 
-func PrintSnapshot(ctx context.Context, fileName, category string, dumpAll bool) error {
+// PrintSnapshot outputs a snapshot of the Dashboard as a CR.
+func PrintSnapshot(
+	ctx context.Context,
+	env *environmet.Env,
+	apiDefinitionsFile,
+	policiesFile,
+	category string,
+	dumpAll bool,
+) error {
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
 		return err
 	}
 
-	policiesList, err := klient.Universal.Portal().Policy().All(ctx)
-	if err != nil {
-		return err
+	var policiesList []tykv1alpha1.SecurityPolicySpec
+	if policiesFile != "" {
+		policiesList, err = fetchPolicies(env)
+		if err != nil {
+			return err
+		}
 	}
 
-	f, err := os.Create(fileName)
+	f, err := os.Create(apiDefinitionsFile)
 	if err != nil {
 		return err
 	}
@@ -85,8 +101,17 @@ func PrintSnapshot(ctx context.Context, fileName, category string, dumpAll bool)
 			}
 		}
 
-		if err := exportPolicies(policiesList, bw, e); err != nil {
-			return err
+		if policiesFile != "" {
+			policyFile, err := os.Create(policiesFile)
+			if err != nil {
+				return err
+			}
+			defer policyFile.Close()
+
+			pw := bufio.NewWriter(policyFile)
+			if err := exportPolicies(policiesList, pw, e); err != nil {
+				return err
+			}
 		}
 
 		return bw.Flush()
@@ -123,11 +148,50 @@ func PrintSnapshot(ctx context.Context, fileName, category string, dumpAll bool)
 		}
 	}
 
-	if err := exportPolicies(policiesList, bw, e); err != nil {
-		return err
+	if policiesFile != "" {
+		policyFile, err := os.Create(policiesFile)
+		if err != nil {
+			return err
+		}
+		defer policyFile.Close()
+
+		pw := bufio.NewWriter(policyFile)
+		if err := exportPolicies(policiesList, pw, e); err != nil {
+			return err
+		}
 	}
 
 	return bw.Flush()
+}
+
+// fetchPolicies lists all SecurityPolicy objects form dashboard.
+func fetchPolicies(e *environmet.Env) ([]tykv1alpha1.SecurityPolicySpec, error) {
+	url := client.JoinURL(e.URL, "/api/portal/policies?p=-2")
+	method := http.MethodGet
+
+	hc := &http.Client{}
+
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Authorization", e.Auth)
+
+	res, err := hc.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	policiesResponse := &dashboard.PoliciesResponse{}
+
+	err = jsonEncoding.NewDecoder(res.Body).Decode(&policiesResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return policiesResponse.Policies, nil
 }
 
 // parseConfigData parses given ApiDefinitionSpec's ConfigData field. It checks existence of NameKey and NamespaceKey
@@ -182,6 +246,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 	return
 }
 
+// exportPolicies writes all policies to the given buffer in a YAML format.
 func exportPolicies(policiesList []tykv1alpha1.SecurityPolicySpec, w *bufio.Writer, e *json.Serializer) error {
 	for i := 0; i < len(policiesList); i++ {
 		pol := tykv1alpha1.SecurityPolicy{

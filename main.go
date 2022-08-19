@@ -58,6 +58,7 @@ func main() {
 	var err error
 
 	var snapshotFile string
+	var policyFile string
 	var category string
 	var dumpAll bool
 
@@ -68,11 +69,15 @@ func main() {
 
 	flag.StringVar(&snapshotFile, "snapshot", "",
 		"By passing an export flag, we are telling the Operator to connect to a"+
-			"Tyk installation in order to pull a snapshot from that environment and output as CR")
+			"Tyk installation in order to pull a snapshot of ApiDefinitions from that environment and output as CR")
 
 	flag.BoolVar(&dumpAll, "all", false, "Dump all APIs")
 
 	flag.StringVar(&category, "category", "operator", "Dump APIs from specified category.")
+
+	flag.StringVar(&policyFile, "policy", "",
+		"By passing an export flag, we are telling the Operator to connect to a"+
+			"Tyk installation in order to pull a snapshot of SecurityPolicies from that environment and output as CR")
 
 	opts := zap.Options{
 		Development: true,
@@ -126,7 +131,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := snapshot.PrintSnapshot(ctx, snapshotFile, category, dumpAll); err != nil {
+		if err := snapshot.PrintSnapshot(ctx, &env, snapshotFile, policyFile, category, dumpAll); err != nil {
 			snapshotLog.Error(err, "failed to create snapshot file")
 			os.Exit(1)
 		}
