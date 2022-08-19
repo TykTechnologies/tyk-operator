@@ -130,15 +130,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 
-		// we support only one certificate secret name for mvp
-		if len(desired.Spec.CertificateSecretNames) != 0 {
-			certName := desired.Spec.CertificateSecretNames[0]
-			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
-			if err != nil {
-				return err
-			}
-
-			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
+		if err := r.processCertificateReferences(ctx, env, log, upstreamRequestStruct); err != nil {
+			return err
 		}
 
 		r.processUpstreamCertificateReferences(ctx, env, log, upstreamRequestStruct)
@@ -218,9 +211,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 
-		// To prevent API object validation failures, set additional properties to nil.
-		upstreamRequestStruct.Spec.CertificateSecretNames = nil
-
 		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
 
 		targets := upstreamRequestStruct.Spec.CollectLoopingTarget()
@@ -253,12 +243,34 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{RequeueAfter: queueA}, err
 }
 
+func (r *ApiDefinitionReconciler) processCertificateReferences(
+	ctx context.Context,
+	env environmet.Env,
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) error {
+	// we support only one certificate secret name for mvp
+	if len(upstreamRequestStruct.Spec.CertificateSecretNames) != 0 {
+		certName := upstreamRequestStruct.Spec.CertificateSecretNames[0]
+		tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, &env)
+		if err != nil {
+			return err
+		}
+
+		upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
+	}
+	// To prevent API object validation failures, set additional properties to nil.
+	upstreamRequestStruct.Spec.CertificateSecretNames = nil
+
+	return nil
+}
+
 func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 	ctx context.Context,
 	env environmet.Env,
 	log logr.Logger,
-	upstreamRequestStruct *tykv1alpha1.ApiDefinition) {
-
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) {
 	if len(upstreamRequestStruct.Spec.PinnedPublicKeysRefs) != 0 {
 		for domain, secretName := range upstreamRequestStruct.Spec.PinnedPublicKeysRefs {
 			// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
