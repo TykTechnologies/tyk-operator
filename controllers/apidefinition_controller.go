@@ -130,22 +130,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 
-		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
-			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
-				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
-				if err != nil {
-					// we should log the missing secret, but we should still create the API definition
-					log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
-				} else {
-					if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
-						upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
-					}
-					upstreamRequestStruct.Spec.UpstreamCertificates[domain] = tykCertID
-				}
-			}
-		}
-		upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
-
 		// we support only one certificate secret name for mvp
 		if len(desired.Spec.CertificateSecretNames) != 0 {
 			certName := desired.Spec.CertificateSecretNames[0]
@@ -156,6 +140,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
 		}
+
+		r.processUpstreamCertificateReferences(ctx, env, log, upstreamRequestStruct)
 
 		// Check Pinned Public keys
 		if len(desired.Spec.PinnedPublicKeysRefs) != 0 {
@@ -282,6 +268,29 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
+}
+
+func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
+	ctx context.Context,
+	env environmet.Env,
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition) {
+
+	if len(upstreamRequestStruct.Spec.UpstreamCertificateRefs) != 0 {
+		for domain, certName := range upstreamRequestStruct.Spec.UpstreamCertificateRefs {
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, &env)
+			if err != nil {
+				// we should log the missing secret, but we should still create the API definition
+				log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
+			} else {
+				if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
+					upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
+				}
+				upstreamRequestStruct.Spec.UpstreamCertificates[domain] = tykCertID
+			}
+		}
+	}
+	upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
 }
 
 func decodeID(encodedID string) (namespace, name string) {
