@@ -23,6 +23,9 @@ import (
 // names stores each ApiDefiniton's ID as a key and .metadata.name field of corresponding ApiDefinition.
 var names map[string]string
 
+// namesSpaces stores each ApiDefiniton's ID as a key and .metadata.namespace field of corresponding ApiDefinition.
+var nameSpaces map[string]string
+
 const (
 	NameKey      = "k8sName"
 	NamespaceKey = "k8sNs"
@@ -80,6 +83,7 @@ func PrintSnapshot(
 	}
 
 	names = make(map[string]string)
+	nameSpaces = make(map[string]string)
 
 	if dumpAll {
 		for i, v := range apiDefSpecList.Apis {
@@ -90,7 +94,8 @@ func PrintSnapshot(
 			apiDef := createApiDef(name, ns)
 			apiDef.Spec.APIDefinitionSpec = *v
 
-			names[apiDef.Spec.APIID] = apiDef.ObjectMeta.Name
+			// store metadata of this ApiDefinition in memory.
+			storeMetadata(apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
 
 			if err := e.Encode(&apiDef, bw); err != nil {
 				return err
@@ -136,7 +141,7 @@ func PrintSnapshot(
 		apiDef := createApiDef(name, ns)
 		apiDef.Spec.APIDefinitionSpec = *v
 
-		names[apiDef.Spec.APIID] = apiDef.ObjectMeta.Name
+		storeMetadata(apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
 		i++
 
 		if err := e.Encode(&apiDef, bw); err != nil {
@@ -162,6 +167,15 @@ func PrintSnapshot(
 	}
 
 	return bw.Flush()
+}
+
+func storeMetadata(key, name, namespace string) {
+	names[key] = name
+	nameSpaces[key] = namespace
+}
+
+func getMetadata(key string) (name, namespace string) {
+	return names[key], nameSpaces[key]
 }
 
 // fetchPolicies lists all SecurityPolicy objects form dashboard.
@@ -264,21 +278,21 @@ func exportPolicies(policiesList []tykv1alpha1.SecurityPolicySpec, w *bufio.Writ
 		for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
 			apiID := pol.Spec.AccessRightsArray[i].APIID
 
-			name := names[apiID]
-			if name == "" {
+			name, namespace := getMetadata(apiID)
+			if name == "" || namespace == "" {
 				fmt.Printf("WARNING: Please ensure that API identified by %s exists in k8s environment.\n", apiID)
 			}
 
 			p, ok := pol.Spec.AccessRights[apiID]
 			if ok {
 				p.Name = name
-				p.Namespace = "default"
+				p.Namespace = namespace
 
 				pol.Spec.AccessRights[apiID] = p
 			}
 
 			pol.Spec.AccessRightsArray[i].Name = name
-			pol.Spec.AccessRightsArray[i].Namespace = "default"
+			pol.Spec.AccessRightsArray[i].Namespace = namespace
 		}
 
 		if err := e.Encode(&pol, w); err != nil {
