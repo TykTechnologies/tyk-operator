@@ -1,6 +1,8 @@
 # API Definitions
 
-An API Definition describes the configuration of an API. It instructs Tyk Gateway how to configure the API.
+An API Definition describes the configuration of an API. It instructs Tyk Gateway how to configure the API. 
+
+To check the supported features of the API Definitions CRD version you're currently using, please use the "Switch branches / tags" feature on GitHub and select corresponding version tag.
 
 ## Implemented Capabilities / Support Status
 
