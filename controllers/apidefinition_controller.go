@@ -310,6 +310,9 @@ func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 				continue
 			}
 
+			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
+				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
+			}
 			upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
 		}
 	}
