@@ -20,7 +20,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | TCP                                | ✅      | v0.1           | -                            |        |
 | TLS                                | ✅      | v0.1           | -                            |        |
 | GraphQL - Proxy                    | ✅      | v0.1           | -                            | [Sample](./../config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml) |
-| GraphQL - Universal Data Graph     | ⚠️      | v0.1           | V2 Engine & API ETA Sep 2022 | [Sample](./../config/samples/udg_1.yaml) |
+| GraphQL - Universal Data Graph     | ⚠️      | v0.1           | V2 Engine & API ETA Sep 2022 | [Sample - Works with V1 Engine only (Tyk v3.1 or before) ](./../config/samples/udg_1.yaml) |
 | GraphQL - Federation               | ⚠️      | -              | WIP ETA Sep 2022             | [Sample](./../config/samples/federation/README.md) |
 
 ## Routing
