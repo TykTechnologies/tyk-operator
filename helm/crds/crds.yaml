@@ -237,11 +237,11 @@ spec:
                 items:
                   type: string
                 type: array
-              client_certificates:
+              client_certificate_refs:
                 items:
                   type: string
                 type: array
-              client_certificates_refs:
+              client_certificates:
                 items:
                   type: string
                 type: array

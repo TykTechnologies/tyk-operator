@@ -579,7 +579,7 @@ type APIDefinitionSpec struct {
 
 	UseMutualTLSAuth      bool     `json:"use_mutual_tls_auth,omitempty"`
 	ClientCertificates    []string `json:"client_certificates,omitempty"`
-	ClientCertificateRefs []string `json:"client_certificates_refs,omitempty"`
+	ClientCertificateRefs []string `json:"client_certificate_refs,omitempty"`
 
 	// PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in
 	// case an upstream certificate is compromised. Please use PinnedPublicKeysRefs if using cert-manager.

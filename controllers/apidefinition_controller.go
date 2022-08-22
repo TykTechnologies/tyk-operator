@@ -139,6 +139,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// Check Pinned Public keys
 		r.processPinnedPublicKeyReferences(ctx, env, log, upstreamRequestStruct)
 
+		if desired.Spec.UseMutualTLSAuth {
+			r.processClientCertificateReferences(ctx, env, log, upstreamRequestStruct)
+		}
+
 		// Check GraphQL Federation
 		if upstreamRequestStruct.Spec.GraphQL != nil && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
 			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
@@ -241,6 +245,31 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
+}
+
+func (r *ApiDefinitionReconciler) processClientCertificateReferences(
+	ctx context.Context,
+	env environmet.Env,
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) {
+	if len(upstreamRequestStruct.Spec.ClientCertificateRefs) != 0 {
+		clientCerts := make([]string, 0)
+
+		for _, secretName := range upstreamRequestStruct.Spec.ClientCertificateRefs {
+			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, &env)
+			if err != nil {
+				// we should log the missing secret, but we should still create the API definition
+				log.Info("failed to upload client certificate", "error", err)
+				continue
+			}
+
+			clientCerts = append(clientCerts, tykCertID)
+		}
+
+		upstreamRequestStruct.Spec.ClientCertificates = clientCerts
+		upstreamRequestStruct.Spec.ClientCertificateRefs = nil
+	}
 }
 
 func (r *ApiDefinitionReconciler) processCertificateReferences(
