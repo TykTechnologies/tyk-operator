@@ -822,13 +822,16 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 		defaultVersion              = "Default"
 		opNs                        = "tyk-operator-system"
 		certName                    = "test-tls-secret-name"
-		dashboardLocalHost          = adminLocalhost
+		tykConnectionURL            = ""
 	)
 
 	mode := os.Getenv("TYK_MODE")
-	if strings.TrimSpace(mode) == "ce" {
-		t.Log("CE is not feasible to test at the moment.")
-		return
+
+	switch mode {
+	case "pro":
+		tykConnectionURL = adminLocalhost
+	case "ce":
+		tykConnectionURL = gatewayLocalhost
 	}
 
 	testWithCert := features.New("Client MTLS with certificate").
@@ -892,14 +895,18 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					is.Fail()
 				}
 
+				if mode == "ce" {
+					tykOrg = []byte("")
+				}
+
 				calculatedCertID := string(tykOrg) + certFingerPrint
 
 				err = wait.For(func() (done bool, err error) {
 					env := environmet.Env{}
-					env.Mode = "pro"
+					env.Mode = v1alpha1.OperatorContextMode(mode)
 					env.Org = string(tykOrg)
 					env.Auth = string(tykAuth)
-					env.URL = dashboardLocalHost
+					env.URL = tykConnectionURL
 
 					pkgContext := pkgclient.Context{
 						Env: env,
@@ -974,10 +981,10 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 				err = wait.For(func() (done bool, err error) {
 					env := environmet.Env{}
-					env.Mode = "pro"
+					env.Mode = v1alpha1.OperatorContextMode(mode)
 					env.Org = string(tykOrg)
 					env.Auth = string(tykAuth)
-					env.URL = dashboardLocalHost
+					env.URL = tykConnectionURL
 
 					pkgContext := pkgclient.Context{
 						Env: env,
