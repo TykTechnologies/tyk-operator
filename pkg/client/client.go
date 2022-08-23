@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+
 	"net"
 	"net/http"
 	"net/url"
@@ -183,7 +183,7 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 
 	if res.StatusCode != http.StatusOK {
 		defer res.Body.Close()
-		b, _ := ioutil.ReadAll(res.Body)
+		b, _ := io.ReadAll(res.Body)
 
 		if len(b) > 0 {
 			rctx.Log.Info(http.StatusText(res.StatusCode), "body", string(b))
@@ -235,7 +235,7 @@ func SetHeaders(q map[string]string) func(*http.Request) {
 
 // Error dumps whole response plus body and return it as an error
 func Error(res *http.Response) error {
-	b, _ := ioutil.ReadAll(res.Body)
+	b, _ := io.ReadAll(res.Body)
 	return fmt.Errorf("%d API call failed with %v", res.StatusCode, string(b))
 }
 

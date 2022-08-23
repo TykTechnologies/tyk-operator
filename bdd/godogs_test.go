@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -215,7 +214,7 @@ func (s *store) iRequestEndpointWithHeader(path, headerKey, headerValue string) 
 		func(res *http.Response) error {
 			s.responseCode = res.StatusCode
 			s.responseHeaders = res.Header.Clone()
-			s.responseBody, _ = ioutil.ReadAll(res.Body)
+			s.responseBody, _ = io.ReadAll(res.Body)
 			return nil
 		},
 	)
@@ -234,7 +233,7 @@ func (s *store) iRequestEndpoint(path string) error {
 		func(h *http.Response) error {
 			s.responseCode = h.StatusCode
 			s.responseHeaders = h.Header.Clone()
-			s.responseBody, _ = ioutil.ReadAll(h.Body)
+			s.responseBody, _ = io.ReadAll(h.Body)
 			return nil
 		},
 	)

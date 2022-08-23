@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
+
 	"mime/multipart"
 	"net/http"
 
@@ -85,7 +85,7 @@ func (c Cert) Upload(ctx context.Context, key, crt []byte) (id string, err error
 		return "", err
 	}
 
-	_, err = io.Copy(part, ioutil.NopCloser(bytes.NewReader(combined)))
+	_, err = io.Copy(part, io.NopCloser(bytes.NewReader(combined)))
 
 	err = writer.Close()
 	if err != nil {

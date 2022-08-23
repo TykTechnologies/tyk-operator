@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -119,10 +119,10 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(context.Context) err
 			}
 			doErr = append(doErr, nil)
 			response = append(response, res)
-			b, _ := ioutil.ReadAll(res.Body)
+			b, _ := io.ReadAll(res.Body)
 			res.Body.Close()
 			body = append(body, string(b))
-			res.Body = ioutil.NopCloser(bytes.NewReader(b))
+			res.Body = io.NopCloser(bytes.NewReader(b))
 			return res, nil
 		},
 	}

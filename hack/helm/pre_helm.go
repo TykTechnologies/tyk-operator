@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
 func main() {
-	a, _ := ioutil.ReadAll(os.Stdin)
+	a, _ := io.ReadAll(os.Stdin)
 	m := []struct{ key, value string }{
 		{namespace, ""},
 		{envFrom, envFromTPL},
