@@ -125,11 +125,12 @@ created inside Tyk will follow a special naming convention as follows:
 <ingress_namespace>-<ingress_name>-<hash(Host + Path)>
 ```
 
+
 The above ingress resource will create an ApiDefinition called `default-httpbin-ingress-78acd160d` inside Tyk's Gateway.
 ApiDefinition's name comes from:
 - `default`: The namespace of this Ingress resource,
 - `httpbin-ingress`: The name of this Ingress resource,
-- `78acd160d`: Short hash (first 9 characters) of Host (`""`) and Path (`/httpbin`).
+- `78acd160d`: Short hash (first 9 characters) of Host (`""`) and Path (`/httpbin`). The hash algorithm is SHA256.
 
 The ApiDefinition will offer path-based routing listening on `/httpbin`. Because the referenced template is `myapideftemplate`, the IngressReconciler will retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard auth enabled.
 
