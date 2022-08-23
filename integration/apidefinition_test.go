@@ -931,7 +931,6 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					is.True(apiDef.ClientCertificates[0] == calculatedCertID)
 
 					return true, nil
-
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 
@@ -1004,7 +1003,6 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					is.True(len(apiDef.ClientCertificates) == 0)
 
 					return true, nil
-
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
 

@@ -130,17 +130,17 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 
-		if err := r.processCertificateReferences(ctx, env, log, upstreamRequestStruct); err != nil {
+		if err := r.processCertificateReferences(ctx, &env, log, upstreamRequestStruct); err != nil {
 			return err
 		}
 
-		r.processUpstreamCertificateReferences(ctx, env, log, upstreamRequestStruct)
+		r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 
 		// Check Pinned Public keys
-		r.processPinnedPublicKeyReferences(ctx, env, log, upstreamRequestStruct)
+		r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
 
 		if desired.Spec.UseMutualTLSAuth {
-			r.processClientCertificateReferences(ctx, env, log, upstreamRequestStruct)
+			r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 		}
 
 		// Check GraphQL Federation
@@ -249,7 +249,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 func (r *ApiDefinitionReconciler) processClientCertificateReferences(
 	ctx context.Context,
-	env environmet.Env,
+	env *environmet.Env,
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
@@ -257,7 +257,7 @@ func (r *ApiDefinitionReconciler) processClientCertificateReferences(
 		clientCerts := make([]string, 0)
 
 		for _, secretName := range upstreamRequestStruct.Spec.ClientCertificateRefs {
-			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, &env)
+			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, env)
 			if err != nil {
 				// we should log the missing secret, but we should still create the API definition
 				log.Info("failed to upload client certificate", "error", err)
@@ -274,14 +274,15 @@ func (r *ApiDefinitionReconciler) processClientCertificateReferences(
 
 func (r *ApiDefinitionReconciler) processCertificateReferences(
 	ctx context.Context,
-	env environmet.Env,
+	env *environmet.Env,
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) error {
 	// we support only one certificate secret name for mvp
 	if len(upstreamRequestStruct.Spec.CertificateSecretNames) != 0 {
 		certName := upstreamRequestStruct.Spec.CertificateSecretNames[0]
-		tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, &env)
+
+		tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, env)
 		if err != nil {
 			return err
 		}
@@ -296,14 +297,14 @@ func (r *ApiDefinitionReconciler) processCertificateReferences(
 
 func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 	ctx context.Context,
-	env environmet.Env,
+	env *environmet.Env,
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
 	if len(upstreamRequestStruct.Spec.PinnedPublicKeysRefs) != 0 {
 		for domain, secretName := range upstreamRequestStruct.Spec.PinnedPublicKeysRefs {
 			// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
-			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, &env)
+			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, env)
 			if err != nil {
 				// we should log the missing secret, but we should still create the API definition
 				log.Info("failed to upload pinned public key", "error", err)
@@ -313,6 +314,7 @@ func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
 				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
 			}
+
 			upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
 		}
 	}
@@ -322,13 +324,13 @@ func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 
 func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
 	ctx context.Context,
-	env environmet.Env,
+	env *environmet.Env,
 	log logr.Logger,
-	upstreamRequestStruct *tykv1alpha1.ApiDefinition) {
-
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) {
 	if len(upstreamRequestStruct.Spec.UpstreamCertificateRefs) != 0 {
 		for domain, certName := range upstreamRequestStruct.Spec.UpstreamCertificateRefs {
-			tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, &env)
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, env)
 			if err != nil {
 				// we should log the missing secret, but we should still create the API definition
 				log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
@@ -340,6 +342,7 @@ func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
 			}
 		}
 	}
+
 	upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
 }
 
