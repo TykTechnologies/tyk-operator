@@ -1,0 +1,36 @@
+##### How to use upstream certificate refs:
+
+#
+# First create a cert-manager issued TLS certificate using the following command
+# "kubectl apply -f config/samples/tls/upstream/upstream-tls-cert-manager.yaml -n tyk"
+#
+# Next create an APIDefinition that references a cert-manager created secret by applying this manifest
+# "kubectl apply -f config/samples/httpbin_upstream_certmanager_cert.yaml -n tyk"
+#
+# NOTE: the operator can work even if the certificate is not in the cluster. In that case it will try to create the APIDefinition and will succeed, but will log an error that a certificate is missing
+# in the cluster for an upstream
+
+# NOTE: the upstream_certificate_refs can hold references to multiple secrets which are used for the domain
+# mentioned in the key (currently "*" is used as a wildcard for all the domains)
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: true
+  upstream_certificate_refs:
+    "*": upstream-tls
+  protocol: http
+  active: true
+  proxy:
+    target_url: https://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
