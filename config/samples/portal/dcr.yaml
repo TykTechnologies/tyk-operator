@@ -15,7 +15,7 @@ spec:
   strip_auth_data: true
   jwt_signing_method: rsa
   jwt_source: aHR0cDovL2VjMi0xMy00MS0xNjUtMTUuZXUtd2VzdC0yLmNvbXB1dGUuYW1hem9uYXdzLmNvbTo4MTgwL2F1dGgvcmVhbG1zL21hc3Rlci9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9jZXJ0cw==
-  jwt_identity_base_field: sub
+  jwt_identity_base_field: clientId
   jwt_policy_field_name: pol
   jwt_default_policies:
     - tyk/jwt-policy
