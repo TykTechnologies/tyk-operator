@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        type: option
+        type: choice
         description: Start or Stop?
         options: 
         - start
