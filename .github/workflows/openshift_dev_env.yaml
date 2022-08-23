@@ -1,9 +1,9 @@
-name: openshiftDevEnv
+name: OpenShift Dev Env
 on:
   workflow_dispatch:
     inputs:
-      name:
-        type: action
+      action:
+        type: option
         description: Start or Stop?
         options: 
         - start
