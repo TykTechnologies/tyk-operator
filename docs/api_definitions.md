@@ -45,7 +45,7 @@ An API Definition describes the configuration of an API. It instructs Tyk Gatewa
 | OAuth2 - Implicit | ⚠️ | Untested |
 | OAuth2 - Password | ⚠️ | Untested |
 | OpenID Connect | ❌ | Not implemented |
-| mTLS | ❌ | Not implemented |
+| [mTLS](./../config/samples/mtls/client/) | ✅ | Only Static flow is supported |
 | HMAC | ❌ | Not implemented |
 | Basic Authentication | ❌ | Not implemented |
 | Plugin Auth - Go | ❌ | Not implemented |
