@@ -518,11 +518,6 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 }
 
 func TestApiDefinitionCertificatePinning(t *testing.T) {
-	if strings.TrimSpace(os.Getenv("TYK_MODE")) == "ce" {
-		t.Log("CE is not feasible to test at the moment.")
-		return
-	}
-
 	var (
 		apiDefPinning = "apidef-certificate-pinning"
 
@@ -702,12 +697,16 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 		defaultVersion      = "Default"
 		opNs                = "tyk-operator-system"
 		certName            = "test-tls-secret-name"
-		dashboardLocalHost  = "http://localhost:7200"
+		tykConnectionURL    = ""
 	)
 
-	if strings.TrimSpace(os.Getenv("TYK_MODE")) == "ce" {
-		t.Log("CE is not feasible to test at the moment.")
-		return
+	mode := os.Getenv("TYK_MODE")
+
+	switch mode {
+	case "pro":
+		tykConnectionURL = adminLocalhost
+	case "ce":
+		tykConnectionURL = gatewayLocalhost
 	}
 
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
@@ -778,7 +777,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 					req, err := http.NewRequest(
 						http.MethodGet,
-						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, string(tykOrg)),
+						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", tykConnectionURL, calculatedCertID, string(tykOrg)),
 						nil,
 					)
 					is.NoErr(err)
