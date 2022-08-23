@@ -2,9 +2,7 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -773,37 +771,23 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				calculatedCertID := string(tykOrg) + certFingerPrint
 
 				err = wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
+					env := environmet.Env{}
+					env.Mode = v1alpha1.OperatorContextMode(mode)
+					env.Org = string(tykOrg)
+					env.Auth = string(tykAuth)
+					env.URL = tykConnectionURL
 
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", tykConnectionURL, calculatedCertID, string(tykOrg)),
-						nil,
-					)
-					is.NoErr(err)
-					req.Header.Add("Content-type", "application/json")
-					req.Header.Add("authorization", string(tykAuth))
-
-					resp, err := hc.Do(req)
-					is.NoErr(err)
-
-					response, err := io.ReadAll(resp.Body)
-					if err != nil {
-						return false, nil
+					pkgContext := pkgclient.Context{
+						Env: env,
+						Log: log.NullLogger{},
 					}
 
-					certResponse := struct {
-						Certs []string `json:"certs"`
-						Pages int      `json:"pages"`
-					}{}
-					err = json.Unmarshal(response, &certResponse)
-					if err != nil {
-						return false, nil
-					}
+					// validate certificate was created
+					reqContext := pkgclient.SetContext(context.Background(), pkgContext)
+					exists := klient.Universal.Certificate().Exists(reqContext, calculatedCertID)
 
-					if len(certResponse.Certs) < 1 {
-						return false, nil
-					}
+					is.True(exists)
+
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
