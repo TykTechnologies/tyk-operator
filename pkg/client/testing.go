@@ -111,15 +111,22 @@ func RunRequestKase(t *testing.T, e environmet.Env, fn func(context.Context) err
 		Log: log.NullLogger{},
 		Do: func(h *http.Request) (*http.Response, error) {
 			request = append(request, h)
+
 			res, err := Do(h)
 			if err != nil {
 				doErr = append(doErr, err)
 				response = append(response, nil)
 				return nil, err
 			}
+
 			doErr = append(doErr, nil)
 			response = append(response, res)
-			b, _ := io.ReadAll(res.Body)
+
+			b, err := io.ReadAll(res.Body)
+			if err != nil {
+				return nil, err
+			}
+
 			res.Body.Close()
 			body = append(body, string(b))
 			res.Body = io.NopCloser(bytes.NewReader(b))

@@ -212,9 +212,16 @@ func (s *store) iRequestEndpointWithHeader(path, headerKey, headerValue string) 
 			h.Header.Set(headerKey, headerValue)
 		},
 		func(res *http.Response) error {
+			var err error
+
 			s.responseCode = res.StatusCode
 			s.responseHeaders = res.Header.Clone()
-			s.responseBody, _ = io.ReadAll(res.Body)
+			s.responseBody, err = io.ReadAll(res.Body)
+
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
@@ -231,9 +238,16 @@ func (s *store) iRequestEndpoint(path string) error {
 		func() io.Reader { return nil },
 		func(h *http.Request) {},
 		func(h *http.Response) error {
+			var err error
+
 			s.responseCode = h.StatusCode
 			s.responseHeaders = h.Header.Clone()
-			s.responseBody, _ = io.ReadAll(h.Body)
+			s.responseBody, err = io.ReadAll(h.Body)
+
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)

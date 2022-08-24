@@ -3,7 +3,6 @@ package dashboard
 import (
 	"encoding/json"
 	"io"
-
 	"net/http"
 	"os"
 	"path/filepath"

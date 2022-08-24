@@ -7,7 +7,11 @@ import (
 )
 
 func main() {
-	a, _ := io.ReadAll(os.Stdin)
+	a, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		os.Stderr.WriteString("Failed to read input")
+	}
+
 	m := []struct{ key, value string }{
 		{namespace, ""},
 		{envFrom, envFromTPL},
