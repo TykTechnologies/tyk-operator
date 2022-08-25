@@ -260,7 +260,12 @@ func (r *ApiDefinitionReconciler) processClientCertificateReferences(
 			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, env)
 			if err != nil {
 				// we should log the missing secret, but we should still create the API definition
-				log.Info("failed to upload client certificate", "error", err)
+				log.Error(
+					err,
+					"failed to upload client certificate. Creating API Definition without uploading certificate",
+					"secretName",
+					secretName)
+
 				continue
 			}
 
@@ -302,17 +307,22 @@ func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
 	if len(upstreamRequestStruct.Spec.PinnedPublicKeysRefs) != 0 {
+		if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
+			upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
+		}
+
 		for domain, secretName := range upstreamRequestStruct.Spec.PinnedPublicKeysRefs {
 			// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
 			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, env)
 			if err != nil {
 				// we should log the missing secret, but we should still create the API definition
-				log.Info("failed to upload pinned public key", "error", err)
-				continue
-			}
+				log.Error(
+					err,
+					"failed to upload pinned public key from the secret. Creating API Definition without uploading certificate",
+					"secretName",
+					secretName)
 
-			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
-				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
+				continue
 			}
 
 			upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
