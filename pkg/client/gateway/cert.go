@@ -50,7 +50,7 @@ func (c Cert) Exists(ctx context.Context, id string) bool {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		client.LError(ctx, client.Error(res), "Unexepcted status")
+		client.LError(ctx, client.Error(res), "Unexpected status")
 		return false
 	}
 
