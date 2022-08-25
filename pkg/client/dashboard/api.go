@@ -116,8 +116,8 @@ func (Api) List(
 	a := model.APIDefinitionSpecList{}
 
 	for _, v := range o.Apis {
-		apiDefSpec := v.ApiDefinition
-		a.Apis = append(a.Apis, &apiDefSpec)
+		v := v
+		a.Apis = append(a.Apis, &v.ApiDefinition)
 	}
 
 	return &a, nil

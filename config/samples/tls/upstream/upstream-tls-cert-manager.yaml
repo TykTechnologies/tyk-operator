@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: upstream-tls
+spec:
+  secretName: upstream-tls
+  dnsNames:
+    - tyk-upstream-tls-service.tyk.svc
+    - tyk-upstream-tls-service.tyk.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: tyk-operator-selfsigned-issuer
