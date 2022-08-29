@@ -853,6 +853,9 @@ spec:
                   type: string
                 description: UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk Gateway to provide mTLS support for upstreams
                 type: object
+              use_go_plugin_auth:
+                description: Enable Go Plugin Auth
+                type: boolean
               use_keyless:
                 description: UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting, quotas and security policies will not be possible (there is no session to attach requests to).
                 type: boolean
@@ -1691,6 +1694,7 @@ spec:
             - name
             - protocol
             - proxy
+            - use_go_plugin_auth
             type: object
           status:
             description: ApiDefinitionStatus defines the observed state of ApiDefinition
