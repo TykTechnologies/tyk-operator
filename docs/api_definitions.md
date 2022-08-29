@@ -36,24 +36,24 @@ To check the supported features of the API Definitions CRD version you're curren
 
 ## Client to Gateway Authentication
 
-| Type | Supported | Comments |
-| ----------- | --------- | --------- |
-| [Keyless](./../config/samples/httpbin.yaml) | ✅ | - |
-| [Static Bearer Token](./../config/samples/httpbin_protected.yaml) | ✅ | - |
-| [JWT](./../config/samples/jwt-auth) | ✅️ | - |
-| [OAuth2 - Client Credentials](./../config/samples/oauth2/client_credentials.yaml) | ✅️ | - |
-| OAuth2 - Authorization Code | ⚠️ | Untested |
-| OAuth2 - Authorization Code + Refresh Token | ⚠️ | Untested |
-| OAuth2 - Implicit | ⚠️ | Untested |
-| OAuth2 - Password | ⚠️ | Untested |
-| OpenID Connect | ❌ | Not implemented |
-| mTLS | ❌ | Not implemented |
-| HMAC | ❌ | Not implemented |
-| Basic Authentication | ❌ | Not implemented |
-| Plugin Auth - Go | ❌ | Not implemented |
-| [Plugin Auth - gRPC](./../bdd/features/api_http_grpc_plugin.feature) | ✅ | - |
-| [IP Whitelisting](./api_definitions/ip.md#whitelisting) | ✅ | - |
-| [IP Blacklisting](./api_definitions/ip.md#blacklisting) | ✅ | - |
+| Type                                                                              | Supported | Comments        |
+|-----------------------------------------------------------------------------------| --------- |-----------------|
+| [Keyless](./../config/samples/httpbin.yaml)                                       | ✅ | -               |
+| [Static Bearer Token](./../config/samples/httpbin_protected.yaml)                 | ✅ | -               |
+| [JWT](./../config/samples/jwt-auth)                                               | ✅️ | -               |
+| [OAuth2 - Client Credentials](./../config/samples/oauth2/client_credentials.yaml) | ✅️ | -               |
+| OAuth2 - Authorization Code                                                       | ⚠️ | Untested        |
+| OAuth2 - Authorization Code + Refresh Token                                       | ⚠️ | Untested        |
+| OAuth2 - Implicit                                                                 | ⚠️ | Untested        |
+| OAuth2 - Password                                                                 | ⚠️ | Untested        |
+| OpenID Connect                                                                    | ❌ | Not implemented |
+| mTLS                                                                              | ❌ | Not implemented |
+| HMAC                                                                              | ❌ | Not implemented |
+| Basic Authentication                                                              | ❌ | Not implemented |
+| [Plugin Auth - Go](./api_definitions/custom_plugin_goauth.yaml)                   | ✅ | -               |
+| [Plugin Auth - gRPC](./../bdd/features/api_http_grpc_plugin.feature)              | ✅ | -               |
+| [IP Whitelisting](./api_definitions/ip.md#whitelisting)                           | ✅ | -               |
+| [IP Blacklisting](./api_definitions/ip.md#blacklisting)                           | ✅ | -               |
 
 ## Gateway to Upstream Authentication
 
