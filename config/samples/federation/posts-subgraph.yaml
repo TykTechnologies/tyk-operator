@@ -9,8 +9,8 @@ metadata:
 spec:
   ports:
     - name: http
-      port: 4002
-      targetPort: 4002
+      port: 4202
+      targetPort: 4202
   selector:
     app: posts
 ---
@@ -31,13 +31,13 @@ spec:
         version: v1
     spec:
       containers:
-        - image: zalbiraw/go-api-test-service
+        - image: zalbiraw/go-api-test-service:v2.0.0
           imagePullPolicy: Always
-          name: users
-          command: ["./posts/server"]
+          name: posts
+          command: ["./services/graphql-subgraphs/posts/server"]
           env:
             - name: PORT
-              value: "4002"
+              value: "4202"
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: SubGraph
@@ -127,6 +127,6 @@ spec:
       enabled: false
       path: ""
   proxy:
-    target_url: http://posts.default.svc:4002/query
+    target_url: http://posts.default.svc:4202/query
     listen_path: /posts-subgraph/
     disable_strip_slash: true
