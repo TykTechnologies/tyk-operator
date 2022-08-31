@@ -61,6 +61,7 @@ func main() {
 	var policyFile string
 	var category string
 	var dumpAll bool
+	var group bool
 
 	flag.StringVar(&configFile, "config", "",
 		"The controller will load its initial configuration from this file. "+
@@ -72,6 +73,10 @@ func main() {
 			"Tyk installation in order to pull a snapshot of ApiDefinitions from that environment and output as CR")
 
 	flag.BoolVar(&dumpAll, "all", false, "Dump all APIs")
+
+	flag.BoolVar(&group, "group", false, ""+
+		"output file contains groups of apis with corresponding security policies",
+	)
 
 	flag.StringVar(&category, "category", "operator", "Dump APIs from specified category.")
 
@@ -121,7 +126,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if snapshotFile != "" {
+	if snapshotFile != "" || group {
 		snapshotLog := ctrl.Log.WithName("snapshot").WithName("ApiDefinition")
 		ctx := context.Background()
 
@@ -131,7 +136,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := snapshot.PrintSnapshot(ctx, &env, snapshotFile, policyFile, category, dumpAll); err != nil {
+		if err := snapshot.PrintSnapshot(ctx, &env, snapshotFile, policyFile, category, dumpAll, group); err != nil {
 			snapshotLog.Error(err, "failed to create snapshot file")
 			os.Exit(1)
 		}

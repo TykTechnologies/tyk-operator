@@ -20,11 +20,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
 
-// names stores each ApiDefiniton's ID as a key and .metadata.name field of corresponding ApiDefinition.
-var names map[string]string
+var (
+	// names stores each ApiDefiniton's ID as a key and .metadata.name field of corresponding ApiDefinition.
+	names map[string]string
 
-// namesSpaces stores each ApiDefiniton's ID as a key and .metadata.namespace field of corresponding ApiDefinition.
-var nameSpaces map[string]string
+	// namesSpaces stores each ApiDefiniton's ID as a key and .metadata.namespace field of corresponding ApiDefinition.
+	nameSpaces map[string]string
+
+	idName map[string]*model.APIDefinitionSpec
+)
+
+type Group struct {
+	Policy         tykv1alpha1.SecurityPolicySpec
+	APIDefinitions model.APIDefinitionSpecList
+}
+
+type Groups []Group
 
 const (
 	NameKey      = "k8sName"
@@ -40,7 +51,8 @@ func PrintSnapshot(
 	apiDefinitionsFile,
 	policiesFile,
 	category string,
-	dumpAll bool,
+	dumpAll,
+	group bool,
 ) error {
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
@@ -48,7 +60,7 @@ func PrintSnapshot(
 	}
 
 	var policiesList []tykv1alpha1.SecurityPolicySpec
-	if policiesFile != "" {
+	if policiesFile != "" || group {
 		policiesList, err = fetchPolicies(env)
 		if err != nil {
 			return err
@@ -85,6 +97,56 @@ func PrintSnapshot(
 	names = make(map[string]string)
 	nameSpaces = make(map[string]string)
 
+	// Output file will contain ApiDefinitions grouped by SecurityPolicies.
+	if group {
+		idName = make(map[string]*model.APIDefinitionSpec)
+		for i := 0; i < len(apiDefSpecList.Apis); i++ {
+			idName[apiDefSpecList.Apis[i].APIID] = apiDefSpecList.Apis[i]
+		}
+
+		groups := groupPolicies(policiesList)
+		for i := 0; i < len(groups); i++ {
+			g := groups[i]
+
+			groupedFile, err := os.Create(fmt.Sprintf("grouped-pol-%d.yaml", i))
+			if err != nil {
+				return err
+			}
+
+			pw := bufio.NewWriter(groupedFile)
+
+			if err := writePolicies([]tykv1alpha1.SecurityPolicySpec{g.Policy}, pw, e); err != nil {
+				groupedFile.Close()
+				return err
+			}
+
+			for ii, v := range g.APIDefinitions.Apis {
+				// Parse Config Data of the ApiDefinition created on Dashboard.
+				name, ns := parseConfigData(v, fmt.Sprintf("%s-%d", DefaultName, ii))
+
+				// create an ApiDefinition object.
+				apiDef := createApiDef(name, ns)
+				apiDef.Spec.APIDefinitionSpec = *v
+
+				if err := e.Encode(&apiDef, pw); err != nil {
+					groupedFile.Close()
+					return err
+				}
+
+				if _, err := pw.WriteString("\n---\n"); err != nil {
+					groupedFile.Close()
+					return err
+				}
+			}
+
+			pw.Flush()
+			groupedFile.Close()
+		}
+
+		return nil
+	}
+
+	// Output file will contain all ApiDefinitions without checking any category.
 	if dumpAll {
 		for i, v := range apiDefSpecList.Apis {
 			// Parse Config Data of the ApiDefinition created on Dashboard.
@@ -114,7 +176,7 @@ func PrintSnapshot(
 			defer policyFile.Close()
 
 			pw := bufio.NewWriter(policyFile)
-			if err := exportPolicies(policiesList, pw, e); err != nil {
+			if err := writePolicies(policiesList, pw, e); err != nil {
 				return err
 			}
 		}
@@ -122,10 +184,12 @@ func PrintSnapshot(
 		return bw.Flush()
 	}
 
+	// Output file will contain ApiDefinition based on specified category.
 	category = strings.TrimSpace(category)
 	if !strings.HasPrefix(category, "#") {
 		category = fmt.Sprintf("#%s", category)
 	}
+	fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
 
 	i := 0
 
@@ -161,7 +225,7 @@ func PrintSnapshot(
 		defer policyFile.Close()
 
 		pw := bufio.NewWriter(policyFile)
-		if err := exportPolicies(policiesList, pw, e); err != nil {
+		if err := writePolicies(policiesList, pw, e); err != nil {
 			return err
 		}
 	}
@@ -260,8 +324,8 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 	return
 }
 
-// exportPolicies writes all policies to the given buffer in a YAML format.
-func exportPolicies(policiesList []tykv1alpha1.SecurityPolicySpec, w *bufio.Writer, e *json.Serializer) error {
+// writePolicies writes all policies to the given buffer in a YAML format.
+func writePolicies(policiesList []tykv1alpha1.SecurityPolicySpec, w *bufio.Writer, e *json.Serializer) error {
 	for i := 0; i < len(policiesList); i++ {
 		pol := tykv1alpha1.SecurityPolicy{
 			TypeMeta: metav1.TypeMeta{
@@ -305,4 +369,19 @@ func exportPolicies(policiesList []tykv1alpha1.SecurityPolicySpec, w *bufio.Writ
 	}
 
 	return w.Flush()
+}
+
+func groupPolicies(policiesList []tykv1alpha1.SecurityPolicySpec) Groups {
+	groups := Groups{}
+
+	for i := 0; i < len(policiesList); i++ {
+		g := Group{Policy: policiesList[i]}
+		for _, ar := range policiesList[i].AccessRightsArray {
+			g.APIDefinitions.Apis = append(g.APIDefinitions.Apis, idName[ar.APIID])
+		}
+
+		groups = append(groups, g)
+	}
+
+	return groups
 }
