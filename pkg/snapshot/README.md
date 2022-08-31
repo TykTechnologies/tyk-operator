@@ -9,18 +9,23 @@ It can help you to migrate existing APIs and Policies to Kubernetes environment.
 
 This tool is provided as PoC only and bear some limitations and restrictions. Please use with caution.
 
-| [Pre-requisite](#pre-requisite) | [Installation](#installation) | [Usage](#usage) | [Limitations](#limitations) |
 
-## Pre-Requisite
+---
+
+[Prerequisites](#prerequisites) | [Installation](#installation) | [Preparation](#preparation) | [Usage](#usage) | [Limitations](#limitations)
+
+---
+
+
+## Prerequisites
 
 1. Access to `tyk-operator` repository.
-2. Credentials to connect Tyk Dashboard. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid)
-for details.
+2. [go](https://go.dev/doc/install)
+3. Credentials to connect Tyk Dashboard. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid) for details.
 
 ## Installation
 
-In order to use snapshot tool, you should have access to Tyk Operator repository
-on your local machine.
+In order to use snapshot tool, checkout "feat/importer-cli" branch from Tyk Operator repository on your local machine.
 
 1. Clone Tyk Operator repository
 ```bash
@@ -34,71 +39,75 @@ git checkout feat/importer-cli
 go build
 ```
 
-3. Run snapshot
+## Preparation
+1. Use API Category to group the APIs you want to export
 
-- By default, snapshot only dumps ApiDefinitions grouped by a category. The category
-can be configured through `--category` flag. The default category is `operator`.
-For example, the command below only dumps ApiDefinitions within `k8s` category.
-```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --category k8s
-```
+By default, snapshot tool will export all APIs from Tyk dashboard with category `operator`.  You can also categorize your APIs by teams, environments, or any way you want. You can specify which API category to be exported in later steps.
 
-- To dump all of your ApiDefinitions, you can pass the `--all` flag.
-For example, the command below dumps all ApiDefinitions.
-```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --all
-```
+![apis](./img/apis.png)
+
+2. Specify the Kubernetes resource names in Config Data
+
+By default, the created ApiDefinition resource will have the name `replace-me-{i}`. It is not the best name for a kubernetes resource and should be manually updated. You can store this meta-data in Config Data for each API first before exporting, so that you do not need to manually update the output file afterwards.
+
+![config-data](./img/config-data.png)
 
 ## Usage
-
 ```bash
-Usage of ./tyk-operator:
-  -all
+tyk-operator exports APIs and Security Policies from your Tyk Dashboard to Custom Resource that can be used with Tyk Operator
+
+Export API Definitions:
+   --snapshot <output_file>
+    	Pull a snapshot of ApiDefinitions from Tyk Dashboard and output as CR
+  --all
     	Dump all APIs
-  -category string
-    	Dump APIs from specified category. (default "operator")
-  -policy string
-    	By passing an export flag, we are telling the Operator to connect to a Tyk installation 
-    in order to pull a snapshot of SecurityPolicies from that environment and output as CR
-  -snapshot string
-    	By passing an export flag, we are telling the Operator to connect to a Tyk installation 
-    in order to pull a snapshot of ApiDefinitions from that environment and output as CR
+  --category <category_name>
+    	Dump APIs from specified category (default "operator")
+
+Export Security Policies:
+  --policy <output_file>
+    	Pull a snapshot of SecurityPolicies from Tyk Dashboard and output as CR
 ```
 
+
+
+### Setting required environment variables
+
+Store the Tyk Dashboard connection parameters in environment variables before running `tyk-operator`, e.g.
+
 ```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --all
+TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> \
+./tyk-operator --snapshot <OUTPUT_FILE>
 ```
 
 where
-
 - `<TYK_URL>`: Management URL of your Tyk Dashboard.
 - `<TYK_AUTH>`: Operator user API Key.
 - `<TYK_ORG>`: Operator user ORG ID.
 
-> For more details, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid).
+> For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid).
 
-### Exporting ApiDefinitions
 
-You can export all ApiDefinitions or particular ApiDefinitions specified via category.
-Exported ApiDefinitions will be stored in the output file specified by `--snapshot`
-flag.
 
-- By default, tyk-operator exports ApiDefinitions defined in `#operator` category.
-You can change default category via `-category` flag.
+### Exporting API Definitions
+
+#### Specify Category to export
+
+By default, tyk-operator exports ApiDefinitions defined in `#operator` category. You can change default category via `--category` flag.
+
 ```bash
 TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --category k8s
 ```
 
-- To dump all ApiDefinitions from Dashboard, you can specify `--all` flag, as follows:
+You can also dump all ApiDefinitions from Dashboard via `--all` flag.
+
 ```bash
 TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --all
 ```
 
 #### Output CR
 
-snapshot CLI creates an output file specified via `--snapshot` flag. Each ApiDefinition
-CR metadata have a default name as `replace-me-{i}` where `{i}` increases by each 
-ApiDefinition.
+`tyk-operator` CLI creates an output file specified via `--snapshot` flag. Each ApiDefinition CR metadata has a default name  `replace-me-{i}` where `{i}` increases by each ApiDefinition.
 
 For example,
 ```yaml
@@ -113,6 +122,7 @@ spec:
 
 In order to specify CR metadata, you can use Config Data. For specified ApiDefinitions,
 snapshot CLI generates ApiDefinition CRs based on Config Data of that specific ApiDefinition.
+
 ```json
 {
   "k8sName": "metadata-name",
@@ -163,7 +173,6 @@ spec:
   ...
 ```
 
-
 ### Exporting Security Policies
 
 You can export your SecurityPolicy objects by specifying `--policy` flag.
@@ -173,16 +182,22 @@ TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-opera
 SecurityPolicy CRs will be saved into a file specified in `--policy` command.
 
 _**Warning:**_ All ApiDefinitions that SecurityPolicy access must exist in Kubernetes.
-Otherwise, SecurityPolicy controller logs an error since it cannot find corresponding
-ApiDefinition resource on the environment.
+Otherwise, when you try to apply the policies, SecurityPolicy controller logs an error since it cannot find corresponding ApiDefinition resource in the environment.
+
+### Applying the API and Policy Custom Resources
+
+1. Apply the API Definition CRs first
+
+2. After that, you can apply the Security Policies.
+
+3. The APIs and Policies are now managed by Tyk Operator!
 
 ## Limitations
-- Not all features are supported by Operator. Hence, some configurations would be
+- Not all features are supported by Operator. Non-supported features would be
 _lost_ during the conversion. 
 
-> Please visit [ApiDefinition](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/api_definitions.md)
-and [Policies](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/policies.md)
-documentations to see supported features.
+> Please visit [ApiDefinition](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/api_definitions.md) and [Policies](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/policies.md) documentations to see supported features.
 
+- The CLI tool will include all fields from your API RAW Definitions (i.e. also the empty and default fields). You can manually clean up those fields if you're sure 
 - Please remember that this is a PoC for exporting ApiDefinitions to k8s resources. 
 First, try on your testing environment.
