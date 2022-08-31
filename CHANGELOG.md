@@ -3,6 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.10.0...HEAD)
 
+**Added**
+- Added support for Go auth custom plugins
+
 **Documentation**
 - Added how Tyk Ingress Controller generates API names
 

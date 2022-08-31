@@ -1,0 +1,81 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+  namespace: tyk
+spec:
+  name: httpbin
+  enable_jwt: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  strip_auth_data: true
+  jwt_signing_method: rsa
+  jwt_source: aHR0cDovL2VjMi0xMy00MS0xNjUtMTUuZXUtd2VzdC0yLmNvbXB1dGUuYW1hem9uYXdzLmNvbTo4MTgwL2F1dGgvcmVhbG1zL21hc3Rlci9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9jZXJ0cw==
+  jwt_identity_base_field: clientId
+  jwt_policy_field_name: pol
+  jwt_default_policies:
+    - tyk/jwt-policy
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: jwt-policy
+  namespace: tyk
+spec:
+  access_rights_array:
+    - name: httpbin
+      namespace: tyk
+      versions:
+        - Default
+  active: true
+  name: jwt-policy
+  state: active
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: APIDescription
+metadata:
+  name: sample-dcr-api
+  namespace: tyk
+spec:
+  name: "Sample DCR API"
+  show: true
+  auth_type: jwt
+  policyRef:
+    name: jwt-policy
+    namespace: tyk
+  docs:
+    documentation: "https://httpbin.org/spec.json"
+    doc_type: swagger_custom_url
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: PortalConfig
+metadata:
+  name: sample-portal-config
+  namespace: tyk
+spec:
+  enable_dcr: true
+  dcr_options:
+    provider: keycloak
+    grant_types:
+      - "client_credentials"
+    response_types:
+      - "code"
+    token_endpoint_auth_method: client_secret_post
+    idp_host: http://ec2-13-41-165-15.eu-west-2.compute.amazonaws.com:8180
+    registration_endpoint: http://ec2-13-41-165-15.eu-west-2.compute.amazonaws.com:8180/auth/realms/master/clients-registrations/openid-connect
+    access_token: eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI3ODkzZTIxMS0yZDgwLTRjMGMtYTkwMy0xNTRmNTk5MDc1MTIifQ.eyJleHAiOjE2NjM4NTY1OTQsImlhdCI6MTY2MTI2NDU5NCwianRpIjoiMDMyOWY3NWUtMjdlNS00NWI4LWI3Y2QtNjU1OGM4MjBmNTliIiwiaXNzIjoiaHR0cDovL2VjMi0xMy00MS0xNjUtMTUuZXUtd2VzdC0yLmNvbXB1dGUuYW1hem9uYXdzLmNvbTo4MTgwL2F1dGgvcmVhbG1zL21hc3RlciIsImF1ZCI6Imh0dHA6Ly9lYzItMTMtNDEtMTY1LTE1LmV1LXdlc3QtMi5jb21wdXRlLmFtYXpvbmF3cy5jb206ODE4MC9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJ0eXAiOiJJbml0aWFsQWNjZXNzVG9rZW4ifQ.4YYmlgkUsMB7G7xoZAVpxP0SZLn63J7qggum3shcys4
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: PortalAPICatalogue
+metadata:
+  name: sample-dcr-api
+  namespace: tyk
+spec:
+  apis:
+    - apiDescriptionRef:
+        name: sample-dcr-api
+        namespace: tyk

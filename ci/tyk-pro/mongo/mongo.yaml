@@ -25,7 +25,7 @@ spec:
         name: mongo
     spec:
       containers:
-        - image: mongo:latest
+        - image: mongo:4.4
           name: mongo
           imagePullPolicy: IfNotPresent
           ports:
