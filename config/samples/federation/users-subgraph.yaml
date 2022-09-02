@@ -15,8 +15,8 @@ metadata:
 spec:
   ports:
     - name: http
-      port: 4001
-      targetPort: 4001
+      port: 4201
+      targetPort: 4201
   selector:
     app: users
 ---
@@ -38,13 +38,13 @@ spec:
         version: v1
     spec:
       containers:
-        - image: zalbiraw/go-api-test-service
+        - image: zalbiraw/go-api-test-service:v2.0.0
           imagePullPolicy: Always
           name: users
-          command: ["./users/server"]
+          command: ["./services/graphql-subgraphs/users/server"]
           env:
             - name: PORT
-              value: "4001"
+              value: "4201"
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: SubGraph
@@ -170,6 +170,6 @@ spec:
       enabled: false
       path: ""
   proxy:
-    target_url: http://users.users-ns.svc:4001/query
+    target_url: http://users.users-ns.svc:4201/query
     listen_path: /users-subgraph/
     disable_strip_slash: true

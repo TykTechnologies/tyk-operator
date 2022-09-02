@@ -49,7 +49,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
 | HMAC                          | ❌        | -              | Not implemented | |
 | Basic Authentication          | ❌        | -              | Not implemented | |
-| Plugin Auth - Go              | ❌        | -              | ETA Sep 2022 | |
+| [Plugin Auth - Go](./api_definitions/custom_plugin_goauth.yaml)                   | ✅ | -               |
 | Plugin Auth - gRPC            | ✅        | v0.1           | - | [Sample](./../bdd/features/api_http_grpc_plugin.feature) |
 | IP Whitelisting               | ✅        | v0.5           | - | [Sample](./api_definitions/ip.md#whitelisting) |
 | IP Blacklisting               | ✅        | v0.5           | - | [Sample](./api_definitions/ip.md#blacklisting) |
