@@ -2,12 +2,16 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
 func main() {
-	a, _ := ioutil.ReadAll(os.Stdin)
+	a, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		os.Stderr.WriteString("Failed to read input")
+	}
+
 	m := []struct{ key, value string }{
 		{namespace, ""},
 		{envFrom, envFromTPL},

@@ -3,7 +3,8 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.10.0...HEAD)
 
-** Custom Go Auth Plugin **
+**Added**
+- Added support of client mTLS
 - Added support for Go auth custom plugins
 
 ## [v0.10.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.10.0)
