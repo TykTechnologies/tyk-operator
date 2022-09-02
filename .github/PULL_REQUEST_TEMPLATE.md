@@ -31,9 +31,10 @@
 - [ ] Make sure you are updating [CHANGELOG.md](https://github.com/TykTechnologies/tyk-operator/blob/master/CHANGELOG.md) based on your changes.
 - [ ] My change requires a change to the documentation.
   - [ ] If you've changed APIs, describe what needs to be updated in the documentation.
-  - [ ] If you've changed API models, please update Helm CRDs.
-    - [ ] `make helm`
 - [ ] I have updated the documentation accordingly.
+- [ ] If you've changed API models, please update CRDs.
+  - [ ] `make manifests`
+  - [ ] `make helm`
 - [ ] I have added tests to cover my changes.
 - [ ] All new and existing tests passed.
 - [ ] Check your code additions will not fail linting checks:
