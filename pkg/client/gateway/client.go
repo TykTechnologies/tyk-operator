@@ -11,6 +11,7 @@ import (
 const (
 	endpointAPIs   = "/tyk/apis"
 	endpointReload = "/tyk/reload/group"
+	endpointCerts  = "/tyk/certs"
 )
 
 var _ universal.Client = (*Client)(nil)
@@ -53,7 +54,6 @@ func (c Client) HotReload(ctx context.Context) error {
 	return nil
 }
 
-// TODO: Certificate Requires implementation
 func (c Client) Certificate() universal.Certificate {
-	panic("implement me")
+	return Cert{}
 }

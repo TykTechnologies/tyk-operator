@@ -1,4 +1,4 @@
-package dashboard
+package gateway
 
 import (
 	"bytes"
@@ -15,7 +15,6 @@ type Cert struct{}
 
 type CertificateList struct {
 	CertIDs []string `json:"certs"`
-	Pages   int      `json:"pages"`
 }
 
 // All returns a list of all certificates ID's
@@ -51,7 +50,7 @@ func (c Cert) Exists(ctx context.Context, id string) bool {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		client.LError(ctx, client.Error(res), "Unexepcted status")
+		client.LError(ctx, client.Error(res), "Unexpected status")
 		return false
 	}
 
@@ -79,6 +78,7 @@ func (c Cert) Upload(ctx context.Context, key, crt []byte) (id string, err error
 	combined = append(combined, crt...)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
+
 	part, err := writer.CreateFormFile("cert", "cert.pem")
 	if err != nil {
 		return "", err

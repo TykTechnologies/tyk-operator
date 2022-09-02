@@ -88,7 +88,7 @@ func (t *Tyk) ce() {
 	t.Mode = "ce"
 	t.URL = "http://tyk.tykce-control-plane.svc.cluster.local:8001"
 	t.Auth = "foo"
-	t.Org = "myorg"
+	t.Org = ""
 	t.Namespace = "tykce-control-plane"
 }
 
