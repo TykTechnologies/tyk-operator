@@ -28,10 +28,13 @@
 <!-- If you're unsure about any of these, don't hesitate to ask; we're here to help! -->
 - [ ] Make sure you are requesting to **pull a topic/feature/bugfix branch** (right side). If PRing from your fork, don't come from your `master`!
 - [ ] Make sure you are making a pull request against our **`master` branch** (left side). Also, it would be best if you started *your change* off *our latest `master`*.
-- [ ] Make sure you are updating [CHANGELOG.md](../CHANGELOG.md) based on your changes.
+- [ ] Make sure you are updating [CHANGELOG.md](https://github.com/TykTechnologies/tyk-operator/blob/master/CHANGELOG.md) based on your changes.
 - [ ] My change requires a change to the documentation.
   - [ ] If you've changed APIs, describe what needs to be updated in the documentation.
 - [ ] I have updated the documentation accordingly.
+- [ ] If you've changed API models, please update CRDs.
+  - [ ] `make manifests`
+  - [ ] `make helm`
 - [ ] I have added tests to cover my changes.
 - [ ] All new and existing tests passed.
 - [ ] Check your code additions will not fail linting checks:

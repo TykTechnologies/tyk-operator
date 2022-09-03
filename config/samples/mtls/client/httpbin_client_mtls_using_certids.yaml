@@ -1,0 +1,28 @@
+# Here we are creating an API definition with client MTLS Auth for httpbin 
+#
+# We assume that client certificates are already uploaded on Tyk and you have certificate IDs
+#
+# Before applying this manifest replace <CERTIFICATE_ID_$> with your certificate ids
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-client-mtls
+spec:
+  name: Httpbin Client MTLS
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+  use_mutual_tls_auth: true
+  client_certificates:
+    - CERTIFICATE_ID_1
+    - CERTIFICATE_ID_2

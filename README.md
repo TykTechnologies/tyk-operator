@@ -34,6 +34,11 @@ Tyk Operator can configure Tyk Gateway as a drop-in replacement for standard [Ku
 
 Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and documentation for each of these custom resources are available [here](#documentation).
 
+### Tyk Licensing
+Tyk Operator and Tyk Gateway are both 100% Open Source. Tyk Operator will operate on a single gateway.
+
+Feel free to reach to our commercial team (or your account manager for existing customers) if you need advice about architecture, licensing, or just to discuss your requirements for runnning in HA, scaling across clusters, nodes & namespaces.
+
 ### What benefits Tyk Operator has?
 
 You can get the benefits of GitOps with declarative API configurations:
