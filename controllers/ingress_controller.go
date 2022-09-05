@@ -200,7 +200,7 @@ func (r *IngressReconciler) createAPI(
 				return nil
 			}
 
-			lg.Info("successful sync api defintion", "name", name, "op", op)
+			lg.Info("successful sync api definition", "name", name, "op", op)
 		}
 	}
 
@@ -272,8 +272,8 @@ func shortHash(txt string) string {
 func (r *IngressReconciler) ingressClassEventFilter() predicate.Predicate {
 	watch := keys.DefaultIngressClassAnnotationValue
 
-	if overide := r.Env.IngressClass; overide != "" {
-		watch = overide
+	if override := r.Env.IngressClass; override != "" {
+		watch = override
 	}
 
 	isOurIngress := func(o runtime.Object) bool {
