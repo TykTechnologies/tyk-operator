@@ -8,13 +8,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func NewFakeClient(opCtx runtime.Object) client.Client {
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.GroupVersion, opCtx)
+func NewFakeClient(objs []runtime.Object) client.Client {
+	scheme := scheme.Scheme
+	v1alpha1.AddToScheme(scheme)
 
-	objs := []runtime.Object{
-		opCtx,
+	if objs == nil {
+		return fake.NewClientBuilder().WithScheme(scheme).Build()
 	}
 
-	return fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	cliBuilder := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objs...)
+
+	return cliBuilder.Build()
 }

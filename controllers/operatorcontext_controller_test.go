@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
@@ -31,7 +33,7 @@ func TestOperatorContextCreate(t *testing.T) {
 		},
 	}
 
-	cl := controllers.NewFakeClient(&opCtx)
+	cl := controllers.NewFakeClient([]runtime.Object{&opCtx})
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
 		Scheme: scheme.Scheme,
@@ -120,7 +122,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				Status: *tc.OpCtxStatus,
 			}
 
-			cl := controllers.NewFakeClient(&opCtx)
+			cl := controllers.NewFakeClient([]runtime.Object{&opCtx})
 
 			r := controllers.OperatorContextReconciler{
 				Client: cl,
