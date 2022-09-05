@@ -27,7 +27,8 @@ var (
 	// namesSpaces stores each ApiDefiniton's ID as a key and .metadata.namespace field of corresponding ApiDefinition.
 	nameSpaces map[string]string
 
-	idName map[string]*model.APIDefinitionSpec
+	// idAPIs stores ApiDefinitions based on its ID.
+	idAPIs map[string]*model.APIDefinitionSpec
 )
 
 type Group struct {
@@ -80,28 +81,14 @@ func PrintSnapshot(
 		Strict: true,
 	})
 
-	createApiDef := func(metaName, metaNs string) tykv1alpha1.ApiDefinition {
-		return tykv1alpha1.ApiDefinition{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ApiDefinition",
-				APIVersion: "tyk.tyk.io/v1alpha1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      metaName,
-				Namespace: metaNs,
-			},
-			Spec: tykv1alpha1.APIDefinitionSpec{},
-		}
-	}
-
 	names = make(map[string]string)
 	nameSpaces = make(map[string]string)
 
 	// Output file will contain ApiDefinitions grouped by SecurityPolicies.
 	if group {
-		idName = make(map[string]*model.APIDefinitionSpec)
+		idAPIs = make(map[string]*model.APIDefinitionSpec)
 		for i := 0; i < len(apiDefSpecList.Apis); i++ {
-			idName[apiDefSpecList.Apis[i].APIID] = apiDefSpecList.Apis[i]
+			idAPIs[apiDefSpecList.Apis[i].APIID] = apiDefSpecList.Apis[i]
 		}
 
 		groups := groupPolicies(policiesList)
@@ -189,6 +176,7 @@ func PrintSnapshot(
 	if !strings.HasPrefix(category, "#") {
 		category = fmt.Sprintf("#%s", category)
 	}
+
 	fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
 
 	i := 0
@@ -231,6 +219,20 @@ func PrintSnapshot(
 	}
 
 	return bw.Flush()
+}
+
+func createApiDef(metaName, metaNs string) tykv1alpha1.ApiDefinition {
+	return tykv1alpha1.ApiDefinition{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ApiDefinition",
+			APIVersion: "tyk.tyk.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      metaName,
+			Namespace: metaNs,
+		},
+		Spec: tykv1alpha1.APIDefinitionSpec{},
+	}
 }
 
 func storeMetadata(key, name, namespace string) {
@@ -377,7 +379,7 @@ func groupPolicies(policiesList []tykv1alpha1.SecurityPolicySpec) Groups {
 	for i := 0; i < len(policiesList); i++ {
 		g := Group{Policy: policiesList[i]}
 		for _, ar := range policiesList[i].AccessRightsArray {
-			g.APIDefinitions.Apis = append(g.APIDefinitions.Apis, idName[ar.APIID])
+			g.APIDefinitions.Apis = append(g.APIDefinitions.Apis, idAPIs[ar.APIID])
 		}
 
 		groups = append(groups, g)

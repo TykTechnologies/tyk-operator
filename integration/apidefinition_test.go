@@ -1058,7 +1058,7 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 				},
 				"empty execution mode": {
 					ExecutionMode: "",
-					ReturnErr:     true,
+					ReturnErr:     false,
 				},
 				"valid execution engine mode": {
 					ExecutionMode: "executionEngine",

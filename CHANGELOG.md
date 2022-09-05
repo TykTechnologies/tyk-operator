@@ -6,6 +6,8 @@
 **Added**
 - Added support of client mTLS
 - Added support for Go auth custom plugins
+- Added PoC tool that helps migration of existing ApiDefinition & SecurityPolicies
+from Dashboard to Kubernetes environment.
 
 **Documentation**
 - Added how Tyk Ingress Controller generates API names
