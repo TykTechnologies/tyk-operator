@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -26,8 +25,10 @@ import (
 var ErrTODO = errors.New("TODO: This feature is not implemented yet")
 
 // ErrNotFound is returned when an api call returns 404
-var ErrNotFound = errors.New("Resource not found")
-var ErrFailed = errors.New("Failed api call")
+var (
+	ErrNotFound = errors.New("Resource not found")
+	ErrFailed   = errors.New("Failed api call")
+)
 
 func IsTODO(err error) bool {
 	return errors.Is(err, ErrTODO)
@@ -183,7 +184,11 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 
 	if res.StatusCode != http.StatusOK {
 		defer res.Body.Close()
-		b, _ := ioutil.ReadAll(res.Body)
+
+		b, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
 
 		if len(b) > 0 {
 			rctx.Log.Info(http.StatusText(res.StatusCode), "body", string(b))
@@ -235,7 +240,11 @@ func SetHeaders(q map[string]string) func(*http.Request) {
 
 // Error dumps whole response plus body and return it as an error
 func Error(res *http.Response) error {
-	b, _ := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
 	return fmt.Errorf("%d API call failed with %v", res.StatusCode, string(b))
 }
 

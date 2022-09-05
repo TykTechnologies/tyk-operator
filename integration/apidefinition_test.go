@@ -2,15 +2,15 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/google/uuid"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,8 +19,11 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	pkgclient "github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/matryer/is"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -514,11 +517,6 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 }
 
 func TestApiDefinitionCertificatePinning(t *testing.T) {
-	if strings.TrimSpace(os.Getenv("TYK_MODE")) == "ce" {
-		t.Log("CE is not feasible to test at the moment.")
-		return
-	}
-
 	var (
 		apiDefPinning = "apidef-certificate-pinning"
 
@@ -698,12 +696,16 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 		defaultVersion      = "Default"
 		opNs                = "tyk-operator-system"
 		certName            = "test-tls-secret-name"
-		dashboardLocalHost  = "http://localhost:7200"
+		tykConnectionURL    = ""
 	)
 
-	if strings.TrimSpace(os.Getenv("TYK_MODE")) == "ce" {
-		t.Log("CE is not feasible to test at the moment.")
-		return
+	mode := os.Getenv("TYK_MODE")
+
+	switch mode {
+	case "pro":
+		tykConnectionURL = adminLocalhost
+	case "ce":
+		tykConnectionURL = gatewayLocalhost
 	}
 
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
@@ -770,37 +772,23 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				calculatedCertID := string(tykOrg) + certFingerPrint
 
 				err = wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
+					env := environmet.Env{}
+					env.Mode = v1alpha1.OperatorContextMode(mode)
+					env.Org = string(tykOrg)
+					env.Auth = string(tykAuth)
+					env.URL = tykConnectionURL
 
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s/api/certs/?certId=%s&org_id=%s", dashboardLocalHost, calculatedCertID, string(tykOrg)),
-						nil,
-					)
-					is.NoErr(err)
-					req.Header.Add("Content-type", "application/json")
-					req.Header.Add("authorization", string(tykAuth))
-
-					resp, err := hc.Do(req)
-					is.NoErr(err)
-
-					response, err := io.ReadAll(resp.Body)
-					if err != nil {
-						return false, nil
+					pkgContext := pkgclient.Context{
+						Env: env,
+						Log: log.NullLogger{},
 					}
 
-					certResponse := struct {
-						Certs []string `json:"certs"`
-						Pages int      `json:"pages"`
-					}{}
-					err = json.Unmarshal(response, &certResponse)
-					if err != nil {
-						return false, nil
-					}
+					// validate certificate was created
+					reqContext := pkgclient.SetContext(context.Background(), pkgContext)
+					exists := klient.Universal.Certificate().Exists(reqContext, calculatedCertID)
 
-					if len(certResponse.Certs) < 1 {
-						return false, nil
-					}
+					is.True(exists)
+
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
@@ -809,6 +797,249 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			}).Feature()
 
 	testenv.Test(t, adCreate)
+}
+
+func TestApiDefinitionClientMTLS(t *testing.T) {
+	var (
+		apiDefClientMTLSWithCert    = "apidef-client-mtls-with-cert"
+		apiDefClientMTLSWithoutCert = "apidef-client-mtls-without-cert"
+		defaultVersion              = "Default"
+		opNs                        = "tyk-operator-system"
+		certName                    = "test-tls-secret-name"
+		tykConnectionURL            = ""
+		tykOrg                      = ""
+		tykAuth                     = ""
+	)
+
+	type ContextKey string
+	var certIDCtxKey ContextKey = "certID"
+
+	mode := os.Getenv("TYK_MODE")
+
+	switch mode {
+	case "pro":
+		tykConnectionURL = adminLocalhost
+	case "ce":
+		tykConnectionURL = gatewayLocalhost
+	}
+
+	testWithCert := features.New("Client MTLS with certificate").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			client := envConf.Client()
+			is := is.New(t)
+			opConfSecret := v1.Secret{}
+
+			err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			is.NoErr(err)
+
+			data, ok := opConfSecret.Data["TYK_AUTH"]
+			if !ok {
+				is.Fail()
+			}
+
+			tykAuth = string(data)
+
+			data, ok = opConfSecret.Data["TYK_ORG"]
+			if !ok {
+				is.Fail()
+			}
+
+			tykOrg = string(data)
+
+			return ctx
+		}).
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
+			is := is.New(t)
+			t.Log(testNS)
+
+			_, err := createTestTlsSecret(ctx, testNS, nil, envConf)
+			is.NoErr(err)
+
+			return ctx
+		}).
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			is := is.New(t)
+
+			// Create ApiDefinition with Client certificate
+			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefClientMTLSWithCert
+				apiDef.Spec.UseMutualTLSAuth = true
+				apiDef.Spec.ClientCertificateRefs = []string{certName}
+				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
+				apiDef.Spec.VersionData.NotVersioned = true
+				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
+					defaultVersion: {Name: defaultVersion},
+				}
+			}, envConf)
+			is.NoErr(err) // failed to create apiDefinition
+
+			return ctx
+		}).Assess("Certificate from secret must be uploaded",
+		func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			is := is.New(t)
+			client := cfg.Client()
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+
+			tlsSecret := v1.Secret{} //nolint:errcheck
+
+			err := client.Resources(testNS).Get(ctx, certName, testNS, &tlsSecret)
+			is.NoErr(err)
+
+			certPemBytes, ok := tlsSecret.Data["tls.crt"]
+			if !ok {
+				is.Fail()
+			}
+
+			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
+			calculatedCertID := tykOrg + certFingerPrint
+
+			err = wait.For(func() (done bool, err error) {
+				env := environmet.Env{}
+				env.Mode = v1alpha1.OperatorContextMode(mode)
+				env.Org = string(tykOrg)
+				env.Auth = string(tykAuth)
+				env.URL = tykConnectionURL
+
+				pkgContext := pkgclient.Context{
+					Env: env,
+					Log: log.NullLogger{},
+				}
+
+				// validate certificate was created
+				reqContext := pkgclient.SetContext(context.Background(), pkgContext)
+				exists := klient.Universal.Certificate().Exists(reqContext, calculatedCertID)
+
+				if !exists {
+					return false, errors.New("Certificate is not created yet")
+				}
+
+				return true, nil
+			}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+			is.NoErr(err)
+
+			ctx = context.WithValue(ctx, certIDCtxKey, calculatedCertID)
+
+			return ctx
+		}).
+		Assess("API must have client certificate field defined",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				client := cfg.Client()
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+
+				certID := ctx.Value(certIDCtxKey)
+
+				err := wait.For(func() (done bool, err error) {
+					env := environmet.Env{}
+					env.Mode = v1alpha1.OperatorContextMode(mode)
+					env.Org = string(tykOrg)
+					env.Auth = string(tykAuth)
+					env.URL = tykConnectionURL
+
+					pkgContext := pkgclient.Context{
+						Env: env,
+						Log: log.NullLogger{},
+					}
+
+					reqContext := pkgclient.SetContext(context.Background(), pkgContext)
+
+					// validate client certificate field was set
+					var apiDefCRD v1alpha1.ApiDefinition
+
+					err = client.Resources().Get(ctx, apiDefClientMTLSWithCert, testNS, &apiDefCRD)
+					is.NoErr(err)
+
+					apiDef, err := klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
+					if err != nil {
+						return false, errors.New("API is not created yet")
+					}
+
+					is.True(len(apiDef.ClientCertificates) == 1)
+					is.True(apiDef.ClientCertificates[0] == certID)
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				is.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testWithoutCert := features.New("Client MTLS without certs").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			is := is.New(t)
+
+			// Create ApiDefinition with Upstream certificate
+			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefClientMTLSWithoutCert
+				apiDef.Spec.UseMutualTLSAuth = true
+				apiDef.Spec.ClientCertificateRefs = []string{certName}
+				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
+				apiDef.Spec.VersionData.NotVersioned = true
+				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
+					defaultVersion: {Name: defaultVersion},
+				}
+			}, envConf)
+			is.NoErr(err) // failed to create apiDefinition
+
+			return ctx
+		}).
+		Assess("API should be created even though certs doesn't exists",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				is := is.New(t)
+				client := cfg.Client()
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+
+				opConfSecret := v1.Secret{}
+				err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+				is.NoErr(err)
+
+				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
+				if !ok {
+					is.Fail()
+				}
+
+				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
+				if !ok {
+					is.Fail()
+				}
+
+				err = wait.For(func() (done bool, err error) {
+					env := environmet.Env{}
+					env.Mode = v1alpha1.OperatorContextMode(mode)
+					env.Org = string(tykOrg)
+					env.Auth = string(tykAuth)
+					env.URL = tykConnectionURL
+
+					pkgContext := pkgclient.Context{
+						Env: env,
+						Log: log.NullLogger{},
+					}
+
+					reqContext := pkgclient.SetContext(context.Background(), pkgContext)
+
+					// validate api Def was created without certificate
+					var apiDefCRD v1alpha1.ApiDefinition
+
+					err = client.Resources().Get(ctx, apiDefClientMTLSWithoutCert, testNS, &apiDefCRD)
+					is.NoErr(err)
+
+					apiDef, err := klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
+					is.NoErr(err)
+
+					is.True(len(apiDef.ClientCertificates) == 0)
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				is.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testWithCert)
+	testenv.Test(t, testWithoutCert)
 }
 
 func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {

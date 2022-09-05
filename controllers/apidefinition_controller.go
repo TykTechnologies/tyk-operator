@@ -130,50 +130,17 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
 
-		if len(desired.Spec.UpstreamCertificateRefs) != 0 {
-			for domain, certName := range desired.Spec.UpstreamCertificateRefs {
-				tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
-				if err != nil {
-					// we should log the missing secret, but we should still create the API definition
-					log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
-				} else {
-					if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
-						upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
-					}
-					upstreamRequestStruct.Spec.UpstreamCertificates[domain] = tykCertID
-				}
-			}
+		if err := r.processCertificateReferences(ctx, &env, log, upstreamRequestStruct); err != nil {
+			return err
 		}
-		upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
 
-		// we support only one certificate secret name for mvp
-		if len(desired.Spec.CertificateSecretNames) != 0 {
-			certName := desired.Spec.CertificateSecretNames[0]
-			tykCertID, err := r.checkSecretAndUpload(ctx, certName, namespacedName.Namespace, log, &env)
-			if err != nil {
-				return err
-			}
-
-			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
-		}
+		r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 
 		// Check Pinned Public keys
-		if len(desired.Spec.PinnedPublicKeysRefs) != 0 {
-			if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
-				upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
-			}
+		r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
 
-			for domain, secretName := range desired.Spec.PinnedPublicKeysRefs {
-				// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
-				tykCertID, err := r.checkSecretAndUpload(ctx, secretName, req.Namespace, log, &env)
-				if err != nil {
-					// we should log the missing secret, but we should still create the API definition
-					log.Info("failed to upload pinned public key", "error", err)
-					continue
-				}
-
-				upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
-			}
+		if desired.Spec.UseMutualTLSAuth {
+			r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 		}
 
 		// Check GraphQL Federation
@@ -248,10 +215,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 
-		// To prevent API object validation failures, set additional properties to nil.
-		upstreamRequestStruct.Spec.CertificateSecretNames = nil
-		upstreamRequestStruct.Spec.PinnedPublicKeysRefs = nil
-
 		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
 
 		targets := upstreamRequestStruct.Spec.CollectLoopingTarget()
@@ -282,6 +245,115 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
+}
+
+func (r *ApiDefinitionReconciler) processClientCertificateReferences(
+	ctx context.Context,
+	env *environmet.Env,
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) {
+	if len(upstreamRequestStruct.Spec.ClientCertificateRefs) != 0 {
+		clientCerts := make([]string, 0)
+
+		for _, secretName := range upstreamRequestStruct.Spec.ClientCertificateRefs {
+			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, env)
+			if err != nil {
+				// we should log the missing secret, but we should still create the API definition
+				log.Error(
+					err,
+					"failed to upload client certificate. Creating API Definition without uploading certificate",
+					"secretName",
+					secretName)
+
+				continue
+			}
+
+			clientCerts = append(clientCerts, tykCertID)
+		}
+
+		upstreamRequestStruct.Spec.ClientCertificates = clientCerts
+		upstreamRequestStruct.Spec.ClientCertificateRefs = nil
+	}
+}
+
+func (r *ApiDefinitionReconciler) processCertificateReferences(
+	ctx context.Context,
+	env *environmet.Env,
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) error {
+	// we support only one certificate secret name for mvp
+	if len(upstreamRequestStruct.Spec.CertificateSecretNames) != 0 {
+		certName := upstreamRequestStruct.Spec.CertificateSecretNames[0]
+
+		tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, env)
+		if err != nil {
+			return err
+		}
+
+		upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
+	}
+	// To prevent API object validation failures, set additional properties to nil.
+	upstreamRequestStruct.Spec.CertificateSecretNames = nil
+
+	return nil
+}
+
+func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
+	ctx context.Context,
+	env *environmet.Env,
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) {
+	if len(upstreamRequestStruct.Spec.PinnedPublicKeysRefs) != 0 {
+		if upstreamRequestStruct.Spec.PinnedPublicKeys == nil {
+			upstreamRequestStruct.Spec.PinnedPublicKeys = map[string]string{}
+		}
+
+		for domain, secretName := range upstreamRequestStruct.Spec.PinnedPublicKeysRefs {
+			// Set the namespace for referenced secret to the current namespace where ApiDefinition lives.
+			tykCertID, err := r.checkSecretAndUpload(ctx, secretName, upstreamRequestStruct.Namespace, log, env)
+			if err != nil {
+				// we should log the missing secret, but we should still create the API definition
+				log.Error(
+					err,
+					"failed to upload pinned public key from the secret. Creating API Definition without uploading certificate",
+					"secretName",
+					secretName)
+
+				continue
+			}
+
+			upstreamRequestStruct.Spec.PinnedPublicKeys[domain] = tykCertID
+		}
+	}
+
+	upstreamRequestStruct.Spec.PinnedPublicKeysRefs = nil
+}
+
+func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
+	ctx context.Context,
+	env *environmet.Env,
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) {
+	if len(upstreamRequestStruct.Spec.UpstreamCertificateRefs) != 0 {
+		for domain, certName := range upstreamRequestStruct.Spec.UpstreamCertificateRefs {
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, env)
+			if err != nil {
+				// we should log the missing secret, but we should still create the API definition
+				log.Info(fmt.Sprintf("cert name %s is missing", certName), "error", err)
+			} else {
+				if upstreamRequestStruct.Spec.UpstreamCertificates == nil {
+					upstreamRequestStruct.Spec.UpstreamCertificates = make(map[string]string)
+				}
+				upstreamRequestStruct.Spec.UpstreamCertificates[domain] = tykCertID
+			}
+		}
+	}
+
+	upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
 }
 
 func decodeID(encodedID string) (namespace, name string) {
@@ -524,7 +596,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 }
 
 // checkLinkedPolicies checks if there are any policies that are still linking
-// to this api defintion resource.
+// to this api definition resource.
 func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("checking linked security policies")
 
@@ -552,7 +624,7 @@ func encodeIfNotBase64(s string) string {
 	return encodeNS(s)
 }
 
-// updateLinkedPolicies ensure that all policies needed by this api denition are
+// updateLinkedPolicies ensure that all policies needed by this api definition are
 // updated.
 func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
 	r.Log.Info("Updating linked policies")
