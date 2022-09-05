@@ -33,7 +33,9 @@ func TestOperatorContextCreate(t *testing.T) {
 		},
 	}
 
-	cl := controllers.NewFakeClient([]runtime.Object{&opCtx})
+	cl, err := controllers.NewFakeClient([]runtime.Object{&opCtx})
+	is.NoErr(err)
+
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
 		Scheme: scheme.Scheme,
@@ -43,7 +45,7 @@ func TestOperatorContextCreate(t *testing.T) {
 	req := reconcile.Request{}
 	req.NamespacedName = key
 
-	_, err := r.Reconcile(context.TODO(), req)
+	_, err = r.Reconcile(context.TODO(), req)
 	is.NoErr(err)
 
 	var result v1alpha1.OperatorContext
@@ -122,7 +124,8 @@ func TestOperatorContextDelete(t *testing.T) {
 				Status: *tc.OpCtxStatus,
 			}
 
-			cl := controllers.NewFakeClient([]runtime.Object{&opCtx})
+			cl, err := controllers.NewFakeClient([]runtime.Object{&opCtx})
+			is.NoErr(err)
 
 			r := controllers.OperatorContextReconciler{
 				Client: cl,
@@ -133,7 +136,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			req := reconcile.Request{}
 			req.NamespacedName = key
 
-			_, err := r.Reconcile(context.TODO(), req)
+			_, err = r.Reconcile(context.TODO(), req)
 			is.Equal(err != nil, tc.ReturnError)
 		})
 	}

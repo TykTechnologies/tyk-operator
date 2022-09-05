@@ -70,11 +70,15 @@ func TestBuildAPIName(t *testing.T) {
 }
 
 func TestCreateAPI(t *testing.T) {
+	is := is.New(t)
 	apiTemplate := v1alpha1.ApiDefinition{}
+	ns := "default"
+	path := "test"
+
 	ing := v1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-ingress",
-			Namespace: "default",
+			Namespace: ns,
 		},
 		Spec: v1.IngressSpec{
 			Rules: []v1.IngressRule{
@@ -83,7 +87,7 @@ func TestCreateAPI(t *testing.T) {
 						HTTP: &v1.HTTPIngressRuleValue{
 							Paths: []v1.HTTPIngressPath{
 								{
-									Path: "/test",
+									Path: path,
 									Backend: v1.IngressBackend{
 										Service: &v1.IngressServiceBackend{
 											Name: "test-sv",
@@ -102,23 +106,24 @@ func TestCreateAPI(t *testing.T) {
 		},
 	}
 
+	client, err := NewFakeClient(nil)
+	is.NoErr(err)
+
 	reconciler := IngressReconciler{
-		Client: NewFakeClient(nil),
+		Client: client,
 		Log:    log.NullLogger{},
 		Scheme: scheme.Scheme,
 		Env:    environmet.Env{},
 	}
 
-	is := is.New(t)
-
-	err := reconciler.createAPI(context.TODO(), reconciler.Log, &apiTemplate, "default", &ing, reconciler.Env)
+	err = reconciler.createAPI(context.TODO(), reconciler.Log, &apiTemplate, "default", &ing, reconciler.Env)
 	is.NoErr(err)
 
 	apiDef := &v1alpha1.ApiDefinition{}
 
 	key := types.NamespacedName{
-		Name:      reconciler.buildAPIName(ing.Namespace, ing.Name, shortHash(""+"/test")),
-		Namespace: "default",
+		Name:      reconciler.buildAPIName(ing.Namespace, ing.Name, shortHash(""+path)),
+		Namespace: ns,
 	}
 
 	err = reconciler.Client.Get(context.TODO(), key, apiDef)
