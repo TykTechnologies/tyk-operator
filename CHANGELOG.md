@@ -7,6 +7,9 @@
 - Added support of client mTLS
 - Added support for Go auth custom plugins
 
+**Documentation**
+- Added how Tyk Ingress Controller generates API names
+
 ## [v0.10.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.10.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.9.0...v0.10.0)
 
