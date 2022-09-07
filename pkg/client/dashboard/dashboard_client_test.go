@@ -3,7 +3,6 @@ package dashboard
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -69,7 +68,7 @@ func ReadSample(t *testing.T, name string) string {
 
 	defer f.Close()
 
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +81,7 @@ func ReadSampleFile(t *testing.T, name string) string {
 
 	defer f.Close()
 
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	if err != nil {
 		t.Fatal(err)
 	}

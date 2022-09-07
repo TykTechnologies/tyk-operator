@@ -275,6 +275,14 @@ spec:
                 items:
                   type: string
                 type: array
+              client_certificate_refs:
+                items:
+                  type: string
+                type: array
+              client_certificates:
+                items:
+                  type: string
+                type: array
               config_data:
                 description: ConfigData can be used to pass custom attributes (a JSON
                   object) into your middleware, such as a virtual endpoint or header
@@ -1014,11 +1022,16 @@ spec:
                   IDs that is used by the Tyk Gateway to provide mTLS support for
                   upstreams
                 type: object
+              use_go_plugin_auth:
+                description: Enable Go Plugin Auth. Needs to be combined with "use_keyless:false"
+                type: boolean
               use_keyless:
                 description: UseKeylessAccess will switch off all key checking. Some
                   analytics will still be recorded, but rate-limiting, quotas and
                   security policies will not be possible (there is no session to attach
                   requests to).
+                type: boolean
+              use_mutual_tls_auth:
                 type: boolean
               use_oauth2:
                 description: UseOAuth2 enables oauth2 authorization
