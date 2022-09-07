@@ -41,7 +41,7 @@ type Groups []Group
 const (
 	NameKey      = "k8sName"
 	NamespaceKey = "k8sNamespace"
-	DefaultName  = "replace-me"
+	DefaultName  = "REPLACE_ME"
 	DefaultNs    = ""
 )
 
@@ -109,7 +109,7 @@ func PrintSnapshot(
 
 			for ii, v := range g.APIDefinitions.Apis {
 				// Parse Config Data of the ApiDefinition created on Dashboard.
-				name, ns := parseConfigData(v, fmt.Sprintf("%s-%d", DefaultName, ii))
+				name, ns := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, ii))
 
 				// create an ApiDefinition object.
 				apiDef := createApiDef(name, ns)
@@ -137,7 +137,7 @@ func PrintSnapshot(
 	if dumpAll {
 		for i, v := range apiDefSpecList.Apis {
 			// Parse Config Data of the ApiDefinition created on Dashboard.
-			name, ns := parseConfigData(v, fmt.Sprintf("%s-%d", DefaultName, i))
+			name, ns := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
 
 			// create an ApiDefinition object.
 			apiDef := createApiDef(name, ns)

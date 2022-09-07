@@ -50,9 +50,9 @@ You can specify which API category to be exported in later steps.
 
 2. Specify the Kubernetes resource names in Config Data
 
-By default, the created ApiDefinition resource will have the name `replace-me-{i}`. 
-It is not the best name for a kubernetes resource and should be manually updated. 
-You can store this meta-data in Config Data for each API first before exporting, 
+By default, the created ApiDefinition resource will have the name `REPLACE_ME_{i}`. 
+It is not valid name for a Kubernetes resource and should be manually updated. 
+You can store this metadata in Config Data for each API first before exporting, 
 so that you do not need to manually update the output file afterwards.
 
 ![config-data](./img/config-data.png)
@@ -109,14 +109,14 @@ TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-op
 
 #### Output CR
 
-`tyk-operator` CLI creates an output file specified via `--snapshot` flag. Each ApiDefinition CR metadata has a default name  `replace-me-{i}` where `{i}` increases by each ApiDefinition.
+`tyk-operator` CLI creates an output file specified via `--snapshot` flag. Each ApiDefinition CR metadata has a default name  `REPLACE_ME_{i}` where `{i}` increases by each ApiDefinition.
 
 For example,
 ```yaml
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: replace-me-0 # Default name for ApiDefinition CRs
+  name: REPLACE_ME_0 # Default name for ApiDefinition CRs
   namespace: default # Default namespace for ApiDefinition CRs
 spec:
   ...
@@ -134,7 +134,7 @@ snapshot CLI generates ApiDefinition CRs based on Config Data of that specific A
 
 The CLI checks for `k8sName` and `k8sNamespace` fields of each ApiDefinition's Config Data 
 to generate metadata of the output CR. If these fields exist, the CLI uses the 
-values specified in these fields. Otherwise, it uses default values (`replace-me-` 
+values specified in these fields. Otherwise, it uses default values (`REPLACE_ME_` 
 for name and `default` for namespace) for them.
 
 > If `k8sNamespace` is not specified, it can be specified via `kubectl apply` as follows:
@@ -175,7 +175,7 @@ apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   creationTimestamp: null
-  name: replace-me-1    # Since Config Data does not include "k8sName", default name is used.
+  name: REPLACE_ME_1    # Since Config Data does not include "k8sName", default name is used.
   namespace: default    # Since Config Data does not include "k8sNamespace", default namespace is used.
 spec:
   name: 'test-api-3 #testing'
