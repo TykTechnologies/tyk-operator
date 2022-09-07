@@ -5,6 +5,7 @@ import (
 	"context"
 	jsonEncoding "encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -52,7 +53,6 @@ func PrintSnapshot(
 	apiDefinitionsFile,
 	policiesFile,
 	category string,
-	dumpAll,
 	group bool,
 ) error {
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
@@ -68,21 +68,35 @@ func PrintSnapshot(
 		}
 	}
 
-	f, err := os.Create(apiDefinitionsFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	names = make(map[string]string)
+	nameSpaces = make(map[string]string)
 
-	bw := bufio.NewWriter(f)
 	e := json.NewSerializerWithOptions(json.DefaultMetaFactory, nil, nil, json.SerializerOptions{
 		Yaml:   true,
 		Pretty: true,
 		Strict: true,
 	})
 
-	names = make(map[string]string)
-	nameSpaces = make(map[string]string)
+	exportApiDefs := func(i int, w io.Writer, v *model.APIDefinitionSpec) error {
+		// Parse Config Data of the ApiDefinition created on Dashboard.
+		name, ns := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
+
+		// create an ApiDefinition object.
+		apiDef := createApiDef(name, ns)
+		apiDef.Spec.APIDefinitionSpec = *v
+
+		storeMetadata(apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
+
+		if err := e.Encode(&apiDef, w); err != nil {
+			return err
+		}
+
+		if _, err := w.Write([]byte("\n---\n\n")); err != nil {
+			return err
+		}
+
+		return nil
+	}
 
 	// Output file will contain ApiDefinitions grouped by SecurityPolicies.
 	if group {
@@ -95,35 +109,22 @@ func PrintSnapshot(
 		for i := 0; i < len(groups); i++ {
 			g := groups[i]
 
-			groupedFile, err := os.Create(fmt.Sprintf("grouped-pol-%d.yaml", i))
+			groupedFile, err := os.Create(fmt.Sprintf("grouped-output-%d.yaml", i))
 			if err != nil {
 				return err
 			}
 
 			pw := bufio.NewWriter(groupedFile)
 
+			for ii, v := range g.APIDefinitions.Apis {
+				if err := exportApiDefs(ii, pw, v); err != nil {
+					return err
+				}
+			}
+
 			if err := writePolicies([]tykv1alpha1.SecurityPolicySpec{g.Policy}, pw, e); err != nil {
 				groupedFile.Close()
 				return err
-			}
-
-			for ii, v := range g.APIDefinitions.Apis {
-				// Parse Config Data of the ApiDefinition created on Dashboard.
-				name, ns := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, ii))
-
-				// create an ApiDefinition object.
-				apiDef := createApiDef(name, ns)
-				apiDef.Spec.APIDefinitionSpec = *v
-
-				if err := e.Encode(&apiDef, pw); err != nil {
-					groupedFile.Close()
-					return err
-				}
-
-				if _, err := pw.WriteString("\n---\n"); err != nil {
-					groupedFile.Close()
-					return err
-				}
 			}
 
 			pw.Flush()
@@ -133,28 +134,15 @@ func PrintSnapshot(
 		return nil
 	}
 
-	// Output file will contain all ApiDefinitions without checking any category.
-	if dumpAll {
-		for i, v := range apiDefSpecList.Apis {
-			// Parse Config Data of the ApiDefinition created on Dashboard.
-			name, ns := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
+	f, err := os.Create(apiDefinitionsFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
 
-			// create an ApiDefinition object.
-			apiDef := createApiDef(name, ns)
-			apiDef.Spec.APIDefinitionSpec = *v
+	bw := bufio.NewWriter(f)
 
-			// store metadata of this ApiDefinition in memory.
-			storeMetadata(apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
-
-			if err := e.Encode(&apiDef, bw); err != nil {
-				return err
-			}
-
-			if _, err := bw.WriteString("\n---\n\n"); err != nil {
-				return err
-			}
-		}
-
+	exportPolicies := func() error {
 		if policiesFile != "" {
 			policyFile, err := os.Create(policiesFile)
 			if err != nil {
@@ -168,54 +156,44 @@ func PrintSnapshot(
 			}
 		}
 
-		return bw.Flush()
+		return nil
 	}
 
 	// Output file will contain ApiDefinition based on specified category.
-	category = strings.TrimSpace(category)
-	if !strings.HasPrefix(category, "#") {
-		category = fmt.Sprintf("#%s", category)
+	if category != "" {
+		category = strings.TrimSpace(category)
+		if !strings.HasPrefix(category, "#") {
+			category = fmt.Sprintf("#%s", category)
+		}
+
+		fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
+
+		for i, v := range apiDefSpecList.Apis {
+			if contains := strings.Contains(v.Name, category); !contains {
+				continue
+			}
+
+			if err := exportApiDefs(i, bw, v); err != nil {
+				return err
+			}
+		}
+
+		if err := exportPolicies(); err != nil {
+			return err
+		}
+
+		return bw.Flush()
 	}
 
-	fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
-
-	i := 0
-
-	for _, v := range apiDefSpecList.Apis {
-		if contains := strings.Contains(v.Name, category); !contains {
-			continue
-		}
-
-		// Parse Config Data of the ApiDefinition created on Dashboard.
-		name, ns := parseConfigData(v, fmt.Sprintf("%s-%d", DefaultName, i))
-
-		// create an ApiDefinition object.
-		apiDef := createApiDef(name, ns)
-		apiDef.Spec.APIDefinitionSpec = *v
-
-		storeMetadata(apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
-		i++
-
-		if err := e.Encode(&apiDef, bw); err != nil {
-			return err
-		}
-
-		if _, err := bw.WriteString("\n---\n\n"); err != nil {
+	// Output file will contain all ApiDefinitions without checking any category.
+	for i, v := range apiDefSpecList.Apis {
+		if err := exportApiDefs(i, bw, v); err != nil {
 			return err
 		}
 	}
 
-	if policiesFile != "" {
-		policyFile, err := os.Create(policiesFile)
-		if err != nil {
-			return err
-		}
-		defer policyFile.Close()
-
-		pw := bufio.NewWriter(policyFile)
-		if err := writePolicies(policiesList, pw, e); err != nil {
-			return err
-		}
+	if err := exportPolicies(); err != nil {
+		return err
 	}
 
 	return bw.Flush()

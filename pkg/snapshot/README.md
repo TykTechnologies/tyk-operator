@@ -1,21 +1,24 @@
 # Snapshot (WIP)
 
 The snapshot package provides a CLI tool that allows dashboard users to export their 
-existing Tyk APIs and Security Policies into CRD YAML format that can be used by Tyk Operator. 
+existing Tyk APIs and Security Policies into CRD YAML format that can be used by 
+Tyk Operator. 
 
 It can help you to migrate existing APIs and Policies to Kubernetes environment.
 
-> **Notes:** After the migration, please be reminded that you should stop using the Dashboard UI to manage the migrated APIs and Policies. Please see [Using Tyk Operator to enable GitOps with Tyk](https://tyk.io/docs/getting-started/key-concepts/gitops-with-tyk/) for more information.
+> **Notes:** After the migration, please be reminded that you should stop using 
+the Dashboard UI to manage the migrated APIs and Policies. Please see 
+[Using Tyk Operator to enable GitOps with Tyk](https://tyk.io/docs/getting-started/key-concepts/gitops-with-tyk/) 
+for more information.
 
-This tool is provided as PoC only and bear some limitations and restrictions. Please use with caution.
-
+This tool is provided as PoC only and bear some limitations and restrictions. 
+Please use with caution.
 
 ---
 
 [Prerequisites](#prerequisites) | [Installation](#installation) | [Preparation](#preparation) | [Usage](#usage) | [Limitations](#limitations)
 
 ---
-
 
 ## Prerequisites
 
@@ -24,8 +27,6 @@ This tool is provided as PoC only and bear some limitations and restrictions. Pl
 3. Credentials to connect Tyk Dashboard. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid) for details.
 
 ## Installation
-
-In order to use snapshot tool, checkout "feat/importer-cli" branch from Tyk Operator repository on your local machine.
 
 1. Clone Tyk Operator repository
 ```bash
@@ -42,7 +43,7 @@ go build
 ## Preparation
 1. Use API Category to group the APIs you want to export
 
-By default, snapshot tool will export all APIs from Tyk dashboard with category `operator`.  
+By default, snapshot tool will export **all** APIs from Tyk dashboard.   
 You can also categorize your APIs by teams, environments, or any way you want. 
 You can specify which API category to be exported in later steps.
 
@@ -64,10 +65,14 @@ tyk-operator exports APIs and Security Policies from your Tyk Dashboard to Custo
 Export API Definitions:
    --snapshot <output_file>
     	Pull a snapshot of ApiDefinitions from Tyk Dashboard and output as CR
-  --all
-    	Dump all APIs
+
+  --group
+    	Creates an output file including an Security Policy object with ApiDefinition 
+    objects that are accessed by this Security Policy. Each Security Policy is 
+    created in separate file.
+ 
   --category <category_name>
-    	Dump APIs from specified category (default "operator")
+    	Dump APIs from specified category
 
 Export Security Policies:
   --policy <output_file>
@@ -76,7 +81,8 @@ Export Security Policies:
 
 ### Setting required environment variables
 
-Store the Tyk Dashboard connection parameters in environment variables before running `tyk-operator`, e.g.
+Store the Tyk Dashboard connection parameters in environment variables before running 
+`tyk-operator`, e.g.
 
 ```bash
 TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} \
@@ -95,21 +101,28 @@ where
 
 #### Specify Category to export
 
-By default, tyk-operator exports ApiDefinitions defined in `#operator` category. You can change default category via `--category` flag.
+By default, tyk-operator exports all ApiDefinitions created on the Tyk Dashboard
+without considering their categories. 
 
+You can specify a category to fetch via `--category` flag, as follows:
 ```bash
 TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category k8s
 ```
+The command above fetches all ApiDefinitions in `#k8s` category.
 
-You can also dump all ApiDefinitions from Dashboard via `--all` flag.
+#### Grouping ApiDefinition and SecurityPolicy objects
 
+If you would like to group SecurityPolicy objects and ApiDefinitions that are controlled
+by specific SecurityPolicy, you can use `--group` flag, as follows:
 ```bash
-TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --all
+TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --group
 ```
 
 #### Output CR
 
-`tyk-operator` CLI creates an output file specified via `--snapshot` flag. Each ApiDefinition CR metadata has a default name  `REPLACE_ME_{i}` where `{i}` increases by each ApiDefinition.
+`tyk-operator` CLI creates an output file specified via `--snapshot` flag. Each 
+ApiDefinition CR metadata has a default name  `REPLACE_ME_{i}` where `{i}` increases 
+by each ApiDefinition.
 
 For example,
 ```yaml
@@ -122,7 +135,7 @@ spec:
   ...
 ```
 
-In order to specify CR metadata, you can use Config Data. For specified ApiDefinitions,
+In order to specify CR metadata, you can use *Config Data*. For specified ApiDefinitions,
 snapshot CLI generates ApiDefinition CRs based on Config Data of that specific ApiDefinition.
 
 ```json
@@ -132,10 +145,10 @@ snapshot CLI generates ApiDefinition CRs based on Config Data of that specific A
 }
 ```
 
-The CLI checks for `k8sName` and `k8sNamespace` fields of each ApiDefinition's Config Data 
-to generate metadata of the output CR. If these fields exist, the CLI uses the 
-values specified in these fields. Otherwise, it uses default values (`REPLACE_ME_` 
-for name and `default` for namespace) for them.
+The CLI checks for `k8sName` and `k8sNamespace` fields of each ApiDefinition's 
+Config Data to generate metadata of the output CR. If these fields exist, the CLI 
+uses the values specified in these fields. Otherwise, it uses default values 
+(`REPLACE_ME_` for `.metadata.name`) for them.
 
 > If `k8sNamespace` is not specified, it can be specified via `kubectl apply` as follows:
 ```bash
@@ -150,7 +163,7 @@ and created on our Dashboard.
 ![Created APIs on Tyk Dashboard](./img/apis.png)
 
 If we would like to specify metadata of the `test-api-5`, we can update Config Data
-of the ApiDefinition, as follows.
+of the ApiDefinition as follows.
 
 ![Config Data feature of ApiDefinition objects](./img/config-data.png)
 

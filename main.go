@@ -60,7 +60,6 @@ func main() {
 	var snapshotFile string
 	var policyFile string
 	var category string
-	var dumpAll bool
 	var group bool
 
 	flag.StringVar(&configFile, "config", "",
@@ -72,13 +71,12 @@ func main() {
 		"By passing an export flag, we are telling the Operator to connect to a"+
 			"Tyk installation in order to pull a snapshot of ApiDefinitions from that environment and output as CR")
 
-	flag.BoolVar(&dumpAll, "all", false, "Dump all APIs")
-
 	flag.BoolVar(&group, "group", false, ""+
-		"output file contains groups of apis with corresponding security policies",
+		"Creates an output file including an Security Policy object with ApiDefinition objects that are accessed by this "+
+		"Security Policy. Each Security Policy is created in separate file.",
 	)
 
-	flag.StringVar(&category, "category", "operator", "Dump APIs from specified category.")
+	flag.StringVar(&category, "category", "", "Dump APIs from specified category.")
 
 	flag.StringVar(&policyFile, "policy", "",
 		"By passing an export flag, we are telling the Operator to connect to a"+
@@ -99,7 +97,7 @@ func main() {
 
 	options := ctrl.Options{Scheme: scheme, Namespace: env.Namespace}
 
-	if snapshotFile != "" {
+	if snapshotFile != "" || group {
 		// MetricsBindAddress can be set to "0" to disable the metrics serving.
 		options.MetricsBindAddress = "0"
 	}
@@ -136,7 +134,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := snapshot.PrintSnapshot(ctx, &env, snapshotFile, policyFile, category, dumpAll, group); err != nil {
+		if err := snapshot.PrintSnapshot(ctx, &env, snapshotFile, policyFile, category, group); err != nil {
 			snapshotLog.Error(err, "failed to create snapshot file")
 			os.Exit(1)
 		}
