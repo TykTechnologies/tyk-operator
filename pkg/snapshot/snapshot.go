@@ -40,9 +40,9 @@ type Groups []Group
 
 const (
 	NameKey      = "k8sName"
-	NamespaceKey = "k8sNs"
+	NamespaceKey = "k8sNamespace"
 	DefaultName  = "replace-me"
-	DefaultNs    = "default"
+	DefaultNs    = ""
 )
 
 // PrintSnapshot outputs a snapshot of the Dashboard as a CR.
@@ -222,16 +222,18 @@ func PrintSnapshot(
 }
 
 func createApiDef(metaName, metaNs string) tykv1alpha1.ApiDefinition {
+	meta := metav1.ObjectMeta{Name: metaName}
+	if metaNs != "" {
+		meta.Namespace = metaNs
+	}
+
 	return tykv1alpha1.ApiDefinition{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ApiDefinition",
 			APIVersion: "tyk.tyk.io/v1alpha1",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      metaName,
-			Namespace: metaNs,
-		},
-		Spec: tykv1alpha1.APIDefinitionSpec{},
+		ObjectMeta: meta,
+		Spec:       tykv1alpha1.APIDefinitionSpec{},
 	}
 }
 
@@ -302,7 +304,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 		)
 	}
 
-	// Parse namespace
+	// Parse namespace. If namespace is not specified, use what is provided via `kubectl apply`.
 	val, ok = apiDefSpec.ConfigData.Object[NamespaceKey]
 	if !ok {
 		return name, DefaultNs

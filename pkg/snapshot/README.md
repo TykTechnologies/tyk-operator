@@ -42,13 +42,18 @@ go build
 ## Preparation
 1. Use API Category to group the APIs you want to export
 
-By default, snapshot tool will export all APIs from Tyk dashboard with category `operator`.  You can also categorize your APIs by teams, environments, or any way you want. You can specify which API category to be exported in later steps.
+By default, snapshot tool will export all APIs from Tyk dashboard with category `operator`.  
+You can also categorize your APIs by teams, environments, or any way you want. 
+You can specify which API category to be exported in later steps.
 
 ![apis](./img/apis.png)
 
 2. Specify the Kubernetes resource names in Config Data
 
-By default, the created ApiDefinition resource will have the name `replace-me-{i}`. It is not the best name for a kubernetes resource and should be manually updated. You can store this meta-data in Config Data for each API first before exporting, so that you do not need to manually update the output file afterwards.
+By default, the created ApiDefinition resource will have the name `replace-me-{i}`. 
+It is not the best name for a kubernetes resource and should be manually updated. 
+You can store this meta-data in Config Data for each API first before exporting, 
+so that you do not need to manually update the output file afterwards.
 
 ![config-data](./img/config-data.png)
 
@@ -69,25 +74,22 @@ Export Security Policies:
     	Pull a snapshot of SecurityPolicies from Tyk Dashboard and output as CR
 ```
 
-
-
 ### Setting required environment variables
 
 Store the Tyk Dashboard connection parameters in environment variables before running `tyk-operator`, e.g.
 
 ```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> \
+TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} \
 ./tyk-operator --snapshot <OUTPUT_FILE>
 ```
 
 where
-- `<TYK_URL>`: Management URL of your Tyk Dashboard.
-- `<TYK_AUTH>`: Operator user API Key.
-- `<TYK_ORG>`: Operator user ORG ID.
+- `${TYK_URL}`: Management URL of your Tyk Dashboard.
+- `${TYK_AUTH}`: Operator user API Key.
+- `${TYK_ORG}`: Operator user ORG ID.
+- `<OUTPUT_FILE>`: The name of the output file in YAML format, e.g., `output.yaml`.
 
 > For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid).
-
-
 
 ### Exporting API Definitions
 
@@ -96,13 +98,13 @@ where
 By default, tyk-operator exports ApiDefinitions defined in `#operator` category. You can change default category via `--category` flag.
 
 ```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --category k8s
+TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category k8s
 ```
 
 You can also dump all ApiDefinitions from Dashboard via `--all` flag.
 
 ```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --all
+TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --all
 ```
 
 #### Output CR
@@ -126,28 +128,35 @@ snapshot CLI generates ApiDefinition CRs based on Config Data of that specific A
 ```json
 {
   "k8sName": "metadata-name",
-  "k8sNs": "metadata-namespace"
+  "k8sNamespace": "metadata-namespace"
 }
 ```
 
-The CLI checks for `k8sName` and `k8sNs` fields of each ApiDefinition's Config Data 
+The CLI checks for `k8sName` and `k8sNamespace` fields of each ApiDefinition's Config Data 
 to generate metadata of the output CR. If these fields exist, the CLI uses the 
 values specified in these fields. Otherwise, it uses default values (`replace-me-` 
 for name and `default` for namespace) for them.
 
+> If `k8sNamespace` is not specified, it can be specified via `kubectl apply` as follows:
+```bash
+kubectl apply -f ${OUTPUT_FILE} -n ${NAMESPACE}
+```
+
+<hr/>
+
 Assume we have the following ApiDefinitions, two of which are categorized as `#testing` 
 and created on our Dashboard.
 
-![apis](./img/apis.png)
+![Created APIs on Tyk Dashboard](./img/apis.png)
 
 If we would like to specify metadata of the `test-api-5`, we can update Config Data
 of the ApiDefinition, as follows.
 
-![config-data](./img/config-data.png)
+![Config Data feature of ApiDefinition objects](./img/config-data.png)
 
 So, the generated output for this environment will look as follows;
 ```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --category testing
+TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category testing
 ```
 ```yaml
 # output.yaml
@@ -157,7 +166,7 @@ kind: ApiDefinition
 metadata:
   creationTimestamp: null
   name: httpbin-api-5   # obtained from Config Data's "k8sName" field.
-  namespace: staging    # obtained from Config Data's "k8sNs" field. 
+  namespace: staging    # obtained from Config Data's "k8sNamespace" field. 
 spec:
   name: 'test-api-5 #testing'
   ...
@@ -167,7 +176,7 @@ kind: ApiDefinition
 metadata:
   creationTimestamp: null
   name: replace-me-1    # Since Config Data does not include "k8sName", default name is used.
-  namespace: default    # Since Config Data does not include "k8sKey", default namespace is used.
+  namespace: default    # Since Config Data does not include "k8sNamespace", default namespace is used.
 spec:
   name: 'test-api-3 #testing'
   ...
@@ -177,7 +186,7 @@ spec:
 
 You can export your SecurityPolicy objects by specifying `--policy` flag.
 ```bash
-TYK_MODE=pro TYK_URL=<TYK_URL> TYK_AUTH=<TYK_AUTH> TYK_ORG=<TYK_ORG> ./tyk-operator --snapshot output.yaml --policy policies.yaml
+TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --policy policies.yaml
 ```
 SecurityPolicy CRs will be saved into a file specified in `--policy` command.
 
