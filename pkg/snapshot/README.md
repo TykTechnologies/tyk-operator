@@ -59,7 +59,7 @@ so that you do not need to manually update the output file afterwards.
 
 ## Usage
 ```bash
-tyk-operator exports APIs and Security Policies from your Tyk Dashboard to Custom 
+tyk-operator exports APIs and Security Policies from your Tyk installation to Custom 
 Resource that can be used with Tyk Operator
 
 Export API Definitions:
