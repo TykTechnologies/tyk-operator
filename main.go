@@ -68,7 +68,7 @@ func main() {
 			"Command-line flags override configuration from this file.")
 
 	flag.StringVar(&snapshotFile, "snapshot", "",
-		"By passing an export flag, we are telling the Operator to connect to a"+
+		"By passing an export flag, we are telling the Operator to connect to a "+
 			"Tyk installation in order to pull a snapshot of ApiDefinitions from that environment and output as CR")
 
 	flag.BoolVar(&group, "group", false, ""+
@@ -79,7 +79,7 @@ func main() {
 	flag.StringVar(&category, "category", "", "Dump APIs from specified category.")
 
 	flag.StringVar(&policyFile, "policy", "",
-		"By passing an export flag, we are telling the Operator to connect to a"+
+		"By passing an export flag, we are telling the Operator to connect to a "+
 			"Tyk installation in order to pull a snapshot of SecurityPolicies from that environment and output as CR")
 
 	opts := zap.Options{

@@ -1,6 +1,6 @@
 # Snapshot (PoC)
 
-The snapshot package provides a CLI tool that allows dashboard users to export their 
+The snapshot package provides a CLI tool that allows users to export their 
 existing Tyk APIs and Security Policies into CRD YAML format that can be used by 
 Tyk Operator. 
 
@@ -24,7 +24,7 @@ Please use with caution.
 
 1. Access to `tyk-operator` repository.
 2. [go](https://go.dev/doc/install)
-3. Credentials to connect Tyk Dashboard. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid) for details.
+3. Credentials to connect Tyk Dashboard or Gateway. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator) for details.
 
 ## Installation
 
@@ -42,9 +42,9 @@ go build
 ## Preparation
 1. Use API Category to group the APIs you want to export
 
-By default, snapshot tool will export **all** APIs from Tyk dashboard.   
-You can also categorize your APIs by teams, environments, or any way you want. 
-You can specify which API category to be exported in later steps.
+By default, snapshot tool will export **all** APIs. You can also categorize your 
+APIs by teams, environments, or any way you want. You can specify which API category 
+to be exported in later steps.
 
 ![apis](./img/apis.png)
 
@@ -59,11 +59,14 @@ so that you do not need to manually update the output file afterwards.
 
 ## Usage
 ```bash
-tyk-operator exports APIs and Security Policies from your Tyk Dashboard to Custom Resource that can be used with Tyk Operator
+tyk-operator exports APIs and Security Policies from your Tyk Dashboard to Custom 
+Resource that can be used with Tyk Operator
 
 Export API Definitions:
   --snapshot <output_file>
-    	Pull a snapshot of ApiDefinitions from Tyk Dashboard and output as CR
+    	By passing an export flag, we are telling the Operator to connect to a Tyk
+    	 installation in order to pull a snapshot of ApiDefinitions from that 
+    	 environment and output as CR
 
   --group
     	Creates an output file including an Security Policy object with ApiDefinition 
@@ -80,16 +83,18 @@ Export Security Policies:
 
 ### Setting required environment variables
 
-Store the Tyk Dashboard connection parameters in environment variables before running 
+Store the Tyk Dashboard or Gateway connection parameters in environment variables 
+before running 
 `tyk-operator`, e.g.
 
 ```bash
-TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} \
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} \
 ./tyk-operator --snapshot <OUTPUT_FILE>
 ```
 
 where
-- `${TYK_URL}`: Management URL of your Tyk Dashboard.
+- `${TYK_MODE}`: `ce` for Tyk Open Source mode and `pro` for for Tyk Self Managed mode.
+- `${TYK_URL}`: Management URL of your Tyk Dashboard or Gateway.
 - `${TYK_AUTH}`: Operator user API Key.
 - `${TYK_ORG}`: Operator user ORG ID.
 - `<OUTPUT_FILE>`: The name of the output file in YAML format, e.g., `output.yaml`.
@@ -101,11 +106,11 @@ where
 #### Specify Category to export
 
 By default, tyk-operator exports all ApiDefinitions created on the Tyk Dashboard
-without considering their categories. 
+or Gateway without considering their categories. 
 
 You can specify a category to fetch via `--category` flag, as follows:
 ```bash
-TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category k8s
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category k8s
 ```
 The command above fetches all ApiDefinitions in `#k8s` category.
 
@@ -114,7 +119,7 @@ The command above fetches all ApiDefinitions in `#k8s` category.
 If you would like to group SecurityPolicy objects and ApiDefinitions that are controlled
 by specific SecurityPolicy, you can use `--group` flag, as follows:
 ```bash
-TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --group
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --group
 ```
 
 #### Output CR
@@ -168,7 +173,7 @@ of the ApiDefinition as follows.
 
 So, the generated output for this environment will look as follows;
 ```bash
-TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category testing
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category testing
 ```
 ```yaml
 # output.yaml
@@ -198,7 +203,7 @@ spec:
 
 You can export your SecurityPolicy objects by specifying `--policy` flag.
 ```bash
-TYK_MODE=pro TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --policy policies.yaml
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --policy policies.yaml
 ```
 SecurityPolicy CRs will be saved into a file specified in `--policy` command.
 
