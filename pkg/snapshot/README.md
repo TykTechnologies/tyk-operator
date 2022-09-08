@@ -32,7 +32,6 @@ Please use with caution.
 ```bash
 git clone https://github.com/TykTechnologies/tyk-operator.git
 cd tyk-operator/
-git checkout feat/importer-cli
 ```
 
 2. Build Tyk Operator

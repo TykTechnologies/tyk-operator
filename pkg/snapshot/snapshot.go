@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	jsonEncoding "encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,6 +31,12 @@ var (
 
 	// idAPIs stores ApiDefinitions based on its ID.
 	idAPIs map[string]*model.APIDefinitionSpec
+
+	// ErrNonexistentKey represents an error if the given key does not exist in the object.
+	ErrNonexistentKey = errors.New("key does not exist in the map")
+
+	// ErrNonStringVal represents an error if the underlying value of interface{} is not string type.
+	ErrNonStringVal = errors.New("failed to convert interface{} to string")
 )
 
 type Group struct {
@@ -254,6 +261,21 @@ func fetchPolicies(e *environmet.Env) ([]tykv1alpha1.SecurityPolicySpec, error) 
 	return policiesResponse.Policies, nil
 }
 
+// val returns given key's value from given map in string format.
+func val(obj map[string]interface{}, key string) (string, error) {
+	v, ok := obj[key]
+	if !ok {
+		return "", ErrNonexistentKey
+	}
+
+	strVal, ok := v.(string)
+	if !ok {
+		return "", ErrNonStringVal
+	}
+
+	return strings.TrimSpace(strVal), nil
+}
+
 // parseConfigData parses given ApiDefinitionSpec's ConfigData field. It checks existence of NameKey and NamespaceKey
 // keys in the ConfigData map. Returns their values if keys exist. Otherwise, returns default values for name and namespace.
 func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name, namespace string) {
@@ -262,45 +284,27 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 	}
 
 	// Parse name
-	val, ok := apiDefSpec.ConfigData.Object[NameKey]
-	if !ok {
+	name, err := val(apiDefSpec.ConfigData.Object, NameKey)
+	if err != nil {
+		fmt.Println(err)
 		return defName, DefaultNs
 	}
 
-	name, ok = val.(string)
-	if !ok {
-		return defName, DefaultNs
-	}
-
-	// Warn if .metadata.name includes an empty character because it violates k8s spec rules.
-	name = strings.TrimSpace(name)
-	if strings.Contains(name, " ") {
-		fmt.Printf(
-			"WARNING: Please ensure that API identified by %s does not include empty space in its ConfigData[%s].\n",
-			apiDefSpec.APIID,
-			NameKey,
-		)
-	}
-
-	// Parse namespace. If namespace is not specified, use what is provided via `kubectl apply`.
-	val, ok = apiDefSpec.ConfigData.Object[NamespaceKey]
-	if !ok {
+	namespace, err = val(apiDefSpec.ConfigData.Object, NamespaceKey)
+	if err != nil {
+		fmt.Println(err)
 		return name, DefaultNs
 	}
 
-	namespace, ok = val.(string)
-	if !ok {
-		return name, DefaultNs
-	}
-
-	// Warn if .metadata.namespace includes an empty character because it violates k8s spec rules.
-	namespace = strings.TrimSpace(namespace)
-	if strings.Contains(namespace, " ") {
-		fmt.Printf(
-			"WARNING: Please ensure that API identified by %s does not include empty space in its ConfigData[%s].\n",
-			apiDefSpec.APIID,
-			NamespaceKey,
-		)
+	// Warn if .metadata includes an empty character because it violates k8s spec rules.
+	for _, v := range []string{name, namespace} {
+		if strings.Contains(v, " ") {
+			fmt.Printf(
+				"WARNING: Please ensure that API identified by %s does not include empty space in its ConfigData[%s].\n",
+				apiDefSpec.APIID,
+				NamespaceKey,
+			)
+		}
 	}
 
 	return
