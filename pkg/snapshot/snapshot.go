@@ -3,18 +3,14 @@ package snapshot
 import (
 	"bufio"
 	"context"
-	jsonEncoding "encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 
@@ -69,7 +65,7 @@ func PrintSnapshot(
 
 	var policiesList []tykv1alpha1.SecurityPolicySpec
 	if policiesFile != "" || group {
-		policiesList, err = fetchPolicies(env)
+		policiesList, err = klient.Universal.Portal().Policy().All(ctx)
 		if err != nil {
 			return err
 		}
@@ -229,36 +225,6 @@ func storeMetadata(key, name, namespace string) {
 
 func getMetadata(key string) (name, namespace string) {
 	return names[key], nameSpaces[key]
-}
-
-// fetchPolicies lists all SecurityPolicy objects form dashboard.
-func fetchPolicies(e *environmet.Env) ([]tykv1alpha1.SecurityPolicySpec, error) {
-	url := client.JoinURL(e.URL, "/api/portal/policies?p=-2")
-	method := http.MethodGet
-
-	hc := &http.Client{}
-
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", e.Auth)
-
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	policiesResponse := &dashboard.PoliciesResponse{}
-
-	err = jsonEncoding.NewDecoder(res.Body).Decode(&policiesResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return policiesResponse.Policies, nil
 }
 
 // val returns given key's value from given map in string format.
