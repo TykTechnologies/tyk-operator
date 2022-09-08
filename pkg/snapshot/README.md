@@ -1,4 +1,4 @@
-# Snapshot (WIP)
+# Snapshot (PoC)
 
 The snapshot package provides a CLI tool that allows dashboard users to export their 
 existing Tyk APIs and Security Policies into CRD YAML format that can be used by 
@@ -62,7 +62,7 @@ so that you do not need to manually update the output file afterwards.
 tyk-operator exports APIs and Security Policies from your Tyk Dashboard to Custom Resource that can be used with Tyk Operator
 
 Export API Definitions:
-   --snapshot <output_file>
+  --snapshot <output_file>
     	Pull a snapshot of ApiDefinitions from Tyk Dashboard and output as CR
 
   --group
