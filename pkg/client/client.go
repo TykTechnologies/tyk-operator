@@ -78,7 +78,7 @@ func Do(r *http.Request) (*http.Response, error) {
 	return client.Do(r)
 }
 
-// Context inforation needed to make a successful http api call
+// Context information needed to make a successful http api call.
 type Context struct {
 	Env           environmet.Env
 	Log           logr.Logger

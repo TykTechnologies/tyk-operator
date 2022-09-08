@@ -9,6 +9,9 @@
 - Added PoC tool that helps migration of existing ApiDefinition & SecurityPolicies
 from Dashboard to Kubernetes environment.
 
+**Fixed**
+- Dashboard client to fetch all Policy objects from the Dashboard [#503](https://github.com/TykTechnologies/tyk-operator/issues/503).
+
 **Documentation**
 - Added how Tyk Ingress Controller generates API names
 

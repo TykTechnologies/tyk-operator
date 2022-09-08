@@ -9,7 +9,7 @@ import (
 
 type Policy interface {
 	All(ctx context.Context) ([]v1alpha1.SecurityPolicySpec, error)
-	// Get retruns the policy with the given id.
+	// Get returns the policy with the given id.
 	Get(ctx context.Context, id string) (*v1alpha1.SecurityPolicySpec, error)
 	// Create creates a new def and updates id and other fields. It is up to the
 	// caller to update any fields that will be set after the policy has been
