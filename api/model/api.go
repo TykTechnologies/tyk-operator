@@ -306,6 +306,7 @@ func (t Target) Equal(o Target) bool {
 	return t.Namespace == o.Namespace && t.Name == o.Name
 }
 
+// NS returns NamespacedName representation of the Target. If target's namespace is empty, it uses namespace argument.
 func (t Target) NS(defaultNS string) types.NamespacedName {
 	if t.Namespace != "" {
 		defaultNS = t.Namespace
@@ -1046,10 +1047,14 @@ type GraphQLSubgraphEntity struct {
 
 type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
-	UpdatedAt     *metav1.Time            `json:"updated_at,omitempty"`
-	Subgraphs     []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
-	MergedSDL     string                  `json:"merged_sdl,omitempty"`
-	GlobalHeaders map[string]string       `json:"global_headers,omitempty"`
+	UpdatedAt *metav1.Time            `json:"updated_at,omitempty"`
+	Subgraphs []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
+
+	// SubgraphRefs represents an array of name/namespace structure referencing Subgraph ApiDefinitions.
+	SubgraphRefs []Target `json:"subgraph_refs,omitempty"`
+
+	MergedSDL     string            `json:"merged_sdl,omitempty"`
+	GlobalHeaders map[string]string `json:"global_headers,omitempty"`
 }
 
 // +kubebuilder:validation:Enum="1";"2"

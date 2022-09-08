@@ -1,59 +1,4 @@
 apiVersion: tyk.tyk.io/v1alpha1
-kind: SuperGraph
-metadata:
-  name: social-media-supergraph
-spec:
-  subgraph_refs:
-    - name: users-subgraph
-      namespace: users-ns
-    - name: posts-subgraph # Since namespace is not specified for posts-subgraph, Operator uses the namespace of this SuperGraph CRD which is default for our example.
-  schema: |-
-    type Query {
-      user(id: ID!): User!
-      users: [User!]!
-      post(id: ID!): Post!
-      posts: [Post!]!
-    }
-    
-    type User {
-      id: ID!
-      name: String!
-      username: String!
-      email: String!
-      address: Address!
-      phone: String!
-      website: String!
-      company: Company!
-      posts: [Post!]!
-    }
-    
-    type Address {
-      street: String!
-      suite: String!
-      city: String!
-      zipcode: String!
-      geo: GeoLocation!
-    }
-    
-    type GeoLocation {
-      lat: String!
-      lng: String!
-    }
-    
-    type Company {
-      name: String!
-      catchPhrase: String!
-      bs: String!
-    }
-    
-    type Post {
-      id: ID!
-      userId: ID!
-      title: String!
-      body: String!
-    }
----
-apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
   name: federation-supergraph
@@ -66,7 +11,12 @@ spec:
   graphql:
     enabled: true
     execution_mode: supergraph
-    graph_ref: social-media-supergraph
+    supergraph:
+      subgraph_refs:
+        - name: federation-posts-subgraph
+          namespace: default
+        - name: federation-users-subgraph
+          namespace: users-ns
     version: "2"
     playground:
       enabled: true

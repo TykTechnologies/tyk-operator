@@ -1,16 +1,25 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
+	"github.com/jensneuse/graphql-go-tools/pkg/astprinter"
+	"github.com/jensneuse/graphql-go-tools/pkg/introspection"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -374,3 +383,207 @@ func GetContext(
 
 	return &o, nil
 }
+
+// containsTarget returns true if given Target object exists in the array of Target.
+func containsTarget(targets []model.Target, t model.Target) bool {
+	for _, target := range targets {
+		if target.Equal(t) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// metadataInformation returns `namespace/name` representation of the given metadata of the object.
+func metadataInformation(meta *metav1.ObjectMeta) string {
+	return fmt.Sprintf("%s/%s", meta.Namespace, meta.Name)
+}
+
+type schemaIntrospectionResp struct {
+	Data json.RawMessage `json:"data"`
+}
+
+type sdlIntrospectionResp struct {
+	Data struct {
+		Service struct {
+			SDL string `json:"sdl"`
+		} `json:"_service"`
+	} `json:"data"`
+}
+
+// introspect sends given GraphQL introspection query to the given url address.
+func introspect(url string, query GraphQLQuery) (string, error) {
+	hc := http.Client{}
+
+	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(query)))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := hc.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to introspect, unexpected HTTP status code: %d", res.StatusCode)
+	}
+	defer res.Body.Close()
+
+	if query == sdlIntrospectionQuery {
+		sdlBytes, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return "", err
+		}
+
+		sdlStruct := &sdlIntrospectionResp{}
+		if err = json.Unmarshal(sdlBytes, &sdlStruct); err != nil {
+			return "", err
+		}
+
+		return sdlStruct.Data.Service.SDL, nil
+	}
+
+	introspectionResponse := &schemaIntrospectionResp{}
+	if err := json.NewDecoder(res.Body).Decode(&introspectionResponse); err != nil {
+		return "", err
+	}
+
+	converter := introspection.JsonConverter{}
+	buf := bytes.NewBuffer(introspectionResponse.Data)
+
+	doc, err := converter.GraphQLDocument(buf)
+	if err != nil {
+		return "", err
+	}
+
+	outWriter := &bytes.Buffer{}
+
+	err = astprinter.PrintIndent(doc, nil, []byte("  "), outWriter)
+	if err != nil {
+		return "", err
+	}
+
+	schemaOutputPretty := outWriter.String()
+	schemaOutputPretty = strings.ReplaceAll(schemaOutputPretty, "scalar String", "")
+	schemaOutputPretty = strings.ReplaceAll(schemaOutputPretty, "scalar Int", "")
+	schemaOutputPretty = strings.ReplaceAll(schemaOutputPretty, "scalar ID", "")
+	schemaOutputPretty = strings.ReplaceAll(schemaOutputPretty, "scalar Float", "")
+	schemaOutputPretty = strings.ReplaceAll(schemaOutputPretty, "scalar Boolean", "")
+
+	return schemaOutputPretty, nil
+}
+
+const rawSchemaIntrospection = `
+  query IntrospectionQuery {
+    __schema {
+      queryType {
+        name
+      }
+      mutationType {
+        name
+      }
+      subscriptionType {
+        name
+      }
+      types {
+        ...FullType
+      }
+      directives {
+        name
+        description
+        locations
+        args {
+          ...InputValue
+        }
+      }
+    }
+  }
+  fragment FullType on __Type {
+    kind
+    name
+    description
+    fields(includeDeprecated: true) {
+      name
+      description
+      args {
+        ...InputValue
+      }
+      type {
+        ...TypeRef
+      }
+      isDeprecated
+      deprecationReason
+    }
+    inputFields {
+      ...InputValue
+    }
+    interfaces {
+      ...TypeRef
+    }
+    enumValues(includeDeprecated: true) {
+      name
+      description
+      isDeprecated
+      deprecationReason
+    }
+    possibleTypes {
+      ...TypeRef
+    }
+  }
+  fragment InputValue on __InputValue {
+    name
+    description
+    type {
+      ...TypeRef
+    }
+    defaultValue
+  }
+  fragment TypeRef on __Type {
+    kind
+    name
+    ofType {
+      kind
+      name
+      ofType {
+        kind
+        name
+        ofType {
+          kind
+          name
+          ofType {
+            kind
+            name
+            ofType {
+              kind
+              name
+              ofType {
+                kind
+                name
+                ofType {
+                  kind
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+type GraphQLQuery string
+
+var sdlIntrospectionQuery GraphQLQuery = `{"query":"query {\n _service {\n sdl\n }\n}"}`
+
+var schemaIntrospectionQuery = GraphQLQuery(fmt.Sprintf(`
+{
+	"operationName": "IntrospectionQuery",
+	"variables": {},
+	"query": "%s"
+}`, strings.ReplaceAll(strings.TrimSpace(rawSchemaIntrospection), "\n", `\n`),
+))

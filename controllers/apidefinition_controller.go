@@ -22,41 +22,42 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/event"
-
-	"k8s.io/apimachinery/pkg/fields"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
+	"github.com/TykTechnologies/tyk-operator/api/model"
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-
-	"github.com/TykTechnologies/tyk-operator/api/model"
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
+	"github.com/jensneuse/graphql-go-tools/pkg/federation/sdlmerge"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
 	queueAfter = time.Second * 5
 	GraphKey   = "graph_ref"
+)
+
+var (
+	ErrInvalidGraphQLSpec = fmt.Errorf("invalid GraphQL spec")
+	ErrInvalidGraphQLMode = fmt.Errorf("invalid GraphQL mode")
 )
 
 // ApiDefinitionReconciler reconciles a ApiDefinition object
@@ -121,10 +122,12 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		if desired.Spec.APIID == "" {
+			desired.Spec.APIID = encodeNS(req.NamespacedName.String())
 			upstreamRequestStruct.Spec.APIID = encodeNS(req.NamespacedName.String())
 		}
 
 		if desired.Spec.OrgID == "" {
+			desired.Spec.OrgID = env.Org
 			upstreamRequestStruct.Spec.OrgID = env.Org
 		}
 
@@ -139,79 +142,38 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		// Check Pinned Public keys
 		r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
 
-		if desired.Spec.UseMutualTLSAuth {
+		if upstreamRequestStruct.Spec.UseMutualTLSAuth {
 			r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 		}
 
 		// Check GraphQL Federation
-		if upstreamRequestStruct.Spec.GraphQL != nil && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
-			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
-				subgraph := &tykv1alpha1.SubGraph{}
+		if upstreamRequestStruct.Spec.GraphQL != nil {
+			switch upstreamRequestStruct.Spec.GraphQL.ExecutionMode {
+			case model.SubGraphExecutionMode:
+				err := r.gqlIntrospection(upstreamRequestStruct)
+				if err != nil {
+					return err
+				}
+				desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
+				desired.Spec.GraphQL.Subgraph.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
 
-				err := r.Client.Get(ctx, types.NamespacedName{
-					Namespace: req.Namespace,
-					Name:      desired.Spec.GraphQL.GraphRef,
-				}, subgraph)
+			case model.SuperGraphExecutionMode:
+				desired.Spec.GraphQL.Supergraph.SubgraphRefs = upstreamRequestStruct.Spec.GraphQL.Supergraph.SubgraphRefs
+
+				sdls, err := r.generateSDLs(ctx, upstreamRequestStruct)
 				if err != nil {
 					return err
 				}
 
-				upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Schema
-				upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.SDL
-
-				subgraph.Status.APIID = upstreamRequestStruct.Spec.APIID
-				err = r.Status().Update(ctx, subgraph)
+				mergedSdl, err := sdlmerge.MergeSDLs(sdls...)
 				if err != nil {
-					log.Error(err, "Could not update Status APIID of SubGraph")
-					return err
-				}
-			}
-
-			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SuperGraphExecutionMode {
-				supergraph := &tykv1alpha1.SuperGraph{}
-				err := r.Client.Get(ctx, types.NamespacedName{
-					Namespace: req.Namespace,
-					Name:      upstreamRequestStruct.Spec.GraphQL.GraphRef,
-				}, supergraph)
-				if err != nil {
-					return err
+					log.Error(err, "Failed to merge SDLs")
 				}
 
-				for _, ref := range supergraph.Spec.SubgraphRefs {
-					ns := ref.Namespace
-					if ns == "" {
-						ns = supergraph.Namespace
-					}
-
-					subGraph := &tykv1alpha1.SubGraph{}
-					err := r.Client.Get(ctx, types.NamespacedName{
-						Name:      ref.Name,
-						Namespace: ns,
-					}, subGraph)
-					if err != nil {
-						return err
-					}
-
-					ns, name := decodeID(subGraph.Status.APIID)
-
-					apiDef := &tykv1alpha1.ApiDefinition{}
-					err = r.Client.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, apiDef)
-					if err != nil {
-						return err
-					}
-
-					upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
-						model.GraphQLSubgraphEntity{
-							APIID: subGraph.Status.APIID,
-							Name:  apiDef.Spec.Name,
-							URL:   fmt.Sprintf("tyk://%s", apiDef.Name),
-							SDL:   subGraph.Spec.SDL,
-						})
-				}
-
-				upstreamRequestStruct.Spec.GraphQL.Schema = supergraph.Spec.Schema
-				upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = supergraph.Spec.MergedSDL
+				desired.Spec.GraphQL.Schema = mergedSdl
+				desired.Spec.GraphQL.Supergraph.MergedSDL = mergedSdl
+				upstreamRequestStruct.Spec.GraphQL.Schema = mergedSdl
+				upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = mergedSdl
 			}
 		}
 
@@ -354,27 +316,6 @@ func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
 	}
 
 	upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
-}
-
-func decodeID(encodedID string) (namespace, name string) {
-	// TODO: refactor this code and consider returning error.
-	if encodedID == "" {
-		return
-	}
-
-	b, err := base64.RawURLEncoding.DecodeString(encodedID)
-	if err != nil {
-		return
-	}
-
-	encoded := string(b)
-	namespacedName := strings.Split(encoded, "/")
-
-	if len(namespacedName) < 1 {
-		return
-	}
-
-	return namespacedName[0], namespacedName[1]
 }
 
 func uploadCert(ctx context.Context, orgID string, pemKeyBytes, pemCrtBytes []byte) (tykCertID string, err error) {
@@ -548,6 +489,115 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 	return ctrl.Result{}, nil
 }
 
+// generateSDLs returns an array of subgraph SDLs referenced by the given supergraph. It returns an error if referenced
+// subgraphs aren't found in the k8s environment or if there is no valid GraphQL spec.
+func (r *ApiDefinitionReconciler) generateSDLs(
+	ctx context.Context,
+	supergraphApiDef *tykv1alpha1.ApiDefinition,
+) ([]string, error) {
+	sdls := []string{}
+
+	for _, subgraphRef := range supergraphApiDef.Spec.GraphQL.Supergraph.SubgraphRefs {
+		subgraphApiDef := &tykv1alpha1.ApiDefinition{}
+
+		err := r.Client.Get(ctx, types.NamespacedName{
+			Name:      subgraphRef.Name,
+			Namespace: subgraphRef.Namespace,
+		}, subgraphApiDef)
+		if err != nil {
+			r.Log.Error(
+				err,
+				"Failed to find ApiDefinition",
+				"ApiDefinition", subgraphRef.String(),
+			)
+
+			return sdls, err
+		}
+
+		if subgraphApiDef.Spec.GraphQL == nil {
+			r.Log.Error(ErrInvalidGraphQLSpec, subgraphRef.String())
+			return sdls, ErrInvalidGraphQLSpec
+		}
+
+		if subgraphApiDef.Spec.GraphQL.ExecutionMode != model.SubGraphExecutionMode {
+			r.Log.Error(
+				ErrInvalidGraphQLMode,
+				subgraphRef.String(),
+				"expected Subgraph but got %s", subgraphApiDef.Spec.GraphQL.ExecutionMode,
+			)
+
+			return sdls, ErrInvalidGraphQLMode
+		}
+
+		sdls = append(sdls, subgraphApiDef.Spec.GraphQL.Subgraph.SDL)
+		supergraphApiDef.Spec.GraphQL.Supergraph.Subgraphs = append(
+			supergraphApiDef.Spec.GraphQL.Supergraph.Subgraphs,
+			model.GraphQLSubgraphEntity{
+				APIID: subgraphApiDef.Status.ApiID,
+				Name:  subgraphApiDef.Spec.Name,
+				URL:   fmt.Sprintf("tyk://%s/", subgraphApiDef.Status.ApiID),
+				SDL:   subgraphApiDef.Spec.GraphQL.Subgraph.SDL,
+			},
+		)
+
+		err = r.updateStatus(ctx, subgraphApiDef.Namespace, subgraphRef, false,
+			func(ads *tykv1alpha1.ApiDefinitionStatus) {
+				t := model.Target{
+					Name:      supergraphApiDef.Name,
+					Namespace: supergraphApiDef.Namespace,
+				}
+				if !containsTarget(ads.SupergraphRefs, t) {
+					ads.SupergraphRefs = append(ads.SupergraphRefs, t)
+				}
+			},
+		)
+		if err != nil {
+			r.Log.Error(
+				err,
+				"Failed to update Subgraph Status",
+				"ApiDefinition", subgraphApiDef.ObjectMeta.String(),
+			)
+
+			return sdls, err
+		}
+	}
+
+	return sdls, nil
+}
+
+// gqlIntrospection introspects Schema and SDL from given ApiDefinition's proxy URL. It returns an error if introspection
+// fails.
+func (r *ApiDefinitionReconciler) gqlIntrospection(upstreamRequestStruct *tykv1alpha1.ApiDefinition) error {
+	schema, err := introspect(upstreamRequestStruct.Spec.Proxy.TargetURL, schemaIntrospectionQuery)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to introspect Subgraph schema",
+			"URL", upstreamRequestStruct.Spec.Proxy.TargetURL,
+			"Subgraph", metadataInformation(&upstreamRequestStruct.ObjectMeta),
+		)
+
+		return err
+	}
+
+	sdl, err := introspect(upstreamRequestStruct.Spec.Proxy.TargetURL, sdlIntrospectionQuery)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to introspect Subgraph SDL",
+			"URL", upstreamRequestStruct.Spec.Proxy.TargetURL,
+			"Subgraph", metadataInformation(&upstreamRequestStruct.ObjectMeta),
+		)
+	}
+
+	if upstreamRequestStruct != nil && upstreamRequestStruct.Spec.GraphQL != nil {
+		upstreamRequestStruct.Spec.GraphQL.Schema = schema
+		upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = sdl
+	}
+
+	return nil
+}
+
 func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alpha1.ApiDefinition) (time.Duration, error) {
 	r.Log.Info("resource being deleted")
 	// If our finalizer is present, need to delete from Tyk still
@@ -571,6 +621,70 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			})
 			if err != nil {
 				return queueAfter, err
+			}
+		}
+
+		// If deleted resource has subgraph references, get these subgraphs and delete the deleted object's reference from
+		// their .status.supergraph_refs field.
+		if desired.Spec.GraphQL != nil {
+			for _, subgraphRef := range desired.Spec.GraphQL.Supergraph.SubgraphRefs {
+				subgraph := &tykv1alpha1.ApiDefinition{}
+
+				err := r.Get(ctx, types.NamespacedName{
+					Name:      subgraphRef.Name,
+					Namespace: subgraphRef.Namespace,
+				}, subgraph)
+				if err != nil {
+					r.Log.Error(
+						err,
+						"Failed to find Supergraph reference",
+						"Supergraph", subgraphRef.String(),
+					)
+
+					return queueAfter, err
+				}
+
+				err = r.updateStatus(ctx, desired.Namespace, subgraphRef, false,
+					func(ads *tykv1alpha1.ApiDefinitionStatus) {
+						ads.SupergraphRefs = removeTarget(
+							ads.SupergraphRefs,
+							model.Target{Name: desired.Name, Namespace: desired.Namespace},
+						)
+					})
+				if err != nil {
+					return queueAfter, err
+				}
+			}
+		}
+
+		// If deleted resource has supergraph references, update supergraph based on deleted resource.
+		for _, supergraphRef := range desired.Status.SupergraphRefs {
+			supergraph := &tykv1alpha1.ApiDefinition{}
+
+			err := r.Get(ctx, types.NamespacedName{
+				Name:      supergraphRef.Name,
+				Namespace: supergraphRef.Namespace,
+			}, supergraph)
+			if err != nil {
+				r.Log.Error(
+					err,
+					"Failed to find Supergraph reference",
+					"Supergraph", supergraphRef.String(),
+				)
+
+				return queueAfter, err
+			}
+
+			if supergraph.Spec.GraphQL != nil {
+				supergraph.Spec.GraphQL.Supergraph.SubgraphRefs = removeTarget(
+					supergraph.Spec.GraphQL.Supergraph.SubgraphRefs,
+					model.Target{Name: desired.Name, Namespace: desired.Namespace},
+				)
+				if err := r.Update(ctx, supergraph); err != nil {
+					r.Log.Error(err, "Failed to update in k8s")
+
+					return queueAfter, err
+				}
 			}
 		}
 
@@ -724,6 +838,8 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	return client.IgnoreNotFound(r.Status().Update(ctx, a))
 }
 
+// updateStatus updates status of the object identified by target object. If the target object has an empty namespace,
+// it uses given `ns` string value for namespace.
 func (r *ApiDefinitionReconciler) updateStatus(
 	ctx context.Context,
 	ns string,

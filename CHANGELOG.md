@@ -6,6 +6,7 @@
 **Added**
 - Added support of client mTLS
 - Added support for Go auth custom plugins
+- Added GraphQL introspection.
 
 **Fixed**
 - Dashboard client to fetch all Policy objects from the Dashboard [#503](https://github.com/TykTechnologies/tyk-operator/issues/503).

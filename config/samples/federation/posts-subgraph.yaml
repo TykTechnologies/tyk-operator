@@ -9,8 +9,8 @@ metadata:
 spec:
   ports:
     - name: http
-      port: 4202
-      targetPort: 4202
+      port: 4002
+      targetPort: 4002
   selector:
     app: posts
 ---
@@ -31,81 +31,13 @@ spec:
         version: v1
     spec:
       containers:
-        - image: zalbiraw/go-api-test-service:v2.0.0
+        - image: zalbiraw/go-api-test-service:v1.0.0
           imagePullPolicy: Always
           name: posts
-          command: ["./services/graphql-subgraphs/posts/server"]
+          command: ["./posts/server"]
           env:
             - name: PORT
-              value: "4202"
----
-apiVersion: tyk.tyk.io/v1alpha1
-kind: SubGraph
-metadata:
-  name: posts-subgraph
-spec:
-  schema: |
-    directive @extends on OBJECT | INTERFACE
-    
-    directive @external on FIELD_DEFINITION
-    
-    directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
-    
-    directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
-    
-    directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
-    
-    scalar _Any
-    
-    union _Entity = Post | User
-    
-    scalar _FieldSet
-    
-    type _Service {
-      sdl: String
-    }
-    
-    type Entity {
-      findPostByID(id: ID!): Post!
-      findUserByID(id: ID!): User!
-    }
-    
-    type Post {
-      id: ID!
-      userId: ID!
-      title: String!
-      body: String!
-    }
-    
-    type Query {
-      post(id: ID!): Post!
-      posts: [Post!]!
-      _entities(representations: [_Any!]!): [_Entity]!
-      _service: _Service!
-    }
-    
-    type User {
-      id: ID!
-      posts: [Post!]!
-    }
-  sdl: |
-    extend type Query {
-        post(id: ID!): Post!
-        posts: [Post!]!
-    }
-    
-    type Post @key(fields: "id") {
-        id: ID!
-        userId: ID!
-        title: String!
-        body: String!
-    }
-    
-    extend type User @key(fields: "id") {
-        id: ID! @external
-        posts: [Post!]!
-    }
-
+              value: "4002"
 ---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
@@ -121,12 +53,11 @@ spec:
   graphql:
     enabled: true
     execution_mode: subgraph
-    graph_ref: posts-subgraph
     version: "2"
     playground:
       enabled: false
       path: ""
   proxy:
-    target_url: http://posts.default.svc:4202/query
+    target_url: http://posts.default.svc:4002/query
     listen_path: /posts-subgraph/
     disable_strip_slash: true

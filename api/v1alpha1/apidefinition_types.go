@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// APIDefinition represents the configuration for a single proxied API and it's versions.
+// APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
 	model.APIDefinitionSpec `json:",inline"`
@@ -45,6 +45,9 @@ type ApiDefinitionStatus struct {
 	// LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource
 	// links to.
 	LinkedToAPIs []model.Target `json:"linked_to_apis,omitempty"`
+
+	// SupergraphRefs is a list of Supergraph ApiDefinition namespaced/name that this resource is used in.
+	SupergraphRefs []model.Target `json:"supergraph_refs,omitempty"`
 }
 
 // +kubebuilder:object:root=true

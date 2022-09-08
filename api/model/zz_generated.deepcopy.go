@@ -935,6 +935,11 @@ func (in *GraphQLSupergraphConfig) DeepCopyInto(out *GraphQLSupergraphConfig) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.SubgraphRefs != nil {
+		in, out := &in.SubgraphRefs, &out.SubgraphRefs
+		*out = make([]Target, len(*in))
+		copy(*out, *in)
+	}
 	if in.GlobalHeaders != nil {
 		in, out := &in.GlobalHeaders, &out.GlobalHeaders
 		*out = make(map[string]string, len(*in))
