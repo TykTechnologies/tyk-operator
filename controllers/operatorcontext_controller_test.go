@@ -66,47 +66,47 @@ func TestOperatorContextDelete(t *testing.T) {
 	tests := map[string]struct {
 		Name        string
 		OpCtxStatus *v1alpha1.OperatorContextStatus
-		ReturnError bool
+		Error       error
 	}{
 		"without links": {
 			Name:        "optCtx",
 			OpCtxStatus: &v1alpha1.OperatorContextStatus{},
-			ReturnError: false,
+			Error:       nil,
 		},
 		"with apiDef link": {
 			Name: "optCtx",
 			OpCtxStatus: &v1alpha1.OperatorContextStatus{
 				LinkedApiDefinitions: []model.Target{{Name: dummyName}},
 			},
-			ReturnError: true,
+			Error: controllers.ErrOperatorContextIsStillInUse,
 		},
 		"with security policy link": {
 			Name: "optCtx",
 			OpCtxStatus: &v1alpha1.OperatorContextStatus{
 				LinkedSecurityPolicies: []model.Target{{Name: dummyName}},
 			},
-			ReturnError: true,
+			Error: controllers.ErrOperatorContextIsStillInUse,
 		},
 		"with apiCatalogue link": {
 			Name: "optCtx",
 			OpCtxStatus: &v1alpha1.OperatorContextStatus{
 				LinkedPortalAPICatalogues: []model.Target{{Name: dummyName}},
 			},
-			ReturnError: true,
+			Error: controllers.ErrOperatorContextIsStillInUse,
 		},
 		"with portal config link": {
 			Name: "optCtx",
 			OpCtxStatus: &v1alpha1.OperatorContextStatus{
 				LinkedPortalConfigs: []model.Target{{Name: dummyName}},
 			},
-			ReturnError: true,
+			Error: controllers.ErrOperatorContextIsStillInUse,
 		},
 		"with apiDescription link": {
 			Name: "optCtx",
 			OpCtxStatus: &v1alpha1.OperatorContextStatus{
 				LinkedApiDescriptions: []model.Target{{Name: dummyName}},
 			},
-			ReturnError: true,
+			Error: controllers.ErrOperatorContextIsStillInUse,
 		},
 	}
 
@@ -137,7 +137,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			req.NamespacedName = key
 
 			_, err = r.Reconcile(context.TODO(), req)
-			is.Equal(err != nil, tc.ReturnError)
+			is.Equal(err, tc.Error)
 		})
 	}
 }
