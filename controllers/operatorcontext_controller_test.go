@@ -10,6 +10,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/google/uuid"
 	"github.com/matryer/is"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -128,18 +129,19 @@ func TestOperatorContextDelete(t *testing.T) {
 			t.Parallel()
 
 			key := types.NamespacedName{
-				Name: tc.Name,
+				Name: tc.Name + uuid.New().String(),
 			}
 			// Create a test object
 			opCtx := v1alpha1.OperatorContext{
 				ObjectMeta: v1.ObjectMeta{
-					Name:              tc.Name,
+					Name:              key.Name,
 					DeletionTimestamp: &v1.Time{Time: v1.Now().Time},
 				},
 				Status: *tc.OpCtxStatus,
 			}
 
-			cl.Create(ctx, &opCtx)
+			err := cl.Create(ctx, &opCtx)
+			is.NoErr(err)
 
 			req := reconcile.Request{}
 			req.NamespacedName = key
