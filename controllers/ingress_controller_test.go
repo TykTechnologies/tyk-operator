@@ -33,7 +33,7 @@ func TestTranslateHost(t *testing.T) {
 
 func TestBuildAPIName(t *testing.T) {
 	reconciler := IngressReconciler{}
-	is := is.New(t)
+	eval := is.New(t)
 
 	t.Parallel()
 
@@ -67,13 +67,13 @@ func TestBuildAPIName(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			t.Parallel()
 			result := reconciler.buildAPIName(tc.Namespace, tc.Name, tc.Hash)
-			is.Equal(result, tc.Result)
+			eval.Equal(result, tc.Result)
 		})
 	}
 }
 
 func TestCreateAPI(t *testing.T) {
-	is := is.New(t)
+	eval := is.New(t)
 	apiTemplate := v1alpha1.ApiDefinition{}
 	ns := "default"
 	path := "test"
@@ -112,7 +112,7 @@ func TestCreateAPI(t *testing.T) {
 	}
 
 	client, err := NewFakeClient(nil)
-	is.NoErr(err)
+	eval.NoErr(err)
 
 	reconciler := IngressReconciler{
 		Client: client,
@@ -122,7 +122,7 @@ func TestCreateAPI(t *testing.T) {
 	}
 
 	err = reconciler.createAPI(context.TODO(), reconciler.Log, &apiTemplate, "default", &ing, reconciler.Env)
-	is.NoErr(err)
+	eval.NoErr(err)
 
 	apiDef := &v1alpha1.ApiDefinition{}
 
@@ -132,5 +132,5 @@ func TestCreateAPI(t *testing.T) {
 	}
 
 	err = reconciler.Client.Get(context.TODO(), key, apiDef)
-	is.NoErr(err)
+	eval.NoErr(err)
 }

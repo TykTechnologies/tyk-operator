@@ -20,7 +20,7 @@ import (
 )
 
 func TestOperatorContextCreate(t *testing.T) {
-	is := is.New(t)
+	eval := is.New(t)
 	t.Parallel()
 
 	key := types.NamespacedName{
@@ -36,7 +36,7 @@ func TestOperatorContextCreate(t *testing.T) {
 	}
 
 	cl, err := controllers.NewFakeClient([]runtime.Object{&opCtx})
-	is.NoErr(err)
+	eval.NoErr(err)
 
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
@@ -48,7 +48,7 @@ func TestOperatorContextCreate(t *testing.T) {
 	req.NamespacedName = key
 
 	_, err = r.Reconcile(context.TODO(), req)
-	is.NoErr(err)
+	eval.NoErr(err)
 
 	var result v1alpha1.OperatorContext
 
@@ -57,17 +57,17 @@ func TestOperatorContextCreate(t *testing.T) {
 		t.Error(err)
 	}
 
-	is.True(len(result.Finalizers) != 0)
-	is.True(result.Finalizers[0] == keys.OperatorContextFinalizerName)
+	eval.True(len(result.Finalizers) != 0)
+	eval.True(result.Finalizers[0] == keys.OperatorContextFinalizerName)
 }
 
 func TestOperatorContextDelete(t *testing.T) {
-	is := is.New(t)
+	eval := is.New(t)
 	dummyName := "dummy"
 	ctx := context.TODO()
 
 	cl, err := controllers.NewFakeClient(nil)
-	is.NoErr(err)
+	eval.NoErr(err)
 
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
@@ -141,13 +141,13 @@ func TestOperatorContextDelete(t *testing.T) {
 			}
 
 			err := cl.Create(ctx, &opCtx)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			req := reconcile.Request{}
 			req.NamespacedName = key
 
 			_, err = r.Reconcile(ctx, req)
-			is.Equal(err, tc.Error)
+			eval.Equal(err, tc.Error)
 		})
 	}
 }
