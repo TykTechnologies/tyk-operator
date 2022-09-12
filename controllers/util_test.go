@@ -3,13 +3,12 @@ package controllers
 import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func NewFakeClient(objs []runtime.Object) (client.Client, error) {
-	scheme := scheme.Scheme
+	scheme := runtime.NewScheme()
 	if err := v1alpha1.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
