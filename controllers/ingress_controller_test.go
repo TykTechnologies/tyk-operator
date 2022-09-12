@@ -35,6 +35,8 @@ func TestBuildAPIName(t *testing.T) {
 	reconciler := IngressReconciler{}
 	is := is.New(t)
 
+	t.Parallel()
+
 	tests := map[string]struct {
 		Namespace string
 		Name      string
@@ -63,6 +65,7 @@ func TestBuildAPIName(t *testing.T) {
 
 	for n, tc := range tests {
 		t.Run(n, func(t *testing.T) {
+			t.Parallel()
 			result := reconciler.buildAPIName(tc.Namespace, tc.Name, tc.Hash)
 			is.Equal(result, tc.Result)
 		})
@@ -74,6 +77,8 @@ func TestCreateAPI(t *testing.T) {
 	apiTemplate := v1alpha1.ApiDefinition{}
 	ns := "default"
 	path := "test"
+
+	t.Parallel()
 
 	ing := v1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{

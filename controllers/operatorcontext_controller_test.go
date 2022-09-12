@@ -20,6 +20,7 @@ import (
 
 func TestOperatorContextCreate(t *testing.T) {
 	is := is.New(t)
+	t.Parallel()
 
 	key := types.NamespacedName{
 		Name:      "test",
@@ -62,6 +63,18 @@ func TestOperatorContextCreate(t *testing.T) {
 func TestOperatorContextDelete(t *testing.T) {
 	is := is.New(t)
 	dummyName := "dummy"
+	ctx := context.TODO()
+
+	cl, err := controllers.NewFakeClient(nil)
+	is.NoErr(err)
+
+	r := controllers.OperatorContextReconciler{
+		Client: cl,
+		Scheme: scheme.Scheme,
+		Log:    log.NullLogger{},
+	}
+
+	t.Parallel()
 
 	tests := map[string]struct {
 		Name        string
@@ -112,6 +125,8 @@ func TestOperatorContextDelete(t *testing.T) {
 
 	for n, tc := range tests {
 		t.Run(n, func(t *testing.T) {
+			t.Parallel()
+
 			key := types.NamespacedName{
 				Name: tc.Name,
 			}
@@ -124,19 +139,12 @@ func TestOperatorContextDelete(t *testing.T) {
 				Status: *tc.OpCtxStatus,
 			}
 
-			cl, err := controllers.NewFakeClient([]runtime.Object{&opCtx})
-			is.NoErr(err)
-
-			r := controllers.OperatorContextReconciler{
-				Client: cl,
-				Scheme: scheme.Scheme,
-				Log:    log.NullLogger{},
-			}
+			cl.Create(ctx, &opCtx)
 
 			req := reconcile.Request{}
 			req.NamespacedName = key
 
-			_, err = r.Reconcile(context.TODO(), req)
+			_, err = r.Reconcile(ctx, req)
 			is.Equal(err, tc.Error)
 		})
 	}
