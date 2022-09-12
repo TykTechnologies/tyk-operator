@@ -90,7 +90,7 @@ spec:
 Pay particular attention to the ApiDefinition metadata. This specifies that we have an ApiDefinition object with the
  label `template: true`.
 
-When applying this manifest, the ApiDefinition reconciler's predicate filter will skip reconciliation. This will allow
+When applying this manifest, the ApiDefinition controller will skip reconciliation. This will allow
  the ApiDefinition to be stored inside Kubernetes as a resource, but will not reconcile the ApiDefinition inside Tyk.
 
 All mandatory fields inside the ApiDefinition spec are still mandatory, but can be replaced with placeholders as they
@@ -119,7 +119,20 @@ spec:
            number: 8000
 ```
 
-The above ingress resource will create an ApiDefinition inside Tyk's Gateway. The ApiDefinition will offer path-based routing listening on /httpbin. Because the referenced template is `myapideftemplate`, the IngressReconciler will retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard auth enabled.
+Tyk Ingress Controller will create APIs in Tyk for each path defined for a specific rule in Ingress resource. Each API 
+created inside Tyk will follow a special naming convention as follows:
+```
+<ingress_namespace>-<ingress_name>-<hash(Host + Path)>
+```
+
+
+The above ingress resource will create an ApiDefinition called `default-httpbin-ingress-78acd160d` inside Tyk's Gateway.
+ApiDefinition's name comes from:
+- `default`: The namespace of this Ingress resource,
+- `httpbin-ingress`: The name of this Ingress resource,
+- `78acd160d`: Short hash (first 9 characters) of Host (`""`) and Path (`/httpbin`). The hash algorithm is SHA256.
+
+The ApiDefinition will offer path-based routing listening on `/httpbin`. Because the referenced template is `myapideftemplate`, the IngressReconciler will retrieve the `myapideftemplate` resource and determine that the ApiDefinition object it creates needs to have standard auth enabled.
 
 ## Sample HTTPS Ingress resource
 

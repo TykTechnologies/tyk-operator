@@ -7,6 +7,12 @@
 - Added support of client mTLS
 - Added support for Go auth custom plugins
 
+**Fixed**
+- Dashboard client to fetch all Policy objects from the Dashboard [#503](https://github.com/TykTechnologies/tyk-operator/issues/503).
+
+**Documentation**
+- Added how Tyk Ingress Controller generates API names
+
 ## [v0.10.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.10.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.9.0...v0.10.0)
 
