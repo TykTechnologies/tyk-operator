@@ -29,7 +29,9 @@ import (
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-var ErrOperatorContextIsStillInUse = errors.New("Operator context is used by other resources. Please check operator context status to find exact list of resources")
+var ErrOperatorContextIsStillInUse = errors.
+	New("Operator context is used by other resources." +
+		"Please check operator context status to find exact list of resources")
 
 // OperatorContextReconciler reconciles a OperatorContext object
 type OperatorContextReconciler struct {
