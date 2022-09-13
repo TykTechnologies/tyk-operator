@@ -29,6 +29,10 @@ import (
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+var ErrOperatorContextIsStillInUse = errors.
+	New("Operator context is used by other resources." +
+		"Please check operator context status to find exact list of resources")
+
 // OperatorContextReconciler reconciles a OperatorContext object
 type OperatorContextReconciler struct {
 	client.Client
@@ -64,11 +68,9 @@ func (r *OperatorContextReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	if !desired.DeletionTimestamp.IsZero() {
 		if len(desired.Status.LinkedApiDefinitions) != 0 || len(desired.Status.LinkedApiDescriptions) != 0 || len(desired.Status.LinkedPortalAPICatalogues) != 0 || len(desired.Status.LinkedSecurityPolicies) != 0 || len(desired.Status.LinkedPortalConfigs) != 0 {
-			err := errors.New("Operator context is used by other resources. Please check operator context status to find exact list of resources")
+			logger.Error(ErrOperatorContextIsStillInUse, "Cannot delete operator context")
 
-			logger.Error(err, "Cannot delete operator context")
-
-			return ctrl.Result{RequeueAfter: queueAfter}, err
+			return ctrl.Result{RequeueAfter: queueAfter}, ErrOperatorContextIsStillInUse
 		}
 
 		logger.Info("No resource linked. Deleting operator context")
