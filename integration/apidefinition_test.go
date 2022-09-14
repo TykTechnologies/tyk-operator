@@ -826,23 +826,19 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 	testWithCert := features.New("Client MTLS with certificate").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			client := envConf.Client()
-			is := is.New(t)
+			eval := is.New(t)
 			opConfSecret := v1.Secret{}
 
 			err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			data, ok := opConfSecret.Data["TYK_AUTH"]
-			if !ok {
-				is.Fail()
-			}
+			eval.True(ok)
 
 			tykAuth = string(data)
 
 			data, ok = opConfSecret.Data["TYK_ORG"]
-			if !ok {
-				is.Fail()
-			}
+			eval.True(ok)
 
 			tykOrg = string(data)
 
@@ -850,17 +846,17 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 		}).
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
-			is := is.New(t)
+			eval := is.New(t)
 			t.Log(testNS)
 
 			_, err := createTestTlsSecret(ctx, testNS, nil, envConf)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create ApiDefinition with Client certificate
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -873,24 +869,22 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					defaultVersion: {Name: defaultVersion},
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).Assess("Certificate from secret must be uploaded",
 		func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			is := is.New(t)
+			eval := is.New(t)
 			client := cfg.Client()
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 			tlsSecret := v1.Secret{} //nolint:errcheck
 
 			err := client.Resources(testNS).Get(ctx, certName, testNS, &tlsSecret)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			certPemBytes, ok := tlsSecret.Data["tls.crt"]
-			if !ok {
-				is.Fail()
-			}
+			eval.True(ok)
 
 			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 			calculatedCertID := tykOrg + certFingerPrint
@@ -917,7 +911,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 				return true, nil
 			}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			ctx = context.WithValue(ctx, certIDCtxKey, calculatedCertID)
 
@@ -925,11 +919,13 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 		}).
 		Assess("API must have client certificate field defined",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 				certID := ctx.Value(certIDCtxKey)
+
+				var apiDef *model.APIDefinitionSpec
 
 				err := wait.For(func() (done bool, err error) {
 					env := environmet.Env{}
@@ -949,19 +945,24 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					var apiDefCRD v1alpha1.ApiDefinition
 
 					err = client.Resources().Get(ctx, apiDefClientMTLSWithCert, testNS, &apiDefCRD)
-					is.NoErr(err)
+					if err != nil {
+						return false, err
+					}
 
-					apiDef, err := klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
+					apiDef, err = klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
 					if err != nil {
 						return false, errors.New("API is not created yet")
 					}
 
-					is.True(len(apiDef.ClientCertificates) == 1)
-					is.True(apiDef.ClientCertificates[0] == certID)
+					eval.True(len(apiDef.ClientCertificates) == 1)
+					eval.True(apiDef.ClientCertificates[0] == certID)
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
+
+				eval.True(len(apiDef.ClientCertificates) == 1)
+				eval.True(apiDef.ClientCertificates[0] == certID)
 
 				return ctx
 			}).Feature()
@@ -969,7 +970,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 	testWithoutCert := features.New("Client MTLS without certs").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create ApiDefinition with Upstream certificate
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -982,30 +983,27 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					defaultVersion: {Name: defaultVersion},
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).
 		Assess("API should be created even though certs doesn't exists",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 				opConfSecret := v1.Secret{}
 				err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
-				if !ok {
-					is.Fail()
-				}
+				eval.True(ok)
 
 				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
-				if !ok {
-					is.Fail()
-				}
+				eval.True(ok)
 
+				var apiDef *model.APIDefinitionSpec
 				err = wait.For(func() (done bool, err error) {
 					env := environmet.Env{}
 					env.Mode = v1alpha1.OperatorContextMode(mode)
@@ -1024,16 +1022,20 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					var apiDefCRD v1alpha1.ApiDefinition
 
 					err = client.Resources().Get(ctx, apiDefClientMTLSWithoutCert, testNS, &apiDefCRD)
-					is.NoErr(err)
+					if err != nil {
+						return false, err
+					}
 
-					apiDef, err := klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
-					is.NoErr(err)
-
-					is.True(len(apiDef.ClientCertificates) == 0)
+					apiDef, err = klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
+					if err != nil {
+						return false, err
+					}
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
+
+				eval.True(len(apiDef.ClientCertificates) == 0)
 
 				return ctx
 			}).Feature()
