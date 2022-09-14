@@ -833,16 +833,12 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			eval.NoErr(err)
 
 			data, ok := opConfSecret.Data["TYK_AUTH"]
-			if !ok {
-				eval.Fail()
-			}
+			eval.True(ok)
 
 			tykAuth = string(data)
 
 			data, ok = opConfSecret.Data["TYK_ORG"]
-			if !ok {
-				eval.Fail()
-			}
+			eval.True(ok)
 
 			tykOrg = string(data)
 
@@ -888,9 +884,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			eval.NoErr(err)
 
 			certPemBytes, ok := tlsSecret.Data["tls.crt"]
-			if !ok {
-				eval.Fail()
-			}
+			eval.True(ok)
 
 			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 			calculatedCertID := tykOrg + certFingerPrint
@@ -1004,14 +998,10 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				eval.NoErr(err)
 
 				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
-				if !ok {
-					eval.Fail()
-				}
+				eval.True(ok)
 
 				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
-				if !ok {
-					eval.Fail()
-				}
+				eval.True(ok)
 
 				var apiDef *model.APIDefinitionSpec
 				err = wait.For(func() (done bool, err error) {
