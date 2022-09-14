@@ -29,7 +29,7 @@ var (
 	idAPIs map[string]*model.APIDefinitionSpec
 
 	// ErrNonexistentKey represents an error if the given key does not exist in the object.
-	ErrNonexistentKey = errors.New("key does not exist in the map")
+	ErrNonexistentKey = errors.New("key does not exist in the Config Data")
 
 	// ErrNonStringVal represents an error if the underlying value of interface{} is not string type.
 	ErrNonStringVal = errors.New("failed to convert interface{} to string")

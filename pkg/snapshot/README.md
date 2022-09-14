@@ -63,7 +63,7 @@ tyk-operator exports APIs and Security Policies from your Tyk installation to Cu
 Resource that can be used with Tyk Operator
 
 Export API Definitions:
-  --snapshot <output_file>
+  --apidef <output_file>
     	By passing an export flag, we are telling the Operator to connect to a Tyk
     	 installation in order to pull a snapshot of ApiDefinitions from that 
     	 environment and output as CR
@@ -89,7 +89,7 @@ before running
 
 ```bash
 TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} \
-./tyk-operator --snapshot <OUTPUT_FILE>
+./tyk-operator --apidef <OUTPUT_FILE>
 ```
 
 where
@@ -110,7 +110,7 @@ or Gateway without considering their categories.
 
 You can specify a category to fetch via `--category` flag, as follows:
 ```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category k8s
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --apidef output.yaml --category k8s
 ```
 The command above fetches all ApiDefinitions in `#k8s` category.
 
@@ -124,7 +124,7 @@ TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} 
 
 #### Output CR
 
-`tyk-operator` CLI creates an output file specified via `--snapshot` flag. Each 
+`tyk-operator` CLI creates an output file specified via `--apidef` flag. Each 
 ApiDefinition CR metadata has a default name  `REPLACE_ME_{i}` where `{i}` increases 
 by each ApiDefinition.
 
@@ -173,7 +173,7 @@ of the ApiDefinition as follows.
 
 So, the generated output for this environment will look as follows;
 ```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --category testing
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --apidef output.yaml --category testing
 ```
 ```yaml
 # output.yaml
@@ -203,7 +203,7 @@ spec:
 
 You can export your SecurityPolicy objects by specifying `--policy` flag.
 ```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --snapshot output.yaml --policy policies.yaml
+TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --apidef output.yaml --policy policies.yaml
 ```
 SecurityPolicy CRs will be saved into a file specified in `--policy` command.
 

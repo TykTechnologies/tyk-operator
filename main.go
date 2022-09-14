@@ -67,7 +67,7 @@ func main() {
 			"Omit this flag to use the default configuration values. "+
 			"Command-line flags override configuration from this file.")
 
-	flag.StringVar(&snapshotFile, "snapshot", "",
+	flag.StringVar(&snapshotFile, "apidef", "",
 		"By passing an export flag, we are telling the Operator to connect to a "+
 			"Tyk installation in order to pull a snapshot of ApiDefinitions from that environment and output as CR")
 
