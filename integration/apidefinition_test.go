@@ -1006,6 +1006,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					is.Fail()
 				}
 
+				var apiDef *model.APIDefinitionSpec
 				err = wait.For(func() (done bool, err error) {
 					env := environmet.Env{}
 					env.Mode = v1alpha1.OperatorContextMode(mode)
@@ -1024,16 +1025,20 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 					var apiDefCRD v1alpha1.ApiDefinition
 
 					err = client.Resources().Get(ctx, apiDefClientMTLSWithoutCert, testNS, &apiDefCRD)
-					is.NoErr(err)
+					if err != nil {
+						return false, err
+					}
 
-					apiDef, err := klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
-					is.NoErr(err)
-
-					is.True(len(apiDef.ClientCertificates) == 0)
+					apiDef, err = klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
+					if err != nil {
+						return false, err
+					}
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				is.NoErr(err)
+
+				is.True(len(apiDef.ClientCertificates) == 0)
 
 				return ctx
 			}).Feature()
