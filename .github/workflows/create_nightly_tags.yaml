@@ -1,4 +1,4 @@
-name: Publish nightly
+name: Create nightly tags
 
 on:
   push:
