@@ -20,8 +20,8 @@ To check the supported features of the API Definitions CRD version you're curren
 | TCP                                | ✅      | v0.1           | -                            |        |
 | TLS                                | ✅      | v0.1           | -                            |        |
 | GraphQL - Proxy                    | ✅      | v0.1           | -                            | [Sample](./../config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml) |
-| GraphQL - Universal Data Graph     | ⚠️      | v0.1           | V2 Engine & API ETA Sep 2022 | [Sample - Works with V1 Engine only (Tyk v3.1 or before) ](./../config/samples/udg_1.yaml) |
-| GraphQL - Federation               | ⚠️      | -              | WIP ETA Sep 2022             | [Sample](./../config/samples/federation/README.md) |
+| GraphQL - Universal Data Graph     | ⚠️      | v0.1           | V2 Engine & API ETA Dec 2022 | [Sample - Works with V1 Engine only (Tyk v3.1 or before) ](./../config/samples/udg_1.yaml) |
+| GraphQL - Federation               | ⚠️      | -              | WIP ETA Dec 2022             | [Sample](./../config/samples/federation/README.md) |
 
 ## Routing
 
@@ -49,7 +49,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
 | HMAC                          | ❌        | -              | Not implemented | |
 | Basic Authentication          | ❌        | -              | Not implemented | |
-| [Plugin Auth - Go](./api_definitions/custom_plugin_goauth.yaml)                   | ✅ | -               |
+| Plugin Auth - Go              | ✅        | v0.11          | - | [Sample](./api_definitions/custom_plugin_goauth.yaml) |
 | Plugin Auth - gRPC            | ✅        | v0.1           | - | [Sample](./../bdd/features/api_http_grpc_plugin.feature) |
 | IP Whitelisting               | ✅        | v0.5           | - | [Sample](./api_definitions/ip.md#whitelisting) |
 | IP Blacklisting               | ✅        | v0.5           | - | [Sample](./api_definitions/ip.md#blacklisting) |
