@@ -58,7 +58,7 @@ func get(ctx context.Context) *E2EContext {
 	return ctx.Value(E2EContextKey{}).(*E2EContext)
 }
 
-func (e *E2EContext) CreateSuperUSer() error {
+func (e *E2EContext) CreateSuperUser() error {
 	n := make([]byte, 4)
 
 	_, err := rand.Read(n)
@@ -89,7 +89,7 @@ func (e *E2EContext) CreateSuperUSer() error {
 
 func (e *E2EContext) Setup() error {
 	if isPro() {
-		err := e.CreateSuperUSer()
+		err := e.CreateSuperUser()
 		if err != nil {
 			return err
 		}
