@@ -70,7 +70,7 @@ func (e *E2EContext) CreateSuperUser() error {
 	super := &User{
 		FirstName:    "super",
 		LastName:     "user",
-		EmailAddress: fmt.Sprintf("%x@operator.e2e", n),
+		EmailAddress: fmt.Sprintf("%x@operator.test", n),
 		Password:     "newpassword",
 		OrgID:        "",
 		Active:       true,
