@@ -50,7 +50,7 @@ func (c Config) Chart() string {
 	default:
 		return "tyk-helm/tyk-headless"
 	}
-	//return filepath.Join(c.Tyk.Charts, chartDir())
+	// return filepath.Join(c.Tyk.Charts, chartDir())
 }
 
 // Values returns path to values.yaml used to install the chart
