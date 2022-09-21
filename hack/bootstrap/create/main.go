@@ -42,7 +42,15 @@ type Config struct {
 
 // Chart returns path to the helm chart to install
 func (c Config) Chart() string {
-	return filepath.Join(c.Tyk.Charts, chartDir())
+	switch c.Tyk.Mode {
+	case "ce":
+		return "tyk-helm/tyk-headless"
+	case "pro":
+		return "tyk-helm/tyk-pro"
+	default:
+		return "tyk-helm/tyk-headless"
+	}
+	//return filepath.Join(c.Tyk.Charts, chartDir())
 }
 
 // Values returns path to values.yaml used to install the chart
@@ -393,6 +401,7 @@ func installTykStack() {
 		cmd := exec.Command("helm", "install", config.Tyk.Mode,
 			"-f", config.Values(),
 			config.Chart(),
+			"--version 0.10.0",
 			"--set", fmt.Sprintf("dash.license=%s", config.Tyk.License),
 			"--set", fmt.Sprintf("dash.image.tag=%s", *tykVersion),
 			"--set", fmt.Sprintf("gateway.image.tag=%s", *tykVersion),
