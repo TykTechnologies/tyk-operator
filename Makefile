@@ -186,7 +186,6 @@ setup-pro:	## Install Tyk Pro
 setup-ce:	## Install Tyk CE
 	helm repo add tyk-helm https://helm.tyk.io/public/helm/charts/
 	helm repo update
-	helm version
 	go run hack/bootstrap/create/main.go -debug -mode=ce -cluster=${CLUSTER_NAME} -tyk_version=$(TYK_VERSION)
 
 
