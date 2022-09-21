@@ -399,9 +399,9 @@ func installTykStack() {
 		}
 
 		cmd := exec.Command("helm", "install", config.Tyk.Mode,
-			"-f", config.Values(),
 			config.Chart(),
 			"--version 0.10.0",
+			"-f", config.Values(),
 			"--set", fmt.Sprintf("dash.license=%s", config.Tyk.License),
 			"--set", fmt.Sprintf("dash.image.tag=%s", *tykVersion),
 			"--set", fmt.Sprintf("gateway.image.tag=%s", *tykVersion),
