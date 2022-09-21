@@ -50,7 +50,6 @@ func (c Config) Chart() string {
 	default:
 		return "tyk-helm/tyk-headless"
 	}
-	// return filepath.Join(c.Tyk.Charts, chartDir())
 }
 
 // Values returns path to values.yaml used to install the chart
@@ -185,14 +184,7 @@ func chartDir() string {
 }
 
 func deployDir() string {
-	switch config.Tyk.Mode {
-	case "ce":
-		return "tyk-ce"
-	case "pro":
-		return "tyk-pro"
-	default:
-		return ""
-	}
+	return "datastores"
 }
 
 func main() {
@@ -203,33 +195,10 @@ func main() {
 		preloadImages()
 	}
 
-	submodule()
 	createNamespaces()
 	common()
 	installTykStack()
 	operator()
-}
-
-func submodule() {
-	say("Setup helm charts submodule ...")
-
-	cmd := exec.Command("git", "submodule", "init")
-	cmd.Stderr = os.Stderr
-
-	if *debug {
-		cmd.Stdout = os.Stdout
-	}
-
-	exit(cmd.Run())
-	cmd = exec.Command("git", "submodule", "update")
-	cmd.Stderr = os.Stderr
-
-	if *debug {
-		cmd.Stdout = os.Stdout
-	}
-
-	exit(cmd.Run())
-	ok()
 }
 
 func pro(fn func()) {
@@ -344,7 +313,7 @@ func createRedis() {
 	say("Creating Redis ....")
 
 	if !hasDeployment("deployment/redis", config.Tyk.Namespace) {
-		f := filepath.Join(config.WorkDir, deployDir(), "redis")
+		f := filepath.Join(config.WorkDir, "datastores/redis")
 		exit(kl(
 			"apply", "-f", f,
 			"-n", config.Tyk.Namespace,
@@ -363,7 +332,7 @@ func createMongo() {
 	say("Creating Mongo ....")
 
 	if !hasDeployment("deployment/mongo", config.Tyk.Namespace) {
-		f := filepath.Join(config.WorkDir, deployDir(), "mongo")
+		f := filepath.Join(config.WorkDir, "datastores/mongo")
 		exit(kl(
 			"apply", "-f", f,
 			"-n", config.Tyk.Namespace,
