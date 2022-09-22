@@ -18,9 +18,9 @@ import (
 )
 
 var preloadImagesList = []struct{ name, image, version string }{
-	{"mongo", "mongo", "latest"},
+	{"mongo", "mongo", "4.4"},
 	{"rbac", "gcr.io/kubebuilder/kube-rbac-proxy", "v0.8.0"},
-	{"redis", "k8s.gcr.io/redis", "e2e"},
+	{"redis", "redis", "6.0.10"},
 	{"httpbin", "docker.io/kennethreitz/httpbin", ""},
 	{"gateway", "tykio/tyk-gateway", "v3.1.2"},
 	{"dash", "tykio/tyk-dashboard", "v3.2.1"},
@@ -38,18 +38,6 @@ type Config struct {
 	PreloadImages bool
 	Tyk           Tyk
 	Operator      Operator
-}
-
-// Chart returns path to the helm chart to install
-func (c Config) Chart() string {
-	switch c.Tyk.Mode {
-	case "ce":
-		return "tyk-helm/tyk-headless"
-	case "pro":
-		return "tyk-helm/tyk-pro"
-	default:
-		return "tyk-helm/tyk-headless"
-	}
 }
 
 // Values returns path to values.yaml used to install the chart
@@ -97,11 +85,10 @@ func (t *Tyk) ce() {
 	t.Auth = "foo"
 	t.Org = ""
 	t.Namespace = "tykce-control-plane"
+	t.Charts = "tyk-helm/tyk-headless"
 }
 
 func (t *Tyk) helm(workdir string) {
-	t.Charts = filepath.Join(workdir, "charts")
-
 	if t.Mode == "pro" {
 		t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
 	} else {
@@ -114,6 +101,7 @@ func (t *Tyk) pro() {
 	t.URL = "http://dashboard.tykpro-control-plane.svc.cluster.local:3000"
 	t.Namespace = "tykpro-control-plane"
 	t.AdminSecret = "54321"
+	t.Charts = "tyk-helm/tyk-pro"
 }
 
 func (t *Tyk) bind(workdir, mode string) {
@@ -181,10 +169,6 @@ func chartDir() string {
 	default:
 		return ""
 	}
-}
-
-func deployDir() string {
-	return "datastores"
 }
 
 func main() {
@@ -309,22 +293,33 @@ func exit(err error) {
 	}
 }
 
+func installHelmChart(releaseName, chartName, ns string, args ...string) error {
+	cmd := exec.Command(
+		"helm", "install", releaseName, chartName,
+		"-n", ns,
+	)
+	cmd.Stderr = os.Stderr
+
+	if args != nil {
+		cmd.Args = append(cmd.Args, args...)
+	}
+
+	if *debug {
+		cmd.Stdout = os.Stdout
+		fmt.Println(cmd.Args)
+	}
+
+	return cmd.Run()
+}
+
 func createRedis() {
 	say("Creating Redis ....")
 
-	if !IsChartInstalled("tyk-redis") {
-		cmd := exec.Command(
-			"helm", "install", "tyk-redis", "tyk-helm/simple-redis",
-			"-n", config.Tyk.Namespace,
-		)
-		cmd.Stderr = os.Stderr
+	releaseName := "tyk-redis"
 
-		if *debug {
-			cmd.Stdout = os.Stdout
-			fmt.Println(cmd.Args)
-		}
+	if !isChartInstalled(releaseName) {
+		exit(installHelmChart(releaseName, "tyk-helm/simple-redis", config.Tyk.Namespace))
 
-		exit(cmd.Run())
 		ok()
 		say("Waiting for redis to be ready ...")
 		exit(kl(
@@ -338,19 +333,10 @@ func createRedis() {
 func createMongo() {
 	say("Creating Mongo ....")
 
-	if !IsChartInstalled("tyk-mongo") {
-		cmd := exec.Command(
-			"helm", "install", "tyk-mongo", "tyk-helm/simple-mongodb",
-			"-n", config.Tyk.Namespace,
-		)
-		cmd.Stderr = os.Stderr
+	releaseName := "tyk-mongo"
 
-		if *debug {
-			cmd.Stdout = os.Stdout
-			fmt.Println(cmd.Args)
-		}
-
-		exit(cmd.Run())
+	if !isChartInstalled(releaseName) {
+		exit(installHelmChart(releaseName, "tyk-helm/simple-mongodb", config.Tyk.Namespace))
 		ok()
 		say("Waiting for mongo to be ready ...")
 		exit(kl(
@@ -364,7 +350,7 @@ func createMongo() {
 func installTykStack() {
 	say("Installing helm chart ...")
 
-	if !IsChartInstalled(config.Tyk.Mode) {
+	if !isChartInstalled(config.Tyk.Mode) {
 		if config.Tyk.Mode == "pro" {
 			if config.Tyk.License == "" {
 				exit(errors.New("Dashboard license is empty"))
@@ -381,29 +367,21 @@ func installTykStack() {
 			}
 		}
 
-		cmd := exec.Command("helm", "install", config.Tyk.Mode,
-			config.Chart(),
+		args := []string{
 			"-f", config.Values(),
 			"--set", fmt.Sprintf("dash.license=%s", config.Tyk.License),
 			"--set", fmt.Sprintf("dash.image.tag=%s", *tykVersion),
 			"--set", fmt.Sprintf("gateway.image.tag=%s", *tykVersion),
-			"-n", config.Tyk.Namespace,
 			"--wait",
-		)
-		cmd.Stderr = os.Stderr
-
-		if *debug {
-			cmd.Stdout = os.Stdout
-			fmt.Println(cmd.Args)
 		}
 
-		exit(cmd.Run())
+		exit(installHelmChart(config.Tyk.Mode, config.Tyk.Charts, config.Tyk.Namespace, args...))
 	}
 
 	ok()
 }
 
-func IsChartInstalled(chartName string) bool {
+func isChartInstalled(chartName string) bool {
 	var buf bytes.Buffer
 
 	cmd := exec.Command("helm", "list", "--short",
