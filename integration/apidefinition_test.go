@@ -39,6 +39,8 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 		errorResponseCode            = 422
 	)
 
+	t.Parallel()
+
 	eps := &model.ExtendedPathsSet{
 		ValidateJSON: []model.ValidatePathMeta{{
 			ErrorResponseCode: errorResponseCode,
@@ -144,6 +146,8 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
 	)
+
+	t.Parallel()
 
 	const whiteListedPath = "/whitelisted"
 	eps := &model.ExtendedPathsSet{
@@ -267,6 +271,8 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 		errForbiddenResponseCode = 403
 	)
 
+	t.Parallel()
+
 	const blackListedPath = "/blacklisted"
 	eps := &model.ExtendedPathsSet{
 		BlackList: []model.EndPointMeta{{
@@ -388,6 +394,8 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
 	)
+
+	t.Parallel()
 
 	const whiteListedPath = "/whitelisted"
 	const ignoredPath = "/ignored"
@@ -539,6 +547,8 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 5QIDAQAB
 -----END PUBLIC KEY-----`)
 	)
+
+	t.Parallel()
 
 	adCreate := features.New("Create ApiDefinition objects for Certificate Pinning").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
@@ -699,6 +709,8 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 		tykConnectionURL    = ""
 	)
 
+	t.Parallel()
+
 	mode := os.Getenv("TYK_MODE")
 
 	switch mode {
@@ -810,6 +822,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 		tykOrg                      = ""
 		tykAuth                     = ""
 	)
+
+	t.Parallel()
 
 	type ContextKey string
 	var certIDCtxKey ContextKey = "certID"
@@ -1050,6 +1064,8 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			is := is.New(t)
 
+			t.Parallel()
+
 			tests := map[string]struct {
 				ExecutionMode string
 				ReturnErr     bool
@@ -1074,6 +1090,8 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 
 			for n, tc := range tests {
 				t.Run(n, func(t *testing.T) {
+					t.Parallel()
+
 					_, err := createTestAPIDef(ctx, testNS, func(ad *v1alpha1.ApiDefinition) {
 						ad.Name = fmt.Sprintf("%s-%s", ad.Name, uuid.New().String())
 						ad.Spec.Name = ad.Name

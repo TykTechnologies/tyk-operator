@@ -24,6 +24,8 @@ const (
 )
 
 func TestOperatorContextCreate(t *testing.T) {
+	t.Parallel()
+
 	opCreate := features.New("Operator Context").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
@@ -129,6 +131,8 @@ func TestOperatorContextCreate(t *testing.T) {
 }
 
 func TestOperatorContextDelete(t *testing.T) {
+	t.Parallel()
+
 	delApiDef := features.New("Api Definition Delete").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
