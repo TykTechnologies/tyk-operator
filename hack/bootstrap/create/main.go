@@ -312,12 +312,19 @@ func exit(err error) {
 func createRedis() {
 	say("Creating Redis ....")
 
-	if !hasDeployment("deployment/redis", config.Tyk.Namespace) {
-		f := filepath.Join(config.WorkDir, "datastores/redis")
-		exit(kl(
-			"apply", "-f", f,
+	if !IsChartInstalled("tyk-redis") {
+		cmd := exec.Command(
+			"helm", "install", "tyk-redis", "tyk-helm/simple-redis",
 			"-n", config.Tyk.Namespace,
-		))
+		)
+		cmd.Stderr = os.Stderr
+
+		if *debug {
+			cmd.Stdout = os.Stdout
+			fmt.Println(cmd.Args)
+		}
+
+		exit(cmd.Run())
 		ok()
 		say("Waiting for redis to be ready ...")
 		exit(kl(
@@ -331,12 +338,19 @@ func createRedis() {
 func createMongo() {
 	say("Creating Mongo ....")
 
-	if !hasDeployment("deployment/mongo", config.Tyk.Namespace) {
-		f := filepath.Join(config.WorkDir, "datastores/mongo")
-		exit(kl(
-			"apply", "-f", f,
+	if !IsChartInstalled("tyk-mongo") {
+		cmd := exec.Command(
+			"helm", "install", "tyk-mongo", "tyk-helm/simple-mongodb",
 			"-n", config.Tyk.Namespace,
-		))
+		)
+		cmd.Stderr = os.Stderr
+
+		if *debug {
+			cmd.Stdout = os.Stdout
+			fmt.Println(cmd.Args)
+		}
+
+		exit(cmd.Run())
 		ok()
 		say("Waiting for mongo to be ready ...")
 		exit(kl(
@@ -350,7 +364,7 @@ func createMongo() {
 func installTykStack() {
 	say("Installing helm chart ...")
 
-	if !hasTykChart() {
+	if !IsChartInstalled(config.Tyk.Mode) {
 		if config.Tyk.Mode == "pro" {
 			if config.Tyk.License == "" {
 				exit(errors.New("Dashboard license is empty"))
@@ -389,17 +403,17 @@ func installTykStack() {
 	ok()
 }
 
-func hasTykChart() bool {
+func IsChartInstalled(chartName string) bool {
 	var buf bytes.Buffer
 
-	cmd := exec.Command("helm", "list",
+	cmd := exec.Command("helm", "list", "--short",
 		"-n", config.Tyk.Namespace,
 	)
 	cmd.Dir = config.WorkDir
 	cmd.Stdout = &buf
 	exit(cmd.Run())
 
-	return strings.Contains(buf.String(), config.Tyk.Mode)
+	return strings.Contains(buf.String(), chartName)
 }
 
 func hasNS(name string) bool {
