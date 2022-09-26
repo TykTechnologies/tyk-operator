@@ -82,7 +82,13 @@ func PrintSnapshot(
 
 	exportApiDefs := func(i int, w io.Writer, v *model.APIDefinitionSpec) error {
 		// Parse Config Data of the ApiDefinition created on Dashboard.
-		name, ns := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
+		name, ns, err := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
+		if err != nil {
+			// Instead of terminating the function with error, just do not export ApiDefinitions with invalid ConfigData
+			// fields, instead inform users with the following log message.
+			fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n", v.APIID, err)
+			return nil
+		}
 
 		// create an ApiDefinition object.
 		apiDef := createApiDef(name, ns)
@@ -242,25 +248,24 @@ func val(obj map[string]interface{}, key string) (string, error) {
 	return strings.TrimSpace(strVal), nil
 }
 
+var (
+	ErrNonExistentConfigData = errors.New("failed to find ConfigData: non existent")
+)
+
 // parseConfigData parses given ApiDefinitionSpec's ConfigData field. It checks existence of NameKey and NamespaceKey
 // keys in the ConfigData map. Returns their values if keys exist. Otherwise, returns default values for name and namespace.
-func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name, namespace string) {
+func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name, namespace string, err error) {
 	if apiDefSpec.ConfigData == nil {
-		return defName, DefaultNs
+		return defName, DefaultNs, ErrNonExistentConfigData
 	}
 
 	// Parse name
-	name, err := val(apiDefSpec.ConfigData.Object, NameKey)
+	name, err = val(apiDefSpec.ConfigData.Object, NameKey)
 	if err != nil {
-		fmt.Println(err)
-		return defName, DefaultNs
+		return defName, DefaultNs, fmt.Errorf("failed to parse k8s name from ConfigData, err: %v", err)
 	}
 
-	namespace, err = val(apiDefSpec.ConfigData.Object, NamespaceKey)
-	if err != nil {
-		fmt.Println(err)
-		return name, DefaultNs
-	}
+	namespace, _ = val(apiDefSpec.ConfigData.Object, NamespaceKey)
 
 	// Warn if .metadata includes an empty character because it violates k8s spec rules.
 	for _, v := range []string{name, namespace} {
