@@ -57,6 +57,10 @@ so that you do not need to manually update the output file afterwards.
 
 ![config-data](./img/config-data.png)
 
+> The only required key for ConfigData is `k8sName`. If ConfigData of your ApiDefinition
+> does not include this key, snapshot tool does not export your ApiDefinition, which
+> means that the output file does not include the details of the ApiDefinition.
+
 ## Usage
 ```bash
 tyk-operator exports APIs and Security Policies from your Tyk installation to Custom 
