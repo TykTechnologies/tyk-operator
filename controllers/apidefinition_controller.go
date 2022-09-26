@@ -253,6 +253,7 @@ func (r *ApiDefinitionReconciler) processClientCertificateReferences(
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
+	log.Info("Processing client certificate references")
 	if len(upstreamRequestStruct.Spec.ClientCertificateRefs) != 0 {
 		clientCerts := make([]string, 0)
 
