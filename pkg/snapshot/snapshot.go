@@ -12,7 +12,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -33,6 +32,9 @@ var (
 
 	// ErrNonStringVal represents an error if the underlying value of interface{} is not string type.
 	ErrNonStringVal = errors.New("failed to convert interface{} to string")
+
+	// ErrNonExistentConfigData represents an error if the given ApiDefinition includes empty (nil) ConfigData field.
+	ErrNonExistentConfigData = errors.New("failed to parse ConfigData: non existent")
 )
 
 type Group struct {
@@ -50,14 +52,7 @@ const (
 )
 
 // PrintSnapshot outputs a snapshot of the Dashboard as a CR.
-func PrintSnapshot(
-	ctx context.Context,
-	env *environmet.Env,
-	apiDefinitionsFile,
-	policiesFile,
-	category string,
-	group bool,
-) error {
+func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, category string, group bool) error {
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
 		return err
@@ -248,10 +243,6 @@ func val(obj map[string]interface{}, key string) (string, error) {
 	return strings.TrimSpace(strVal), nil
 }
 
-var (
-	ErrNonExistentConfigData = errors.New("failed to find ConfigData: non existent")
-)
-
 // parseConfigData parses given ApiDefinitionSpec's ConfigData field. It checks existence of NameKey and NamespaceKey
 // keys in the ConfigData map. Returns their values if keys exist. Otherwise, returns default values for name and namespace.
 func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name, namespace string, err error) {
@@ -265,7 +256,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 		return defName, DefaultNs, fmt.Errorf("failed to parse k8s name from ConfigData, err: %v", err)
 	}
 
-	namespace, _ = val(apiDefSpec.ConfigData.Object, NamespaceKey)
+	namespace, _ = val(apiDefSpec.ConfigData.Object, NamespaceKey) //nolint:errcheck
 
 	// Warn if .metadata includes an empty character because it violates k8s spec rules.
 	for _, v := range []string{name, namespace} {

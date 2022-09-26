@@ -134,7 +134,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := snapshot.PrintSnapshot(ctx, &env, snapshotFile, policyFile, category, group); err != nil {
+		if err := snapshot.PrintSnapshot(ctx, snapshotFile, policyFile, category, group); err != nil {
 			snapshotLog.Error(err, "failed to create snapshot file")
 			os.Exit(1)
 		}
