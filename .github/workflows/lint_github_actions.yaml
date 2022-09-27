@@ -1,0 +1,22 @@
+name: Lint GitHub Actions workflows
+on: 
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/**"
+  push:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/**"
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check workflow files
+        uses: docker://rhysd/actionlint:latest
+        with:
+          args: -color
