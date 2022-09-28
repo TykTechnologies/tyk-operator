@@ -14,7 +14,7 @@ type SecurityPolicy struct{}
 
 // All Returns all policies from the Dashboard
 func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error) {
-	res, err := client.Get(ctx, client.Join(endpointPolicies), nil)
+	res, err := client.Get(ctx, client.Join(fmt.Sprintf("%s?p=-2", endpointPolicies)), nil)
 	if err != nil {
 		return nil, err
 	}
