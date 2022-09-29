@@ -27,14 +27,17 @@ var (
 	// idAPIs stores ApiDefinitions based on its ID.
 	idAPIs map[string]*model.APIDefinitionSpec
 
-	// ErrNonexistentKey represents an error if the given key does not exist in the object.
-	ErrNonexistentKey = errors.New("key does not exist in the Config Data")
+	// ErrNonExistentKey represents an error if the given key does not exist in the object.
+	ErrNonExistentKey = errors.New("key does not exist in the Config Data")
 
 	// ErrNonStringVal represents an error if the underlying value of interface{} is not string type.
 	ErrNonStringVal = errors.New("failed to convert interface{} to string")
 
 	// ErrNonExistentConfigData represents an error if the given ApiDefinition includes empty (nil) ConfigData field.
 	ErrNonExistentConfigData = errors.New("failed to parse ConfigData: non existent")
+
+	// ErrInvalidConfigData represents an error if the given ConfigData does not include the required key 'k8sName'.
+	ErrInvalidConfigData = errors.New("failed to parse 'k8sName' field in ConfigData")
 )
 
 type Group struct {
@@ -79,10 +82,8 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		// Parse Config Data of the ApiDefinition created on Dashboard.
 		name, ns, err := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
 		if err != nil {
-			// Instead of terminating the function with error, just do not export ApiDefinitions with invalid ConfigData
-			// fields, instead inform users with the following log message.
 			fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n", v.APIID, err)
-			return nil
+			return err
 		}
 
 		// create an ApiDefinition object.
@@ -120,10 +121,29 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 
 			pw := bufio.NewWriter(groupedFile)
 
+			// invalidApiDef becomes true if a policy includes invalid ApiDefinition that consists of invalid ConfigData.
+			invalidApiDef := false
+
 			for ii, v := range g.APIDefinitions.Apis {
-				if err := exportApiDefs(ii, pw, v); err != nil {
-					return err
+				err := exportApiDefs(ii, pw, v)
+				if err != nil {
+					if !errors.Is(err, ErrInvalidConfigData) {
+						return err
+					}
+
+					invalidApiDef = true
+
+					break
 				}
+			}
+
+			// If the current policy includes an ApiDefinition with invalid ConfigData, skip writing this Policy into the
+			// output file.
+			if invalidApiDef {
+				fmt.Printf("WARNING: Policy %s includes ApiDefinition with invalid ConfigData\n", g.Policy.Name)
+				groupedFile.Close()
+
+				continue
 			}
 
 			if err := writePolicies([]tykv1alpha1.SecurityPolicySpec{g.Policy}, pw, e); err != nil {
@@ -177,7 +197,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 				continue
 			}
 
-			if err := exportApiDefs(i, bw, v); err != nil {
+			if err := exportApiDefs(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
 				return err
 			}
 		}
@@ -191,7 +211,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 
 	// Output file will contain all ApiDefinitions without checking any category.
 	for i, v := range apiDefSpecList.Apis {
-		if err := exportApiDefs(i, bw, v); err != nil {
+		if err := exportApiDefs(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
 			return err
 		}
 	}
@@ -232,7 +252,7 @@ func getMetadata(key string) (name, namespace string) {
 func val(obj map[string]interface{}, key string) (string, error) {
 	v, ok := obj[key]
 	if !ok {
-		return "", ErrNonexistentKey
+		return "", ErrNonExistentKey
 	}
 
 	strVal, ok := v.(string)
@@ -245,6 +265,7 @@ func val(obj map[string]interface{}, key string) (string, error) {
 
 // parseConfigData parses given ApiDefinitionSpec's ConfigData field. It checks existence of NameKey and NamespaceKey
 // keys in the ConfigData map. Returns their values if keys exist. Otherwise, returns default values for name and namespace.
+// Returns error in case of missing NameKey in the Config Data.
 func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name, namespace string, err error) {
 	if apiDefSpec.ConfigData == nil {
 		return defName, DefaultNs, ErrNonExistentConfigData
@@ -253,7 +274,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 	// Parse name
 	name, err = val(apiDefSpec.ConfigData.Object, NameKey)
 	if err != nil {
-		return defName, DefaultNs, fmt.Errorf("failed to parse k8s name from ConfigData, err: %v", err)
+		return defName, DefaultNs, ErrInvalidConfigData
 	}
 
 	namespace, _ = val(apiDefSpec.ConfigData.Object, NamespaceKey) //nolint:errcheck
