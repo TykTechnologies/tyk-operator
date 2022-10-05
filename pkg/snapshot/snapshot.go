@@ -104,7 +104,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 			defer policyFile.Close()
 
 			pw := bufio.NewWriter(policyFile)
-			if err := writePolicy(i, userPolicy, pw, e); err != nil {
+			if err := writePolicy(i, &userPolicy, pw, e); err != nil {
 				return err
 			}
 		}
@@ -120,6 +120,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 					apiDefSpec.APIID,
 					err,
 				)
+
 				return err
 			}
 
@@ -150,6 +151,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 
 		for i := 0; i < len(policiesList); i++ {
 			policiesFile = fmt.Sprintf("%s-%s.yaml", "policy", policiesList[i].MID)
+
 			if err != nil {
 				return err
 			}
@@ -220,6 +222,7 @@ func generateFilename(filename string) (string, error) {
 	_, err := os.Stat(fmt.Sprintf("%s.yaml", filename))
 	if err == nil {
 		fullFilename := fmt.Sprintf("%s-*.yaml", filename)
+
 		matches, err := filepath.Glob(fullFilename)
 		if err != nil {
 			return "", err
@@ -331,7 +334,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 	return
 }
 
-func writePolicy(idx int, userPolicy tykv1alpha1.SecurityPolicySpec, w *bufio.Writer, e *json.Serializer) error {
+func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.Writer, e *json.Serializer) error {
 	pol := tykv1alpha1.SecurityPolicy{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "SecurityPolicy",
@@ -341,7 +344,7 @@ func writePolicy(idx int, userPolicy tykv1alpha1.SecurityPolicySpec, w *bufio.Wr
 		Spec:       tykv1alpha1.SecurityPolicySpec{},
 	}
 
-	pol.Spec = userPolicy
+	pol.Spec = *userPolicy
 	pol.Spec.ID = userPolicy.MID
 
 	for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
