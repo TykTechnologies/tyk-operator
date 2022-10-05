@@ -312,7 +312,7 @@ func writePolicies(policiesList []tykv1alpha1.SecurityPolicySpec, w *bufio.Write
 			apiID := pol.Spec.AccessRightsArray[i].APIID
 
 			name, namespace := getMetadata(apiID)
-			if name == "" || namespace == "" {
+			if name == "" {
 				fmt.Printf("WARNING: Please ensure that API identified by %s exists in k8s environment.\n", apiID)
 			}
 
