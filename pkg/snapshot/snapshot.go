@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -18,14 +20,11 @@ import (
 )
 
 var (
-	// names stores each ApiDefiniton's ID as a key and .metadata.name field of corresponding ApiDefinition.
+	// names stores each ApiDefinition's ID as a key and .metadata.name field of corresponding ApiDefinition.
 	names map[string]string
 
-	// namesSpaces stores each ApiDefiniton's ID as a key and .metadata.namespace field of corresponding ApiDefinition.
+	// namesSpaces stores each ApiDefinition's ID as a key and .metadata.namespace field of corresponding ApiDefinition.
 	nameSpaces map[string]string
-
-	// idAPIs stores ApiDefinitions based on its ID.
-	idAPIs map[string]*model.APIDefinitionSpec
 
 	// ErrNonExistentKey represents an error if the given key does not exist in the object.
 	ErrNonExistentKey = errors.New("key does not exist in the Config Data")
@@ -40,13 +39,6 @@ var (
 	ErrInvalidConfigData = errors.New("failed to parse 'k8sName' field in ConfigData")
 )
 
-type Group struct {
-	Policy         tykv1alpha1.SecurityPolicySpec
-	APIDefinitions model.APIDefinitionSpecList
-}
-
-type Groups []Group
-
 const (
 	NameKey      = "k8sName"
 	NamespaceKey = "k8sNamespace"
@@ -55,14 +47,14 @@ const (
 )
 
 // PrintSnapshot outputs a snapshot of the Dashboard as a CR.
-func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, category string, group bool) error {
+func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, category string, separate bool) error {
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
 		return err
 	}
 
 	var policiesList []tykv1alpha1.SecurityPolicySpec
-	if policiesFile != "" || group {
+	if policiesFile != "" || separate {
 		policiesList, err = klient.Universal.Portal().Policy().All(ctx)
 		if err != nil {
 			return err
@@ -103,56 +95,68 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		return nil
 	}
 
-	// Output file will contain ApiDefinitions grouped by SecurityPolicies.
-	if group {
-		idAPIs = make(map[string]*model.APIDefinitionSpec)
-		for i := 0; i < len(apiDefSpecList.Apis); i++ {
-			idAPIs[apiDefSpecList.Apis[i].APIID] = apiDefSpecList.Apis[i]
+	exportPolicies := func(i int, userPolicy tykv1alpha1.SecurityPolicySpec) error {
+		if policiesFile != "" {
+			policyFile, err := os.Create(policiesFile)
+			if err != nil {
+				return err
+			}
+			defer policyFile.Close()
+
+			pw := bufio.NewWriter(policyFile)
+			if err := writePolicy(i, userPolicy, pw, e); err != nil {
+				return err
+			}
 		}
 
-		groups := groupPolicies(policiesList)
-		for i := 0; i < len(groups); i++ {
-			g := groups[i]
+		return nil
+	}
 
-			groupedFile, err := os.Create(fmt.Sprintf("grouped-output-%d.yaml", i))
+	if separate {
+		for i, apiDefSpec := range apiDefSpecList.Apis {
+			name, ns, err := parseConfigData(apiDefSpec, "")
+			if err != nil {
+				fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n",
+					apiDefSpec.APIID,
+					err,
+				)
+				return err
+			}
+
+			filename := fmt.Sprintf("%s-%s", ns, name)
+			if ns == "" {
+				filename = name
+			}
+
+			fullFilename, err := generateFilename(filename)
 			if err != nil {
 				return err
 			}
 
-			pw := bufio.NewWriter(groupedFile)
-
-			// invalidApiDef becomes true if a policy includes invalid ApiDefinition that consists of invalid ConfigData.
-			invalidApiDef := false
-
-			for ii, v := range g.APIDefinitions.Apis {
-				err := exportApiDefs(ii, pw, v)
-				if err != nil {
-					if !errors.Is(err, ErrInvalidConfigData) {
-						return err
-					}
-
-					invalidApiDef = true
-
-					break
-				}
-			}
-
-			// If the current policy includes an ApiDefinition with invalid ConfigData, skip writing this Policy into the
-			// output file.
-			if invalidApiDef {
-				fmt.Printf("WARNING: Policy %s includes ApiDefinition with invalid ConfigData\n", g.Policy.Name)
-				groupedFile.Close()
-
-				continue
-			}
-
-			if err := writePolicies([]tykv1alpha1.SecurityPolicySpec{g.Policy}, pw, e); err != nil {
-				groupedFile.Close()
+			f, err := os.Create(fullFilename)
+			if err != nil {
 				return err
 			}
 
-			pw.Flush()
-			groupedFile.Close()
+			bw := bufio.NewWriter(f)
+
+			if err := exportApiDefs(i, bw, apiDefSpec); err != nil && !errors.Is(err, ErrInvalidConfigData) {
+				f.Close()
+				return err
+			}
+
+			f.Close()
+		}
+
+		for i := 0; i < len(policiesList); i++ {
+			policiesFile = fmt.Sprintf("%s-%s.yaml", "policy", policiesList[i].MID)
+			if err != nil {
+				return err
+			}
+
+			if err := exportPolicies(i, policiesList[i]); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -165,23 +169,6 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 	defer f.Close()
 
 	bw := bufio.NewWriter(f)
-
-	exportPolicies := func() error {
-		if policiesFile != "" {
-			policyFile, err := os.Create(policiesFile)
-			if err != nil {
-				return err
-			}
-			defer policyFile.Close()
-
-			pw := bufio.NewWriter(policyFile)
-			if err := writePolicies(policiesList, pw, e); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
 
 	// Output file will contain ApiDefinition based on specified category.
 	if category != "" {
@@ -202,8 +189,10 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 			}
 		}
 
-		if err := exportPolicies(); err != nil {
-			return err
+		for i := 0; i < len(policiesList); i++ {
+			if err := exportPolicies(i, policiesList[i]); err != nil {
+				return err
+			}
 		}
 
 		return bw.Flush()
@@ -216,11 +205,60 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		}
 	}
 
-	if err := exportPolicies(); err != nil {
-		return err
+	for i := 0; i < len(policiesList); i++ {
+		if err := exportPolicies(i, policiesList[i]); err != nil {
+			return err
+		}
 	}
 
 	return bw.Flush()
+}
+
+func generateFilename(filename string) (string, error) {
+	counter := 0
+
+	_, err := os.Stat(fmt.Sprintf("%s.yaml", filename))
+	if err == nil {
+		fullFilename := fmt.Sprintf("%s-*.yaml", filename)
+		matches, err := filepath.Glob(fullFilename)
+		if err != nil {
+			return "", err
+		}
+
+		// if there is no matches, it means that we do not have any files with `-*.yaml` suffix. So, this file
+		// must be the first copy considering <filename>.yaml already exists.
+		if len(matches) == 0 {
+			counter = 1
+		}
+
+		for _, match := range matches {
+			tmpFullFilename := strings.Trim(match, ".yaml")
+
+			splitted := strings.Split(tmpFullFilename, "-")
+			if len(splitted) == 0 {
+				return "", fmt.Errorf(
+					"unexpected filename while creating separated output, filename: %v",
+					tmpFullFilename,
+				)
+			}
+
+			lastCounter, err := strconv.Atoi(splitted[len(splitted)-1])
+			if err != nil {
+				return "", err
+			}
+
+			if counter <= lastCounter {
+				counter = lastCounter + 1
+			}
+		}
+	}
+
+	fullFilename := fmt.Sprintf("%s.yaml", filename)
+	if counter != 0 {
+		fullFilename = fmt.Sprintf("%s-%d.yaml", filename, counter)
+	}
+
+	return fullFilename, nil
 }
 
 func createApiDef(metaName, metaNs string) tykv1alpha1.ApiDefinition {
@@ -293,64 +331,46 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 	return
 }
 
-// writePolicies writes all policies to the given buffer in a YAML format.
-func writePolicies(policiesList []tykv1alpha1.SecurityPolicySpec, w *bufio.Writer, e *json.Serializer) error {
-	for i := 0; i < len(policiesList); i++ {
-		pol := tykv1alpha1.SecurityPolicy{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "SecurityPolicy",
-				APIVersion: "tyk.tyk.io/v1alpha1",
-			},
-			ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("security-policy-%d", i)},
-			Spec:       tykv1alpha1.SecurityPolicySpec{},
+func writePolicy(idx int, userPolicy tykv1alpha1.SecurityPolicySpec, w *bufio.Writer, e *json.Serializer) error {
+	pol := tykv1alpha1.SecurityPolicy{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "SecurityPolicy",
+			APIVersion: "tyk.tyk.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("security-policy-%d", idx)},
+		Spec:       tykv1alpha1.SecurityPolicySpec{},
+	}
+
+	pol.Spec = userPolicy
+	pol.Spec.ID = userPolicy.MID
+
+	for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
+		apiID := pol.Spec.AccessRightsArray[i].APIID
+
+		name, namespace := getMetadata(apiID)
+		if name == "" {
+			fmt.Printf("WARNING: Please ensure that API identified by %s exists in k8s environment.\n", apiID)
 		}
 
-		pol.Spec = policiesList[i]
-		pol.Spec.ID = policiesList[i].MID
+		p, ok := pol.Spec.AccessRights[apiID]
+		if ok {
+			p.Name = name
+			p.Namespace = namespace
 
-		for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
-			apiID := pol.Spec.AccessRightsArray[i].APIID
-
-			name, namespace := getMetadata(apiID)
-			if name == "" {
-				fmt.Printf("WARNING: Please ensure that API identified by %s exists in k8s environment.\n", apiID)
-			}
-
-			p, ok := pol.Spec.AccessRights[apiID]
-			if ok {
-				p.Name = name
-				p.Namespace = namespace
-
-				pol.Spec.AccessRights[apiID] = p
-			}
-
-			pol.Spec.AccessRightsArray[i].Name = name
-			pol.Spec.AccessRightsArray[i].Namespace = namespace
+			pol.Spec.AccessRights[apiID] = p
 		}
 
-		if err := e.Encode(&pol, w); err != nil {
-			return err
-		}
+		pol.Spec.AccessRightsArray[i].Name = name
+		pol.Spec.AccessRightsArray[i].Namespace = namespace
+	}
 
-		if _, err := w.WriteString("\n---\n\n"); err != nil {
-			return err
-		}
+	if err := e.Encode(&pol, w); err != nil {
+		return err
+	}
+
+	if _, err := w.WriteString("\n---\n\n"); err != nil {
+		return err
 	}
 
 	return w.Flush()
-}
-
-func groupPolicies(policiesList []tykv1alpha1.SecurityPolicySpec) Groups {
-	groups := Groups{}
-
-	for i := 0; i < len(policiesList); i++ {
-		g := Group{Policy: policiesList[i]}
-		for _, ar := range policiesList[i].AccessRightsArray {
-			g.APIDefinitions.Apis = append(g.APIDefinitions.Apis, idAPIs[ar.APIID])
-		}
-
-		groups = append(groups, g)
-	}
-
-	return groups
 }
