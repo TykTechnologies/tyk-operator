@@ -195,7 +195,9 @@ spec:
   ...
 ```
 
-**Note:** Since `test-api-3 #testing `
+**Note:** Since `test-api-3 #testing` API has no valid `Config Data` configured,
+which means it lacks of a Config Data with `k8sName` key, the output file does not
+contain ApiDefinition Custom Resource for `test-api-3 #testing`.
 
 ### Exporting Security Policies
 
