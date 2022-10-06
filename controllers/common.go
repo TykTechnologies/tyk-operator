@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"strconv"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -334,6 +335,34 @@ func GetContext(
 		if e.Auth == "" {
 			err := value(v1alpha1.TykAuth, func(s string) (err error) {
 				e.Auth = s
+				return
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if e.UserOwners == nil {
+			err := value(v1alpha1.TykUserOwners, func(s string) (err error) {
+				for _, user := range strings.Split(s, ",") {
+					if o := strings.TrimSpace(user); o != "" {
+						e.UserOwners = append(e.UserOwners, o)
+					}
+				}
+				return
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if e.UserGroupOwners == nil {
+			err := value(v1alpha1.TykUserGroupOwners, func(s string) (err error) {
+				for _, group := range strings.Split(s, ",") {
+					if o := strings.TrimSpace(group); o != "" {
+						e.UserGroupOwners = append(e.UserGroupOwners, o)
+					}
+				}
 				return
 			})
 			if err != nil {
