@@ -150,7 +150,7 @@ gateway:
     - name: TYK_LOGLEVEL
       value: debug
     - name: TYK_GW_COPROCESSOPTIONS_ENABLECOPROCESS
-      value: true
+      value: "true"
     - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
       value: "tcp://grpc-plugin.tykpro-control-plane.svc.cluster.local:9999"
 
