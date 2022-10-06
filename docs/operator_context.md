@@ -41,6 +41,14 @@ spec:
     ingress:
       httpPort: 8000
       httpsPort: 8443
+    # The list of users who are authorized to update/delete the API.
+    # The user pointed by auth needs to be in this list, if not empty.
+    user_owners:
+    - a1b2c3d4e5f6
+    # The list of groups of users who are authorized to update/delete the API.
+    # The user pointed by auth needs to be a member of one of the groups in this list, if not empty.
+    user_group_owners:
+    - 1a2b3c4d5e6f
 ```
 
 # Using secret for sensitive information
@@ -52,7 +60,8 @@ Create a `k8s` secret `tyk-operator-conf` with our sensitive info for auth and o
 ```sh
 kubectl create secret -n tyk-operator-system generic tyk-operator-conf \
   --from-literal "TYK_AUTH=foo" \
-  --from-literal "TYK_ORG=myorg"
+  --from-literal "TYK_ORG=myorg" \
+  --from-literal "TYK_USER_OWNERS=a1b2c3d4e5f6,f6a1e5b2d4c3"
 ```
 
 We can now reference our secret in the `OperatorContext` resource with `.spec.secretRef`
@@ -73,6 +82,10 @@ spec:
     ingress:
       httpPort: 8000
       httpsPort: 8443
+    user_owners:
+    - a1b2c3d4f5e6f7
+    user_group_owners:
+    - 1a2b3c4d5f6e7f
 ```
 
 Mappings between `.spec.env` properties and secret `.spec.data` keys
@@ -84,6 +97,8 @@ Mappings between `.spec.env` properties and secret `.spec.data` keys
 | TYK_AUTH   | auth      |
 | TYK_ORG | org |
 | TYK_TLS_INSECURE_SKIP_VERIFY | insecureSkipVerify |
+| TYK_USER_OWNERS (comma separated list) | user_owners |
+| TYK_USER_GROUP_OWNERS (comma separated list) | user_group_owners |
 
 
 # Referencing OperatorContext in ApiDefinion
@@ -139,6 +154,10 @@ envVars:
     value: "pro"
   - name: TYK_URL
     value: "xxx"
+  - name: TYK_USER_OWNERS
+    value: "xxx,yyy"
+  - name: TYK_USER_GROUP_OWNERS
+    value: "xxx,yyy"
 ```
 
 This workaround will not be required in `v0.8.0` release

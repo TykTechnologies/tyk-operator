@@ -1,0 +1,28 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: OperatorContext
+metadata:
+  name: httpbin-ownership-test-operator-b
+spec:
+  env:
+    mode: pro
+    auth: b-foo
+    user_owners:
+      - b2c3d4
+
+---
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-ownership-test
+spec:
+  contextRef:
+    name: httpbin-ownership-test-operator-b
+  name: httpbin-ownership-test
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.default.svc:8000
+    listen_path: /httpbin-ownership-test-b
+    strip_listen_path: false

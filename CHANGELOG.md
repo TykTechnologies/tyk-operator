@@ -7,6 +7,7 @@
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.10.0...v0.11.0)
 
 **Added**
+- Added support of API Ownership
 - Added support of client mTLS
 - Added support for Go auth custom plugins
 - Added PoC tool that helps migration of existing ApiDefinition & SecurityPolicies
