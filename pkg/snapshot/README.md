@@ -40,43 +40,54 @@ go build
 ```
 
 ## Preparation
-1. Use API Category to group the APIs you want to export
+1. Specify the Kubernetes resource names in `Config Data`
 
-By default, snapshot tool will export **all** APIs. You can also categorize your 
-APIs by teams, environments, or any way you want. You can specify which API category 
-to be exported in later steps.
+By default, `snapshot` tool outputs your APIs if its `Config Data` is configured
+properly. In the `Config Data`, you can specify Kubernetes metadata of your ApiDefinition
+Custom Resources. Each API must have a `Config Data` configured. Otherwise, `snapshot`
+tool skips APIs with missing or invalid `Config Data`.
 
-![apis](./img/apis.png)
-
-2. Specify the Kubernetes resource names in Config Data
-
-By default, the created ApiDefinition resource will have the name `REPLACE_ME_{i}`. 
-It is not valid name for a Kubernetes resource and should be manually updated. 
-You can store this metadata in Config Data for each API first before exporting, 
-so that you do not need to manually update the output file afterwards.
+Example `Config Data` for your APIs:
+```json
+{
+  "k8sName": "metadata_name",
+  "k8sNamespace": "metadata_namespace"
+}
+```
 
 ![config-data](./img/config-data.png)
 
-> The only required key for ConfigData is `k8sName`. If ConfigData of your ApiDefinition
+> The only required key for Config Data is `k8sName`. If Config Data of your ApiDefinition
 > does not include this key, snapshot tool does not export your ApiDefinition, which
 > means that the output file does not include the details of the ApiDefinition.
+
+
+2. Use API Category to group the APIs you want to export
+
+By default, snapshot tool will export **all** APIs that have proper `Config Data`
+configured. You can also categorize your APIs by teams, environments, or any way 
+you want. You can specify which API category to be exported in later steps.
+
+In the example below, you can see that some APIs are categorized as `#testing` 
+or `#production`. You can configure snapshot tool to export APIs from certain groups.
+
+![apis](./img/apis.png)
+
 
 ## Usage
 ```bash
 tyk-operator exports APIs and Security Policies from your Tyk installation to Custom 
 Resource that can be used with Tyk Operator
 
+  --separate 
+        Each ApiDefinition and Policy files will be written into separate files.
+  
 Export API Definitions:
   --apidef <output_file>
     	By passing an export flag, we are telling the Operator to connect to a Tyk
     	 installation in order to pull a snapshot of ApiDefinitions from that 
     	 environment and output as CR
 
-  --group
-    	Creates an output file including an Security Policy object with ApiDefinition 
-    objects that are accessed by this Security Policy. Each Security Policy is 
-    created in separate file.
- 
   --category <category_name>
     	Dump APIs from specified category
 
@@ -87,9 +98,9 @@ Export Security Policies:
 
 ### Setting required environment variables
 
-Store the Tyk Dashboard or Gateway connection parameters in environment variables 
-before running 
-`tyk-operator`, e.g.
+In order snapshot tool to connect your Tyk installation, store the Tyk Dashboard 
+or Gateway connection parameters in environment variables before running 
+`snapshot`, e.g.
 
 ```bash
 TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} \
@@ -103,13 +114,13 @@ where
 - `${TYK_ORG}`: Operator user ORG ID.
 - `<OUTPUT_FILE>`: The name of the output file in YAML format, e.g., `output.yaml`.
 
-> For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid).
+> For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#step-3-configuring-tyk-operator).
 
 ### Exporting API Definitions
 
 #### Specify Category to export
 
-By default, tyk-operator exports all ApiDefinitions created on the Tyk Dashboard
+By default, `snapshot` tool exports all ApiDefinitions created on the Tyk Dashboard
 or Gateway without considering their categories. 
 
 You can specify a category to fetch via `--category` flag, as follows:
@@ -118,33 +129,14 @@ TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} 
 ```
 The command above fetches all ApiDefinitions in `#k8s` category.
 
-#### Grouping ApiDefinition and SecurityPolicy objects
-
-If you would like to group SecurityPolicy objects and ApiDefinitions that are controlled
-by specific SecurityPolicy, you can use `--group` flag, as follows:
-```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --group
-```
-
 #### Output CR
 
-`tyk-operator` CLI creates an output file specified via `--apidef` flag. Each 
-ApiDefinition CR metadata has a default name  `REPLACE_ME_{i}` where `{i}` increases 
-by each ApiDefinition.
+`snapshot` tool creates output files specified via `--apidef` flag for ApiDefinitions
+and `--policy` for SecurityPolicies. 
 
-For example,
-```yaml
-apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-  name: REPLACE_ME_0 # Default name for ApiDefinition CRs
-  namespace: default # Default namespace for ApiDefinition CRs
-spec:
-  ...
-```
-
-In order to specify CR metadata, you can use *Config Data*. For specified ApiDefinitions,
-snapshot CLI generates ApiDefinition CRs based on Config Data of that specific ApiDefinition.
+In order to specify CR metadata, you can use `Config Data`. For specified ApiDefinitions,
+snapshot tool generates ApiDefinition CRs based on `Config Data` of that specific 
+ApiDefinition.
 
 ```json
 {
@@ -153,10 +145,20 @@ snapshot CLI generates ApiDefinition CRs based on Config Data of that specific A
 }
 ```
 
-The CLI checks for `k8sName` and `k8sNamespace` fields of each ApiDefinition's 
-Config Data to generate metadata of the output CR. If these fields exist, the CLI 
-uses the values specified in these fields. Otherwise, it uses default values 
-(`REPLACE_ME_` for `.metadata.name`) for them.
+For example,
+```yaml
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: production-api  # .metadata.name is obtained through Config Data's 'k8sName' field.
+  namespace: production # .metadata.namespace is obtained through Config Data's 'k8sNamespace' field.
+spec:
+  ...
+```
+
+The `snapshot` tool checks for `k8sName` and `k8sNamespace` fields of each
+ApiDefinition's Config Data to generate metadata of the output CR. The only required
+key for `Config Data` is `k8sName` which specifies your CR's `.metadata.name` field.
 
 > If `k8sNamespace` is not specified, it can be specified via `kubectl apply` as follows:
 ```bash
@@ -170,7 +172,7 @@ and created on our Dashboard.
 
 ![Created APIs on Tyk Dashboard](./img/apis.png)
 
-If we would like to specify metadata of the `test-api-5`, we can update Config Data
+If we would like to specify metadata of the `test-api-5`, we can update `Config Data`
 of the ApiDefinition as follows.
 
 ![Config Data feature of ApiDefinition objects](./img/config-data.png)
@@ -191,17 +193,9 @@ metadata:
 spec:
   name: 'test-api-5 #testing'
   ...
----
-apiVersion: tyk.tyk.io/v1alpha1
-kind: ApiDefinition
-metadata:
-  creationTimestamp: null
-  name: REPLACE_ME_1    # Since Config Data does not include "k8sName", default name is used.
-  namespace: default    # Since Config Data does not include "k8sNamespace", default namespace is used.
-spec:
-  name: 'test-api-3 #testing'
-  ...
 ```
+
+**Note:** Since `test-api-3 #testing `
 
 ### Exporting Security Policies
 
