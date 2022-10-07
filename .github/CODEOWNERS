@@ -1,6 +1,6 @@
 # These owners will be the default owners for everything in
 # the repo. 
-# tyk-operator team will be requested for
+# operator-squad team will be requested for
 # review when someone opens a pull request.
 
-*   @TykTechnologies/tyk-operator
+*   @TykTechnologies/operator-squad
