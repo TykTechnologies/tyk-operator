@@ -246,10 +246,8 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 
 // generateFilename generates YAML filename based on the given filenames' existence. If the given filename exists on the
 // current directory, then the function adds incremental counter to the filenames. For example, if the current directory
-// contains following files;
-//	.
-//	└── output.yaml
-// If the given filename is "output", the generated output becomes `output-1.yaml`.
+// contains a file called "output.yaml" and If the given filename is "output", the generated output becomes
+// `output-1.yaml`.
 //
 // It assumes that given filename does not contain any file extension such as `.yaml`.
 func generateFilename(filename string) (string, error) {
