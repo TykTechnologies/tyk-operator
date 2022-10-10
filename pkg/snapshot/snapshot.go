@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -44,6 +43,9 @@ const (
 	NamespaceKey = "k8sNamespace"
 	DefaultName  = "REPLACE_ME"
 	DefaultNs    = ""
+
+	ApiDefinitionKind = "ApiDefinition"
+	ApiVersion        = "tyk.tyk.io/v1alpha1"
 )
 
 // PrintSnapshot outputs a snapshot of the Dashboard as a CR.
@@ -70,7 +72,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		Strict: true,
 	})
 
-	exportApiDefs := func(i int, w io.Writer, v *model.APIDefinitionSpec) error {
+	exportApiDef := func(i int, w *bufio.Writer, v *model.APIDefinitionSpec) error {
 		// Parse Config Data of the ApiDefinition created on Dashboard.
 		name, ns, err := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
 		if err != nil {
@@ -88,28 +90,19 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 			return err
 		}
 
-		if _, err := w.Write([]byte("\n---\n\n")); err != nil {
+		if _, err := w.WriteString("\n---\n"); err != nil {
 			return err
 		}
 
-		return nil
+		return w.Flush()
 	}
 
-	exportPolicies := func(i int, userPolicy tykv1alpha1.SecurityPolicySpec) error {
-		if policiesFile != "" {
-			policyFile, err := os.Create(policiesFile)
-			if err != nil {
-				return err
-			}
-			defer policyFile.Close()
-
-			pw := bufio.NewWriter(policyFile)
-			if err := writePolicy(i, &userPolicy, pw, e); err != nil {
-				return err
-			}
+	exportPolicy := func(i int, pw *bufio.Writer, userPolicy tykv1alpha1.SecurityPolicySpec) error {
+		if err := writePolicy(i, &userPolicy, pw, e); err != nil {
+			return err
 		}
 
-		return nil
+		return pw.Flush()
 	}
 
 	if separate {
@@ -141,8 +134,12 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 
 			bw := bufio.NewWriter(f)
 
-			if err := exportApiDefs(i, bw, apiDefSpec); err != nil && !errors.Is(err, ErrInvalidConfigData) {
+			if err := exportApiDef(i, bw, apiDefSpec); err != nil && !errors.Is(err, ErrInvalidConfigData) {
 				f.Close()
+				return err
+			}
+
+			if err := bw.Flush(); err != nil {
 				return err
 			}
 
@@ -156,9 +153,20 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 				return err
 			}
 
-			if err := exportPolicies(i, policiesList[i]); err != nil {
+			policyFile, err := os.Create(policiesFile)
+			if err != nil {
 				return err
 			}
+
+			pw := bufio.NewWriter(policyFile)
+
+			if err := exportPolicy(i, pw, policiesList[i]); err != nil {
+				policyFile.Close()
+				return err
+			}
+
+			policyFile.Close()
+			pw.Flush()
 		}
 
 		return nil
@@ -186,37 +194,69 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 				continue
 			}
 
-			if err := exportApiDefs(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
+			if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
 				return err
 			}
 		}
 
-		for i := 0; i < len(policiesList); i++ {
-			if err := exportPolicies(i, policiesList[i]); err != nil {
+		if policiesFile != "" {
+			policyFile, err := os.Create(policiesFile)
+			if err != nil {
 				return err
+			}
+
+			defer policyFile.Close()
+			pw := bufio.NewWriter(policyFile)
+
+			for i := 0; i < len(policiesList); i++ {
+				if err := exportPolicy(i, pw, policiesList[i]); err != nil {
+					return err
+				}
 			}
 		}
 
-		return bw.Flush()
+		return nil
 	}
 
 	// Output file will contain all ApiDefinitions without checking any category.
 	for i, v := range apiDefSpecList.Apis {
-		if err := exportApiDefs(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
+		if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
 			return err
 		}
 	}
 
-	for i := 0; i < len(policiesList); i++ {
-		if err := exportPolicies(i, policiesList[i]); err != nil {
+	if policiesFile != "" {
+		policyFile, err := os.Create(policiesFile)
+		if err != nil {
 			return err
+		}
+
+		defer policyFile.Close()
+		pw := bufio.NewWriter(policyFile)
+
+		for i := 0; i < len(policiesList); i++ {
+			if err := exportPolicy(i, pw, policiesList[i]); err != nil {
+				return err
+			}
 		}
 	}
 
-	return bw.Flush()
+	return nil
 }
 
+// generateFilename generates YAML filename based on the given filenames' existence. If the given filename exists on the
+// current directory, then the function adds incremental counter to the filenames. For example, if the current directory
+// contains following files;
+//	.
+//	└── output.yaml
+// If the given filename is "output", the generated output becomes `output-1.yaml`.
+//
+// It assumes that given filename does not contain any file extension such as `.yaml`.
 func generateFilename(filename string) (string, error) {
+	if filename == "" {
+		return "", nil
+	}
+
 	counter := 0
 
 	_, err := os.Stat(fmt.Sprintf("%s.yaml", filename))
@@ -272,8 +312,8 @@ func createApiDef(metaName, metaNs string) tykv1alpha1.ApiDefinition {
 
 	return tykv1alpha1.ApiDefinition{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "ApiDefinition",
-			APIVersion: "tyk.tyk.io/v1alpha1",
+			Kind:       ApiDefinitionKind,
+			APIVersion: ApiVersion,
 		},
 		ObjectMeta: meta,
 		Spec:       tykv1alpha1.APIDefinitionSpec{},
@@ -371,7 +411,7 @@ func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.W
 		return err
 	}
 
-	if _, err := w.WriteString("\n---\n\n"); err != nil {
+	if _, err := w.WriteString("\n---\n"); err != nil {
 		return err
 	}
 
