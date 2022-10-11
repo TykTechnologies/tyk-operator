@@ -60,12 +60,12 @@ jobs:
           config: hack/kind.yaml
 
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: 1.17.x
 
       - name: Cache Go Modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -89,7 +89,7 @@ jobs:
           make test-all
 
       - name: Upload Coverage files
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: test coverage files
           path: '*_coverage.out'
