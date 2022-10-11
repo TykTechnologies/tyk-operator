@@ -6,6 +6,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
@@ -15,7 +16,8 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	client := envConf.Client()
 	var apiDef v1alpha1.ApiDefinition
 
-	apiDef.Name = testApiDef
+	uid := string(uuid.NewUUID())
+	apiDef.Name = testApiDef + uid
 	apiDef.Spec.Name = testApiDef
 	apiDef.Namespace = namespace
 	apiDef.Spec.Protocol = "http"
@@ -26,8 +28,9 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 		NotVersioned:   true,
 		Versions:       map[string]model.VersionInfo{"Default": {Name: "Default"}},
 	}
+
 	apiDef.Spec.Proxy = model.Proxy{
-		ListenPath:      "/httpbin",
+		ListenPath:      "/httpbin-" + uid,
 		TargetURL:       "http://httpbin.default.svc:8000",
 		StripListenPath: true,
 	}

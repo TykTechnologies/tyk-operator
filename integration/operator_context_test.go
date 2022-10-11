@@ -41,6 +41,8 @@ func TestOperatorContextCreate(t *testing.T) {
 					Name:      opCtx.Name,
 					Namespace: opCtx.Namespace,
 				}
+				apiDef.Spec.Proxy.ListenPath = "test-operator-context-create"
+				apiDef.Name = "test-operator-context-create"
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
@@ -94,7 +96,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 
 				if resp.StatusCode != 200 {
-					t.Log("API is not created yet")
+					t.Logf("API is not created yet. Got response code %d", resp.StatusCode)
 					return false, nil
 				}
 
@@ -150,6 +152,8 @@ func TestOperatorContextDelete(t *testing.T) {
 					Name:      operatorCtx.Name,
 					Namespace: operatorCtx.Namespace,
 				}
+				apiDef.Spec.Proxy.ListenPath = "/test-operator-context-delete-api-delete"
+				apiDef.Name = "test-operator-context-delete-api-delete"
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
@@ -226,6 +230,9 @@ func TestOperatorContextDelete(t *testing.T) {
 					Name:      operatorCtx.Name,
 					Namespace: operatorCtx.Namespace,
 				}
+				apiDef.Spec.Proxy.ListenPath = "/test-operator-context-delete-remove-ref"
+				apiDef.Name = "test-operator-context-delete-remove-ref"
+
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 

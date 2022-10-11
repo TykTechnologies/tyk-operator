@@ -36,14 +36,13 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 		apiDefWithJSONValidationName = "apidef-json-validation"
 		apiDefListenPath             = "/validation"
 		defaultVersion               = "Default"
-		errorResponseCode            = 422
 	)
 
 	t.Parallel()
 
 	eps := &model.ExtendedPathsSet{
 		ValidateJSON: []model.ValidatePathMeta{{
-			ErrorResponseCode: errorResponseCode,
+			ErrorResponseCode: http.StatusUnprocessableEntity,
 			Path:              "/get",
 			Method:            http.MethodGet,
 			Schema: &model.MapStringInterfaceType{Unstructured: unstructured.Unstructured{
@@ -125,7 +124,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode != errorResponseCode {
+					if resp.StatusCode != http.StatusUnprocessableEntity {
 						return false, nil
 					}
 
@@ -141,10 +140,9 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 func TestApiDefinitionCreateWhitelist(t *testing.T) {
 	var (
-		apiDefWithWhitelist      = "apidef-whitelist"
-		apiDefListenPath         = "/test"
-		defaultVersion           = "Default"
-		errForbiddenResponseCode = 403
+		apiDefWithWhitelist = "apidef-whitelist"
+		apiDefListenPath    = "/test-whitelist"
+		defaultVersion      = "Default"
 	)
 
 	t.Parallel()
@@ -222,7 +220,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode == errForbiddenResponseCode {
+					if resp.StatusCode == http.StatusForbidden {
 						return false, nil
 					}
 
@@ -249,7 +247,8 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode != errForbiddenResponseCode {
+					if resp.StatusCode != http.StatusForbidden {
+						t.Logf("Invalid status code. Instead of 403 got %d", resp.StatusCode)
 						return false, nil
 					}
 
@@ -265,10 +264,9 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 func TestApiDefinitionCreateBlackList(t *testing.T) {
 	var (
-		apiDefWithBlacklist      = "apidef-blacklist"
-		apiDefListenPath         = "/test"
-		defaultVersion           = "Default"
-		errForbiddenResponseCode = 403
+		apiDefWithBlacklist = "apidef-blacklist"
+		apiDefListenPath    = "/test-blacklist"
+		defaultVersion      = "Default"
 	)
 
 	t.Parallel()
@@ -346,7 +344,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode != errForbiddenResponseCode {
+					if resp.StatusCode != http.StatusForbidden {
 						return false, nil
 					}
 
@@ -373,7 +371,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode == errForbiddenResponseCode {
+					if resp.StatusCode == http.StatusForbidden {
 						return false, nil
 					}
 
@@ -389,10 +387,9 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 func TestApiDefinitionCreateIgnored(t *testing.T) {
 	var (
-		apiDefWithWhitelist      = "apidef-ignored"
-		apiDefListenPath         = "/test"
-		defaultVersion           = "Default"
-		errForbiddenResponseCode = 403
+		apiDefWithWhitelist = "apidef-ignored"
+		apiDefListenPath    = "/test-ignored"
+		defaultVersion      = "Default"
 	)
 
 	t.Parallel()
@@ -482,7 +479,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode == errForbiddenResponseCode {
+					if resp.StatusCode == http.StatusForbidden {
 						return false, nil
 					}
 
@@ -510,7 +507,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode != errForbiddenResponseCode {
+					if resp.StatusCode != http.StatusForbidden {
 						return false, nil
 					}
 
