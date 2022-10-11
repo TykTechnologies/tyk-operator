@@ -232,7 +232,6 @@ func TestOperatorContextDelete(t *testing.T) {
 				}
 				apiDef.Spec.Proxy.ListenPath = "/test-operator-context-delete-remove-ref"
 				apiDef.Name = "test-operator-context-delete-remove-ref"
-
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
