@@ -44,7 +44,7 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	return &apiDef, err
 }
 
-func createTestOperatorContext(ctx context.Context, namespace string, name string,
+func createTestOperatorContext(ctx context.Context, name, namespace string,
 	envConf *envconf.Config,
 ) (*v1alpha1.OperatorContext, error) {
 	var operatorCtx v1alpha1.OperatorContext
