@@ -45,6 +45,10 @@ type ApiDefinitionStatus struct {
 	// LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource
 	// links to.
 	LinkedToAPIs []model.Target `json:"linked_to_apis,omitempty"`
+
+	// LinkedSubgraphName corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph.
+	// ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
+	LinkedSubgraphName string `json:"linked_subgraph_name,omitempty"`
 }
 
 // +kubebuilder:object:root=true
