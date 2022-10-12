@@ -18,13 +18,16 @@ jobs:
     name: linter
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.17
       - name: check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2.5.2
+        uses: golangci/golangci-lint-action@v3
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: v1.44
+          version: v2.5.2
 
           # Optional: golangci-lint command line arguments.
           args: --verbose --timeout=5m
