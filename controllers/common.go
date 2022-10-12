@@ -53,7 +53,7 @@ func encodeNS(decoded string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(decoded))
 }
 
-func httpContext(
+func HttpContext(
 	ctx context.Context,
 	rClient runtimeClient.Client,
 	e environmet.Env,

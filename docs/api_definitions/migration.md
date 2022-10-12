@@ -1,5 +1,9 @@
 ## Migration
 
+>Tyk Operator provides a PoC tool to help with the migration of your existing 
+> ApiDefinition and SecurityPolicy objects from Dashboard to Kubernetes CR files. 
+> Please see the [snapshot package](../../pkg/snapshot/README.md).
+
 If there are existing APIs that you want to link to a CRD, it's very easy to do.  Simply add the `api_id` from your API Definition to the YAML of your `ApiDefinition` type and the Operator will take care of the rest.
 
 

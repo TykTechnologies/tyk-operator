@@ -10,6 +10,8 @@
 - Added support of API Ownership
 - Added support of client mTLS
 - Added support for Go auth custom plugins
+- Added PoC tool that helps migration of existing ApiDefinition & SecurityPolicies
+from Dashboard to Kubernetes environment.
 
 **Fixed**
 - Dashboard client to fetch all Policy objects from the Dashboard [#503](https://github.com/TykTechnologies/tyk-operator/issues/503).

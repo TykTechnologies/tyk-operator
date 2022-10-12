@@ -1,5 +1,9 @@
 ## Migration
 
+>Tyk Operator provides a PoC tool to help with the migration of your existing
+> ApiDefinition and SecurityPolicy objects from Dashboard to Kubernetes CR files.
+> Please see the [snapshot package](../../pkg/snapshot/README.md).
+
 If you have existing pre-Operator policies, you can easily link them to a CRD, which will allow you to modify them through the YAML moving forward.
 
 Simply set the `id` field in the SecurityPolicy YAML to the `_id` field in the existing Policy's JSON.
