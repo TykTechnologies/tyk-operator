@@ -25,6 +25,7 @@ const (
 
 func TestOperatorContextCreate(t *testing.T) {
 	t.Parallel()
+	listenPath := "/test-opctx"
 
 	opCreate := features.New("Operator Context").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
@@ -41,8 +42,7 @@ func TestOperatorContextCreate(t *testing.T) {
 					Name:      opCtx.Name,
 					Namespace: opCtx.Namespace,
 				}
-				apiDef.Spec.Proxy.ListenPath = "test-operator-context-create"
-				apiDef.Name = "test-operator-context-create"
+				apiDef.Spec.Proxy.ListenPath = listenPath
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
@@ -89,13 +89,13 @@ func TestOperatorContextCreate(t *testing.T) {
 			is := is.New(t)
 
 			err := wait.For(func() (done bool, err error) {
-				resp, getErr := http.Get(fmt.Sprintf("%s/httpbin/get", gatewayLocalhost))
+				resp, getErr := http.Get(fmt.Sprintf("%s/%s/get", gatewayLocalhost, listenPath))
 				if getErr != nil {
 					t.Log(getErr)
 					return false, nil
 				}
 
-				if resp.StatusCode != 200 {
+				if resp.StatusCode != http.StatusOK {
 					t.Logf("API is not created yet. Got response code %d", resp.StatusCode)
 					return false, nil
 				}
