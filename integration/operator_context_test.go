@@ -119,7 +119,7 @@ func TestOperatorContextCreate(t *testing.T) {
 					return false, nil
 				}
 
-				if resp.StatusCode != 404 {
+				if resp.StatusCode != http.StatusNotFound {
 					t.Log("API definition should not be created on dashboard")
 					return false, nil
 				}

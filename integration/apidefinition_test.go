@@ -278,8 +278,9 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 			IgnoreCase: true,
 			MethodActions: map[string]model.EndpointMethodMeta{
 				"GET": {
-					Action: "no_action",
-					Code:   200, Data: "",
+					Action:  "no_action",
+					Code:    http.StatusOK,
+					Data:    "",
 					Headers: make(map[string]string),
 				},
 			},
@@ -402,8 +403,9 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			IgnoreCase: true,
 			MethodActions: map[string]model.EndpointMethodMeta{
 				"GET": {
-					Action: "no_action",
-					Code:   200, Data: "",
+					Action:  "no_action",
+					Code:    http.StatusOK,
+					Data:    "",
 					Headers: make(map[string]string),
 				},
 			},
@@ -413,8 +415,9 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			IgnoreCase: true,
 			MethodActions: map[string]model.EndpointMethodMeta{
 				"GET": {
-					Action: "no_action",
-					Code:   200, Data: "",
+					Action:  "no_action",
+					Code:    http.StatusOK,
+					Data:    "",
 					Headers: make(map[string]string),
 				},
 			},
@@ -655,7 +658,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode != 200 {
+					if resp.StatusCode != http.StatusOK {
 						t.Log("expected to access httpbin.org since it is pinned via public key.")
 						return false, nil
 					}
@@ -681,7 +684,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 					resp, err := hc.Do(req)
 					is.NoErr(err)
 
-					if resp.StatusCode == 200 {
+					if resp.StatusCode == http.StatusOK {
 						t.Log("unexpected access to invalid address")
 						return false, nil
 					}
