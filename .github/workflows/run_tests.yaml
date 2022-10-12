@@ -53,7 +53,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create Kind cluster
-        uses: helm/kind-action@v1.2.0
+        uses: helm/kind-action@v1.4.0
         with:
           wait: 2m
           node_image: ${{ matrix.k8s-version }}
