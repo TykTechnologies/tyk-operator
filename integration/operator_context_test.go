@@ -19,13 +19,15 @@ import (
 
 const (
 	testApiDef       = "test-http"
-	testOperatorCtx  = "mycontext"
 	gatewayLocalhost = "http://localhost:7000"
 )
 
 func TestOperatorContextCreate(t *testing.T) {
 	t.Parallel()
+
+	apiName := "test-operator-context"
 	listenPath := "/test-opctx"
+	opctxName := "opctx-create-test"
 
 	opCreate := features.New("Operator Context").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
@@ -33,7 +35,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			is := is.New(t)
 
 			// create operator context
-			opCtx, err := createTestOperatorContext(ctx, testNS, envConf)
+			opCtx, err := createTestOperatorContext(ctx, testNS, opctxName, envConf)
 			is.NoErr(err) // failed to create operatorcontext
 
 			// create api definition
@@ -43,6 +45,7 @@ func TestOperatorContextCreate(t *testing.T) {
 					Namespace: opCtx.Namespace,
 				}
 				apiDef.Spec.Proxy.ListenPath = listenPath
+				apiDef.Name = apiName
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
 
@@ -63,7 +66,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				client := envConf.Client()
 				is := is.New(t)
 
-				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: testOperatorCtx, Namespace: testNS}}
+				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opctxName, Namespace: testNS}}
 
 				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&opCtx, func(object k8s.Object) bool {
 					operatCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
@@ -75,7 +78,7 @@ func TestOperatorContextCreate(t *testing.T) {
 					}
 
 					if operatCtx.Status.LinkedApiDefinitions[0].Namespace != testNS ||
-						operatCtx.Status.LinkedApiDefinitions[0].Name != testApiDef {
+						operatCtx.Status.LinkedApiDefinitions[0].Name != apiName {
 						return false
 					}
 
@@ -135,13 +138,15 @@ func TestOperatorContextCreate(t *testing.T) {
 func TestOperatorContextDelete(t *testing.T) {
 	t.Parallel()
 
+	opctxName := "optctx-test-delete"
+
 	delApiDef := features.New("Api Definition Delete").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
 			is := is.New(t)
 			client := envConf.Client()
 
-			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
+			operatorCtx, err := createTestOperatorContext(ctx, testNS, opctxName, envConf)
 			is.NoErr(err) // failed to create operatorcontext
 
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
@@ -219,7 +224,9 @@ func TestOperatorContextDelete(t *testing.T) {
 			is := is.New(t)
 			client := envConf.Client()
 
-			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
+			opctxName := "optctx-test-remove-api-ref"
+
+			operatorCtx, err := createTestOperatorContext(ctx, testNS, opctxName, envConf)
 			is.NoErr(err) // failed to create operatorcontext
 
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
@@ -263,7 +270,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			err := client.Resources().Delete(ctx, &opCtx)
 			is.NoErr(err)
 
-			err = client.Resources(testNS).Get(ctx, testOperatorCtx, testNS, &opCtx)
+			err = client.Resources(testNS).Get(ctx, opCtxName, testNS, &opCtx)
 			is.NoErr(err)
 
 			return ctx

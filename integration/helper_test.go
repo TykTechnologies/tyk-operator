@@ -44,14 +44,14 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	return &apiDef, err
 }
 
-func createTestOperatorContext(ctx context.Context, namespace string,
+func createTestOperatorContext(ctx context.Context, namespace string, name string,
 	envConf *envconf.Config,
 ) (*v1alpha1.OperatorContext, error) {
 	var operatorCtx v1alpha1.OperatorContext
 
 	client := envConf.Client()
 
-	operatorCtx.Name = testOperatorCtx
+	operatorCtx.Name = name
 	operatorCtx.Namespace = namespace
 	operatorCtx.Spec.FromSecret = &model.Target{
 		Name:      "tyk-operator-conf",
