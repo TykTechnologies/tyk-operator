@@ -60,7 +60,7 @@ type (
 type HttpMethod string
 
 // GraphQLExecutionMode is the mode to define how an api behaves.
-// +kubebuilder:validation:Enum=proxyOnly;executionEngine;supergraph;subgraph
+// +kubebuilder:validation:Enum="";proxyOnly;executionEngine;supergraph;subgraph
 type GraphQLExecutionMode string
 
 const (
@@ -69,7 +69,7 @@ const (
 )
 
 // APIProtocol is the network transport protocol supported by the gateway
-// +kubebuilder:validation:Enum=h2c;tcp;tls;http;https;
+// +kubebuilder:validation:Enum="";h2c;tcp;tls;http;https;
 type APIProtocol string
 
 type NotificationsManager struct {
