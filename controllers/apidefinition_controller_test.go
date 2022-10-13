@@ -12,7 +12,6 @@ import (
 
 	"github.com/matryer/is"
 
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -365,13 +364,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			}
 
 			err = r.processSubGraphExec(context.Background(), api)
-			if err != nil {
-				if _, ok := err.(*k8sErrors.StatusError); ok {
-					eval.Equal(tc.expectedErr.Error(), string(k8sErrors.ReasonForError(err)))
-				} else {
-					eval.Equal(tc.expectedErr, err)
-				}
-			}
+			eval.Equal(tc.expectedErr, err)
 
 			if tc.expectedErr == nil && tc.apiDef.Spec.GraphQL != nil {
 				eval.Equal(tc.subGraph.Spec.Schema, api.Spec.GraphQL.Schema)
