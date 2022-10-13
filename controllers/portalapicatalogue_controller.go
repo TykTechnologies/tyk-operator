@@ -77,7 +77,7 @@ func (r *PortalAPICatalogueReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := httpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := HttpContext(ctx, r.Client, r.Env, desired, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

@@ -63,6 +63,14 @@ spec:
                     type: string
                   url:
                     type: string
+                  user_group_owners:
+                    items:
+                      type: string
+                    type: array
+                  user_owners:
+                    items:
+                      type: string
+                    type: array
                 type: object
               secretRef:
                 description: Reference to k8s secret resource that we load environment
