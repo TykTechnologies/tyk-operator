@@ -1,0 +1,26 @@
+name: Test API Definition plugin
+testcases:
+- name: Test json validation
+  steps:
+  - type: exec
+    script: |
+      kubectl apply -f ../config/samples/httpbin_json_schema_validation.yaml
+      sleep 30
+    assertions:
+    - result.code ShouldEqual 0
+  - type: http
+    url: http://localhost:8080/httpbin/get
+    body: '{
+          "userName" : "b",
+          "age": 0
+        }'
+    assertions:
+    - result.statuscode ShouldEqual 422
+  - type: http
+    url: http://localhost:8080/httpbin/get
+    body: '{"userName":"burak","age":2}'
+    assertions:
+    - result.statuscode ShouldEqual 200
+  - type: exec
+    script: kubectl delete -f ../config/samples/httpbin_json_schema_validation.yaml
+
