@@ -21,7 +21,7 @@ jobs:
         id: setup-matrix-pr
         if: ${{ github.event_name  == 'pull_request' ||  github.event_name == 'push' }}
         run: |
-          MATRIX_PARAMS_COMBINATIONS='["v1.24.6"]'
+          MATRIX_PARAMS_COMBINATIONS='["v1.25.2"]'
           echo "matrix_params=$MATRIX_PARAMS_COMBINATIONS" >> "$GITHUB_ENV"
       - name: Decide which matrix to use
         id: decider
