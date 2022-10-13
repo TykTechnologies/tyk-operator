@@ -2,10 +2,8 @@ name:  Test Json Validation Plugin
 testcases:
 - name: Create API 
   steps:
-  - type: exec
-    script: |
-      kubectl apply -f ../config/samples/httpbin_json_schema_validation.yaml
-      sleep 30
+  - type: applyManifests
+    filename: "../config/samples/httpbin_json_schema_validation.yaml"
     assertions:
     - result.code ShouldEqual 0
 
