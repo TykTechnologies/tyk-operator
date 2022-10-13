@@ -56,7 +56,7 @@ jobs:
         uses: helm/kind-action@v1.2.0
         with:
           wait: 2m
-          node_image: ${{ matrix.k8s-version }}
+          node_image: "kindest/node:${{ matrix.k8s-version }}"
           config: hack/kind.yaml
 
       - name: Install Go
