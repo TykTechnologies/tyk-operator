@@ -288,7 +288,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 		},
 		Spec: tykv1alpha1.APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
-				APIID: encodeNS(types.NamespacedName{Name: "test-name", Namespace: testNs}.String()),
+				APIID: EncodeNS(types.NamespacedName{Name: "test-name", Namespace: testNs}.String()),
 				GraphQL: &model.GraphQLConfig{
 					GraphRef: subgraphName,
 				},
@@ -296,32 +296,36 @@ func TestProcessSubGraphExecution(t *testing.T) {
 		},
 	}
 
-	apiDefMalformed := apiDef
+	apiDefMalformed := &tykv1alpha1.ApiDefinition{}
+	apiDef.DeepCopyInto(apiDefMalformed)
+	apiDefMalformed.ObjectMeta.Name = "test-api-malformed"
 	apiDefMalformed.Spec.GraphQL = nil
 
 	apiDefLinkedMultiple := &tykv1alpha1.ApiDefinition{}
 	apiDef.DeepCopyInto(apiDefLinkedMultiple)
 	apiDefLinkedMultiple.ObjectMeta.Name = "test-name-multiple-link"
-	apiDefLinkedMultiple.Spec.APIID = encodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
+	apiDefLinkedMultiple.Spec.APIID = EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
 
-	objects := []runtime.Object{&apiDef, apiDefLinkedMultiple, subGraph, newSubGraph}
+	apiDefNewGraphRef := &tykv1alpha1.ApiDefinition{}
+	apiDef.DeepCopyInto(apiDefNewGraphRef)
+	apiDefNewGraphRef.Spec.GraphQL.GraphRef = newSubgraphName
+
+	objects := []runtime.Object{&apiDef, apiDefMalformed, apiDefLinkedMultiple, subGraph, newSubGraph}
 	eval := is.New(t)
 
 	cl, err := NewFakeClient(objects)
 	eval.NoErr(err)
 
 	testCases := []struct {
-		testName       string
-		expectedSDL    string
-		expectedSchema string
-		apiDef         *tykv1alpha1.ApiDefinition
-		subGraph       *tykv1alpha1.SubGraph
-		mutateFn       func(definition *tykv1alpha1.ApiDefinition)
-		expectedErr    error
+		testName    string
+		apiDef      *tykv1alpha1.ApiDefinition
+		subGraph    *tykv1alpha1.SubGraph
+		apiMutator  func(definition *tykv1alpha1.ApiDefinition)
+		expectedErr error
 	}{
 		{
 			testName: "processing malformed ApiDefinition with nil GraphQLConfig field",
-			apiDef:   &apiDefMalformed,
+			apiDef:   apiDefMalformed,
 		},
 		{
 			testName: "processing valid ApiDefinition must update it's GraphQLConfig based on SubGraph reference",
@@ -336,20 +340,10 @@ func TestProcessSubGraphExecution(t *testing.T) {
 		},
 		{
 			testName: "update ApiDefinition GraphRef to another SubGraph CR",
-			apiDef:   &apiDef,
+			apiDef:   apiDefNewGraphRef,
 			subGraph: newSubGraph,
-			mutateFn: func(definition *tykv1alpha1.ApiDefinition) {
+			apiMutator: func(definition *tykv1alpha1.ApiDefinition) {
 				definition.Spec.GraphQL.GraphRef = newSubgraphName
-			},
-		},
-		{
-			testName: "remove GraphRef from ApiDefinition CR",
-			apiDef:   &apiDef,
-			// subGraph: newSubGraph,
-			subGraph: &tykv1alpha1.SubGraph{},
-			mutateFn: func(definition *tykv1alpha1.ApiDefinition) {
-				definition.Spec.GraphQL.GraphRef = ""
-				definition.Spec.APIID = ""
 			},
 		},
 	}
@@ -366,85 +360,32 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.apiDef), api)
 			eval.NoErr(err)
 
-			if tc.mutateFn != nil {
-				tc.mutateFn(api)
+			if tc.apiMutator != nil {
+				tc.apiMutator(api)
 			}
 
 			err = r.processSubGraphExec(context.Background(), api)
-			if _, ok := err.(*k8sErrors.StatusError); ok {
-				eval.Equal(tc.expectedErr.Error(), string(k8sErrors.ReasonForError(err)))
-			} else {
-				eval.Equal(tc.expectedErr, err)
+			if err != nil {
+				if _, ok := err.(*k8sErrors.StatusError); ok {
+					eval.Equal(tc.expectedErr.Error(), string(k8sErrors.ReasonForError(err)))
+				} else {
+					eval.Equal(tc.expectedErr, err)
+				}
 			}
 
 			if tc.expectedErr == nil && tc.apiDef.Spec.GraphQL != nil {
 				eval.Equal(tc.subGraph.Spec.Schema, api.Spec.GraphQL.Schema)
 				eval.Equal(tc.subGraph.Spec.SDL, api.Spec.GraphQL.Subgraph.SDL)
 
-				reconciledApiDef := &tykv1alpha1.ApiDefinition{}
-				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.apiDef), reconciledApiDef)
+				ad := &tykv1alpha1.ApiDefinition{}
+				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.apiDef), ad)
 				eval.NoErr(err)
-				eval.Equal(reconciledApiDef.Status.LinkedSubgraphName, tc.subGraph.Name)
+				eval.Equal(ad.Status.LinkedSubgraphName, tc.subGraph.Name)
 
-				reconciledSubGraph := &tykv1alpha1.SubGraph{}
-				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.subGraph), reconciledSubGraph)
+				sg := &tykv1alpha1.SubGraph{}
+				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.subGraph), sg)
 				eval.NoErr(client.IgnoreNotFound(err))
-				eval.Equal(reconciledSubGraph.Status.LinkedApiDefID, api.Spec.APIID)
-			}
-		})
-	}
-}
-
-func TestDecodeID(t *testing.T) {
-	type args struct {
-		encodedID string
-	}
-	tests := []struct {
-		name         string
-		encodedID    string
-		expectedNs   string
-		expectedName string
-	}{
-		{
-			name:         "decoding empty ID",
-			encodedID:    "",
-			expectedNs:   "",
-			expectedName: "",
-		},
-		{
-			name:         "decoding default/httpbin",
-			encodedID:    "ZGVmYXVsdC9odHRwYmlu",
-			expectedNs:   "default",
-			expectedName: "httpbin",
-		},
-		{
-			name:         "decoding corrupted input, /httpbin",
-			encodedID:    "L2h0dHBiaW4=",
-			expectedNs:   "",
-			expectedName: "",
-		},
-		{
-			name:         "decoding corrupted input, default/",
-			encodedID:    "ZGVmYXVsdC8=",
-			expectedNs:   "",
-			expectedName: "",
-		},
-		{
-			name:         "decoding corrupted input, /",
-			encodedID:    "Lw==",
-			expectedNs:   "",
-			expectedName: "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotNamespace, gotName := decodeID(tt.encodedID)
-			if gotNamespace != tt.expectedNs {
-				t.Errorf("decodeID() gotNamespace = %v, want %v", gotNamespace, tt.expectedNs)
-			}
-
-			if gotName != tt.expectedName {
-				t.Errorf("decodeID() gotName = %v, want %v", gotName, tt.expectedName)
+				eval.Equal(sg.Status.LinkedApiDefID, api.Spec.APIID)
 			}
 		})
 	}

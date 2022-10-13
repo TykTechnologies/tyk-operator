@@ -121,7 +121,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		if desired.Spec.APIID == "" {
-			upstreamRequestStruct.Spec.APIID = encodeNS(req.NamespacedName.String())
+			upstreamRequestStruct.Spec.APIID = EncodeNS(req.NamespacedName.String())
 		}
 
 		if desired.Spec.OrgID == "" {
@@ -151,11 +151,17 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				if err != nil {
 					return err
 				}
+
+				desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
+				desired.Spec.GraphQL.Subgraph.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
 			case model.SuperGraphExecutionMode:
 				err = r.processSuperGraphExec(ctx, upstreamRequestStruct)
 				if err != nil {
 					return err
 				}
+
+				desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
+				desired.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL
 			}
 		}
 
@@ -575,7 +581,7 @@ func encodeIfNotBase64(s string) string {
 		return s
 	}
 
-	return encodeNS(s)
+	return EncodeNS(s)
 }
 
 // updateLinkedPolicies ensure that all policies needed by this api definition are
