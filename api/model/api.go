@@ -27,6 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/TykTechnologies/tyk/apidef"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -177,11 +178,18 @@ type RoutingTriggerOptions struct {
 }
 
 type RoutingTrigger struct {
+	apidef.RoutingTrigger `json:",inline"`
+	RewriteToInternal     *RewriteToInternal `json:"rewrite_to_internal,omitempty"`
+}
+
+/*
+type RoutingTrigger struct {
 	On                RoutingTriggerOnType  `json:"on"`
 	Options           RoutingTriggerOptions `json:"options"`
 	RewriteTo         string                `json:"rewrite_to,omitempty"`
 	RewriteToInternal *RewriteToInternal    `json:"rewrite_to_internal,omitempty"`
 }
+*/
 
 func (r *RoutingTrigger) collectLoopingTarget(fn func(Target)) {
 	if r.RewriteToInternal != nil {
@@ -193,6 +201,13 @@ func (r *RoutingTrigger) collectLoopingTarget(fn func(Target)) {
 	}
 }
 
+type URLRewriteMeta struct {
+	apidef.URLRewriteMeta `json:",inline"`
+	Triggers              []RoutingTrigger   `bson:"triggers" json:"triggers"`
+	RewriteToInternal     *RewriteToInternal `json:"rewrite_to_internal,omitempty"`
+}
+
+/*
 type URLRewriteMeta struct {
 	// Path represents the endpoint listen path
 	Path   string     `json:"path"`
@@ -208,7 +223,7 @@ type URLRewriteMeta struct {
 	RewriteToInternal *RewriteToInternal `json:"rewrite_to_internal,omitempty"`
 	Triggers          []RoutingTrigger   `json:"triggers,omitempty"`
 }
-
+*/
 func (u *URLRewriteMeta) collectLoopingTarget(fn func(Target)) {
 	if u.RewriteToInternal != nil {
 		x := u.RewriteToInternal.Target
@@ -341,6 +356,12 @@ type ValidatePathMeta struct {
 }
 
 type ExtendedPathsSet struct {
+	apidef.ExtendedPathsSet `json:",inline"`
+	URLRewrite              []URLRewriteMeta `json:"url_rewrites,omitempty"`
+}
+
+/*
+type ExtendedPathsSet struct {
 	Ignored   []EndPointMeta `json:"ignored,omitempty"`
 	WhiteList []EndPointMeta `json:"white_list,omitempty"`
 	BlackList []EndPointMeta `json:"black_list,omitempty"`
@@ -364,6 +385,7 @@ type ExtendedPathsSet struct {
 	ValidateJSON            []ValidatePathMeta    `json:"validate_json,omitempty"`
 	Internal                []InternalMeta        `json:"internal,omitempty"`
 }
+*/
 
 func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
 	if e == nil {
@@ -375,6 +397,12 @@ func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
 	}
 }
 
+type VersionInfo struct {
+	apidef.ExtendedPathsSet `json:",inline"`
+	ExtendedPaths           *ExtendedPathsSet `json:"extended_paths,omitempty"`
+}
+
+/*
 type VersionInfo struct {
 	Name                        string            `json:"name"`
 	Expires                     string            `json:"expires,omitempty"`
@@ -389,6 +417,7 @@ type VersionInfo struct {
 	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
 	OverrideTarget              string            `json:"override_target,omitempty"`
 }
+*/
 
 func (v *VersionInfo) collectLoopingTarget(fn func(Target)) {
 	v.ExtendedPaths.collectLoopingTarget(fn)
@@ -515,8 +544,19 @@ type OpenIDOptions struct {
 	SegregateByClient bool                `json:"segregate_by_client"`
 }
 
-// APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
+	apidef.APIDefinition `json:",inline"`
+	Proxy                ProxyConfig `json:"proxy"`
+	VersionData          VersionData `json:"version_data,omitempty"`
+}
+
+type ProxyConfig struct {
+	apidef.ProxyConfig `json:",inline"`
+	TargetInternal     *TargetInternal `json:"target_internal,omitempty"`
+}
+
+// APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
+/*type APIDefinitionSpec struct {
 	// For server use only, do not use
 	ID string `json:"id,omitempty"`
 
@@ -775,7 +815,7 @@ type APIDefinitionSpec struct {
 
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 }
-
+*/
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
 	fn := func(t Target) {
 		targets = append(targets, t)
@@ -835,7 +875,7 @@ type Proxy struct {
 	ServiceDiscovery ServiceDiscoveryConfiguration `json:"service_discovery,omitempty"`
 }
 
-func (p *Proxy) collectLoopingTarget(fn func(Target)) {
+func (p ProxyConfig) collectLoopingTarget(fn func(Target)) {
 	if p.TargetInternal != nil {
 		x := p.TargetInternal.Target
 		p.TargetURL = p.TargetInternal.String()
@@ -913,12 +953,19 @@ type UptimeTestConfig struct {
 }
 
 type VersionData struct {
+	apidef.VersionData `json:",inline"`
+	Versions           map[string]VersionInfo `json:"versions,omitempty"`
+}
+
+/*
+type VersionData struct {
 	NotVersioned   bool                   `json:"not_versioned"`
 	DefaultVersion string                 `json:"default_version"`
 	Versions       map[string]VersionInfo `json:"versions,omitempty"`
 }
+*/
 
-func (v *VersionData) collectLoopingTarget(fn func(Target)) {
+func (v VersionData) collectLoopingTarget(fn func(Target)) {
 	for k, value := range v.Versions {
 		value.collectLoopingTarget(fn)
 		v.Versions[k] = value
