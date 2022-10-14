@@ -165,6 +165,12 @@ func generateEnvConfig(operatorConfSecret *v1.Secret) (environmet.Env, error) {
 	}
 
 	tykOrg := string(data)
+	tykVersion := "v4.0"
+
+	data, ok = operatorConfSecret.Data["TYK_VERSION"]
+	if ok && len(data) != 0 {
+		tykVersion = string(data)
+	}
 
 	mode := os.Getenv("TYK_MODE")
 	var tykConnectionURL string
@@ -183,5 +189,6 @@ func generateEnvConfig(operatorConfSecret *v1.Secret) (environmet.Env, error) {
 			Mode: v1alpha1.OperatorContextMode(mode),
 			URL:  tykConnectionURL,
 		},
+		TykVersion: tykVersion,
 	}, nil
 }

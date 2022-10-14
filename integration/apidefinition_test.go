@@ -16,13 +16,12 @@ import (
 	pkgclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
-
 	"github.com/google/uuid"
 	"github.com/matryer/is"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -1098,9 +1097,14 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 }
 
 func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
-	const opNs = "tyk-operator-system"
+	const (
+		opNs = "tyk-operator-system"
+
+		supportedMajorTykVersion = uint(4)
+	)
 
 	tykEnv := environmet.Env{}
+	majorTykVersion := supportedMajorTykVersion
 	r := &controllers.ApiDefinitionReconciler{}
 
 	gqlSubGraph := features.New("GraphQL SubGraph Execution mode").
@@ -1114,6 +1118,13 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
+
+			v, err := version.ParseGeneric(tykEnv.TykVersion)
+			eval.NoErr(err)
+			if v.Major() < 4 {
+				majorTykVersion = v.Major()
+				t.Skip("GraphQL Federation is not available on Tyk v3")
+			}
 
 			// Create ApiDefinition Reconciler.
 			r, err = createTestApiDefReconciler(c.Client(), &tykEnv)
@@ -1359,6 +1370,10 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 		Feature()
 
 	testenv.Finish(func(ctx context.Context, c *envconf.Config) (context.Context, error) {
+		if t.Skipped() || majorTykVersion < supportedMajorTykVersion {
+			return ctx, nil
+		}
+
 		eval := is.New(t)
 		testNs, ok := ctx.Value(ctxNSKey).(string)
 		eval.True(ok)
