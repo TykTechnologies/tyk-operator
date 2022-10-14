@@ -3,6 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.11.0...HEAD)
 
+**Fixed**
+- Fixed bug in linking logic of SubGraph CR and SuperGraph CR [#522](https://github.com/TykTechnologies/tyk-operator/pull/522).
+
 ## [v0.11.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.11.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.10.0...v0.11.0)
 
