@@ -892,8 +892,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			err = wait.For(func() (done bool, err error) {
 				env := environmet.Env{}
 				env.Mode = v1alpha1.OperatorContextMode(mode)
-				env.Org = string(tykOrg)
-				env.Auth = string(tykAuth)
+				env.Org = tykOrg
+				env.Auth = tykAuth
 				env.URL = tykConnectionURL
 
 				pkgContext := pkgclient.Context{
@@ -930,8 +930,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				err := wait.For(func() (done bool, err error) {
 					env := environmet.Env{}
 					env.Mode = v1alpha1.OperatorContextMode(mode)
-					env.Org = string(tykOrg)
-					env.Auth = string(tykAuth)
+					env.Org = tykOrg
+					env.Auth = tykAuth
 					env.URL = tykConnectionURL
 
 					pkgContext := pkgclient.Context{
