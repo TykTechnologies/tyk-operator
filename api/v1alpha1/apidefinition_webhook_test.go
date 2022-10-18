@@ -199,7 +199,7 @@ func hasError(errs field.ErrorList, needle string) bool {
 }
 
 func TestApiDefinition_Validate_Auth(t *testing.T) {
-	is := is.New(t)
+	eval := is.New(t)
 
 	tests := map[string]struct {
 		ApiDefinition ApiDefinition
@@ -274,15 +274,15 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 	for n, tc := range tests {
 		t.Run(n, func(t *testing.T) {
 			if err := tc.ApiDefinition.validate(); err != nil {
-				is.True(apierrors.IsInvalid(err))
-				is.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
+				eval.True(apierrors.IsInvalid(err))
+				eval.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
 			}
 		})
 	}
 }
 
 func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
-	is := is.New(t)
+	eval := is.New(t)
 
 	tests := map[string]struct {
 		ApiDefinition ApiDefinition
@@ -465,11 +465,11 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 				if !ok {
 					t.Fatal("invalid error type")
 				}
-				is.True(apierrors.IsInvalid(err))
+				eval.True(apierrors.IsInvalid(err))
 
 				t.Log(statusErr.Status().Details.Causes)
 
-				is.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
+				eval.True(apierrors.HasStatusCause(err, metav1.CauseType(tc.ErrCause)))
 			}
 		})
 	}

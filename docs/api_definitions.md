@@ -6,22 +6,22 @@ To check the supported features of the API Definitions CRD version you're curren
 
 ## Implemented Capabilities / Support Status
 
-| Symbol    | Description |
-| --------- | ----------- |
-| ✅        | Fully supported |
-| ⚠️        | Untested / Requires Documentation |
-| ❌️        | Not currently supported |
+| Symbol | Description                       |
+|--------|-----------------------------------|
+| ✅      | Fully supported                   |
+| ⚠️     | Untested / Requires Documentation |
+| ❌️     | Not currently supported           |
 
 ## API Types
-| Type                               | Support | Supported From | Comments                     | Sample |
-|------------------------------------|---------|----------------|------------------------------|--------|
-| HTTP                               | ✅      | v0.1           | -                            |        |
-| HTTPS                              | ✅      | v0.4           | -                            | [Sample](./../config/samples/tls/example.yaml)️ |
-| TCP                                | ✅      | v0.1           | -                            |        |
-| TLS                                | ✅      | v0.1           | -                            |        |
-| GraphQL - Proxy                    | ✅      | v0.1           | -                            | [Sample](./../config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml) |
-| GraphQL - Universal Data Graph     | ⚠️      | v0.1           | V2 Engine & API ETA Dec 2022 | [Sample - Works with V1 Engine only (Tyk v3.1 or before) ](./../config/samples/udg_1.yaml) |
-| GraphQL - Federation               | ⚠️      | -              | WIP ETA Dec 2022             | [Sample](./../config/samples/federation/README.md) |
+| Type                           | Support | Supported From | Comments                     | Sample                                                                                     |
+|--------------------------------|---------|----------------|------------------------------|--------------------------------------------------------------------------------------------|
+| HTTP                           | ✅       | v0.1           | -                            |                                                                                            |
+| HTTPS                          | ✅       | v0.4           | -                            | [Sample](./../config/samples/tls/example.yaml)️                                            |
+| TCP                            | ✅       | v0.1           | -                            |                                                                                            |
+| TLS                            | ✅       | v0.1           | -                            |                                                                                            |
+| GraphQL - Proxy                | ✅       | v0.1           | -                            | [Sample](./../config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml)                |
+| GraphQL - Universal Data Graph | ⚠️      | v0.1           | V2 Engine & API ETA Dec 2022 | [Sample - Works with V1 Engine only (Tyk v3.1 or before) ](./../config/samples/udg_1.yaml) |
+| GraphQL - Federation           | ⚠️      | -              | WIP ETA Dec 2022             | [Sample](./../config/samples/federation/README.md)                                         |
 
 ## Routing
 
@@ -65,23 +65,23 @@ To check the supported features of the API Definitions CRD version you're curren
 
 ## Features
 
-| Feature                                | Supported | Supported From | Comments                                                               | Sample |
-|----------------------------------------|-----------|----------------|------------------------------------------------------------------------|--------|
-| API Tagging                            | ✅        | v0.1           | -                                                                      | |
-| Config Data                            | ✅        | v0.8.2         | -                                                                      | [Sample](./../config/samples/config_data_virtual_endpoint.yaml) |
-| Context Variables                      | ✅        | v0.1           | -                                                                      |
-| Cross Origin Resource Sharing (CORS)   | ⚠️        | v0.2           | [See ISSUE #3396 ](https://github.com/TykTechnologies/tyk/issues/3396) | [Sample](./../config/samples/httpbin_cors.yaml) |
-| Custom Plugins - Go                    | ⚠️        | v0.1           | Untested                                                               |
-| Custom Plugins - gRPC                  | ✅        | v0.1           | -                                                                      | [Sample](./../bdd/features/api_http_grpc_plugin.feature) |
-| Custom Plugins - Javascript            | ✅        | v0.1           | -                                                                      | [Sample](./api_definitions/custom_plugin.md) |
-| Custom Plugins - Lua                   | ⚠️        | v0.1           | Untested                                                               |
-| Custom Plugins - Python                | ⚠️        | v0.1           | Untested                                                               |
-| Global Rate Limit                      | ✅        | v0.10          | -                                                                      | [Sample](./../config/samples/httpbin_global_rate_limit.yaml) |
-| Segment Tags                           | ✅        | v0.1           | -                                                                      | [Sample](./../config/samples/httpbin_tagged.yaml) |
-| Tag Headers                            | ❌        | -              | Not Implemented                                                        |
-| Webhooks                               | ❌        | -              | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   | [Sample](./webhooks.md) |
-| Looping                                | ⚠️        | v0.6           | Untested                                                               | [Sample](./api_definitions/looping.md) |
-| Active API                             | ✅        | v0.2           | Only available to Tyk Self Managed (Pro) users                         | [Sample](./api_definitions/fields.md#active) |
+| Feature                              | Supported | Supported From | Comments                                                               | Sample                                                          |
+|--------------------------------------|-----------|----------------|------------------------------------------------------------------------|-----------------------------------------------------------------|
+| API Tagging                          | ✅         | v0.1           | -                                                                      |                                                                 |
+| Config Data                          | ✅         | v0.8.2         | -                                                                      | [Sample](./../config/samples/config_data_virtual_endpoint.yaml) |
+| Context Variables                    | ✅         | v0.1           | -                                                                      |
+| Cross Origin Resource Sharing (CORS) | ⚠️        | v0.2           | [See ISSUE #3396 ](https://github.com/TykTechnologies/tyk/issues/3396) | [Sample](./../config/samples/httpbin_cors.yaml)                 |
+| Custom Plugins - Go                  | ⚠️        | v0.1           | Untested                                                               |
+| Custom Plugins - gRPC                | ✅         | v0.1           | -                                                                      | [Sample](./../bdd/features/api_http_grpc_plugin.feature)        |
+| Custom Plugins - Javascript          | ✅         | v0.1           | -                                                                      | [Sample](./api_definitions/custom_plugin.md)                    |
+| Custom Plugins - Lua                 | ⚠️        | v0.1           | Untested                                                               |
+| Custom Plugins - Python              | ⚠️        | v0.1           | Untested                                                               |
+| Global Rate Limit                    | ✅         | v0.10          | -                                                                      | [Sample](./../config/samples/httpbin_global_rate_limit.yaml)    |
+| Segment Tags                         | ✅         | v0.1           | -                                                                      | [Sample](./../config/samples/httpbin_tagged.yaml)               |
+| Tag Headers                          | ❌         | -              | Not Implemented                                                        |
+| Webhooks                             | ❌         | -              | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   | 
+| Looping                              | ⚠️        | v0.6           | Untested                                                               | [Sample](./api_definitions/looping.md)                          |
+| Active API                           | ✅         | v0.2           | Only available to Tyk Self Managed (Pro) users                         | [Sample](./api_definitions/fields.md#active)                    |
 
 ## APIDefinition - Endpoint Middleware
 

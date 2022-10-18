@@ -13,7 +13,7 @@ You can configure Ingress, APIs, Security Policies, Authentication, Authorizatio
 practices with Custom Resources and Kubernetes-native primitives.
 </p>
 <p align="center">
-  <img width="600" src="https://raw.githubusercontent.com/TykTechnologies/tyk-operator/master/docs/img/apim.svg">
+  <img alt="API Management with Tyk Operator" width="600" src="https://raw.githubusercontent.com/TykTechnologies/tyk-operator/master/docs/img/apim.svg">
 </p>
 
 ---
