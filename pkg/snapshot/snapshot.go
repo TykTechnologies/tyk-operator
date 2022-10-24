@@ -149,10 +149,6 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		for i := 0; i < len(policiesList); i++ {
 			policiesFile = fmt.Sprintf("%s-%s.yaml", "policy", policiesList[i].MID)
 
-			if err != nil {
-				return err
-			}
-
 			policyFile, err := os.Create(policiesFile)
 			if err != nil {
 				return err
