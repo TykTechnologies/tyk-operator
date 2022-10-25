@@ -1,0 +1,105 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: rest-countries
+spec:
+  name: rest-countries
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: https://restcountries.com/v2/alpha/
+    listen_path: /restCountries
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+
+
+
+---
+
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: udg
+spec:
+  name: Universal Data Graph v2b
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: ""
+    listen_path: /udg
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+  graphql:
+    enabled: true
+    execution_mode: executionEngine
+    schema: |
+      type Country {
+        name: String
+        code: String
+        restCountry: RestCountry
+      }
+
+      type Query {
+        countries: [Country]
+      }
+
+      type RestCountry {
+        altSpellings: [String]
+        subregion: String
+        population: Int
+      }
+    version: "2"
+    last_schema_update: "2022-10-12T14:27:55.511+03:00"
+    type_field_configurations: []
+    playground:
+      enabled: true
+      path: /playground
+    engine:
+      field_configs:
+        - disable_default_mapping: false
+          field_name: countries
+          path:
+            - "countries"
+          type_name: Query
+        - disable_default_mapping: true #very important for rest APIs
+          field_name: restCountry
+          path: []
+          type_name: Country
+      data_sources:
+        - kind: "GraphQL"
+          name: "countries"
+          internal: false
+          root_fields:
+            - type: Query
+              fields:
+                - "countries"
+          config:
+            url: "https://countries.trevorblades.com/"
+            method: "POST"
+            headers: {}
+            body: ""
+        - kind: "REST"
+          internal: false
+          name: "restCountries"
+          root_fields:
+            - type: "Country"
+              fields:
+                - "restCountry"
+          config:
+            url: "tyk://rest-countries/{{ .object.code }}"
+            method: "GET"
+            body: ""
+            headers: {}

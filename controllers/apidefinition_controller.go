@@ -144,74 +144,76 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		// Check GraphQL Federation
-		if upstreamRequestStruct.Spec.GraphQL != nil && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
-			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
-				subgraph := &tykv1alpha1.SubGraph{}
+		if upstreamRequestStruct.Spec.GraphQL != nil {
+			if upstreamRequestStruct.Spec.GraphQL.Version == "1" && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
+				if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
+					subgraph := &tykv1alpha1.SubGraph{}
 
-				err := r.Client.Get(ctx, types.NamespacedName{
-					Namespace: req.Namespace,
-					Name:      desired.Spec.GraphQL.GraphRef,
-				}, subgraph)
-				if err != nil {
-					return err
-				}
-
-				upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Schema
-				upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.SDL
-
-				subgraph.Status.APIID = upstreamRequestStruct.Spec.APIID
-				err = r.Status().Update(ctx, subgraph)
-				if err != nil {
-					log.Error(err, "Could not update Status APIID of SubGraph")
-					return err
-				}
-			}
-
-			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SuperGraphExecutionMode {
-				supergraph := &tykv1alpha1.SuperGraph{}
-				err := r.Client.Get(ctx, types.NamespacedName{
-					Namespace: req.Namespace,
-					Name:      upstreamRequestStruct.Spec.GraphQL.GraphRef,
-				}, supergraph)
-				if err != nil {
-					return err
-				}
-
-				for _, ref := range supergraph.Spec.SubgraphRefs {
-					ns := ref.Namespace
-					if ns == "" {
-						ns = supergraph.Namespace
-					}
-
-					subGraph := &tykv1alpha1.SubGraph{}
 					err := r.Client.Get(ctx, types.NamespacedName{
-						Name:      ref.Name,
-						Namespace: ns,
-					}, subGraph)
+						Namespace: req.Namespace,
+						Name:      desired.Spec.GraphQL.GraphRef,
+					}, subgraph)
 					if err != nil {
 						return err
 					}
 
-					ns, name := decodeID(subGraph.Status.APIID)
+					upstreamRequestStruct.Spec.GraphQL.Schema = subgraph.Spec.Schema
+					upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.SDL
 
-					apiDef := &tykv1alpha1.ApiDefinition{}
-					err = r.Client.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, apiDef)
+					subgraph.Status.APIID = upstreamRequestStruct.Spec.APIID
+					err = r.Status().Update(ctx, subgraph)
 					if err != nil {
+						log.Error(err, "Could not update Status APIID of SubGraph")
 						return err
 					}
-
-					upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
-						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
-						model.GraphQLSubgraphEntity{
-							APIID: subGraph.Status.APIID,
-							Name:  apiDef.Spec.Name,
-							URL:   fmt.Sprintf("tyk://%s", apiDef.Name),
-							SDL:   subGraph.Spec.SDL,
-						})
 				}
 
-				upstreamRequestStruct.Spec.GraphQL.Schema = supergraph.Spec.Schema
-				upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = supergraph.Spec.MergedSDL
+				if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SuperGraphExecutionMode {
+					supergraph := &tykv1alpha1.SuperGraph{}
+					err := r.Client.Get(ctx, types.NamespacedName{
+						Namespace: req.Namespace,
+						Name:      upstreamRequestStruct.Spec.GraphQL.GraphRef,
+					}, supergraph)
+					if err != nil {
+						return err
+					}
+
+					for _, ref := range supergraph.Spec.SubgraphRefs {
+						ns := ref.Namespace
+						if ns == "" {
+							ns = supergraph.Namespace
+						}
+
+						subGraph := &tykv1alpha1.SubGraph{}
+						err := r.Client.Get(ctx, types.NamespacedName{
+							Name:      ref.Name,
+							Namespace: ns,
+						}, subGraph)
+						if err != nil {
+							return err
+						}
+
+						ns, name := decodeID(subGraph.Status.APIID)
+
+						apiDef := &tykv1alpha1.ApiDefinition{}
+						err = r.Client.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, apiDef)
+						if err != nil {
+							return err
+						}
+
+						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
+							upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
+							model.GraphQLSubgraphEntity{
+								APIID: subGraph.Status.APIID,
+								Name:  apiDef.Spec.Name,
+								URL:   fmt.Sprintf("tyk://%s", apiDef.Name),
+								SDL:   subGraph.Spec.SDL,
+							})
+					}
+
+					upstreamRequestStruct.Spec.GraphQL.Schema = supergraph.Spec.Schema
+					upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL = supergraph.Spec.MergedSDL
+				}
 			}
 		}
 
