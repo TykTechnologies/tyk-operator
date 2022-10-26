@@ -7,14 +7,12 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	e2eKlient "sigs.k8s.io/e2e-framework/klient"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
@@ -25,9 +23,9 @@ const (
 	testSubGraphSDL        = "test-SDL"
 )
 
-// createTestApiDefReconciler creates an ApiDefinition reconciler for integration tests. It wraps e2e-framework's client
-// to make it compatible with controller-runtime client.
-func createTestApiDefReconciler(k e2eKlient.Client, env *environmet.Env) (*controllers.ApiDefinitionReconciler, error) {
+// createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
+// Reconciler for objects such as ApiDefinition
+func createTestClient(k e2eKlient.Client) (cr.Client, error) {
 	scheme := runtime.NewScheme()
 
 	cl, err := cr.New(k.RESTConfig(), cr.Options{Scheme: scheme})
@@ -35,17 +33,7 @@ func createTestApiDefReconciler(k e2eKlient.Client, env *environmet.Env) (*contr
 		return nil, err
 	}
 
-	err = v1alpha1.AddToScheme(scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	return &controllers.ApiDefinitionReconciler{
-		Client: cl,
-		Log:    log.NullLogger{},
-		Scheme: scheme,
-		Env:    *env,
-	}, nil
+	return cl, v1alpha1.AddToScheme(scheme)
 }
 
 func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1.ApiDefinition {

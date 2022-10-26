@@ -48,7 +48,7 @@ type ApiDefinitionStatus struct {
 
 	// LinkedToSubgraph corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph.
 	// ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
-	LinkedToSubgraph string `json:"linked_subgraph_name,omitempty"`
+	LinkedToSubgraph string `json:"linked_to_subgraph,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -1960,12 +1960,6 @@ spec:
                   - name
                   type: object
                 type: array
-              linked_subgraph_name:
-                description: LinkedToSubgraph corresponds to the name of the Subgraph
-                  CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition
-                  CR can only be linked to Subgraph CRs that are created in the same
-                  namespace as ApiDefinition CR.
-                type: string
               linked_to_apis:
                 description: LinkedToAPIs is a list of ApiDefinition namespaced/name
                   that this resource links to.
@@ -1983,6 +1977,12 @@ spec:
                   - name
                   type: object
                 type: array
+              linked_to_subgraph:
+                description: LinkedToSubgraph corresponds to the name of the Subgraph
+                  CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition
+                  CR can only be linked to Subgraph CRs that are created in the same
+                  namespace as ApiDefinition CR.
+                type: string
             required:
             - api_id
             type: object

@@ -1127,8 +1127,14 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 			}
 
 			// Create ApiDefinition Reconciler.
-			r, err = createTestApiDefReconciler(c.Client(), &tykEnv)
+			cl, err := createTestClient(c.Client())
 			eval.NoErr(err)
+			r = &controllers.ApiDefinitionReconciler{
+				Client: cl,
+				Log:    log.NullLogger{},
+				Scheme: cl.Scheme(),
+				Env:    tykEnv,
+			}
 
 			return ctx
 		}).
