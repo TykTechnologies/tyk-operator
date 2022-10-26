@@ -29,11 +29,11 @@ func TestOperatorContextCreate(t *testing.T) {
 	opCreate := features.New("Operator Context").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
-			is := is.New(t)
+			eval := is.New(t)
 
 			// create operator context
 			opCtx, err := createTestOperatorContext(ctx, testNS, envConf)
-			is.NoErr(err) // failed to create operatorcontext
+			eval.NoErr(err) // failed to create operatorcontext
 
 			// create api definition
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -43,7 +43,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				}
 				apiDef.Spec.Proxy.ListenPath = listenPath
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			// create api definition with empty namespace for contextRef
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -52,7 +52,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				apiDef.Spec.Proxy.ListenPath = "/empty-ns"
 			}, envConf)
 
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).
@@ -60,7 +60,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 				client := envConf.Client()
-				is := is.New(t)
+				eval := is.New(t)
 
 				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: testOperatorCtx, Namespace: testNS}}
 
@@ -80,12 +80,12 @@ func TestOperatorContextCreate(t *testing.T) {
 
 					return true
 				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).Assess("apidef was created in dashboard",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			is := is.New(t)
+			eval := is.New(t)
 
 			err := wait.For(func() (done bool, err error) {
 				resp, getErr := http.Get(fmt.Sprintf("%s/%s/get", gatewayLocalhost, listenPath))
@@ -101,12 +101,12 @@ func TestOperatorContextCreate(t *testing.T) {
 
 				return true, nil
 			}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).Assess("apidef with empty namespace in contextRef was not created in dashboard",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			is := is.New(t)
+			eval := is.New(t)
 
 			err := wait.For(func() (done bool, err error) {
 				resp, getErr := http.Get(fmt.Sprintf("%s/empty-ns/get", gatewayLocalhost))
@@ -123,7 +123,7 @@ func TestOperatorContextCreate(t *testing.T) {
 				return true, nil
 			}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).Feature()
@@ -135,11 +135,11 @@ func TestOperatorContextDelete(t *testing.T) {
 	delApiDef := features.New("Api Definition Delete").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
-			is := is.New(t)
+			eval := is.New(t)
 			client := envConf.Client()
 
 			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
-			is.NoErr(err) // failed to create operatorcontext
+			eval.NoErr(err) // failed to create operatorcontext
 
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
 
@@ -150,7 +150,7 @@ func TestOperatorContextDelete(t *testing.T) {
 					Namespace: operatorCtx.Namespace,
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			ctx = context.WithValue(ctx, ctxApiName, def.Name)
 
@@ -165,7 +165,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				return true
 			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).Assess("context ref should not get deleted while it is still been refered",
@@ -174,14 +174,14 @@ func TestOperatorContextDelete(t *testing.T) {
 			opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
 
 			client := envConf.Client()
-			is := is.New(t)
+			eval := is.New(t)
 			opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
 			err := client.Resources().Delete(ctx, &opCtx)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			err = client.Resources(testNS).Get(ctx, opCtxName, testNS, &opCtx)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).
@@ -192,17 +192,17 @@ func TestOperatorContextDelete(t *testing.T) {
 				apiDefName := ctx.Value(ctxApiName).(string)  //nolint:errcheck
 
 				client := envConf.Client()
-				is := is.New(t)
+				eval := is.New(t)
 
 				apiDef := v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: apiDefName, Namespace: testNS}}
 				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
 				err := client.Resources(testNS).Delete(ctx, &apiDef)
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx),
 					wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
@@ -211,11 +211,11 @@ func TestOperatorContextDelete(t *testing.T) {
 	updateApiDef := features.New("Remove context from Api Definition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string)
-			is := is.New(t)
+			eval := is.New(t)
 			client := envConf.Client()
 
 			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
-			is.NoErr(err) // failed to create operatorcontext
+			eval.NoErr(err) // failed to create operatorcontext
 
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
 
@@ -226,7 +226,7 @@ func TestOperatorContextDelete(t *testing.T) {
 					Namespace: operatorCtx.Namespace,
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			ctx = context.WithValue(ctx, ctxApiName, def.Name)
 
@@ -240,7 +240,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				return true
 			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).Assess("context ref should not get deleted while it is still been refered",
@@ -249,15 +249,15 @@ func TestOperatorContextDelete(t *testing.T) {
 			opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
 
 			client := envConf.Client()
-			is := is.New(t)
+			eval := is.New(t)
 
 			opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
 			err := client.Resources().Delete(ctx, &opCtx)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			err = client.Resources(testNS).Get(ctx, testOperatorCtx, testNS, &opCtx)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).
@@ -268,23 +268,23 @@ func TestOperatorContextDelete(t *testing.T) {
 				apiDefName := ctx.Value(ctxApiName).(string)  //nolint:errcheck
 
 				client := envConf.Client()
-				is := is.New(t)
+				eval := is.New(t)
 
 				var apiDef v1alpha1.ApiDefinition
 				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
 				err := client.Resources(testNS).Get(ctx, apiDefName, testNS, &apiDef)
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				apiDef.Spec.Context = nil
 
 				err = client.Resources(testNS).Update(ctx, &apiDef)
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx),
 					wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).

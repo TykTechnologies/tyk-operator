@@ -90,15 +90,15 @@ spec:
 
 Mappings between `.spec.env` properties and secret `.spec.data` keys
 
-| secret key | .spec.env |
-|------------|-----------|
-| TYK_MODE   | mode      |
-| TYK_URL    | url       |
-| TYK_AUTH   | auth      |
-| TYK_ORG | org |
-| TYK_TLS_INSECURE_SKIP_VERIFY | insecureSkipVerify |
-| TYK_USER_OWNERS (comma separated list) | user_owners |
-| TYK_USER_GROUP_OWNERS (comma separated list) | user_group_owners |
+| secret key                                   | .spec.env          |
+|----------------------------------------------|--------------------|
+| TYK_MODE                                     | mode               |
+| TYK_URL                                      | url                |
+| TYK_AUTH                                     | auth               |
+| TYK_ORG                                      | org                |
+| TYK_TLS_INSECURE_SKIP_VERIFY                 | insecureSkipVerify |
+| TYK_USER_OWNERS (comma separated list)       | user_owners        |
+| TYK_USER_GROUP_OWNERS (comma separated list) | user_group_owners  |
 
 
 # Referencing OperatorContext in ApiDefinion
