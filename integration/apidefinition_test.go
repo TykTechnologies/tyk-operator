@@ -1178,7 +1178,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 							apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName &&
 							apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == testSubGraphSDL &&
-							apiDefObj.Status.LinkedSubgraphName == testSubGraphCRMetaName
+							apiDefObj.Status.LinkedToSubgraph == testSubGraphCRMetaName
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -1191,7 +1191,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						sgObj, ok := object.(*v1alpha1.SubGraph)
 						eval.True(ok)
 
-						return sgObj.Status.LinkedApiDefID == controllers.EncodeNS(cr.ObjectKeyFromObject(api).String())
+						return sgObj.Status.LinkedByAPI == controllers.EncodeNS(cr.ObjectKeyFromObject(api).String())
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -1296,7 +1296,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 							apiDefObj.Spec.GraphQL.GraphRef == newSgName &&
 							apiDefObj.Spec.GraphQL.Schema == newSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
-							apiDefObj.Status.LinkedSubgraphName == newSgName
+							apiDefObj.Status.LinkedToSubgraph == newSgName
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -1358,7 +1358,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 							apiDefObj.Spec.GraphQL.GraphRef == "" &&
 							apiDefObj.Spec.GraphQL.Schema == newSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
-							apiDefObj.Status.LinkedSubgraphName == ""
+							apiDefObj.Status.LinkedToSubgraph == ""
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),

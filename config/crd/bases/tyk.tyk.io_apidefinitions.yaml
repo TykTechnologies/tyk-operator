@@ -1961,7 +1961,7 @@ spec:
                   type: object
                 type: array
               linked_subgraph_name:
-                description: LinkedSubgraphName corresponds to the name of the Subgraph
+                description: LinkedToSubgraph corresponds to the name of the Subgraph
                   CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition
                   CR can only be linked to Subgraph CRs that are created in the same
                   namespace as ApiDefinition CR.

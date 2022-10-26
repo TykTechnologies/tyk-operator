@@ -373,12 +373,12 @@ func TestProcessSubGraphExecution(t *testing.T) {
 				ad := &tykv1alpha1.ApiDefinition{}
 				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.apiDef), ad)
 				eval.NoErr(err)
-				eval.Equal(ad.Status.LinkedSubgraphName, tc.subGraph.Name)
+				eval.Equal(ad.Status.LinkedToSubgraph, tc.subGraph.Name)
 
 				sg := &tykv1alpha1.SubGraph{}
 				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.subGraph), sg)
 				eval.NoErr(client.IgnoreNotFound(err))
-				eval.Equal(sg.Status.LinkedApiDefID, api.Spec.APIID)
+				eval.Equal(sg.Status.LinkedByAPI, api.Spec.APIID)
 			}
 		})
 	}

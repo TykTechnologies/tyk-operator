@@ -1741,7 +1741,7 @@ spec:
                   type: object
                 type: array
               linked_subgraph_name:
-                description: LinkedSubgraphName corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
+                description: LinkedToSubgraph corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
                 type: string
               linked_to_apis:
                 description: LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource links to.
@@ -3100,7 +3100,8 @@ spec:
           status:
             description: SubGraphStatus defines the observed state of SubGraph
             properties:
-              linked_api_def_id:
+              linked_by_api:
+                description: LinkedByAPI specifies the ID of the ApiDefinition CR that is linked to this particular SubGraph CR. Please note that SubGraph CR can only be linked to one ApiDefinition CR that is created in the same namespace as SubGraph CR.
                 type: string
             type: object
         type: object

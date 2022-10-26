@@ -714,14 +714,14 @@ func (r *ApiDefinitionReconciler) breakSubgraphLink(
 	desired *tykv1alpha1.ApiDefinition,
 	pass bool,
 ) error {
-	if desired.Status.LinkedSubgraphName == "" {
+	if desired.Status.LinkedToSubgraph == "" {
 		return nil
 	}
 
 	subgraph := &tykv1alpha1.SubGraph{}
 	subgraphNamespacedName := types.NamespacedName{
 		Namespace: desired.ObjectMeta.Namespace,
-		Name:      desired.Status.LinkedSubgraphName,
+		Name:      desired.Status.LinkedToSubgraph,
 	}
 
 	// If ApiDefinition is linked to Subgraph (through .status.subgraph_name field) even though it's
@@ -736,8 +736,8 @@ func (r *ApiDefinitionReconciler) breakSubgraphLink(
 		return err
 	}
 
-	if subgraph.Status.LinkedApiDefID != "" {
-		subgraph.Status.LinkedApiDefID = ""
+	if subgraph.Status.LinkedByAPI != "" {
+		subgraph.Status.LinkedByAPI = ""
 
 		err = r.Status().Update(ctx, subgraph)
 		if err != nil {
@@ -750,14 +750,14 @@ func (r *ApiDefinitionReconciler) breakSubgraphLink(
 		}
 	}
 
-	if !pass && desired.Status.LinkedSubgraphName != "" {
+	if !pass {
 		err = r.updateStatus(
 			ctx,
 			desired.ObjectMeta.Namespace,
 			model.Target{Namespace: desired.Namespace, Name: desired.Name},
 			false,
 			func(status *tykv1alpha1.ApiDefinitionStatus) {
-				status.LinkedSubgraphName = ""
+				status.LinkedToSubgraph = ""
 			},
 		)
 
@@ -807,11 +807,11 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 	// SubGraph can only refer to one ApiDefinition. There is one-to-one relationship between ApiDefinition
 	// and SubGraph CRs. If another ApiDefinition tries to refer to the SubGraph that is already referred by
 	// another ApiDefinition, we should return error to indicate that multiple linking is not allowed.
-	if subgraph.Status.LinkedApiDefID != "" &&
-		subgraph.Status.LinkedApiDefID != urs.Spec.APIID {
+	if subgraph.Status.LinkedByAPI != "" &&
+		subgraph.Status.LinkedByAPI != urs.Spec.APIID {
 		r.Log.Error(ErrMultipleLinkSubGraph, fmt.Sprintf(
 			"failed to link ApiDefinition CR with SubGraph CR; SubGraph %q is already linked by %s",
-			client.ObjectKeyFromObject(subgraph), subgraph.Status.LinkedApiDefID,
+			client.ObjectKeyFromObject(subgraph), subgraph.Status.LinkedByAPI,
 		))
 
 		return ErrMultipleLinkSubGraph
@@ -820,7 +820,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 	// If ApiDefinition refers to another Subgraph, the link between the previous Subgraph CR and
 	// ApiDefinition CR must be broken before updating the current ApiDefinition CR based on the new
 	// Subgraph CR.
-	if urs.Status.LinkedSubgraphName != urs.Spec.GraphQL.GraphRef {
+	if urs.Status.LinkedToSubgraph != urs.Spec.GraphQL.GraphRef {
 		err = r.breakSubgraphLink(ctx, urs, false)
 		if err != nil {
 			return err
@@ -836,7 +836,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 		model.Target{Namespace: urs.Namespace, Name: urs.Name},
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
-			status.LinkedSubgraphName = subgraph.ObjectMeta.Name
+			status.LinkedToSubgraph = subgraph.ObjectMeta.Name
 		})
 	if err != nil {
 		r.Log.Error(err,
@@ -847,7 +847,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 		return err
 	}
 
-	subgraph.Status.LinkedApiDefID = urs.Spec.APIID
+	subgraph.Status.LinkedByAPI = urs.Spec.APIID
 
 	err = r.Status().Update(ctx, subgraph)
 	if err != nil {
@@ -889,7 +889,7 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 			return err
 		}
 
-		ns, name := decodeID(subGraph.Status.LinkedApiDefID)
+		ns, name := decodeID(subGraph.Status.LinkedByAPI)
 		apiDef := &tykv1alpha1.ApiDefinition{}
 
 		err = r.Client.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, apiDef)
@@ -899,7 +899,7 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 
 		urs.Spec.GraphQL.Supergraph.Subgraphs = append(urs.Spec.GraphQL.Supergraph.Subgraphs,
 			model.GraphQLSubgraphEntity{
-				APIID: subGraph.Status.LinkedApiDefID,
+				APIID: subGraph.Status.LinkedByAPI,
 				Name:  apiDef.Spec.Name,
 				URL:   fmt.Sprintf("tyk://%s", apiDef.Name),
 				SDL:   subGraph.Spec.SDL,
