@@ -1037,10 +1037,10 @@ type GraphQLSubgraphConfig struct {
 }
 
 type GraphQLSubgraphEntity struct {
-	//UUID v4 string (!not the same as _id of APIDefinition)
+	// UUID v4 string (!not the same as _id of APIDefinition)
 	APIID string `json:"api_id"`
 	Name  string `json:"name"`
-	//The internal URL of the subgraph
+	// The internal URL of the subgraph
 	URL string `json:"url"`
 	// the schema definition language of the subgraph
 	SDL     string            `json:"sdl"`
