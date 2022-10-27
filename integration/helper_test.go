@@ -24,7 +24,7 @@ const (
 )
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
-// Reconciler for objects such as ApiDefinition
+// Reconciler for CRs such as ApiDefinitionReconciler.
 func createTestClient(k e2eKlient.Client) (cr.Client, error) {
 	scheme := runtime.NewScheme()
 

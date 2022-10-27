@@ -1309,6 +1309,19 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				)
 				eval.NoErr(err)
 
+				// After successful reconciliation, check that SubGraph CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(sg, func(object k8s.Object) bool {
+						sgObj, ok := object.(*v1alpha1.SubGraph)
+						eval.True(ok)
+
+						return sgObj.Status.LinkedByAPI == controllers.EncodeNS(cr.ObjectKeyFromObject(api).String())
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
 				return ctx
 			}).
 		Assess("remove GraphRef from ApiDefinition",
