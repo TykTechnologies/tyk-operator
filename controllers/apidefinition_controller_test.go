@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"encoding/base64"
 	"reflect"
 	"sort"
@@ -8,6 +9,15 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+
+	"github.com/matryer/is"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestUpdatingLoopingTargets(t *testing.T) {
@@ -229,5 +239,147 @@ func TestEncodeIfNotBase64(t *testing.T) {
 	s = encodeIfNotBase64(in)
 	if s != in {
 		t.Fatalf("expect %s, got %s", in, s)
+	}
+}
+
+func TestProcessSubGraphExecution(t *testing.T) {
+	const (
+		subgraphName = "test-subgraph"
+		testSDL      = "sdl"
+		testSchema   = "schema"
+
+		newSubgraphName = "test-subgraph-new"
+		newTestSDL      = "new-sdl"
+		newTestSchema   = "new-schema"
+
+		testNs = "test-ns"
+	)
+
+	subGraph := &tykv1alpha1.SubGraph{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      subgraphName,
+			Namespace: testNs,
+		},
+		Spec: tykv1alpha1.SubGraphSpec{
+			SubGraphSpec: model.SubGraphSpec{
+				SDL:    testSDL,
+				Schema: testSchema,
+			},
+		},
+	}
+	newSubGraph := &tykv1alpha1.SubGraph{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      newSubgraphName,
+			Namespace: testNs,
+		},
+		Spec: tykv1alpha1.SubGraphSpec{
+			SubGraphSpec: model.SubGraphSpec{
+				SDL:    newTestSDL,
+				Schema: newTestSchema,
+			},
+		},
+	}
+
+	apiDef := tykv1alpha1.ApiDefinition{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "test-name",
+			Namespace: testNs,
+		},
+		Spec: tykv1alpha1.APIDefinitionSpec{
+			APIDefinitionSpec: model.APIDefinitionSpec{
+				APIID: EncodeNS(types.NamespacedName{Name: "test-name", Namespace: testNs}.String()),
+				GraphQL: &model.GraphQLConfig{
+					GraphRef: subgraphName,
+				},
+			},
+		},
+	}
+
+	apiDefMalformed := &tykv1alpha1.ApiDefinition{}
+	apiDef.DeepCopyInto(apiDefMalformed)
+	apiDefMalformed.ObjectMeta.Name = "test-api-malformed"
+	apiDefMalformed.Spec.GraphQL = nil
+
+	apiDefLinkedMultiple := &tykv1alpha1.ApiDefinition{}
+	apiDef.DeepCopyInto(apiDefLinkedMultiple)
+	apiDefLinkedMultiple.ObjectMeta.Name = "test-name-multiple-link"
+	apiDefLinkedMultiple.Spec.APIID = EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
+
+	apiDefNewGraphRef := &tykv1alpha1.ApiDefinition{}
+	apiDef.DeepCopyInto(apiDefNewGraphRef)
+	apiDefNewGraphRef.Spec.GraphQL.GraphRef = newSubgraphName
+
+	objects := []runtime.Object{&apiDef, apiDefMalformed, apiDefLinkedMultiple, subGraph, newSubGraph}
+	eval := is.New(t)
+
+	cl, err := NewFakeClient(objects)
+	eval.NoErr(err)
+
+	testCases := []struct {
+		testName    string
+		apiDef      *tykv1alpha1.ApiDefinition
+		subGraph    *tykv1alpha1.SubGraph
+		apiMutator  func(definition *tykv1alpha1.ApiDefinition)
+		expectedErr error
+	}{
+		{
+			testName: "processing malformed ApiDefinition with nil GraphQLConfig field",
+			apiDef:   apiDefMalformed,
+		},
+		{
+			testName: "processing valid ApiDefinition must update it's GraphQLConfig based on SubGraph reference",
+			apiDef:   &apiDef,
+			subGraph: subGraph,
+		},
+		{
+			testName:    "processing ApiDefinition referencing already linked SubGraph CR must fail",
+			apiDef:      apiDefLinkedMultiple,
+			subGraph:    subGraph,
+			expectedErr: ErrMultipleLinkSubGraph,
+		},
+		{
+			testName: "update ApiDefinition GraphRef to another SubGraph CR",
+			apiDef:   apiDefNewGraphRef,
+			subGraph: newSubGraph,
+			apiMutator: func(definition *tykv1alpha1.ApiDefinition) {
+				definition.Spec.GraphQL.GraphRef = newSubgraphName
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			r := ApiDefinitionReconciler{
+				Client: cl,
+				Scheme: scheme.Scheme,
+				Log:    log.NullLogger{},
+			}
+
+			api := &tykv1alpha1.ApiDefinition{}
+			err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.apiDef), api)
+			eval.NoErr(err)
+
+			if tc.apiMutator != nil {
+				tc.apiMutator(api)
+			}
+
+			err = r.processSubGraphExec(context.Background(), api)
+			eval.Equal(tc.expectedErr, err)
+
+			if tc.expectedErr == nil && tc.apiDef.Spec.GraphQL != nil {
+				eval.Equal(tc.subGraph.Spec.Schema, api.Spec.GraphQL.Schema)
+				eval.Equal(tc.subGraph.Spec.SDL, api.Spec.GraphQL.Subgraph.SDL)
+
+				ad := &tykv1alpha1.ApiDefinition{}
+				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.apiDef), ad)
+				eval.NoErr(err)
+				eval.Equal(ad.Status.LinkedToSubgraph, tc.subGraph.Name)
+
+				sg := &tykv1alpha1.SubGraph{}
+				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.subGraph), sg)
+				eval.NoErr(client.IgnoreNotFound(err))
+				eval.Equal(sg.Status.LinkedByAPI, api.Spec.APIID)
+			}
+		})
 	}
 }

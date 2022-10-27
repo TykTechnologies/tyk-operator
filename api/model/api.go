@@ -597,8 +597,6 @@ type APIDefinitionSpec struct {
 	// to obtain certificates from secrets in order to establish mTLS support for upstreams
 	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
 
-	// PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
-
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
 

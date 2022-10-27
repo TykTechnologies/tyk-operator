@@ -46,7 +46,7 @@ import (
 
 const SubgraphField = ".subgraphs_refs.name"
 
-var ErrSuperGraphReference = errors.New("supergraph is referenced in apiDefinition")
+var ErrSuperGraphReference = errors.New("SuperGraph is referenced in ApiDefinition")
 
 // SuperGraphReconciler reconciles a SuperGraph object
 type SuperGraphReconciler struct {
