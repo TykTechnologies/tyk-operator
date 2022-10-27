@@ -9,20 +9,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/google/uuid"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	v1 "k8s.io/api/core/v1"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	pkgclient "github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/google/uuid"
 	"github.com/matryer/is"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/version"
+	ctrl "sigs.k8s.io/controller-runtime"
+	cr "sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -1092,4 +1094,316 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 		}).Feature()
 
 	testenv.Test(t, createAPI)
+}
+
+func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
+	const (
+		opNs = "tyk-operator-system"
+
+		supportedMajorTykVersion = uint(4)
+	)
+
+	tykEnv := environmet.Env{}
+	majorTykVersion := supportedMajorTykVersion
+	r := &controllers.ApiDefinitionReconciler{}
+
+	gqlSubGraph := features.New("GraphQL SubGraph Execution mode").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			eval := is.New(t)
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			v, err := version.ParseGeneric(tykEnv.TykVersion)
+			eval.NoErr(err)
+			if v.Major() < 4 {
+				majorTykVersion = v.Major()
+				t.Skip("GraphQL Federation is not available on Tyk v3")
+			}
+
+			// Create ApiDefinition Reconciler.
+			cl, err := createTestClient(c.Client())
+			eval.NoErr(err)
+			r = &controllers.ApiDefinitionReconciler{
+				Client: cl,
+				Log:    log.NullLogger{},
+				Scheme: cl.Scheme(),
+				Env:    tykEnv,
+			}
+
+			return ctx
+		}).
+		Assess("ApiDefinition must include SubGraph CR details",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Generate ApiDefinition CR and create it.
+				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					definition.Spec.GraphQL = &model.GraphQLConfig{
+						GraphRef: testSubGraphCRMetaName, ExecutionMode: model.SubGraphExecutionMode,
+					}
+				})
+				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Generate SubGraph CR and create it.
+				sg := generateSubGraphCR(testNs, nil)
+				_, err = util.CreateOrUpdate(ctx, r.Client, sg, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Wait for reconciliation; so that, the ApiDefinition is updated according to linked SubGraph CR.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+						return err == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After reconciliation, check that ApiDefinition CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						return apiDefObj.Spec.GraphQL != nil &&
+							apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName &&
+							apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
+							apiDefObj.Spec.GraphQL.Subgraph.SDL == testSubGraphSDL &&
+							apiDefObj.Status.LinkedToSubgraph == testSubGraphCRMetaName
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After reconciliation, check that SubGraph CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(sg, func(object k8s.Object) bool {
+						sgObj, ok := object.(*v1alpha1.SubGraph)
+						eval.True(ok)
+
+						return sgObj.Status.LinkedByAPI == controllers.EncodeNS(cr.ObjectKeyFromObject(api).String())
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("another ApiDefinition must not use already linked SubGraph CR",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Generate another ApiDefinition CR and create it.
+				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					definition.ObjectMeta = metav1.ObjectMeta{
+						Name: "another-api", Namespace: testNs,
+					}
+					definition.Spec.GraphQL = &model.GraphQLConfig{
+						GraphRef: testSubGraphCRMetaName, ExecutionMode: model.SubGraphExecutionMode,
+					}
+				})
+				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Reconciliation must fail because the SubGraph is already linked by another ApiDefinition since linking
+				// multiple ApiDefinition to one SubGraph CR is forbidden.
+				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+					return errors.Is(err, controllers.ErrMultipleLinkSubGraph)
+				}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("update ApiDefinition GraphRef to another SubGraph CR",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				const (
+					newSgName = "new-sg"
+					newSDL    = "newSDL"
+					newSchema = "newSchema"
+				)
+
+				// Generate another SubGraph CR and create it.
+				sg := generateSubGraphCR(testNs, func(subGraph *v1alpha1.SubGraph) {
+					subGraph.ObjectMeta.Name = newSgName
+					subGraph.Spec.SDL = newSDL
+					subGraph.Spec.Schema = newSchema
+				})
+				_, err := util.CreateOrUpdate(ctx, r.Client, sg, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Get ApiDefinition and update it based on the new SubGraph CR information.
+				api := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: testApiDef, Namespace: testNs}}
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					api.Spec.GraphQL.GraphRef = newSgName
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Wait for reconciliation; so that, the ApiDefinition is updated according to new SubGraph CR.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+						return err == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After successful reconciliation, check that ApiDefinition CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						return apiDefObj.Spec.GraphQL != nil &&
+							apiDefObj.Spec.GraphQL.GraphRef == newSgName &&
+							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
+							apiDefObj.Status.LinkedToSubgraph == newSgName
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After successful reconciliation, check that SubGraph CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(sg, func(object k8s.Object) bool {
+						sgObj, ok := object.(*v1alpha1.SubGraph)
+						eval.True(ok)
+
+						return sgObj.Status.LinkedByAPI == controllers.EncodeNS(cr.ObjectKeyFromObject(api).String())
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("remove GraphRef from ApiDefinition",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Get ApiDefinition and remove GraphRef from it.
+				api := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: testApiDef, Namespace: testNs}}
+				err := wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					api.Spec.GraphQL.GraphRef = ""
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Wait for reconciliation; so that, the ApiDefinition is updated according to new SubGraph CR.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+						return err == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				const (
+					newSDL    = "newSDL"
+					newSchema = "newSchema"
+				)
+
+				// After successful reconciliation, check that ApiDefinition CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						apiDefObj := &v1alpha1.ApiDefinition{}
+						err = r.Get(ctx, cr.ObjectKeyFromObject(api), apiDefObj)
+						if err != nil {
+							return false
+						}
+
+						return apiDefObj.Spec.GraphQL != nil &&
+							apiDefObj.Spec.GraphQL.GraphRef == "" &&
+							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
+							apiDefObj.Status.LinkedToSubgraph == ""
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Finish(func(ctx context.Context, c *envconf.Config) (context.Context, error) {
+		if t.Skipped() || majorTykVersion < supportedMajorTykVersion {
+			return ctx, nil
+		}
+
+		eval := is.New(t)
+		testNs, ok := ctx.Value(ctxNSKey).(string)
+		eval.True(ok)
+
+		err := r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, cr.InNamespace(testNs))
+		if err != nil {
+			return ctx, err
+		}
+
+		return ctx, r.DeleteAllOf(ctx, &v1alpha1.SubGraph{}, cr.InNamespace(testNs))
+	})
+
+	testenv.Test(t, gqlSubGraph)
 }

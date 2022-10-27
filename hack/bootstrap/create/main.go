@@ -64,8 +64,8 @@ func (c *Config) bind(mode string) {
 		c.PreloadImages = false
 	}
 
-	c.Tyk.bind(c.WorkDir, mode)
-	c.Operator.bind(mode)
+	c.Tyk.bind(mode)
+	c.Operator.bind()
 }
 
 type Tyk struct {
@@ -77,6 +77,7 @@ type Tyk struct {
 	AdminSecret string
 	Namespace   string
 	Charts      string
+	Version     string
 }
 
 func (t *Tyk) ce() {
@@ -88,12 +89,13 @@ func (t *Tyk) ce() {
 	t.Charts = "tyk-helm/tyk-headless"
 }
 
-func (t *Tyk) helm(workdir string) {
+func (t *Tyk) helm() {
 	if t.Mode == "pro" {
 		t.URL = "http://dashboard-svc-ci-tyk-pro.tykpro-control-plane.svc.cluster.local:3000"
-	} else {
-		t.URL = "http://gateway-svc-ce-tyk-headless.tykce-control-plane.svc.cluster.local:8080"
+		return
 	}
+
+	t.URL = "http://gateway-svc-ce-tyk-headless.tykce-control-plane.svc.cluster.local:8080"
 }
 
 func (t *Tyk) pro() {
@@ -104,7 +106,7 @@ func (t *Tyk) pro() {
 	t.Charts = "tyk-helm/tyk-pro"
 }
 
-func (t *Tyk) bind(workdir, mode string) {
+func (t *Tyk) bind(mode string) {
 	t.Mode = mode
 
 	if mode == "pro" {
@@ -113,7 +115,7 @@ func (t *Tyk) bind(workdir, mode string) {
 		t.ce()
 	}
 
-	t.helm(workdir)
+	t.helm()
 	env(&t.URL, "TYK_URL")
 	env(&t.Org, "TYK_ORG")
 	env(&t.Auth, "TYK_AUTH")
@@ -143,7 +145,7 @@ func (o *Operator) defaults() {
 	o.CertManagerNamespace = "cert-manager"
 }
 
-func (o *Operator) bind(mode string) {
+func (o *Operator) bind() {
 	o.defaults()
 	env(&o.Namespace, "TYK_OPERATOR_NAMESPACE")
 	env(&o.SecretName, "TYK_OPERATOR_SECRET_NAME")
@@ -246,20 +248,23 @@ func createSecret() {
 			var buf bytes.Buffer
 			exit(kf(func(c *exec.Cmd) {
 				c.Stdout = &buf
-			}, "get", "secret",
-				config.Operator.SecretName, "-n", config.Tyk.Namespace, "-o", "json"))
+			}, "get", "secret", config.Operator.SecretName, "-n", config.Tyk.Namespace, "-o", "json"))
+
 			o := struct {
 				Data map[string]string `json:"data"`
 			}{}
+
 			exit(json.Unmarshal(buf.Bytes(), &o))
 			for k, v := range o.Data {
 				x, _ := base64.StdEncoding.DecodeString(v)
 				o.Data[k] = string(x)
 			}
+
 			config.Tyk.Auth = o.Data["TYK_AUTH"]
 			config.Tyk.Org = o.Data["TYK_ORG"]
 			config.Tyk.Mode = o.Data["TYK_MODE"]
 			config.Tyk.URL = o.Data["TYK_URL"]
+			config.Tyk.Version = *tykVersion
 		})
 
 		exit(kl("create", "secret",
@@ -269,6 +274,7 @@ func createSecret() {
 			"--from-literal", fmt.Sprintf("TYK_ORG=%s", config.Tyk.Org),
 			"--from-literal", fmt.Sprintf("TYK_MODE=%s", config.Tyk.Mode),
 			"--from-literal", fmt.Sprintf("TYK_URL=%s", config.Tyk.URL),
+			"--from-literal", fmt.Sprintf("TYK_VERSION=%s", config.Tyk.Version),
 		))
 	}
 

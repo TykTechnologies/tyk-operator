@@ -81,7 +81,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		util.AddFinalizer(policy, policyFinalizer)
 
 		if policy.Spec.ID == "" {
-			policy.Spec.ID = encodeNS(ns)
+			policy.Spec.ID = EncodeNS(ns)
 		}
 
 		if policy.Spec.OrgID == "" {
