@@ -1,0 +1,36 @@
+name:  Test Header injection for response and resquest
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "../config/samples/httpbin_global-headers.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with Request and Response Headers add and remove
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-global-headers/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson ShouldContainKey Bar-Req
+      #- result.request.headers ShouldNotBeEmpty
+      #- result.request.headers ShouldContainSubstring /bar-req
+      #- result.request.headers ShouldContainKey bar-req
+      #- result.request.headers ShouldContainKey foo-req
+      #- result.request.headers ShouldNotContainKey hello
+      #- result.bodyjson.bodyjson0 ShouldContainKey Foo
+      #- result.headers ShouldNotContainKey Server
+
+#- name: Delete API
+  #steps:
+    #- type: exec
+      #script: kubectl delete -f ../config/samples/httpbin_timeout.yaml
+      #assertions:
+      #- result.code ShouldEqual 0
+
+
+
+
+#(Comments - Still trying to figure out assertions to put for Header injection validation)      

@@ -12,6 +12,7 @@
 
 - ## TODO
     - How to query gateway/dashboard without need of portforwarding
+    - How to disable venom.logs which is getting created after every test run.
 
 
 

@@ -1,0 +1,23 @@
+name:  Test Ignore Endpoint Designer
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "../config/samples/httpbin_ignored.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with Security Ignorelist
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_ignored.yaml
+      assertions:
+      - result.code ShouldEqual 0

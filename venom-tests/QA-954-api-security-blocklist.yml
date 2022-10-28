@@ -1,0 +1,27 @@
+name:  Test Blacklist Endpoint Designer
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "../config/samples/httpbin_blacklist.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with Security Blocklist
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/blacklist_example
+      assertions:
+      - result.statuscode ShouldEqual 403
+      - result.body ShouldContainSubstring /Requested endpoint is forbidden
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_blacklist.yaml
+      assertions:
+      - result.code ShouldEqual 0
+
+
+#(Comments - Test is giving 404 error, rather than 403)

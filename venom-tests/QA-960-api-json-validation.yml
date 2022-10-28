@@ -1,0 +1,38 @@
+name:  Test Json Validation Plugin
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "../config/samples/httpbin_json_schema_validation.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with invalid request
+  steps:
+    - type: http
+      url: http://localhost:8080/httpbin/get
+      body: '{
+                "userName": "b",
+                "age": 0
+             }'
+      assertions:
+      - result.statuscode ShouldEqual 422
+
+- name: Test with valid request
+  steps:      
+    - type: http
+      url: http://localhost:8080/httpbin/get
+      body: '{
+                "userName": "burak",
+                "age": 2
+             }'
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_json_schema_validation.yaml
+      assertions:
+      - result.code ShouldEqual 0
+

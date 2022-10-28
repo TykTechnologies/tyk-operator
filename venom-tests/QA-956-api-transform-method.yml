@@ -1,0 +1,23 @@
+name:  Test Method Transform Plugin
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "../bdd/custom_resources/transform/method.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test Tyk can change method of a request using Method Transform Plugin
+  steps:
+    - type: http
+      method: POST
+      url: http://localhost:8080/transform/anything
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../bdd/custom_resources/transform/method.yaml
+      assertions:
+      - result.code ShouldEqual 0
