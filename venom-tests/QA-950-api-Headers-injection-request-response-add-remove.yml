@@ -14,23 +14,15 @@ testcases:
       url: http://localhost:8080/httpbin-global-headers/get
       assertions:
       - result.statuscode ShouldEqual 200
-      - result.bodyjson ShouldContainKey Bar-Req
-      #- result.request.headers ShouldNotBeEmpty
-      #- result.request.headers ShouldContainSubstring /bar-req
-      #- result.request.headers ShouldContainKey bar-req
-      #- result.request.headers ShouldContainKey foo-req
-      #- result.request.headers ShouldNotContainKey hello
-      #- result.bodyjson.bodyjson0 ShouldContainKey Foo
-      #- result.headers ShouldNotContainKey Server
+      - result.bodyjson.headers ShouldNotBeEmpty 
+      - result.bodyjson.headers.foo-req ShouldEqual my-foo
+      - result.bodyjson.headers.bar-req ShouldEqual my-bar
+      - result.headers.foo ShouldEqual Bar
+      - result.headers.Server ShouldBeEmpty
 
-#- name: Delete API
-  #steps:
-    #- type: exec
-      #script: kubectl delete -f ../config/samples/httpbin_timeout.yaml
-      #assertions:
-      #- result.code ShouldEqual 0
-
-
-
-
-#(Comments - Still trying to figure out assertions to put for Header injection validation)      
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_global-headers.yaml
+      assertions:
+      - result.code ShouldEqual 0    
