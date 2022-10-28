@@ -2129,13 +2129,11 @@ spec:
                     type: string
                   url:
                     type: string
-                  user_owners:
-                    description: List of user ids authorized to manage the api definitions created in this context. If both this and user_group_owners are empty, anyone is authorized. The user whose key is used as OperatorContextAuth needs to be in this list, when not empty.
+                  user_group_owners:
                     items:
                       type: string
                     type: array
-                  user_group_owners:
-                    description: List of group ids authorized to manage the api definitions created in this context. If both this and user_owners are empty, anyone is authorized. The user whose key is used as OperatorContextAuth needs to be in one of the groups in this list, when not empty.
+                  user_owners:
                     items:
                       type: string
                     type: array
