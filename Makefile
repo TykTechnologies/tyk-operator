@@ -201,7 +201,7 @@ bdd:
 	go test -timeout 400s -coverprofile bdd_coverage.out -v  ./bdd
 
 .PHONY: test-all
-test-all: test bdd ## Run tests
+test-all: test bdd run-venom-tests ## Run tests
 
 .PHONY: create-kind-cluster
 create-kind-cluster:	## Create kind cluster
@@ -210,6 +210,10 @@ create-kind-cluster:	## Create kind cluster
 .PHONY: clean
 clean:	## Delete kind cluster
 	kind delete cluster --name=${CLUSTER_NAME}
+
+.PHONY: venom-tests
+run-venom-tests:  ## Run Venom integration tests
+	cd venom-tests && IS_TTY=true venom run
 
 help:
 	@fgrep -h "##" Makefile | fgrep -v fgrep |sed -e 's/\\$$//' |sed -e 's/:/-:/'| sed -e 's/:.*##//'
