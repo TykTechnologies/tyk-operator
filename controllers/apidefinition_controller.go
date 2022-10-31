@@ -145,7 +145,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		// Check GraphQL Federation
 		if desired.Spec.GraphQL != nil {
-			if upstreamRequestStruct.Spec.GraphQL.Version == "1"{
+			if upstreamRequestStruct.Spec.GraphQL.Version == "1" {
 				switch desired.Spec.GraphQL.ExecutionMode {
 				case model.SubGraphExecutionMode:
 					err = r.processSubGraphExec(ctx, upstreamRequestStruct)
