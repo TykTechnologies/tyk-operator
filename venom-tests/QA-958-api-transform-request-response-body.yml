@@ -17,7 +17,7 @@ testcases:
              }'
       assertions:
       - result.statuscode ShouldEqual 200
-      #- result.request.body ShouldContainSubstring /test
+      - result.bodyjson.json.bar ShouldEqual test
 
 - name: Test Tyk can change Body of a response using Body Transform Plugin
   steps:
@@ -33,6 +33,3 @@ testcases:
       script: kubectl delete -f ../config/samples/httpbin_transform.yaml
       assertions:
       - result.code ShouldEqual 0
-
-
-#comment-(assertion at step 20 is failing)
