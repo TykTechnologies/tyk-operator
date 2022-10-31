@@ -17,12 +17,7 @@ spec:
     versions:
       Default:
         name: Default
-
-
-
 ---
-
-
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
