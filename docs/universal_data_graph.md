@@ -1,6 +1,7 @@
 # Universal Data Graph (UDG)
 
-> At the moment, Tyk Operator does support the **V2 GraphQL Engine** introduced in 3.2 Tyk release.
+> At the moment, Tyk Operator does support the both the **V1 and the V2 GraphQL Engine** (the latter was introduced in 3.2 Tyk release; for examples
+> please checkout the examples provided in the config/samples/udg2 path).
 
 The Universal Data Graph (UDG) lets you combine multiple APIs into one universal interface. With the help of GraphQL you’re able to access multiple APIs with a single query.
 
