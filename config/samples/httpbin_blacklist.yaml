@@ -31,4 +31,4 @@ spec:
                   code: 200
                   data: ""
                   headers: {}
-              path: "/blacklist_example/"
+              path: "/get"
