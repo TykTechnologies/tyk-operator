@@ -14,16 +14,40 @@ testcases:
       url: http://localhost:8080/httpbin-timeout-breaker/delay/3
       assertions:
       - result.statuscode ShouldEqual 504
-      - result.body ShouldContainSubstring /Upstream service reached hard timeout
+      - result.bodyjson.error ShouldContainSubstring Upstream service reached hard timeout
 
 - name: Test with Circuit Breaker Plugin
-  steps:      
+  steps:  
     - type: http
       method: GET
       url: http://localhost:8080/httpbin-timeout-breaker/status/500
       assertions:
       - result.statuscode ShouldEqual 500
-      - result.body ShouldContainSubstring /Internal Server Error
+
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-timeout-breaker/status/500
+      assertions:
+      - result.statuscode ShouldEqual 500
+
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-timeout-breaker/status/500
+      assertions:
+      - result.statuscode ShouldEqual 500
+
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-timeout-breaker/status/500
+      assertions:
+      - result.statuscode ShouldEqual 500    
+
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-timeout-breaker/status/500
+      assertions:
+      - result.statuscode ShouldEqual 503
+      - result.bodyjson.error ShouldContainSubstring Service temporarily unavailable
 
 - name: Delete API
   steps:
