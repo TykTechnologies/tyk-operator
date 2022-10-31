@@ -49,11 +49,11 @@ func removeTarget(slice []model.Target, s model.Target) (result []model.Target) 
 	return
 }
 
-func encodeNS(decoded string) string {
+func EncodeNS(decoded string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(decoded))
 }
 
-func httpContext(
+func HttpContext(
 	ctx context.Context,
 	rClient runtimeClient.Client,
 	e environmet.Env,

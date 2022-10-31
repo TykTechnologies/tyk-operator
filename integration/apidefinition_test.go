@@ -9,20 +9,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/google/uuid"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	v1 "k8s.io/api/core/v1"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	pkgclient "github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/google/uuid"
 	"github.com/matryer/is"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/version"
+	ctrl "sigs.k8s.io/controller-runtime"
+	cr "sigs.k8s.io/controller-runtime/pkg/client"
+	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -60,7 +62,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create ApiDefinition with JSON Schema Validation support.
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -76,13 +78,13 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).
 		Assess("ApiDefinition must have ValidateJSON field",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
@@ -95,13 +97,13 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 					// 'validate_json' field must exist in the ApiDefinition object.
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
 				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
 		Assess("ApiDefinition must verify user requests",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -115,13 +117,13 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 						fmt.Sprintf("%s%s/get", gatewayLocalhost, apiDefListenPath),
 						invalidJSONBody,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 					req.Header.Add("Content-type", "application/json")
 
 					// Since the following request does not match with the JSON Validation Schema,
 					// the response status code must be 422 as indicated in the ErrorResponseCode of the ValidatePathMeta.
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode != errorResponseCode {
 						return false, nil
@@ -129,7 +131,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).Feature()
@@ -163,7 +165,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -179,13 +181,13 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).
 		Assess("ApiDefinition must have whitelist field",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
@@ -197,13 +199,13 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
 				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
 		Assess("ApiDefniition should allow traffic to whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -213,10 +215,10 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath+whiteListedPath),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode == errForbiddenResponseCode {
 						return false, nil
@@ -224,12 +226,12 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 				return ctx
 			}).
 		Assess("ApiDefinition must not allow traffic to non-whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -239,11 +241,11 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 					req.Header.Add("Content-type", "application/json")
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode != errForbiddenResponseCode {
 						return false, nil
@@ -251,7 +253,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).Feature()
@@ -285,7 +287,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -301,13 +303,13 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).
 		Assess("ApiDefinition must have blacklist field",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
@@ -319,13 +321,13 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
 				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
 		Assess("ApiDefniition should forbid traffic to blacklist route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -335,10 +337,10 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath+blackListedPath),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode != errForbiddenResponseCode {
 						return false, nil
@@ -346,12 +348,12 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 				return ctx
 			}).
 		Assess("ApiDefinition must allow traffic to non-blacklisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -361,11 +363,11 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 					req.Header.Add("Content-type", "application/json")
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode == errForbiddenResponseCode {
 						return false, nil
@@ -373,7 +375,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).Feature()
@@ -419,7 +421,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 	adCreate := features.New("ApiDefinition").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist + ingored extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -435,13 +437,13 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).
 		Assess("ApiDefinition must have ignored field",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
@@ -453,13 +455,13 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
 				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
 		Assess("ApiDefniition should allow traffic to ignored route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -469,10 +471,10 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath+ignoredPath),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode == errForbiddenResponseCode {
 						return false, nil
@@ -480,13 +482,13 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
 		Assess("ApiDefinition must not allow traffic to other non whitelisted routes",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
@@ -496,11 +498,11 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefListenPath+"/randomNonWhiteListedPath"),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 					req.Header.Add("Content-type", "application/json")
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode != errForbiddenResponseCode {
 						return false, nil
@@ -508,7 +510,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).Feature()
@@ -530,13 +532,13 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 
 		publicKeyID = "test-public-key-id"
 		pubKeyPem   = []byte(`-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhOQnpezrwA0vHzf47Pa+
-O84fWue/562TqQrVirtf+3fsGQd3MmwnId+ksAGQvWN4M1/hSelYJb246pFqGB7t
-+ZI+vjBYH4/J6CiFsKwzusqkSF63ftQh8Ox0OasB9HvRlOPHT/B5Dskh8HNiJ+1l
-ExSZEaO9zsQ9wO62bsGHsMX/UP3VQByXLVBZu0DMKsl2hGaUNy9+LgZv4/iVpWDP
-Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
-5ph610hWmVQKIrCAPsAUMM9m6+iDb64NjrMjWV/bkm36r+FBMz9L8HfEB4hxlwwg
-5QIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyoiVyRRffvWcc/kQJj4h
+tRPZeafPYAZzCgd9tQfQmtCJXWDAynL3slPfhAAuO0vWxyNHTTELbCHxD43nPgST
+7HUwG/ZjsrY03+M4IaEiBvN53OsnJ5UekmH2G04HTZdsApoc9OSb+4aBGlkISsNx
+n8SCRF3a8kn95tD27IToBozNXosKbyzKli/9g0rqmeQHqGHtLuuEsMZcWn9dXbKu
+MB7n1c1e4XiBNgowQZGNWCU09fH56X/fN8QZ+OeP/1Fy5maOqjMReAAexkboS6yL
+ZwOHzCPBGoxsay40cdI3pjz8UT8squMowlmZvhLNkOI1GkxucUXhFaaZoqmLrgh9
+pwIDAQAB
 -----END PUBLIC KEY-----`)
 	)
 
@@ -544,7 +546,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			client := envConf.Client()
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
 			// It contains a dummy public key which is not valid to be used.
@@ -552,7 +554,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 				apiDef.Name = apiDefPinning
 				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
 			}, envConf)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			// Create a secret to store the public key of httpbin.org.
 			secret := &v1.Secret{
@@ -565,7 +567,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 			}
 
 			err = client.Resources(testNS).Create(ctx, secret)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			// For all domains (`*`), use following secret that contains the public key of the httpbin.org
 			// So, if you make any requests to any addresses except httpbin.org, we should get proxy errors because
@@ -583,7 +585,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 				}
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			}, envConf)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
 			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
@@ -598,13 +600,13 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 				apiDef.Spec.Name = "invalid"
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			}, envConf)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).
 		Assess("ApiDefinition must have Certificate Pinning field defined",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
@@ -629,13 +631,13 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 
 					return val == publicKeyID
 				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
 		Assess("Allow making requests based on the pinned public key defined via secret",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
 					req, err := http.NewRequest(
@@ -643,10 +645,10 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefPinningViaSecretListenPath),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode != 200 {
 						t.Log("expected to access httpbin.org since it is pinned via public key.")
@@ -655,13 +657,13 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
 		Assess("Prevent making requests to disallowed addresses based on the pinned public key defined via secret",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				err := wait.For(func() (done bool, err error) {
 					hc := &http.Client{}
 					req, err := http.NewRequest(
@@ -669,10 +671,10 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 						fmt.Sprintf("%s%s", gatewayLocalhost, invalidApiDefListenPath),
 						nil,
 					)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					resp, err := hc.Do(req)
-					is.NoErr(err)
+					eval.NoErr(err)
 
 					if resp.StatusCode == 200 {
 						t.Log("unexpected access to invalid address")
@@ -681,7 +683,7 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 
 					return true, nil
 				}, wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).
@@ -711,16 +713,16 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 	adCreate := features.New("Create an ApiDefinition for Upstream TLS").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
-			is := is.New(t)
+			eval := is.New(t)
 			t.Log(testNS)
 			_, err := createTestTlsSecret(ctx, testNS, nil, envConf)
-			is.NoErr(err)
+			eval.NoErr(err)
 
 			return ctx
 		}).
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			// Create ApiDefinition with Upstream certificate
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
@@ -734,39 +736,39 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 					defaultVersion: {Name: defaultVersion},
 				}
 			}, envConf)
-			is.NoErr(err) // failed to create apiDefinition
+			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
 		}).
 		Assess("ApiDefinition must have upstream field defined",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				is := is.New(t)
+				eval := is.New(t)
 				client := cfg.Client()
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 				tlsSecret := v1.Secret{} //nolint:errcheck
 
 				err := client.Resources(testNS).Get(ctx, certName, testNS, &tlsSecret)
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				certPemBytes, ok := tlsSecret.Data["tls.crt"]
 				if !ok {
-					is.Fail()
+					eval.Fail()
 				}
 				certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
 
 				opConfSecret := v1.Secret{}
 				err = client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				tykAuth, ok := opConfSecret.Data["TYK_AUTH"]
 				if !ok {
-					is.Fail()
+					eval.Fail()
 				}
 
 				tykOrg, ok := opConfSecret.Data["TYK_ORG"]
 				if !ok {
-					is.Fail()
+					eval.Fail()
 				}
 
 				calculatedCertID := string(tykOrg) + certFingerPrint
@@ -787,11 +789,11 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 					reqContext := pkgclient.SetContext(context.Background(), pkgContext)
 					exists := klient.Universal.Certificate().Exists(reqContext, calculatedCertID)
 
-					is.True(exists)
+					eval.True(exists)
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				is.NoErr(err)
+				eval.NoErr(err)
 
 				return ctx
 			}).Feature()
@@ -892,8 +894,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			err = wait.For(func() (done bool, err error) {
 				env := environmet.Env{}
 				env.Mode = v1alpha1.OperatorContextMode(mode)
-				env.Org = string(tykOrg)
-				env.Auth = string(tykAuth)
+				env.Org = tykOrg
+				env.Auth = tykAuth
 				env.URL = tykConnectionURL
 
 				pkgContext := pkgclient.Context{
@@ -930,8 +932,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				err := wait.For(func() (done bool, err error) {
 					env := environmet.Env{}
 					env.Mode = v1alpha1.OperatorContextMode(mode)
-					env.Org = string(tykOrg)
-					env.Auth = string(tykAuth)
+					env.Org = tykOrg
+					env.Auth = tykAuth
 					env.URL = tykConnectionURL
 
 					pkgContext := pkgclient.Context{
@@ -1048,7 +1050,7 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 	createAPI := features.New("Create GraphQL API").
 		Assess("validate_executionMode", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			is := is.New(t)
+			eval := is.New(t)
 
 			tests := map[string]struct {
 				ExecutionMode string
@@ -1060,7 +1062,7 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 				},
 				"empty execution mode": {
 					ExecutionMode: "",
-					ReturnErr:     true,
+					ReturnErr:     false,
 				},
 				"valid execution engine mode": {
 					ExecutionMode: "executionEngine",
@@ -1084,7 +1086,7 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 					}, c)
 
 					t.Log("Error=", err)
-					is.Equal(tc.ReturnErr, err != nil)
+					eval.Equal(tc.ReturnErr, err != nil)
 				})
 			}
 
@@ -1092,4 +1094,316 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 		}).Feature()
 
 	testenv.Test(t, createAPI)
+}
+
+func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
+	const (
+		opNs = "tyk-operator-system"
+
+		supportedMajorTykVersion = uint(4)
+	)
+
+	tykEnv := environmet.Env{}
+	majorTykVersion := supportedMajorTykVersion
+	r := &controllers.ApiDefinitionReconciler{}
+
+	gqlSubGraph := features.New("GraphQL SubGraph Execution mode").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			eval := is.New(t)
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			v, err := version.ParseGeneric(tykEnv.TykVersion)
+			eval.NoErr(err)
+			if v.Major() < 4 {
+				majorTykVersion = v.Major()
+				t.Skip("GraphQL Federation is not available on Tyk v3")
+			}
+
+			// Create ApiDefinition Reconciler.
+			cl, err := createTestClient(c.Client())
+			eval.NoErr(err)
+			r = &controllers.ApiDefinitionReconciler{
+				Client: cl,
+				Log:    log.NullLogger{},
+				Scheme: cl.Scheme(),
+				Env:    tykEnv,
+			}
+
+			return ctx
+		}).
+		Assess("ApiDefinition must include SubGraph CR details",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Generate ApiDefinition CR and create it.
+				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					definition.Spec.GraphQL = &model.GraphQLConfig{
+						GraphRef: testSubGraphCRMetaName, ExecutionMode: model.SubGraphExecutionMode,
+					}
+				})
+				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Generate SubGraph CR and create it.
+				sg := generateSubGraphCR(testNs, nil)
+				_, err = util.CreateOrUpdate(ctx, r.Client, sg, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Wait for reconciliation; so that, the ApiDefinition is updated according to linked SubGraph CR.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+						return err == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After reconciliation, check that ApiDefinition CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						return apiDefObj.Spec.GraphQL != nil &&
+							apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName &&
+							apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
+							apiDefObj.Spec.GraphQL.Subgraph.SDL == testSubGraphSDL &&
+							apiDefObj.Status.LinkedToSubgraph == testSubGraphCRMetaName
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After reconciliation, check that SubGraph CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(sg, func(object k8s.Object) bool {
+						sgObj, ok := object.(*v1alpha1.SubGraph)
+						eval.True(ok)
+
+						return sgObj.Status.LinkedByAPI == controllers.EncodeNS(cr.ObjectKeyFromObject(api).String())
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("another ApiDefinition must not use already linked SubGraph CR",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Generate another ApiDefinition CR and create it.
+				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					definition.ObjectMeta = metav1.ObjectMeta{
+						Name: "another-api", Namespace: testNs,
+					}
+					definition.Spec.GraphQL = &model.GraphQLConfig{
+						GraphRef: testSubGraphCRMetaName, ExecutionMode: model.SubGraphExecutionMode,
+					}
+				})
+				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Reconciliation must fail because the SubGraph is already linked by another ApiDefinition since linking
+				// multiple ApiDefinition to one SubGraph CR is forbidden.
+				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+					return errors.Is(err, controllers.ErrMultipleLinkSubGraph)
+				}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("update ApiDefinition GraphRef to another SubGraph CR",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				const (
+					newSgName = "new-sg"
+					newSDL    = "newSDL"
+					newSchema = "newSchema"
+				)
+
+				// Generate another SubGraph CR and create it.
+				sg := generateSubGraphCR(testNs, func(subGraph *v1alpha1.SubGraph) {
+					subGraph.ObjectMeta.Name = newSgName
+					subGraph.Spec.SDL = newSDL
+					subGraph.Spec.Schema = newSchema
+				})
+				_, err := util.CreateOrUpdate(ctx, r.Client, sg, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Get ApiDefinition and update it based on the new SubGraph CR information.
+				api := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: testApiDef, Namespace: testNs}}
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					api.Spec.GraphQL.GraphRef = newSgName
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Wait for reconciliation; so that, the ApiDefinition is updated according to new SubGraph CR.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+						return err == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After successful reconciliation, check that ApiDefinition CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						return apiDefObj.Spec.GraphQL != nil &&
+							apiDefObj.Spec.GraphQL.GraphRef == newSgName &&
+							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
+							apiDefObj.Status.LinkedToSubgraph == newSgName
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// After successful reconciliation, check that SubGraph CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(sg, func(object k8s.Object) bool {
+						sgObj, ok := object.(*v1alpha1.SubGraph)
+						eval.True(ok)
+
+						return sgObj.Status.LinkedByAPI == controllers.EncodeNS(cr.ObjectKeyFromObject(api).String())
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("remove GraphRef from ApiDefinition",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Get ApiDefinition and remove GraphRef from it.
+				api := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: testApiDef, Namespace: testNs}}
+				err := wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
+					api.Spec.GraphQL.GraphRef = ""
+					return nil
+				})
+				eval.NoErr(err)
+
+				// Wait for reconciliation; so that, the ApiDefinition is updated according to new SubGraph CR.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
+						return err == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				const (
+					newSDL    = "newSDL"
+					newSchema = "newSchema"
+				)
+
+				// After successful reconciliation, check that ApiDefinition CR is updated properly.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
+						apiDefObj := &v1alpha1.ApiDefinition{}
+						err = r.Get(ctx, cr.ObjectKeyFromObject(api), apiDefObj)
+						if err != nil {
+							return false
+						}
+
+						return apiDefObj.Spec.GraphQL != nil &&
+							apiDefObj.Spec.GraphQL.GraphRef == "" &&
+							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
+							apiDefObj.Status.LinkedToSubgraph == ""
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Finish(func(ctx context.Context, c *envconf.Config) (context.Context, error) {
+		if t.Skipped() || majorTykVersion < supportedMajorTykVersion {
+			return ctx, nil
+		}
+
+		eval := is.New(t)
+		testNs, ok := ctx.Value(ctxNSKey).(string)
+		eval.True(ok)
+
+		err := r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, cr.InNamespace(testNs))
+		if err != nil {
+			return ctx, err
+		}
+
+		return ctx, r.DeleteAllOf(ctx, &v1alpha1.SubGraph{}, cr.InNamespace(testNs))
+	})
+
+	testenv.Test(t, gqlSubGraph)
 }

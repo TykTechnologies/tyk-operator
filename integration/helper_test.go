@@ -2,22 +2,46 @@ package integration
 
 import (
 	"context"
+	"errors"
+	"os"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	cr "sigs.k8s.io/controller-runtime/pkg/client"
+	e2eKlient "sigs.k8s.io/e2e-framework/klient"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
-func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
-	envConf *envconf.Config,
-) (*v1alpha1.ApiDefinition, error) {
-	client := envConf.Client()
+const (
+	testSubGraphCRMetaName = "test-subgraph"
+	testSubGraphSchema     = "test-schema"
+	testSubGraphSDL        = "test-SDL"
+)
+
+// createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
+// Reconciler for CRs such as ApiDefinitionReconciler.
+func createTestClient(k e2eKlient.Client) (cr.Client, error) {
+	scheme := runtime.NewScheme()
+
+	cl, err := cr.New(k.RESTConfig(), cr.Options{Scheme: scheme})
+	if err != nil {
+		return nil, err
+	}
+
+	return cl, v1alpha1.AddToScheme(scheme)
+}
+
+func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1.ApiDefinition {
 	var apiDef v1alpha1.ApiDefinition
 
 	apiDef.Name = testApiDef
+	apiDef.Namespace = ns
 	apiDef.Spec.Name = testApiDef
-	apiDef.Namespace = namespace
 	apiDef.Spec.Protocol = "http"
 	apiDef.Spec.UseKeylessAccess = true
 	apiDef.Spec.Active = true
@@ -36,9 +60,39 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 		mutateFn(&apiDef)
 	}
 
-	err := client.Resources(namespace).Create(ctx, &apiDef)
+	return &apiDef
+}
 
-	return &apiDef, err
+func generateSubGraphCR(namespace string, mutateFn func(graph *v1alpha1.SubGraph)) *v1alpha1.SubGraph {
+	sg := &v1alpha1.SubGraph{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testSubGraphCRMetaName,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.SubGraphSpec{
+			SubGraphSpec: model.SubGraphSpec{
+				Schema: testSubGraphSchema,
+				SDL:    testSubGraphSDL,
+			},
+		},
+	}
+
+	if mutateFn != nil {
+		mutateFn(sg)
+	}
+
+	return sg
+}
+
+func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
+	envConf *envconf.Config,
+) (*v1alpha1.ApiDefinition, error) {
+	c := envConf.Client()
+	apiDef := generateApiDef(namespace, mutateFn)
+
+	err := c.Resources(namespace).Create(ctx, apiDef)
+
+	return apiDef, err
 }
 
 func createTestOperatorContext(ctx context.Context, namespace string,
@@ -81,4 +135,48 @@ func createTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v
 	err := client.Resources(namespace).Create(ctx, &tlsSecret)
 
 	return &tlsSecret, err
+}
+
+// generateEnvConfig creates a config structure to connect your Tyk installation. It parses k8s secret object
+// and reads required connection credentials from there.
+func generateEnvConfig(operatorConfSecret *v1.Secret) (environmet.Env, error) {
+	data, ok := operatorConfSecret.Data["TYK_AUTH"]
+	if !ok {
+		return environmet.Env{}, errors.New("failed to parse TYK_AUTH from operator secret")
+	}
+
+	tykAuth := string(data)
+
+	data, ok = operatorConfSecret.Data["TYK_ORG"]
+	if !ok {
+		return environmet.Env{}, errors.New("failed to parse TYK_ORG from operator secret")
+	}
+
+	tykOrg := string(data)
+	tykVersion := "v4.0"
+
+	data, ok = operatorConfSecret.Data["TYK_VERSION"]
+	if ok && len(data) != 0 {
+		tykVersion = string(data)
+	}
+
+	mode := os.Getenv("TYK_MODE")
+	var tykConnectionURL string
+
+	switch mode {
+	case "pro":
+		tykConnectionURL = adminLocalhost
+	case "ce":
+		tykConnectionURL = gatewayLocalhost
+	}
+
+	return environmet.Env{
+		Environment: v1alpha1.Environment{
+			Auth: tykAuth,
+			Org:  tykOrg,
+			Mode: v1alpha1.OperatorContextMode(mode),
+			URL:  tykConnectionURL,
+		},
+		TykVersion: tykVersion,
+	}, nil
 }

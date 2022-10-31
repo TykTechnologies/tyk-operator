@@ -111,7 +111,7 @@ func createServices(ctx context.Context, c2 *envconf.Config, list []v1.Service) 
 		}
 
 		err := c2.Client().Resources(envNS()).Get(ctx, s.Name, list[index].Namespace, &s)
-		// Create service if it doesn't exists
+		// Create service if it doesn't exist
 		if err != nil {
 			err = c2.Client().Resources(list[index].Namespace).Create(ctx, &s)
 			if err != nil {

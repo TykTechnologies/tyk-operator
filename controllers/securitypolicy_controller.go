@@ -63,7 +63,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := httpContext(ctx, r.Client, r.Env, policy, log)
+	env, ctx, err := HttpContext(ctx, r.Client, r.Env, policy, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -81,7 +81,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		util.AddFinalizer(policy, policyFinalizer)
 
 		if policy.Spec.ID == "" {
-			policy.Spec.ID = encodeNS(ns)
+			policy.Spec.ID = EncodeNS(ns)
 		}
 
 		if policy.Spec.OrgID == "" {
@@ -227,11 +227,25 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	err = klient.Universal.Portal().Policy().Create(ctx, spec)
-	if err != nil {
-		r.Log.Error(err, "Failed to create policy")
+	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment. Therefore,
+	// although policy.status.ID is an empty string, which triggers policy create API call, we cannot create a policy on
+	// the dashboard due to duplicated policy name. To resolve this problem, check if policy exists before creating it.
+	// If the policy exists, just update it with spec. Otherwise, create it.
+	if _, err = klient.Universal.Portal().Policy().Get(ctx, spec.ID); err != nil {
+		err = klient.Universal.Portal().Policy().Create(ctx, spec)
+		if err != nil {
+			r.Log.Error(err, "Failed to create policy")
 
-		return err
+			return err
+		}
+	} else {
+		if err := klient.Universal.Portal().Policy().Update(ctx, spec); err != nil {
+			r.Log.Error(
+				err,
+				"Failed to update policy",
+				"Name", spec.Name,
+			)
+		}
 	}
 
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {

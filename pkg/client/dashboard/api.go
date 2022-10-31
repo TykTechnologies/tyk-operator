@@ -107,7 +107,7 @@ func (a Api) Delete(ctx context.Context, id string) (*model.Result, error) {
 	return &o, nil
 }
 
-// List lists all apis in the dashboard. options controls filtering and sorting
+// List lists all apis in the dashboard. options controls filtering and sorting.
 func (Api) List(
 	ctx context.Context,
 	options ...model.ListAPIOptions,
@@ -127,7 +127,7 @@ func (Api) List(
 		return nil, err
 	}
 
-	var a model.APIDefinitionSpecList
+	a := model.APIDefinitionSpecList{}
 
 	for _, v := range o.Apis {
 		v := v

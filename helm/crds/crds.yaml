@@ -437,6 +437,7 @@ spec:
                   execution_mode:
                     description: GraphQLExecutionMode is the mode to define how an api behaves.
                     enum:
+                    - ""
                     - proxyOnly
                     - executionEngine
                     - supergraph
@@ -705,6 +706,7 @@ spec:
               protocol:
                 description: APIProtocol is the network transport protocol supported by the gateway
                 enum:
+                - ""
                 - h2c
                 - tcp
                 - tls
@@ -1752,6 +1754,9 @@ spec:
                   - name
                   type: object
                 type: array
+              linked_to_subgraph:
+                description: LinkedToSubgraph corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
+                type: string
             required:
             - api_id
             type: object
@@ -2129,13 +2134,11 @@ spec:
                     type: string
                   url:
                     type: string
-                  user_owners:
-                    description: List of user ids authorized to manage the api definitions created in this context. If both this and user_group_owners are empty, anyone is authorized. The user whose key is used as OperatorContextAuth needs to be in this list, when not empty.
+                  user_group_owners:
                     items:
                       type: string
                     type: array
-                  user_group_owners:
-                    description: List of group ids authorized to manage the api definitions created in this context. If both this and user_owners are empty, anyone is authorized. The user whose key is used as OperatorContextAuth needs to be in one of the groups in this list, when not empty.
+                  user_owners:
                     items:
                       type: string
                     type: array
@@ -3097,10 +3100,9 @@ spec:
           status:
             description: SubGraphStatus defines the observed state of SubGraph
             properties:
-              api_id:
+              linked_by_api:
+                description: LinkedByAPI specifies the ID of the ApiDefinition CR that is linked to this particular SubGraph CR. Please note that SubGraph CR can only be linked to one ApiDefinition CR that is created in the same namespace as SubGraph CR.
                 type: string
-            required:
-            - api_id
             type: object
         type: object
     served: true

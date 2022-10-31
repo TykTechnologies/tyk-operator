@@ -60,7 +60,7 @@ type (
 type HttpMethod string
 
 // GraphQLExecutionMode is the mode to define how an api behaves.
-// +kubebuilder:validation:Enum=proxyOnly;executionEngine;supergraph;subgraph
+// +kubebuilder:validation:Enum="";proxyOnly;executionEngine;supergraph;subgraph
 type GraphQLExecutionMode string
 
 const (
@@ -69,7 +69,7 @@ const (
 )
 
 // APIProtocol is the network transport protocol supported by the gateway
-// +kubebuilder:validation:Enum=h2c;tcp;tls;http;https;
+// +kubebuilder:validation:Enum="";h2c;tcp;tls;http;https;
 type APIProtocol string
 
 type NotificationsManager struct {
@@ -596,8 +596,6 @@ type APIDefinitionSpec struct {
 	// UpstreamCertificateRefs is a map of domains and secret names that is used internally
 	// to obtain certificates from secrets in order to establish mTLS support for upstreams
 	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
-
-	// PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
 
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
@@ -1177,7 +1175,7 @@ func (in *MapStringInterfaceType) DeepCopyInto(out *MapStringInterfaceType) {
 	// controller-gen cannot handle the interface{} type of an aliased Unstructured,
 	// thus we write our own DeepCopyInto function.
 	if out != nil {
-		casted := unstructured.Unstructured(in.Unstructured)
+		casted := in.Unstructured
 		deepCopy := casted.DeepCopy()
 		out.Object = deepCopy.Object
 	}

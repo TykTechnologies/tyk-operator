@@ -17,10 +17,13 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/TykTechnologies/tyk-operator/pkg/snapshot"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -54,10 +57,29 @@ func main() {
 	var env environmet.Env
 	var err error
 
+	var snapshotFile string
+	var policyFile string
+	var category string
+	var separate bool
+
 	flag.StringVar(&configFile, "config", "",
 		"The controller will load its initial configuration from this file. "+
 			"Omit this flag to use the default configuration values. "+
 			"Command-line flags override configuration from this file.")
+
+	flag.StringVar(&snapshotFile, "apidef", "",
+		"By passing an export flag, we are telling the Operator to connect to a "+
+			"Tyk installation in order to pull a snapshot of ApiDefinitions from that environment and output as CR")
+
+	flag.BoolVar(&separate, "separate", false, "Each ApiDefinition and Policy files will be written "+
+		"into separate files.",
+	)
+
+	flag.StringVar(&category, "category", "", "Dump APIs from specified category.")
+
+	flag.StringVar(&policyFile, "policy", "",
+		"By passing an export flag, we are telling the Operator to connect to a "+
+			"Tyk installation in order to pull a snapshot of SecurityPolicies from that environment and output as CR")
 
 	opts := zap.Options{
 		Development: true,
@@ -73,6 +95,11 @@ func main() {
 	}
 
 	options := ctrl.Options{Scheme: scheme, Namespace: env.Namespace}
+
+	if snapshotFile != "" || separate {
+		// MetricsBindAddress can be set to "0" to disable the metrics serving.
+		options.MetricsBindAddress = "0"
+	}
 
 	if configFile != "" {
 		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
@@ -94,6 +121,24 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
+	}
+
+	if snapshotFile != "" || separate {
+		snapshotLog := ctrl.Log.WithName("snapshot").WithName("ApiDefinition")
+		ctx := context.Background()
+
+		_, ctx, err := controllers.HttpContext(ctx, mgr.GetClient(), env, nil, snapshotLog)
+		if err != nil {
+			snapshotLog.Error(err, "failed to set HTTP context")
+			os.Exit(1)
+		}
+
+		if err := snapshot.PrintSnapshot(ctx, snapshotFile, policyFile, category, separate); err != nil {
+			snapshotLog.Error(err, "failed to create snapshot file")
+			os.Exit(1)
+		}
+
+		os.Exit(0)
 	}
 
 	a := ctrl.Log.WithName("controllers").WithName("ApiDefinition")

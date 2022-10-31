@@ -13,6 +13,7 @@ type Env struct {
 	v1alpha1.Environment
 	Namespace    string
 	IngressClass string
+	TykVersion   string
 }
 
 func (e Env) Merge(n Env) Env {

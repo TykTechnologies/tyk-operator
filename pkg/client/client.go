@@ -173,7 +173,11 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 	if res != nil {
 		values = append(values, "Status", res.StatusCode)
 	} else {
-		values = append(values, "Status", err.Error())
+		if err != nil {
+			values = append(values, "Status", err.Error())
+		} else {
+			values = append(values, "Status undefined error")
+		}
 	}
 
 	rctx.Log.Info("Call", values...)
