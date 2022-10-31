@@ -201,7 +201,7 @@ bdd:
 	go test -timeout 400s -coverprofile bdd_coverage.out -v  ./bdd
 
 .PHONY: test-all
-test-all: test bdd run-venom-tests ## Run tests
+test-all: test bdd ## Run tests
 
 .PHONY: create-kind-cluster
 create-kind-cluster:	## Create kind cluster
