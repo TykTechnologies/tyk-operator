@@ -597,8 +597,6 @@ type APIDefinitionSpec struct {
 	// to obtain certificates from secrets in order to establish mTLS support for upstreams
 	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
 
-	// PinnedPublicKeys           map[string]string     `json:"pinned_public_keys"`
-
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
 
@@ -1181,7 +1179,7 @@ func (in *MapStringInterfaceType) DeepCopyInto(out *MapStringInterfaceType) {
 	// controller-gen cannot handle the interface{} type of an aliased Unstructured,
 	// thus we write our own DeepCopyInto function.
 	if out != nil {
-		casted := unstructured.Unstructured(in.Unstructured)
+		casted := in.Unstructured
 		deepCopy := casted.DeepCopy()
 		out.Object = deepCopy.Object
 	}

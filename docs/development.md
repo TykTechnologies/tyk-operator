@@ -7,15 +7,15 @@ for development
 
 Note that these are tools which we use for development of this project.
 
-| tool | version|
-|-------|---------|
-| [kind](https://kind.sigs.k8s.io) | v0.9.0+ |
-|[go](https://go.dev/doc/install) |1.16.3+|
-| [operator-sdk](https://sdk.operatorframework.io/)| v1.7.2+ |
-|controller-gen | v0.4.1+|
-| [kustomize](https://kustomize.io/) |v3.8.7+|
-| [helm](https://helm.sh/)|v3.5.4+|
-| [Docker](https://docs.docker.com/)| 19.03.13+|
+| tool                                              | version   |
+|---------------------------------------------------|-----------|
+| [kind](https://kind.sigs.k8s.io)                  | v0.9.0+   |
+| [go](https://go.dev/doc/install)                  | 1.16.3+   |
+| [operator-sdk](https://sdk.operatorframework.io/) | v1.7.2+   |
+| controller-gen                                    | v0.4.1+   |
+| [kustomize](https://kustomize.io/)                | v3.8.7+   |
+| [helm](https://helm.sh/)                          | v3.5.4+   |
+| [Docker](https://docs.docker.com/)                | 19.03.13+ |
 
 
 ### 0. Create cluster
