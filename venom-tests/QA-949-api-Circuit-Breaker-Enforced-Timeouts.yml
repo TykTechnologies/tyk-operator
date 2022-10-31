@@ -3,7 +3,7 @@ testcases:
 - name: Create API 
   steps:
   - type: applyManifests
-    filename: "../config/samples/httpbin_timeout.yaml"
+    filename: "samples/httpbin_timeout.yaml"
     assertions:
     - result.code ShouldEqual 0
 

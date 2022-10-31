@@ -1,0 +1,77 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-transform
+spec:
+  name: httpbin-transform
+  use_keyless: true
+  protocol: http
+  active: true
+  org_id: acme.com
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin-transform
+    strip_listen_path: true
+  response_processors:
+    - name: response_body_transform
+    - name: header_injector
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        use_extended_paths: true
+        paths:
+          black_list: [ ]
+          ignored: [ ]
+          white_list: [ ]
+        extended_paths:
+          transform:
+            - method: POST
+              path: /anything
+              template_data:
+                enable_session: false
+                input_type: json
+                template_mode: blob
+                # base64 encoded template
+                template_source: eyJiYXIiOiAie3suZm9vfX0ifQ==
+          transform_response:
+            - method: GET
+              path: /xml
+              template_data:
+                enable_session: false
+                input_type: xml
+                template_mode: blob
+                # base64 encoded template
+                template_source: e3sgLiB8IGpzb25NYXJzaGFsIH19
+          transform_response_headers:
+            - method: GET
+              path: /xml
+              add_headers:
+                Content-Type: "application/json"
+              act_on: false
+              delete_headers: [ ]
+
+#curl http://localhost:8081/httpbin-transform/anything -X POST -d '{"foo": "bar"}' -H 'Content-Type: application/json'
+#  {
+#    "args": {},
+#    "data": "{\"bar\": \"bar\"}",
+#    "files": {},
+#    "form": {},
+#    "headers": {
+#      "Accept": "*/*",
+#      "Accept-Encoding": "gzip",
+#      "Content-Length": "14",
+#      "Content-Type": "application/json",
+#      "Host": "httpbin.org",
+#      "User-Agent": "curl/7.71.1",
+#      "X-Amzn-Trace-Id": "Root=1-5f7b9a0c-38521f504d5e3ff521049ce7"
+#    },
+#    "json": {
+#      "bar": "bar"
+#    },
+#    "method": "POST",
+#    "origin": "::1, 82.47.141.120",
+#    "url": "http://httpbin.org/anything"
+#  }

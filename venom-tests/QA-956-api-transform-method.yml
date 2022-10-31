@@ -3,7 +3,7 @@ testcases:
 - name: Create API 
   steps:
   - type: applyManifests
-    filename: "../bdd/custom_resources/transform/method.yaml"
+    filename: "samples/httpbin_method_transform.yaml"
     assertions:
     - result.code ShouldEqual 0
 

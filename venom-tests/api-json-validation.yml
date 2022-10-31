@@ -3,7 +3,7 @@ testcases:
 - name: Create API 
   steps:
   - type: applyManifests
-    filename: "../config/samples/httpbin_json_schema_validation.yaml"
+    filename: "samples/httpbin_json_schema_validation.yaml"
     assertions:
     - result.code ShouldEqual 0
 

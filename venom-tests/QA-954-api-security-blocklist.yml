@@ -3,7 +3,7 @@ testcases:
 - name: Create API 
   steps:
   - type: applyManifests
-    filename: "../config/samples/httpbin_blacklist.yaml"
+    filename: "samples/httpbin_blacklist.yaml"
     assertions:
     - result.code ShouldEqual 0
 
