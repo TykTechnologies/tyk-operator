@@ -145,25 +145,23 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		// Check GraphQL Federation
 		if desired.Spec.GraphQL != nil {
-			if upstreamRequestStruct.Spec.GraphQL.Version == "1" {
-				switch desired.Spec.GraphQL.ExecutionMode {
-				case model.SubGraphExecutionMode:
-					err = r.processSubGraphExec(ctx, upstreamRequestStruct)
-					if err != nil {
-						return err
-					}
-
-					desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
-					desired.Spec.GraphQL.Subgraph.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
-				case model.SuperGraphExecutionMode:
-					err = r.processSuperGraphExec(ctx, upstreamRequestStruct)
-					if err != nil {
-						return err
-					}
-
-					desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
-					desired.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL
+			switch desired.Spec.GraphQL.ExecutionMode {
+			case model.SubGraphExecutionMode:
+				err = r.processSubGraphExec(ctx, upstreamRequestStruct)
+				if err != nil {
+					return err
 				}
+
+				desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
+				desired.Spec.GraphQL.Subgraph.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
+			case model.SuperGraphExecutionMode:
+				err = r.processSuperGraphExec(ctx, upstreamRequestStruct)
+				if err != nil {
+					return err
+				}
+
+				desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
+				desired.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL
 			}
 		}
 
