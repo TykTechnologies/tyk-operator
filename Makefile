@@ -201,7 +201,7 @@ bdd:
 	go test -timeout 400s -coverprofile bdd_coverage.out -v  ./bdd
 
 .PHONY: test-all
-test-all: test bdd ## Run tests
+test-all: test bdd run-venom-tests ## Run tests
 
 .PHONY: create-kind-cluster
 create-kind-cluster:	## Create kind cluster
@@ -211,8 +211,18 @@ create-kind-cluster:	## Create kind cluster
 clean:	## Delete kind cluster
 	kind delete cluster --name=${CLUSTER_NAME}
 
+.PHONY: install-venom
+install-venom:
+ifeq ("", $(venom version))
+	@echo "Installing venom"
+	sudo curl https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 -L -o /usr/local/bin/venom && sudo chmod +x /usr/local/bin/venom
+else
+	@echo "Venom is already installed"
+endif
+	
 .PHONY: venom-tests
-run-venom-tests:  ## Run Venom integration tests
+run-venom-tests: install-venom ## Run Venom integration tests
+	kubectl port-forward svc/gateway-svc-pro-tyk-pro 8080:8080 -n tykpro-control-plane >/dev/null 2>&1 &
 	cd venom-tests && IS_TTY=true venom run
 
 help:
