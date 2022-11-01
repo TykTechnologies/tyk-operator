@@ -1148,7 +1148,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				// Generate ApiDefinition CR and create it.
 				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
 					definition.Spec.GraphQL = &model.GraphQLConfig{
-						GraphRef: testSubGraphCRMetaName, ExecutionMode: model.SubGraphExecutionMode,
+						GraphRef:      testSubGraphCRMetaName,
+						ExecutionMode: model.SubGraphExecutionMode,
+						Version:       "1",
 					}
 				})
 				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
@@ -1219,7 +1221,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						Name: "another-api", Namespace: testNs,
 					}
 					definition.Spec.GraphQL = &model.GraphQLConfig{
-						GraphRef: testSubGraphCRMetaName, ExecutionMode: model.SubGraphExecutionMode,
+						GraphRef:      testSubGraphCRMetaName,
+						ExecutionMode: model.SubGraphExecutionMode,
+						Version:       "1",
 					}
 				})
 				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {

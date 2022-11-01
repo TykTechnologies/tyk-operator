@@ -434,6 +434,74 @@ spec:
                   enabled:
                     description: Enabled indicates if GraphQL proxy should be enabled.
                     type: boolean
+                  engine:
+                    description: Engine holds the configuration for engine v2 and upwards.
+                    properties:
+                      data_sources:
+                        items:
+                          properties:
+                            config:
+                              description: MapStringInterfaceType represents a generic struct used as a map[string]interface{}. Since an arbitrary JSON fields defined as map[string]interface{} is not feasible to use as a Kubernetes CRD, unstructured.Unstructured type is used.
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            internal:
+                              type: boolean
+                            kind:
+                              enum:
+                              - REST
+                              - GraphQL
+                              - Kafka
+                              type: string
+                            name:
+                              type: string
+                            root_fields:
+                              items:
+                                properties:
+                                  fields:
+                                    items:
+                                      type: string
+                                    type: array
+                                  type:
+                                    type: string
+                                required:
+                                - fields
+                                - type
+                                type: object
+                              type: array
+                          required:
+                          - config
+                          - internal
+                          - kind
+                          - name
+                          - root_fields
+                          type: object
+                        nullable: true
+                        type: array
+                      field_configs:
+                        items:
+                          properties:
+                            disable_default_mapping:
+                              type: boolean
+                            field_name:
+                              type: string
+                            path:
+                              items:
+                                type: string
+                              type: array
+                            type_name:
+                              type: string
+                          required:
+                          - disable_default_mapping
+                          - field_name
+                          - path
+                          - type_name
+                          type: object
+                        nullable: true
+                        type: array
+                    required:
+                    - data_sources
+                    - field_configs
+                    type: object
                   execution_mode:
                     description: GraphQLExecutionMode is the mode to define how an api behaves.
                     enum:
@@ -487,6 +555,8 @@ spec:
                   supergraph:
                     description: Supergraph holds the configuration for a GraphQL federation supergraph.
                     properties:
+                      disable_query_batching:
+                        type: boolean
                       global_headers:
                         additionalProperties:
                           type: string
@@ -497,6 +567,7 @@ spec:
                         items:
                           properties:
                             api_id:
+                              description: UUID v4 string (!not the same as _id of APIDefinition)
                               type: string
                             headers:
                               additionalProperties:
@@ -505,10 +576,14 @@ spec:
                             name:
                               type: string
                             sdl:
+                              description: the schema definition language of the subgraph
                               type: string
                             url:
+                              description: The internal URL of the subgraph
                               type: string
                           required:
+                          - api_id
+                          - headers
                           - name
                           - sdl
                           - url
