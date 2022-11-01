@@ -213,7 +213,7 @@ clean:	## Delete kind cluster
 
 .PHONY: install-venom
 install-venom:
-ifeq ("", $(venom version))
+ifeq (, $(venom version))
 	@echo "Installing venom"
 	sudo curl https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 -L -o /usr/local/bin/venom && sudo chmod +x /usr/local/bin/venom
 else
