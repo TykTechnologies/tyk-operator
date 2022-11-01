@@ -1,0 +1,205 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: trevorblades
+spec:
+  name: trevorblades
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: https://countries.trevorblades.com
+    listen_path: /trevorblades
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+  graphql:
+    enabled: true
+    execution_mode: proxyOnly
+    playground:
+      enabled: true
+      path: /playground
+    schema: |
+      """Exposes a URL that specifies the behaviour of this scalar."""
+      directive @specifiedBy(
+      """The URL that specifies the behaviour of this scalar."""
+      url: String!
+      ) on SCALAR
+      
+      directive @key(fields: String!) on OBJECT | INTERFACE
+      
+      directive @extends on OBJECT | INTERFACE
+      
+      directive @external on OBJECT | FIELD_DEFINITION
+      
+      directive @requires(fields: String!) on FIELD_DEFINITION
+      
+      directive @provides(fields: String!) on FIELD_DEFINITION
+      
+      scalar _Any
+      
+      union _Entity = Country | Continent | Language
+      
+      type _Service {
+      """
+      The sdl representing the federated service capabilities. Includes federation
+      directives, removes federation types, and includes rest of full schema after
+      schema directives have been applied
+      """
+      sdl: String
+      }
+      
+      type Continent {
+        code: ID!
+        name: String!
+        countries: [Country!]!
+      }
+      
+      input ContinentFilterInput {
+        code: StringQueryOperatorInput
+      }
+      
+      type Country {
+        code: ID!
+        name: String!
+        native: String!
+        phone: String!
+        continent: Continent!
+        capital: String
+        currency: String
+        languages: [Language!]!
+        emoji: String!
+        emojiU: String!
+        states: [State!]!
+      }
+      
+      input CountryFilterInput {
+        code: StringQueryOperatorInput
+        currency: StringQueryOperatorInput
+        continent: StringQueryOperatorInput
+      }
+      
+      type Language {
+        code: ID!
+        name: String
+        native: String
+        rtl: Boolean!
+      }
+      
+      input LanguageFilterInput {
+        code: StringQueryOperatorInput
+      }
+      
+      type Query {
+        _entities(representations: [_Any!]!): [_Entity]!
+        _service: _Service!
+        countries(filter: CountryFilterInput): [Country!]!
+        country(code: ID!): Country
+        continents(filter: ContinentFilterInput): [Continent!]!
+        continent(code: ID!): Continent
+        languages(filter: LanguageFilterInput): [Language!]!
+        language(code: ID!): Language
+      }
+      
+      type State {
+        code: String
+        name: String!
+        country: Country!
+      }
+      
+      input StringQueryOperatorInput {
+        eq: String
+        ne: String
+        in: [String]
+        nin: [String]
+        regex: String
+        glob: String
+      }
+
+
+---
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: udg
+spec:
+  name: Universal Data Graph v2c
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: ""
+    listen_path: /udg
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+  graphql:
+    enabled: true
+    execution_mode: executionEngine
+    schema: |
+      type Country {
+        name: String
+        code: String
+        restCountry: RestCountry
+      }
+
+      type Query {
+        countries: [Country]
+      }
+
+      type RestCountry {
+        altSpellings: [String]
+        subregion: String
+        population: Int
+      }
+    version: "2"
+    last_schema_update: "2022-10-12T14:27:55.511+03:00"
+    type_field_configurations: []
+    playground:
+      enabled: true
+      path: /playground
+    engine:
+      field_configs:
+        - disable_default_mapping: false
+          field_name: countries
+          path:
+            - "countries"
+          type_name: Query
+        - disable_default_mapping: true #very important for rest APIs
+          field_name: restCountry
+          path: []
+          type_name: Country
+      data_sources:
+        - kind: "GraphQL"
+          name: "countries"
+          internal: true
+          root_fields:
+            - type: Query
+              fields:
+                - "countries"
+          config:
+            url: "tyk://trevorblades/"
+            method: "POST"
+            headers: {}
+            body: ""
+        - kind: "REST"
+          internal: false
+          name: "restCountries"
+          root_fields:
+            - type: "Country"
+              fields:
+                - "restCountry"
+          config:
+            url: "https://restcountries.com/v2/alpha/{{ .object.code }}"
+            method: "GET"
+            body: ""
+            headers: {}

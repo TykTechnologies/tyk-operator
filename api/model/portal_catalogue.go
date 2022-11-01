@@ -181,9 +181,9 @@ type EmailCopyOptions struct {
 }
 
 type EmailConfigMeta struct {
-	Enabled       bool   `bson:"enabled" json:"enabled"`
-	EmailSubject  string `bson:"subject" json:"subject"`
-	EmailBody     string `bson:"body" json:"body"`
-	EmailSignoff  string `bson:"sign_off" json:"sign_off"`
-	HideTokenData bool   `bson:"hide_token_data" json:"hide_token_data"`
+	Enabled       bool   `json:"enabled"`
+	EmailSubject  string `json:"subject"`
+	EmailBody     string `json:"body"`
+	EmailSignoff  string `json:"sign_off"`
+	HideTokenData bool   `json:"hide_token_data"`
 }

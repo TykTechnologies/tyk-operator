@@ -1001,13 +1001,13 @@ type RequestSigningMeta struct {
 }
 
 type GraphQLFieldConfig struct {
-	TypeName              string   ` json:"type_name"`
-	FieldName             string   ` json:"field_name"`
-	DisableDefaultMapping bool     ` json:"disable_default_mapping"`
+	TypeName              string   `json:"type_name"`
+	FieldName             string   `json:"field_name"`
+	DisableDefaultMapping bool     `json:"disable_default_mapping"`
 	Path                  []string `json:"path"`
 }
 
-// +kubebuilder:validation:Enum=REST;GraphQL
+// +kubebuilder:validation:Enum=REST;GraphQL;Kafka
 type GraphQLEngineDataSourceKind string
 
 type GraphQLEngineDataSource struct {
@@ -1035,19 +1035,23 @@ type GraphQLSubgraphConfig struct {
 }
 
 type GraphQLSubgraphEntity struct {
-	APIID   string            `json:"api_id,omitempty"`
-	Name    string            `json:"name"`
-	URL     string            `json:"url"`
+	// UUID v4 string (!not the same as _id of APIDefinition)
+	APIID string `json:"api_id"`
+	Name  string `json:"name"`
+	// The internal URL of the subgraph
+	URL string `json:"url"`
+	// the schema definition language of the subgraph
 	SDL     string            `json:"sdl"`
-	Headers map[string]string `json:"headers,omitempty"`
+	Headers map[string]string `json:"headers"`
 }
 
 type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
-	UpdatedAt     *metav1.Time            `json:"updated_at,omitempty"`
-	Subgraphs     []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
-	MergedSDL     string                  `json:"merged_sdl,omitempty"`
-	GlobalHeaders map[string]string       `json:"global_headers,omitempty"`
+	UpdatedAt            *metav1.Time            `json:"updated_at,omitempty"`
+	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
+	MergedSDL            string                  `json:"merged_sdl,omitempty"`
+	GlobalHeaders        map[string]string       `json:"global_headers,omitempty"`
+	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
 }
 
 // +kubebuilder:validation:Enum="1";"2"
@@ -1060,8 +1064,14 @@ type GraphQLConfig struct {
 
 	ExecutionMode GraphQLExecutionMode `json:"execution_mode"`
 
+	// Version defines the version of the GraphQL config and engine to be used.
+	Version GraphQLConfigVersion `json:"version,omitempty"`
+
 	// Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
 	Schema string `json:"schema,omitempty"`
+
+	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
+	LastSchemaUpdate *metav1.Time `json:"last_schema_update,omitempty"`
 
 	// TypeFieldConfigurations is a rule set of data source and mapping of a schema field.
 	TypeFieldConfigurations []TypeFieldConfiguration `json:"type_field_configurations,omitempty"`
@@ -1069,11 +1079,11 @@ type GraphQLConfig struct {
 	// GraphQLPlayground is the Playground specific configuration.
 	GraphQLPlayground GraphQLPlayground `json:"playground,omitempty"`
 
+	// Engine holds the configuration for engine v2 and upwards.
+	Engine GraphQLEngineConfig `json:"engine,omitempty"`
+
 	// Proxy holds the configuration for a proxy only api.
 	Proxy GraphQLProxyConfig `json:"proxy,omitempty"`
-
-	// Engine holds the configuration for engine v2 and upwards.
-	// Engine GraphQLEngineConfig `json:"engine,omitempty"`
 
 	// Subgraph holds the configuration for a GraphQL federation subgraph.
 	Subgraph GraphQLSubgraphConfig `json:"subgraph,omitempty"`
@@ -1082,12 +1092,6 @@ type GraphQLConfig struct {
 
 	// Supergraph holds the configuration for a GraphQL federation supergraph.
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`
-
-	// Version defines the version of the GraphQL config and engine to be used.
-	Version GraphQLConfigVersion `json:"version,omitempty"`
-
-	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
-	LastSchemaUpdate *metav1.Time `json:"last_schema_update,omitempty"`
 }
 
 type GraphQLProxyConfig struct {
