@@ -7,6 +7,7 @@
 - Added support of API Ownership [#483](https://github.com/TykTechnologies/tyk-operator/pull/483)
 - Added PoC tool that helps migration of existing ApiDefinition & SecurityPolicies
 from Dashboard to Kubernetes environment. [#481](https://github.com/TykTechnologies/tyk-operator/pull/481)
+- Added integration tests using venom framework
 
 **Fixed**
 - Fixed user email format used in integration tests since e2e tests were failing after Tyk v4.0.6 was released [#510](https://github.com/TykTechnologies/tyk-operator/pull/510)
