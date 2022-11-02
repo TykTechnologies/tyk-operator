@@ -201,7 +201,7 @@ bdd:
 	go test -timeout 400s -coverprofile bdd_coverage.out -v  ./bdd
 
 .PHONY: test-all
-test-all: test bdd run-venom-tests ## Run tests
+test-all: test bdd ## Run tests
 
 .PHONY: create-kind-cluster
 create-kind-cluster:	## Create kind cluster
@@ -220,11 +220,9 @@ else
 	@echo "Venom is already installed"
 endif
 	
-.PHONY: venom-tests
+.PHONY: run-venom-tests
 run-venom-tests: install-venom ## Run Venom integration tests
-	kubectl port-forward svc/gateway-svc-pro-tyk-pro 8080:8080 -n tykpro-control-plane >/dev/null 2>&1 &
 	cd venom-tests && IS_TTY=true venom run
 
 help:
 	@fgrep -h "##" Makefile | fgrep -v fgrep |sed -e 's/\\$$//' |sed -e 's/:/-:/'| sed -e 's/:.*##//'
-
