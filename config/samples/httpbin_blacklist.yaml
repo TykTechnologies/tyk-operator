@@ -1,3 +1,10 @@
+# Blacklist example
+#
+# This example adds `/get` path of httpbin.org to the Blacklist. Therefore, any requests to 
+# this path will be blocked.
+# 
+# For reference: 
+# https://tyk.io/docs/nightly/advanced-configuration/transform-traffic/endpoint-designer/#hahahugoshortcode-s3-hbhb
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
@@ -31,4 +38,4 @@ spec:
                   code: 200
                   data: ""
                   headers: {}
-              path: "/blacklist_example/"
+              path: "/get"
