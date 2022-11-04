@@ -11,6 +11,7 @@ from Dashboard to Kubernetes environment. [#481](https://github.com/TykTechnolog
 **Fixed**
 - Fixed user email format used in integration tests since e2e tests were failing after Tyk v4.0.6 was released [#510](https://github.com/TykTechnologies/tyk-operator/pull/510)
 - Fixed bug in linking logic of SubGraph CR and ApiDefinition CR [#522](https://github.com/TykTechnologies/tyk-operator/pull/522).
+- Operator was panicking when invalid certificate was provided [#529](https://github.com/TykTechnologies/tyk-operator/pull/529)
 
 ## [v0.11.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.11.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.10.0...v0.11.0)
