@@ -327,7 +327,12 @@ func decodeID(encodedID string) (namespace, name string) {
 }
 
 func uploadCert(ctx context.Context, orgID string, pemKeyBytes, pemCrtBytes []byte) (tykCertID string, err error) {
-	tykCertID = orgID + cert.CalculateFingerPrint(pemCrtBytes)
+	fingerprint, err := cert.CalculateFingerPrint(pemCrtBytes)
+	if err != nil {
+		return "", err
+	}
+
+	tykCertID = orgID + fingerprint
 	exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
 
 	if !exists {
