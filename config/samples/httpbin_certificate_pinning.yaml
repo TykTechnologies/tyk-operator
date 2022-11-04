@@ -28,6 +28,8 @@
 # with the following command:
 #   $ openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null | openssl x509 -pubkey -noout
 #
+# Note: Please set tls.crt field of your secret to actual public key of httpbin.org.
+#
 # We are creating a secret called 'httpbin-secret'. In the 'tls.crt' field of the secret, we are specifying the public key of the
 #  httpbin.org obtained through above `openssl` command, in the decoded manner.
 # Now, in the ApiDefinition, we are using this public key for all domains as '*' (wildcard domains are also supported).
@@ -39,8 +41,7 @@ metadata:
   name: httpbin-secret
 type: kubernetes.io/tls
 data:
-  tls.crt: |  # Use tls.crt field for the public key.
-    LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoT1FucGV6cndBMHZIemY0N1BhKwpPODRmV3VlLzU2MlRxUXJWaXJ0ZiszZnNHUWQzTW13bklkK2tzQUdRdldONE0xL2hTZWxZSmIyNDZwRnFHQjd0CitaSSt2akJZSDQvSjZDaUZzS3d6dXNxa1NGNjNmdFFoOE94ME9hc0I5SHZSbE9QSFQvQjVEc2toOEhOaUorMWwKRXhTWkVhTzl6c1E5d082MmJzR0hzTVgvVVAzVlFCeVhMVkJadTBETUtzbDJoR2FVTnk5K0xnWnY0L2lWcFdEUApRMStraHBmeFA5eDFIK21NbFVXQmdZUHE3akc1Y2VUYmx0SW9GL3NVUVBOUit5S0lCU251aUlTWEZITzlIRW5rCjVwaDYxMGhXbVZRS0lyQ0FQc0FVTU05bTYraURiNjROanJNaldWL2JrbTM2citGQk16OUw4SGZFQjRoeGx3d2cKNVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+  tls.crt: <PUBLIC_KEY> # Use tls.crt field for the public key.
   tls.key: ""
 ---
 apiVersion: tyk.tyk.io/v1alpha1
