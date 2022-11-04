@@ -331,6 +331,7 @@ func uploadCert(ctx context.Context, orgID string, pemKeyBytes, pemCrtBytes []by
 	if err != nil {
 		return "", err
 	}
+
 	tykCertID = orgID + fingerprint
 	exists := klient.Universal.Certificate().Exists(ctx, tykCertID)
 

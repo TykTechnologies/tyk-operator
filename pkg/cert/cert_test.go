@@ -16,7 +16,7 @@ import (
 func TestCalculateFingerPrint(t *testing.T) {
 	is := is.New(t)
 
-	testCert, _, _ := generateTestCertificate()
+	testCert, _, _ := generateTestCertificate() //nolint:errcheck
 
 	testCases := map[string]struct {
 		Data  []byte
@@ -63,19 +63,18 @@ func generateTestCertificate() ([]byte, []byte, error) {
 		},
 	)
 
-	//Create certificate templet
+	// Create certificate template
 	template := x509.Certificate{
 		SerialNumber:       big.NewInt(0),
 		Subject:            pkix.Name{CommonName: "localhost"},
 		SignatureAlgorithm: x509.SHA256WithRSA,
 	}
-	//Create certificate using templet
+	// Create certificate using template
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
 	if err != nil {
 		return nil, nil, err
-
 	}
-	//pem encoding of certificate
+	// PEM encoding of certificate
 	certPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "CERTIFICATE",
