@@ -755,7 +755,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				if !ok {
 					eval.Fail()
 				}
-				certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
+				certFingerPrint, _ := cert.CalculateFingerPrint(certPemBytes)
 
 				opConfSecret := v1.Secret{}
 				err = client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
@@ -888,7 +888,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			certPemBytes, ok := tlsSecret.Data["tls.crt"]
 			eval.True(ok)
 
-			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
+			certFingerPrint, _ := cert.CalculateFingerPrint(certPemBytes)
 			calculatedCertID := tykOrg + certFingerPrint
 
 			err = wait.For(func() (done bool, err error) {

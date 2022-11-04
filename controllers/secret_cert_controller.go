@@ -76,7 +76,12 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 
 			orgID := env.Org
-			certFingerPrint := cert.CalculateFingerPrint(certPemBytes)
+
+			certFingerPrint, err := cert.CalculateFingerPrint(certPemBytes)
+			if err != nil {
+				log.Error(err, "Failed to delete Tyk certificate")
+				return ctrl.Result{}, nil
+			}
 
 			certID := orgID + certFingerPrint
 
