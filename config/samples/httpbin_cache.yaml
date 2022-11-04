@@ -27,8 +27,6 @@ spec:
           cache:
             - /get
             - /anything
-            - /delay
-            - /status
   cache_options:
 #    cache_all_safe_requests: false
 #    cache_by_headers: []
