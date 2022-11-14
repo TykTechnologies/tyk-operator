@@ -52,26 +52,3 @@ spec:
                 Content-Type: "application/json"
               act_on: false
               delete_headers: [ ]
-
-#curl http://localhost:8081/httpbin-transform/anything -X POST -d '{"foo": "bar"}' -H 'Content-Type: application/json'
-#  {
-#    "args": {},
-#    "data": "{\"bar\": \"bar\"}",
-#    "files": {},
-#    "form": {},
-#    "headers": {
-#      "Accept": "*/*",
-#      "Accept-Encoding": "gzip",
-#      "Content-Length": "14",
-#      "Content-Type": "application/json",
-#      "Host": "httpbin.org",
-#      "User-Agent": "curl/7.71.1",
-#      "X-Amzn-Trace-Id": "Root=1-5f7b9a0c-38521f504d5e3ff521049ce7"
-#    },
-#    "json": {
-#      "bar": "bar"
-#    },
-#    "method": "POST",
-#    "origin": "::1, 82.47.141.120",
-#    "url": "http://httpbin.org/anything"
-#  }

@@ -35,14 +35,3 @@ spec:
               samples: 4
               # createOrUpdate failure  {"ApiDefinition": "default/httpbin-timeout-breaker", "error": "unable to create api: API Returned error: {\"Status\":\"Error\",\"Message\":\"Request body malformed\",\"Meta\":null} (code: 403)"
               threshold_percent: "0.5" # Tyk Dashboard API doesn't support strings.
-
-#  curl http://localhost:8081/httpbin-timeout/delay/3 -i
-#  HTTP/1.1 504 Gateway Timeout
-#Content-Type: application/json
-#X-Generator: tyk.io
-#Date: Tue, 06 Oct 2020 07:43:48 GMT
-#Content-Length: 57
-#
-#  {
-#    "error": "Upstream service reached hard timeout."
-#  }
