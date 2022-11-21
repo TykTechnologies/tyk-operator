@@ -1,0 +1,21 @@
+# Here we are creating an API definition with basic authentication for httpbin 
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-basic-auth
+spec:
+  name: Httpbin Basic Authentication
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+  use_basic_auth: true 
