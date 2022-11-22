@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      subgraph: users
+  template:
+    metadata:
+      labels:
+        subgraph: users
+    spec:
+      containers:
+        - image: zalbiraw/go-api-test-service:v1.0.0
+          imagePullPolicy: IfNotPresent
+          name: countries
+          command:
+            - ./users/server
+          ports:
+            - containerPort: 4001
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: users
+  labels:
+    subgraph: users
+    discovery.tyk.io: subgraph
+spec:
+  ports:
+    - name: http
+      port: 4001
+      targetPort: 4001
+  selector:
+    subgraph: users
+
+---
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: users
+spec:
+  name: Users Subgraph
+  protocol: "http"
+  do_not_track: false
+  use_keyless: true
+  active: true
+  internal: true
+  graphql:
+    enabled: true
+    execution_mode: subgraph
+    graph_ref: users
+    version: "2"
+    playground:
+      enabled: false
+      path: ""
+  proxy:
+    target_url: http://users.federation.svc:4001/query
+    listen_path: /
+    disable_strip_slash: true

@@ -1,4 +1,5 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
 - tyk_v1alpha1_portalconfig.yaml
+- _v1_endpoints.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

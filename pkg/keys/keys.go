@@ -2,6 +2,7 @@ package keys
 
 // finalizers
 const (
+	EndpointsFinalizerName            = "finalizers.tyk.io/endpoints"
 	ApiDefFinalizerName               = "finalizers.tyk.io/apidefinition"
 	ApiDefTemplateFinalizerName       = "finalizers.tyk.io/template"
 	PortalAPICatalogueFinalizerName   = "finalizers.tyk.io/portalapicatalogue"
