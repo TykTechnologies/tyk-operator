@@ -102,7 +102,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Security - Ignore list            | ✅        | v0.8.2         | -                                              | [Sample](./../config/samples/httpbin_ignored.yaml) |
 | Transform - Internal              | ⚠️        | v0.1           | Untested                                       | |
 | Transform - Method                | ✅        | v0.5           | -                                              | [Sample](../bdd/custom_resources/transform/method.yaml) |
-| Transform - Mock                  | ✅        | v0.12           | -                                             | [Sample](../config/samples/httpbin_mock.yaml)|
+| Transform - Mock                  | ✅        | v0.1           | -                                             | [Sample](../config/samples/httpbin_mock.yaml)|
 | Transform - Request Body          | ✅        | v0.1           | -                                              | [Sample](../config/samples/httpbin_transform.yaml) |
 | Transform - Response Body         | ✅        | v0.1           | -                                              | [Sample](../config/samples/httpbin_transform.yaml) |
 | Transform - Request Body JQ       | ⚠️        | v0.1           | Untested - Requires JQ on Gateway Docker Image | |
