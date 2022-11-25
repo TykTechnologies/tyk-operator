@@ -1,3 +1,22 @@
+/*
+
+
+Licensed under the Mozilla Public License (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.mozilla.org/en-US/MPL/2.0/
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Please note that SecurityPolicies API is available from v4 for Tyk GW (OSS). Therefore, tests for Tyk CE can only
+run versions greater than v4.
+
+*/
 package integration
 
 import (
@@ -10,10 +29,8 @@ import (
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/version"
-	ctrl "sigs.k8s.io/controller-runtime"
-	cr "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -21,23 +38,17 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-// Please note that SecurityPolicies API is available from v4 for Tyk GW (OSS). Therefore, tests for Tyk CE can only
-// run versions greater than v4.
-
 func TestSecurityPolicy(t *testing.T) {
 	const (
 		opNs    = "tyk-operator-system"
 		apiName = "httpbin-policies"
-
-		supportedMajorTykVersion = uint(4)
 	)
 
 	var (
-		apiDef    *v1alpha1.ApiDefinition
-		apiDefRec controllers.ApiDefinitionReconciler
-		pol       *v1alpha1.SecurityPolicy
-		policyRec controllers.SecurityPolicyReconciler
-		tykEnv    environmet.Env
+		apiDef *v1alpha1.ApiDefinition
+		pol    *v1alpha1.SecurityPolicy
+		tykEnv environmet.Env
+		cl     ctrl.Client
 	)
 
 	securityPolicyFeatures := features.New("SecurityPolicy CR must establish correct links").
@@ -59,22 +70,8 @@ func TestSecurityPolicy(t *testing.T) {
 			}
 
 			// Create SecurityPolicy Reconciler.
-			cl, err := createTestClient(c.Client())
+			cl, err = createTestClient(c.Client())
 			eval.NoErr(err)
-
-			policyRec = controllers.SecurityPolicyReconciler{
-				Client: cl,
-				Log:    log.NullLogger{},
-				Scheme: cl.Scheme(),
-				Env:    tykEnv,
-			}
-
-			apiDefRec = controllers.ApiDefinitionReconciler{
-				Client: cl,
-				Log:    log.NullLogger{},
-				Scheme: cl.Scheme(),
-				Env:    tykEnv,
-			}
 
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
@@ -82,7 +79,7 @@ func TestSecurityPolicy(t *testing.T) {
 			apiDef = generateApiDef(testNs, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.ObjectMeta.Name = apiName
 			})
-			_, err = util.CreateOrUpdate(ctx, apiDefRec.Client, apiDef, func() error {
+			_, err = util.CreateOrUpdate(ctx, cl, apiDef, func() error {
 				return nil
 			})
 			eval.NoErr(err)
@@ -98,9 +95,10 @@ func TestSecurityPolicy(t *testing.T) {
 				}
 			},
 			)
-			_, err = util.CreateOrUpdate(ctx, policyRec.Client, pol, func() error {
+			_, err = util.CreateOrUpdate(ctx, cl, pol, func() error {
 				return nil
 			})
+			eval.NoErr(err)
 
 			return ctx
 		}).
@@ -108,27 +106,10 @@ func TestSecurityPolicy(t *testing.T) {
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 				eval := is.New(t)
 
-				// Wait for reconciliation of ApiDefinition CR.
 				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDef, func(object k8s.Object) bool {
-						_, err := apiDefRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDef)})
-						return err == nil
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				// Wait for reconciliation of SecurityPolicy CR; so that, the SecurityPolicy CR is updated.
-				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(pol, func(object k8s.Object) bool {
-						_, err := policyRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(pol)})
-						if err != nil {
-							return false
-						}
-
-						return pol.Spec.ID != "" && pol.Spec.OrgID == policyRec.Env.Org &&
-							pol.Status.PolID == controllers.ParsePolicyID(policyRec.Env.Mode, &pol.Spec)
+						return pol.Spec.ID != "" && pol.Spec.OrgID == tykEnv.Org &&
+							pol.Status.PolID == controllers.ParsePolicyID(tykEnv.Mode, &pol.Spec)
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -138,7 +119,6 @@ func TestSecurityPolicy(t *testing.T) {
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
-				// After reconciliation, check that ApiDefinition CR is updated according to SecurityPolicy CR.
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDef, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)

@@ -234,7 +234,8 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	// although policy.status.ID is an empty string, which triggers policy create API call, we cannot create a policy on
 	// the dashboard due to duplicated policy name. To resolve this problem, check if policy exists before creating it.
 	// If the policy exists, just update it with spec. Otherwise, create it.
-	if _, err = klient.Universal.Portal().Policy().Get(ctx, spec.MID); err != nil {
+	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, spec.MID)
+	if err != nil || existingSpec == nil || existingSpec.MID == "" {
 		r.Log.Info("Failed to find the policy in Tyk, "+
 			"trying to create the policy", "Policy ID", spec.MID)
 
