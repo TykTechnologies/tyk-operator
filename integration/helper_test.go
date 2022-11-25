@@ -21,6 +21,7 @@ const (
 	testSubGraphCRMetaName = "test-subgraph"
 	testSubGraphSchema     = "test-schema"
 	testSubGraphSDL        = "test-SDL"
+	testSecurityPolicyName = "test-pol"
 )
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
@@ -61,6 +62,20 @@ func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1
 	}
 
 	return &apiDef
+}
+
+func generateSecurityPolicy(ns string, mutateFn func(policy *v1alpha1.SecurityPolicy)) *v1alpha1.SecurityPolicy {
+	var pol v1alpha1.SecurityPolicy
+
+	pol.ObjectMeta.Name = testSecurityPolicyName
+	pol.ObjectMeta.Namespace = ns
+	pol.Spec.State = "active"
+
+	if mutateFn != nil {
+		mutateFn(&pol)
+	}
+
+	return &pol
 }
 
 func generateSubGraphCR(namespace string, mutateFn func(graph *v1alpha1.SubGraph)) *v1alpha1.SubGraph {

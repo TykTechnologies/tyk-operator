@@ -42,6 +42,8 @@ gateway:
       value: true
     - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
       value: "tcp://grpc-plugin.tykce-control-plane.svc.cluster.local:9999"
+    - name: TYK_GW_POLICIES_POLICYPATH
+      value: "/mnt/tyk-gateway/policies"
 
 # If pump is enabled the Gateway will create and collect analytics data to send to a data store of your choice
 # These can be set up in the pump config. The possible pump configs can be found here: https://github.com/TykTechnologies/tyk-pump#configuration
