@@ -13,8 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Please note that SecurityPolicies API is available from v4 for Tyk GW (OSS). Therefore, tests for Tyk CE can only
-run versions greater than v4.
+Please note that SecurityPolicies API is available from v4.1 for Tyk GW (OSS). Therefore, tests for Tyk CE can only
+run versions above v4.0.
 
 */
 package integration
@@ -42,6 +42,9 @@ func TestSecurityPolicy(t *testing.T) {
 	const (
 		opNs    = "tyk-operator-system"
 		apiName = "httpbin-policies"
+
+		// minPolicyApiVersion indicates minimum version of Tyk Gateway (CE) that includes Policy API.
+		minPolicyApiVersion = "v4.1"
 	)
 
 	var (
@@ -65,8 +68,9 @@ func TestSecurityPolicy(t *testing.T) {
 
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
 			eval.NoErr(err)
-			if tykEnv.Environment.Mode == "ce" && v.Major() < 4 {
-				t.Skip("Gateway API does not include Policy API in versions smaller than 4.")
+			if tykEnv.Environment.Mode == "ce" &&
+				v.Major() < 4 || v.LessThan(version.MustParseGeneric(minPolicyApiVersion)) {
+				t.Skip("Gateway API does not include the Policy API in versions smaller than v4.1.")
 			}
 
 			// Create SecurityPolicy Reconciler.
