@@ -239,12 +239,18 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 			return err
 		}
 	} else {
+		if spec.MID == "" {
+			spec.MID = spec.ID
+		}
+
 		if err := klient.Universal.Portal().Policy().Update(ctx, spec); err != nil {
 			r.Log.Error(
 				err,
 				"Failed to update policy",
 				"Name", spec.Name,
 			)
+
+			return err
 		}
 	}
 
