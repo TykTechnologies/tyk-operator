@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	errors2 "errors"
 	"fmt"
 	"time"
 
@@ -90,7 +91,8 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		// update access rights
 		r.Log.Info("updating access rights")
 		if policy.Status.PolID == "" {
-			return r.create(ctx, policy)
+			err = r.create(ctx, policy)
+			return err
 		}
 
 		return r.update(ctx, policy)
@@ -105,9 +107,14 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{RequeueAfter: reqA}, err
 }
 
-// returns a copy of SecurityPolicySpec with AccessRightsArray updated
-func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
-	spec := policy.Spec.DeepCopy()
+// spec returns a copy of SecurityPolicySpec with AccessRightsArray updated. As a result, each AccessRightsArray
+// element contains the K8s details for each ApiDefinition. It returns an error if ApiDefinition does not exist
+// in the K8s environment.
+func (r *SecurityPolicyReconciler) spec(
+	ctx context.Context,
+	s *tykv1.SecurityPolicySpec,
+) (*tykv1.SecurityPolicySpec, error) {
+	spec := s.DeepCopy()
 	spec.Context = nil
 
 	for i := 0; i < len(spec.AccessRightsArray); i++ {
@@ -120,16 +127,32 @@ func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.Secur
 	return spec, nil
 }
 
-func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
-	a *tykv1.AccessDefinition,
-) error {
-	api := &tykv1.ApiDefinition{}
+func (r *SecurityPolicyReconciler) parseExistingPolicyAccessRight(existingSpec *tykv1.SecurityPolicySpec) error {
+	for _, ad := range existingSpec.AccessRightsArray {
+		ns, name := decodeID(ad.APIID)
+		if name == "" || ns == "" {
+			e := errors2.New("failed to decode api_id of ApiDefinition from existing SecurityPolicy's spec")
+			r.Log.Error(e, "api_id", ad.APIID, "api_name", ad.APIName)
 
-	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
+			return e
+		}
+
+		ad.Name = name
+		ad.Namespace = ns
+	}
+
+	return nil
+}
+
+// updateAccess updates given AccessDefinition's APIID and APIName fields based on ApiDefinition CR that is referred
+// in the AccessDefinition. So that, it includes k8s details of the referred ApiDefinitions.
+func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.AccessDefinition) error {
+	api := &tykv1.ApiDefinition{}
+	if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
 			r.Log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue",
-				"Name", a.Name,
-				"Namespace", a.Namespace,
+				"Name", ad.Name,
+				"Namespace", ad.Namespace,
 			)
 
 			return err
@@ -144,8 +167,8 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 		return opclient.ErrNotFound
 	}
 
-	a.APIID = api.Status.ApiID
-	a.APIName = api.Spec.Name
+	ad.APIID = api.Status.ApiID
+	ad.APIName = api.Spec.Name
 
 	return nil
 }
@@ -194,7 +217,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 
 	policy.Spec.MID = policy.Status.PolID
 
-	spec, err := r.spec(ctx, policy)
+	spec, err := r.spec(ctx, &policy.Spec)
 	if err != nil {
 		return err
 	}
@@ -220,58 +243,74 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
-	r.Log.Info("Creating  policy")
-
-	spec, err := r.spec(ctx, policy)
-	if err != nil {
-		return err
-	}
+	r.Log.Info("Creating a policy")
 
 	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment. Therefore,
 	// although policy.status.ID is an empty string, which triggers policy create API call, we cannot create a policy on
 	// the dashboard due to duplicated policy name. To resolve this problem, check if policy exists before creating it.
 	// If the policy exists, just update it with spec. Otherwise, create it.
-	if _, err = klient.Universal.Portal().Policy().Get(ctx, spec.ID); err != nil {
+	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
+	if err != nil || existingSpec == nil || existingSpec.MID == "" {
+		spec, err := r.spec(ctx, &policy.Spec)
+		if err != nil {
+			return err
+		}
+
+		r.Log.Info("Creating a new policy")
+
 		err = klient.Universal.Portal().Policy().Create(ctx, spec)
 		if err != nil {
-			r.Log.Error(err, "Failed to create policy")
+			r.Log.Error(err, "Failed to create policy", "policy", client.ObjectKeyFromObject(policy))
 
 			return err
 		}
+
+		policy.Spec.MID = spec.MID
 	} else {
-		if spec.MID == "" {
-			spec.MID = spec.ID
+		err = r.parseExistingPolicyAccessRight(existingSpec)
+		if err != nil {
+			return err
 		}
 
-		if err := klient.Universal.Portal().Policy().Update(ctx, spec); err != nil {
+		s, err := r.spec(ctx, existingSpec)
+		if err != nil {
+			return err
+		}
+
+		s.ID = policy.Spec.ID
+		policy.Spec = *s
+
+		if err := klient.Universal.Portal().Policy().Update(ctx, s); err != nil {
 			r.Log.Error(
 				err,
 				"Failed to update policy",
-				"Name", spec.Name,
+				"Policy", client.ObjectKeyFromObject(policy),
 			)
 
 			return err
 		}
 	}
 
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
-		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, target model.Target) {
+		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, target)
 	})
-
 	if err != nil {
-		r.Log.Error(err, "failed to update linkedAPI status")
+		r.Log.Error(err,
+			"failed to update linkedAPI status",
+			"policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return err
 	}
 
 	r.Log.Info("Successful created Policy")
 
-	policy.Spec.MID = spec.MID
 	policy.Status.PolID = policy.Spec.MID
 
 	return r.Status().Update(ctx, policy)
 }
 
-// updateLinkedAPI updates the status of api definitions associated with this
-// policy.
+// updateLinkedAPI updates the status of api definitions associated with this policy.
 func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *tykv1.SecurityPolicy,
 	fn func(*tykv1.ApiDefinitionStatus, model.Target),
 ) error {
