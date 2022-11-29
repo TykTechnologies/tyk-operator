@@ -96,7 +96,7 @@ func main() {
 
 	options := ctrl.Options{Scheme: scheme, Namespace: env.Namespace}
 
-	if snapshotFile != "" || separate {
+	if snapshotFile != "" || separate || policyFile != "" {
 		// MetricsBindAddress can be set to "0" to disable the metrics serving.
 		options.MetricsBindAddress = "0"
 	}
@@ -123,7 +123,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if snapshotFile != "" || separate {
+	if snapshotFile != "" || separate || policyFile != "" {
 		snapshotLog := ctrl.Log.WithName("snapshot").WithName("ApiDefinition")
 		ctx := context.Background()
 

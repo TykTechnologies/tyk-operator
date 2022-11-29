@@ -168,56 +168,58 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		return nil
 	}
 
-	f, err := os.Create(apiDefinitionsFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	bw := bufio.NewWriter(f)
-
-	// Output file will contain ApiDefinition based on specified category.
-	if category != "" {
-		category = strings.TrimSpace(category)
-		if !strings.HasPrefix(category, "#") {
-			category = fmt.Sprintf("#%s", category)
+	if apiDefinitionsFile != "" {
+		f, err := os.Create(apiDefinitionsFile)
+		if err != nil {
+			return err
 		}
+		defer f.Close()
 
-		fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
+		bw := bufio.NewWriter(f)
 
-		for i, v := range apiDefSpecList.Apis {
-			if contains := strings.Contains(v.Name, category); !contains {
-				continue
+		// Output file will contain ApiDefinition based on specified category.
+		if category != "" {
+			category = strings.TrimSpace(category)
+			if !strings.HasPrefix(category, "#") {
+				category = fmt.Sprintf("#%s", category)
 			}
 
-			if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
-				return err
-			}
-		}
+			fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
 
-		if policiesFile != "" {
-			policyFile, err := os.Create(policiesFile)
-			if err != nil {
-				return err
-			}
+			for i, v := range apiDefSpecList.Apis {
+				if contains := strings.Contains(v.Name, category); !contains {
+					continue
+				}
 
-			defer policyFile.Close()
-			pw := bufio.NewWriter(policyFile)
-
-			for i := 0; i < len(policiesList); i++ {
-				if err := exportPolicy(i, pw, policiesList[i]); err != nil {
+				if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
 					return err
 				}
 			}
+
+			if policiesFile != "" {
+				policyFile, err := os.Create(policiesFile)
+				if err != nil {
+					return err
+				}
+
+				defer policyFile.Close()
+				pw := bufio.NewWriter(policyFile)
+
+				for i := 0; i < len(policiesList); i++ {
+					if err := exportPolicy(i, pw, policiesList[i]); err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
 		}
 
-		return nil
-	}
-
-	// Output file will contain all ApiDefinitions without checking any category.
-	for i, v := range apiDefSpecList.Apis {
-		if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
-			return err
+		// Output file will contain all ApiDefinitions without checking any category.
+		for i, v := range apiDefSpecList.Apis {
+			if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
+				return err
+			}
 		}
 	}
 
