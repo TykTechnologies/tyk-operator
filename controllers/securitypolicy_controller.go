@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	errors2 "errors"
 	"fmt"
 	"time"
 
@@ -131,26 +130,6 @@ func (r *SecurityPolicyReconciler) spec(
 	return spec, nil
 }
 
-// updateExistingPolicyAccessRight updates existing SecurityPolicy, which means SecurityPolicy objects created on
-// Tyk but not on K8s. So that, the existing object's AccessRightsArray will include the K8s details (namespace/name)
-// of ApiDefinition objects.
-func (r *SecurityPolicyReconciler) updateExistingPolicyAccessRight(existingSpec *tykv1.SecurityPolicySpec) error {
-	for _, ad := range existingSpec.AccessRightsArray {
-		ns, name := decodeID(ad.APIID)
-		if name == "" || ns == "" {
-			e := errors2.New("failed to decode api_id of ApiDefinition from existing SecurityPolicy's spec")
-			r.Log.Error(e, "api_id", ad.APIID, "api_name", ad.APIName)
-
-			return e
-		}
-
-		ad.Name = name
-		ad.Namespace = ns
-	}
-
-	return nil
-}
-
 // updateAccess updates given AccessDefinition's APIID and APIName fields based on ApiDefinition CR that is referred
 // in the AccessDefinition. So that, it includes k8s details of the referred ApiDefinitions.
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.AccessDefinition) error {
@@ -249,13 +228,15 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	return nil
 }
 
-func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
+func (r *SecurityPolicyReconciler) create(
+	ctx context.Context,
+	policy *tykv1.SecurityPolicy,
+) (*tykv1.SecurityPolicySpec, error) {
 	r.Log.Info("Creating a policy")
 
-	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment. Therefore,
-	// although policy.status.ID is an empty string, which triggers policy create API call, we cannot create a policy on
-	// the dashboard due to duplicated policy name. To resolve this problem, check if policy exists before creating it.
-	// If the policy exists, just update it with spec. Otherwise, create it.
+	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment.
+	// If policy does not exist on Tyk side, create it. Otherwise, get AccessRightsArray from SecurityPolicy CR
+	// and update existing policy's spec.
 	spec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
 	if err != nil || spec == nil || spec.MID == "" {
 		spec, err = r.spec(ctx, &policy.Spec)
@@ -274,10 +255,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 		policy.Spec.MID = spec.MID
 	} else {
-		err = r.updateExistingPolicyAccessRight(spec)
-		if err != nil {
-			return nil, err
-		}
+		spec.AccessRightsArray = policy.Spec.AccessRightsArray
 
 		spec, err = r.spec(ctx, spec)
 		if err != nil {
