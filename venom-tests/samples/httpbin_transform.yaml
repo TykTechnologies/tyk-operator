@@ -1,0 +1,54 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-transform
+spec:
+  name: httpbin-transform
+  use_keyless: true
+  protocol: http
+  active: true
+  org_id: acme.com
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin-transform
+    strip_listen_path: true
+  response_processors:
+    - name: response_body_transform
+    - name: header_injector
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        use_extended_paths: true
+        paths:
+          black_list: [ ]
+          ignored: [ ]
+          white_list: [ ]
+        extended_paths:
+          transform:
+            - method: POST
+              path: /anything
+              template_data:
+                enable_session: false
+                input_type: json
+                template_mode: blob
+                # base64 encoded template
+                template_source: eyJiYXIiOiAie3suZm9vfX0ifQ==
+          transform_response:
+            - method: GET
+              path: /xml
+              template_data:
+                enable_session: false
+                input_type: xml
+                template_mode: blob
+                # base64 encoded template
+                template_source: e3sgLiB8IGpzb25NYXJzaGFsIH19
+          transform_response_headers:
+            - method: GET
+              path: /xml
+              add_headers:
+                Content-Type: "application/json"
+              act_on: false
+              delete_headers: [ ]
