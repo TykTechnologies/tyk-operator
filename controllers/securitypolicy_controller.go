@@ -88,11 +88,15 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		if policy.Spec.OrgID == "" {
 			policy.Spec.OrgID = env.Org
 		}
-		// update access rights
-		r.Log.Info("updating access rights")
+
 		if policy.Status.PolID == "" {
-			err = r.create(ctx, policy)
-			return err
+			newSpec, err := r.create(ctx, policy)
+			if err != nil {
+				return err
+			}
+
+			policy.Spec = *newSpec
+			return nil
 		}
 
 		return r.update(ctx, policy)
@@ -127,7 +131,10 @@ func (r *SecurityPolicyReconciler) spec(
 	return spec, nil
 }
 
-func (r *SecurityPolicyReconciler) parseExistingPolicyAccessRight(existingSpec *tykv1.SecurityPolicySpec) error {
+// updateExistingPolicyAccessRight updates existing SecurityPolicy, which means SecurityPolicy objects created on
+// Tyk but not on K8s. So that, the existing object's AccessRightsArray will include the K8s details (namespace/name)
+// of ApiDefinition objects.
+func (r *SecurityPolicyReconciler) updateExistingPolicyAccessRight(existingSpec *tykv1.SecurityPolicySpec) error {
 	for _, ad := range existingSpec.AccessRightsArray {
 		ns, name := decodeID(ad.APIID)
 		if name == "" || ns == "" {
@@ -242,18 +249,18 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 	return nil
 }
 
-func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
 	r.Log.Info("Creating a policy")
 
 	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment. Therefore,
 	// although policy.status.ID is an empty string, which triggers policy create API call, we cannot create a policy on
 	// the dashboard due to duplicated policy name. To resolve this problem, check if policy exists before creating it.
 	// If the policy exists, just update it with spec. Otherwise, create it.
-	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
-	if err != nil || existingSpec == nil || existingSpec.MID == "" {
-		spec, err := r.spec(ctx, &policy.Spec)
+	spec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
+	if err != nil || spec == nil || spec.MID == "" {
+		spec, err = r.spec(ctx, &policy.Spec)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		r.Log.Info("Creating a new policy")
@@ -262,32 +269,31 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		if err != nil {
 			r.Log.Error(err, "Failed to create policy", "policy", client.ObjectKeyFromObject(policy))
 
-			return err
+			return nil, err
 		}
 
 		policy.Spec.MID = spec.MID
 	} else {
-		err = r.parseExistingPolicyAccessRight(existingSpec)
+		err = r.updateExistingPolicyAccessRight(spec)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		s, err := r.spec(ctx, existingSpec)
+		spec, err = r.spec(ctx, spec)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		s.ID = policy.Spec.ID
-		policy.Spec = *s
+		spec.ID = policy.Spec.ID
 
-		if err := klient.Universal.Portal().Policy().Update(ctx, s); err != nil {
+		if err := klient.Universal.Portal().Policy().Update(ctx, spec); err != nil {
 			r.Log.Error(
 				err,
 				"Failed to update policy",
 				"Policy", client.ObjectKeyFromObject(policy),
 			)
 
-			return err
+			return nil, err
 		}
 	}
 
@@ -300,14 +306,19 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 			"policy", client.ObjectKeyFromObject(policy),
 		)
 
-		return err
+		return nil, err
 	}
 
 	r.Log.Info("Successful created Policy")
 
 	policy.Status.PolID = policy.Spec.MID
 
-	return r.Status().Update(ctx, policy)
+	err = r.Status().Update(ctx, policy)
+	if err != nil {
+		return nil, err
+	}
+
+	return spec, nil
 }
 
 // updateLinkedAPI updates the status of api definitions associated with this policy.
