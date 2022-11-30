@@ -1,0 +1,12 @@
+executor: applyManifests
+input:
+  filename: {}
+steps: 
+  - type: exec
+    script: |
+      kubectl apply -f '{{.input.filename}}'
+      sleep 20
+    assertions:
+    - result.code ShouldEqual 0
+output:
+    code: '{{.result.code}}'
