@@ -542,7 +542,9 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		r.Log.Info("deleting api")
 
 		_, err = klient.Universal.Api().Delete(ctx, desired.Status.ApiID)
-		if err != nil {
+		if err != nil && err.Error() == "Resource not found" {
+			r.Log.Error(err, "ignoring not existing api on delete", "api_id", desired.Status.ApiID)
+		} else if err != nil {
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
