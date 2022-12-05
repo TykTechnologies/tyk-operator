@@ -81,10 +81,12 @@ func TestSecurityPolicyCreate(t *testing.T) {
 				_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policy)})
 				return err == nil, err
 			})
+			eval.NoErr(err)
 
 			err = wait.For(
 				conditions.New(c.Client().Resources()).ResourceMatch(&policy, func(object k8s.Object) bool {
-					pol := object.(*v1alpha1.SecurityPolicy)
+					pol, ok := object.(*v1alpha1.SecurityPolicy)
+					eval.True(ok)
 
 					eval.True(pol.Status.PolID == policy.Spec.MID)
 					return true
