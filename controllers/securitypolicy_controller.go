@@ -287,7 +287,7 @@ func (r *SecurityPolicyReconciler) create(
 		return nil, err
 	}
 
-	r.Log.Info("Successful created Policy")
+	r.Log.Info("Successfully created Policy")
 
 	policy.Status.PolID = policy.Spec.MID
 
