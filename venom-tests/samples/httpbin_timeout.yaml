@@ -1,0 +1,37 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-timeout-breaker
+spec:
+  name: httpbin-timeout-breaker
+  use_keyless: true
+  protocol: http
+  active: true
+  org_id: acme.com
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin-timeout-breaker
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+        use_extended_paths: true
+        paths:
+          black_list: []
+          ignored: []
+          white_list: []
+        extended_paths:
+          hard_timeouts:
+            - method: GET
+              path: /delay/{delay_seconds}
+              timeout: 2
+          circuit_breakers:
+            - method: GET
+              path: /status/500
+              return_to_service_after: 10
+              samples: 4
+              # createOrUpdate failure  {"ApiDefinition": "default/httpbin-timeout-breaker", "error": "unable to create api: API Returned error: {\"Status\":\"Error\",\"Message\":\"Request body malformed\",\"Meta\":null} (code: 403)"
+              threshold_percent: "0.5" # Tyk Dashboard API doesn't support strings.

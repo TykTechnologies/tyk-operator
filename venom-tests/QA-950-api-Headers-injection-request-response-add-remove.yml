@@ -1,0 +1,28 @@
+name:  Test Header injection for response and resquest
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_global-headers.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with Request and Response Headers add and remove
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-global-headers/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.headers ShouldNotBeEmpty 
+      - result.bodyjson.headers.foo-req ShouldEqual my-foo
+      - result.bodyjson.headers.bar-req ShouldEqual my-bar
+      - result.headers.foo ShouldEqual Bar
+      - result.headers.Server ShouldBeEmpty
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_global-headers.yaml
+      assertions:
+      - result.code ShouldEqual 0    
