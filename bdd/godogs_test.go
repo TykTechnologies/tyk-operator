@@ -239,7 +239,7 @@ func createURL(path string) string {
 }
 
 func createDashURL(path string) string {
-	return gatewayURL + path
+	return dashboardURL + path
 }
 
 func (s *store) iRequestEndpoint(path string) error {
