@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	tykclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"sort"
 	"strconv"
 	"strings"
@@ -542,7 +543,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		r.Log.Info("deleting api")
 
 		_, err = klient.Universal.Api().Delete(ctx, desired.Status.ApiID)
-		if err != nil && err.Error() == "Resource not found" {
+		if err != nil && tykclient.IsNotFound(err) {
 			r.Log.Error(err, "ignoring nonexistent api on delete", "api_id", desired.Status.ApiID)
 		} else if err != nil {
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
