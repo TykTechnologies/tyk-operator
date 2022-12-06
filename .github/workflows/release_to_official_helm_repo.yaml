@@ -19,7 +19,7 @@ jobs:
 
       - name: Read helm chart version
         id: chart-values
-        run: echo "::set-output name=version::$(awk '/version:/ {print $2}' helm/Chart.yaml)"
+        run: echo "version=$(awk '/version:/ {print $2}' helm/Chart.yaml)" >> $GITHUB_OUTPUT
 
       - name: Package helm chart
         run: helm package helm --version ${{ steps.chart-values.outputs.version }}
