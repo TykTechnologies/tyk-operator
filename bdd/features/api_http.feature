@@ -21,10 +21,10 @@ Feature: Managing http APIs
     Then there should be a 404 http response code
 
   Scenario: Delete an already deleted API
-    Given there is a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
+    Given there is a ./custom_resources/httpbin.delete.apidefinition.yaml resource
     When i request a /api/apis/httpbin-auth-test dashboard endpoint with method DELETE
-    And then i delete a ./custom_resources/httpbin.keyless.apidefinition.yaml resource
-    Then a resource ./custom_resources/httpbin.keyless.apidefinition.yaml should not exist
+    And then i delete a ./custom_resources/httpbin.delete.apidefinition.yaml resource
+    Then a resource ./custom_resources/httpbin.delete.apidefinition.yaml should not exist
 
   Scenario: Transform xml to json
     Given there is a ./../config/samples/httpbin_transform.yaml resource
