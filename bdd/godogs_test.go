@@ -15,9 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TykTechnologies/tyk-operator/bdd/k8sutil"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cucumber/godog"
+
+	"github.com/TykTechnologies/tyk-operator/bdd/k8sutil"
 )
 
 const (
@@ -61,8 +62,11 @@ var opts = &godog.Options{
 	Format:        "pretty",
 	Tags:          "~@undone",
 }
-var gatewayURL = "http://localhost:8080"
-var dashboardURL = "http://localhost:3000"
+
+var (
+	gatewayURL   = "http://localhost:8080"
+	dashboardURL = "http://localhost:3000"
+)
 
 func init() {
 	godog.BindCommandLineFlags("godog.", opts)
@@ -303,7 +307,6 @@ func (s *store) aResourceShouldNotExist(fileName string) error {
 	err := wait(reconcileDelay)(
 		k8sutil.Get(ctx, fileName, namespace),
 	)
-
 	if err != nil {
 		return nil
 	}

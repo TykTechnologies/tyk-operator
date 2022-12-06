@@ -21,19 +21,20 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	tykclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	tykclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	"github.com/go-logr/logr"
 
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
