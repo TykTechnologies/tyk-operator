@@ -25,6 +25,7 @@ const (
 	Created OpExpect = iota + 1
 	Configured
 	Deleted
+	Got
 )
 
 func (o OpExpect) String() string {
@@ -47,6 +48,7 @@ type CMD interface {
 	Create(ctx context.Context, file, namespace string) error
 	Configure(ctx context.Context, file, namespace string) error
 	Delete(ctx context.Context, file, namespace string) error
+	Get(ctx context.Context, file, namespace string) error
 }
 
 var cmd CMD = CB{
@@ -56,6 +58,7 @@ var cmd CMD = CB{
 	DeleteNSFn:  deleteNS,
 	ConfigureFn: config,
 	DeleteFn:    del,
+	GetFn:       get,
 }
 
 func Init(ns, env string) (func() error, error) {
@@ -91,6 +94,10 @@ func Configure(ctx context.Context, file, namespace string) error {
 	return cmd.Configure(ctx, file, namespace)
 }
 
+func Get(ctx context.Context, file, namespace string) error {
+	return cmd.Get(ctx, file, namespace)
+}
+
 // CB is a helper struct satisfying CMD interface. Use the fields to provide
 // callbacks for respective CMD method call.
 type CB struct {
@@ -98,6 +105,7 @@ type CB struct {
 	CreateFn    func(ctx context.Context, file, namespace string) error
 	DeleteFn    func(ctx context.Context, file, namespace string) error
 	ConfigureFn func(ctx context.Context, file, namespace string) error
+	GetFn       func(ctx context.Context, file, namespace string) error
 	CreateNSFn  func(ctx context.Context, ns string) error
 	DeleteNSFn  func(ctx context.Context, ns string) error
 }
@@ -148,6 +156,14 @@ func (fn CB) Configure(ctx context.Context, file, namespace string) error {
 	}
 
 	return fn.ConfigureFn(ctx, file, namespace)
+}
+
+func (fn CB) Get(ctx context.Context, file, namespace string) error {
+	if fn.GetFn == nil {
+		return ErrNotImplemented
+	}
+
+	return fn.GetFn(ctx, file, namespace)
 }
 
 func runCMD(cmd *exec.Cmd) (string, error) {
@@ -203,6 +219,10 @@ func config(ctx context.Context, file, ns string) error {
 
 func del(ctx context.Context, file, ns string) error {
 	return expect(Deleted)(runFile(ctx, "delete", file, ns))
+}
+
+func get(ctx context.Context, file, ns string) error {
+	return expect(Got)(runFile(ctx, "get", file, ns))
 }
 
 func runFile(ctx context.Context, op, file, ns string) (OpExpect, error) {

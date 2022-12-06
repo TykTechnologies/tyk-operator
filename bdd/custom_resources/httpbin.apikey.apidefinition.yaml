@@ -3,6 +3,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin-auth-test
 spec:
+  api_id: httpbin-auth-test
   name: httpbin-auth-test
   use_standard_auth: true
   protocol: http

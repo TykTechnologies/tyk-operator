@@ -62,6 +62,7 @@ var opts = &godog.Options{
 	Tags:          "~@undone",
 }
 var gatewayURL = "http://localhost:8080"
+var dashboardURL = "http://localhost:3000"
 
 func init() {
 	godog.BindCommandLineFlags("godog.", opts)
@@ -120,9 +121,11 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	})
 
 	ctx.Step(`^there is a (\S+) resource$`, s.thereIsAResource)
+	ctx.Step(`^a (\S+) resource should not exist$`, s.aResourceShouldNotExist)
 	ctx.Step(`^i create a (\S+) resource$`, s.iCreateAResource)
 	ctx.Step(`^i update a (\S+) resource$`, s.iUpdateAResource)
 	ctx.Step(`^i delete a (\S+) resource$`, s.iDeleteAResource)
+	ctx.Step(`^i request (\S+) dashboard endpoint with method DELETE`, s.iRequestDeleteDashEndpoint)
 	ctx.Step(`^i request (\S+) endpoint$`, s.iRequestEndpoint)
 	ctx.Step(`^i request (\S+) endpoint with header (\S+): (\S+)$`, s.iRequestEndpointWithHeader)
 	ctx.Step(`^i request (\S+) endpoint with header (\S+): (\S+) (\d+) times$`, s.iRequestEndpointWithHeaderTimes)
@@ -231,12 +234,40 @@ func createURL(path string) string {
 	return gatewayURL + path
 }
 
+func createDashURL(path string) string {
+	return gatewayURL + path
+}
+
 func (s *store) iRequestEndpoint(path string) error {
 	return call(
 		http.MethodGet,
 		createURL(path),
 		func() io.Reader { return nil },
 		func(h *http.Request) {},
+		func(h *http.Response) error {
+			var err error
+
+			s.responseCode = h.StatusCode
+			s.responseHeaders = h.Header.Clone()
+			s.responseBody, err = io.ReadAll(h.Body)
+
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *store) iRequestDeleteDashEndpoint(path string) error {
+	return call(
+		http.MethodDelete,
+		createDashURL(path),
+		func() io.Reader { return nil },
+		func(h *http.Request) {
+			h.Header.Add("X-Tyk-Authorization", os.Getenv("TYK_ADMIN_SECRET"))
+		},
 		func(h *http.Response) error {
 			var err error
 
@@ -262,6 +293,22 @@ func (s *store) thereIsAResource(fileName string) error {
 	return wait(reconcileDelay)(
 		k8sutil.Create(ctx, fileName, namespace),
 	)
+}
+
+func (s *store) aResourceShouldNotExist(fileName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), k8sTimeout)
+
+	defer cancel()
+
+	err := wait(reconcileDelay)(
+		k8sutil.Get(ctx, fileName, namespace),
+	)
+
+	if err != nil {
+		return nil
+	}
+
+	return fmt.Errorf("a resource %s exists", fileName)
 }
 
 func (s *store) iCreateAResource(fileName string) error {
