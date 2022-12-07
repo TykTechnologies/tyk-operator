@@ -5,6 +5,7 @@ Feature: Managing API ownership
 
   Scenario: Create an api with a operator context and update it with a different operator context with different credentials, the update should not happen
     Given there is a ./custom_resources/httpbin.onwed-by-a.apidefinition.yaml resource
+    And there is a ./custom_resources/httpbin.onwed-by-b.operatorcontext.yaml resource
     When i update a ./custom_resources/httpbin.onwed-by-b.apidefinition.yaml resource
     And i request /httpbin-ownership-test-a/get endpoint
     Then there should be a 200 http response code
