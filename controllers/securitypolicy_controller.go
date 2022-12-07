@@ -150,6 +150,11 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 	}
 
 	if api.Status.ApiID == "" {
+		r.Log.Error(
+			opclient.ErrNotFound,
+			"ApiDefinition does not exist on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
+		)
+
 		return opclient.ErrNotFound
 	}
 
@@ -208,10 +213,24 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	err = klient.Universal.Portal().Policy().Update(ctx, spec)
-	if err != nil {
-		r.Log.Error(err, "Failed to update policy")
-		return err
+	// If SecurityPolicy does not exist on Tyk Side, Tyk Operator must create a Security
+	// Policy on Tyk based on k8s state. So, unintended deletions from Dashboard can be avoided.
+	_, err = klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
+	if err == nil {
+		err = klient.Universal.Portal().Policy().Update(ctx, spec)
+		if err != nil {
+			r.Log.Error(err, "Failed to update policy")
+			return err
+		}
+	} else {
+		err = klient.Universal.Portal().Policy().Create(ctx, spec)
+		if err != nil {
+			r.Log.Error(err, "failed to re-create Policy",
+				"SecurityPolicy", client.ObjectKeyFromObject(policy),
+			)
+
+			return err
+		}
 	}
 
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
