@@ -7,5 +7,5 @@ Feature: Managing API ownership
     Given there is a ./custom_resources/httpbin.owned-by-a.apidefinition.yaml resource
     And there is a ./custom_resources/httpbin.owned-by-b.operatorcontext.yaml resource
     When i update a ./custom_resources/httpbin.owned-by-b.apidefinition.yaml resource
-    And i request /httpbin-ownership-test-a/get endpoint
+    And i request /httpbin-ownership-test-a endpoint
     Then there should be a 200 http response code
