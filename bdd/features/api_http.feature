@@ -22,7 +22,7 @@ Feature: Managing http APIs
 
   Scenario: Delete an already deleted API
     Given there is a ./custom_resources/httpbin.delete.apidefinition.yaml resource
-    When i request /api/apis/httpbin-delete-test dashboard endpoint with method DELETE
+    When i request /tyk/apis/httpbin-delete-test dashboard endpoint with method DELETE
     And i delete a ./custom_resources/httpbin.delete.apidefinition.yaml resource
     Then a ./custom_resources/httpbin.delete.apidefinition.yaml resource should not exist
 

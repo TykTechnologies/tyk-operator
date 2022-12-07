@@ -65,10 +65,7 @@ var opts = &godog.Options{
 	Randomize:     -1,
 }
 
-var (
-	gatewayURL   = "http://localhost:8080"
-	dashboardURL = "http://localhost:3000"
-)
+var gatewayURL = "http://localhost:8080"
 
 func init() {
 	godog.BindCommandLineFlags("godog.", opts)
@@ -240,10 +237,6 @@ func createURL(path string) string {
 	return gatewayURL + path
 }
 
-func createDashURL(path string) string {
-	return dashboardURL + path
-}
-
 func (s *store) iRequestEndpoint(path string) error {
 	return call(
 		http.MethodGet,
@@ -269,7 +262,7 @@ func (s *store) iRequestEndpoint(path string) error {
 func (s *store) iRequestDeleteDashEndpoint(path string) error {
 	return call(
 		http.MethodDelete,
-		createDashURL(path),
+		createURL(path),
 		func() io.Reader { return nil },
 		func(h *http.Request) {
 			h.Header.Add("X-Tyk-Authorization", os.Getenv("TYK_ADMIN_SECRET"))
