@@ -1,14 +1,14 @@
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
-  name: httpbin-auth-test
+  name: httpbin-delete-test
 spec:
-  api_id: httpbin-auth-test
-  name: httpbin-auth-test
+  api_id: httpbin-delete-test
+  name: httpbin-delete-test
   use_standard_auth: true
   protocol: http
   active: true
   proxy:
     target_url: http://httpbin.default.svc:8000
-    listen_path: /httpbin-auth-test
+    listen_path: /httpbin-delete-test
     strip_listen_path: true

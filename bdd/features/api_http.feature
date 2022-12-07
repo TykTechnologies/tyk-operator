@@ -22,9 +22,9 @@ Feature: Managing http APIs
 
   Scenario: Delete an already deleted API
     Given there is a ./custom_resources/httpbin.delete.apidefinition.yaml resource
-    When i request a /api/apis/httpbin-auth-test dashboard endpoint with method DELETE
-    And then i delete a ./custom_resources/httpbin.delete.apidefinition.yaml resource
-    Then a resource ./custom_resources/httpbin.delete.apidefinition.yaml should not exist
+    When i request /api/apis/httpbin-delete-test dashboard endpoint with method DELETE
+    And i delete a ./custom_resources/httpbin.delete.apidefinition.yaml resource
+    Then a ./custom_resources/httpbin.delete.apidefinition.yaml resource should not exist
 
   Scenario: Transform xml to json
     Given there is a ./../config/samples/httpbin_transform.yaml resource
