@@ -61,7 +61,6 @@ var opts = &godog.Options{
 	StopOnFailure: true,
 	Format:        "pretty",
 	Tags:          "~@undone",
-	Strict:        true,
 	Randomize:     -1,
 }
 
