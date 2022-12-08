@@ -98,7 +98,13 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return nil
 		}
 
-		return r.update(ctx, policy)
+		newSpec, err := r.update(ctx, policy)
+		if err != nil {
+			return err
+		}
+
+		policy.Spec = *newSpec
+		return nil
 	})
 
 	if err == nil {
@@ -203,14 +209,17 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 	return nil
 }
 
-func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.SecurityPolicy) error {
-	r.Log.Info("Updating  policy")
+func (r *SecurityPolicyReconciler) update(
+	ctx context.Context,
+	policy *tykv1.SecurityPolicy,
+) (*tykv1.SecurityPolicySpec, error) {
+	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
 
 	policy.Spec.MID = policy.Status.PolID
 
 	spec, err := r.spec(ctx, &policy.Spec)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// If SecurityPolicy does not exist on Tyk Side, Tyk Operator must create a Security
@@ -220,7 +229,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
 			r.Log.Error(err, "Failed to update policy")
-			return err
+			return nil, err
 		}
 	} else {
 		err = klient.Universal.Portal().Policy().Create(ctx, spec)
@@ -229,22 +238,23 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.Sec
 				"SecurityPolicy", client.ObjectKeyFromObject(policy),
 			)
 
-			return err
+			return nil, err
 		}
+
+		policy.Status.PolID = spec.MID
 	}
 
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	klient.Universal.HotReload(ctx)
 	r.Log.Info("Successfully updated Policy")
 
-	return nil
+	return spec, r.Status().Update(ctx, policy)
 }
 
 func (r *SecurityPolicyReconciler) create(
@@ -286,7 +296,7 @@ func (r *SecurityPolicyReconciler) create(
 		if err := klient.Universal.Portal().Policy().Update(ctx, spec); err != nil {
 			r.Log.Error(
 				err,
-				"Failed to update policy",
+				"Failed to update policy on Tyk",
 				"Policy", client.ObjectKeyFromObject(policy),
 			)
 
