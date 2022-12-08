@@ -237,12 +237,17 @@ func TestSecurityPolicyMigration(t *testing.T) {
 	testenv.Test(t, securityPolicyMigrationFeatures)
 }
 
-func TestSecurityPolicyCreate(t *testing.T) {
+func TestSecurityPolicy(t *testing.T) {
 	const opNs = "tyk-operator-system"
 
-	polRec := &controllers.SecurityPolicyReconciler{}
+	var (
+		reqCtx   context.Context
+		policyCR v1alpha1.SecurityPolicy
+		apiDefCR *v1alpha1.ApiDefinition
+		polRec   controllers.SecurityPolicyReconciler
+	)
 
-	securityPolicyFeatures := features.New("Security Policy Create").
+	securityPolicyFeatures := features.New("Create Security Policy from scratch").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			eval := is.New(t)
 
@@ -261,65 +266,123 @@ func TestSecurityPolicyCreate(t *testing.T) {
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
 
-			polRec = &controllers.SecurityPolicyReconciler{
+			polRec = controllers.SecurityPolicyReconciler{
 				Client: testCl,
 				Log:    log.NullLogger{},
 				Scheme: testCl.Scheme(),
 				Env:    tykEnv,
 			}
 
-			return ctx
-		}).
-		Assess("", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			eval := is.New(t)
-
-			testNs, ok := ctx.Value(ctxNSKey).(string)
-			eval.True(ok)
-
-			api, err := createTestAPIDef(ctx, testNs, nil, c)
-			eval.NoErr(err)
-
-			policy := v1alpha1.SecurityPolicy{
-				ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
-				Spec: v1alpha1.SecurityPolicySpec{
-					Name:              envconf.RandomName("existing-name", 32),
-					Active:            true,
-					State:             "draft",
-					AccessRightsArray: []*v1alpha1.AccessDefinition{{Name: api.Name, Namespace: api.Namespace}},
-				},
-			}
-
-			_, err = util.CreateOrUpdate(ctx, polRec.Client, &policy, func() error {
-				return nil
+			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: polRec.Env,
+				Log: log.NullLogger{},
 			})
-			eval.NoErr(err)
-
-			err = wait.For(
-				conditions.New(c.Client().Resources()).ResourceMatch(&policy, func(object k8s.Object) bool {
-					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policy)})
-					return err == nil
-				}),
-				wait.WithTimeout(defaultWaitTimeout),
-				wait.WithInterval(defaultWaitInterval),
-			)
-			eval.NoErr(err)
-
-			err = wait.For(
-				conditions.New(c.Client().Resources()).ResourceMatch(&policy, func(object k8s.Object) bool {
-					pol, ok := object.(*v1alpha1.SecurityPolicy)
-					eval.True(ok)
-
-					eval.True(len(pol.Status.PolID) > 0)
-					eval.True(pol.Status.PolID == policy.Spec.MID)
-					return true
-				}),
-				wait.WithTimeout(defaultWaitTimeout),
-				wait.WithInterval(defaultWaitInterval),
-			)
-			eval.NoErr(err)
 
 			return ctx
 		}).
+		Assess("Access ApiDefinition CR",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				var err error
+				apiDefCR, err = createTestAPIDef(ctx, testNs, nil, c)
+				eval.NoErr(err)
+
+				policyCR = v1alpha1.SecurityPolicy{
+					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
+					Spec: v1alpha1.SecurityPolicySpec{
+						Name:   envconf.RandomName("existing-name", 32),
+						Active: true,
+						State:  "draft",
+						AccessRightsArray: []*v1alpha1.AccessDefinition{{
+							Name:      apiDefCR.Name,
+							Namespace: apiDefCR.Namespace,
+						}},
+					},
+				}
+
+				_, err = util.CreateOrUpdate(ctx, polRec.Client, &policyCR, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
+						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
+						return err == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
+						pol, ok := object.(*v1alpha1.SecurityPolicy)
+						eval.True(ok)
+
+						eval.True(len(pol.Status.PolID) > 0)
+						eval.True(pol.Status.PolID == policyCR.Spec.MID)
+						eval.Equal(len(pol.Spec.AccessRightsArray), 1)
+
+						// Ensure that policy is created on Tyk
+						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, pol.Status.PolID)
+						eval.NoErr(err)
+
+						eval.Equal(pol.Status.PolID, policyOnTyk.MID)
+						eval.Equal(pol.Spec.Name, policyOnTyk.Name)
+						eval.Equal(len(pol.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
+						eval.Equal(pol.Spec.AccessRightsArray[0].APIID, policyOnTyk.AccessRightsArray[0].APIID)
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Delete SecurityPolicy and check ApiDefinition and Tyk",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval := is.New(t)
+
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Deleting SecurityPolicy CR must delete corresponding SecurityPolicy from Tyk and
+				// update ApiDefinition CR status accordingly.
+				err := c.Client().Resources(testNs).Delete(ctx, &policyCR)
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).ResourceDeleted(&policyCR))
+				eval.NoErr(err)
+
+				// Ensure that the policy is deleted successfully from Tyk.
+				_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
+				eval.True(tykClient.IsNotFound(err))
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefOnK8s, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						// Ensure that ApiDefinition CR removed policy link after deleting
+						// the SecurityPolicy CR.
+						eval.Equal(len(apiDefOnK8s.Status.LinkedByPolicies), 0)
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
 		Feature()
 
 	testenv.Test(t, securityPolicyFeatures)
