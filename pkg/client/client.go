@@ -205,7 +205,6 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 			return nil, ErrNotFound
 		default:
 			return nil, errors2.Wrap(ErrFailed, string(b))
-
 		}
 	}
 

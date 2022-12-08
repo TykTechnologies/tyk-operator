@@ -282,7 +282,7 @@ func TestSecurityPolicyCreate(t *testing.T) {
 			policy := v1alpha1.SecurityPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 				Spec: v1alpha1.SecurityPolicySpec{
-					Name:              "existing policy",
+					Name:              envconf.RandomName("existing-name", 32),
 					Active:            true,
 					State:             "draft",
 					AccessRightsArray: []*v1alpha1.AccessDefinition{{Name: api.Name, Namespace: api.Namespace}},
