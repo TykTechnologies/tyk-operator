@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-func TestExistingSecurityPolicyMigration(t *testing.T) {
+func TestSecurityPolicyMigration(t *testing.T) {
 	const opNs = "tyk-operator-system"
 
 	spec := v1alpha1.SecurityPolicySpec{
@@ -294,10 +294,14 @@ func TestSecurityPolicyCreate(t *testing.T) {
 			})
 			eval.NoErr(err)
 
-			err = wait.For(func() (done bool, err error) {
-				_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policy)})
-				return err == nil, err
-			})
+			err = wait.For(
+				conditions.New(c.Client().Resources()).ResourceMatch(&policy, func(object k8s.Object) bool {
+					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policy)})
+					return err == nil
+				}),
+				wait.WithTimeout(defaultWaitTimeout),
+				wait.WithInterval(defaultWaitInterval),
+			)
 			eval.NoErr(err)
 
 			err = wait.For(
