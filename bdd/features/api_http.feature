@@ -20,6 +20,12 @@ Feature: Managing http APIs
     And i request /httpbin-auth-test/get endpoint
     Then there should be a 404 http response code
 
+  Scenario: Delete an already deleted API
+    Given there is a ./custom_resources/httpbin.delete.apidefinition.yaml resource
+    When i request /tyk/apis/httpbin-delete-test dashboard endpoint with method DELETE
+    And i delete a ./custom_resources/httpbin.delete.apidefinition.yaml resource
+    Then a ./custom_resources/httpbin.delete.apidefinition.yaml resource should not exist
+
   Scenario: Transform xml to json
     Given there is a ./../config/samples/httpbin_transform.yaml resource
     When i request /httpbin-transform/xml endpoint

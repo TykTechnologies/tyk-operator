@@ -2,6 +2,7 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
+- Operator was failing to remove finalizers from ApiDefinition that was already deleted in Dashboard
 
 ## [v0.12.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.12.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.11.0...v0.12.0)
