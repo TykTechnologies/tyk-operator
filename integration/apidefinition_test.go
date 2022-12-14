@@ -800,6 +800,112 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 	testenv.Test(t, adCreate)
 }
+func TestApiDefinitionBasicAuth(t *testing.T) {
+	var (
+		apiDefBasicAuth  = "apidef-basic-authentication"
+		defaultVersion   = "Default"
+		opNs             = "tyk-operator-system"
+		tykConnectionURL = ""
+		tykOrg           = ""
+		tykAuth          = ""
+	)
+
+	mode := os.Getenv("TYK_MODE")
+
+	switch mode {
+	case "pro":
+		tykConnectionURL = adminLocalhost
+	case "ce":
+		tykConnectionURL = gatewayLocalhost
+	}
+
+	testBasicAuth := features.New("Basic authentication").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			client := envConf.Client()
+			eval := is.New(t)
+			opConfSecret := v1.Secret{}
+
+			err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			data, ok := opConfSecret.Data["TYK_AUTH"]
+			eval.True(ok)
+
+			tykAuth = string(data)
+
+			data, ok = opConfSecret.Data["TYK_ORG"]
+			eval.True(ok)
+
+			tykOrg = string(data)
+
+			return ctx
+		}).
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+			eval := is.New(t)
+
+			// Create ApiDefinition with Basic Authentication
+			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefBasicAuth
+				apiDef.Spec.UseBasicAuth = true
+				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
+				apiDef.Spec.VersionData.NotVersioned = true
+				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
+					defaultVersion: {Name: defaultVersion},
+				}
+			}, envConf)
+			eval.NoErr(err) // failed to create apiDefinition
+
+			return ctx
+		}).
+		Assess("API must have basic authentication enabled",
+			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				eval := is.New(t)
+				client := cfg.Client()
+				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
+
+				var apiDef *model.APIDefinitionSpec
+
+				err := wait.For(func() (done bool, err error) {
+					env := environmet.Env{}
+					env.Mode = v1alpha1.OperatorContextMode(mode)
+					env.Org = tykOrg
+					env.Auth = tykAuth
+					env.URL = tykConnectionURL
+
+					pkgContext := pkgclient.Context{
+						Env: env,
+						Log: log.NullLogger{},
+					}
+
+					reqContext := pkgclient.SetContext(context.Background(), pkgContext)
+
+					// validate basic authentication field was set
+					var apiDefCRD v1alpha1.ApiDefinition
+
+					err = client.Resources().Get(ctx, apiDefBasicAuth, testNS, &apiDefCRD)
+					if err != nil {
+						return false, err
+					}
+
+					apiDef, err = klient.Universal.Api().Get(reqContext, apiDefCRD.Status.ApiID)
+					if err != nil {
+						return false, errors.New("API is not created yet")
+					}
+
+					eval.True(apiDef.UseBasicAuth)
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				eval.True(apiDef.UseBasicAuth)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testBasicAuth)
+}
 
 func TestApiDefinitionClientMTLS(t *testing.T) {
 	var (

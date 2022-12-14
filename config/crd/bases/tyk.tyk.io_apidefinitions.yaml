@@ -1105,6 +1105,8 @@ spec:
                   IDs that is used by the Tyk Gateway to provide mTLS support for
                   upstreams
                 type: object
+              use_basic_auth:
+                type: boolean
               use_go_plugin_auth:
                 description: Enable Go Plugin Auth. Needs to be combined with "use_keyless:false"
                 type: boolean
