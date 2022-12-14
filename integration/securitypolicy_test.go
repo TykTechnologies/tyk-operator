@@ -23,27 +23,28 @@ import (
 )
 
 func TestSecurityPolicyMigration(t *testing.T) {
-	const opNs = "tyk-operator-system"
+	const (
+		opNs                  = "tyk-operator-system"
+		initialK8sPolicyTag   = "sample-tag"
+		initialK8sPolicyRate  = 50
+		initialK8sPolicyState = "deny"
+	)
 
 	spec := v1alpha1.SecurityPolicySpec{
 		Name:   "existing-spec",
 		State:  "draft",
 		Rate:   34,
-		Per:    50,
 		Active: true,
 		Tags:   []string{"testing"},
 	}
 
 	hasSameValues := func(k8sSpec, tykSpec *v1alpha1.SecurityPolicySpec, k8sStatusID string) bool {
 		return k8sSpec.MID == tykSpec.MID &&
-			k8sStatusID == tykSpec.MID &&
-			k8sSpec.Name == tykSpec.Name &&
-			k8sSpec.State == tykSpec.State &&
-			k8sSpec.Active == tykSpec.Active &&
-			k8sSpec.Per == tykSpec.Per &&
-			k8sSpec.Rate == tykSpec.Rate &&
 			len(k8sSpec.Tags) == len(tykSpec.Tags) &&
-			k8sSpec.Tags[0] == tykSpec.Tags[0]
+			len(tykSpec.Tags) == 1 &&
+			tykSpec.Tags[0] == initialK8sPolicyTag &&
+			tykSpec.Rate == initialK8sPolicyRate &&
+			tykSpec.State == initialK8sPolicyState
 	}
 
 	var (
@@ -100,8 +101,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					Spec: v1alpha1.SecurityPolicySpec{
 						ID:     spec.MID,
 						Active: true,
-						State:  "active",
-						Per:    3,
+						State:  initialK8sPolicyState,
+						Rate:   initialK8sPolicyRate,
+						Tags:   []string{initialK8sPolicyTag},
 					},
 				}
 
@@ -120,8 +122,17 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
+						eval.True(len(policyOnK8s.Status.PolID) > 0)
 
-						eval.True(hasSameValues(&policyOnK8s.Spec, &spec, policyOnK8s.Status.PolID))
+						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
+						eval.NoErr(err)
+
+						eval.True(policyOnK8s.Spec.MID == policyOnTyk.MID &&
+							len(policyOnK8s.Spec.Tags) == len(policyOnTyk.Tags) &&
+							len(policyOnTyk.Tags) == 1 &&
+							policyOnTyk.Tags[0] == initialK8sPolicyTag &&
+							policyOnTyk.Rate == initialK8sPolicyRate &&
+							policyOnTyk.State == initialK8sPolicyState)
 						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -346,7 +357,7 @@ func TestSecurityPolicy(t *testing.T) {
 
 				return ctx
 			}).
-		Assess("Delete SecurityPolicy and check ApiDefinition and Tyk",
+		Assess("Delete SecurityPolicy and check k8s and Tyk",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 				eval := is.New(t)
 
