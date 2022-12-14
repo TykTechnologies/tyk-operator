@@ -82,25 +82,6 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have ValidateJSON field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithJSONValidationName, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					// 'validate_json' field must exist in the ApiDefinition object.
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("ApiDefinition must verify user requests",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
@@ -185,24 +166,6 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have whitelist field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("ApiDefniition should allow traffic to whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
@@ -307,24 +270,6 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have blacklist field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithBlacklist, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("ApiDefniition should forbid traffic to blacklist route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
@@ -441,24 +386,6 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have ignored field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("ApiDefniition should allow traffic to ignored route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
@@ -604,37 +531,6 @@ pwIDAQAB
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have Certificate Pinning field defined",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefPinning, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-
-					if apiDef.Spec.PinnedPublicKeys == nil {
-						t.Log("PinnedPublicKeys field is undefined.")
-						return false
-					}
-
-					// 'pinned_public_keys' field must exist in the ApiDefinition object.
-					val, ok := apiDef.Spec.PinnedPublicKeys["*"]
-					if !ok {
-						t.Log("cannot find a public key for the domain '*'")
-						return false
-					}
-
-					return val == publicKeyID
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("Allow making requests based on the pinned public key defined via secret",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 				eval := is.New(t)
