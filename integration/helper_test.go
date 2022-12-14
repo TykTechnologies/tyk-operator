@@ -14,6 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
 	e2eKlient "sigs.k8s.io/e2e-framework/klient"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
@@ -21,6 +24,10 @@ const (
 	testSubGraphCRMetaName = "test-subgraph"
 	testSubGraphSchema     = "test-schema"
 	testSubGraphSDL        = "test-SDL"
+	testApiDef             = "test-api-def"
+	testOperatorCtx        = "mycontext"
+	testSecurityPolicy     = "test-security-policy"
+	gatewayLocalhost       = "http://localhost:7000"
 )
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
@@ -92,6 +99,16 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 
 	err := c.Resources(namespace).Create(ctx, apiDef)
 
+	wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(obj k8s.Object) bool {
+		apiDef := obj.(*v1alpha1.ApiDefinition)
+
+		if apiDef.Status.ApiID == "" {
+			return false
+		}
+
+		return true
+	}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
 	return apiDef, err
 }
 
@@ -112,6 +129,42 @@ func createTestOperatorContext(ctx context.Context, namespace string,
 	err := client.Resources(namespace).Create(ctx, &operatorCtx)
 
 	return &operatorCtx, err
+}
+
+func createTestPolicy(ctx context.Context, namespace string, mutateFn func(*v1alpha1.SecurityPolicy),
+	envConf *envconf.Config,
+) (*v1alpha1.SecurityPolicy, error) {
+	c := envConf.Client()
+	var policy v1alpha1.SecurityPolicy
+
+	policy.Name = testSecurityPolicy
+	policy.Namespace = namespace
+	policy.Spec = v1alpha1.SecurityPolicySpec{
+		Name:   testSecurityPolicy,
+		Active: true,
+		State:  "active",
+	}
+
+	if mutateFn != nil {
+		mutateFn(&policy)
+	}
+
+	err := c.Resources(namespace).Create(ctx, &policy)
+
+	err = wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(&policy, func(obj k8s.Object) bool {
+		apiDef := obj.(*v1alpha1.SecurityPolicy)
+
+		if apiDef.Status.PolID == "" {
+			return false
+		}
+
+		return true
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	return &policy, err
 }
 
 func createTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v1.Secret),

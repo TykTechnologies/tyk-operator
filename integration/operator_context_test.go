@@ -17,12 +17,6 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-const (
-	testApiDef       = "test-http"
-	testOperatorCtx  = "mycontext"
-	gatewayLocalhost = "http://localhost:7000"
-)
-
 func TestOperatorContextCreate(t *testing.T) {
 	listenPath := "/test-opctx"
 
