@@ -2,6 +2,7 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
+- Operator was failing to remove finalizers from ApiDefinition that was already deleted in Dashboard
 
 **Added**
 - snapshot tool can now export only SecurityPolicy objects without specifying
