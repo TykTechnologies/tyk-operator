@@ -250,6 +250,8 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	r.Log.Info("Successfully created Policy")
 
+	policy.Spec.MID = spec.MID
+
 	return r.updatePolicyStatus(ctx, policy)
 }
 
