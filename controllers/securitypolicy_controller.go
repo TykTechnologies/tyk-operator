@@ -264,7 +264,6 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	// creating a Policy with duplicated name causes API call errors.
 	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
 	if err != nil || existingSpec == nil || existingSpec.MID == "" {
-
 		r.Log.Info("Creating a new policy")
 
 		err = klient.Universal.Portal().Policy().Create(ctx, spec)
