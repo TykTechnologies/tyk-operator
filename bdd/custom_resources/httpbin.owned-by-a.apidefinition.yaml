@@ -16,6 +16,7 @@ kind: ApiDefinition
 metadata:
   name: httpbin-ownership-test
 spec:
+  api_id: httpbin-ownership-test
   contextRef:
     name: httpbin-ownership-test-operator-a
   name: httpbin-ownership-test

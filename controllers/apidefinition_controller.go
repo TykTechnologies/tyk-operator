@@ -26,13 +26,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
+	tykclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	"github.com/go-logr/logr"
 
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -542,7 +544,9 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		r.Log.Info("deleting api")
 
 		_, err = klient.Universal.Api().Delete(ctx, desired.Status.ApiID)
-		if err != nil {
+		if err != nil && tykclient.IsNotFound(err) {
+			r.Log.Error(err, "ignoring nonexistent api on delete", "api_id", desired.Status.ApiID)
+		} else if err != nil {
 			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
 			return 0, err
 		}
