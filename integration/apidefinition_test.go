@@ -203,7 +203,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 				return ctx
 			}).
-		Assess("ApiDefniition should allow traffic to whitelisted route",
+		Assess("ApiDefinition should allow traffic to whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
 
@@ -423,7 +423,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			eval := is.New(t)
 
-			// Create ApiDefinition with whitelist + ingored extended path
+			// Create ApiDefinition with whitelist + ignored extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{

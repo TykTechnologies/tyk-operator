@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	errors2 "github.com/pkg/errors"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
@@ -202,7 +204,7 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 		case http.StatusNotFound:
 			return nil, ErrNotFound
 		default:
-			return nil, ErrFailed
+			return nil, errors2.Wrap(ErrFailed, string(b))
 		}
 	}
 

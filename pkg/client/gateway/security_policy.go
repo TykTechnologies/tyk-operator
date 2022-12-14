@@ -11,8 +11,6 @@ import (
 )
 
 // SecurityPolicy provides api for accessing policies on the tyk gateway
-// NOTE: The gateway doesn't provide api for security policy so this is just a
-// placeholder and does nothing except returning universal.ErrTODO on all methods.
 type SecurityPolicy struct{}
 
 func (a SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error) {
@@ -70,7 +68,7 @@ func (a SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 
 	switch strings.ToLower(msg.Status) {
 	case "ok":
-		def.MID = msg.Message
+		def.MID = msg.Key
 		return nil
 	default:
 		return client.Error(res)
