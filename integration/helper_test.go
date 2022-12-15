@@ -102,23 +102,33 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 		return nil, err
 	}
 
-	err = wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(obj k8s.Object) bool {
-		apiDef, ok := obj.(*v1alpha1.ApiDefinition)
-		if !ok {
-			return false
-		}
+	return apiDef, err
+}
 
-		if apiDef.Status.ApiID == "" {
-			return false
-		}
-
-		return true
-	}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-	if err != nil {
-		return nil, err
+func waitForTykResourceCreation(envConf *envconf.Config, name string, namespace string) error {
+	apiDef := &v1alpha1.ApiDefinition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
 	}
 
-	return apiDef, err
+	err := wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(obj k8s.Object) bool {
+		switch val := obj.(type) {
+		case *v1alpha1.ApiDefinition:
+			if val.Status.ApiID == "" {
+				return false
+			}
+		case *v1alpha1.SecurityPolicy:
+			if val.Status.PolID == "" {
+				return false
+			}
+		}
+
+		return false
+	}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
 }
 
 func createTestOperatorContext(ctx context.Context, namespace string,
@@ -159,22 +169,6 @@ func createTestPolicy(ctx context.Context, namespace string, mutateFn func(*v1al
 	}
 
 	err := c.Resources(namespace).Create(ctx, &policy)
-	if err != nil {
-		return nil, err
-	}
-
-	err = wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(&policy, func(obj k8s.Object) bool {
-		apiDef, ok := obj.(*v1alpha1.SecurityPolicy)
-		if !ok {
-			return false
-		}
-
-		if apiDef.Status.PolID == "" {
-			return false
-		}
-
-		return true
-	}))
 	if err != nil {
 		return nil, err
 	}
