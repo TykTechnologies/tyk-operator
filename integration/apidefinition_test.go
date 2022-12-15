@@ -888,8 +888,9 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 						return false, errors.New("API is not created yet")
 					}
 
-					eval.True(len(apiDef.ClientCertificates) == 1)
-					eval.True(apiDef.ClientCertificates[0] == certID)
+					if len(apiDef.ClientCertificates) == 0 {
+						return false, errors.New("Client certificate field is not set yet")
+					}
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
