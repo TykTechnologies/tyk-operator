@@ -254,7 +254,7 @@ func Error(res *http.Response) error {
 	return fmt.Errorf("%d API call failed with %v", res.StatusCode, string(b))
 }
 
-// JoinURL returns addition of  parts to the base e.URL
+// JoinURL returns addition of parts to the base e.URL
 func JoinURL(base string, parts ...string) string {
 	return Join(append([]string{base}, parts...)...)
 }
