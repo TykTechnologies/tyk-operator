@@ -125,6 +125,13 @@ func (r *SecurityPolicyReconciler) spec(
 		if err != nil {
 			return nil, err
 		}
+
+		if spec.AccessRights == nil {
+			spec.AccessRights = map[string]tykv1.AccessDefinition{}
+		}
+
+		// Set AccessRights for Tyk OSS.
+		spec.AccessRights[spec.AccessRightsArray[i].APIID] = *spec.AccessRightsArray[i]
 	}
 
 	return spec, nil
@@ -173,8 +180,8 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 			return err
 		}
 
-		for _, v := range all.APIS {
-			if v.PolicyID == policy.Status.PolID {
+		for i := 0; i < len(all.APIS); i++ {
+			if all.APIS[i].PolicyID == policy.Status.PolID {
 				return fmt.Errorf("cannot delete policy due to catalogue %q dependency", all.Id)
 			}
 		}
@@ -197,6 +204,15 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
 	})
 	if err != nil {
+		return err
+	}
+
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "Failed to hot-reload Tyk after deleting a Policy",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
 		return err
 	}
 
@@ -244,6 +260,15 @@ func (r *SecurityPolicyReconciler) update(
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
 	if err != nil {
+		return nil, err
+	}
+
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "Failed to hot-reload Tyk after updating the Policy",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
 		return nil, err
 	}
 
@@ -306,9 +331,11 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
-		r.Log.Error(err, "Failed to hot-reload after creating a Policy",
+		r.Log.Error(err, "Failed to hot-reload Tyk after creating a Policy",
 			"Policy", client.ObjectKeyFromObject(policy),
 		)
+
+		return err
 	}
 
 	r.Log.Info("Successfully created Policy")

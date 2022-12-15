@@ -22,15 +22,50 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+// policyCreate creates given spec and reloads Tyk. Although reloading is not required for Pro,
+// it is needed for CE.
+func policyCreate(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
+	err := klient.Universal.Portal().Policy().Create(ctx, spec)
+	if err != nil {
+		return err
+	}
+
+	return klient.Universal.HotReload(ctx)
+}
+
+// policyUpdate updates given spec and reloads Tyk. Although reloading is not required for Pro,
+// it is needed for CE.
+func policyUpdate(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
+	err := klient.Universal.Portal().Policy().Update(ctx, spec)
+	if err != nil {
+		return err
+	}
+
+	return klient.Universal.HotReload(ctx)
+}
+
+// policyDelete deletes SecurityPolicy identified by given ID and reloads Tyk.
+// Although reloading is not required for Pro, it is needed for CE.
+func policyDelete(ctx context.Context, id string) error {
+	err := klient.Universal.Portal().Policy().Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return klient.Universal.HotReload(ctx)
+}
+
 func TestSecurityPolicyMigration(t *testing.T) {
 	const (
 		opNs                  = "tyk-operator-system"
 		initialK8sPolicyTag   = "sample-tag"
 		initialK8sPolicyRate  = 50
 		initialK8sPolicyState = "deny"
+		existingPolicyID      = "my-testing-id"
 	)
 
 	spec := v1alpha1.SecurityPolicySpec{
+		ID:     existingPolicyID,
 		Name:   "existing-spec",
 		State:  "draft",
 		Rate:   34,
@@ -38,14 +73,27 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		Tags:   []string{"testing"},
 	}
 
-	hasSameValues := func(k8sSpec, tykSpec *v1alpha1.SecurityPolicySpec, k8sStatusID string) bool {
-		return k8sSpec.MID == tykSpec.MID &&
-			k8sStatusID == tykSpec.MID &&
+	hasSameValues := func(
+		mode v1alpha1.OperatorContextMode,
+		k8sSpec, tykSpec *v1alpha1.SecurityPolicySpec,
+		k8sStatusID string,
+	) bool {
+		if mode == "pro" {
+			return k8sSpec.MID == tykSpec.MID &&
+				k8sStatusID == tykSpec.MID &&
+				len(k8sSpec.Tags) == len(tykSpec.Tags) &&
+				len(tykSpec.Tags) == 1 &&
+				tykSpec.Tags[0] == initialK8sPolicyTag &&
+				tykSpec.Rate == initialK8sPolicyRate &&
+				tykSpec.State == initialK8sPolicyState
+		}
+
+		return k8sSpec.MID == tykSpec.ID &&
+			k8sStatusID == tykSpec.ID &&
 			len(k8sSpec.Tags) == len(tykSpec.Tags) &&
 			len(tykSpec.Tags) == 1 &&
 			tykSpec.Tags[0] == initialK8sPolicyTag &&
-			tykSpec.Rate == initialK8sPolicyRate &&
-			tykSpec.State == initialK8sPolicyState
+			tykSpec.Rate == initialK8sPolicyRate
 	}
 
 	var (
@@ -65,10 +113,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
-
-			if tykEnv.Mode == "ce" {
-				t.Skip("SecurityPolicy API is not implemented in CE yet")
-			}
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -94,7 +138,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
-				err := klient.Universal.Portal().Policy().Create(reqCtx, &spec)
+				err := policyCreate(reqCtx, &spec)
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
@@ -128,7 +172,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						eval.NoErr(err)
 
-						eval.True(hasSameValues(&policyOnK8s.Spec, policyOnTyk, policyOnK8s.Status.PolID))
+						eval.True(
+							hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, policyOnTyk, policyOnK8s.Status.PolID),
+						)
 						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -147,7 +193,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				eval := is.New(t)
 
 				// Delete an existing Policy from Dashboard to create drift between Tyk and K8s state.
-				err := klient.Universal.Portal().Policy().Delete(reqCtx, policyCR.Status.PolID)
+				err := policyDelete(reqCtx, policyCR.Status.PolID)
 				eval.NoErr(err)
 
 				previousPolicyID := policyCR.Status.PolID
@@ -170,12 +216,12 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 						newSpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						eval.NoErr(err)
-						eval.True(hasSameValues(&policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
+						eval.True(hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
 
 						// Ensure that the Policy is accessible via the previous ID
 						newSpec, err = klient.Universal.Portal().Policy().Get(reqCtx, previousPolicyID)
 						eval.NoErr(err)
-						eval.True(hasSameValues(&policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
+						eval.True(hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
 
 						return true
 					}),
@@ -197,16 +243,15 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					copySpec := policyCR.Spec.DeepCopy()
 					copySpec.Name = "Updating Existing Policy"
 
-					err = klient.Universal.Portal().Policy().Update(reqCtx, copySpec)
+					err = policyUpdate(reqCtx, copySpec)
 					eval.NoErr(err)
 
 					// Ensure that policy is updated accordingly on Tyk Side.
 					newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 					eval.NoErr(err)
 					eval.True(newCopySpec != nil)
-					eval.Equal(newCopySpec.Name, copySpec.Name)
 
-					return true, nil
+					return newCopySpec.Name == copySpec.Name, nil
 				})
 				eval.NoErr(err)
 
@@ -229,7 +274,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 						// Ensure that the latest Policy of Dashboard is created according to k8s state during
 						// reconciliation.
-						eval.True(hasSameValues(&policyOnK8s.Spec, newCopySpec, policyOnK8s.Status.PolID))
+						eval.True(
+							hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newCopySpec, policyOnK8s.Status.PolID),
+						)
 						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -266,9 +313,9 @@ func TestSecurityPolicy(t *testing.T) {
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			if tykEnv.Mode == "ce" {
-				t.Skip("SecurityPolicy API is not implemented in CE yet")
-			}
+			//if tykEnv.Mode == "ce" {
+			//	t.Skip("SecurityPolicy API is not implemented in CE yet")
+			//}
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -328,21 +375,30 @@ func TestSecurityPolicy(t *testing.T) {
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
-						pol, ok := object.(*v1alpha1.SecurityPolicy)
+						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
-						eval.True(len(pol.Status.PolID) > 0)
-						eval.True(pol.Status.PolID == policyCR.Spec.MID)
-						eval.Equal(len(pol.Spec.AccessRightsArray), 1)
+						eval.True(len(policyOnK8s.Status.PolID) > 0)
+						eval.True(policyOnK8s.Status.PolID == policyCR.Spec.MID)
+						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
 
 						// Ensure that policy is created on Tyk
-						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, pol.Status.PolID)
+						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						eval.NoErr(err)
 
-						eval.Equal(pol.Status.PolID, policyOnTyk.MID)
-						eval.Equal(pol.Spec.Name, policyOnTyk.Name)
-						eval.Equal(len(pol.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
-						eval.Equal(pol.Spec.AccessRightsArray[0].APIID, policyOnTyk.AccessRightsArray[0].APIID)
+						if polRec.Env.Mode == "pro" {
+							eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
+							eval.Equal(
+								policyOnK8s.Spec.AccessRightsArray[0].APIID,
+								policyOnTyk.AccessRightsArray[0].APIID,
+							)
+						} else {
+							ad, exists := policyOnTyk.AccessRights[policyOnK8s.Spec.AccessRightsArray[0].APIID]
+							eval.True(exists)
+							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
+						}
+						eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
+						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 
 						return true
 					}),
