@@ -1,0 +1,10 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: OperatorContext
+metadata:
+  name: httpbin-ownership-test-operator-b
+spec:
+  env:
+    mode: pro
+    auth: b-foo
+    user_owners:
+      - b2c3d4
