@@ -84,7 +84,8 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      apiDefWithJSONValidationName,
 					Namespace: testNS,
-				}}
+				},
+			}
 			err = waitForTykResourceCreation(envConf, &apiDef)
 			eval.NoErr(err)
 
@@ -176,7 +177,8 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      apiDefWithWhitelist,
 					Namespace: testNS,
-				}}
+				},
+			}
 			err = waitForTykResourceCreation(envConf, &apiDef)
 			eval.NoErr(err)
 
@@ -288,7 +290,8 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      apiDefWithBlacklist,
 					Namespace: testNS,
-				}}
+				},
+			}
 			err = waitForTykResourceCreation(envConf, &apiDef)
 			eval.NoErr(err)
 
@@ -412,7 +415,8 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      apiDefWithWhitelist,
 					Namespace: testNS,
-				}}
+				},
+			}
 			err = waitForTykResourceCreation(envConf, &apiDef)
 			eval.NoErr(err)
 
