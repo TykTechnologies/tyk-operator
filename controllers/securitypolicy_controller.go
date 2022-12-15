@@ -253,7 +253,15 @@ func (r *SecurityPolicyReconciler) update(
 		return nil, err
 	}
 
-	klient.Universal.HotReload(ctx)
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "failed to hot-reload after updating the policy",
+			"policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return nil, err
+	}
+
 	r.Log.Info("Successfully updated Policy")
 
 	return spec, r.Status().Update(ctx, policy)
@@ -283,9 +291,6 @@ func (r *SecurityPolicyReconciler) create(
 
 			return nil, err
 		}
-
-		mid := ParsePolicyID(r.Env.Mode, spec)
-		policy.Spec.MID = mid
 	} else {
 		spec.AccessRightsArray = policy.Spec.AccessRightsArray
 
@@ -328,22 +333,16 @@ func (r *SecurityPolicyReconciler) create(
 		return nil, err
 	}
 
-	return spec, nil
-}
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "failed to hot-reload after creating a policy",
+			"policy", client.ObjectKeyFromObject(policy),
+		)
 
-// ParsePolicyID returns MID value from Security Policy Spec. In Tyk Pro, the Dashboard API returns
-// MID of the resource in the response message. However, Gateway API does not return MID in the response
-// because Gateway API creates a Policy with k8s ID (encoded namespace/name) as a storage ID on Tyk as well.
-func ParsePolicyID(env tykv1.OperatorContextMode, polSpec *tykv1.SecurityPolicySpec) string {
-	if env == "ce" {
-		// If the Tyk OSS is in use, the policySpec MID is empty for newly created objects. So, k8s ID is used
-		// in Tyk as well.
-		polSpec.MID = polSpec.ID
-		return polSpec.ID
+		return nil, err
 	}
 
-	// If Tyk Pro is in use, Dashboard API already set MID on given spec. So, use it as a storage ID.
-	return polSpec.MID
+	return spec, nil
 }
 
 // updateLinkedAPI updates the status of api definitions associated with this policy.
