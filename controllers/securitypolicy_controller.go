@@ -271,7 +271,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 			r.Log.Error(
 				err,
 				"Failed to create policy on Tyk",
-				"policy", client.ObjectKeyFromObject(policy),
+				"Policy", client.ObjectKeyFromObject(policy),
 			)
 
 			return err
@@ -284,7 +284,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 			r.Log.Error(
 				err,
 				"Failed to update policy on Tyk",
-				"policy", client.ObjectKeyFromObject(policy),
+				"Policy", client.ObjectKeyFromObject(policy),
 			)
 
 			return err
@@ -297,10 +297,17 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	if err != nil {
 		r.Log.Error(err,
 			"failed to update linkedAPI status",
-			"policy", client.ObjectKeyFromObject(policy),
+			"Policy", client.ObjectKeyFromObject(policy),
 		)
 
 		return err
+	}
+
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "Failed to hot-reload after creating a Policy",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
 	}
 
 	r.Log.Info("Successfully created Policy")

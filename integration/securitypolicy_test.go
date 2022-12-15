@@ -170,9 +170,13 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 						newSpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						eval.NoErr(err)
-						eval.True(newSpec.MID == previousPolicyID)
-
 						eval.True(hasSameValues(&policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
+
+						// Ensure that the Policy is accessible via the previous ID
+						newSpec, err = klient.Universal.Portal().Policy().Get(reqCtx, previousPolicyID)
+						eval.NoErr(err)
+						eval.True(hasSameValues(&policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
+
 						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
