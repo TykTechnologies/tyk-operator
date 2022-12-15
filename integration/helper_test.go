@@ -105,7 +105,7 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	return apiDef, err
 }
 
-func waitForTykResourceCreation(envConf *envconf.Config, name string, namespace string) error {
+func waitForTykResourceCreation(envConf *envconf.Config, name, namespace string) error {
 	apiDef := &v1alpha1.ApiDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,

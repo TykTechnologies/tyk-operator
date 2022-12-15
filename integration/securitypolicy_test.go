@@ -39,8 +39,11 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			}, c)
 			is.NoErr(err)
 
-			waitForTykResourceCreation(c, api1Name, testNs)
-			waitForTykResourceCreation(c, api2Name, testNs)
+			err = waitForTykResourceCreation(c, api1Name, testNs)
+			is.NoErr(err)
+
+			err = waitForTykResourceCreation(c, api2Name, testNs)
+			is.NoErr(err)
 
 			_, err = createTestPolicy(ctx, testNs, func(policy *v1alpha1.SecurityPolicy) {
 				policy.Name = policyName
@@ -49,7 +52,8 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			}, c)
 			is.NoErr(err)
 
-			waitForTykResourceCreation(c, policyName, testNs)
+			err = waitForTykResourceCreation(c, policyName, testNs)
+			is.NoErr(err)
 
 			return ctx
 		}).Assess("validate links are created properly",
