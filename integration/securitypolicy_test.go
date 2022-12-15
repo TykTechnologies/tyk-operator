@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -19,6 +20,11 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 	api1Name := "test-api-1-status"
 	api2Name := "test-api-2-status"
 	policyName := "test-policy"
+
+	mode := os.Getenv("TYK_MODE")
+	if mode == "ce" {
+		t.Skip("Skipping security policy test in CE mode")
+	}
 
 	policyCreate := features.New("SecurityPolicy status is updated").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
