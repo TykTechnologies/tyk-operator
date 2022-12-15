@@ -305,9 +305,11 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
-		r.Log.Error(err, "Failed to hot-reload after creating a Policy",
+		r.Log.Error(err, "Failed to hot-reload Tyk after creating a Policy",
 			"Policy", client.ObjectKeyFromObject(policy),
 		)
+
+		return err
 	}
 
 	r.Log.Info("Successfully created Policy")
