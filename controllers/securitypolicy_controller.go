@@ -89,13 +89,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 
 		if policy.Status.PolID == "" {
-			newSpec, err := r.create(ctx, policy)
-			if err != nil {
-				return err
-			}
-
-			policy.Spec = *newSpec
-			return nil
+			return r.create(ctx, policy)
 		}
 
 		newSpec, err := r.update(ctx, policy)
@@ -253,62 +247,48 @@ func (r *SecurityPolicyReconciler) update(
 		return nil, err
 	}
 
-	err = klient.Universal.HotReload(ctx)
-	if err != nil {
-		r.Log.Error(err, "failed to hot-reload after updating the policy",
-			"policy", client.ObjectKeyFromObject(policy),
-		)
-
-		return nil, err
-	}
-
 	r.Log.Info("Successfully updated Policy")
 
 	return spec, r.Status().Update(ctx, policy)
 }
 
-func (r *SecurityPolicyReconciler) create(
-	ctx context.Context,
-	policy *tykv1.SecurityPolicy,
-) (*tykv1.SecurityPolicySpec, error) {
+func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Creating a policy")
 
-	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment.
-	// If policy does not exist on Tyk side, create it. Otherwise, get AccessRightsArray from SecurityPolicy CR
-	// and update existing policy's spec.
-	spec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
-	if err != nil || spec == nil || spec.MID == "" {
-		spec, err = r.spec(ctx, &policy.Spec)
-		if err != nil {
-			return nil, err
-		}
+	spec, err := r.spec(ctx, &policy.Spec)
+	if err != nil {
+		return err
+	}
 
+	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment.
+	// If policy does not exist on Tyk side, create it. Otherwise, update it based on Kubernetes spec because
+	// creating a Policy with duplicated name causes API call errors.
+	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
+	if err != nil || existingSpec == nil || existingSpec.MID == "" {
 		r.Log.Info("Creating a new policy")
 
 		err = klient.Universal.Portal().Policy().Create(ctx, spec)
 		if err != nil {
-			r.Log.Error(err, "Failed to create policy", "policy", client.ObjectKeyFromObject(policy))
+			r.Log.Error(
+				err,
+				"Failed to create policy on Tyk",
+				"Policy", client.ObjectKeyFromObject(policy),
+			)
 
-			return nil, err
+			return err
 		}
 	} else {
-		spec.AccessRightsArray = policy.Spec.AccessRightsArray
+		spec.MID = existingSpec.MID
 
-		spec, err = r.spec(ctx, spec)
+		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
-			return nil, err
-		}
-
-		spec.ID = policy.Spec.ID
-
-		if err := klient.Universal.Portal().Policy().Update(ctx, spec); err != nil {
 			r.Log.Error(
 				err,
 				"Failed to update policy on Tyk",
 				"Policy", client.ObjectKeyFromObject(policy),
 			)
 
-			return nil, err
+			return err
 		}
 	}
 
@@ -318,31 +298,25 @@ func (r *SecurityPolicyReconciler) create(
 	if err != nil {
 		r.Log.Error(err,
 			"failed to update linkedAPI status",
-			"policy", client.ObjectKeyFromObject(policy),
+			"Policy", client.ObjectKeyFromObject(policy),
 		)
 
-		return nil, err
-	}
-
-	r.Log.Info("Successfully created Policy")
-
-	policy.Status.PolID = policy.Spec.MID
-
-	err = r.Status().Update(ctx, policy)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
-		r.Log.Error(err, "failed to hot-reload after creating a policy",
-			"policy", client.ObjectKeyFromObject(policy),
+		r.Log.Error(err, "Failed to hot-reload after creating a Policy",
+			"Policy", client.ObjectKeyFromObject(policy),
 		)
-
-		return nil, err
 	}
 
-	return spec, nil
+	r.Log.Info("Successfully created Policy")
+
+	policy.Spec.MID = spec.MID
+	policy.Status.PolID = policy.Spec.MID
+
+	return r.Status().Update(ctx, policy)
 }
 
 // updateLinkedAPI updates the status of api definitions associated with this policy.
