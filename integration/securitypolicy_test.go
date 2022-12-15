@@ -7,6 +7,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/matryer/is"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -45,10 +46,9 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			})
 			is.NoErr(err)
 
-			err = waitForTykResourceCreation(c, api1Name, testNs)
-			is.NoErr(err)
-
-			err = waitForTykResourceCreation(c, api2Name, testNs)
+			// ensure API is created on Tyk before creating policy
+			apiDef := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: api1Name, Namespace: testNs}}
+			err = waitForTykResourceCreation(c, apiDef)
 			is.NoErr(err)
 
 			_, err = createTestPolicy(ctx, testNs, func(policy *v1alpha1.SecurityPolicy) {
@@ -58,7 +58,8 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			}, c)
 			is.NoErr(err)
 
-			err = waitForTykResourceCreation(c, policyName, testNs)
+			pol := v1alpha1.SecurityPolicy{ObjectMeta: metav1.ObjectMeta{Name: policyName, Namespace: testNs}}
+			err = waitForTykResourceCreation(c, &pol)
 			is.NoErr(err)
 
 			return ctx

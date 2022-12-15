@@ -105,23 +105,16 @@ func createTestAPIDef(ctx context.Context, envConf *envconf.Config, namespace st
 	return apiDef, err
 }
 
-func waitForTykResourceCreation(envConf *envconf.Config, name, namespace string) error {
-	apiDef := &v1alpha1.ApiDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
-
-	err := wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(obj k8s.Object) bool {
+func waitForTykResourceCreation(envConf *envconf.Config, obj k8s.Object) error {
+	err := wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(obj, func(obj k8s.Object) bool {
 		switch val := obj.(type) {
 		case *v1alpha1.ApiDefinition:
-			if val.Status.ApiID == "" {
-				return false
+			if val.Status.ApiID != "" {
+				return true
 			}
 		case *v1alpha1.SecurityPolicy:
-			if val.Status.PolID == "" {
-				return false
+			if val.Status.PolID != "" {
+				return true
 			}
 		}
 

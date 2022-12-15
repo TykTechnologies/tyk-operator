@@ -80,6 +80,14 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 			})
 			eval.NoErr(err) // failed to create apiDefinition
 
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithJSONValidationName,
+					Namespace: testNS,
+				}}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
+
 			return ctx
 		}).
 		Assess("ApiDefinition must verify user requests",
@@ -163,6 +171,14 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithWhitelist,
+					Namespace: testNS,
+				}}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
 
 			return ctx
 		}).
@@ -267,6 +283,14 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithBlacklist,
+					Namespace: testNS,
+				}}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
 
 			return ctx
 		}).
@@ -383,6 +407,14 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithWhitelist,
+					Namespace: testNS,
+				}}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
 
 			return ctx
 		}).
