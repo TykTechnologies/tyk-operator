@@ -98,9 +98,15 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	apiDef := generateApiDef(namespace, mutateFn)
 
 	err := c.Resources(namespace).Create(ctx, apiDef)
+	if err != nil {
+		return nil, err
+	}
 
-	wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(obj k8s.Object) bool {
-		apiDef := obj.(*v1alpha1.ApiDefinition)
+	err = wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(obj k8s.Object) bool {
+		apiDef, ok := obj.(*v1alpha1.ApiDefinition)
+		if !ok {
+			return false
+		}
 
 		if apiDef.Status.ApiID == "" {
 			return false
@@ -108,6 +114,9 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 
 		return true
 	}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+	if err != nil {
+		return nil, err
+	}
 
 	return apiDef, err
 }
@@ -150,9 +159,15 @@ func createTestPolicy(ctx context.Context, namespace string, mutateFn func(*v1al
 	}
 
 	err := c.Resources(namespace).Create(ctx, &policy)
+	if err != nil {
+		return nil, err
+	}
 
 	err = wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(&policy, func(obj k8s.Object) bool {
-		apiDef := obj.(*v1alpha1.SecurityPolicy)
+		apiDef, ok := obj.(*v1alpha1.SecurityPolicy)
+		if !ok {
+			return false
+		}
 
 		if apiDef.Status.PolID == "" {
 			return false

@@ -47,67 +47,74 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			is.NoErr(err)
 
 			return ctx
-		}).Assess("validate links are created properly", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-		var pol v1alpha1.SecurityPolicy
-		var api v1alpha1.ApiDefinition
+		}).Assess("validate links are created properly",
+		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			var pol v1alpha1.SecurityPolicy
+			var api v1alpha1.ApiDefinition
 
-		testNs, ok := ctx.Value(ctxNSKey).(string)
-		is.True(ok)
+			testNs, ok := ctx.Value(ctxNSKey).(string)
+			is.True(ok)
 
-		// check status of policy
-		err := c.Client().Resources().Get(ctx, policyName, testNs, &pol)
-		is.NoErr(err)
+			// check status of policy
+			err := c.Client().Resources().Get(ctx, policyName, testNs, &pol)
+			is.NoErr(err)
 
-		is.True(len(pol.Status.LinkedAPIs) != 0)
-		is.Equal(pol.Status.LinkedAPIs[0].Name, api1Name)
+			is.True(len(pol.Status.LinkedAPIs) != 0)
+			is.Equal(pol.Status.LinkedAPIs[0].Name, api1Name)
 
-		// check status of ApiDefinition
-		err = c.Client().Resources().Get(ctx, api1Name, testNs, &api)
-		is.NoErr(err)
+			// check status of ApiDefinition
+			err = c.Client().Resources().Get(ctx, api1Name, testNs, &api)
+			is.NoErr(err)
 
-		is.True(len(api.Status.LinkedByPolicies) != 0)
-		is.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
+			is.True(len(api.Status.LinkedByPolicies) != 0)
+			is.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
 
-		return ctx
-	}).Assess("Add new api in the access rights", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-		var updatePolicy v1alpha1.SecurityPolicy
-		testNs, ok := ctx.Value(ctxNSKey).(string)
-		is.True(ok)
+			return ctx
+		}).Assess("Add new api in the access rights",
+		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			var updatePolicy v1alpha1.SecurityPolicy
+			testNs, ok := ctx.Value(ctxNSKey).(string)
+			is.True(ok)
 
-		err := c.Client().Resources().Get(ctx, policyName, testNs, &updatePolicy)
-		is.NoErr(err)
+			err := c.Client().Resources().Get(ctx, policyName, testNs, &updatePolicy)
+			is.NoErr(err)
 
-		updatePolicy.Spec.AccessRightsArray = append(updatePolicy.Spec.AccessRightsArray, &v1alpha1.AccessDefinition{Name: api2Name, Namespace: testNs})
+			updatePolicy.Spec.AccessRightsArray = append(updatePolicy.Spec.AccessRightsArray,
+				&v1alpha1.AccessDefinition{Name: api2Name, Namespace: testNs})
 
-		err = c.Client().Resources().Update(ctx, &updatePolicy)
-		is.NoErr(err)
+			err = c.Client().Resources().Update(ctx, &updatePolicy)
+			is.NoErr(err)
 
-		var pol v1alpha1.SecurityPolicy
-		pol.Name = policyName
-		pol.Namespace = testNs
+			var pol v1alpha1.SecurityPolicy
+			pol.Name = policyName
+			pol.Namespace = testNs
 
-		// wait until status of policy is updated.
-		wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&pol, func(object k8s.Object) bool {
-			pol := object.(*v1alpha1.SecurityPolicy)
+			// wait until status of policy is updated.
+			err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&pol, func(object k8s.Object) bool {
+				pol, ok := object.(*v1alpha1.SecurityPolicy)
+				if !ok {
+					return false
+				}
 
-			if len(pol.Status.LinkedAPIs) == 2 {
-				return true
-			}
+				if len(pol.Status.LinkedAPIs) == 2 {
+					return true
+				}
 
-			return false
-		}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				return false
+			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+			is.NoErr(err)
 
-		is.True(pol.Status.LinkedAPIs[0].Name == api2Name || pol.Status.LinkedAPIs[1].Name == api2Name)
+			is.True(pol.Status.LinkedAPIs[0].Name == api2Name || pol.Status.LinkedAPIs[1].Name == api2Name)
 
-		var api v1alpha1.ApiDefinition
-		err = c.Client().Resources().Get(ctx, api2Name, testNs, &api)
-		is.NoErr(err)
+			var api v1alpha1.ApiDefinition
+			err = c.Client().Resources().Get(ctx, api2Name, testNs, &api)
+			is.NoErr(err)
 
-		is.True(len(api.Status.LinkedByPolicies) != 0)
-		is.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
+			is.True(len(api.Status.LinkedByPolicies) != 0)
+			is.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
 
-		return ctx
-	}).Assess("Delete access rights", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			return ctx
+		}).Assess("Delete access rights", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 		var updatePolicy v1alpha1.SecurityPolicy
 
 		testNs, ok := ctx.Value(ctxNSKey).(string)
@@ -126,15 +133,15 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 		pol.Name = policyName
 		pol.Namespace = testNs
 
-		wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&pol, func(object k8s.Object) bool {
-			pol := object.(*v1alpha1.SecurityPolicy)
-
-			if pol.Status.LinkedAPIs == nil {
-				return true
+		err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&pol, func(object k8s.Object) bool {
+			pol, ok := object.(*v1alpha1.SecurityPolicy)
+			if !ok {
+				return false
 			}
 
-			return false
+			return pol.Status.LinkedAPIs == nil
 		}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+		is.NoErr(err)
 
 		var api v1alpha1.ApiDefinition
 
