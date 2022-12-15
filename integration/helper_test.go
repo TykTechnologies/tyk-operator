@@ -91,8 +91,8 @@ func generateSubGraphCR(namespace string, mutateFn func(graph *v1alpha1.SubGraph
 	return sg
 }
 
-func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
-	envConf *envconf.Config,
+func createTestAPIDef(ctx context.Context, envConf *envconf.Config, namespace string,
+	mutateFn func(*v1alpha1.ApiDefinition),
 ) (*v1alpha1.ApiDefinition, error) {
 	c := envConf.Client()
 	apiDef := generateApiDef(namespace, mutateFn)

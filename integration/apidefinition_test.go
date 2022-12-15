@@ -65,7 +65,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with JSON Schema Validation support.
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithJSONValidationName
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -77,7 +77,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -149,7 +149,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -161,7 +161,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -253,7 +253,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithBlacklist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -265,7 +265,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -369,7 +369,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist + ingored extended path
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -381,7 +381,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -477,10 +477,10 @@ pwIDAQAB
 
 			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
 			// It contains a dummy public key which is not valid to be used.
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefPinning
 				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
-			}, envConf)
+			})
 			eval.NoErr(err)
 
 			// Create a secret to store the public key of httpbin.org.
@@ -502,7 +502,7 @@ pwIDAQAB
 			publicKeySecrets := map[string]string{"*": secretName}
 
 			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
-			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefPinningViaSecret
 				apiDef.Spec.Name = "valid"
 				apiDef.Spec.Proxy = model.Proxy{
@@ -511,13 +511,13 @@ pwIDAQAB
 					StripListenPath: true,
 				}
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
-			}, envConf)
+			})
 			eval.NoErr(err)
 
 			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
 			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
 			// to reach github.com, which must fail due to proxy error.
-			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = invalidApiDef
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      invalidApiDefListenPath,
@@ -526,7 +526,7 @@ pwIDAQAB
 				}
 				apiDef.Spec.Name = "invalid"
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
-			}, envConf)
+			})
 			eval.NoErr(err)
 
 			return ctx
@@ -621,7 +621,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with Upstream certificate
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefUpstreamCerts
 				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
 					"*": certName,
@@ -631,7 +631,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -757,7 +757,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with Client certificate
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefClientMTLSWithCert
 				apiDef.Spec.UseMutualTLSAuth = true
 				apiDef.Spec.ClientCertificateRefs = []string{certName}
@@ -766,7 +766,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -871,7 +871,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with Upstream certificate
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefClientMTLSWithoutCert
 				apiDef.Spec.UseMutualTLSAuth = true
 				apiDef.Spec.ClientCertificateRefs = []string{certName}
@@ -880,7 +880,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -972,14 +972,14 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 
 			for n, tc := range tests {
 				t.Run(n, func(t *testing.T) {
-					_, err := createTestAPIDef(ctx, testNS, func(ad *v1alpha1.ApiDefinition) {
+					_, err := createTestAPIDef(ctx, c, testNS, func(ad *v1alpha1.ApiDefinition) {
 						ad.Name = fmt.Sprintf("%s-%s", ad.Name, uuid.New().String())
 						ad.Spec.Name = ad.Name
 						ad.Spec.GraphQL = &model.GraphQLConfig{
 							Enabled:       true,
 							ExecutionMode: model.GraphQLExecutionMode(tc.ExecutionMode),
 						}
-					}, c)
+					})
 
 					t.Log("Error=", err)
 					eval.Equal(tc.ReturnErr, err != nil)

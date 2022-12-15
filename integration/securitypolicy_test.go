@@ -25,18 +25,18 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			is.True(ok)
 
-			_, err := createTestAPIDef(ctx, testNs, func(ad *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api1Name
 				ad.Spec.Name = api1Name
 				ad.Spec.Proxy.ListenPath = "/test-api-1"
-			}, c)
+			})
 			is.NoErr(err)
 
-			_, err = createTestAPIDef(ctx, testNs, func(ad *v1alpha1.ApiDefinition) {
+			_, err = createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api2Name
 				ad.Spec.Name = api2Name
 				ad.Spec.Proxy.ListenPath = "/test-api-2"
-			}, c)
+			})
 			is.NoErr(err)
 
 			err = waitForTykResourceCreation(c, api1Name, testNs)
