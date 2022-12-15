@@ -40,6 +40,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 	hasSameValues := func(k8sSpec, tykSpec *v1alpha1.SecurityPolicySpec, k8sStatusID string) bool {
 		return k8sSpec.MID == tykSpec.MID &&
+			k8sStatusID == tykSpec.MID &&
 			len(k8sSpec.Tags) == len(tykSpec.Tags) &&
 			len(tykSpec.Tags) == 1 &&
 			tykSpec.Tags[0] == initialK8sPolicyTag &&
@@ -127,12 +128,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						eval.NoErr(err)
 
-						eval.True(policyOnK8s.Spec.MID == policyOnTyk.MID &&
-							len(policyOnK8s.Spec.Tags) == len(policyOnTyk.Tags) &&
-							len(policyOnTyk.Tags) == 1 &&
-							policyOnTyk.Tags[0] == initialK8sPolicyTag &&
-							policyOnTyk.Rate == initialK8sPolicyRate &&
-							policyOnTyk.State == initialK8sPolicyState)
+						eval.True(hasSameValues(&policyOnK8s.Spec, policyOnTyk, policyOnK8s.Status.PolID))
 						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -154,6 +150,8 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				err := klient.Universal.Portal().Policy().Delete(reqCtx, policyCR.Status.PolID)
 				eval.NoErr(err)
 
+				previousPolicyID := policyCR.Status.PolID
+
 				// Ensure that policy is deleted from Tyk.
 				_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 				eval.True(tykClient.IsNotFound(err))
@@ -172,6 +170,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 						newSpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						eval.NoErr(err)
+						eval.True(newSpec.MID == previousPolicyID)
 
 						eval.True(hasSameValues(&policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
 						return true
@@ -190,28 +189,21 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// k8s state on next reconciliation - so that k8s remains as a source of truth.
 				eval := is.New(t)
 
-				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
-						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
-						eval.True(ok)
+				err := wait.For(func() (done bool, err error) {
+					copySpec := policyCR.Spec.DeepCopy()
+					copySpec.Name = "Updating Existing Policy"
 
-						copySpec := policyOnK8s.Spec.DeepCopy()
-						copySpec.Name = "Updating Existing Policy"
+					err = klient.Universal.Portal().Policy().Update(reqCtx, copySpec)
+					eval.NoErr(err)
 
-						err := klient.Universal.Portal().Policy().Update(reqCtx, copySpec)
-						eval.NoErr(err)
+					// Ensure that policy is updated accordingly on Tyk Side.
+					newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
+					eval.NoErr(err)
+					eval.True(newCopySpec != nil)
+					eval.Equal(newCopySpec.Name, copySpec.Name)
 
-						// Ensure that policy is updated accordingly on Tyk Side.
-						newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
-						eval.NoErr(err)
-						eval.True(newCopySpec != nil)
-						eval.Equal(newCopySpec.Name, copySpec.Name)
-
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
+					return true, nil
+				})
 				eval.NoErr(err)
 
 				// Ensure that reconciliation brings updated Security Policy back to the k8s state. In the
@@ -373,8 +365,11 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that the policy is deleted successfully from Tyk.
-				_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
-				eval.True(tykClient.IsNotFound(err))
+				err = wait.For(func() (done bool, err error) {
+					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
+					return tykClient.IsNotFound(err), nil
+				})
+				eval.NoErr(err)
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
