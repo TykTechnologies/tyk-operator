@@ -79,7 +79,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Custom Plugins - Python              | ⚠️        | v0.1           | Untested                                                               |
 | Global Rate Limit                    | ✅         | v0.10          | -                                                                      | [Sample](./../config/samples/httpbin_global_rate_limit.yaml)    |
 | Segment Tags                         | ✅         | v0.1           | -                                                                      | [Sample](./../config/samples/httpbin_tagged.yaml)               |
-| Tag Headers                          | ❌         | -              | Not Implemented                                                        |
+| Tag Headers                          | ⚠️         | -              | Untested                                                               |
 | Webhooks                             | ❌         | -              | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   | 
 | Looping                              | ⚠️        | v0.6           | Untested                                                               | [Sample](./api_definitions/looping.md)                          |
 | Active API                           | ✅         | v0.2           | Only available to Tyk Self Managed (Pro) users                         | [Sample](./api_definitions/fields.md#active)                    |
