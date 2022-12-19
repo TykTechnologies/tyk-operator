@@ -3,8 +3,11 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
 
-**Updated**:
+**Updated**
 - Added new field `LinkedAPIs` in status of security policies.
+
+**Fixed**
+- Attempting to remove an ApiDefinition fails if previously associated to a SecurityPolicy [#431](https://github.com/TykTechnologies/tyk-operator/issues/431)
 
 ## [v0.12.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.12.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.11.0...v0.12.0)
