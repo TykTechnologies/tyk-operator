@@ -26,6 +26,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/TykTechnologies/tyk/apidef"
 	"github.com/go-logr/logr"
 	netV1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,18 +125,20 @@ func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
 	return &v1alpha1.ApiDefinition{
 		Spec: v1alpha1.APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
-				Name:             "default-keyless",
-				Protocol:         "http",
-				UseKeylessAccess: true,
-				Active:           true,
-				Proxy: model.Proxy{
-					TargetURL: "http://example.com",
+				APIDefinition: apidef.APIDefinition{
+					Name:             "default-keyless",
+					Protocol:         "http",
+					UseKeylessAccess: true,
+					Active:           true,
 				},
+				Proxy: model.ProxyConfig{
+					ProxyConfig: apidef.ProxyConfig{
+						TargetURL: "http://example.com",
+					}},
 				VersionData: model.VersionData{
 					NotVersioned: true,
 				},
-			},
-		},
+			}},
 	}
 }
 
