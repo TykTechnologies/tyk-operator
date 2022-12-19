@@ -41,7 +41,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	graphQlMerge "github.com/jensneuse/graphql-go-tools/pkg/federation/sdlmerge"
+	graphQlMerge "github.com/TykTechnologies/graphql-go-tools/pkg/federation/sdlmerge"
 )
 
 const SubgraphField = ".subgraphs_refs.name"

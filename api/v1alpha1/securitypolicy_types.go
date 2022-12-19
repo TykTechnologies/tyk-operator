@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/TykTechnologies/graphql-go-tools/pkg/graphql"
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -91,7 +92,13 @@ type SecurityPolicySpec struct {
 	// GraphQL                       map[string]GraphAccessDefinition `json:"graphql_access_rights"`
 }
 
-// from tyk/session.go
+// GraphQLType represents a GraphQL Type for Tyk.
+//+k8s:deepcopy-gen:interfaces=github.com/TykTechnologies/graphql-go-tools/pkg/graphql.Type
+type GraphQLType graphql.Type
+
+// GraphQLTypeList represents a list of GraphQLType.
+type GraphQLTypeList []GraphQLType
+
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {
 	// Namespace of the ApiDefinition resource to target
@@ -104,10 +111,43 @@ type AccessDefinition struct {
 	// TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource
 	APIID    string   `json:"api_id,omitempty"`
 	Versions []string `json:"versions,omitempty"`
-	// RestrictedTypes []graphql.Type `json:"restricted_types"`
+
+	// Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy
+	// or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+	AllowedTypes GraphQLTypeList `json:"allowed_types,omitempty"`
+
+	// Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy
+	// or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+	RestrictedTypes GraphQLTypeList `json:"restricted_types,omitempty"`
+
+	// DisableIntrospection disables GraphQL introspection if it is set to True. Please visit
+	// https://tyk.io/docs/graphql/introspection/ for more details.
+	DisableIntrospection bool `json:"disable_introspection,omitempty"`
+
+	// FieldAccessRights is array of depth limit settings per GraphQL APIs.
+	FieldAccessRights []FieldAccessDefinition `json:"field_access_rights,omitempty"`
+
 	// Limit          APILimit     `json:"limit,omitempty"`
+
 	AllowanceScope string       `json:"allowance_scope,omitempty"`
 	AllowedURLs    []AccessSpec `json:"allowed_urls,omitempty"` // mapped string MUST be a valid regex
+}
+
+// FieldAccessDefinition represent a struct for depth limit settings per API.
+type FieldAccessDefinition struct {
+	// TypeName points to a type on which depth limit is set.
+	// It can be either Query (most common case) or Mutation
+	TypeName string `json:"type_name,omitempty"`
+	// FieldName represents the name of the Query or Mutation which the limit applies to.
+	FieldName string `json:"field_name,omitempty"`
+	// Limit specifies the numerical value of the limit.
+	Limits FieldLimits `json:"limits,omitempty"`
+}
+
+// FieldLimits represents a struct for the numerical value of the depth limit for a GraphQL query.
+type FieldLimits struct {
+	// MaxQueryDepth represents the numerical value of the limit.
+	MaxQueryDepth int64 `json:"max_query_depth"`
 }
 
 // APILimit stores quota and rate limit on ACL level (per API)
@@ -123,7 +163,7 @@ type APILimit struct {
 	QuotaRenewalRate   int64 `json:"quota_renewal_rate"`
 }
 
-// AccessSpecs define what URLS a user has access to an what methods are enabled
+// AccessSpec defines what URLS a user has access to an what methods are enabled
 type AccessSpec struct {
 	URL     string   `json:"url"`
 	Methods []string `json:"methods"`
@@ -142,10 +182,10 @@ type SecurityPolicyStatus struct {
 	PolID string `json:"pol_id"`
 }
 
+// SecurityPolicy is the Schema for the securitypolicies API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=tykpolicies
-// SecurityPolicy is the Schema for the securitypolicies API
 type SecurityPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
