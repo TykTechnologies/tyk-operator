@@ -292,7 +292,7 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		api := &tykv1.ApiDefinition{}
 
 		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, api); err != nil {
-			r.Log.Error(err, "Failed to remove link from api definition")
+			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
 
 			return err
 		}
@@ -300,7 +300,7 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
 
 		if err := r.Status().Update(ctx, api); err != nil {
-			r.Log.Error(err, "Failed to remove link from api definition")
+			r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
 
 			return err
 		}
@@ -309,8 +309,10 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 	for _, a := range policy.Spec.AccessRightsArray {
 		api := &tykv1.ApiDefinition{}
 
+		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
+
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
-			r.Log.Error(err, "Failed to get linked api definition")
+			r.Log.Error(err, "Failed to get linked api definition", "api", name)
 
 			return err
 		}
@@ -322,7 +324,7 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		}
 
 		if err := r.Status().Update(ctx, api); err != nil {
-			r.Log.Error(err, "Failed to update linked api definition")
+			r.Log.Error(err, "Failed to update status of linked api definition", "api", name)
 
 			return err
 		}
