@@ -22,7 +22,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
 				APIDefinitionSpec: model.APIDefinitionSpec{
-					Proxy: model.Proxy{
+					Proxy: model.ProxyConfig{
 						TargetInternal: target,
 					},
 				},
@@ -157,7 +157,7 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
 				APIDefinitionSpec: model.APIDefinitionSpec{
-					Proxy: model.Proxy{
+					Proxy: model.ProxyConfig{
 						TargetInternal: target1,
 					},
 					VersionData: model.VersionData{
