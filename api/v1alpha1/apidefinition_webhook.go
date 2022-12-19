@@ -17,9 +17,12 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
 	"net/url"
 
+	"github.com/TykTechnologies/graphql-go-tools/pkg/execution/datasource"
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/TykTechnologies/tyk/apidef"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -55,8 +58,8 @@ func (in *ApiDefinition) Default() {
 			DefaultVersion: "Default",
 			Versions: map[string]model.VersionInfo{
 				"Default": {
-					Name:             "Default",
-					UseExtendedPaths: false,
+					VersionInfo: apidef.VersionInfo{Name: "Default",
+						UseExtendedPaths: false},
 				},
 			},
 		}
@@ -64,13 +67,13 @@ func (in *ApiDefinition) Default() {
 
 	if in.Spec.UseStandardAuth {
 		if in.Spec.AuthConfigs == nil {
-			in.Spec.AuthConfigs = make(map[string]model.AuthConfig)
+			in.Spec.AuthConfigs = make(map[string]apidef.AuthConfig)
 		}
 
 		if _, ok := in.Spec.AuthConfigs["authToken"]; !ok {
 			apidefinitionlog.Info("applying default auth_config as not set & use_standard_auth enabled")
 
-			in.Spec.AuthConfigs["authToken"] = model.AuthConfig{
+			in.Spec.AuthConfigs["authToken"] = apidef.AuthConfig{
 				AuthHeaderName: "Authorization",
 			}
 		}
@@ -127,31 +130,70 @@ func (in *ApiDefinition) validate() error {
 	}
 
 	// graphql
-	if spec.GraphQL != nil {
+	if spec.GraphQL.Enabled {
 		if spec.GraphQL.Enabled && spec.GraphQL.ExecutionMode == "executionEngine" {
 			for _, typeFieldConfig := range spec.GraphQL.TypeFieldConfigurations {
-				switch typeFieldConfig.DataSource.Kind {
-				case "HTTPJsonDataSource", "GraphQLDataSource":
-					src := typeFieldConfig.DataSource
-					if src.Config.URL == "" {
+				switch typeFieldConfig.DataSource.Name {
+				case "HTTPJsonDataSource":
+					var config datasource.HttpJsonDataSourceConfig
+
+					src := typeFieldConfig.DataSource.Config
+					err := json.Unmarshal(src, &config)
+					if err != nil {
+						return err
+					}
+					if config.URL == "" {
 						all = append(all,
 							field.Required(path("graphql", "type_field_configurations", "data_source", "url"),
 								ErrEmptyValue,
 							),
 						)
 					} else {
-						_, err := url.Parse(src.Config.URL)
+						_, err := url.Parse(config.URL)
 						if err != nil {
 							all = append(all,
 								field.Invalid(path("graphql", "type_field_configurations", "data_source", "url"),
-									src.Config.URL,
+									config.URL,
 									err.Error(),
 								),
 							)
 						}
 					}
 
-					if src.Config.Method == "" {
+					if config.Method == nil {
+						all = append(all,
+							field.Required(path("graphql", "type_field_configurations", "data_source", "method"),
+								ErrEmptyValue,
+							),
+						)
+					}
+				case "GraphQLDataSource":
+					var config datasource.GraphQLDataSourceConfig
+
+					src := typeFieldConfig.DataSource.Config
+					err := json.Unmarshal(src, &config)
+					if err != nil {
+						return err
+					}
+					if config.URL == "" {
+						all = append(all,
+							field.Required(path("graphql", "type_field_configurations", "data_source", "url"),
+								ErrEmptyValue,
+							),
+						)
+					} else {
+						_, err := url.Parse(config.URL)
+						if err != nil {
+							all = append(all,
+								field.Invalid(path("graphql", "type_field_configurations", "data_source", "url"),
+									config.URL,
+									err.Error(),
+								),
+							)
+						}
+					}
+
+					if config.Method == nil {
 						all = append(all,
 							field.Required(path("graphql", "type_field_configurations", "data_source", "method"),
 								ErrEmptyValue,
@@ -161,7 +203,7 @@ func (in *ApiDefinition) validate() error {
 				default:
 					all = append(all,
 						field.Invalid(path("graphql", "type_field_configurations", "data_source", "kind"),
-							typeFieldConfig.DataSource.Kind,
+							typeFieldConfig.DataSource.Name,
 							"invalid data source kind type",
 						),
 					)
@@ -207,14 +249,12 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 	// TargetURL is only allowed to be an empty string when we have GraphQL
 	// API, or we are targeting internal API by its name and namespace.
 	if in.Spec.Proxy.TargetURL == "" {
-		if in.Spec.GraphQL != nil {
-			if !in.Spec.GraphQL.Enabled {
-				all = append(all,
-					field.Required(path("proxy", "target_url"),
-						ErrEmptyValue,
-					),
-				)
-			}
+		if !in.Spec.GraphQL.Enabled {
+			all = append(all,
+				field.Required(path("proxy", "target_url"),
+					ErrEmptyValue,
+				),
+			)
 		} else if in.Spec.Proxy.TargetInternal == nil {
 			all = append(all,
 				field.Required(path("proxy", "target_url"),
