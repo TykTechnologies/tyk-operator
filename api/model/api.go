@@ -545,9 +545,23 @@ type OpenIDOptions struct {
 }
 
 type APIDefinitionSpec struct {
-	apidef.APIDefinition `json:",inline"`
-	Proxy                ProxyConfig `json:"proxy"`
-	VersionData          VersionData `json:"version_data,omitempty"`
+	apidef.APIDefinition  `json:",inline"`
+	Proxy                 ProxyConfig    `json:"proxy"`
+	VersionData           VersionData    `json:"version_data,omitempty"`
+	GraphQL               *GraphQLConfig `bson:"graphql" json:"graphql"`
+	ClientCertificateRefs []string       `json:"client_certificate_refs,omitempty"`
+
+	// CertificateSecretNames represents the names of the secrets that the controller should look for in the current
+	// namespace which contain the certificates.
+	CertificateSecretNames []string `json:"certificate_secret_names,omitempty"`
+
+	// PinnedPublicKeysRefs allows you to specify public keys using k8s secret.
+	// It takes domain name as a key and secret name as a value.
+	PinnedPublicKeysRefs map[string]string `json:"pinned_public_keys_refs,omitempty"`
+
+	// UpstreamCertificateRefs is a map of domains and secret names that is used internally
+	// to obtain certificates from secrets in order to establish mTLS support for upstreams
+	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
 }
 
 type ProxyConfig struct {
@@ -1104,6 +1118,12 @@ type GraphQLSupergraphConfig struct {
 // +kubebuilder:validation:Enum="1";"2"
 type GraphQLConfigVersion string
 
+type GraphQLConfig struct {
+	apidef.GraphQLConfig `json:",inline"`
+	GraphRef             string `json:"graph_ref,omitempty"`
+}
+
+/*
 // GraphQLConfig is the root config object for a GraphQL API.
 type GraphQLConfig struct {
 	// Enabled indicates if GraphQL proxy should be enabled.
@@ -1140,6 +1160,7 @@ type GraphQLConfig struct {
 	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
 	LastSchemaUpdate *metav1.Time `json:"last_schema_update,omitempty"`
 }
+*/
 
 type GraphQLProxyConfig struct {
 	// +nullable

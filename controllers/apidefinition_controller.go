@@ -39,6 +39,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/TykTechnologies/tyk/apidef"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -145,7 +146,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		// Check GraphQL Federation
 		if upstreamRequestStruct.Spec.GraphQL != nil && upstreamRequestStruct.Spec.GraphQL.GraphRef != "" {
-			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SubGraphExecutionMode {
+			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == apidef.GraphQLExecutionModeSubgraph {
 				subgraph := &tykv1alpha1.SubGraph{}
 
 				err := r.Client.Get(ctx, types.NamespacedName{
@@ -167,7 +168,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				}
 			}
 
-			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == model.SuperGraphExecutionMode {
+			if upstreamRequestStruct.Spec.GraphQL.ExecutionMode == apidef.GraphQLExecutionModeSupergraph {
 				supergraph := &tykv1alpha1.SuperGraph{}
 				err := r.Client.Get(ctx, types.NamespacedName{
 					Namespace: req.Namespace,
@@ -202,7 +203,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 					upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs = append(
 						upstreamRequestStruct.Spec.GraphQL.Supergraph.Subgraphs,
-						model.GraphQLSubgraphEntity{
+						apidef.GraphQLSubgraphEntity{
 							APIID: subGraph.Status.APIID,
 							Name:  apiDef.Spec.Name,
 							URL:   fmt.Sprintf("tyk://%s", apiDef.Name),
