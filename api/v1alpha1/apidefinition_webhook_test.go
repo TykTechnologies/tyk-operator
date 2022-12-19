@@ -1,10 +1,13 @@
 package v1alpha1
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
+	"github.com/TykTechnologies/graphql-go-tools/pkg/execution/datasource"
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/TykTechnologies/tyk/apidef"
 	"github.com/matryer/is"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +17,7 @@ import (
 func TestApiDefinition_Default(t *testing.T) {
 	in := ApiDefinition{
 		Spec: APIDefinitionSpec{
-			APIDefinitionSpec: model.APIDefinitionSpec{UseStandardAuth: true},
+			APIDefinitionSpec: model.APIDefinitionSpec{APIDefinition: apidef.APIDefinition{UseStandardAuth: true}},
 		},
 	}
 	in.Default()
@@ -45,12 +48,12 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 	invalidRewriteApiDef := ApiDefinition{
 		Spec: APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
-				Proxy: model.Proxy{TargetURL: "/test"},
+				Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 				VersionData: model.VersionData{
 					Versions: map[string]model.VersionInfo{
 						"Default": {
 							ExtendedPaths: &model.ExtendedPathsSet{
-								URLRewrite: []model.URLRewriteMeta{{RewriteTo: ""}},
+								URLRewrite: []model.URLRewriteMeta{{URLRewriteMeta: apidef.URLRewriteMeta{RewriteTo: ""}}},
 							},
 						},
 					},
@@ -62,13 +65,13 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 	invalidTriggerApiDef := ApiDefinition{
 		Spec: APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
-				Proxy: model.Proxy{TargetURL: "/test"},
+				Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 				VersionData: model.VersionData{
 					Versions: map[string]model.VersionInfo{
 						"Default": {
 							ExtendedPaths: &model.ExtendedPathsSet{
 								URLRewrite: []model.URLRewriteMeta{
-									{RewriteTo: "", Triggers: []model.RoutingTrigger{{}}},
+									{URLRewriteMeta: apidef.URLRewriteMeta{RewriteTo: ""}, Triggers: []model.RoutingTrigger{{}}},
 								},
 							},
 						},
@@ -94,7 +97,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			apiDef: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						Proxy: model.Proxy{TargetURL: "/test"},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -105,8 +108,8 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			apiDef: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						Proxy:   model.Proxy{TargetURL: ""},
-						GraphQL: &model.GraphQLConfig{Enabled: true},
+						Proxy:         model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: ""}},
+						APIDefinition: apidef.APIDefinition{GraphQL: apidef.GraphQLConfig{Enabled: true}},
 					},
 				},
 			},
@@ -117,7 +120,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			apiDef: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						Proxy: model.Proxy{TargetURL: "", TargetInternal: &model.TargetInternal{
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: ""}, TargetInternal: &model.TargetInternal{
 							Target: model.Target{Name: "resource-name", Namespace: "resource-ns"},
 						}},
 					},
@@ -135,7 +138,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			apiDef: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						Proxy: model.Proxy{TargetURL: ""},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: ""}},
 					},
 				},
 			},
@@ -146,8 +149,9 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 			apiDef: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						GraphQL: &model.GraphQLConfig{Enabled: false},
-					},
+						APIDefinition: apidef.APIDefinition{
+							GraphQL: apidef.GraphQLConfig{Enabled: false},
+						}},
 				},
 			},
 			expectedErr: &missingTargetURLErr,
@@ -209,9 +213,11 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						UseStandardAuth:  true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							UseStandardAuth:  true,
+						},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -221,8 +227,9 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -231,8 +238,10 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseStandardAuth: true,
-						Proxy:           model.Proxy{TargetURL: "/test"},
+						APIDefinition: apidef.APIDefinition{
+							UseStandardAuth: true,
+						},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -242,13 +251,14 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseStandardAuth: true,
-						AuthConfigs: map[string]model.AuthConfig{
-							"random": {
-								AuthHeaderName: "Authorization",
-							},
-						},
-						Proxy: model.Proxy{TargetURL: "/test"},
+						APIDefinition: apidef.APIDefinition{
+							UseStandardAuth: true,
+							AuthConfigs: map[string]apidef.AuthConfig{
+								"random": {
+									AuthHeaderName: "Authorization",
+								},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -258,13 +268,14 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseStandardAuth: true,
-						AuthConfigs: map[string]model.AuthConfig{
-							"authToken": {
-								AuthHeaderName: "Authorization",
-							},
-						},
-						Proxy: model.Proxy{TargetURL: "/test"},
+						APIDefinition: apidef.APIDefinition{
+							UseStandardAuth: true,
+							AuthConfigs: map[string]apidef.AuthConfig{
+								"authToken": {
+									AuthHeaderName: "Authorization",
+								},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -292,19 +303,20 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
-						GraphQL: &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: "executionEngine",
-							TypeFieldConfigurations: []model.TypeFieldConfiguration{
-								{
-									DataSource: model.SourceConfig{
-										Kind: "",
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							GraphQL: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: "executionEngine",
+								TypeFieldConfigurations: []datasource.TypeFieldConfiguration{
+									{
+										DataSource: datasource.SourceConfig{
+											Name: "",
+										},
 									},
 								},
-							},
-						},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -314,19 +326,20 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
-						GraphQL: &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: "executionEngine",
-							TypeFieldConfigurations: []model.TypeFieldConfiguration{
-								{
-									DataSource: model.SourceConfig{
-										Kind: "invalid",
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							GraphQL: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: "executionEngine",
+								TypeFieldConfigurations: []datasource.TypeFieldConfiguration{
+									{
+										DataSource: datasource.SourceConfig{
+											Name: "invalid",
+										},
 									},
 								},
-							},
-						},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -336,20 +349,20 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
-						GraphQL: &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: "executionEngine",
-							TypeFieldConfigurations: []model.TypeFieldConfiguration{
-								{
-									DataSource: model.SourceConfig{
-										Kind:   "HTTPJsonDataSource",
-										Config: model.DataSourceConfig{},
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							GraphQL: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: "executionEngine",
+								TypeFieldConfigurations: []datasource.TypeFieldConfiguration{
+									{
+										DataSource: datasource.SourceConfig{
+											Name: "HTTPJsonDataSource",
+										},
 									},
 								},
-							},
-						},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -359,23 +372,30 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
-						GraphQL: &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: "executionEngine",
-							TypeFieldConfigurations: []model.TypeFieldConfiguration{
-								{
-									DataSource: model.SourceConfig{
-										Kind: "HTTPJsonDataSource",
-										Config: model.DataSourceConfig{
-											URL:    "hi/\there?",
-											Method: http.MethodGet,
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							GraphQL: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: "executionEngine",
+								TypeFieldConfigurations: []datasource.TypeFieldConfiguration{
+									{
+										DataSource: datasource.SourceConfig{
+											Name: "HTTPJsonDataSource",
+											Config: func() json.RawMessage {
+												data, _ := json.Marshal(datasource.HttpJsonDataSourceConfig{
+													URL: "hi/\there?",
+													Method: func() *string {
+														method := http.MethodGet
+														return &method
+													}(),
+												})
+												return data
+											}(),
 										},
 									},
 								},
-							},
-						},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -385,22 +405,27 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
-						GraphQL: &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: "executionEngine",
-							TypeFieldConfigurations: []model.TypeFieldConfiguration{
-								{
-									DataSource: model.SourceConfig{
-										Kind: "HTTPJsonDataSource",
-										Config: model.DataSourceConfig{
-											URL: "http://httpbin.org",
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							GraphQL: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: "executionEngine",
+								TypeFieldConfigurations: []datasource.TypeFieldConfiguration{
+									{
+										DataSource: datasource.SourceConfig{
+											Name: "HTTPJsonDataSource",
+											Config: func() json.RawMessage {
+												data, _ := json.Marshal(datasource.HttpJsonDataSourceConfig{
+													URL: "http://httpbin.org",
+												})
+
+												return data
+											}(),
 										},
 									},
 								},
-							},
-						},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -410,23 +435,31 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
-						GraphQL: &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: "executionEngine",
-							TypeFieldConfigurations: []model.TypeFieldConfiguration{
-								{
-									DataSource: model.SourceConfig{
-										Kind: "HTTPJsonDataSource",
-										Config: model.DataSourceConfig{
-											URL:    "http://httpbin.org",
-											Method: http.MethodGet,
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							GraphQL: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: "executionEngine",
+								TypeFieldConfigurations: []datasource.TypeFieldConfiguration{
+									{
+										DataSource: datasource.SourceConfig{
+											Name: "HTTPJsonDataSource",
+											Config: func() json.RawMessage {
+												data, _ := json.Marshal(datasource.HttpJsonDataSourceConfig{
+													URL: "http://httpbin.org",
+													Method: func() *string {
+														method := http.MethodGet
+														return &method
+													}(),
+												})
+
+												return data
+											}(),
 										},
 									},
 								},
-							},
-						},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},
@@ -435,23 +468,31 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
-						Proxy:            model.Proxy{TargetURL: "/test"},
-						GraphQL: &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: "executionEngine",
-							TypeFieldConfigurations: []model.TypeFieldConfiguration{
-								{
-									DataSource: model.SourceConfig{
-										Kind: "GraphQLDataSource",
-										Config: model.DataSourceConfig{
-											URL:    "http://httpbin.org",
-											Method: http.MethodGet,
+						APIDefinition: apidef.APIDefinition{
+							UseKeylessAccess: true,
+							GraphQL: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: "executionEngine",
+								TypeFieldConfigurations: []datasource.TypeFieldConfiguration{
+									{
+										DataSource: datasource.SourceConfig{
+											Name: "GraphQLDataSource",
+											Config: func() json.RawMessage {
+												data, _ := json.Marshal(datasource.GraphQLDataSourceConfig{
+													URL: "http://httpbin.org",
+													Method: func() *string {
+														method := http.MethodGet
+														return &method
+													}(),
+												})
+
+												return data
+											}(),
 										},
 									},
 								},
-							},
-						},
+							}},
+						Proxy: model.ProxyConfig{ProxyConfig: apidef.ProxyConfig{TargetURL: "/test"}},
 					},
 				},
 			},

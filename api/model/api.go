@@ -398,8 +398,8 @@ func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
 }
 
 type VersionInfo struct {
-	apidef.ExtendedPathsSet `json:",inline"`
-	ExtendedPaths           *ExtendedPathsSet `json:"extended_paths,omitempty"`
+	apidef.VersionInfo `json:",inline"`
+	ExtendedPaths      *ExtendedPathsSet `json:"extended_paths,omitempty"`
 }
 
 /*
@@ -955,6 +955,8 @@ type UptimeTestConfig struct {
 type VersionData struct {
 	apidef.VersionData `json:",inline"`
 	Versions           map[string]VersionInfo `json:"versions,omitempty"`
+	NotVersioned       bool                   `json:"not_versioned"`
+	DefaultVersion     string                 `json:"default_version"`
 }
 
 /*
