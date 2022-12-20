@@ -67,7 +67,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							AllowedTypes: []v1alpha1.GraphQLType{
 								{Name: queryName, Fields: []string{accountsField}},
 							},
-							RestrictedTypes: []v1alpha1.GraphQLType{{Name: queryName, Fields: []string{allField}}},
+							RestrictedTypes:      []v1alpha1.GraphQLType{{Name: queryName, Fields: []string{allField}}},
+							DisableIntrospection: true,
 							FieldAccessRights: []v1alpha1.FieldAccessDefinition{
 								{
 									TypeName:  queryName,
@@ -102,12 +103,15 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 					if k8s {
 						eval.Equal(polSpec.AccessRightsArray[0].Name, testApiDef)
 						eval.Equal(polSpec.AccessRightsArray[0].Namespace, testNs)
-					}
 
-					eval.Equal(len(polSpec.AccessRightsArray[0].AllowedTypes), 1)
-					eval.Equal(polSpec.AccessRightsArray[0].AllowedTypes[0].Name, queryName)
-					eval.Equal(len(polSpec.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
-					eval.Equal(polSpec.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
+						// allowed_types and disable_introspection are only possible via GW API
+						eval.Equal(len(polSpec.AccessRightsArray[0].AllowedTypes), 1)
+						eval.Equal(polSpec.AccessRightsArray[0].AllowedTypes[0].Name, queryName)
+						eval.Equal(len(polSpec.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
+						eval.Equal(polSpec.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
+
+						eval.Equal(polSpec.AccessRightsArray[0].DisableIntrospection, true)
+					}
 
 					eval.Equal(len(polSpec.AccessRightsArray[0].RestrictedTypes), 1)
 					eval.Equal(polSpec.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
