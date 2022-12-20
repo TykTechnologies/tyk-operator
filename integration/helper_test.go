@@ -139,9 +139,9 @@ func createTestOperatorContext(ctx context.Context, namespace string,
 	return &operatorCtx, err
 }
 
-func createTestPolicy(ctx context.Context, envConf *envconf.Config, namespace string, mutateFn func(*v1alpha1.SecurityPolicy),
+func createTestPolicy(ctx context.Context, c *envconf.Config, namespace string, mutateFn func(*v1alpha1.SecurityPolicy),
 ) (*v1alpha1.SecurityPolicy, error) {
-	c := envConf.Client()
+	cl := c.Client()
 	var policy v1alpha1.SecurityPolicy
 
 	policy.Name = testSecurityPolicy
@@ -156,7 +156,7 @@ func createTestPolicy(ctx context.Context, envConf *envconf.Config, namespace st
 		mutateFn(&policy)
 	}
 
-	err := c.Resources(namespace).Create(ctx, &policy)
+	err := cl.Resources(namespace).Create(ctx, &policy)
 	if err != nil {
 		return nil, err
 	}

@@ -50,7 +50,6 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 		Assess(
 			"Create a SecurityPolicy for GraphQL",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
