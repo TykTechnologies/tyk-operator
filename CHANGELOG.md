@@ -2,6 +2,13 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
+
+**Added**
+- Added support to policy fields that apply to GraphQL.
+
+
+
+**Fixed**
 - Operator was failing to remove finalizers from ApiDefinition that was already deleted in Dashboard
 
 ## [v0.12.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.12.0)
