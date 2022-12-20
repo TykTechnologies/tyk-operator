@@ -5,6 +5,10 @@ import (
 	"errors"
 	"os"
 
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
@@ -21,6 +25,8 @@ const (
 	testSubGraphCRMetaName = "test-subgraph"
 	testSubGraphSchema     = "test-schema"
 	testSubGraphSDL        = "test-SDL"
+	testSecurityPolicy     = "test-security-policy"
+	operatorSecret         = "tyk-operator-conf"
 )
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
@@ -95,6 +101,25 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	return apiDef, err
 }
 
+func waitForTykResourceCreation(envConf *envconf.Config, obj k8s.Object) error {
+	err := wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(obj, func(obj k8s.Object) bool {
+		switch val := obj.(type) {
+		case *v1alpha1.ApiDefinition:
+			if val.Status.ApiID != "" {
+				return true
+			}
+		case *v1alpha1.SecurityPolicy:
+			if val.Status.PolID != "" {
+				return true
+			}
+		}
+
+		return false
+	}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
+}
+
 func createTestOperatorContext(ctx context.Context, namespace string,
 	envConf *envconf.Config,
 ) (*v1alpha1.OperatorContext, error) {
@@ -112,6 +137,31 @@ func createTestOperatorContext(ctx context.Context, namespace string,
 	err := client.Resources(namespace).Create(ctx, &operatorCtx)
 
 	return &operatorCtx, err
+}
+
+func createTestPolicy(ctx context.Context, envConf *envconf.Config, namespace string, mutateFn func(*v1alpha1.SecurityPolicy),
+) (*v1alpha1.SecurityPolicy, error) {
+	c := envConf.Client()
+	var policy v1alpha1.SecurityPolicy
+
+	policy.Name = testSecurityPolicy
+	policy.Namespace = namespace
+	policy.Spec = v1alpha1.SecurityPolicySpec{
+		Name:   testSecurityPolicy,
+		Active: true,
+		State:  "active",
+	}
+
+	if mutateFn != nil {
+		mutateFn(&policy)
+	}
+
+	err := c.Resources(namespace).Create(ctx, &policy)
+	if err != nil {
+		return nil, err
+	}
+
+	return &policy, err
 }
 
 func createTestTlsSecret(ctx context.Context, namespace string, mutateFn func(*v1.Secret),
