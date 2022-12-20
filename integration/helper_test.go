@@ -5,6 +5,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk/apidef"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
@@ -24,13 +25,14 @@ func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1al
 	apiDef.Spec.VersionData = model.VersionData{
 		DefaultVersion: "Default",
 		NotVersioned:   true,
-		Versions:       map[string]model.VersionInfo{"Default": {Name: "Default"}},
+		Versions:       map[string]model.VersionInfo{"Default": {VersionInfo: apidef.VersionInfo{Name: "Default"}}},
 	}
-	apiDef.Spec.Proxy = model.Proxy{
-		ListenPath:      "/httpbin",
-		TargetURL:       "http://httpbin.default.svc:8000",
-		StripListenPath: true,
-	}
+	apiDef.Spec.Proxy = model.ProxyConfig{
+		ProxyConfig: apidef.ProxyConfig{
+			ListenPath:      "/httpbin",
+			TargetURL:       "http://httpbin.default.svc:8000",
+			StripListenPath: true,
+		}}
 
 	if mutateFn != nil {
 		mutateFn(&apiDef)

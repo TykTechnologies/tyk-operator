@@ -11,9 +11,8 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
+	"github.com/TykTechnologies/tyk/apidef"
 	"github.com/google/uuid"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -39,21 +38,19 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 		errorResponseCode            = 422
 	)
 
-	eps := &model.ExtendedPathsSet{
-		ValidateJSON: []model.ValidatePathMeta{{
+	eps := apidef.ExtendedPathsSet{
+		ValidateJSON: []apidef.ValidatePathMeta{{
 			ErrorResponseCode: errorResponseCode,
 			Path:              "/get",
 			Method:            http.MethodGet,
-			Schema: &model.MapStringInterfaceType{Unstructured: unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"properties": map[string]interface{}{
-						"key": map[string]interface{}{
-							"type":      "string",
-							"minLength": 2,
-						},
+			Schema: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"key": map[string]interface{}{
+						"type":      "string",
+						"minLength": 2,
 					},
 				},
-			}},
+			},
 		}},
 	}
 
@@ -65,15 +62,16 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 			// Create ApiDefinition with JSON Schema Validation support.
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithJSONValidationName
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
-				}
+				apiDef.Spec.Proxy = model.ProxyConfig{
+					ProxyConfig: apidef.ProxyConfig{
+						ListenPath:      apiDefListenPath,
+						TargetURL:       "http://httpbin.org",
+						StripListenPath: true,
+					}}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {VersionInfo: apidef.VersionInfo{Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps}},
 				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
@@ -146,11 +144,11 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 	)
 
 	const whiteListedPath = "/whitelisted"
-	eps := &model.ExtendedPathsSet{
-		WhiteList: []model.EndPointMeta{{
+	eps := apidef.ExtendedPathsSet{
+		WhiteList: []apidef.EndPointMeta{{
 			Path:       whiteListedPath,
 			IgnoreCase: true,
-			MethodActions: map[string]model.EndpointMethodMeta{
+			MethodActions: map[string]apidef.EndpointMethodMeta{
 				"GET": {
 					Action: "no_action",
 					Code:   200, Data: "",
@@ -168,15 +166,16 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 			// Create ApiDefinition with whitelist extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
-				}
+				apiDef.Spec.Proxy = model.ProxyConfig{
+					ProxyConfig: apidef.ProxyConfig{
+						ListenPath:      apiDefListenPath,
+						TargetURL:       "http://httpbin.org",
+						StripListenPath: true,
+					}}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {VersionInfo: apidef.VersionInfo{Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps}},
 				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
@@ -268,11 +267,11 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 	)
 
 	const blackListedPath = "/blacklisted"
-	eps := &model.ExtendedPathsSet{
-		BlackList: []model.EndPointMeta{{
+	eps := apidef.ExtendedPathsSet{
+		BlackList: []apidef.EndPointMeta{{
 			Path:       blackListedPath,
 			IgnoreCase: true,
-			MethodActions: map[string]model.EndpointMethodMeta{
+			MethodActions: map[string]apidef.EndpointMethodMeta{
 				"GET": {
 					Action: "no_action",
 					Code:   200, Data: "",
@@ -290,15 +289,16 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 			// Create ApiDefinition with whitelist extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithBlacklist
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
-				}
+				apiDef.Spec.Proxy = model.ProxyConfig{
+					ProxyConfig: apidef.ProxyConfig{
+						ListenPath:      apiDefListenPath,
+						TargetURL:       "http://httpbin.org",
+						StripListenPath: true,
+					}}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {VersionInfo: apidef.VersionInfo{Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps}},
 				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
@@ -391,11 +391,11 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 	const whiteListedPath = "/whitelisted"
 	const ignoredPath = "/ignored"
-	eps := &model.ExtendedPathsSet{
-		WhiteList: []model.EndPointMeta{{
+	eps := apidef.ExtendedPathsSet{
+		WhiteList: []apidef.EndPointMeta{{
 			Path:       whiteListedPath,
 			IgnoreCase: true,
-			MethodActions: map[string]model.EndpointMethodMeta{
+			MethodActions: map[string]apidef.EndpointMethodMeta{
 				"GET": {
 					Action: "no_action",
 					Code:   200, Data: "",
@@ -403,10 +403,10 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				},
 			},
 		}},
-		Ignored: []model.EndPointMeta{{
+		Ignored: []apidef.EndPointMeta{{
 			Path:       ignoredPath,
 			IgnoreCase: true,
-			MethodActions: map[string]model.EndpointMethodMeta{
+			MethodActions: map[string]apidef.EndpointMethodMeta{
 				"GET": {
 					Action: "no_action",
 					Code:   200, Data: "",
@@ -424,15 +424,16 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			// Create ApiDefinition with whitelist + ingored extended path
 			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
-				}
+				apiDef.Spec.Proxy = model.ProxyConfig{
+					ProxyConfig: apidef.ProxyConfig{
+						ListenPath:      apiDefListenPath,
+						TargetURL:       "http://httpbin.org",
+						StripListenPath: true,
+					}}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {VersionInfo: apidef.VersionInfo{Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps}},
 				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
@@ -576,11 +577,12 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefPinningViaSecret
 				apiDef.Spec.Name = "valid"
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefPinningViaSecretListenPath,
-					TargetURL:       "https://httpbin.org/",
-					StripListenPath: true,
-				}
+				apiDef.Spec.Proxy = model.ProxyConfig{
+					ProxyConfig: apidef.ProxyConfig{
+						ListenPath:      apiDefPinningViaSecretListenPath,
+						TargetURL:       "https://httpbin.org/",
+						StripListenPath: true,
+					}}
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			}, envConf)
 			is.NoErr(err)
@@ -590,11 +592,11 @@ Q1+khpfxP9x1H+mMlUWBgYPq7jG5ceTbltIoF/sUQPNR+yKIBSnuiISXFHO9HEnk
 			// to reach github.com, which must fail due to proxy error.
 			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = invalidApiDef
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      invalidApiDefListenPath,
-					TargetURL:       "https://github.com/",
-					StripListenPath: true,
-				}
+				apiDef.Spec.Proxy = model.ProxyConfig{
+					ProxyConfig: apidef.ProxyConfig{ListenPath: invalidApiDefListenPath,
+						TargetURL:       "https://github.com/",
+						StripListenPath: true,
+					}}
 				apiDef.Spec.Name = "invalid"
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			}, envConf)
@@ -731,7 +733,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion},
+					defaultVersion: {VersionInfo: apidef.VersionInfo{Name: defaultVersion}},
 				}
 			}, envConf)
 			is.NoErr(err) // failed to create apiDefinition
@@ -866,7 +868,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion},
+					defaultVersion: {VersionInfo: apidef.VersionInfo{Name: defaultVersion}},
 				}
 			}, envConf)
 			eval.NoErr(err) // failed to create apiDefinition
@@ -980,7 +982,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion},
+					defaultVersion: {VersionInfo: apidef.VersionInfo{Name: defaultVersion}},
 				}
 			}, envConf)
 			eval.NoErr(err) // failed to create apiDefinition
@@ -1078,9 +1080,10 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 						ad.Name = fmt.Sprintf("%s-%s", ad.Name, uuid.New().String())
 						ad.Spec.Name = ad.Name
 						ad.Spec.GraphQL = &model.GraphQLConfig{
-							Enabled:       true,
-							ExecutionMode: model.GraphQLExecutionMode(tc.ExecutionMode),
-						}
+							GraphQLConfig: apidef.GraphQLConfig{
+								Enabled:       true,
+								ExecutionMode: apidef.GraphQLExecutionMode(tc.ExecutionMode),
+							}}
 					}, c)
 
 					t.Log("Error=", err)
