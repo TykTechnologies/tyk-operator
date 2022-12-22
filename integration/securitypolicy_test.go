@@ -22,9 +22,9 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-// policyCreate creates given spec and reloads Tyk. Although reloading is not required for Pro,
+// createPolicyOnTyk creates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
-func policyCreate(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
+func createPolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
 	err := klient.Universal.Portal().Policy().Create(ctx, spec)
 	if err != nil {
 		return err
@@ -33,9 +33,9 @@ func policyCreate(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error 
 	return klient.Universal.HotReload(ctx)
 }
 
-// policyUpdate updates given spec and reloads Tyk. Although reloading is not required for Pro,
+// updatePolicyOnTyk updates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
-func policyUpdate(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
+func updatePolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
 	err := klient.Universal.Portal().Policy().Update(ctx, spec)
 	if err != nil {
 		return err
@@ -44,9 +44,9 @@ func policyUpdate(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error 
 	return klient.Universal.HotReload(ctx)
 }
 
-// policyDelete deletes SecurityPolicy identified by given ID and reloads Tyk.
+// deletePolicyOnTyk deletes SecurityPolicy identified by given ID and reloads Tyk.
 // Although reloading is not required for Pro, it is needed for CE.
-func policyDelete(ctx context.Context, id string) error {
+func deletePolicyOnTyk(ctx context.Context, id string) error {
 	err := klient.Universal.Portal().Policy().Delete(ctx, id)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
-				err := policyCreate(reqCtx, &spec)
+				err := createPolicyOnTyk(reqCtx, &spec)
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
@@ -193,7 +193,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				eval := is.New(t)
 
 				// Delete an existing Policy from Dashboard to create drift between Tyk and K8s state.
-				err := policyDelete(reqCtx, policyCR.Status.PolID)
+				err := deletePolicyOnTyk(reqCtx, policyCR.Status.PolID)
 				eval.NoErr(err)
 
 				previousPolicyID := policyCR.Status.PolID
@@ -243,7 +243,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					copySpec := policyCR.Spec.DeepCopy()
 					copySpec.Name = "Updating Existing Policy"
 
-					err = policyUpdate(reqCtx, copySpec)
+					err = updatePolicyOnTyk(reqCtx, copySpec)
 					eval.NoErr(err)
 
 					// Ensure that policy is updated accordingly on Tyk Side.
@@ -312,10 +312,6 @@ func TestSecurityPolicy(t *testing.T) {
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
-
-			//if tykEnv.Mode == "ce" {
-			//	t.Skip("SecurityPolicy API is not implemented in CE yet")
-			//}
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
