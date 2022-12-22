@@ -1,17 +1,18 @@
-## Migration
+# Existing Security Policy Migration to Kubernetes
 
 >Tyk Operator provides a PoC tool to help with the migration of your existing
 > ApiDefinition and SecurityPolicy objects from Dashboard to Kubernetes CR files.
 > Please see the [snapshot package](../../pkg/snapshot/README.md).
 
-If you have existing pre-Operator policies, you can easily link them to a CRD, which will allow you to modify them through the YAML moving forward.
+As of **v0.13.0**, if you have existing pre-Operator policies, you can easily link them to a CRD, 
+which will allow you to modify them through the YAML moving forward.
 
 Simply set the `id` field in the SecurityPolicy YAML to the `_id` field in the existing Policy's JSON.
 This will allow the Operator to make the link.  
 
 Note that the YAML becomes the source of truth and will overwrite any changes between it and the existing Policy.
 
-#### Example
+## Example
 
 1. You have an existing Policy
 
@@ -37,7 +38,8 @@ spec:
         - Default
 ```
 
-The `spec.access_rights_array` field of the YAML must refer to the ApiDefinition object that the policy identified by the id will affect.
+The `spec.access_rights_array` field of the YAML must refer to the ApiDefinition object that the policy identified by 
+the id will affect.
 
 In order to find available ApiDefinition objects:
 ```bash
@@ -53,6 +55,8 @@ $ kubectl apply -f my-security-policy.yaml
 securitypolicy.tyk.tyk.io/new-httpbin-policy created
 ```
 
-Now the changes in the YAML were applied to the existing Policy.  You can now manage this policy through the CRD moving forward.
+Now the changes in the YAML were applied to the existing Policy.  You can now manage this policy through the CRD moving 
+forward.
 
-Note, if this resource is unintentionally deleted, the Operator will recreate it with the same `id` field as above, allowing keys to continue to work as before the delete event.
+Note, if this resource is unintentionally deleted, the Operator will recreate it with the same `id` field as above, 
+allowing keys to continue to work as before the delete event.
