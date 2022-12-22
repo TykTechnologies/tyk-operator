@@ -159,7 +159,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 	if api.Status.ApiID == "" {
 		r.Log.Error(
 			opclient.ErrNotFound,
-			"ApiDefinition does not exist on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
+			"Failed to find ApiDefinition on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
 		)
 
 		return opclient.ErrNotFound
