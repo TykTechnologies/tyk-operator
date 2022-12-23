@@ -414,7 +414,12 @@ func TestSecurityPolicy(t *testing.T) {
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-						return err == nil
+						if err == nil {
+							t.Log("failed to reconcile", err)
+							return false
+						}
+
+						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -476,7 +481,11 @@ func TestSecurityPolicy(t *testing.T) {
 				// Ensure that the policy is deleted successfully from Tyk.
 				err = wait.For(func() (done bool, err error) {
 					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
-					return tykClient.IsNotFound(err), nil
+					if tykClient.IsNotFound(err) {
+						return true, nil
+					}
+
+					return false, err
 				})
 				eval.NoErr(err)
 
