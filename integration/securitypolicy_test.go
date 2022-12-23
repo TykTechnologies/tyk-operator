@@ -148,7 +148,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
 			eval.NoErr(err)
 
-			if tykEnv.Mode == "ce" && v.AtLeast(minPolicyAPIVersion) {
+			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyAPIVersion) {
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
 
@@ -361,7 +361,7 @@ func TestSecurityPolicy(t *testing.T) {
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
 			eval.NoErr(err)
 
-			if tykEnv.Mode == "ce" && v.AtLeast(minPolicyAPIVersion) {
+			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyAPIVersion) {
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
 

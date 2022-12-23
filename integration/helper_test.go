@@ -153,7 +153,7 @@ func generateEnvConfig(operatorConfSecret *v1.Secret) (environmet.Env, error) {
 	}
 
 	tykOrg := string(data)
-	tykVersion := "v4.0"
+	tykVersion := "v4.2"
 
 	data, ok = operatorConfSecret.Data["TYK_VERSION"]
 	if ok && len(data) != 0 {
