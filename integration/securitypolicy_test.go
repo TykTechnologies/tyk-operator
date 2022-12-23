@@ -226,8 +226,15 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				previousPolicyID := policyCR.Status.PolID
 
 				// Ensure that policy is deleted from Tyk.
-				_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
-				eval.True(tykClient.IsNotFound(err))
+				err = wait.For(func() (done bool, err error) {
+					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
+					if tykClient.IsNotFound(err) {
+						return true, nil
+					}
+
+					return false, err
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
 
 				// After reconciliation, Operator should detect drift and recreate non-existing policy on Tyk side.
 				err = wait.For(func() (done bool, err error) {
@@ -415,12 +422,13 @@ func TestSecurityPolicy(t *testing.T) {
 								policyOnK8s.Spec.AccessRightsArray[0].APIID,
 								policyOnTyk.AccessRightsArray[0].APIID,
 							)
+							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.MID)
 						} else {
 							ad, exists := policyOnTyk.AccessRights[policyOnK8s.Spec.AccessRightsArray[0].APIID]
 							eval.True(exists)
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
+							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
 						}
-						eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
 						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 
 						return true
