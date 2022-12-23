@@ -25,34 +25,61 @@ import (
 // createPolicyOnTyk creates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
 func createPolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
-	err := klient.Universal.Portal().Policy().Create(ctx, spec)
-	if err != nil {
-		return err
-	}
+	err := wait.For(func() (done bool, err error) {
+		err = klient.Universal.Portal().Policy().Create(ctx, spec)
+		if err != nil {
+			return false, err
+		}
 
-	return klient.Universal.HotReload(ctx)
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
 }
 
 // updatePolicyOnTyk updates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
 func updatePolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
-	err := klient.Universal.Portal().Policy().Update(ctx, spec)
-	if err != nil {
-		return err
-	}
+	err := wait.For(func() (done bool, err error) {
+		err = klient.Universal.Portal().Policy().Update(ctx, spec)
+		if err != nil {
+			return false, err
+		}
 
-	return klient.Universal.HotReload(ctx)
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
 }
 
 // deletePolicyOnTyk deletes SecurityPolicy identified by given ID and reloads Tyk.
 // Although reloading is not required for Pro, it is needed for CE.
 func deletePolicyOnTyk(ctx context.Context, id string) error {
-	err := klient.Universal.Portal().Policy().Delete(ctx, id)
-	if err != nil {
-		return err
-	}
+	err := wait.For(func() (done bool, err error) {
+		err = klient.Universal.Portal().Policy().Delete(ctx, id)
+		if err != nil {
+			return false, err
+		}
 
-	return klient.Universal.HotReload(ctx)
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
 }
 
 func TestSecurityPolicyMigration(t *testing.T) {
