@@ -5,6 +5,7 @@
 
 **Added**
 - Added Basic Authentication support [Issue #534](https://github.com/TykTechnologies/tyk-operator/issues/534)
+- Added support for security policies in OSS [#357](https://github.com/TykTechnologies/tyk-operator/issues/357)
 
 **Fixed**
 - Operator was failing to remove finalizers from ApiDefinition that was already deleted in Dashboard [#469](https://github.com/TykTechnologies/tyk-operator/issues/469)
