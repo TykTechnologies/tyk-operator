@@ -11,6 +11,7 @@ import (
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -140,6 +141,12 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
+
+			v, err := version.ParseGeneric(tykEnv.TykVersion)
+			eval.NoErr(err)
+			if tykEnv.Mode == "ce" && v.Major() < 4 && v.Minor() < 1 {
+				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
+			}
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -346,6 +353,12 @@ func TestSecurityPolicy(t *testing.T) {
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
+
+			v, err := version.ParseGeneric(tykEnv.TykVersion)
+			eval.NoErr(err)
+			if tykEnv.Mode == "ce" && v.Major() < 4 && v.Minor() < 1 {
+				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
+			}
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
