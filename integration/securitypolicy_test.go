@@ -151,6 +151,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyAPIVersion) {
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
+			t.Logf("Running Tyk %v %v\n", "ce", v.String())
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -414,7 +415,7 @@ func TestSecurityPolicy(t *testing.T) {
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-						if err == nil {
+						if err != nil {
 							t.Log("failed to reconcile", err)
 							return false
 						}
