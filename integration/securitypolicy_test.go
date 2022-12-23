@@ -23,6 +23,9 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+// minPolicyAPIVersion represents the minimum Tyk Gateway version required to use Policy API.
+var minPolicyAPIVersion = version.MustParseGeneric("v4.1.0")
+
 // createPolicyOnTyk creates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
 func createPolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
@@ -144,7 +147,8 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
 			eval.NoErr(err)
-			if tykEnv.Mode == "ce" && v.Major() < 4 && v.Minor() < 1 {
+
+			if tykEnv.Mode == "ce" && v.AtLeast(minPolicyAPIVersion) {
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
 
@@ -356,7 +360,8 @@ func TestSecurityPolicy(t *testing.T) {
 
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
 			eval.NoErr(err)
-			if tykEnv.Mode == "ce" && v.Major() < 4 && v.Minor() < 1 {
+
+			if tykEnv.Mode == "ce" && v.AtLeast(minPolicyAPIVersion) {
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
 
