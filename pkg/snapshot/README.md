@@ -24,6 +24,7 @@ Please use with caution.
 
 1. Access to `tyk-operator` repository.
 2. [go](https://go.dev/doc/install)
+> Please make sure that your Go version is compatible with the Go version defined in [`go.mod`](https://github.com/TykTechnologies/tyk-operator/blob/master/go.mod#L3).
 3. Credentials to connect Tyk Dashboard or Gateway. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator) for details.
 
 ## Installation
