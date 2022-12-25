@@ -151,7 +151,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyAPIVersion) {
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
-			t.Logf("Running Tyk %v %v\n", "ce", v.String())
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
