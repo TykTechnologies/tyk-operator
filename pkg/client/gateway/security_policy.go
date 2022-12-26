@@ -87,7 +87,7 @@ func (a SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) 
 		return client.Error(res)
 	}
 
-	return client.JSON(res, def)
+	return nil
 }
 
 func (a SecurityPolicy) Delete(ctx context.Context, id string) error {

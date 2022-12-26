@@ -8,6 +8,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
+	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,8 +24,8 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-// minPolicyAPIVersion represents the minimum Tyk Gateway version required to use Policy API.
-var minPolicyAPIVersion = version.MustParseGeneric("v4.1.0")
+// minPolicyGwVersion represents the minimum Tyk Gateway version required to use Policy API.
+var minPolicyGwVersion = version.MustParseGeneric("v4.1.0")
 
 // createPolicyOnTyk creates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
@@ -148,7 +149,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
 			eval.NoErr(err)
 
-			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyAPIVersion) {
+			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
 				runTests = false
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
@@ -298,7 +299,10 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 					// Ensure that policy is updated accordingly on Tyk Side.
 					newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
-					eval.NoErr(err)
+					if err != nil {
+						return false, err
+					}
+
 					eval.True(newCopySpec != nil)
 
 					return newCopySpec.Name == copySpec.Name, nil
@@ -360,7 +364,7 @@ func TestSecurityPolicy(t *testing.T) {
 		reqCtx   context.Context
 		policyCR v1alpha1.SecurityPolicy
 		apiDefCR *v1alpha1.ApiDefinition
-		polRec   controllers.SecurityPolicyReconciler
+		tykEnv   environmet.Env
 	)
 
 	securityPolicyFeatures := features.New("Create Security Policy from scratch").
@@ -372,28 +376,18 @@ func TestSecurityPolicy(t *testing.T) {
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
 			eval.NoErr(err)
 
-			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyAPIVersion) {
+			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
 
-			testCl, err := createTestClient(c.Client())
-			eval.NoErr(err)
-
-			polRec = controllers.SecurityPolicyReconciler{
-				Client: testCl,
-				Log:    log.NullLogger{},
-				Scheme: testCl.Scheme(),
-				Env:    tykEnv,
-			}
-
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
-				Env: polRec.Env,
+				Env: tykEnv,
 				Log: log.NullLogger{},
 			})
 
@@ -426,9 +420,11 @@ func TestSecurityPolicy(t *testing.T) {
 					},
 				}
 
+				// Create the SecurityPolicy on k8s.
 				err = c.Client().Resources(testNs).Create(ctx, &policyCR)
 				eval.NoErr(err)
 
+				// Wait until policy is successfully reconciled.
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						pol, ok := object.(*v1alpha1.SecurityPolicy)
@@ -454,7 +450,7 @@ func TestSecurityPolicy(t *testing.T) {
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						eval.NoErr(err)
 
-						if polRec.Env.Mode == "pro" {
+						if tykEnv.Mode == "pro" {
 							eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
 							eval.Equal(
 								policyOnK8s.Spec.AccessRightsArray[0].APIID,
@@ -467,6 +463,7 @@ func TestSecurityPolicy(t *testing.T) {
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
 							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
 						}
+
 						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 
 						return true
