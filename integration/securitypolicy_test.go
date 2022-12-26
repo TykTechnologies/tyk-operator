@@ -180,8 +180,12 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
-					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      envconf.RandomName("sample-policy-k8s", 32),
+						Namespace: testNs,
+					},
 					Spec: v1alpha1.SecurityPolicySpec{
+						Name:   envconf.RandomName("sample-policy", 32),
 						ID:     spec.MID,
 						Active: true,
 						State:  initialK8sPolicyState,
@@ -333,6 +337,14 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			}).
 		Feature()
 
+	testenv.Finish(func(ctx context.Context, config *envconf.Config) (context.Context, error) {
+		eval := is.New(t)
+		testNs, ok := ctx.Value(ctxNSKey).(string)
+		eval.True(ok)
+
+		return ctx, polRec.DeleteAllOf(ctx, &v1alpha1.SecurityPolicy{}, cr.InNamespace(testNs))
+	})
+
 	testenv.Test(t, securityPolicyMigrationFeatures)
 }
 
@@ -394,9 +406,12 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
-					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      envconf.RandomName("sample-policy-k8s", 32),
+						Namespace: testNs,
+					},
 					Spec: v1alpha1.SecurityPolicySpec{
-						Name:   envconf.RandomName("existing-name", 32),
+						Name:   envconf.RandomName("sample-policy", 32),
 						Active: true,
 						State:  "draft",
 						AccessRightsArray: []*v1alpha1.AccessDefinition{{
@@ -406,20 +421,15 @@ func TestSecurityPolicy(t *testing.T) {
 					},
 				}
 
-				_, err = util.CreateOrUpdate(ctx, polRec.Client, &policyCR, func() error {
-					return nil
-				})
+				err = c.Client().Resources(testNs).Create(ctx, &policyCR)
 				eval.NoErr(err)
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
-						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-						if err != nil {
-							t.Log("failed to reconcile", err)
-							return false
-						}
+						pol, ok := object.(*v1alpha1.SecurityPolicy)
+						eval.True(ok)
 
-						return true
+						return pol.Status.PolID != ""
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
