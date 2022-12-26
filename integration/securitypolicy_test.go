@@ -95,42 +95,42 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		existingPolicyID      = "my-testing-id"
 	)
 
-	spec := v1alpha1.SecurityPolicySpec{
-		ID:     existingPolicyID,
-		Name:   "existing-spec",
-		State:  "draft",
-		Rate:   34,
-		Active: true,
-		Tags:   []string{"testing"},
-	}
-
-	hasSameValues := func(
-		mode v1alpha1.OperatorContextMode,
-		k8sSpec, tykSpec *v1alpha1.SecurityPolicySpec,
-		k8sStatusID string,
-	) bool {
-		if mode == "pro" {
-			return k8sSpec.MID == tykSpec.MID &&
-				k8sStatusID == tykSpec.MID &&
-				len(k8sSpec.Tags) == len(tykSpec.Tags) &&
-				len(tykSpec.Tags) == 1 &&
-				tykSpec.Tags[0] == initialK8sPolicyTag &&
-				tykSpec.Rate == initialK8sPolicyRate &&
-				tykSpec.State == initialK8sPolicyState
-		}
-
-		return k8sSpec.MID == tykSpec.ID &&
-			k8sStatusID == tykSpec.ID &&
-			len(k8sSpec.Tags) == len(tykSpec.Tags) &&
-			len(tykSpec.Tags) == 1 &&
-			tykSpec.Tags[0] == initialK8sPolicyTag &&
-			tykSpec.Rate == initialK8sPolicyRate
-	}
-
 	var (
+		runTests = true
+		spec     = v1alpha1.SecurityPolicySpec{
+			ID:     existingPolicyID,
+			Name:   "existing-spec",
+			State:  "draft",
+			Rate:   34,
+			Active: true,
+			Tags:   []string{"testing"},
+		}
 		polRec   controllers.SecurityPolicyReconciler
 		policyCR v1alpha1.SecurityPolicy
 		reqCtx   context.Context
+
+		hasSameValues = func(
+			mode v1alpha1.OperatorContextMode,
+			k8sSpec, tykSpec *v1alpha1.SecurityPolicySpec,
+			k8sStatusID string,
+		) bool {
+			if mode == "pro" {
+				return k8sSpec.MID == tykSpec.MID &&
+					k8sStatusID == tykSpec.MID &&
+					len(k8sSpec.Tags) == len(tykSpec.Tags) &&
+					len(tykSpec.Tags) == 1 &&
+					tykSpec.Tags[0] == initialK8sPolicyTag &&
+					tykSpec.Rate == initialK8sPolicyRate &&
+					tykSpec.State == initialK8sPolicyState
+			}
+
+			return k8sSpec.MID == tykSpec.ID &&
+				k8sStatusID == tykSpec.ID &&
+				len(k8sSpec.Tags) == len(tykSpec.Tags) &&
+				len(tykSpec.Tags) == 1 &&
+				tykSpec.Tags[0] == initialK8sPolicyTag &&
+				tykSpec.Rate == initialK8sPolicyRate
+		}
 	)
 
 	securityPolicyMigrationFeatures := features.New("Existing Security Policy Migration to K8s").
@@ -149,6 +149,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			eval.NoErr(err)
 
 			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyAPIVersion) {
+				runTests = false
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
 
@@ -338,6 +339,10 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		Feature()
 
 	testenv.Finish(func(ctx context.Context, config *envconf.Config) (context.Context, error) {
+		if t.Skipped() || !runTests {
+			return ctx, nil
+		}
+
 		eval := is.New(t)
 		testNs, ok := ctx.Value(ctxNSKey).(string)
 		eval.True(ok)
