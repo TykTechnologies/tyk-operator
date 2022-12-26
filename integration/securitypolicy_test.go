@@ -424,31 +424,21 @@ func TestSecurityPolicy(t *testing.T) {
 				err = c.Client().Resources(testNs).Create(ctx, &policyCR)
 				eval.NoErr(err)
 
-				// Wait until policy is successfully reconciled.
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
-						pol, ok := object.(*v1alpha1.SecurityPolicy)
-						eval.True(ok)
-
-						return pol.Status.PolID != ""
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
+						// Ensure that policy is created on Tyk
+						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
+						if err != nil {
+							t.Logf("Failed to find Policy %v on Tyk, err: %v", policyOnK8s.Status.PolID, err)
+							return false
+						}
+
 						eval.True(len(policyOnK8s.Status.PolID) > 0)
 						eval.True(policyOnK8s.Status.PolID == policyCR.Spec.MID)
 						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
-
-						// Ensure that policy is created on Tyk
-						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
-						eval.NoErr(err)
 
 						if tykEnv.Mode == "pro" {
 							eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
