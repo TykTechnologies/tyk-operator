@@ -5,9 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"github.com/TykTechnologies/tyk/apidef"
 
 	"github.com/matryer/is"
 )
@@ -85,7 +84,7 @@ func TestParseConfigData(t *testing.T) {
 	const tmpNs = "namespace"
 
 	testCases := []struct {
-		configData *model.MapStringInterfaceType
+		configData map[string]interface{}
 		name       string
 		namespace  string
 		err        error
@@ -97,54 +96,38 @@ func TestParseConfigData(t *testing.T) {
 			err:        ErrNonExistentConfigData,
 		},
 		{
-			configData: &model.MapStringInterfaceType{
-				Unstructured: unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"k8sName": existingName,
-					},
-				},
+			configData: map[string]interface{}{
+				"k8sName": existingName,
 			},
 			name: existingName,
 			err:  nil,
 		},
 		{
-			configData: &model.MapStringInterfaceType{
-				Unstructured: unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"k8sName":      existingName,
-						"k8sNamespace": tmpNs,
-					},
-				},
+			configData: map[string]interface{}{
+				"k8sName":      existingName,
+				"k8sNamespace": tmpNs,
 			},
 			name:      existingName,
 			namespace: tmpNs,
 			err:       nil,
 		},
 		{
-			configData: &model.MapStringInterfaceType{
-				Unstructured: unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"k8sName":    existingName,
-						"anotherKey": tmpNs,
-					},
-				},
+			configData: map[string]interface{}{
+				"k8sName":    existingName,
+				"anotherKey": tmpNs,
 			},
 			name:      existingName,
 			namespace: "",
 			err:       nil,
 		},
 		{
-			configData: &model.MapStringInterfaceType{
-				Unstructured: unstructured.Unstructured{
-					Object: map[string]interface{}{},
-				},
-			},
-			err: ErrInvalidConfigData,
+			configData: map[string]interface{}{},
+			err:        ErrInvalidConfigData,
 		},
 	}
 
 	for _, tc := range testCases {
-		apiDefSpec := &model.APIDefinitionSpec{ConfigData: tc.configData}
+		apiDefSpec := &model.APIDefinitionSpec{APIDefinition: apidef.APIDefinition{ConfigData: tc.configData}}
 
 		n, ns, err := parseConfigData(apiDefSpec, existingName)
 

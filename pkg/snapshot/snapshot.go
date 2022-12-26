@@ -351,12 +351,12 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 	}
 
 	// Parse name
-	name, err = val(apiDefSpec.ConfigData.Object, NameKey)
+	name, err = val(apiDefSpec.ConfigData, NameKey)
 	if err != nil {
 		return defName, DefaultNs, ErrInvalidConfigData
 	}
 
-	namespace, _ = val(apiDefSpec.ConfigData.Object, NamespaceKey) //nolint:errcheck
+	namespace, _ = val(apiDefSpec.ConfigData, NamespaceKey) //nolint:errcheck
 
 	// Warn if .metadata includes an empty character because it violates k8s spec rules.
 	for _, v := range []string{name, namespace} {
