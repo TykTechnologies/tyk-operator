@@ -574,9 +574,11 @@ type APIDefinitionSpec struct {
 	// UseStandardAuth enables simple bearer token authentication
 	UseStandardAuth bool `json:"use_standard_auth,omitempty"`
 
-	// UseBasicAuth               bool                  `json:"use_basic_auth"`
+	// UseBasicAuth enables basic authentication
+	UseBasicAuth bool `json:"use_basic_auth,omitempty"`
 	// BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 
+	// UseMutualTLSAuth enables mututal TLS authentication
 	UseMutualTLSAuth      bool     `json:"use_mutual_tls_auth,omitempty"`
 	ClientCertificates    []string `json:"client_certificates,omitempty"`
 	ClientCertificateRefs []string `json:"client_certificate_refs,omitempty"`

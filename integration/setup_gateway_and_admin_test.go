@@ -54,7 +54,7 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 	}
 
 	if dashboardSvcIndex == -1 || gatewaySvcIndex == -1 {
-		return errors.New("Failed to find tyk or dashboard service")
+		return errors.New("failed to find tyk or dashboard service")
 	}
 
 	list := []v1.Service{ls.Items[gatewaySvcIndex], ls.Items[dashboardSvcIndex]}
