@@ -52,8 +52,7 @@ spec:
                     allowed_types:
                       description: Field access of GraphQL APIs can be restricted
                         by setting up an allowed types list in a policy or directly
-                        on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/
-                        for more details.
+                        on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -71,7 +70,7 @@ spec:
                     allowed_urls:
                       items:
                         description: AccessSpec defines what URLS a user has access
-                          to an what methods are enabled
+                          to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -94,8 +93,7 @@ spec:
                       type: string
                     disable_introspection:
                       description: DisableIntrospection disables GraphQL introspection
-                        if it is set to True. Please visit https://tyk.io/docs/graphql/introspection/
-                        for more details.
+                        if it is set to True.
                       type: boolean
                     field_access_rights:
                       description: FieldAccessRights is array of depth limit settings
@@ -136,8 +134,7 @@ spec:
                     restricted_types:
                       description: Field access of GraphQL APIs can be restricted
                         by setting up an allowed types list in a policy or directly
-                        on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/
-                        for more details.
+                        on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -171,8 +168,7 @@ spec:
                     allowed_types:
                       description: Field access of GraphQL APIs can be restricted
                         by setting up an allowed types list in a policy or directly
-                        on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/
-                        for more details.
+                        on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -190,7 +186,7 @@ spec:
                     allowed_urls:
                       items:
                         description: AccessSpec defines what URLS a user has access
-                          to an what methods are enabled
+                          to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -213,8 +209,7 @@ spec:
                       type: string
                     disable_introspection:
                       description: DisableIntrospection disables GraphQL introspection
-                        if it is set to True. Please visit https://tyk.io/docs/graphql/introspection/
-                        for more details.
+                        if it is set to True.
                       type: boolean
                     field_access_rights:
                       description: FieldAccessRights is array of depth limit settings
@@ -255,8 +250,7 @@ spec:
                     restricted_types:
                       description: Field access of GraphQL APIs can be restricted
                         by setting up an allowed types list in a policy or directly
-                        on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/
-                        for more details.
+                        on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:

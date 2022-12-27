@@ -93,7 +93,6 @@ type SecurityPolicySpec struct {
 }
 
 // GraphQLType represents a GraphQL Type for Tyk.
-//+k8s:deepcopy-gen:interfaces=github.com/TykTechnologies/graphql-go-tools/pkg/graphql.Type
 type GraphQLType graphql.Type
 
 // GraphQLTypeList represents a list of GraphQLType.
@@ -113,15 +112,14 @@ type AccessDefinition struct {
 	Versions []string `json:"versions,omitempty"`
 
 	// Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy
-	// or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+	// or directly on a key.
 	AllowedTypes GraphQLTypeList `json:"allowed_types,omitempty"`
 
 	// Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy
-	// or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+	// or directly on a key.
 	RestrictedTypes GraphQLTypeList `json:"restricted_types,omitempty"`
 
-	// DisableIntrospection disables GraphQL introspection if it is set to True. Please visit
-	// https://tyk.io/docs/graphql/introspection/ for more details.
+	// DisableIntrospection disables GraphQL introspection if it is set to True.
 	DisableIntrospection bool `json:"disable_introspection,omitempty"`
 
 	// FieldAccessRights is array of depth limit settings per GraphQL APIs.
@@ -163,7 +161,7 @@ type APILimit struct {
 	QuotaRenewalRate   int64 `json:"quota_renewal_rate"`
 }
 
-// AccessSpec defines what URLS a user has access to an what methods are enabled
+// AccessSpec defines what URLS a user has access to and what methods are enabled
 type AccessSpec struct {
 	URL     string   `json:"url"`
 	Methods []string `json:"methods"`

@@ -2941,7 +2941,7 @@ spec:
                     allowance_scope:
                       type: string
                     allowed_types:
-                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -2958,7 +2958,7 @@ spec:
                       type: array
                     allowed_urls:
                       items:
-                        description: AccessSpec defines what URLS a user has access to an what methods are enabled
+                        description: AccessSpec defines what URLS a user has access to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -2978,7 +2978,7 @@ spec:
                       description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource'
                       type: string
                     disable_introspection:
-                      description: DisableIntrospection disables GraphQL introspection if it is set to True. Please visit https://tyk.io/docs/graphql/introspection/ for more details.
+                      description: DisableIntrospection disables GraphQL introspection if it is set to True.
                       type: boolean
                     field_access_rights:
                       description: FieldAccessRights is array of depth limit settings per GraphQL APIs.
@@ -3010,7 +3010,7 @@ spec:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
                     restricted_types:
-                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -3041,7 +3041,7 @@ spec:
                     allowance_scope:
                       type: string
                     allowed_types:
-                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -3058,7 +3058,7 @@ spec:
                       type: array
                     allowed_urls:
                       items:
-                        description: AccessSpec defines what URLS a user has access to an what methods are enabled
+                        description: AccessSpec defines what URLS a user has access to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -3078,7 +3078,7 @@ spec:
                       description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource'
                       type: string
                     disable_introspection:
-                      description: DisableIntrospection disables GraphQL introspection if it is set to True. Please visit https://tyk.io/docs/graphql/introspection/ for more details.
+                      description: DisableIntrospection disables GraphQL introspection if it is set to True.
                       type: boolean
                     field_access_rights:
                       description: FieldAccessRights is array of depth limit settings per GraphQL APIs.
@@ -3110,7 +3110,7 @@ spec:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
                     restricted_types:
-                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key. Please see https://tyk.io/docs/graphql/field-based-permissions/ for more details.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
