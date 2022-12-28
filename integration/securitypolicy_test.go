@@ -204,7 +204,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				err = wait.For(func() (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
 					return err == nil, err
-				})
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				err = wait.For(
@@ -257,7 +257,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				err = wait.For(func() (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
 					return err == nil, err
-				})
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				err = wait.For(
@@ -275,10 +275,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 						eval.True(hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
 
 						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				return ctx
@@ -290,13 +287,13 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// k8s state on next reconciliation - so that k8s remains as a source of truth.
 				eval := is.New(t)
 
-				err := wait.For(func() (done bool, err error) {
-					copySpec := policyCR.Spec.DeepCopy()
-					copySpec.Name = "Updating Existing Policy"
+				copySpec := policyCR.Spec.DeepCopy()
+				copySpec.Name = "Updating Existing Policy"
 
-					err = updatePolicyOnTyk(reqCtx, copySpec)
-					eval.NoErr(err)
+				err := updatePolicyOnTyk(reqCtx, copySpec)
+				eval.NoErr(err)
 
+				err = wait.For(func() (done bool, err error) {
 					// Ensure that policy is updated accordingly on Tyk Side.
 					newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 					if err != nil {
@@ -304,9 +301,10 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					}
 
 					eval.True(newCopySpec != nil)
+					eval.Equal(newCopySpec.Name, copySpec.Name)
 
-					return newCopySpec.Name == copySpec.Name, nil
-				})
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				// Ensure that reconciliation brings updated Security Policy back to the k8s state. In the
@@ -315,7 +313,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				err = wait.For(func() (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
 					return err == nil, err
-				})
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				err = wait.For(
@@ -332,10 +330,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 							hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newCopySpec, policyOnK8s.Status.PolID),
 						)
 						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				return ctx
@@ -436,7 +431,6 @@ func TestSecurityPolicy(t *testing.T) {
 							return false
 						}
 
-						eval.True(len(policyOnK8s.Status.PolID) > 0)
 						eval.True(policyOnK8s.Status.PolID == policyCR.Spec.MID)
 						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
 
@@ -488,7 +482,7 @@ func TestSecurityPolicy(t *testing.T) {
 					}
 
 					return false, err
-				})
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				err = wait.For(
