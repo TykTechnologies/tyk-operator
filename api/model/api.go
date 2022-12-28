@@ -544,8 +544,10 @@ type OpenIDOptions struct {
 	SegregateByClient bool                `json:"segregate_by_client"`
 }
 
+type TykApiDefinition apidef.APIDefinition
+
 type APIDefinitionSpec struct {
-	apidef.APIDefinition  `json:",inline"`
+	TykApiDefinition      `json:",inline"`
 	Proxy                 ProxyConfig    `json:"proxy"`
 	VersionData           VersionData    `json:"version_data,omitempty"`
 	GraphQL               *GraphQLConfig `bson:"graphql" json:"graphql"`
