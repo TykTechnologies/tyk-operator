@@ -415,6 +415,10 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+{{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+{{- end }}
       containers:
       - args:
         - --config=controller_manager_config.yaml
