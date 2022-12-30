@@ -311,16 +311,13 @@ func TestSecurityPolicy(t *testing.T) {
 					},
 				}
 
-				_, err = util.CreateOrUpdate(ctx, polRec.Client, &policyCR, func() error {
-					return nil
-				})
+				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
-						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-						return err == nil
-					}),
+				err = wait.For(func() (done bool, err error) {
+					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
+					return err == nil, err
+				},
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
 				)
@@ -371,7 +368,11 @@ func TestSecurityPolicy(t *testing.T) {
 				// Ensure that the policy is deleted successfully from Tyk.
 				err = wait.For(func() (done bool, err error) {
 					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
-					return tykClient.IsNotFound(err), nil
+					if tykClient.IsNotFound(err) {
+						return true, nil
+					}
+
+					return false, err
 				})
 				eval.NoErr(err)
 
