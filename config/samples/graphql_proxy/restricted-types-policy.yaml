@@ -1,0 +1,25 @@
+# This example shows how to setup field based permissions for GraphQL APIs.
+# It restricts access to "continents" field of "trevorblades" GraphQL API. For more
+# information about field based permissions, please check official Tyk Documentation.
+#
+# NOTE:
+# Before creating it, please ensure that default/trevorblades ApiDefinition resource
+# is created on your k8s cluster. It is accessible via
+# ./config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml file.
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: trevorblades-restricted-types-policy
+spec:
+  name: GraphQL Restricted Types Policy
+  state: active
+  active: true
+  access_rights_array:
+    - name: trevorblades
+      namespace: default
+      versions:
+        - Default
+      restricted_types:
+        - fields:
+            - "continents"
+          name: "Query"
