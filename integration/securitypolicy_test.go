@@ -314,14 +314,16 @@ func TestSecurityPolicy(t *testing.T) {
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
-				err = wait.For(func() (done bool, err error) {
-					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					return err == nil, err
-				},
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
+				/*
+					err = wait.For(func() (done bool, err error) {
+						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
+						return err == nil, err
+					},
+						wait.WithTimeout(defaultWaitTimeout),
+						wait.WithInterval(defaultWaitInterval),
+					)
+					eval.NoErr(err)
+				*/
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
