@@ -23,13 +23,15 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// ErrTODO is returned when a feature is not yet implemented
-var ErrTODO = errors.New("TODO: This feature is not implemented yet")
-
-// ErrNotFound is returned when an api call returns 404
 var (
+	// ErrTODO is returned when a feature is not yet implemented
+	ErrTODO = errors.New("TODO: This feature is not implemented yet")
+
+	// ErrNotFound is returned when an api call returns 404
 	ErrNotFound = errors.New("Resource not found")
-	ErrFailed   = errors.New("Failed api call")
+
+	// ErrFailed represents errors occurred during API calls to Tyk.
+	ErrFailed = errors.New("Failed api call")
 )
 
 func IsTODO(err error) bool {
