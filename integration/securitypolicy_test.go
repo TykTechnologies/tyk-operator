@@ -330,25 +330,26 @@ func TestSecurityPolicy(t *testing.T) {
 						pol, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
-						eval.True(len(pol.Status.PolID) > 0)
-						eval.True(pol.Status.PolID == policyCR.Spec.MID)
-						eval.Equal(len(pol.Spec.AccessRightsArray), 1)
-
-						// Ensure that policy is created on Tyk
-						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, pol.Status.PolID)
-						eval.NoErr(err)
-
-						eval.Equal(pol.Status.PolID, policyOnTyk.MID)
-						eval.Equal(pol.Spec.Name, policyOnTyk.Name)
-						eval.Equal(len(pol.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
-						eval.Equal(pol.Spec.AccessRightsArray[0].APIID, policyOnTyk.AccessRightsArray[0].APIID)
+						if pol.Status.PolID == "" {
+							return false
+						}
 
 						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
+					}), wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
+
+				eval.True(policyCR.Status.PolID == policyCR.Spec.MID)
+				eval.Equal(len(policyCR.Spec.AccessRightsArray), 1)
+
+				// Ensure that policy is created on Tyk
+				policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
+				eval.NoErr(err)
+
+				eval.Equal(policyCR.Status.PolID, policyOnTyk.MID)
+				eval.Equal(policyCR.Spec.Name, policyOnTyk.Name)
+				eval.Equal(len(policyCR.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
+				eval.Equal(policyCR.Spec.AccessRightsArray[0].APIID, policyOnTyk.AccessRightsArray[0].APIID)
 
 				return ctx
 			}).
