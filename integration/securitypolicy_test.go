@@ -299,9 +299,12 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
-					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      envconf.RandomName("sample-policy-k8s", 32),
+						Namespace: testNs,
+					},
 					Spec: v1alpha1.SecurityPolicySpec{
-						Name:   envconf.RandomName("existing-name", 32),
+						Name:   envconf.RandomName("sample-policy", 32),
 						Active: true,
 						State:  "draft",
 						AccessRightsArray: []*v1alpha1.AccessDefinition{{
@@ -314,23 +317,32 @@ func TestSecurityPolicy(t *testing.T) {
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
-				/*
-					err = wait.For(func() (done bool, err error) {
-						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-						return err == nil, err
-					},
-						wait.WithTimeout(defaultWaitTimeout),
-						wait.WithInterval(defaultWaitInterval),
-					)
-					eval.NoErr(err)
-				*/
+				err = wait.For(func() (done bool, err error) {
+					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
+					if err != nil {
+						t.Logf("failed to reconcile after creating a policy on Tyk, err: %v", err)
+
+						return false, err
+					}
+
+					return true, nil
+				},
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						pol, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
-						return pol.Status.PolID != ""
+						if pol.Status.PolID == "" {
+							t.Logf("Policy %v is not created on Tyk yet", pol.Name)
+							return false
+						}
+
+						return true
 					}), wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
@@ -372,7 +384,10 @@ func TestSecurityPolicy(t *testing.T) {
 					}
 
 					return false, err
-				})
+				},
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
 				eval.NoErr(err)
 
 				err = wait.For(
