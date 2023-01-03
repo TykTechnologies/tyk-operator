@@ -415,10 +415,6 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
-{{- if .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-{{- end }}
       containers:
       - args:
         - --config=controller_manager_config.yaml
@@ -480,6 +476,10 @@ spec:
 {{- with .Values.rbac.resources }}
         resources:
 {{- toYaml . | nindent 10 }}
+{{- end }}
+{{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
 {{- end }}
       securityContext:
         runAsNonRoot: true
