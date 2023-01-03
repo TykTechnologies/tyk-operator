@@ -324,8 +324,11 @@ func TestSecurityPolicy(t *testing.T) {
 					eval.NoErr(err)
 				*/
 
+				result := v1alpha1.SecurityPolicy{
+					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
+				}
 				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
+					conditions.New(c.Client().Resources()).ResourceMatch(&result, func(object k8s.Object) bool {
 						pol, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
