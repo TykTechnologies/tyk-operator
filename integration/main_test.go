@@ -27,7 +27,7 @@ const (
 )
 
 const (
-	defaultWaitTimeout  = 40 * time.Second
+	defaultWaitTimeout  = 60 * time.Second
 	defaultWaitInterval = 1 * time.Second
 )
 
