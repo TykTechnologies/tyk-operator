@@ -330,11 +330,7 @@ func TestSecurityPolicy(t *testing.T) {
 						pol, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
-						if pol.Status.PolID == "" {
-							return false
-						}
-
-						return true
+						return pol.Status.PolID != ""
 					}), wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
