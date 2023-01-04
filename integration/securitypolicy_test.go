@@ -297,9 +297,9 @@ func TestSecurityPolicy(t *testing.T) {
 				policyCR = v1alpha1.SecurityPolicy{
 					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 					Spec: v1alpha1.SecurityPolicySpec{
-						Name:   envconf.RandomName("existing-name", 32),
+						Name:   envconf.RandomName("pol", 8),
 						Active: true,
-						State:  "draft",
+						State:  "active",
 						AccessRightsArray: []*v1alpha1.AccessDefinition{{
 							Name:      apiDefCR.Name,
 							Namespace: apiDefCR.Namespace,
@@ -307,7 +307,7 @@ func TestSecurityPolicy(t *testing.T) {
 					},
 				}
 
-				err = c.Client().Resources().Create(ctx, &policyCR)
+				err = c.Client().Resources(testNs).Create(ctx, &policyCR)
 				eval.NoErr(err)
 
 				/*
@@ -330,6 +330,7 @@ func TestSecurityPolicy(t *testing.T) {
 						eval.True(ok)
 
 						if policyOnK8s.Status.PolID == "" {
+							t.Logf("Policy '%v' is not created yet\n", policyOnK8s.Spec.Name)
 							return false
 						}
 
