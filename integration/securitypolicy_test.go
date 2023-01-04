@@ -311,6 +311,12 @@ func TestSecurityPolicy(t *testing.T) {
 					},
 				}
 
+				//Ensure API is created before creating a policy
+				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+					return apiDefCR.Status.ApiID != ""
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
