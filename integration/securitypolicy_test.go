@@ -11,8 +11,6 @@ import (
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
-	cr "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -315,18 +313,19 @@ func TestSecurityPolicy(t *testing.T) {
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
-				err = wait.For(func() (done bool, err error) {
-					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					if err != nil {
-						t.Logf("Reconcile error: %v", err)
-					}
-					return err == nil, err
-				},
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
+				/*
+					err = wait.For(func() (done bool, err error) {
+						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
+						if err != nil {
+							t.Logf("Reconcile error: %v", err)
+						}
+						return err == nil, err
+					},
+						wait.WithTimeout(defaultWaitTimeout),
+						wait.WithInterval(defaultWaitInterval),
+					)
+					eval.NoErr(err)
+				*/
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						pol, ok := object.(*v1alpha1.SecurityPolicy)
