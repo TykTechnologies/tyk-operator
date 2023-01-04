@@ -800,6 +800,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 	testenv.Test(t, adCreate)
 }
+
 func TestApiDefinitionBasicAuth(t *testing.T) {
 	var (
 		apiDefBasicAuth  = "apidef-basic-authentication"

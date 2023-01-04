@@ -256,8 +256,6 @@ func TestSecurityPolicy(t *testing.T) {
 
 	securityPolicyFeatures := features.New("Create Security Policy from scratch").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			//eval := is.New(t)
-
 			opConfSecret := v1.Secret{}
 			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
 			eval.NoErr(err)
@@ -289,7 +287,6 @@ func TestSecurityPolicy(t *testing.T) {
 		}).
 		Assess("Access ApiDefinition CR",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
@@ -298,12 +295,9 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      envconf.RandomName("sample-policy-k8s", 32),
-						Namespace: testNs,
-					},
+					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 					Spec: v1alpha1.SecurityPolicySpec{
-						Name:   envconf.RandomName("sample-policy", 32),
+						Name:   envconf.RandomName("existing-name", 32),
 						Active: true,
 						State:  "draft",
 						AccessRightsArray: []*v1alpha1.AccessDefinition{{
@@ -316,71 +310,68 @@ func TestSecurityPolicy(t *testing.T) {
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
-				err = wait.For(func() (done bool, err error) {
-					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					if err != nil {
-						t.Logf("failed to reconcile after creating a policy on Tyk, err: %v", err)
-
-						return false, err
-					}
-
-					return true, nil
-				},
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
+				/*
+					err = wait.For(func() (done bool, err error) {
+						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
+						return err == nil, err
+					},
+						wait.WithTimeout(defaultWaitTimeout),
+						wait.WithInterval(defaultWaitInterval),
+					)
+					eval.NoErr(err)
+				*/
 
 				result := v1alpha1.SecurityPolicy{
 					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 				}
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&result, func(object k8s.Object) bool {
-						pol, ok := object.(*v1alpha1.SecurityPolicy)
+						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
-						if pol.Status.PolID == "" {
-							t.Logf("Policy %v is not created on Tyk yet", pol.Name)
+						if policyOnK8s.Status.PolID == "" {
 							return false
 						}
+
+						eval.True(policyOnK8s.Status.PolID == policyOnK8s.Spec.MID)
+						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
+
+						// Ensure that policy is created on Tyk
+						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
+						eval.NoErr(err)
+
+						eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.MID)
+						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
+						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
+						eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, policyOnTyk.AccessRightsArray[0].APIID)
 
 						return true
 					}), wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
-				eval.True(policyCR.Status.PolID == policyCR.Spec.MID)
-				eval.Equal(len(policyCR.Spec.AccessRightsArray), 1)
-
-				// Ensure that policy is created on Tyk
-				policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
-				eval.NoErr(err)
-
-				eval.Equal(policyCR.Status.PolID, policyOnTyk.MID)
-				eval.Equal(policyCR.Spec.Name, policyOnTyk.Name)
-				eval.Equal(len(policyCR.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))
-				eval.Equal(policyCR.Spec.AccessRightsArray[0].APIID, policyOnTyk.AccessRightsArray[0].APIID)
-
 				return ctx
 			}).
 		Assess("Delete SecurityPolicy and check k8s and Tyk",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				//eval := is.New(t)
-
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
 				// Deleting SecurityPolicy CR must delete corresponding SecurityPolicy from Tyk and
 				// update ApiDefinition CR status accordingly.
-				err := c.Client().Resources(testNs).Delete(ctx, &policyCR)
+				var deletedPolicy v1alpha1.SecurityPolicy
+				err := c.Client().Resources(testNs).Get(ctx, policyCR.Name, testNs, &deletedPolicy)
 				eval.NoErr(err)
 
-				err = wait.For(conditions.New(c.Client().Resources()).ResourceDeleted(&policyCR))
+				err = c.Client().Resources(testNs).Delete(ctx, &deletedPolicy)
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).ResourceDeleted(&deletedPolicy))
 				eval.NoErr(err)
 
 				// Ensure that the policy is deleted successfully from Tyk.
 				err = wait.For(func() (done bool, err error) {
-					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
+					_, err = klient.Universal.Portal().Policy().Get(reqCtx, deletedPolicy.Status.PolID)
 					if tykClient.IsNotFound(err) {
 						return true, nil
 					}
