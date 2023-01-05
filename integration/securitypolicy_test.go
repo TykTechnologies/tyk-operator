@@ -320,19 +320,7 @@ func TestSecurityPolicy(t *testing.T) {
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
-				/*
-					err = wait.For(func() (done bool, err error) {
-						_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-						if err != nil {
-							t.Logf("Reconcile error: %v", err)
-						}
-						return err == nil, err
-					},
-						wait.WithTimeout(defaultWaitTimeout),
-						wait.WithInterval(defaultWaitInterval),
-					)
-					eval.NoErr(err)
-				*/
+				// Ensure that policy is created on Tyk
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						pol, ok := object.(*v1alpha1.SecurityPolicy)
@@ -346,7 +334,6 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.True(policyCR.Status.PolID == policyCR.Spec.MID)
 				eval.Equal(len(policyCR.Spec.AccessRightsArray), 1)
 
-				// Ensure that policy is created on Tyk
 				policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 				eval.NoErr(err)
 
