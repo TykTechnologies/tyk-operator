@@ -87,13 +87,18 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		if policy.Spec.OrgID == "" {
 			policy.Spec.OrgID = env.Org
 		}
-		// update access rights
-		r.Log.Info("updating access rights")
+
 		if policy.Status.PolID == "" {
 			return r.create(ctx, policy)
 		}
 
-		return r.update(ctx, policy)
+		newSpec, err := r.update(ctx, policy)
+		if err != nil {
+			return err
+		}
+
+		policy.Spec = *newSpec
+		return nil
 	})
 
 	if err == nil {
@@ -105,9 +110,14 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{RequeueAfter: reqA}, err
 }
 
-// returns a copy of SecurityPolicySpec with AccessRightsArray updated
-func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
-	spec := policy.Spec.DeepCopy()
+// spec returns a copy of SecurityPolicySpec with AccessRightsArray updated. As a result, each AccessRightsArray
+// element contains the K8s details for each ApiDefinition. It returns an error if ApiDefinition does not exist
+// in the K8s environment.
+func (r *SecurityPolicyReconciler) spec(
+	ctx context.Context,
+	s *tykv1.SecurityPolicySpec,
+) (*tykv1.SecurityPolicySpec, error) {
+	spec := s.DeepCopy()
 	spec.Context = nil
 
 	for i := 0; i < len(spec.AccessRightsArray); i++ {
@@ -120,16 +130,15 @@ func (r *SecurityPolicyReconciler) spec(ctx context.Context, policy *tykv1.Secur
 	return spec, nil
 }
 
-func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
-	a *tykv1.AccessDefinition,
-) error {
+// updateAccess updates given AccessDefinition's APIID and APIName fields based on ApiDefinition CR that is referred
+// in the AccessDefinition. So that, it includes k8s details of the referred ApiDefinitions.
+func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.AccessDefinition) error {
 	api := &tykv1.ApiDefinition{}
-
-	if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
 			r.Log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue",
-				"Name", a.Name,
-				"Namespace", a.Namespace,
+				"Name", ad.Name,
+				"Namespace", ad.Namespace,
 			)
 
 			return err
@@ -141,11 +150,16 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context,
 	}
 
 	if api.Status.ApiID == "" {
+		r.Log.Error(
+			opclient.ErrNotFound,
+			"ApiDefinition does not exist on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
+		)
+
 		return opclient.ErrNotFound
 	}
 
-	a.APIID = api.Status.ApiID
-	a.APIName = api.Spec.Name
+	ad.APIID = api.Status.ApiID
+	ad.APIName = api.Spec.Name
 
 	return nil
 }
@@ -189,74 +203,122 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 	return nil
 }
 
-func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.SecurityPolicy) error {
-	r.Log.Info("Updating  policy")
+func (r *SecurityPolicyReconciler) update(
+	ctx context.Context,
+	policy *tykv1.SecurityPolicy,
+) (*tykv1.SecurityPolicySpec, error) {
+	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
 
 	policy.Spec.MID = policy.Status.PolID
 
-	spec, err := r.spec(ctx, policy)
+	spec, err := r.spec(ctx, &policy.Spec)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = klient.Universal.Portal().Policy().Update(ctx, spec)
-	if err != nil {
-		r.Log.Error(err, "Failed to update policy")
-		return err
+	// If SecurityPolicy does not exist on Tyk Side, Tyk Operator must create a Security
+	// Policy on Tyk based on k8s state. So, unintended deletions from Dashboard can be avoided.
+	_, err = klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
+	if err == nil {
+		err = klient.Universal.Portal().Policy().Update(ctx, spec)
+		if err != nil {
+			r.Log.Error(err, "Failed to update policy on Tyk")
+			return nil, err
+		}
+	} else {
+		if opclient.IsNotFound(err) {
+			err = klient.Universal.Portal().Policy().Create(ctx, spec)
+			if err != nil {
+				r.Log.Error(err, "Failed to re-create Policy on Tyk",
+					"SecurityPolicy", client.ObjectKeyFromObject(policy),
+				)
+
+				return nil, err
+			}
+
+			policy.Status.PolID = spec.MID
+		} else {
+			r.Log.Error(err, "Failed to get Policy from Tyk", err)
+
+			return nil, err
+		}
 	}
 
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
 		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
 	})
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	klient.Universal.HotReload(ctx)
 	r.Log.Info("Successfully updated Policy")
 
-	return nil
+	return spec, r.Status().Update(ctx, policy)
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
-	r.Log.Info("Creating  policy")
+	r.Log.Info("Creating a policy")
 
-	spec, err := r.spec(ctx, policy)
+	spec, err := r.spec(ctx, &policy.Spec)
 	if err != nil {
 		return err
 	}
 
-	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment. Therefore,
-	// although policy.status.ID is an empty string, which triggers policy create API call, we cannot create a policy on
-	// the dashboard due to duplicated policy name. To resolve this problem, check if policy exists before creating it.
-	// If the policy exists, just update it with spec. Otherwise, create it.
-	if _, err = klient.Universal.Portal().Policy().Get(ctx, spec.ID); err != nil {
+	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment.
+	// If policy does not exist on Tyk side, create it. Otherwise, update it based on Kubernetes spec because
+	// creating a Policy with duplicated name causes API call errors.
+	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
+	if err != nil || existingSpec == nil || existingSpec.MID == "" {
+		r.Log.Info("Creating a new policy")
+
 		err = klient.Universal.Portal().Policy().Create(ctx, spec)
 		if err != nil {
-			r.Log.Error(err, "Failed to create policy")
+			r.Log.Error(
+				err,
+				"Failed to create policy on Tyk",
+				"Policy", client.ObjectKeyFromObject(policy),
+			)
 
 			return err
 		}
 	} else {
-		if err := klient.Universal.Portal().Policy().Update(ctx, spec); err != nil {
+		spec.MID = existingSpec.MID
+
+		err = klient.Universal.Portal().Policy().Update(ctx, spec)
+		if err != nil {
 			r.Log.Error(
 				err,
-				"Failed to update policy",
-				"Name", spec.Name,
+				"Failed to update policy on Tyk",
+				"Policy", client.ObjectKeyFromObject(policy),
 			)
+
+			return err
 		}
 	}
 
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
-		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
+	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, target model.Target) {
+		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, target)
 	})
-
 	if err != nil {
-		r.Log.Error(err, "failed to update linkedAPI status")
+		r.Log.Error(err,
+			"failed to update linkedAPI status",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return err
 	}
 
-	r.Log.Info("Successful created Policy")
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "Failed to hot-reload Tyk after creating a Policy",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return err
+	}
+
+	r.Log.Info("Successfully created Policy")
 
 	policy.Spec.MID = spec.MID
 	policy.Status.PolID = policy.Spec.MID
@@ -264,8 +326,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	return r.Status().Update(ctx, policy)
 }
 
-// updateLinkedAPI updates the status of api definitions associated with this
-// policy.
+// updateLinkedAPI updates the status of api definitions associated with this policy.
 func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *tykv1.SecurityPolicy,
 	fn func(*tykv1.ApiDefinitionStatus, model.Target),
 ) error {

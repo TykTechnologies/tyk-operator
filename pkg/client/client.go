@@ -15,19 +15,23 @@ import (
 	"strings"
 	"time"
 
+	errors2 "github.com/pkg/errors"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 )
 
-// ErrTODO is returned when a feature is not yet implemented
-var ErrTODO = errors.New("TODO: This feature is not implemented yet")
-
-// ErrNotFound is returned when an api call returns 404
 var (
+	// ErrTODO is returned when a feature is not yet implemented
+	ErrTODO = errors.New("TODO: This feature is not implemented yet")
+
+	// ErrNotFound is returned when an api call returns 404
 	ErrNotFound = errors.New("Resource not found")
-	ErrFailed   = errors.New("Failed api call")
+
+	// ErrFailed represents errors occurred during API calls to Tyk.
+	ErrFailed = errors.New("Failed api call")
 )
 
 func IsTODO(err error) bool {
@@ -202,7 +206,7 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 		case http.StatusNotFound:
 			return nil, ErrNotFound
 		default:
-			return nil, ErrFailed
+			return nil, errors2.Wrap(ErrFailed, string(b))
 		}
 	}
 
