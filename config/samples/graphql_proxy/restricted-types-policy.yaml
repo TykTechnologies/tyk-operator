@@ -4,8 +4,109 @@
 #
 # NOTE:
 # Before creating it, please ensure that default/trevorblades ApiDefinition resource
-# is created on your k8s cluster. It is accessible via
-# ./config/samples/graphql_proxy/trevorblades_graphql_proxy.yaml file.
+# is created on your k8s cluster. Once this manifest is applied,
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: trevorblades
+spec:
+  name: trevorblades
+  use_keyless: false # In order to access this API, you need to provide key.
+  protocol: http
+  active: true
+  proxy:
+    target_url: https://countries.trevorblades.com
+    listen_path: /trevorblades
+    strip_listen_path: true
+  graphql:
+    enabled: true
+    execution_mode: proxyOnly
+    schema: |
+      directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE
+
+      enum CacheControlScope {
+        PUBLIC
+        PRIVATE
+      }
+
+      type Continent {
+        code: ID!
+        name: String!
+        countries: [Country!]!
+      }
+
+      input ContinentFilterInput {
+        code: StringQueryOperatorInput
+      }
+
+      type Country {
+        code: ID!
+        name: String!
+        native: String!
+        phone: String!
+        continent: Continent!
+        capital: String
+        currency: String
+        languages: [Language!]!
+        emoji: String!
+        emojiU: String!
+        states: [State!]!
+      }
+
+      input CountryFilterInput {
+        code: StringQueryOperatorInput
+        currency: StringQueryOperatorInput
+        continent: StringQueryOperatorInput
+      }
+
+      type Language {
+        code: ID!
+        name: String
+        native: String
+        rtl: Boolean!
+      }
+
+      input LanguageFilterInput {
+        code: StringQueryOperatorInput
+      }
+
+      type Query {
+        continents(filter: ContinentFilterInput): [Continent!]!
+        continent(code: ID!): Continent
+        countries(filter: CountryFilterInput): [Country!]!
+        country(code: ID!): Country
+        languages(filter: LanguageFilterInput): [Language!]!
+        language(code: ID!): Language
+      }
+
+      type State {
+        code: String
+        name: String!
+        country: Country!
+      }
+
+      input StringQueryOperatorInput {
+        eq: String
+        ne: String
+        in: [String]
+        nin: [String]
+        regex: String
+        glob: String
+      }
+
+      """The `Upload` scalar type represents a file upload."""
+      scalar Upload
+    playground:
+      enabled: true
+      path: /playground
+
+  version_data:
+    default_version: Default
+    not_versioned: false
+    versions:
+      Default:
+        name: Default
+---
 apiVersion: tyk.tyk.io/v1alpha1
 kind: SecurityPolicy
 metadata:
