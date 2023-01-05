@@ -5,6 +5,7 @@
 
 **Added**
 - Added Basic Authentication support [Issue #534](https://github.com/TykTechnologies/tyk-operator/issues/534)
+- Added nodeSelector support [Issue #551](https://github.com/TykTechnologies/tyk-operator/issues/551)
 - Added support to policy fields that apply to GraphQL.
 
 **Fixed**

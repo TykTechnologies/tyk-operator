@@ -20,6 +20,7 @@ podAnnotations: {}
 podSecurityContext:
   allowPrivilegeEscalation: false
 resources: {}
+nodeSelector: {}
 #specify necessary resources for kube-rbac-proxy container
 rbac:
   resources: {}
