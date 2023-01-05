@@ -222,20 +222,26 @@ func (r *SecurityPolicyReconciler) update(
 	if err == nil {
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
-			r.Log.Error(err, "Failed to update policy")
+			r.Log.Error(err, "Failed to update policy on Tyk")
 			return nil, err
 		}
 	} else {
-		err = klient.Universal.Portal().Policy().Create(ctx, spec)
-		if err != nil {
-			r.Log.Error(err, "failed to re-create Policy",
-				"SecurityPolicy", client.ObjectKeyFromObject(policy),
-			)
+		if opclient.IsNotFound(err) {
+			err = klient.Universal.Portal().Policy().Create(ctx, spec)
+			if err != nil {
+				r.Log.Error(err, "Failed to re-create Policy on Tyk",
+					"SecurityPolicy", client.ObjectKeyFromObject(policy),
+				)
+
+				return nil, err
+			}
+
+			policy.Status.PolID = spec.MID
+		} else {
+			r.Log.Error(err, "Failed to get Policy from Tyk", err)
 
 			return nil, err
 		}
-
-		policy.Status.PolID = spec.MID
 	}
 
 	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
