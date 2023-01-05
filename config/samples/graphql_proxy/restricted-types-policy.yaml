@@ -1,10 +1,8 @@
+# Field Based Permissions for GraphQL APIs through SecurityPolicy
+#
 # This example shows how to setup field based permissions for GraphQL APIs.
 # It restricts access to "continents" field of "trevorblades" GraphQL API. For more
 # information about field based permissions, please check official Tyk Documentation.
-#
-# NOTE:
-# Before creating it, please ensure that default/trevorblades ApiDefinition resource
-# is created on your k8s cluster. Once this manifest is applied,
 apiVersion: tyk.tyk.io/v1alpha1
 kind: ApiDefinition
 metadata:
