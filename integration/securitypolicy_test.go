@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
-	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -109,15 +108,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					},
 				}
 
-				_, err = util.CreateOrUpdate(ctx, polRec.Client, &policyCR, func() error {
-					return nil
-				})
-				eval.NoErr(err)
-
-				err = wait.For(func() (done bool, err error) {
-					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					return err == nil, err
-				})
+				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
 				err = wait.For(
