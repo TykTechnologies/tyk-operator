@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
-	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -97,8 +96,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 	)
 
 	var (
-		runTests = true
-		spec     = v1alpha1.SecurityPolicySpec{
+		spec = v1alpha1.SecurityPolicySpec{
 			ID:     existingPolicyID,
 			Name:   "existing-spec",
 			State:  "draft",
@@ -110,27 +108,23 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		policyCR v1alpha1.SecurityPolicy
 		reqCtx   context.Context
 
-		hasSameValues = func(
-			mode v1alpha1.OperatorContextMode,
-			k8sSpec, tykSpec *v1alpha1.SecurityPolicySpec,
-			k8sStatusID string,
-		) bool {
-			if mode == "pro" {
-				return k8sSpec.MID == tykSpec.MID &&
-					k8sStatusID == tykSpec.MID &&
-					len(k8sSpec.Tags) == len(tykSpec.Tags) &&
-					len(tykSpec.Tags) == 1 &&
-					tykSpec.Tags[0] == initialK8sPolicyTag &&
-					tykSpec.Rate == initialK8sPolicyRate &&
-					tykSpec.State == initialK8sPolicyState
+		hasSameValues = func(m v1alpha1.OperatorContextMode, k8s, tyk *v1alpha1.SecurityPolicySpec, k8sID string) bool {
+			if m == "pro" {
+				return k8s.MID == tyk.MID &&
+					k8sID == tyk.MID &&
+					len(k8s.Tags) == len(tyk.Tags) &&
+					len(tyk.Tags) == 1 &&
+					tyk.Tags[0] == initialK8sPolicyTag &&
+					tyk.Rate == initialK8sPolicyRate &&
+					tyk.State == initialK8sPolicyState
 			}
 
-			return k8sSpec.MID == tykSpec.ID &&
-				k8sStatusID == tykSpec.ID &&
-				len(k8sSpec.Tags) == len(tykSpec.Tags) &&
-				len(tykSpec.Tags) == 1 &&
-				tykSpec.Tags[0] == initialK8sPolicyTag &&
-				tykSpec.Rate == initialK8sPolicyRate
+			return k8s.MID == tyk.ID &&
+				k8sID == tyk.ID &&
+				len(k8s.Tags) == len(tyk.Tags) &&
+				len(tyk.Tags) == 1 &&
+				tyk.Tags[0] == initialK8sPolicyTag &&
+				tyk.Rate == initialK8sPolicyRate
 		}
 	)
 
@@ -150,7 +144,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			eval.NoErr(err)
 
 			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
-				runTests = false
 				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
 			}
 
@@ -182,10 +175,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      envconf.RandomName("sample-policy-k8s", 32),
-						Namespace: testNs,
-					},
+					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 					Spec: v1alpha1.SecurityPolicySpec{
 						Name:   envconf.RandomName("sample-policy", 32),
 						ID:     spec.MID,
@@ -196,15 +186,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					},
 				}
 
-				_, err = util.CreateOrUpdate(ctx, polRec.Client, &policyCR, func() error {
-					return nil
-				})
-				eval.NoErr(err)
-
-				err = wait.For(func() (done bool, err error) {
-					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					return err == nil, err
-				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
 				err = wait.For(
@@ -337,18 +319,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			}).
 		Feature()
 
-	testenv.Finish(func(ctx context.Context, config *envconf.Config) (context.Context, error) {
-		if t.Skipped() || !runTests {
-			return ctx, nil
-		}
-
-		eval := is.New(t)
-		testNs, ok := ctx.Value(ctxNSKey).(string)
-		eval.True(ok)
-
-		return ctx, polRec.DeleteAllOf(ctx, &v1alpha1.SecurityPolicy{}, cr.InNamespace(testNs))
-	})
-
 	testenv.Test(t, securityPolicyMigrationFeatures)
 }
 
@@ -400,10 +370,7 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      envconf.RandomName("sample-policy-k8s", 32),
-						Namespace: testNs,
-					},
+					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 					Spec: v1alpha1.SecurityPolicySpec{
 						Name:   envconf.RandomName("sample-policy", 32),
 						Active: true,
@@ -415,10 +382,17 @@ func TestSecurityPolicy(t *testing.T) {
 					},
 				}
 
-				// Create the SecurityPolicy on k8s.
+				// Ensure API is created before creating a policy
+				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+					return apiDefCR.Status.ApiID != ""
+				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				// Create the SecurityPolicy on k8s after creating the Policy.
 				err = c.Client().Resources(testNs).Create(ctx, &policyCR)
 				eval.NoErr(err)
 
+				// Ensure that policy is created on Tyk
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
@@ -427,11 +401,12 @@ func TestSecurityPolicy(t *testing.T) {
 						// Ensure that policy is created on Tyk
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						if err != nil {
-							t.Logf("Failed to find Policy %v on Tyk, err: %v", policyOnK8s.Status.PolID, err)
+							t.Logf("Failed to find Policy '%v' on Tyk, err: %v", policyOnK8s.Status.PolID, err)
 							return false
 						}
 
 						eval.True(policyOnK8s.Status.PolID == policyCR.Spec.MID)
+						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
 
 						if tykEnv.Mode == "pro" {
@@ -447,8 +422,6 @@ func TestSecurityPolicy(t *testing.T) {
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
 							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
 						}
-
-						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 
 						return true
 					}),
