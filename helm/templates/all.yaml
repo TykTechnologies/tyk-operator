@@ -477,6 +477,10 @@ spec:
         resources:
 {{- toYaml . | nindent 10 }}
 {{- end }}
+{{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+{{- end }}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ include "tyk-operator-helm.fullname" . }}-controller-manager
