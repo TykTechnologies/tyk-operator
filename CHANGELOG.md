@@ -6,16 +6,17 @@
 **Updated**
 - Added new field `LinkedAPIs` in status of security policies.
 
+**Added**
+- Added Basic Authentication support [Issue #534](https://github.com/TykTechnologies/tyk-operator/issues/534)
+- Added support for security policies in OSS [#357](https://github.com/TykTechnologies/tyk-operator/issues/357)
+- Added nodeSelector support [Issue #551](https://github.com/TykTechnologies/tyk-operator/issues/551)
+- Added support to policy fields that apply to GraphQL.
+
 **Fixed**
 - Attempting to remove an ApiDefinition fails if previously associated to a SecurityPolicy [#431](https://github.com/TykTechnologies/tyk-operator/issues/431)
 - Operator was failing to remove finalizers from ApiDefinition that was already deleted in Dashboard [#469](https://github.com/TykTechnologies/tyk-operator/issues/469)
 - Fixed the problem of linking existing security policies while migration [#204](https://github.com/TykTechnologies/tyk-operator/issues/204)
 - Fix Security Policy tests
-
-**Added**
-- Added Basic Authentication support [Issue #534](https://github.com/TykTechnologies/tyk-operator/issues/534)
-- Added support for security policies in OSS [#357](https://github.com/TykTechnologies/tyk-operator/issues/357)
-- Added nodeSelector support [Issue #551](https://github.com/TykTechnologies/tyk-operator/issues/551)
 
 ## [v0.12.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.12.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.11.0...v0.12.0)

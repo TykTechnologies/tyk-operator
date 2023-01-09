@@ -5,6 +5,10 @@ import (
 	"errors"
 	"os"
 
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
@@ -14,9 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
 	e2eKlient "sigs.k8s.io/e2e-framework/klient"
-	"sigs.k8s.io/e2e-framework/klient/k8s"
-	"sigs.k8s.io/e2e-framework/klient/wait"
-	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
@@ -28,6 +29,7 @@ const (
 	testOperatorCtx        = "mycontext"
 	testSecurityPolicy     = "test-security-policy"
 	gatewayLocalhost       = "http://localhost:7000"
+	operatorSecret         = "tyk-operator-conf"
 )
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
@@ -143,10 +145,9 @@ func createTestOperatorContext(ctx context.Context, namespace string,
 	return &operatorCtx, err
 }
 
-func createTestPolicy(ctx context.Context, namespace string, mutateFn func(*v1alpha1.SecurityPolicy),
-	envConf *envconf.Config,
+func createTestPolicy(ctx context.Context, c *envconf.Config, namespace string, mutateFn func(*v1alpha1.SecurityPolicy),
 ) (*v1alpha1.SecurityPolicy, error) {
-	c := envConf.Client()
+	cl := c.Client()
 	var policy v1alpha1.SecurityPolicy
 
 	policy.Name = testSecurityPolicy
@@ -161,7 +162,7 @@ func createTestPolicy(ctx context.Context, namespace string, mutateFn func(*v1al
 		mutateFn(&policy)
 	}
 
-	err := c.Resources(namespace).Create(ctx, &policy)
+	err := cl.Resources(namespace).Create(ctx, &policy)
 	if err != nil {
 		return nil, err
 	}

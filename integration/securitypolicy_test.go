@@ -63,11 +63,11 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			err = waitForTykResourceCreation(c, apiDef)
 			eval.NoErr(err)
 
-			_, err = createTestPolicy(ctx, testNs, func(policy *v1alpha1.SecurityPolicy) {
+			_, err = createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
 				policy.Name = policyName
 				policy.Spec.Name = policyName + testNs
 				policy.Spec.AccessRightsArray = []*v1alpha1.AccessDefinition{{Name: api1Name, Namespace: testNs}}
-			}, c)
+			})
 			eval.NoErr(err)
 
 			pol := v1alpha1.SecurityPolicy{ObjectMeta: metav1.ObjectMeta{Name: policyName, Namespace: testNs}}
@@ -645,4 +645,157 @@ func TestSecurityPolicy(t *testing.T) {
 		Feature()
 
 	testenv.Test(t, securityPolicyFeatures)
+}
+
+func TestSecurityPolicyForGraphQL(t *testing.T) {
+	eval := is.New(t)
+
+	const (
+		queryName     = "Query"
+		accountsField = "accounts"
+		allField      = "*"
+		fieldName     = "getMovers"
+		limit         = int64(2)
+	)
+
+	var (
+		reqCtx                    context.Context
+		tykEnv                    environmet.Env
+		apiDefID                  string
+		minGraphQLPolicyGwVersion = version.MustParseGeneric("v4.3.0")
+	)
+
+	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+			err := c.Client().Resources(operatorNamespace).Get(ctx, operatorSecret, operatorNamespace, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			v, err := version.ParseGeneric(tykEnv.TykVersion)
+			eval.NoErr(err)
+
+			if tykEnv.Mode == "ce" && !v.AtLeast(minGraphQLPolicyGwVersion) {
+				t.Skip("GraphQL specific Security Policies API in CE mode requires at least Tyk v4.3.0")
+			}
+
+			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			return ctx
+		}).
+		Assess(
+			"Create a SecurityPolicy for GraphQL",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				apiDefCR, err := createTestAPIDef(ctx, c, testNs, nil)
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
+				var createdResource v1alpha1.ApiDefinition
+				err = c.Client().Resources(testNs).Get(ctx, apiDefCR.Name, testNs, &createdResource)
+				eval.NoErr(err)
+				apiDefID = createdResource.Status.ApiID
+
+				policyCR, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
+					policy.Spec.AccessRightsArray = []*v1alpha1.AccessDefinition{
+						{
+							Name:      apiDefCR.Name,
+							Namespace: apiDefCR.Namespace,
+							AllowedTypes: []v1alpha1.GraphQLType{
+								{Name: queryName, Fields: []string{accountsField}},
+							},
+							RestrictedTypes: []v1alpha1.GraphQLType{
+								{Name: queryName, Fields: []string{allField}},
+							},
+							DisableIntrospection: true,
+							FieldAccessRights: []v1alpha1.FieldAccessDefinition{
+								{
+									TypeName:  queryName,
+									FieldName: fieldName,
+									Limits:    v1alpha1.FieldLimits{MaxQueryDepth: limit},
+								},
+							},
+						},
+					}
+				})
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, policyCR)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess(
+			"Validate fields are set properly on k8s and Tyk",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				var pol v1alpha1.SecurityPolicy
+
+				err := c.Client().Resources().Get(ctx, testSecurityPolicy, testNs, &pol)
+				eval.NoErr(err)
+
+				validPolSpec := func(mode v1alpha1.OperatorContextMode, s *v1alpha1.SecurityPolicySpec, k8s bool) bool {
+					if k8s {
+						eval.Equal(len(s.AccessRightsArray), 1)
+						eval.Equal(s.AccessRightsArray[0].Name, testApiDef)
+						eval.Equal(s.AccessRightsArray[0].Namespace, testNs)
+
+						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes), 1)
+						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Name, queryName)
+						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
+						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
+
+						eval.Equal(s.AccessRightsArray[0].DisableIntrospection, true)
+					} else {
+						if mode == "ce" {
+							ad, exists := s.AccessRights[apiDefID]
+							eval.True(exists)
+
+							// allowed_types and disable_introspection are only available via GW API v4.3
+							eval.Equal(len(ad.AllowedTypes), 1)
+							eval.Equal(ad.AllowedTypes[0].Name, queryName)
+							eval.Equal(len(ad.AllowedTypes[0].Fields), 1)
+							eval.Equal(ad.AllowedTypes[0].Fields[0], accountsField)
+
+							eval.Equal(ad.DisableIntrospection, true)
+						} else {
+							eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes), 1)
+							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
+							eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes[0].Fields), 1)
+							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Fields[0], allField)
+
+							eval.Equal(len(s.AccessRightsArray[0].FieldAccessRights), 1)
+							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
+							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
+							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].Limits.MaxQueryDepth, limit)
+						}
+					}
+
+					return true
+				}
+
+				eval.True(validPolSpec(tykEnv.Mode, &pol.Spec, true))
+
+				policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, pol.Status.PolID)
+				eval.NoErr(err)
+
+				eval.True(validPolSpec(tykEnv.Mode, policyOnTyk, false))
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Test(t, securityPolicyForGraphQL)
 }
