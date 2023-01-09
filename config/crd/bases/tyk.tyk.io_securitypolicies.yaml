@@ -44,17 +44,33 @@ spec:
                 type: string
               access_rights:
                 additionalProperties:
-                  description: from tyk/session.go AccessDefinition defines which
-                    versions of an API a key has access to
+                  description: AccessDefinition defines which versions of an API a
+                    key has access to
                   properties:
                     allowance_scope:
-                      description: RestrictedTypes []graphql.Type `json:"restricted_types"`
-                        Limit          APILimit     `json:"limit,omitempty"`
                       type: string
+                    allowed_types:
+                      description: Field access of GraphQL APIs can be restricted
+                        by setting up an allowed types list in a policy or directly
+                        on a key.
+                      items:
+                        description: GraphQLType represents a GraphQL Type for Tyk.
+                        properties:
+                          fields:
+                            items:
+                              type: string
+                            type: array
+                          name:
+                            type: string
+                        required:
+                        - fields
+                        - name
+                        type: object
+                      type: array
                     allowed_urls:
                       items:
-                        description: AccessSpecs define what URLS a user has access
-                          to an what methods are enabled
+                        description: AccessSpec defines what URLS a user has access
+                          to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -75,12 +91,64 @@ spec:
                       description: 'TODO: APIName should not really be needed, as
                         is auto-set from the APIDefnition Resource'
                       type: string
+                    disable_introspection:
+                      description: DisableIntrospection disables GraphQL introspection
+                        if it is set to True.
+                      type: boolean
+                    field_access_rights:
+                      description: FieldAccessRights is array of depth limit settings
+                        per GraphQL APIs.
+                      items:
+                        description: FieldAccessDefinition represent a struct for
+                          depth limit settings per API.
+                        properties:
+                          field_name:
+                            description: FieldName represents the name of the Query
+                              or Mutation which the limit applies to.
+                            type: string
+                          limits:
+                            description: Limit specifies the numerical value of the
+                              limit.
+                            properties:
+                              max_query_depth:
+                                description: MaxQueryDepth represents the numerical
+                                  value of the limit.
+                                format: int64
+                                type: integer
+                            required:
+                            - max_query_depth
+                            type: object
+                          type_name:
+                            description: TypeName points to a type on which depth
+                              limit is set. It can be either Query (most common case)
+                              or Mutation
+                            type: string
+                        type: object
+                      type: array
                     name:
                       description: Name of the ApiDefinition resource to target
                       type: string
                     namespace:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
+                    restricted_types:
+                      description: Field access of GraphQL APIs can be restricted
+                        by setting up an allowed types list in a policy or directly
+                        on a key.
+                      items:
+                        description: GraphQLType represents a GraphQL Type for Tyk.
+                        properties:
+                          fields:
+                            items:
+                              type: string
+                            type: array
+                          name:
+                            type: string
+                        required:
+                        - fields
+                        - name
+                        type: object
+                      type: array
                     versions:
                       items:
                         type: string
@@ -92,17 +160,33 @@ spec:
                 type: object
               access_rights_array:
                 items:
-                  description: from tyk/session.go AccessDefinition defines which
-                    versions of an API a key has access to
+                  description: AccessDefinition defines which versions of an API a
+                    key has access to
                   properties:
                     allowance_scope:
-                      description: RestrictedTypes []graphql.Type `json:"restricted_types"`
-                        Limit          APILimit     `json:"limit,omitempty"`
                       type: string
+                    allowed_types:
+                      description: Field access of GraphQL APIs can be restricted
+                        by setting up an allowed types list in a policy or directly
+                        on a key.
+                      items:
+                        description: GraphQLType represents a GraphQL Type for Tyk.
+                        properties:
+                          fields:
+                            items:
+                              type: string
+                            type: array
+                          name:
+                            type: string
+                        required:
+                        - fields
+                        - name
+                        type: object
+                      type: array
                     allowed_urls:
                       items:
-                        description: AccessSpecs define what URLS a user has access
-                          to an what methods are enabled
+                        description: AccessSpec defines what URLS a user has access
+                          to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -123,12 +207,64 @@ spec:
                       description: 'TODO: APIName should not really be needed, as
                         is auto-set from the APIDefnition Resource'
                       type: string
+                    disable_introspection:
+                      description: DisableIntrospection disables GraphQL introspection
+                        if it is set to True.
+                      type: boolean
+                    field_access_rights:
+                      description: FieldAccessRights is array of depth limit settings
+                        per GraphQL APIs.
+                      items:
+                        description: FieldAccessDefinition represent a struct for
+                          depth limit settings per API.
+                        properties:
+                          field_name:
+                            description: FieldName represents the name of the Query
+                              or Mutation which the limit applies to.
+                            type: string
+                          limits:
+                            description: Limit specifies the numerical value of the
+                              limit.
+                            properties:
+                              max_query_depth:
+                                description: MaxQueryDepth represents the numerical
+                                  value of the limit.
+                                format: int64
+                                type: integer
+                            required:
+                            - max_query_depth
+                            type: object
+                          type_name:
+                            description: TypeName points to a type on which depth
+                              limit is set. It can be either Query (most common case)
+                              or Mutation
+                            type: string
+                        type: object
+                      type: array
                     name:
                       description: Name of the ApiDefinition resource to target
                       type: string
                     namespace:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
+                    restricted_types:
+                      description: Field access of GraphQL APIs can be restricted
+                        by setting up an allowed types list in a policy or directly
+                        on a key.
+                      items:
+                        description: GraphQLType represents a GraphQL Type for Tyk.
+                        properties:
+                          fields:
+                            items:
+                              type: string
+                            type: array
+                          name:
+                            type: string
+                        required:
+                        - fields
+                        - name
+                        type: object
+                      type: array
                     versions:
                       items:
                         type: string
