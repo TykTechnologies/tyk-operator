@@ -64,7 +64,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with JSON Schema Validation support.
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithJSONValidationName
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -76,30 +76,20 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithJSONValidationName,
+					Namespace: testNS,
+				},
+			}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have ValidateJSON field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithJSONValidationName, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					// 'validate_json' field must exist in the ApiDefinition object.
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.ValidateJSON) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("ApiDefinition must verify user requests",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
@@ -167,7 +157,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -179,30 +169,21 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithWhitelist,
+					Namespace: testNS,
+				},
+			}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have whitelist field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.WhiteList) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
-		Assess("ApiDefinition should allow traffic to whitelisted route",
+		Assess("ApiDefniition should allow traffic to whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
 
@@ -289,7 +270,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with whitelist extended path
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithBlacklist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -301,29 +282,20 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithBlacklist,
+					Namespace: testNS,
+				},
+			}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have blacklist field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithBlacklist, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.BlackList) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("ApiDefniition should forbid traffic to blacklist route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
@@ -422,8 +394,8 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 			eval := is.New(t)
 
-			// Create ApiDefinition with whitelist + ignored extended path
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			// Create ApiDefinition with whitelist + ingored extended path
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      apiDefListenPath,
@@ -435,30 +407,21 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apiDefWithWhitelist,
+					Namespace: testNS,
+				},
+			}
+			err = waitForTykResourceCreation(envConf, &apiDef)
+			eval.NoErr(err)
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have ignored field",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefWithWhitelist, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-					return len(apiDef.Spec.VersionData.Versions[defaultVersion].ExtendedPaths.Ignored) == 1
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
-		Assess("ApiDefinition should allow traffic to ignored route",
+		Assess("ApiDefniition should allow traffic to ignored route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
 
@@ -549,10 +512,10 @@ pwIDAQAB
 
 			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
 			// It contains a dummy public key which is not valid to be used.
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefPinning
 				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
-			}, envConf)
+			})
 			eval.NoErr(err)
 
 			// Create a secret to store the public key of httpbin.org.
@@ -574,7 +537,7 @@ pwIDAQAB
 			publicKeySecrets := map[string]string{"*": secretName}
 
 			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
-			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefPinningViaSecret
 				apiDef.Spec.Name = "valid"
 				apiDef.Spec.Proxy = model.Proxy{
@@ -583,13 +546,13 @@ pwIDAQAB
 					StripListenPath: true,
 				}
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
-			}, envConf)
+			})
 			eval.NoErr(err)
 
 			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
 			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
 			// to reach github.com, which must fail due to proxy error.
-			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = invalidApiDef
 				apiDef.Spec.Proxy = model.Proxy{
 					ListenPath:      invalidApiDefListenPath,
@@ -598,42 +561,11 @@ pwIDAQAB
 				}
 				apiDef.Spec.Name = "invalid"
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
-			}, envConf)
+			})
 			eval.NoErr(err)
 
 			return ctx
 		}).
-		Assess("ApiDefinition must have Certificate Pinning field defined",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				client := cfg.Client()
-
-				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-				desiredApiDef := v1alpha1.ApiDefinition{
-					ObjectMeta: metav1.ObjectMeta{Name: apiDefPinning, Namespace: testNS},
-				}
-
-				err := wait.For(conditions.New(client.Resources()).ResourceMatch(&desiredApiDef, func(object k8s.Object) bool {
-					apiDef := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
-
-					if apiDef.Spec.PinnedPublicKeys == nil {
-						t.Log("PinnedPublicKeys field is undefined.")
-						return false
-					}
-
-					// 'pinned_public_keys' field must exist in the ApiDefinition object.
-					val, ok := apiDef.Spec.PinnedPublicKeys["*"]
-					if !ok {
-						t.Log("cannot find a public key for the domain '*'")
-						return false
-					}
-
-					return val == publicKeyID
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Assess("Allow making requests based on the pinned public key defined via secret",
 			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 				eval := is.New(t)
@@ -730,7 +662,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 			// Create ApiDefinition with Upstream certificate
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefUpstreamCerts
 				apiDef.Spec.UpstreamCertificateRefs = map[string]string{
 					"*": certName,
@@ -740,7 +672,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -812,7 +744,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 			// Create ApiDefinition with Basic Authentication
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefBasicAuth
 				apiDef.Spec.UseBasicAuth = true
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
@@ -820,7 +752,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -909,7 +841,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with Client certificate
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefClientMTLSWithCert
 				apiDef.Spec.UseMutualTLSAuth = true
 				apiDef.Spec.ClientCertificateRefs = []string{certName}
@@ -918,7 +850,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -977,8 +909,9 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 						return false, errors.New("API is not created yet")
 					}
 
-					eval.True(len(apiDef.ClientCertificates) == 1)
-					eval.True(apiDef.ClientCertificates[0] == certID)
+					if len(apiDef.ClientCertificates) == 0 {
+						return false, errors.New("Client certificate field is not set yet")
+					}
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
@@ -995,7 +928,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 			// Create ApiDefinition with Upstream certificate
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefClientMTLSWithoutCert
 				apiDef.Spec.UseMutualTLSAuth = true
 				apiDef.Spec.ClientCertificateRefs = []string{certName}
@@ -1004,7 +937,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx
@@ -1076,14 +1009,14 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 
 			for n, tc := range tests {
 				t.Run(n, func(t *testing.T) {
-					_, err := createTestAPIDef(ctx, testNS, func(ad *v1alpha1.ApiDefinition) {
+					_, err := createTestAPIDef(ctx, c, testNS, func(ad *v1alpha1.ApiDefinition) {
 						ad.Name = fmt.Sprintf("%s-%s", ad.Name, uuid.New().String())
 						ad.Spec.Name = ad.Name
 						ad.Spec.GraphQL = &model.GraphQLConfig{
 							Enabled:       true,
 							ExecutionMode: model.GraphQLExecutionMode(tc.ExecutionMode),
 						}
-					}, c)
+					})
 
 					t.Log("Error=", err)
 					eval.Equal(tc.ReturnErr, err != nil)

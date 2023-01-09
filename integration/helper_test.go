@@ -25,7 +25,10 @@ const (
 	testSubGraphCRMetaName = "test-subgraph"
 	testSubGraphSchema     = "test-schema"
 	testSubGraphSDL        = "test-SDL"
+	testApiDef             = "test-api-def"
+	testOperatorCtx        = "mycontext"
 	testSecurityPolicy     = "test-security-policy"
+	gatewayLocalhost       = "http://localhost:7000"
 	operatorSecret         = "tyk-operator-conf"
 )
 
@@ -90,13 +93,16 @@ func generateSubGraphCR(namespace string, mutateFn func(graph *v1alpha1.SubGraph
 	return sg
 }
 
-func createTestAPIDef(ctx context.Context, namespace string, mutateFn func(*v1alpha1.ApiDefinition),
-	envConf *envconf.Config,
+func createTestAPIDef(ctx context.Context, envConf *envconf.Config, namespace string,
+	mutateFn func(*v1alpha1.ApiDefinition),
 ) (*v1alpha1.ApiDefinition, error) {
 	c := envConf.Client()
 	apiDef := generateApiDef(namespace, mutateFn)
 
 	err := c.Resources(namespace).Create(ctx, apiDef)
+	if err != nil {
+		return nil, err
+	}
 
 	return apiDef, err
 }

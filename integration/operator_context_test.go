@@ -17,12 +17,6 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-const (
-	testApiDef       = "test-http"
-	testOperatorCtx  = "mycontext"
-	gatewayLocalhost = "http://localhost:7000"
-)
-
 func TestOperatorContextCreate(t *testing.T) {
 	listenPath := "/test-opctx"
 
@@ -36,21 +30,21 @@ func TestOperatorContextCreate(t *testing.T) {
 			eval.NoErr(err) // failed to create operatorcontext
 
 			// create api definition
-			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.Context = &model.Target{
 					Name:      opCtx.Name,
 					Namespace: opCtx.Namespace,
 				}
 				apiDef.Spec.Proxy.ListenPath = listenPath
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			// create api definition with empty namespace for contextRef
-			_, err = createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = "empty-ns"
 				apiDef.Spec.Context = &model.Target{Name: opCtx.Name}
 				apiDef.Spec.Proxy.ListenPath = "/empty-ns"
-			}, envConf)
+			})
 
 			eval.NoErr(err) // failed to create apiDefinition
 
@@ -144,12 +138,12 @@ func TestOperatorContextDelete(t *testing.T) {
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
 
 			// create api definition
-			def, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			def, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.Context = &model.Target{
 					Name:      operatorCtx.Name,
 					Namespace: operatorCtx.Namespace,
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			ctx = context.WithValue(ctx, ctxApiName, def.Name)
@@ -220,12 +214,12 @@ func TestOperatorContextDelete(t *testing.T) {
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
 
 			// create api definition
-			def, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			def, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.Context = &model.Target{
 					Name:      operatorCtx.Name,
 					Namespace: operatorCtx.Namespace,
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			ctx = context.WithValue(ctx, ctxApiName, def.Name)

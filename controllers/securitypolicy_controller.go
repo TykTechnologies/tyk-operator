@@ -200,9 +200,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
-		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
-	})
+	err := r.updateStatusOfLinkedAPIs(ctx, policy, true)
 	if err != nil {
 		return err
 	}
@@ -221,8 +219,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 	return nil
 }
 
-func (r *SecurityPolicyReconciler) update(
-	ctx context.Context,
+func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	policy *tykv1.SecurityPolicy,
 ) (*tykv1.SecurityPolicySpec, error) {
 	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
@@ -254,6 +251,7 @@ func (r *SecurityPolicyReconciler) update(
 				return nil, err
 			}
 
+			policy.Spec.MID = spec.MID
 			policy.Status.PolID = spec.MID
 		} else {
 			r.Log.Error(err, "Failed to get Policy from Tyk", err)
@@ -262,14 +260,13 @@ func (r *SecurityPolicyReconciler) update(
 		}
 	}
 
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, s model.Target) {
-		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, s)
-	})
+	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 	if err != nil {
 		return nil, err
 	}
 
 	err = klient.Universal.HotReload(ctx)
+
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after updating the Policy",
 			"Policy", client.ObjectKeyFromObject(policy),
@@ -280,7 +277,7 @@ func (r *SecurityPolicyReconciler) update(
 
 	r.Log.Info("Successfully updated Policy")
 
-	return spec, r.Status().Update(ctx, policy)
+	return spec, r.updatePolicyStatus(ctx, policy)
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
@@ -323,9 +320,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		}
 	}
 
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, target model.Target) {
-		ads.LinkedByPolicies = addTarget(ads.LinkedByPolicies, target)
-	})
+	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 	if err != nil {
 		r.Log.Error(err,
 			"failed to update linkedAPI status",
@@ -347,14 +342,35 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	r.Log.Info("Successfully created Policy")
 
 	policy.Spec.MID = spec.MID
+
+	return r.updatePolicyStatus(ctx, policy)
+}
+
+// updatePolicyStatus updates the status of the policy.
+func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+	r.Log.Info("Updating policy status")
+
 	policy.Status.PolID = policy.Spec.MID
+
+	if policy.Spec.AccessRightsArray != nil && len(policy.Spec.AccessRightsArray) > 0 {
+		policy.Status.LinkedAPIs = make([]model.Target, 0)
+	} else {
+		policy.Status.LinkedAPIs = nil
+	}
+
+	for _, v := range policy.Spec.AccessRightsArray {
+		target := model.Target{Name: v.Name, Namespace: v.Namespace}
+
+		policy.Status.LinkedAPIs = append(policy.Status.LinkedAPIs, target)
+	}
 
 	return r.Status().Update(ctx, policy)
 }
 
-// updateLinkedAPI updates the status of api definitions associated with this policy.
-func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *tykv1.SecurityPolicy,
-	fn func(*tykv1.ApiDefinitionStatus, model.Target),
+// updateStatusOfLinkedAPIs updates the status of api definitions associated with this
+// policy.
+func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context, policy *tykv1.SecurityPolicy,
+	policyDeleted bool,
 ) error {
 	r.Log.Info("Updating linked api definitions")
 
@@ -362,19 +378,44 @@ func (r *SecurityPolicyReconciler) updateLinkedAPI(ctx context.Context, policy *
 		Namespace: policy.Namespace, Name: policy.Name,
 	}
 
-	for _, a := range policy.Spec.AccessRightsArray {
+	// Remove links from api definitions
+	for _, t := range policy.Status.LinkedAPIs {
 		api := &tykv1.ApiDefinition{}
 
-		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
-			r.Log.Error(err, "Failed to get linked api definition")
+		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, api); err != nil {
+			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
 
 			return err
 		}
 
-		fn(&api.Status, ns)
+		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
 
 		if err := r.Status().Update(ctx, api); err != nil {
-			r.Log.Error(err, "Failed to update linked api definition")
+			r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
+
+			return err
+		}
+	}
+
+	for _, a := range policy.Spec.AccessRightsArray {
+		api := &tykv1.ApiDefinition{}
+
+		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
+
+		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
+			r.Log.Error(err, "Failed to get linked api definition", "api", name)
+
+			return err
+		}
+
+		if policyDeleted {
+			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+		} else {
+			api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, ns)
+		}
+
+		if err := r.Status().Update(ctx, api); err != nil {
+			r.Log.Error(err, "Failed to update status of linked api definition", "api", name)
 
 			return err
 		}
