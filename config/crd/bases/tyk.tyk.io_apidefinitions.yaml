@@ -1105,6 +1105,9 @@ spec:
                   IDs that is used by the Tyk Gateway to provide mTLS support for
                   upstreams
                 type: object
+              use_basic_auth:
+                description: UseBasicAuth enables basic authentication
+                type: boolean
               use_go_plugin_auth:
                 description: Enable Go Plugin Auth. Needs to be combined with "use_keyless:false"
                 type: boolean
@@ -1115,6 +1118,7 @@ spec:
                   requests to).
                 type: boolean
               use_mutual_tls_auth:
+                description: UseMutualTLSAuth enables mututal TLS authentication
                 type: boolean
               use_oauth2:
                 description: UseOAuth2 enables oauth2 authorization

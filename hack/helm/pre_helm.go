@@ -21,6 +21,7 @@ func main() {
 		{annotation, annotationTPL},
 		{securityContext, securityContextTPL},
 		{imageRBAC, imageRBACTPL},
+		{nodeSelector, nodeSelectorTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -113,3 +114,11 @@ const imageRBAC = `        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
 const imageRBACTPL = `        image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
         imagePullPolicy: {{ .Values.rbac.image.pullPolicy }}
         name: kube-rbac-proxy`
+
+const nodeSelector = `      nodeSelector:
+        NODE_SELECTOR: NODE_SELECTOR`
+
+const nodeSelectorTPL = `{{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+{{- end }}`

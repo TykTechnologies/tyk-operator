@@ -49,7 +49,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | OpenID Connect                | ❌        | -              | Not implemented | |
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
 | HMAC                          | ❌        | -              | Not implemented | |
-| Basic Authentication          | ❌        | -              | Not implemented | |
+| Basic Authentication          | ✅        | v0.12          | Only enabling with default metadata values is supported  | [Sample](./../config/samples/basic-auth/httpbin_basic_authentication.yaml) |
 | Plugin Auth - Go              | ✅        | v0.11          | - | [Sample](./api_definitions/custom_plugin_goauth.yaml) |
 | Plugin Auth - gRPC            | ✅        | v0.1           | - | [Sample](./../bdd/features/api_http_grpc_plugin.feature) |
 | IP Whitelisting               | ✅        | v0.5           | - | [Sample](./api_definitions/ip.md#whitelisting) |
@@ -79,7 +79,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Custom Plugins - Python              | ⚠️        | v0.1           | Untested                                                               |
 | Global Rate Limit                    | ✅         | v0.10          | -                                                                      | [Sample](./../config/samples/httpbin_global_rate_limit.yaml)    |
 | Segment Tags                         | ✅         | v0.1           | -                                                                      | [Sample](./../config/samples/httpbin_tagged.yaml)               |
-| Tag Headers                          | ❌         | -              | Not Implemented                                                        |
+| Tag Headers                          | ⚠️         | -              | Untested                                                               |
 | Webhooks                             | ❌         | -              | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   | 
 | Looping                              | ⚠️        | v0.6           | Untested                                                               | [Sample](./api_definitions/looping.md)                          |
 | Active API                           | ✅         | v0.2           | Only available to Tyk Self Managed (Pro) users                         | [Sample](./api_definitions/fields.md#active)                    |
