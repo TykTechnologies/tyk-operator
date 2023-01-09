@@ -177,7 +177,8 @@ type PolicyPartitions struct {
 
 // SecurityPolicyStatus defines the observed state of SecurityPolicy
 type SecurityPolicyStatus struct {
-	PolID string `json:"pol_id"`
+	PolID      string         `json:"pol_id"`
+	LinkedAPIs []model.Target `json:"linked_apis,omitempty"`
 }
 
 // SecurityPolicy is the Schema for the securitypolicies API
