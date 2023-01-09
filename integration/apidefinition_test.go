@@ -778,7 +778,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 			eval := is.New(t)
 
 			// Create ApiDefinition with Basic Authentication
-			_, err := createTestAPIDef(ctx, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Name = apiDefBasicAuth
 				apiDef.Spec.UseBasicAuth = true
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
@@ -786,7 +786,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
 					defaultVersion: {Name: defaultVersion},
 				}
-			}, envConf)
+			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			return ctx

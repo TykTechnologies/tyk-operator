@@ -532,7 +532,7 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.True(ok)
 
 				var err error
-				apiDefCR, err = createTestAPIDef(ctx, testNs, nil, c)
+				apiDefCR, err = createTestAPIDef(ctx, c, testNs, nil)
 				eval.NoErr(err)
 
 				policyCR = v1alpha1.SecurityPolicy{
