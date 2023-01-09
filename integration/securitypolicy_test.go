@@ -493,9 +493,10 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 	)
 
 	var (
-		reqCtx   context.Context
-		tykEnv   environmet.Env
-		apiDefID string
+		reqCtx                    context.Context
+		tykEnv                    environmet.Env
+		apiDefID                  string
+		minGraphQLPolicyGwVersion = version.MustParseGeneric("v4.3.0")
 	)
 
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
@@ -507,6 +508,13 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
+
+			v, err := version.ParseGeneric(tykEnv.TykVersion)
+			eval.NoErr(err)
+
+			if tykEnv.Mode == "ce" && !v.AtLeast(minGraphQLPolicyGwVersion) {
+				t.Skip("GraphQL specific Security Policies API in CE mode requires at least Tyk v4.3.0")
+			}
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
