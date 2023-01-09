@@ -219,7 +219,9 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 	return nil
 }
 
-func (r *SecurityPolicyReconciler) update(ctx context.Context, policy *tykv1.SecurityPolicy) (*tykv1.SecurityPolicySpec, error) {
+func (r *SecurityPolicyReconciler) update(ctx context.Context,
+	policy *tykv1.SecurityPolicy,
+) (*tykv1.SecurityPolicySpec, error) {
 	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
 
 	policy.Spec.MID = policy.Status.PolID
