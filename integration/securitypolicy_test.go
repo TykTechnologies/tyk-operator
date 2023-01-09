@@ -493,8 +493,9 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 	)
 
 	var (
-		reqCtx context.Context
-		tykEnv environmet.Env
+		reqCtx   context.Context
+		tykEnv   environmet.Env
+		apiDefID string
 	)
 
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
@@ -526,6 +527,11 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				err = waitForTykResourceCreation(c, apiDefCR)
 				eval.NoErr(err)
 
+				var createdResource v1alpha1.ApiDefinition
+				err = c.Client().Resources(testNs).Get(ctx, apiDefCR.Name, testNs, &createdResource)
+				eval.NoErr(err)
+				apiDefID = createdResource.Status.ApiID
+
 				policyCR, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
 					policy.Spec.AccessRightsArray = []*v1alpha1.AccessDefinition{
 						{
@@ -534,7 +540,9 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							AllowedTypes: []v1alpha1.GraphQLType{
 								{Name: queryName, Fields: []string{accountsField}},
 							},
-							RestrictedTypes:      []v1alpha1.GraphQLType{{Name: queryName, Fields: []string{allField}}},
+							RestrictedTypes: []v1alpha1.GraphQLType{
+								{Name: queryName, Fields: []string{allField}},
+							},
 							DisableIntrospection: true,
 							FieldAccessRights: []v1alpha1.FieldAccessDefinition{
 								{
@@ -565,9 +573,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				eval.NoErr(err)
 
 				validPolSpec := func(mode v1alpha1.OperatorContextMode, s *v1alpha1.SecurityPolicySpec, k8s bool) bool {
-					eval.Equal(len(s.AccessRightsArray), 1)
-
 					if k8s {
+						eval.Equal(len(s.AccessRightsArray), 1)
 						eval.Equal(s.AccessRightsArray[0].Name, testApiDef)
 						eval.Equal(s.AccessRightsArray[0].Namespace, testNs)
 
@@ -577,27 +584,30 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
 
 						eval.Equal(s.AccessRightsArray[0].DisableIntrospection, true)
+					} else {
+						if mode == "ce" {
+							ad, exists := s.AccessRights[apiDefID]
+							eval.True(exists)
+
+							// allowed_types and disable_introspection are only available via GW API v4.3
+							eval.Equal(len(ad.AllowedTypes), 1)
+							eval.Equal(ad.AllowedTypes[0].Name, queryName)
+							eval.Equal(len(ad.AllowedTypes[0].Fields), 1)
+							eval.Equal(ad.AllowedTypes[0].Fields[0], accountsField)
+
+							eval.Equal(ad.DisableIntrospection, true)
+						} else {
+							eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes), 1)
+							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
+							eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes[0].Fields), 1)
+							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Fields[0], allField)
+
+							eval.Equal(len(s.AccessRightsArray[0].FieldAccessRights), 1)
+							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
+							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
+							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].Limits.MaxQueryDepth, limit)
+						}
 					}
-
-					// allowed_types and disable_introspection are only possible via GW API
-					if mode == "ce" {
-						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes), 1)
-						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Name, queryName)
-						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
-						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
-
-						eval.Equal(s.AccessRightsArray[0].DisableIntrospection, true)
-					}
-
-					eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes), 1)
-					eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
-					eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes[0].Fields), 1)
-					eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Fields[0], allField)
-
-					eval.Equal(len(s.AccessRightsArray[0].FieldAccessRights), 1)
-					eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
-					eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
-					eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].Limits.MaxQueryDepth, limit)
 
 					return true
 				}
