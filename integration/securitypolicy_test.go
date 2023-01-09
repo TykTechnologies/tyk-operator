@@ -483,6 +483,7 @@ func TestSecurityPolicy(t *testing.T) {
 
 func TestSecurityPolicyForGraphQL(t *testing.T) {
 	eval := is.New(t)
+
 	const (
 		queryName     = "Query"
 		accountsField = "accounts"
@@ -491,7 +492,10 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 		limit         = int64(2)
 	)
 
-	var reqCtx context.Context
+	var (
+		reqCtx context.Context
+		tykEnv environmet.Env
+	)
 
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
@@ -500,12 +504,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
-
-			if tykEnv.Mode == "ce" {
-				t.Skip("SecurityPolicy API is not implemented in CE yet")
-			}
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
@@ -564,41 +564,50 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				err := c.Client().Resources().Get(ctx, testSecurityPolicy, testNs, &pol)
 				eval.NoErr(err)
 
-				validPolSpec := func(polSpec *v1alpha1.SecurityPolicySpec, k8s bool) bool {
-					eval.Equal(len(polSpec.AccessRightsArray), 1)
+				validPolSpec := func(mode v1alpha1.OperatorContextMode, s *v1alpha1.SecurityPolicySpec, k8s bool) bool {
+					eval.Equal(len(s.AccessRightsArray), 1)
 
 					if k8s {
-						eval.Equal(polSpec.AccessRightsArray[0].Name, testApiDef)
-						eval.Equal(polSpec.AccessRightsArray[0].Namespace, testNs)
+						eval.Equal(s.AccessRightsArray[0].Name, testApiDef)
+						eval.Equal(s.AccessRightsArray[0].Namespace, testNs)
 
-						// allowed_types and disable_introspection are only possible via GW API
-						eval.Equal(len(polSpec.AccessRightsArray[0].AllowedTypes), 1)
-						eval.Equal(polSpec.AccessRightsArray[0].AllowedTypes[0].Name, queryName)
-						eval.Equal(len(polSpec.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
-						eval.Equal(polSpec.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
+						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes), 1)
+						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Name, queryName)
+						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
+						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
 
-						eval.Equal(polSpec.AccessRightsArray[0].DisableIntrospection, true)
+						eval.Equal(s.AccessRightsArray[0].DisableIntrospection, true)
 					}
 
-					eval.Equal(len(polSpec.AccessRightsArray[0].RestrictedTypes), 1)
-					eval.Equal(polSpec.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
-					eval.Equal(len(polSpec.AccessRightsArray[0].RestrictedTypes[0].Fields), 1)
-					eval.Equal(polSpec.AccessRightsArray[0].RestrictedTypes[0].Fields[0], allField)
+					// allowed_types and disable_introspection are only possible via GW API
+					if mode == "ce" {
+						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes), 1)
+						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Name, queryName)
+						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
+						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
 
-					eval.Equal(len(polSpec.AccessRightsArray[0].FieldAccessRights), 1)
-					eval.Equal(polSpec.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
-					eval.Equal(polSpec.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
-					eval.Equal(polSpec.AccessRightsArray[0].FieldAccessRights[0].Limits.MaxQueryDepth, limit)
+						eval.Equal(s.AccessRightsArray[0].DisableIntrospection, true)
+					}
+
+					eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes), 1)
+					eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
+					eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes[0].Fields), 1)
+					eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Fields[0], allField)
+
+					eval.Equal(len(s.AccessRightsArray[0].FieldAccessRights), 1)
+					eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
+					eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
+					eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].Limits.MaxQueryDepth, limit)
 
 					return true
 				}
 
-				eval.True(validPolSpec(&pol.Spec, true))
+				eval.True(validPolSpec(tykEnv.Mode, &pol.Spec, true))
 
 				policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, pol.Status.PolID)
 				eval.NoErr(err)
 
-				eval.True(validPolSpec(policyOnTyk, false))
+				eval.True(validPolSpec(tykEnv.Mode, policyOnTyk, false))
 
 				return ctx
 			}).
