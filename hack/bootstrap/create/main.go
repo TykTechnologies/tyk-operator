@@ -244,6 +244,8 @@ func createSecret() {
 	say("Creating Secret ... ")
 
 	if !hasOperatorSecret() {
+		config.Tyk.Version = *tykVersion
+
 		pro(func() {
 			var buf bytes.Buffer
 			exit(kf(func(c *exec.Cmd) {
@@ -264,7 +266,6 @@ func createSecret() {
 			config.Tyk.Org = o.Data["TYK_ORG"]
 			config.Tyk.Mode = o.Data["TYK_MODE"]
 			config.Tyk.URL = o.Data["TYK_URL"]
-			config.Tyk.Version = *tykVersion
 		})
 
 		exit(kl("create", "secret",

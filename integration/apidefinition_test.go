@@ -459,7 +459,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 				return ctx
 			}).
-		Assess("ApiDefniition should allow traffic to ignored route",
+		Assess("ApiDefinition should allow traffic to ignored route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 				eval := is.New(t)
 
@@ -800,6 +800,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 	testenv.Test(t, adCreate)
 }
+
 func TestApiDefinitionBasicAuth(t *testing.T) {
 	var (
 		apiDefBasicAuth  = "apidef-basic-authentication"

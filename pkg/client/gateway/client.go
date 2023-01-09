@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	endpointAPIs   = "/tyk/apis"
-	endpointReload = "/tyk/reload/group"
-	endpointCerts  = "/tyk/certs"
+	endpointAPIs     = "/tyk/apis"
+	endpointReload   = "/tyk/reload/group"
+	endpointCerts    = "/tyk/certs"
+	endpointPolicies = "/tyk/policies"
 )
 
 var _ universal.Client = (*Client)(nil)
