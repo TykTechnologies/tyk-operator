@@ -5,6 +5,7 @@
 
 **Added**
 - Added Basic Authentication support [Issue #534](https://github.com/TykTechnologies/tyk-operator/issues/534)
+- Added support for security policies in OSS [#357](https://github.com/TykTechnologies/tyk-operator/issues/357)
 - Added nodeSelector support [Issue #551](https://github.com/TykTechnologies/tyk-operator/issues/551)
 
 **Fixed**

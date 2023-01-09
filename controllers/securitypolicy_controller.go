@@ -125,6 +125,13 @@ func (r *SecurityPolicyReconciler) spec(
 		if err != nil {
 			return nil, err
 		}
+
+		if spec.AccessRights == nil {
+			spec.AccessRights = map[string]tykv1.AccessDefinition{}
+		}
+
+		// Set AccessRights for Tyk OSS.
+		spec.AccessRights[spec.AccessRightsArray[i].APIID] = *spec.AccessRightsArray[i]
 	}
 
 	return spec, nil
@@ -152,7 +159,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 	if api.Status.ApiID == "" {
 		r.Log.Error(
 			opclient.ErrNotFound,
-			"ApiDefinition does not exist on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
+			"Failed to find ApiDefinition on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
 		)
 
 		return opclient.ErrNotFound
@@ -165,16 +172,18 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 }
 
 func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.SecurityPolicy) error {
-	r.Log.Info("Deleting policy")
+	r.Log.Info("Deleting a policy", "policy", client.ObjectKeyFromObject(policy))
 
-	all, err := klient.Universal.Portal().Catalogue().Get(ctx)
-	if err != nil {
-		return err
-	}
+	if r.Env.Mode == "pro" {
+		all, err := klient.Universal.Portal().Catalogue().Get(ctx)
+		if err != nil {
+			return err
+		}
 
-	for _, v := range all.APIS {
-		if v.PolicyID == policy.Status.PolID {
-			return fmt.Errorf("cannot delete policy due to catalogue %q dependency", all.Id)
+		for i := 0; i < len(all.APIS); i++ {
+			if all.APIS[i].PolicyID == policy.Status.PolID {
+				return fmt.Errorf("cannot delete policy due to catalogue %q dependency", all.Id)
+			}
 		}
 	}
 
@@ -182,19 +191,28 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 
 	if err := klient.Universal.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
 		if opclient.IsNotFound(err) {
-			r.Log.Info("Policy not found")
+			r.Log.Info("Policy not found on Tyk", "Policy ID", policy.Status.PolID)
 			return nil
 		}
 
-		r.Log.Error(err, "Failed to delete resource")
+		r.Log.Error(err, "Failed to delete resource from Tyk")
 
 		return err
 	}
 
-	err = r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
+	err := r.updateLinkedAPI(ctx, policy, func(ads *tykv1.ApiDefinitionStatus, ns model.Target) {
 		ads.LinkedByPolicies = removeTarget(ads.LinkedByPolicies, ns)
 	})
 	if err != nil {
+		return err
+	}
+
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "Failed to hot-reload Tyk after deleting a Policy",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
 		return err
 	}
 
@@ -251,7 +269,15 @@ func (r *SecurityPolicyReconciler) update(
 		return nil, err
 	}
 
-	klient.Universal.HotReload(ctx)
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(err, "Failed to hot-reload Tyk after updating the Policy",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return nil, err
+	}
+
 	r.Log.Info("Successfully updated Policy")
 
 	return spec, r.Status().Update(ctx, policy)

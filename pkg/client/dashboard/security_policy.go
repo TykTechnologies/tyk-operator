@@ -32,7 +32,7 @@ func (p SecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error
 	return response.Policies, nil
 }
 
-// Get  find the Policy by id
+// Get find the Policy by id.
 func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicySpec, error) {
 	res, err := client.Get(ctx, client.Join(endpointPolicies, id), nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func (p SecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicyS
 	return &o, nil
 }
 
-// Create  creates a new policy using the def object
+// Create creates a new policy using the def object
 func (p SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) error {
 	res, err := client.PostJSON(ctx, client.Join(endpointPolicies), def)
 	if err != nil {
