@@ -195,6 +195,15 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 			return nil
 		}
 
+		// At the moment, the Policy API returns 500 instead of 404 in cases of deleting non-existent Policies.
+		// So that reconciliation fails since non-existence couldn't be understood by Operator. Until this
+		// issue is fixed on Gateway level, add an ad-hoc API call to verify that policy's existence on Tyk level.
+		// If the Policy does not exist, no need to reconcile again. Otherwise, return err and reconcile.
+		_, errTyk := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
+		if opclient.IsNotFound(errTyk) {
+			return nil
+		}
+
 		r.Log.Error(err, "Failed to delete resource from Tyk")
 
 		return err
