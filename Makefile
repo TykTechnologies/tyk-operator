@@ -74,13 +74,13 @@ manifests: controller-gen ## Generate manifests
 
 fmt: ## Run go fmt against code
 	go fmt ./...
+	gofmt -s -w .
 
 
 vet: ## Run go vet against code
 	go vet ./...
 
 golangci-lint: ## Run golangci-lint linter
-	gofmt -s -w .
 	golangci-lint run
 
 linters: fmt vet golangci-lint ## Run all linters once
