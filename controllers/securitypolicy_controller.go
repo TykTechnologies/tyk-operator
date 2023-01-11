@@ -200,13 +200,11 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		// issue is fixed on Gateway level, add an ad-hoc API call to verify that policy's existence on Tyk level.
 		// If the Policy does not exist, no need to reconcile again. Otherwise, return err and reconcile.
 		_, errTyk := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
-		if opclient.IsNotFound(errTyk) {
-			return nil
+		if !opclient.IsNotFound(errTyk) {
+			r.Log.Error(err, "Failed to delete resource from Tyk")
+
+			return err
 		}
-
-		r.Log.Error(err, "Failed to delete resource from Tyk")
-
-		return err
 	}
 
 	err := r.updateStatusOfLinkedAPIs(ctx, policy, true)
