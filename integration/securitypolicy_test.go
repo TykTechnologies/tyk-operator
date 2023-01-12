@@ -610,7 +610,11 @@ func TestSecurityPolicy(t *testing.T) {
 				err := c.Client().Resources(testNs).Delete(ctx, &policyCR)
 				eval.NoErr(err)
 
-				err = wait.For(conditions.New(c.Client().Resources()).ResourceDeleted(&policyCR))
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceDeleted(&policyCR),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
 				eval.NoErr(err)
 
 				// Ensure that the policy is deleted successfully from Tyk.
