@@ -21,7 +21,7 @@ jobs:
       - name: "publish nightly tag"
         if: success()
         env:
-          TYK_OPERATOR_TOKEN: ${{ secrets.TYK_OPERATOR_TOKEN }}
+          ORG_GH_TOKEN: ${{ secrets.ORG_GH_TOKEN }}
         run: |
           tag=$(git for-each-ref --sort=-v:refname --count=1 --format '%(refname)' refs/tags/[0-9]*.[0-9]*.[0-9] refs/tags/v[0-9]*.[0-9]*.[0-9] | cut -d / -f 3-)
           tag_commit=$(git rev-list -n 1 "$tag")
@@ -37,7 +37,7 @@ jobs:
           git_refs_url=$(jq .repository.git_refs_url "$GITHUB_EVENT_PATH" | tr -d '"' | sed 's/{\/sha}//g')
           echo "$dt: **pushing tag $new to repo $full_name"
           curl -s -X POST "$git_refs_url" \
-          -H "Authorization: token $TYK_OPERATOR_TOKEN" \
+          -H "Authorization: token $ORG_GH_TOKEN" \
           -d @- << EOF
           {
             "ref": "refs/tags/$new",
