@@ -387,11 +387,11 @@ func (r *ApiDefinitionReconciler) create(
 	desired *tykv1alpha1.ApiDefinition,
 	log logr.Logger,
 ) error {
-	log.Info("Creating new  ApiDefinition")
+	log.Info("Creating a new ApiDefinition")
 
 	_, err := klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 	if err != nil {
-		log.Error(err, "Failed to create api definition")
+		log.Error(err, "Failed to create ApiDefinition on Tyk")
 		return err
 	}
 
@@ -405,10 +405,23 @@ func (r *ApiDefinitionReconciler) create(
 		},
 	)
 	if err != nil {
-		log.Error(err, "Could not update Status ID")
+		log.Error(err, "Failed to update Status ID",
+			"ApiDefinition",
+			client.ObjectKeyFromObject(desired),
+		)
+
+		return err
 	}
 
-	klient.Universal.HotReload(ctx)
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		log.Error(err,
+			"Failed to hot-reload Tyk after creating the ApiDefinition",
+			"ApiDefinition", client.ObjectKeyFromObject(desired),
+		)
+
+		return err
+	}
 
 	return nil
 }
@@ -426,7 +439,15 @@ func (r *ApiDefinitionReconciler) update(
 		return err
 	}
 
-	klient.Universal.HotReload(ctx)
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		log.Error(err,
+			"Failed to hot-reload Tyk after updating the ApiDefinition",
+			"ApiDefinition", client.ObjectKeyFromObject(desired),
+		)
+
+		return err
+	}
 
 	return nil
 }
@@ -511,7 +532,8 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 }
 
 func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alpha1.ApiDefinition) (time.Duration, error) {
-	r.Log.Info("resource being deleted")
+	r.Log.Info("ApiDefinition being deleted", "ApiDefinition", client.ObjectKeyFromObject(desired))
+
 	// If our finalizer is present, need to delete from Tyk still
 	if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
 		if err := r.checkLinkedPolicies(ctx, desired); err != nil {
@@ -541,14 +563,29 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			return 0, err
 		}
 
-		r.Log.Info("deleting api")
+		r.Log.Info("Deleting an ApiDefinition from Tyk", "ApiDefinition ID", desired.Status.ApiID)
 
 		_, err = klient.Universal.Api().Delete(ctx, desired.Status.ApiID)
 		if err != nil && tykclient.IsNotFound(err) {
-			r.Log.Error(err, "ignoring nonexistent api on delete", "api_id", desired.Status.ApiID)
+			r.Log.Info(
+				"Ignoring nonexistent ApiDefinition on delete",
+				"api_id", desired.Status.ApiID,
+				"err", err,
+			)
 		} else if err != nil {
-			r.Log.Error(err, "unable to delete api", "api_id", desired.Status.ApiID)
-			return 0, err
+			// If the ApiDefinition does not exist on Tyk, no need to reconcile with error.
+			// Older versions of GW does not return 404 while deleting non-existent ApiDefinitions.
+			// Therefore, check if ApiDefinition exists on Tyk before returning with error. If ApiDefinition
+			// exists, which means Get call returns successful response, Operator should reconcile to complete
+			// deletion of the ApiDefinition.
+			_, err = klient.Universal.Api().Get(ctx, desired.Status.ApiID)
+			if err == nil {
+				r.Log.Error(
+					err,
+					"Failed to delete ApiDefinition from Tyk", "api_id", desired.Status.ApiID,
+				)
+				return 0, err
+			}
 		}
 
 		err = klient.Universal.HotReload(ctx)
@@ -557,9 +594,13 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			return 0, err
 		}
 
-		r.Log.Info("removing finalizer")
 		util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
 	}
+
+	r.Log.Info(
+		"Deleted ApiDefinition successfully",
+		"ApiDefinition", client.ObjectKeyFromObject(desired),
+	)
 
 	return 0, nil
 }
