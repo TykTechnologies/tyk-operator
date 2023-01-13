@@ -1,7 +1,7 @@
 # Version Compatibility
 
 ## Compatibility with Tyk
-Tyk Operator can work with all version of Tyk beyond Tyk 3.x+. Since Tyk is backward compatible, you can safely use the latest version of Tyk Operator to work with any version of Tyk. However, if you're using a feature that was not yet available on an earlier version of Tyk, e.g. Defining a Subgraph with Tyk 3.x, you'll see error on in Tyk Operator controller manager logs.
+Tyk Operator can work with all version of Tyk beyond Tyk 3.x+. Since Tyk is backward compatible, you can safely use the latest version of Tyk Operator to work with any version of Tyk. However, if you're using a feature that was not yet available on an earlier version of Tyk, e.g. Defining a Subgraph with Tyk 3.x, you'll see error in Tyk Operator controller manager logs.
 
 See [Release notes](https://github.com/TykTechnologies/tyk-operator/releases) to check for each Tyk Operator release, which version of Tyk it is tested against.
 
