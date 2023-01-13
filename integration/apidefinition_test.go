@@ -1389,7 +1389,7 @@ func TestDeletingNonexistentAPI(t *testing.T) {
 
 			return ctx
 		}).
-		Assess("Delete ApiDefinition from Tyk",
+		Assess("Delete nonexistent ApiDefinition from k8s successfully",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 				// To begin with, delete the ApiDefinition from Tyk, which is the wrong thing to do because it'll
 				// cause a drift between k8s and Tyk. Now, deleting ApiDefinition CR from k8s,

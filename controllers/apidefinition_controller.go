@@ -26,8 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-logr/logr"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -35,7 +33,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -184,10 +182,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		//  If this is not set, means it is a new object, set it first
 		if desired.Status.ApiID == "" {
-			return r.create(ctx, upstreamRequestStruct, log)
+			return r.create(ctx, upstreamRequestStruct)
 		}
 
-		return r.update(ctx, upstreamRequestStruct, log)
+		return r.update(ctx, upstreamRequestStruct)
 	})
 
 	if err == nil {
@@ -382,16 +380,18 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	return uploadCert(ctx, env.Org, pemKeyBytes, pemCrtBytes)
 }
 
-func (r *ApiDefinitionReconciler) create(
-	ctx context.Context,
-	desired *tykv1alpha1.ApiDefinition,
-	log logr.Logger,
-) error {
-	log.Info("Creating a new ApiDefinition")
+func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alpha1.ApiDefinition) error {
+	r.Log.Info("Creating a new ApiDefinition",
+		"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+	)
 
 	_, err := klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 	if err != nil {
-		log.Error(err, "Failed to create ApiDefinition on Tyk")
+		r.Log.Error(
+			err,
+			"Failed to create ApiDefinition on Tyk",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
 		return err
 	}
 
@@ -405,9 +405,10 @@ func (r *ApiDefinitionReconciler) create(
 		},
 	)
 	if err != nil {
-		log.Error(err, "Failed to update Status ID",
-			"ApiDefinition",
-			client.ObjectKeyFromObject(desired),
+		r.Log.Error(
+			err,
+			"Failed to update Status ID",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
 		return err
@@ -415,9 +416,10 @@ func (r *ApiDefinitionReconciler) create(
 
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
-		log.Error(err,
+		r.Log.Error(
+			err,
 			"Failed to hot-reload Tyk after creating the ApiDefinition",
-			"ApiDefinition", client.ObjectKeyFromObject(desired),
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
 		return err
@@ -426,24 +428,26 @@ func (r *ApiDefinitionReconciler) create(
 	return nil
 }
 
-func (r *ApiDefinitionReconciler) update(
-	ctx context.Context,
-	desired *tykv1alpha1.ApiDefinition,
-	log logr.Logger,
-) error {
-	log.Info("Updating ApiDefinition")
+func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alpha1.ApiDefinition) error {
+	r.Log.Info("Updating ApiDefinition",
+		"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+	)
 
 	_, err := klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
 	if err != nil {
-		log.Error(err, "Failed to update api definition")
+		r.Log.Error(
+			err, "Failed to update ApiDefinition on Tyk",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
 		return err
 	}
 
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
-		log.Error(err,
+		r.Log.Error(
+			err,
 			"Failed to hot-reload Tyk after updating the ApiDefinition",
-			"ApiDefinition", client.ObjectKeyFromObject(desired),
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
 		return err
@@ -532,7 +536,9 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 }
 
 func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alpha1.ApiDefinition) (time.Duration, error) {
-	r.Log.Info("ApiDefinition being deleted", "ApiDefinition", client.ObjectKeyFromObject(desired))
+	r.Log.Info("ApiDefinition being deleted",
+		"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+	)
 
 	// If our finalizer is present, need to delete from Tyk still
 	if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
@@ -560,7 +566,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 
 		err := r.breakSubgraphLink(ctx, desired, true)
 		if err != nil {
-			return 0, err
+			return queueAfter, err
 		}
 
 		r.Log.Info("Deleting an ApiDefinition from Tyk", "ApiDefinition ID", desired.Status.ApiID)
@@ -578,20 +584,25 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			// Therefore, check if ApiDefinition exists on Tyk before returning with error. If ApiDefinition
 			// exists, which means Get call returns successful response, Operator should reconcile to complete
 			// deletion of the ApiDefinition.
-			_, err = klient.Universal.Api().Get(ctx, desired.Status.ApiID)
-			if err == nil {
+			_, errTyk := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
+			if errTyk == nil {
 				r.Log.Error(
 					err,
 					"Failed to delete ApiDefinition from Tyk", "api_id", desired.Status.ApiID,
 				)
-				return 0, err
+				return queueAfter, err
 			}
 		}
 
 		err = klient.Universal.HotReload(ctx)
 		if err != nil {
-			r.Log.Error(err, "unable to hot reload", "api_id", desired.Status.ApiID)
-			return 0, err
+			r.Log.Error(
+				err,
+				"Failed to hot-reload Tyk after deleting the ApiDefinition",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
+
+			return queueAfter, err
 		}
 
 		util.RemoveFinalizer(desired, keys.ApiDefFinalizerName)
@@ -599,7 +610,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 
 	r.Log.Info(
 		"Deleted ApiDefinition successfully",
-		"ApiDefinition", client.ObjectKeyFromObject(desired),
+		"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 	)
 
 	return 0, nil
@@ -684,7 +695,7 @@ func (r *ApiDefinitionReconciler) ensureTargets(
 func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 	a *tykv1alpha1.ApiDefinition, links []model.Target,
 ) error {
-	r.Log.Info("updating looping targets")
+	r.Log.Info("Updating looping targets")
 
 	if len(links) == 0 {
 		return nil
@@ -812,7 +823,7 @@ func (r *ApiDefinitionReconciler) breakSubgraphLink(
 		if err != nil {
 			r.Log.Error(err,
 				"failed to update ApiDefinition status after removing Subgraph link",
-				"ApiDefinition CR", client.ObjectKeyFromObject(desired),
+				"ApiDefinition CR", client.ObjectKeyFromObject(desired).String(),
 			)
 
 			return err
