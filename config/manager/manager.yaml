@@ -24,6 +24,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+      hostNetwork: CONTROLLER_MANAGER_HOST_NETWORK
       containers:
       - command:
         - /manager

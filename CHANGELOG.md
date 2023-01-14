@@ -2,6 +2,9 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
+**Added**
+- Added hostNetwork Support  [Issue #532](https://github.com/TykTechnologies/tyk-operator/issues/532)
+
 ## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
 
