@@ -1,0 +1,36 @@
+name: Test Limit Request Size
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/request_size.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with invalid request size more than 5 bytes #this is failing, getting 200OK response instead of 400
+  steps:
+    - type: http
+      method: POST
+      url: http://localhost:8080/httpbin-limit/post
+      headers:
+        "content-length": "10"     
+      assertions:
+      - result.statuscode ShouldEqual 400
+      - result.bodyjson.error ShouldContainSubstring Request is too large
+
+- name: Test with valid request size within 5 bytes
+  steps:      
+    - type: http
+      method: POST
+      url: http://localhost:8080/httpbin-limit/post
+      headers:
+        "content-length": "4"
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/request_size.yaml
+      assertions:
+      - result.code ShouldEqual 0

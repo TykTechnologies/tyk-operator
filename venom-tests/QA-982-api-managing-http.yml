@@ -1,0 +1,40 @@
+name: Test user is able to update and delete API resources
+testcases:
+- name: Create keyless API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin.keyless.apidefinition"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Update keyless API to Authentication Token API
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin.apikey.apidefinition.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test changes applied above are reflected
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-auth-test/get
+      assertions:
+      - result.statuscode ShouldEqual 401
+      - result.bodyjson.error ShouldContainSubstring Authorization field missing
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete tykapis httpbin-auth-test
+      assertions:
+      - result.code ShouldEqual 0
+
+- name: Test API deleted above is deleted #this is failing, expected 404 but getting 401
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-auth-test/get
+      assertions:
+      - result.statuscode ShouldEqual 404
+      - result.bodyjson.error ShouldContainSubstring 404 Not Found

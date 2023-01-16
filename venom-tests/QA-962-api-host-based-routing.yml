@@ -1,0 +1,23 @@
+name: Test Host name based routing(http) defined in API definition
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_routing_by_hostname.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test get endpoint with httpbin.tyk.io domain #this is failing
+  steps:
+    - type: http
+      method: GET
+      url: http://httpbin.tyk.io/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_routing_by_hostname.yaml
+      assertions:
+      - result.code ShouldEqual 0

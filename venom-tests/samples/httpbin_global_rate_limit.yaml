@@ -1,0 +1,17 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-global-rate-limit
+spec:
+  name: httpbin-global-rate-limit
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  # setting a global rate-limit for the API of 10 requests per 60 seconds
+  global_rate_limit:
+    rate: 10
+    per: 60

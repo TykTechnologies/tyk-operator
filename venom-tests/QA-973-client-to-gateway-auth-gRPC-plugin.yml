@@ -1,0 +1,81 @@
+name: Test configure an api with gRPC plugins
+testcases:
+- name: Create API for Pre middleware hook
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin.keyless.grpc-pre.apidefinition.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test Pre middleware hook #this is failing 
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-grpc-pre/headers
+      assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.headers.Pre ShouldEqual HelloFromPre
+
+- name: Delete API for Pre middleware hook
+  steps:
+    - type: exec
+      script: kubectl delete -f ../bdd/custom_resources/httpbin.keyless.grpc-pre.apidefinition.yaml
+      assertions:
+      - result.code ShouldEqual 0
+
+- name: Create API for Post middleware hook
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin.keyless.grpc-post.apidefinition.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test Post middleware hook #this is failing 
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-grpc-post/headers
+      assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.headers.Post ShouldEqual HelloFromPost
+
+- name: Delete API for Post middleware hook
+  steps:
+    - type: exec
+      script: kubectl delete -f ../bdd/custom_resources/httpbin.keyless.grpc-post.apidefinition.yaml
+      assertions:
+      - result.code ShouldEqual 0
+
+- name: Create API for Auth middleware hook
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin.keyless.grpc-auth.apidefinition.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test Auth middleware hook without Authentication
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-grpc-auth/headers
+      assertions:
+      - result.statuscode ShouldEqual 400
+      - result.bodyjson.error ShouldContainSubstring Authorization field missing
+
+- name: Test Auth middleware hook with Authentication #this is failing at line 74
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-grpc-auth/headers
+      headers:
+        "Authorization": "foobarbaz" 
+      assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.headers.Postkeyauth ShouldEqual HelloFromPostKeyAuth
+
+- name: Delete API for Auth middleware hook
+  steps:
+    - type: exec
+      script: kubectl delete -f ../bdd/custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml
+      assertions:
+      - result.code ShouldEqual 0
