@@ -14,5 +14,5 @@ spec:
   custom_middleware:
     driver: grpc
     post:
-      - name: HelloFromPost
-        path: ""
+    - name: HelloFromPost
+      path: ""
