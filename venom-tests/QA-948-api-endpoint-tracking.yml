@@ -83,6 +83,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-     script: kubectl delete -f ../config/samples/httpbin_endpoint_tracking.yaml
+      script: kubectl delete -f ../config/samples/httpbin_endpoint_tracking.yaml
       assertions:
       - result.code ShouldEqual 0
