@@ -3,14 +3,15 @@ testcases:
 - name: Create API template
   steps:
   - type: applyManifests
-    filename: "samples/ingress/apidefinition_template.yaml"
+    filename: "samples/Ingress/apidefinition_template.yaml"
+    sleepTime: 0
     assertions:
     - result.code ShouldEqual 0
 
 - name: Create API via Ingress
   steps:
   - type: applyManifests
-    filename: "samples/ingress/ingress.yaml"
+    filename: "samples/Ingress/ingress.yaml"
     assertions:
     - result.code ShouldEqual 0
 
@@ -22,11 +23,12 @@ testcases:
       assertions:
       - result.statuscode ShouldEqual 200
 
+# should remove this since we need to have an hostname entry to make this work
 - name: Test path and host routing #this is failing
   steps:
     - type: http
       method: GET
-      url: http://httpbin.ahmet/httpbin/get
+      url: http://httpbin.ahmet:8080/httpbin/get
       assertions:
       - result.statuscode ShouldEqual 200
 
@@ -34,7 +36,7 @@ testcases:
   steps:
     - type: http
       method: GET
-      url: http://httpbin.ahmet/
+      url: http://httpbin.ahmet:8080/get
       assertions:
       - result.statuscode ShouldEqual 200
 
