@@ -12,7 +12,9 @@ image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
   tag: "v0.13.0"
+# specify the necessary image pull secrets, if any
 imagePullSecrets: []
+# - name: registry_secret
 nameOverride: ""
 fullnameOverride: ""
 annotations: {}
