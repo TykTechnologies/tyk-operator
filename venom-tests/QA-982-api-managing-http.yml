@@ -3,18 +3,26 @@ testcases:
 - name: Create keyless API 
   steps:
   - type: applyManifests
-    filename: "samples/httpbin.keyless.apidefinition.yaml"
+    filename: "samples/httpbin_keyless_apidefinition.yaml"
     assertions:
     - result.code ShouldEqual 0
+
+- name: Test API is created
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-auth-test/get
+      assertions:
+      - result.statuscode ShouldEqual 200
 
 - name: Update keyless API to Authentication Token API
   steps:
   - type: applyManifests
-    filename: "samples/httpbin.apikey.apidefinition.yaml"
+    filename: "samples/httpbin_apikey_apidefinition.yaml"
     assertions:
     - result.code ShouldEqual 0
 
-- name: Test changes applied above are reflected
+- name: Test API is updated on Tyk
   steps:
     - type: http
       method: GET
