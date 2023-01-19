@@ -3,53 +3,53 @@ testcases:
 - name: Create API for Pre middleware hook
   steps:
   - type: applyManifests
-    filename: "samples/httpbin.keyless.grpc-pre.apidefinition.yaml"
+    filename: "samples/httpbin_keyless_grpc-pre.yaml"
     assertions:
     - result.code ShouldEqual 0
 
-- name: Test Pre middleware hook #this is failing 
+- name: Test Pre middleware hook
   steps:
     - type: http
       method: GET
       url: http://localhost:8080/httpbin-grpc-pre/headers
       assertions:
       - result.statuscode ShouldEqual 200
-      - result.bodyjson.headers.Pre ShouldEqual HelloFromPre
+      - result.bodyjson.headers.pre ShouldEqual HelloFromPre
 
 - name: Delete API for Pre middleware hook
   steps:
     - type: exec
-      script: kubectl delete -f ../bdd/custom_resources/httpbin.keyless.grpc-pre.apidefinition.yaml
+      script: kubectl delete -f samples/httpbin_keyless_grpc-pre.yaml
       assertions:
       - result.code ShouldEqual 0
 
 - name: Create API for Post middleware hook
   steps:
   - type: applyManifests
-    filename: "samples/httpbin.keyless.grpc-post.apidefinition.yaml"
+    filename: "samples/httpbin_keyless_grpc-post.yaml"
     assertions:
     - result.code ShouldEqual 0
 
-- name: Test Post middleware hook #this is failing 
+- name: Test Post middleware hook
   steps:
     - type: http
       method: GET
       url: http://localhost:8080/httpbin-grpc-post/headers
       assertions:
       - result.statuscode ShouldEqual 200
-      - result.bodyjson.headers.Post ShouldEqual HelloFromPost
+      - result.bodyjson.headers.post ShouldEqual HelloFromPost
 
 - name: Delete API for Post middleware hook
   steps:
     - type: exec
-      script: kubectl delete -f ../bdd/custom_resources/httpbin.keyless.grpc-post.apidefinition.yaml
+      script: kubectl delete -f samples/httpbin_keyless_grpc-post.yaml
       assertions:
       - result.code ShouldEqual 0
 
 - name: Create API for Auth middleware hook
   steps:
   - type: applyManifests
-    filename: "samples/httpbin.keyless.grpc-auth.apidefinition.yaml"
+    filename: "samples/httpbin_keyless_grpc-auth.yaml"
     assertions:
     - result.code ShouldEqual 0
 
@@ -62,7 +62,7 @@ testcases:
       - result.statuscode ShouldEqual 400
       - result.bodyjson.error ShouldContainSubstring Authorization field missing
 
-- name: Test Auth middleware hook with Authentication #this is failing at line 74
+- name: Test Auth middleware hook with Authentication
   steps:
     - type: http
       method: GET
@@ -71,11 +71,11 @@ testcases:
         "Authorization": "foobarbaz" 
       assertions:
       - result.statuscode ShouldEqual 200
-      - result.bodyjson.headers.Postkeyauth ShouldEqual HelloFromPostKeyAuth
+      - result.bodyjson.headers.postkeyauth ShouldEqual HelloFromPostKeyAuth
 
 - name: Delete API for Auth middleware hook
   steps:
     - type: exec
-      script: kubectl delete -f ../bdd/custom_resources/httpbin.keyless.grpc-auth.apidefinition.yaml
+      script: kubectl delete -f samples/httpbin_keyless_grpc-auth.yaml
       assertions:
       - result.code ShouldEqual 0
