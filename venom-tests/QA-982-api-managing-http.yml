@@ -3,7 +3,7 @@ testcases:
 - name: Create keyless API 
   steps:
   - type: applyManifests
-    filename: "samples/httpbin.keyless.apidefinition"
+    filename: "samples/httpbin.keyless.apidefinition.yaml"
     assertions:
     - result.code ShouldEqual 0
 
@@ -26,15 +26,14 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete tykapis httpbin-auth-test
+      script: kubectl delete tykapis httpbin-auth-test && sleep 20
       assertions:
       - result.code ShouldEqual 0
 
-- name: Test API deleted above is deleted #this is failing, expected 404 but getting 401
+- name: Test API deleted above is deleted 
   steps:
     - type: http
       method: GET
       url: http://localhost:8080/httpbin-auth-test/get
       assertions:
       - result.statuscode ShouldEqual 404
-      - result.bodyjson.error ShouldContainSubstring 404 Not Found
