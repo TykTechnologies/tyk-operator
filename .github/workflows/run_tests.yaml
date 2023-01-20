@@ -39,7 +39,7 @@ jobs:
       fail-fast: false
       matrix: 
         k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
-        tyk-version: ['v3.2', 'v4.3']
+        tyk-version: ['v3.2', 'v4.0', 'v4.3']
         mode: ['ce','pro']
 
     env:
