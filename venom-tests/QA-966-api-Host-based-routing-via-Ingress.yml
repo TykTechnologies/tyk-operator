@@ -28,7 +28,7 @@ testcases:
   steps:
     - type: http
       method: GET
-      url: http://httpbin.ahmet:8080/httpbin/get
+      url: http://httpbin.tyk.io:8080/httpbin/get
       assertions:
       - result.statuscode ShouldEqual 200
 
@@ -36,7 +36,7 @@ testcases:
   steps:
     - type: http
       method: GET
-      url: http://httpbin.ahmet:8080/get
+      url: http://httpbin.tyk.io:8080/get
       assertions:
       - result.statuscode ShouldEqual 200
 
