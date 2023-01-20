@@ -7,11 +7,11 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
 
-- name: Test get endpoint with httpbin.tyk.io domain #this is failing
+- name: Test get endpoint with httpbin.tyk.io domain
   steps:
     - type: http
       method: GET
-      url: http://httpbin.tyk.io/get
+      url: http://httpbin.tyk.io:8080/get
       assertions:
       - result.statuscode ShouldEqual 200
 
