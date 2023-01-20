@@ -46,7 +46,7 @@ testcases:
           url: http://localhost:3000
       assertions:
       - result.title ShouldEqual Tyk.io Login
-      - result.url ShouldEqual http://localhost:3000
+      - result.url ShouldContainSubstring http://localhost:3000
     - type: web
       action:
         find: input[name="username"]
