@@ -23,8 +23,8 @@ testcases:
       assertions:
       - result.statuscode ShouldEqual 200
 
-# should remove this since we need to have an hostname entry to make this work
-- name: Test path and host routing #this is failing
+# please add the hostname entry for httpbin.tyk.io in etc/hosts file
+- name: Test path and host routing
   steps:
     - type: http
       method: GET
@@ -32,7 +32,8 @@ testcases:
       assertions:
       - result.statuscode ShouldEqual 200
 
-- name: Test host only routing #this is failing
+# please add the hostname entry for httpbin.tyk.io in etc/hosts file
+- name: Test host only routing
   steps:
     - type: http
       method: GET

@@ -7,6 +7,7 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
 
+# please add the hostname entry for httpbin.tyk.io in etc/hosts file
 - name: Test get endpoint with httpbin.tyk.io domain
   steps:
     - type: http

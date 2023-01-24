@@ -15,3 +15,10 @@ testcases:
       assertions:
       - result.statuscode ShouldEqual 200
       - result.body ShouldContainSubstring "THIS IS A VIRTUAL RESPONSE"
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/config_data_virtual_endpoint.yaml
+      assertions:
+      - result.code ShouldEqual 0
