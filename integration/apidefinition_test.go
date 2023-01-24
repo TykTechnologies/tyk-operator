@@ -32,6 +32,24 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
+	err := wait.For(func() (done bool, err error) {
+		_, err = klient.Universal.Api().Delete(ctx, id)
+		if err != nil {
+			return false, err
+		}
+
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
+}
+
 func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 	var (
 		apiDefWithJSONValidationName = "apidef-json-validation"
@@ -1343,4 +1361,64 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 	})
 
 	testenv.Test(t, gqlSubGraph)
+}
+
+func TestDeletingNonexistentAPI(t *testing.T) {
+	var (
+		opNs   = "tyk-operator-system"
+		eval   = is.New(t)
+		tykCtx context.Context
+		tykEnv environmet.Env
+	)
+
+	testDeletingNonexistentAPIs := features.New("Deleting Nonexistent APIs from k8s").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			return ctx
+		}).
+		Assess("Delete nonexistent ApiDefinition from k8s successfully",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				// To begin with, delete the ApiDefinition from Tyk, which is the wrong thing to do because it'll
+				// cause a drift between k8s and Tyk. Now, deleting ApiDefinition CR from k8s,
+				// `kubectl delete tykapis <resource_name>`, must be handled gracefully.
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// First, create the ApiDefinition
+				apiDefCR, err := createTestAPIDef(ctx, c, testNs, func(apiDef *v1alpha1.ApiDefinition) {})
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
+				err = deleteApiDefinitionFromTyk(tykCtx, apiDefCR.Status.ApiID)
+				eval.NoErr(err)
+
+				err = c.Client().Resources(testNs).Delete(ctx, apiDefCR)
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceDeleted(apiDefCR),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testDeletingNonexistentAPIs)
 }
