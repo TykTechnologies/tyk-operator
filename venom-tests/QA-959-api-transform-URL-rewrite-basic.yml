@@ -1,0 +1,31 @@
+name: Test Transform URL Rewrite Basic
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/url_rewrite_basic.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test send request to get endpoint
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/url-rewrite/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Test Tyk can rewrite a URL(get) endpoint using URL Rewrite Plugin to xml
+  steps:
+    - type: http
+      method: GET      
+      url: http://localhost:8080/url-rewrite/xml
+      assertions:
+      - result.statuscode ShouldEqual 200
+         
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/url_rewrite_basic.yaml
+      assertions:
+      - result.code ShouldEqual 0
