@@ -56,7 +56,8 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 	}
 
 	var policiesList []tykv1alpha1.SecurityPolicySpec
-	var shouldLoadPolicies = policiesFile != "" || separate
+
+	shouldLoadPolicies := policiesFile != "" || separate
 	if shouldLoadPolicies {
 		policiesList, err = klient.Universal.Portal().Policy().All(ctx)
 		if err != nil {
@@ -116,6 +117,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
 
 		var filteredApis []*model.APIDefinitionSpec
+
 		for _, v := range apiDefSpecList.Apis {
 			if strings.Contains(v.Name, category) {
 				filteredApis = append(filteredApis, v)
