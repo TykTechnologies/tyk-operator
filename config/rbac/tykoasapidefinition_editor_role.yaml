@@ -1,0 +1,24 @@
+# permissions for end users to edit tykoasapidefinitions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tykoasapidefinition-editor-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions/status
+  verbs:
+  - get

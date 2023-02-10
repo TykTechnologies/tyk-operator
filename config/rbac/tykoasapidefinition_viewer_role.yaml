@@ -1,0 +1,20 @@
+# permissions for end users to view tykoasapidefinitions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tykoasapidefinition-viewer-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions/status
+  verbs:
+  - get
