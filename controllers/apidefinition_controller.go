@@ -420,10 +420,19 @@ func (r *ApiDefinitionReconciler) update(
 ) error {
 	log.Info("Updating ApiDefinition")
 
-	_, err := klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+	_, err := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
 	if err != nil {
-		log.Error(err, "Failed to update api definition")
-		return err
+		_, err = klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+		if err != nil {
+			log.Error(err, "Failed to create ApiDefinition")
+			return err
+		}
+	} else {
+		_, err = klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+		if err != nil {
+			log.Error(err, "Failed to update ApiDefinition")
+			return err
+		}
 	}
 
 	klient.Universal.HotReload(ctx)
