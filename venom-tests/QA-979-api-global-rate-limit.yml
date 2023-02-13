@@ -1,0 +1,26 @@
+name: Test Global Rate Limit
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_global_rate_limit.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test user can set Global Rate Limit eleventh try
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/get
+      retry: 10
+      delay: 2
+      assertions:
+      - result.statuscode ShouldEqual 429
+      - result.bodyjson.error ShouldContainSubstring API Rate limit exceeded
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_global_rate_limit.yaml
+      assertions:
+      - result.code ShouldEqual 0
