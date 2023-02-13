@@ -2,11 +2,11 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
-**Fixed**:
-- Fixed the error that happens while deleting non-existent Tyk APIs from k8s.
+**Fixed**
+- Fixed reconciliation failures when ApiDefinition does not exist on Tyk storage.
 
-## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
+## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.13.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...v0.13.0)
 
 **Updated**
 - Added new field `LinkedAPIs` in status of security policies.
