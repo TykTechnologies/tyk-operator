@@ -13,7 +13,7 @@ import (
 
 type OAS struct{}
 
-const OASEndpoint = "/api/apis/oas"
+const oasEndpoint = "/api/apis/oas"
 
 func (o OAS) Create(ctx context.Context, data []byte) (*model.Result, error) {
 	reader := bytes.NewReader(data)
@@ -23,7 +23,7 @@ func (o OAS) Create(ctx context.Context, data []byte) (*model.Result, error) {
 
 	octx.Log.Info("creating OAS Api")
 
-	resp, err := client.Post(ctx, OASEndpoint, reader)
+	resp, err := client.Post(ctx, oasEndpoint, reader)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (o OAS) Create(ctx context.Context, data []byte) (*model.Result, error) {
 func (o OAS) Update(ctx context.Context, id string, data []byte) (*model.Result, error) {
 	reader := bytes.NewReader(data)
 	result := &model.Result{}
-	url := fmt.Sprintf("%s/%s", OASEndpoint, id)
+	url := fmt.Sprintf("%s/%s", oasEndpoint, id)
 
 	octx := client.GetContext(ctx)
 
@@ -64,7 +64,7 @@ func (o OAS) Update(ctx context.Context, id string, data []byte) (*model.Result,
 
 func (o OAS) Delete(ctx context.Context, id string) (*model.Result, error) {
 	result := &model.Result{}
-	url := fmt.Sprintf("%s/%s", OASEndpoint, id)
+	url := fmt.Sprintf("%s/%s", oasEndpoint, id)
 
 	octx := client.GetContext(ctx)
 
@@ -88,7 +88,7 @@ func (o OAS) Delete(ctx context.Context, id string) (*model.Result, error) {
 func (o OAS) Get(ctx context.Context, id string) ([]byte, error) {
 	var data []byte
 
-	url := fmt.Sprintf("%s/%s", OASEndpoint, id)
+	url := fmt.Sprintf("%s/%s", oasEndpoint, id)
 
 	octx := client.GetContext(ctx)
 	octx.Log.Info("getting OAS Api", "id", id)
