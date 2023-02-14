@@ -146,6 +146,10 @@ func PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http
 	return CallJSON(ctx, http.MethodPut, url, body, fn...)
 }
 
+func Put(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return Call(ctx, http.MethodPut, url, body, fn...)
+}
+
 func Delete(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
 	return Call(ctx, http.MethodDelete, url, body, fn...)
 }
