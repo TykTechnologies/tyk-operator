@@ -43,6 +43,10 @@ func (Client) Certificate() universal.Certificate {
 	return Certificate{}
 }
 
+func (Client) OAS() universal.OAS {
+	return OAS{}
+}
+
 type Api struct{}
 
 func (Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
@@ -163,4 +167,22 @@ func (Certificate) Delete(ctx context.Context, id string) error {
 
 func (Certificate) Exists(ctx context.Context, id string) bool {
 	return get(ctx).Certificate().Exists(ctx, id)
+}
+
+type OAS struct{}
+
+func (OAS) Delete(ctx context.Context, id string) (*model.Result, error) {
+	return get(ctx).OAS().Delete(ctx, id)
+}
+
+func (OAS) Get(ctx context.Context, id string) ([]byte, error) {
+	return get(ctx).OAS().Get(ctx, id)
+}
+
+func (OAS) Create(ctx context.Context, data []byte) (*model.Result, error) {
+	return get(ctx).OAS().Create(ctx, data)
+}
+
+func (OAS) Update(ctx context.Context, id string, data []byte) (*model.Result, error) {
+	return get(ctx).OAS().Update(ctx, id, data)
 }

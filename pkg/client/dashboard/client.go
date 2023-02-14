@@ -44,3 +44,7 @@ func (c Client) Api() universal.Api {
 func (c Client) HotReload(context.Context) error {
 	return nil
 }
+
+func (c Client) OAS() universal.OAS {
+	return OAS{}
+}

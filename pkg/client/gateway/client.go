@@ -58,3 +58,7 @@ func (c Client) HotReload(ctx context.Context) error {
 func (c Client) Certificate() universal.Certificate {
 	return Cert{}
 }
+
+func (c Client) OAS() universal.OAS {
+	return OAS{}
+}

@@ -7,4 +7,5 @@ type Client interface {
 	Api() Api
 	Portal() Portal
 	Certificate() Certificate
+	OAS() OAS
 }
