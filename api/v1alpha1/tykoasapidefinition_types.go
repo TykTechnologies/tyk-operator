@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,17 +26,16 @@ import (
 
 // TykOASApiDefinitionSpec defines the desired state of TykOASApiDefinition
 type TykOASApiDefinitionSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of TykOASApiDefinition. Edit tykoasapidefinition_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	OASSpecRef model.Target `json:"oas_spec_ref"`
 }
 
 // TykOASApiDefinitionStatus defines the observed state of TykOASApiDefinition
 type TykOASApiDefinitionStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	ApiDefinitionStatus `json:",inline"`
 }
 
 //+kubebuilder:object:root=true
