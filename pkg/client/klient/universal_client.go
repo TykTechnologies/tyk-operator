@@ -179,7 +179,7 @@ func (OAS) Get(ctx context.Context, id string) ([]byte, error) {
 	return get(ctx).OAS().Get(ctx, id)
 }
 
-func (OAS) Create(ctx context.Context, data []byte) (*model.Result, error) {
+func (OAS) Create(ctx context.Context, data string) (*model.Result, error) {
 	return get(ctx).OAS().Create(ctx, data)
 }
 

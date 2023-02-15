@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -15,8 +16,8 @@ type OAS struct{}
 
 const oasEndpoint = "/api/apis/oas"
 
-func (o OAS) Create(ctx context.Context, data []byte) (*model.Result, error) {
-	reader := bytes.NewReader(data)
+func (o OAS) Create(ctx context.Context, data string) (*model.Result, error) {
+	reader := strings.NewReader(data)
 	result := &model.Result{}
 
 	octx := client.GetContext(ctx)

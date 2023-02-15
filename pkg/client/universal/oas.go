@@ -7,7 +7,7 @@ import (
 )
 
 type OAS interface {
-	Create(ctx context.Context, data []byte) (*model.Result, error)
+	Create(ctx context.Context, data string) (*model.Result, error)
 	Update(ctx context.Context, id string, data []byte) (*model.Result, error)
 	Delete(ctx context.Context, id string) (*model.Result, error)
 	Get(ctx context.Context, id string) ([]byte, error)
