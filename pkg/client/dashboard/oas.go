@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -44,8 +43,8 @@ func (o OAS) Create(ctx context.Context, data string) (*model.Result, error) {
 	return result, nil
 }
 
-func (o OAS) Update(ctx context.Context, id string, data []byte) (*model.Result, error) {
-	reader := bytes.NewReader(data)
+func (o OAS) Update(ctx context.Context, id string, data string) (*model.Result, error) {
+	reader := strings.NewReader(data)
 	result := &model.Result{}
 	url := fmt.Sprintf("%s/%s", oasEndpoint, id)
 
