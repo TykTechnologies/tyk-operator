@@ -181,7 +181,10 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *TykOASApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	pred := predicate.GenerationChangedPredicate{}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.TykOASApiDefinition{}).
+		WithEventFilter(pred).
 		Complete(r)
 }
