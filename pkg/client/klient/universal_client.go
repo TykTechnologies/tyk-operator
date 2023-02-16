@@ -171,18 +171,14 @@ func (Certificate) Exists(ctx context.Context, id string) bool {
 
 type OAS struct{}
 
-func (OAS) Delete(ctx context.Context, id string) (*model.Result, error) {
+func (OAS) Delete(ctx context.Context, id string) error {
 	return get(ctx).OAS().Delete(ctx, id)
-}
-
-func (OAS) Get(ctx context.Context, id string) ([]byte, error) {
-	return get(ctx).OAS().Get(ctx, id)
 }
 
 func (OAS) Create(ctx context.Context, data string) (*model.Result, error) {
 	return get(ctx).OAS().Create(ctx, data)
 }
 
-func (OAS) Update(ctx context.Context, id string, data string) (*model.Result, error) {
+func (OAS) Update(ctx context.Context, id string, data string) error {
 	return get(ctx).OAS().Update(ctx, id, data)
 }

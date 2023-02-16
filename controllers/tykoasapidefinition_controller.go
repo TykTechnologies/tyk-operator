@@ -138,7 +138,7 @@ func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(ctx context.Context
 
 		id = result.Meta
 	} else {
-		_, err = klient.Universal.OAS().Update(ctx, id, data)
+		err = klient.Universal.OAS().Update(ctx, id, data)
 	}
 	if err != nil {
 		r.Log.Error(err, "Failed to create/update OAS API Definition")
@@ -159,7 +159,7 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 			return err
 		}
 
-		_, err = klient.Universal.OAS().Delete(ctx, tykOASDef.Status.ApiID)
+		err = klient.Universal.OAS().Delete(ctx, tykOASDef.Status.ApiID)
 		if err != nil {
 			if tykclient.IsNotFound(err) {
 				r.Log.Info(

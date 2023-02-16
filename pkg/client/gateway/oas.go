@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"net/http"
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -38,7 +38,7 @@ func (o OAS) Create(ctx context.Context, data string) (*model.Result, error) {
 	return result, nil
 }
 
-func (o OAS) Update(ctx context.Context, id string, data string) (*model.Result, error) {
+func (o OAS) Update(ctx context.Context, id string, data string) error {
 	reader := strings.NewReader(data)
 	result := &model.Result{}
 	url := fmt.Sprintf("%s/%s", oasEndpoint, id)
@@ -49,20 +49,24 @@ func (o OAS) Update(ctx context.Context, id string, data string) (*model.Result,
 
 	resp, err := client.Put(ctx, url, reader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return result, nil
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to update OAS Api: %s", result.Message)
+	}
+
+	return nil
 }
 
-func (o OAS) Delete(ctx context.Context, id string) (*model.Result, error) {
+func (o OAS) Delete(ctx context.Context, id string) error {
 	result := &model.Result{}
 	url := fmt.Sprintf("%s/%s", oasEndpoint, id)
 
@@ -72,38 +76,19 @@ func (o OAS) Delete(ctx context.Context, id string) (*model.Result, error) {
 
 	resp, err := client.Delete(ctx, url, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return result, nil
-}
-
-func (o OAS) Get(ctx context.Context, id string) ([]byte, error) {
-	var data []byte
-
-	url := fmt.Sprintf("%s/%s", oasEndpoint, id)
-
-	octx := client.GetContext(ctx)
-	octx.Log.Info("getting OAS Api", "id", id)
-
-	resp, err := client.Get(ctx, url, nil)
-	if err != nil {
-		return nil, err
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to delete OAS Api: %s", result.Message)
 	}
 
-	defer resp.Body.Close()
-
-	data, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return nil
 }
