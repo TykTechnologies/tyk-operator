@@ -28,8 +28,10 @@ import (
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	tykclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -72,6 +74,19 @@ func (r *TykOASApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	_, err = util.CreateOrUpdate(ctx, r.Client, tykOASDef, func() error {
+		if !tykOASDef.ObjectMeta.DeletionTimestamp.IsZero() {
+			err := r.delete(ctx, tykOASDef)
+			if err != nil {
+				return err
+			}
+
+			util.RemoveFinalizer(tykOASDef, keys.TykOASApiDefinitionFinalizerName)
+
+			return nil
+		}
+
+		util.AddFinalizer(tykOASDef, keys.TykOASApiDefinitionFinalizerName)
+
 		// create OAS API if apiID is empty
 		if tykOASDef.Status.ApiID == "" {
 			id, err := r.createTykOAS(ctx, *tykOASDef)
@@ -81,17 +96,17 @@ func (r *TykOASApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 			// when to update the status
 			tykOASDef.Status.ApiID = id
+
+			err = r.Client.Status().Update(ctx, tykOASDef)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
 	})
 	if err != nil {
 		return ctrl.Result{RequeueAfter: queueAfter}, err
-	}
-
-	err = r.Client.Status().Update(ctx, tykOASDef)
-	if err != nil {
-		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
@@ -127,6 +142,35 @@ func (r *TykOASApiDefinitionReconciler) createTykOAS(ctx context.Context, tykOAS
 	r.Log.Info("Successfully created OAS API on Tyk", "id", result.Meta)
 
 	return result.Meta, nil
+}
+
+func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *tykv1alpha1.TykOASApiDefinition) error {
+	r.Log.Info("Deleting OAS API on Tyk")
+
+	if util.ContainsFinalizer(tykOASDef, keys.TykOASApiDefinitionFinalizerName) {
+		err := isLinkedToPolicies(ctx, r.Client, r.Log, tykOASDef.Status.LinkedByPolicies)
+		if err != nil {
+			return err
+		}
+
+		_, err = klient.Universal.OAS().Delete(ctx, tykOASDef.Status.ApiID)
+		if err != nil {
+			if tykclient.IsNotFound(err) {
+				r.Log.Info(
+					"Ignoring nonexistent OAS ApiDefinition on delete",
+					"api_id", tykOASDef.Status.ApiID,
+				)
+
+				return nil
+			}
+			r.Log.Error(err, "Failed to delete OAS API Definition")
+			return err
+		}
+
+		r.Log.Info("Successfully deleted OAS API on Tyk")
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

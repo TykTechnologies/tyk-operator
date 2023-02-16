@@ -3,11 +3,13 @@ package controllers
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
@@ -402,4 +404,23 @@ func GetContext(
 	}
 
 	return &o, nil
+}
+
+// isLinkedToPolicies checks if there are any policies that are still linking to this api definition resource.
+func isLinkedToPolicies(ctx context.Context, client runtimeClient.Client, log logr.Logger, links []model.Target) error {
+	log.Info("checking linked security policies")
+
+	if len(links) == 0 {
+		return nil
+	}
+
+	for _, n := range links {
+		var pol tykv1alpha1.SecurityPolicy
+
+		if err := client.Get(ctx, n.NS(n.Namespace), &pol); err == nil {
+			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
+		}
+	}
+
+	return nil
 }

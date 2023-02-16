@@ -10,6 +10,7 @@ const (
 	OperatorContextFinalizerName      = "finalizers.tyk.io/operatorcontext"
 	SubGraphFinalizerName             = "finalizers.tyk.io/subgraph"
 	SuperGraphFinalizerName           = "finalizers.tyk.io/supergraph"
+	TykOASApiDefinitionFinalizerName  = "finalizers.tyk.io/tykoasapidefinition"
 )
 
 // Ingress

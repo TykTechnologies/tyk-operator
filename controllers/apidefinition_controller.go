@@ -542,7 +542,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 
 	// If our finalizer is present, need to delete from Tyk still
 	if util.ContainsFinalizer(desired, keys.ApiDefFinalizerName) {
-		if err := r.checkLinkedPolicies(ctx, desired); err != nil {
+		if err := isLinkedToPolicies(ctx, r.Client, r.Log, desired.Status.LinkedByPolicies); err != nil {
 			return queueAfter, err
 		}
 
@@ -614,25 +614,6 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 	)
 
 	return 0, nil
-}
-
-// checkLinkedPolicies checks if there are any policies that are still linking to this api definition resource.
-func (r *ApiDefinitionReconciler) checkLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) error {
-	r.Log.Info("checking linked security policies")
-
-	if len(a.Status.LinkedByPolicies) == 0 {
-		return nil
-	}
-
-	for _, n := range a.Status.LinkedByPolicies {
-		var api tykv1alpha1.SecurityPolicy
-
-		if err := r.Get(ctx, n.NS(a.Namespace), &api); err == nil {
-			return fmt.Errorf("unable to delete api due to security policy dependency=%s", n)
-		}
-	}
-
-	return nil
 }
 
 func encodeIfNotBase64(s string) string {
