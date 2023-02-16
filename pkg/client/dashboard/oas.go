@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -34,6 +35,10 @@ func (o OAS) Create(ctx context.Context, data string) (*model.Result, error) {
 	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return result, fmt.Errorf("failed to create OAS Api: %s", result.Message)
 	}
 
 	return result, nil

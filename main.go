@@ -267,6 +267,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("TykOASApiDefinition"),
 		Scheme: mgr.GetScheme(),
+		Env:    env,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TykOASApiDefinition")
 		os.Exit(1)

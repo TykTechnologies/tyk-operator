@@ -37,7 +37,7 @@ spec:
           spec:
             description: TykOASApiDefinitionSpec defines the desired state of TykOASApiDefinition
             properties:
-              oas_spec_ref:
+              oas_ref:
                 description: Foo is an example field of TykOASApiDefinition. Edit
                   tykoasapidefinition_types.go to remove/update
                 properties:
@@ -56,7 +56,7 @@ spec:
                 - name
                 type: object
             required:
-            - oas_spec_ref
+            - oas_ref
             type: object
           status:
             description: TykOASApiDefinitionStatus defines the observed state of TykOASApiDefinition
