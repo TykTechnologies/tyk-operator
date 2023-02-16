@@ -63,23 +63,6 @@ spec:
             properties:
               api_id:
                 type: string
-              linked_by_apis:
-                description: LinkedByAPIs is a list of ApiDefinition namespaced/name
-                  that links to this resource
-                items:
-                  properties:
-                    name:
-                      description: k8s resource name
-                      type: string
-                    namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
               linked_by_policies:
                 description: LinkedByPolicies is a list policies that references this
                   api definition
@@ -97,29 +80,6 @@ spec:
                   - name
                   type: object
                 type: array
-              linked_to_apis:
-                description: LinkedToAPIs is a list of ApiDefinition namespaced/name
-                  that this resource links to.
-                items:
-                  properties:
-                    name:
-                      description: k8s resource name
-                      type: string
-                    namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
-              linked_to_subgraph:
-                description: LinkedToSubgraph corresponds to the name of the Subgraph
-                  CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition
-                  CR can only be linked to Subgraph CRs that are created in the same
-                  namespace as ApiDefinition CR.
-                type: string
             required:
             - api_id
             type: object

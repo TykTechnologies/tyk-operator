@@ -39,8 +39,11 @@ type OASReference struct {
 
 // TykOASApiDefinitionStatus defines the observed state of TykOASApiDefinition
 type TykOASApiDefinitionStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
-	ApiDefinitionStatus `json:",inline"`
+	ApiID string `json:"api_id"`
+
+	// LinkedByPolicies is a list policies that references this api definition
+	//+optional
+	LinkedByPolicies []model.Target `json:"linked_by_policies,omitempty"`
 }
 
 //+kubebuilder:object:root=true
