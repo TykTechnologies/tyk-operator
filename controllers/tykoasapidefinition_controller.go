@@ -26,7 +26,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
@@ -87,14 +89,12 @@ func (r *TykOASApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 		util.AddFinalizer(tykOASDef, keys.TykOASApiDefinitionFinalizerName)
 
-		// create OAS API if apiID is empty
-		if tykOASDef.Status.ApiID == "" {
-			id, err := r.createTykOAS(ctx, *tykOASDef)
-			if err != nil {
-				return err
-			}
+		id, err := r.createOrUpdateTykOAS(ctx, *tykOASDef)
+		if err != nil {
+			return err
+		}
 
-			// when to update the status
+		if tykOASDef.Status.ApiID == "" {
 			tykOASDef.Status.ApiID = id
 
 			err = r.Client.Status().Update(ctx, tykOASDef)
@@ -106,14 +106,15 @@ func (r *TykOASApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return nil
 	})
 	if err != nil {
+		log.Error(err, "Failed to create/update TykOASApiDefinition")
 		return ctrl.Result{RequeueAfter: queueAfter}, err
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *TykOASApiDefinitionReconciler) createTykOAS(ctx context.Context, tykOASDef tykv1alpha1.TykOASApiDefinition) (string, error) {
-	r.Log.Info("Creating OAS API on Tyk")
+func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(ctx context.Context, tykOASDef tykv1alpha1.TykOASApiDefinition) (string, error) {
+	r.Log.Info("Creating/Updating OAS API on Tyk")
 
 	var cm v1.ConfigMap
 
@@ -127,21 +128,26 @@ func (r *TykOASApiDefinitionReconciler) createTykOAS(ctx context.Context, tykOAS
 	data := cm.Data[tykOASDef.Spec.OASRef.KeyName]
 	if data == "" {
 		err = errors.New("OAS Spec is empty")
-
-		r.Log.Error(err, "Failed to create OAS API Definition")
-
-		return "", err
 	}
 
-	result, err := klient.Universal.OAS().Create(ctx, data)
+	id := tykOASDef.Status.ApiID
+	if id == "" {
+		var result *model.Result
+
+		result, err = klient.Universal.OAS().Create(ctx, data)
+
+		id = result.Meta
+	} else {
+		_, err = klient.Universal.OAS().Update(ctx, id, data)
+	}
 	if err != nil {
-		r.Log.Error(err, "Failed to create OAS API Definition")
+		r.Log.Error(err, "Failed to create/update OAS API Definition")
 		return "", err
 	}
 
-	r.Log.Info("Successfully created OAS API on Tyk", "id", result.Meta)
+	r.Log.Info("Successfully created/updated OAS API on Tyk", "id", id)
 
-	return result.Meta, nil
+	return id, nil
 }
 
 func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *tykv1alpha1.TykOASApiDefinition) error {
