@@ -4,6 +4,7 @@
 
 **Fixed**:
 - Fixed the error that happens while deleting non-existent Tyk APIs from k8s.
+- Prevent reading k8s config while using snapshot.
 
 ## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
