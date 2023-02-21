@@ -272,11 +272,12 @@ func initFn(ns, kubeconfig string) (func() error, error) {
 	return func() error { return nil }, setup(ns, kubeconfig)
 }
 
-func InitK8sPortForwardForPod(podName, podNamespace, kubeconfig string) (httpstream.Dialer, error) {
+func initK8sPortForwardForPod(podName, podNamespace, kubeconfig string) (httpstream.Dialer, error) {
 	c, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		return nil, err
 	}
+
 	roundTripper, upgrader, err := spdy.RoundTripperFor(c)
 	if err != nil {
 		return nil, err
@@ -328,6 +329,20 @@ func setup(ns, kubeconfig string) error {
 	api.Pod = pod
 	api.Kubeconfig = kubeconfig
 
+	dialer, err := initK8sPortForwardForPod(api.Pod, api.Namespace, api.Kubeconfig)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err = portForward(dialer)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	<-readyChan
+
 	return nil
 }
 
@@ -352,8 +367,10 @@ func unquote(s string) string {
 
 const agent = "Go-http-client/1.1"
 
-var stopChan, readyChan = make(chan struct{}, 1), make(chan struct{}, 1)
-var out, errOut = new(bytes.Buffer), new(bytes.Buffer)
+var (
+	stopChan, readyChan = make(chan struct{}, 1), make(chan struct{}, 1)
+	out, errOut         = new(bytes.Buffer), new(bytes.Buffer)
+)
 
 func portForward(dialer httpstream.Dialer) error {
 	fw, err := portforward.New(dialer, []string{"8080:8080"}, stopChan, readyChan, out, errOut)
@@ -376,23 +393,6 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 		cs[i] = unquote(cs[i])
 	}
 
-	dialer, err := InitK8sPortForwardForPod(t.Pod, t.Namespace, t.Kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		err = portForward(dialer)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	select {
-	case <-readyChan:
-		break
-	}
-
 	var hc http.Client
 	resp, err := hc.Do(r)
 	if err != nil {
@@ -411,8 +411,6 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 
 		return nil, err
 	}
-
-	close(stopChan)
 
 	return resp, nil
 }
