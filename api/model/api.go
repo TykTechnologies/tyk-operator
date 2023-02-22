@@ -518,7 +518,7 @@ type OpenIDOptions struct {
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
 	// For server use only, do not use
-	ID string `json:"id,omitempty"`
+	ID string `json:"id,omitempty" hash:"ignore"`
 
 	// Only set this field if you are referring
 	// to an existing API def.

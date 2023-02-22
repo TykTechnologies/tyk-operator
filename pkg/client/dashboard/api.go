@@ -2,9 +2,11 @@ package dashboard
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/mitchellh/hashstructure/v2"
 )
 
 const endpointAPIs = "/api/apis"
@@ -60,12 +62,29 @@ func (a Api) Get(ctx context.Context, id string) (*model.APIDefinitionSpec, erro
 	return &o.ApiDefinition, nil
 }
 
-func (a Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.Result, error) {
-	var o model.Result
+var hashOptions = hashstructure.HashOptions{ZeroNil: true}
 
+func (a Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.Result, error) {
+	existingAPI, err := a.Get(ctx, spec.APIID)
+	if err == nil {
+		currentApiHash, currentApiErr := hashstructure.Hash(spec, hashstructure.FormatV2, &hashOptions)
+		if currentApiErr == nil {
+			existingApiHash, existingApiErr := hashstructure.Hash(existingAPI, hashstructure.FormatV2, &hashOptions)
+			if existingApiErr == nil {
+				if currentApiHash == existingApiHash {
+					fmt.Println("same in API level")
+					return &model.Result{}, nil
+				} else {
+					fmt.Println("not the same one in API level")
+				}
+			}
+		}
+	}
+
+	var o model.Result
 	octx := client.GetContext(ctx)
 
-	err := client.Data(&o)(client.PutJSON(
+	err = client.Data(&o)(client.PutJSON(
 		ctx, client.Join(endpointAPIs, spec.APIID), DashboardApi{
 			ApiDefinition:   *spec,
 			UserOwners:      octx.Env.UserOwners,

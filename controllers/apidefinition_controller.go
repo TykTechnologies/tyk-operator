@@ -26,8 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-logr/logr"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -35,6 +33,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -393,6 +392,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 			"Failed to create ApiDefinition on Tyk",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
+
 		return err
 	}
 
@@ -1039,6 +1039,7 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Owns(&v1.Secret{}).
 		Watches(
 			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
