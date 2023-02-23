@@ -6,6 +6,8 @@
 - Fixed reconciliation failures when ApiDefinition does not exist on Tyk storage.
 - Fixed BDD tests dependency of `curl`. Instead of running `curl` within a container,
 implemented a port-forward mechanism to send raw HTTP requests to pods.
+- Fixed extra Update calls to Tyk GW / Dashboard. If no changes are made to 
+ApiDefinition resource, Operator won't send a request to Tyk GW / Dashboard.
 
 ## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.13.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...v0.13.0)
