@@ -9,6 +9,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/google/uuid"
 )
 
 const contentJSON = "application/json"
@@ -128,6 +129,20 @@ func TestAPI(t *testing.T) {
 
 	requestAPI(t, e, "Update",
 		Kase{
+			Name: "GET",
+			Request: RequestKase{
+				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
+				Method: http.MethodGet,
+				Headers: map[string]string{
+					XAuthorization: e.Auth,
+					XContentType:   contentJSON,
+				},
+			},
+			Response: &ResponseKase{
+				Body: ReadSample(t, "api.Get.body"),
+			},
+		},
+		Kase{
 			Name: "Update",
 			Request: RequestKase{
 				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
@@ -184,6 +199,10 @@ func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase
 				func(ctx context.Context) error {
 					var s model.APIDefinitionSpec
 					Sample(t, "api."+name, &s)
+
+					// If ApiDefinition is not updated, update request won't be sent.
+					// Therefore, update ApiDefinition here before testing the PUT request.
+					s.Name += uuid.New().String()
 					newKlient().Api().Update(ctx, &s)
 					return nil
 				},
