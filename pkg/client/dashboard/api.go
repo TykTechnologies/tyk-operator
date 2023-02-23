@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -72,10 +71,7 @@ func (a Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.
 			existingApiHash, existingApiErr := hashstructure.Hash(existingAPI, hashstructure.FormatV2, &hashOptions)
 			if existingApiErr == nil {
 				if currentApiHash == existingApiHash {
-					fmt.Println("same in API level")
 					return &model.Result{}, nil
-				} else {
-					fmt.Println("not the same one in API level")
 				}
 			}
 		}
