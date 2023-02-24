@@ -284,7 +284,7 @@ func initK8sPortForwardForPod(podName, podNamespace, kubeconfig string) (httpstr
 	}
 
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", podNamespace, podName)
-	hostIP := strings.TrimLeft(c.Host, "https:/")
+	hostIP := strings.TrimLeft(c.Host, "htps:/")
 	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
 
 	return spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL), nil
