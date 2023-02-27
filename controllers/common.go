@@ -11,12 +11,30 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
+	"github.com/mitchellh/hashstructure/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Helper function to check string exists in a slice of strings.
+var hashOptions = hashstructure.HashOptions{ZeroNil: true}
+
+// isSameApiDefinition calculates the hash of two ApiDefinitionSpec structs and returns true
+// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
+// if there is no changes on resources.
+func isSameApiDefinition(apiDef1, apiDef2 *model.APIDefinitionSpec) bool {
+	api1Hash, err1 := hashstructure.Hash(apiDef1, hashstructure.FormatV2, &hashOptions)
+	if err1 == nil {
+		api2Hash, err2 := hashstructure.Hash(apiDef2, hashstructure.FormatV2, &hashOptions)
+		if err2 == nil {
+			return api1Hash == api2Hash
+		}
+	}
+
+	return false
+}
+
+// containsString is a helper function to check string exists in a slice of strings.
 func containsString(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
@@ -27,14 +45,15 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
-func addTarget(slice []model.Target, s model.Target) (result []model.Target) {
+// addTarget adds given target to given slice if the slice does not contain the target.
+func addTarget(slice []model.Target, target model.Target) (result []model.Target) {
 	for _, item := range slice {
-		if item == s {
+		if item == target {
 			return slice
 		}
 	}
 
-	return append(slice, s)
+	return append(slice, target)
 }
 
 func removeTarget(slice []model.Target, s model.Target) (result []model.Target) {
@@ -49,10 +68,12 @@ func removeTarget(slice []model.Target, s model.Target) (result []model.Target) 
 	return
 }
 
+// EncodeNS encodes given decoded string based on base64.
 func EncodeNS(decoded string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(decoded))
 }
 
+// HttpContext creates a context.Context for Tyk API Client.
 func HttpContext(
 	ctx context.Context,
 	rClient runtimeClient.Client,
