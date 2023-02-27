@@ -109,6 +109,7 @@ func TestIsSameApiDefinition(t *testing.T) {
 			want: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := isSameApiDefinition(tt.args.apiDef1, tt.args.apiDef2); got != tt.want {
