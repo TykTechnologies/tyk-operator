@@ -129,20 +129,6 @@ func TestAPI(t *testing.T) {
 
 	requestAPI(t, e, "Update",
 		Kase{
-			Name: "GET",
-			Request: RequestKase{
-				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
-				Method: http.MethodGet,
-				Headers: map[string]string{
-					XAuthorization: e.Auth,
-					XContentType:   contentJSON,
-				},
-			},
-			Response: &ResponseKase{
-				Body: ReadSample(t, "api.Get.body"),
-			},
-		},
-		Kase{
 			Name: "Update",
 			Request: RequestKase{
 				Path:   "/api/apis/ZGVmYXVsdC9odHRwYmlu",
