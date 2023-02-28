@@ -18,7 +18,7 @@ for development.
   * [Check if the environment is working](#check-if-the-environment-is-working)
     * [Check Tyk Operator logs](#check-tyk-operator-logs)
     * [Check Tyk Pro installation](#check-tyk-pro-installation)
-    * [Check Tyk Headless - CE (Community edition)](#check-tyk-headless---ce--community-edition-)
+    * [Check Tyk Headless (Community edition)](#check-tyk-headless--community-edition-)
   * [Scrapbook](#scrapbook)
   * [Delete cluster](#delete-cluster)
   * [Run tests](#run-tests)
@@ -208,11 +208,6 @@ curl http://localhost:8080/hello
 <details><summary>SHOW EXPECTED OUTPUT</summary>
 <p>
 <pre>
-
-curl http://localhost:8080/hello | jq
-% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-Dload  Upload   Total   Spent    Left  Speed
-100   240  100   240    0     0  21867      0 --:--:-- --:--:-- --:--:-- 34285
 {
     "status": "pass",
     "version": "4.3.3",
@@ -270,7 +265,7 @@ Dload  Upload   Total   Spent    Left  Speed
         </details>
     - Login to Tyk Dashboard through `http://localhost:3000` and check if your ApiDefinition was created.
     
-### Check Tyk Headless - CE (Community edition)
+### Check Tyk Headless (Community edition)
 
 1. Expose our Tyk Gateway locally
 
