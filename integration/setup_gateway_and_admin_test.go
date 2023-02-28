@@ -14,8 +14,6 @@ const (
 	gatewaySVC     = "tyk-operator-local-gateway-service"
 	adminSVC       = "tyk-operator-local-gateway-admin-service"
 	adminLocalhost = "http://localhost:7200"
-
-	operatorNamespace = "tyk-operator-system"
 )
 
 func setupTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
