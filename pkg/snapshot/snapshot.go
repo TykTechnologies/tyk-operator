@@ -380,6 +380,7 @@ func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.W
 
 	pol.Spec = *userPolicy
 	pol.Spec.ID = userPolicy.MID
+	pol.Spec.OrgID = ""
 
 	for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
 		apiID := pol.Spec.AccessRightsArray[i].APIID
