@@ -23,7 +23,6 @@ address your contributions.
 We do value the time each contributor spends contributing to this repo, and we work hard to make sure we respond to 
 your issues and Pull request as soon as we can.
 
-Below we have outlined.
 
 ### Filling an issue
 Before opening an issue, if you have a question about Tyk Operator or have a problem using it, please
