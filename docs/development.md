@@ -18,7 +18,7 @@ for development.
   * [Check if the environment is working](#check-if-the-environment-is-working)
     * [Check Tyk Operator logs](#check-tyk-operator-logs)
     * [Check Tyk Pro installation](#check-tyk-pro-installation)
-      * [Check Tyk Headless - CE (Community edition)](#check-tyk-headless---ce--community-edition-)
+    * [Check Tyk Headless - CE (Community edition)](#check-tyk-headless---ce--community-edition-)
   * [Scrapbook](#scrapbook)
   * [Delete cluster](#delete-cluster)
   * [Run tests](#run-tests)
@@ -63,10 +63,10 @@ it needs to access your Tyk installation which can be any type of installation
 ([tyk-headless](https://tyk.io/docs/tyk-oss/ce-helm-chart/), 
 [tyk-pro](https://tyk.io/docs/tyk-self-managed/tyk-helm-chart/) , 
 [tyk-hybrid](https://tyk.io/docs/4.0/tyk-cloud/environments-deployments/hybrid-gateways/#hybrid-gateways-in-a-kubernetes-cluster) 
-or [Tyk Cloud](https://tyk.io/docs/tyk-cloud/))
+or [Tyk Cloud](https://tyk.io/docs/tyk-cloud/)).
 
 This guideline will go through how you can bootstrap a testing environment for Tyk Operator, including the deployment of 
-Tyk Gateway / Dashboard and their dependencies (Redis or Mongo if you want to use Tyk Dashboard.)
+Tyk Gateway / Dashboard and their dependencies (Redis or Mongo if you want to use Tyk Dashboard).
 
 <hr/>
 
@@ -270,7 +270,7 @@ Dload  Upload   Total   Spent    Left  Speed
         </details>
     - Login to Tyk Dashboard through `http://localhost:3000` and check if your ApiDefinition was created.
     
-#### Check Tyk Headless - CE (Community edition)
+### Check Tyk Headless - CE (Community edition)
 
 1. Expose our Tyk Gateway locally
 
