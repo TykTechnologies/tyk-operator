@@ -21,13 +21,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// APIDefinition represents the configuration for a single proxied API and it's versions.
+// APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
 	model.APIDefinitionSpec `json:",inline"`
 	// Context specify namespace/name of the OperatorContext object used for
 	// reconciling this APIDefinition
-	Context *model.Target `json:"contextRef,omitempty"`
+	Context *model.Target `json:"contextRef,omitempty" hash:"ignore"`
 }
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition
