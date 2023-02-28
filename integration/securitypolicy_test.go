@@ -254,7 +254,6 @@ func deletePolicyOnTyk(ctx context.Context, id string) error {
 
 func TestSecurityPolicyMigration(t *testing.T) {
 	const (
-		opNs                  = "tyk-operator-system"
 		initialK8sPolicyTag   = "sample-tag"
 		initialK8sPolicyRate  = 50
 		initialK8sPolicyState = "deny"
@@ -299,7 +298,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			eval := is.New(t)
 
 			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
@@ -489,8 +488,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 }
 
 func TestSecurityPolicy(t *testing.T) {
-	const opNs = "tyk-operator-system"
-
 	var (
 		reqCtx   context.Context
 		policyCR v1alpha1.SecurityPolicy
@@ -503,7 +500,7 @@ func TestSecurityPolicy(t *testing.T) {
 			eval := is.New(t)
 
 			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
@@ -672,7 +669,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(operatorNamespace).Get(ctx, operatorSecret, operatorNamespace, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
