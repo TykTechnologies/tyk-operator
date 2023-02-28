@@ -18,7 +18,7 @@ for development.
   * [Check if the environment is working](#check-if-the-environment-is-working)
     * [Check Tyk Operator logs](#check-tyk-operator-logs)
     * [Check Tyk Pro installation](#check-tyk-pro-installation)
-    * [Check Tyk Headless (Community edition)](#check-tyk-headless--community-edition-)
+    * [Check Tyk Headless (Community edition)](#check-tyk-headless-community-edition)
   * [Scrapbook](#scrapbook)
   * [Delete cluster](#delete-cluster)
   * [Run tests](#run-tests)
