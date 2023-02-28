@@ -29,7 +29,7 @@ type TykOASApiDefinitionSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of TykOASApiDefinition. Edit tykoasapidefinition_types.go to remove/update
-	OASRef OASReference `json:"oas_ref"`
+	OASRef *OASReference `json:"oas_ref"`
 }
 
 type OASReference struct {

@@ -140,23 +140,38 @@ func (r *SecurityPolicyReconciler) spec(
 // updateAccess updates given AccessDefinition's APIID and APIName fields based on ApiDefinition CR that is referred
 // in the AccessDefinition. So that, it includes k8s details of the referred ApiDefinitions.
 func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.AccessDefinition) error {
+	var apiID, apiName string
 	api := &tykv1.ApiDefinition{}
 	if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
-			r.Log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue",
+			r.Log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. looking for OasApiDefinition",
 				"Name", ad.Name,
 				"Namespace", ad.Namespace,
 			)
-
-			return err
 		}
-
-		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
-
-		return err
+		if err == nil {
+			apiID = api.Status.ApiID
+			apiName = api.Spec.Name
+		} else {
+			r.Log.Error(err, "Failed to get normal APIDefinition to attach to SecurityPolicy, looking for OasApiDefiniiton")
+			oasApi := &tykv1.TykOASApiDefinition{}
+			if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, oasApi); err != nil {
+				if errors.IsNotFound(err) {
+					r.Log.Info("OasApiDefinition resource also not found. Unable to attach to SecurityPolicy. ReQueue",
+						"Name", ad.Name,
+						"Namespace", ad.Namespace,
+					)
+					return err
+				}
+				if err == nil {
+					apiID = api.Status.ApiID
+					apiName = api.Spec.Name
+				}
+			}
+		}
 	}
 
-	if api.Status.ApiID == "" {
+	if apiID == "" {
 		r.Log.Error(
 			opclient.ErrNotFound,
 			"Failed to find ApiDefinition on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
@@ -165,8 +180,8 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 		return opclient.ErrNotFound
 	}
 
-	ad.APIID = api.Status.ApiID
-	ad.APIName = api.Spec.Name
+	ad.APIID = apiID
+	ad.APIName = apiName
 
 	return nil
 }

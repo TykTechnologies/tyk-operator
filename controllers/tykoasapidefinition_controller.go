@@ -19,6 +19,12 @@ package controllers
 import (
 	"context"
 	"errors"
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,6 +42,8 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	v1 "k8s.io/api/core/v1"
 )
+
+const OasRefKey = "oas_ref"
 
 // TykOASApiDefinitionReconciler reconciles a TykOASApiDefinition object
 type TykOASApiDefinitionReconciler struct {
@@ -179,12 +187,81 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 	return nil
 }
 
+func (r *TykOASApiDefinitionReconciler) findConfigMap(tykOasApiDef client.Object) []reconcile.Request {
+	configMap := &v1.ConfigMapList{}
+	listOps := &client.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector(OasRefKey, tykOasApiDef.GetName()),
+		Namespace:     tykOasApiDef.GetNamespace(),
+	}
+
+	if err := r.List(context.TODO(), configMap, listOps); err != nil {
+		return []reconcile.Request{}
+	}
+
+	requests := make([]reconcile.Request, len(configMap.Items))
+	for i, item := range configMap.Items { //nolint
+		requests[i] = reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      item.GetName(),
+				Namespace: item.GetNamespace(),
+			},
+		}
+	}
+
+	return requests
+
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *TykOASApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	err := mgr.GetFieldIndexer().IndexField(
+		context.Background(),
+		&tykv1alpha1.TykOASApiDefinition{},
+		OasRefKey,
+		func(rawObj client.Object) []string {
+			// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
+			apiDefDeployment, ok := rawObj.(*tykv1alpha1.TykOASApiDefinition)
+			if !ok {
+				r.Log.Info("Not OasApiDefinition")
+				return nil
+			}
+			if apiDefDeployment.Spec.OASRef == nil {
+				return nil
+			}
+
+			if apiDefDeployment.Spec.OASRef.Name == "" {
+				return nil
+			}
+
+			return []string{apiDefDeployment.Spec.OASRef.Name}
+		})
+	if err != nil {
+		return err
+	}
+
 	pred := predicate.GenerationChangedPredicate{}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.TykOASApiDefinition{}).
 		WithEventFilter(pred).
+		Watches(
+			&source.Kind{Type: &v1.ConfigMap{}},
+			handler.EnqueueRequestsFromMapFunc(r.findConfigMap),
+			builder.WithPredicates(r.handleConfigMapEvents()),
+		).
 		Complete(r)
+}
+
+func (r *TykOASApiDefinitionReconciler) handleConfigMapEvents() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return true
+		},
+	}
 }
