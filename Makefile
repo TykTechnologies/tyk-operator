@@ -48,7 +48,7 @@ manager: generate fmt vet	## build manager binary
 	go build -o bin/manager main.go
 
 run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
-	TYK_URL=${TYK_URL} TYK_MODE=${TYK_MODE} TYK_TLS_INSECURE_SKIP_VERIFY=${TYK_TLS_INSECURE_SKIP_VERIFY} TYK_ADMIN_AUTH=${TYK_ADMIN_AUTH} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ENABLE_WEBHOOKS=${ENABLE_WEBHOOKS} go run ./main.go
+	TYK_URL=${TYK_URL} TYK_MODE=${TYK_MODE} TYK_TLS_INSECURE_SKIP_VERIFY=${TYK_TLS_INSECURE_SKIP_VERIFY} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ENABLE_WEBHOOKS=${ENABLE_WEBHOOKS} go run ./main.go
 
 install: manifests kustomize	## Install CRDs into a cluster
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
