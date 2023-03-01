@@ -149,26 +149,23 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 				"Namespace", ad.Namespace,
 			)
 		}
-		if err == nil {
-			apiID = api.Status.ApiID
-			apiName = api.Spec.Name
-		} else {
-			r.Log.Error(err, "Failed to get normal APIDefinition to attach to SecurityPolicy, looking for OasApiDefiniiton")
-			oasApi := &tykv1.TykOASApiDefinition{}
-			if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, oasApi); err != nil {
-				if errors.IsNotFound(err) {
-					r.Log.Info("OasApiDefinition resource also not found. Unable to attach to SecurityPolicy. ReQueue",
-						"Name", ad.Name,
-						"Namespace", ad.Namespace,
-					)
-					return err
-				}
-				if err == nil {
-					apiID = api.Status.ApiID
-					apiName = api.Spec.Name
-				}
+	}
+	apiID = api.Status.ApiID
+	apiName = api.Spec.Name
+
+	if apiID == "" {
+		r.Log.Info("Failed to get normal APIDefinition to attach to SecurityPolicy, looking for OasApiDefiniiton")
+		oasApi := &tykv1.TykOASApiDefinition{}
+		if errOas := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, oasApi); errOas != nil {
+			if errors.IsNotFound(errOas) {
+				r.Log.Info("OasApiDefinition resource also not found. Unable to attach to SecurityPolicy. ReQueue",
+					"Name", ad.Name,
+					"Namespace", ad.Namespace,
+				)
 			}
 		}
+		apiID = oasApi.Status.ApiID
+		apiName = oasApi.Name
 	}
 
 	if apiID == "" {
@@ -176,12 +173,13 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 			opclient.ErrNotFound,
 			"Failed to find ApiDefinition on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
 		)
-
 		return opclient.ErrNotFound
 	}
 
 	ad.APIID = apiID
+	r.Log.Info(apiID)
 	ad.APIName = apiName
+	r.Log.Info(apiName)
 
 	return nil
 }
@@ -402,44 +400,89 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 
 	// Remove links from api definitions
 	for _, t := range policy.Status.LinkedAPIs {
+		linkedApiIsOas := false
 		api := &tykv1.ApiDefinition{}
 
 		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, api); err != nil {
 			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
-
-			return err
+		}
+		oasApi := &tykv1.TykOASApiDefinition{}
+		if api.Status.ApiID == "" {
+			if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, oasApi); err != nil {
+				r.Log.Error(err, "Failed to get the linked OasAPI", "oasApi", t.String())
+				return err
+			}
+		}
+		if oasApi.Status.ApiID != "" {
+			linkedApiIsOas = true
 		}
 
-		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+		if !linkedApiIsOas {
+			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+		} else {
+			oasApi.Status.LinkedByPolicies = removeTarget(oasApi.Status.LinkedByPolicies, ns)
+		}
 
-		if err := r.Status().Update(ctx, api); err != nil {
-			r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
+		if !linkedApiIsOas {
 
-			return err
+			if err := r.Status().Update(ctx, api); err != nil {
+				r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
+
+				return err
+			}
+		} else {
+			if err := r.Status().Update(ctx, oasApi); err != nil {
+				r.Log.Error(err, "Failed to update status of linked oas api definition", "api", t.String())
+
+				return err
+			}
 		}
 	}
 
 	for _, a := range policy.Spec.AccessRightsArray {
+		linkedApiFromAccessRightsArrayIsOas := false
 		api := &tykv1.ApiDefinition{}
-
+		oasApi := &tykv1.TykOASApiDefinition{}
 		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
 
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 			r.Log.Error(err, "Failed to get linked api definition", "api", name)
-
-			return err
+		}
+		if api.Status.ApiID == "" {
+			if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, oasApi); err != nil {
+				r.Log.Error(err, "Failed to get linked OAS api definition", "oasApi", name)
+			}
+		}
+		if oasApi.Status.ApiID != "" {
+			linkedApiFromAccessRightsArrayIsOas = true
 		}
 
 		if policyDeleted {
-			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+			if !linkedApiFromAccessRightsArrayIsOas {
+				api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+			} else {
+				oasApi.Status.LinkedByPolicies = removeTarget(oasApi.Status.LinkedByPolicies, ns)
+			}
 		} else {
-			api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, ns)
+			if !linkedApiFromAccessRightsArrayIsOas {
+				api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, ns)
+			} else {
+				oasApi.Status.LinkedByPolicies = addTarget(oasApi.Status.LinkedByPolicies, ns)
+			}
 		}
 
-		if err := r.Status().Update(ctx, api); err != nil {
-			r.Log.Error(err, "Failed to update status of linked api definition", "api", name)
+		if !linkedApiFromAccessRightsArrayIsOas {
+			if err := r.Status().Update(ctx, api); err != nil {
+				r.Log.Error(err, "Failed to update status of linked api definition", "api", name)
 
-			return err
+				return err
+			}
+		} else {
+			if err := r.Status().Update(ctx, oasApi); err != nil {
+				r.Log.Error(err, "Failed to update status of linked api definition", "api", name)
+
+				return err
+			}
 		}
 	}
 

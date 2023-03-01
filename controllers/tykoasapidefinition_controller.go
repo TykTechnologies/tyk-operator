@@ -19,20 +19,19 @@ package controllers
 import (
 	"context"
 	"errors"
-	"k8s.io/apimachinery/pkg/fields"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -43,7 +42,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-const OasRefKey = "oas_ref"
+const OasRefKey = ".oas_ref.name"
 
 // TykOASApiDefinitionReconciler reconciles a TykOASApiDefinition object
 type TykOASApiDefinitionReconciler struct {
@@ -56,6 +55,7 @@ type TykOASApiDefinitionReconciler struct {
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=tykoasapidefinitions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=tykoasapidefinitions/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=tykoasapidefinitions/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -187,19 +187,18 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 	return nil
 }
 
-func (r *TykOASApiDefinitionReconciler) findConfigMap(tykOasApiDef client.Object) []reconcile.Request {
-	configMap := &v1.ConfigMapList{}
+func (r *TykOASApiDefinitionReconciler) findOasApiDefDependingOnConfigMap(configMap client.Object) []reconcile.Request {
+	apiDefList := &tykv1alpha1.TykOASApiDefinitionList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(OasRefKey, tykOasApiDef.GetName()),
-		Namespace:     tykOasApiDef.GetNamespace(),
+		FieldSelector: fields.OneTermEqualSelector(OasRefKey, configMap.GetName()),
+		Namespace:     configMap.GetNamespace(),
 	}
-
-	if err := r.List(context.TODO(), configMap, listOps); err != nil {
+	if err := r.List(context.TODO(), apiDefList, listOps); err != nil {
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, len(configMap.Items))
-	for i, item := range configMap.Items { //nolint
+	requests := make([]reconcile.Request, len(apiDefList.Items))
+	for i, item := range apiDefList.Items { //nolint
 		requests[i] = reconcile.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      item.GetName(),
@@ -246,7 +245,7 @@ func (r *TykOASApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error
 		WithEventFilter(pred).
 		Watches(
 			&source.Kind{Type: &v1.ConfigMap{}},
-			handler.EnqueueRequestsFromMapFunc(r.findConfigMap),
+			handler.EnqueueRequestsFromMapFunc(r.findOasApiDefDependingOnConfigMap),
 			builder.WithPredicates(r.handleConfigMapEvents()),
 		).
 		Complete(r)

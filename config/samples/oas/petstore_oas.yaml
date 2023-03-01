@@ -18,6 +18,13 @@ data:
     petstore.json: |+
       {
         "components": {
+          "securitySchemes": {
+            "jwt_test": {
+              "bearerFormat": "JWT",
+              "scheme": "bearer",
+              "type": "http"
+            }
+          },
           "schemas": {
             "Error": {
               "properties": {
@@ -70,6 +77,11 @@ data:
           "version": "1.0.0"
         },
         "openapi": "3.0.3",
+        "security": [
+         {
+            "jwt_test": []
+         }
+        ],
         "paths": {
           "/pets": {
             "get": {
@@ -209,6 +221,23 @@ data:
             "listenPath": {
               "strip": true,
               "value": "/"
+            },
+            "authentication": {
+              "enabled": true,
+              "stripAuthorizationData": true,
+              "securitySchemes": {
+                "jwt_test": {
+                  "enabled": true,
+                  "header": {
+                    "enabled": true,
+                    "name": "Authorization"
+                  },
+                  "source": "TFMwdExTMUNSVWRKVGlCUVZVSk1TVU1nUzBWWkxTMHRMUzBLVFVacmQwVjNXVWhMYjFwSmVtb3dRMEZSV1VsTGIxcEplbW93UkVGUlkwUlJaMEZGUlZaekwyODFLM1ZSWWxScVRETmphSGx1VERSM1dHZFZaekpTT1FweE9WVlZPRWsxYlVWdmRsVm1PRFpSV2pkclQwSkpha3AzY1c1NlJERnZiV0ZuWlVWSVYzZElaRUpQTmtJclpFWmhZbTFrVkRsUVQzaG5QVDBLTFMwdExTMUZUa1FnVUZWQ1RFbERJRXRGV1MwdExTMHQ=",
+                  "signingMethod": "ecdsa",
+                  "identityBaseField": "sub",
+                  "policyFieldName": "pol"
+                }
+              }
             }
           },
           "upstream": {
@@ -216,5 +245,5 @@ data:
           }
         }
       }
-
-
+      
+      
