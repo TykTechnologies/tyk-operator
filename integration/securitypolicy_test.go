@@ -5,16 +5,14 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/matryer/is"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/matryer/is"
 
 	v1 "k8s.io/api/core/v1"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,6 +23,17 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
+
+func verifyPolicyApiVersion(t *testing.T, tykEnv environmet.Env) {
+	v, err := version.ParseGeneric(tykEnv.TykVersion)
+	if err != nil {
+		t.Fatal("failed to parse Tyk Version")
+	}
+
+	if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
+		t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
+	}
+}
 
 func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 	eval := is.New(t)
@@ -37,6 +46,16 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
+
+			opConfSecret := v1.Secret{}
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			verifyPolicyApiVersion(t, tykEnv)
 
 			api1, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api1Name
@@ -300,12 +319,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			v, err := version.ParseGeneric(tykEnv.TykVersion)
-			eval.NoErr(err)
-
-			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
-				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
-			}
+			verifyPolicyApiVersion(t, tykEnv)
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -502,12 +516,7 @@ func TestSecurityPolicy(t *testing.T) {
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			v, err := version.ParseGeneric(tykEnv.TykVersion)
-			eval.NoErr(err)
-
-			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
-				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
-			}
+			verifyPolicyApiVersion(t, tykEnv)
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
