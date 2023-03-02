@@ -189,19 +189,22 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 
 	util.RemoveFinalizer(policy, policyFinalizer)
 
-	if err := klient.Universal.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
-		if opclient.IsNotFound(err) {
-			r.Log.Info("Policy not found on Tyk", "Policy ID", policy.Status.PolID)
-			return nil
+	_, errTyk := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
+	if !opclient.IsNotFound(errTyk) {
+		err := klient.Universal.Portal().Policy().Delete(ctx, policy.Status.PolID)
+		if err != nil {
+			r.Log.Error(err, "Failed to delete SecurityPolicy from Tyk",
+				"Policy", client.ObjectKeyFromObject(policy).String(),
+			)
+
+			return err
 		}
 
-		// At the moment, the Policy API returns 500 instead of 404 in cases of deleting non-existent Policies.
-		// So that reconciliation fails since non-existence couldn't be understood by Operator. Until this
-		// issue is fixed on Gateway level, add an ad-hoc API call to verify that policy's existence on Tyk level.
-		// If the Policy does not exist, no need to reconcile again. Otherwise, return err and reconcile.
-		_, errTyk := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
-		if !opclient.IsNotFound(errTyk) {
-			r.Log.Error(err, "Failed to delete resource from Tyk")
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			r.Log.Error(err, "Failed to hot-reload Tyk after deleting a Policy",
+				"Policy", client.ObjectKeyFromObject(policy),
+			)
 
 			return err
 		}
@@ -209,15 +212,6 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 
 	err := r.updateStatusOfLinkedAPIs(ctx, policy, true)
 	if err != nil {
-		return err
-	}
-
-	err = klient.Universal.HotReload(ctx)
-	if err != nil {
-		r.Log.Error(err, "Failed to hot-reload Tyk after deleting a Policy",
-			"Policy", client.ObjectKeyFromObject(policy),
-		)
-
 		return err
 	}
 
@@ -240,8 +234,12 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 
 	// If SecurityPolicy does not exist on Tyk Side, Tyk Operator must create a Security
 	// Policy on Tyk based on k8s state. So, unintended deletions from Dashboard can be avoided.
-	_, err = klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
+	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
+		if isSameSecurityPolicy(ctx, specTyk, spec) {
+			return spec, nil
+		}
+
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
 			r.Log.Error(err, "Failed to update policy on Tyk")
@@ -267,18 +265,17 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		}
 	}
 
-	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
-	if err != nil {
-		return nil, err
-	}
-
 	err = klient.Universal.HotReload(ctx)
-
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after updating the Policy",
 			"Policy", client.ObjectKeyFromObject(policy),
 		)
 
+		return nil, err
+	}
+
+	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
+	if err != nil {
 		return nil, err
 	}
 
