@@ -47,7 +47,10 @@ func createTestClient(k e2eKlient.Client) (cr.Client, error) {
 }
 
 // generateOasApiDef generates a sample ApiDefinition CR. It won't create the newly created CR on your k8s.
-func generateOasApiDef(ns string, mutateFn func(definition *v1alpha1.TykOASApiDefinition)) *v1alpha1.TykOASApiDefinition {
+func generateOasApiDef(
+	ns string,
+	mutateFn func(definition *v1alpha1.TykOASApiDefinition),
+) *v1alpha1.TykOASApiDefinition {
 	var apiDef v1alpha1.TykOASApiDefinition
 
 	apiDef.Name = testApiDef
@@ -131,7 +134,11 @@ func createTestAPIDef(ctx context.Context, c *envconf.Config, ns string, mutateF
 
 // createTestOasApiDef generates ApiDefinition CR and creates it on your cluster. You can modify new ApiDefinition
 // CR via mutateFn.
-func createTestOASApiDef(ctx context.Context, c *envconf.Config, ns string, mutateFn func(definition *v1alpha1.TykOASApiDefinition),
+func createTestOASApiDef(
+	ctx context.Context,
+	c *envconf.Config,
+	ns string,
+	mutateFn func(definition *v1alpha1.TykOASApiDefinition),
 ) (*v1alpha1.TykOASApiDefinition, error) {
 	apiDef := generateOasApiDef(ns, mutateFn)
 
