@@ -30,5 +30,5 @@ spec:
       versions:
         - Default
   active: true
-  name: jwt_test
   state: active
+  name: petstore-oas
