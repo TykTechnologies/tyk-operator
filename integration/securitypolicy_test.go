@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-func verifyPolicyApiVersion(t *testing.T, tykEnv environmet.Env) {
+func verifyPolicyApiVersion(t *testing.T, tykEnv *environmet.Env) {
 	v, err := version.ParseGeneric(tykEnv.TykVersion)
 	if err != nil {
 		t.Fatal("failed to parse Tyk Version")
@@ -55,7 +55,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			verifyPolicyApiVersion(t, tykEnv)
+			verifyPolicyApiVersion(t, &tykEnv)
 
 			api1, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api1Name
@@ -319,7 +319,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			verifyPolicyApiVersion(t, tykEnv)
+			verifyPolicyApiVersion(t, &tykEnv)
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -516,7 +516,7 @@ func TestSecurityPolicy(t *testing.T) {
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			verifyPolicyApiVersion(t, tykEnv)
+			verifyPolicyApiVersion(t, &tykEnv)
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
