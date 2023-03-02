@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -34,24 +33,19 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 	api2Name := "test-api-2-status"
 	policyName := "test-policy"
 
-	mode := os.Getenv("TYK_MODE")
-	if mode == "ce" {
-		t.Skip("Skipping security policy test in CE mode")
-	}
-
 	policyCreate := features.New("SecurityPolicy status is updated").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			_, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+			api1, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api1Name
 				ad.Spec.Name = api1Name
 				ad.Spec.Proxy.ListenPath = "/test-api-1"
 			})
 			eval.NoErr(err)
 
-			_, err = createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+			api2, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api2Name
 				ad.Spec.Name = api2Name
 				ad.Spec.Proxy.ListenPath = "/test-api-2"
@@ -59,30 +53,30 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			eval.NoErr(err)
 
 			// ensure API is created on Tyk before creating policy
-			apiDef := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: api1Name, Namespace: testNs}}
-			err = waitForTykResourceCreation(c, apiDef)
+			err = waitForTykResourceCreation(c, api1)
 			eval.NoErr(err)
 
-			_, err = createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
+			// ensure API is created on Tyk before creating policy
+			err = waitForTykResourceCreation(c, api2)
+			eval.NoErr(err)
+
+			pol, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
 				policy.Name = policyName
 				policy.Spec.Name = policyName + testNs
 				policy.Spec.AccessRightsArray = []*v1alpha1.AccessDefinition{{Name: api1Name, Namespace: testNs}}
 			})
 			eval.NoErr(err)
 
-			pol := v1alpha1.SecurityPolicy{ObjectMeta: metav1.ObjectMeta{Name: policyName, Namespace: testNs}}
-			err = waitForTykResourceCreation(c, &pol)
+			err = waitForTykResourceCreation(c, pol)
 			eval.NoErr(err)
 
 			return ctx
 		}).Assess("validate links are created properly",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			var pol v1alpha1.SecurityPolicy
-			var api v1alpha1.ApiDefinition
-
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
+			var pol v1alpha1.SecurityPolicy
 			// check status of policy
 			err := c.Client().Resources().Get(ctx, policyName, testNs, &pol)
 			eval.NoErr(err)
@@ -90,6 +84,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			eval.True(len(pol.Status.LinkedAPIs) != 0)
 			eval.Equal(pol.Status.LinkedAPIs[0].Name, api1Name)
 
+			var api v1alpha1.ApiDefinition
 			// check status of ApiDefinition
 			err = c.Client().Resources().Get(ctx, api1Name, testNs, &api)
 			eval.NoErr(err)
@@ -98,12 +93,12 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			eval.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
 
 			return ctx
-		}).Assess("Add new api in the access rights",
+		}).Assess("Add a new api in the access rights",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			var updatePolicy v1alpha1.SecurityPolicy
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
+			var updatePolicy v1alpha1.SecurityPolicy
 			err := c.Client().Resources().Get(ctx, policyName, testNs, &updatePolicy)
 			eval.NoErr(err)
 
