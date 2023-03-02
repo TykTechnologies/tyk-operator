@@ -1049,6 +1049,7 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		For(&tykv1alpha1.ApiDefinition{}).
 		Owns(&v1.Secret{}).
 		Watches(
