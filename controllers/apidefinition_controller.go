@@ -401,6 +401,17 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to hot-reload Tyk after creating the ApiDefinition",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
+
+		return err
+	}
+
 	err = r.updateStatus(
 		ctx,
 		desired.Namespace,
@@ -414,17 +425,6 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		r.Log.Error(
 			err,
 			"Failed to update Status ID",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
-
-		return err
-	}
-
-	err = klient.Universal.HotReload(ctx)
-	if err != nil {
-		r.Log.Error(
-			err,
-			"Failed to hot-reload Tyk after creating the ApiDefinition",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
