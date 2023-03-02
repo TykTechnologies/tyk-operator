@@ -1,15 +1,21 @@
 package k8sutil
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/util/httpstream"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
 
 	"moul.io/http2curl/v2"
 )
@@ -42,7 +48,7 @@ func (o OpExpect) String() string {
 }
 
 type CMD interface {
-	Init(ns string) (cancel func() error, err error)
+	Init(ns, kubeconfig string) (cancel func() error, err error)
 	CreateNS(ctx context.Context, ns string) error
 	DeleteNS(ctx context.Context, ns string) error
 	Create(ctx context.Context, file, namespace string) error
@@ -61,14 +67,14 @@ var cmd CMD = CB{
 	GetFn:       get,
 }
 
-func Init(ns, env string) (func() error, error) {
+func Init(ns, env, kubeconfig string) (func() error, error) {
 	switch env {
 	case "ce", "pro":
 	default:
-		return nil, fmt.Errorf("Unknown TYK_ENV=%q", env)
+		return nil, fmt.Errorf("Unknown TYK_MODE=%q", env)
 	}
 
-	return cmd.Init(ns)
+	return cmd.Init(ns, kubeconfig)
 }
 
 // Create applies file to k8s cluster and ensure that thr resource is created
@@ -101,7 +107,7 @@ func Get(ctx context.Context, file, namespace string) error {
 // CB is a helper struct satisfying CMD interface. Use the fields to provide
 // callbacks for respective CMD method call.
 type CB struct {
-	InitFN      func(ns string) (func() error, error)
+	InitFN      func(ns, kubeconfig string) (func() error, error)
 	CreateFn    func(ctx context.Context, file, namespace string) error
 	DeleteFn    func(ctx context.Context, file, namespace string) error
 	ConfigureFn func(ctx context.Context, file, namespace string) error
@@ -110,12 +116,12 @@ type CB struct {
 	DeleteNSFn  func(ctx context.Context, ns string) error
 }
 
-func (fn CB) Init(ns string) (func() error, error) {
+func (fn CB) Init(ns, kubeconfig string) (func() error, error) {
 	if fn.InitFN == nil {
 		return nil, ErrNotImplemented
 	}
 
-	return fn.InitFN(ns)
+	return fn.InitFN(ns, kubeconfig)
 }
 
 func (fn CB) Create(ctx context.Context, file, namespace string) error {
@@ -262,13 +268,31 @@ func expect(have ...OpExpect) func(OpExpect, error) error {
 	}
 }
 
-func initFn(ns string) (func() error, error) {
-	return func() error { return nil }, setup(ns)
+func initFn(ns, kubeconfig string) (func() error, error) {
+	return func() error { return nil }, setup(ns, kubeconfig)
+}
+
+func initK8sPortForwardForPod(podName, podNamespace, kubeconfig string) (httpstream.Dialer, error) {
+	c, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	roundTripper, upgrader, err := spdy.RoundTripperFor(c)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", podNamespace, podName)
+	hostIP := strings.TrimLeft(c.Host, "htps:/")
+	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
+
+	return spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL), nil
 }
 
 var api TykAPI
 
-func setup(ns string) error {
+func setup(ns, kubeconfig string) error {
 	var label string
 
 	mode := os.Getenv("TYK_MODE")
@@ -303,12 +327,30 @@ func setup(ns string) error {
 
 	api.Namespace = ns
 	api.Pod = pod
+	api.Kubeconfig = kubeconfig
+
+	dialer, err := initK8sPortForwardForPod(api.Pod, api.Namespace, api.Kubeconfig)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err = portForward(dialer)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	<-readyChan
 
 	return nil
 }
 
 type TykAPI struct {
-	Namespace, Pod, Container string
+	Namespace  string
+	Pod        string
+	Container  string
+	Kubeconfig string
 }
 
 func Do(r *http.Request) (*http.Response, error) {
@@ -325,6 +367,20 @@ func unquote(s string) string {
 
 const agent = "Go-http-client/1.1"
 
+var (
+	stopChan, readyChan = make(chan struct{}, 1), make(chan struct{}, 1)
+	out, errOut         = new(bytes.Buffer), new(bytes.Buffer)
+)
+
+func portForward(dialer httpstream.Dialer) error {
+	fw, err := portforward.New(dialer, []string{"8080:8080"}, stopChan, readyChan, out, errOut)
+	if err != nil {
+		return err
+	}
+
+	return fw.ForwardPorts()
+}
+
 func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 	c, err := http2curl.GetCurlCommand(r)
 	if err != nil {
@@ -337,30 +393,26 @@ func (t TykAPI) Do(r *http.Request) (*http.Response, error) {
 		cs[i] = unquote(cs[i])
 	}
 
-	e := exec.Command("kubectl", append(
-		t.commands(), cs[1:]...,
-	)...)
+	var hc http.Client
+	resp, err := hc.Do(r)
 	if err != nil {
+		if resp != nil {
+			defer resp.Body.Close()
+
+			b, errResp := io.ReadAll(resp.Body)
+			if errResp != nil {
+				fmt.Println("failed to read the response body, err: ", errResp)
+			} else {
+				fmt.Println("failed to send the request, response: ", string(b))
+			}
+		}
+
+		fmt.Println("failed to send the request, err: ", err)
+
 		return nil, err
 	}
 
-	fmt.Println(e.Args)
-
-	var buf bytes.Buffer
-
-	e.Stderr = os.Stderr
-	e.Stdout = &buf
-
-	if err := e.Run(); err != nil {
-		return nil, err
-	}
-
-	res, err := http.ReadResponse(bufio.NewReader(&buf), r)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return resp, nil
 }
 
 func (t TykAPI) commands() []string {

@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -33,7 +35,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -433,14 +434,27 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 	)
 
-	_, err := klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+	_, err := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
 	if err != nil {
-		r.Log.Error(
-			err, "Failed to update ApiDefinition on Tyk",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
+		_, err = klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+		if err != nil {
+			r.Log.Error(
+				err, "Failed to create ApiDefinition on Tyk",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
 
-		return err
+			return err
+		}
+	} else {
+		_, err = klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+		if err != nil {
+			r.Log.Error(
+				err, "Failed to update ApiDefinition on Tyk",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
+
+			return err
+		}
 	}
 
 	err = klient.Universal.HotReload(ctx)

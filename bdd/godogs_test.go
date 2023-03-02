@@ -11,14 +11,15 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/TykTechnologies/tyk-operator/bdd/k8sutil"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cucumber/godog"
-
-	"github.com/TykTechnologies/tyk-operator/bdd/k8sutil"
+	"k8s.io/client-go/util/homedir"
 )
 
 const (
@@ -64,18 +65,30 @@ var opts = &godog.Options{
 	Randomize:     -1,
 }
 
-var gatewayURL = "http://localhost:8080"
+var (
+	gatewayURL = "http://localhost:8080"
+	kubeconfig *string
+)
 
 func init() {
 	godog.BindCommandLineFlags("godog.", opts)
 }
 
 func TestMain(t *testing.M) {
+	if home := homedir.HomeDir(); home != "" {
+		kubeconfig = flag.String(
+			"kubeconfig",
+			filepath.Join(home, ".kube", "config"),
+			"(optional) absolute path to the kubeconfig file",
+		)
+	} else {
+		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	}
 	flag.Parse()
 
 	opts.Paths = flag.Args()
 
-	kill, err := k8sutil.Init(gwNS, os.Getenv("TYK_MODE"))
+	kill, err := k8sutil.Init(gwNS, os.Getenv("TYK_MODE"), *kubeconfig)
 	if err != nil {
 		log.Fatal(err)
 	}
