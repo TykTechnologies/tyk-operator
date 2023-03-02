@@ -150,12 +150,15 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 			)
 		}
 	}
+
 	apiID = api.Status.ApiID
 	apiName = api.Spec.Name
 
 	if apiID == "" {
 		r.Log.Info("Failed to get normal APIDefinition to attach to SecurityPolicy, looking for OasApiDefiniiton")
+
 		oasApi := &tykv1.TykOASApiDefinition{}
+
 		if errOas := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, oasApi); errOas != nil {
 			if errors.IsNotFound(errOas) {
 				r.Log.Info("OasApiDefinition resource also not found. Unable to attach to SecurityPolicy. ReQueue",
@@ -164,6 +167,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 				)
 			}
 		}
+
 		apiID = oasApi.Status.ApiID
 		apiName = oasApi.Name
 	}
@@ -177,9 +181,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 	}
 
 	ad.APIID = apiID
-	r.Log.Info(apiID)
 	ad.APIName = apiName
-	r.Log.Info(apiName)
 
 	return nil
 }
@@ -406,13 +408,16 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, api); err != nil {
 			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
 		}
+
 		oasApi := &tykv1.TykOASApiDefinition{}
+
 		if api.Status.ApiID == "" {
 			if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, oasApi); err != nil {
 				r.Log.Error(err, "Failed to get the linked OasAPI", "oasApi", t.String())
 				return err
 			}
 		}
+
 		if oasApi.Status.ApiID != "" {
 			linkedApiIsOas = true
 		}
@@ -424,7 +429,6 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		}
 
 		if !linkedApiIsOas {
-
 			if err := r.Status().Update(ctx, api); err != nil {
 				r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
 
@@ -448,11 +452,13 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
 			r.Log.Error(err, "Failed to get linked api definition", "api", name)
 		}
+
 		if api.Status.ApiID == "" {
 			if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, oasApi); err != nil {
 				r.Log.Error(err, "Failed to get linked OAS api definition", "oasApi", name)
 			}
 		}
+
 		if oasApi.Status.ApiID != "" {
 			linkedApiFromAccessRightsArrayIsOas = true
 		}

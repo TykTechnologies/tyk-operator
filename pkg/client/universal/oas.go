@@ -8,6 +8,6 @@ import (
 
 type OAS interface {
 	Create(ctx context.Context, data string) (*model.Result, error)
-	Update(ctx context.Context, id string, data string) error
+	Update(ctx context.Context, id, data string) error
 	Delete(ctx context.Context, id string) error
 }

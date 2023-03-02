@@ -42,7 +42,7 @@ func (o OAS) Create(ctx context.Context, data string) (*model.Result, error) {
 	return result, nil
 }
 
-func (o OAS) Update(ctx context.Context, id string, data string) error {
+func (o OAS) Update(ctx context.Context, id, data string) error {
 	reader := strings.NewReader(data)
 	result := &model.Result{}
 	url := fmt.Sprintf("%s/%s", oasEndpoint, id)

@@ -122,6 +122,7 @@ func createServices(ctx context.Context, c2 *envconf.Config, list []v1.Service) 
 
 	return nil
 }
+
 func isCE() bool {
 	return e.Mode == "ce"
 }

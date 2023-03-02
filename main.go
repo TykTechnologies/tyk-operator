@@ -263,6 +263,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "SubGraph")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.TykOASApiDefinitionReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("TykOASApiDefinition"),

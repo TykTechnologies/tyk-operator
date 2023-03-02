@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"errors"
+
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -97,7 +98,7 @@ func (r *TykOASApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 		util.AddFinalizer(tykOASDef, keys.TykOASApiDefinitionFinalizerName)
 
-		id, err := r.createOrUpdateTykOAS(ctx, *tykOASDef)
+		id, err := r.createOrUpdateTykOAS(ctx, tykOASDef)
 		if err != nil {
 			return err
 		}
@@ -121,14 +122,17 @@ func (r *TykOASApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(ctx context.Context, tykOASDef tykv1alpha1.TykOASApiDefinition) (string, error) {
+func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(
+	ctx context.Context,
+	tykOASDef *tykv1alpha1.TykOASApiDefinition,
+) (string, error) {
 	r.Log.Info("Creating/Updating OAS API on Tyk")
 
 	var cm v1.ConfigMap
 
-	cm_name := types.NamespacedName{Name: tykOASDef.Spec.OASRef.Name, Namespace: tykOASDef.Spec.OASRef.Namespace}
+	cmName := types.NamespacedName{Name: tykOASDef.Spec.OASRef.Name, Namespace: tykOASDef.Spec.OASRef.Namespace}
 
-	err := r.Client.Get(ctx, cm_name, &cm)
+	err := r.Client.Get(ctx, cmName, &cm)
 	if err != nil {
 		return "", err
 	}
@@ -136,6 +140,7 @@ func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(ctx context.Context
 	data := cm.Data[tykOASDef.Spec.OASRef.KeyName]
 	if data == "" {
 		err = errors.New("OAS Spec is empty")
+		return "", err
 	}
 
 	id := tykOASDef.Status.ApiID
@@ -148,6 +153,7 @@ func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(ctx context.Context
 	} else {
 		err = klient.Universal.OAS().Update(ctx, id, data)
 	}
+
 	if err != nil {
 		r.Log.Error(err, "Failed to create/update OAS API Definition")
 		return "", err
@@ -177,7 +183,9 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 
 				return nil
 			}
+
 			r.Log.Error(err, "Failed to delete OAS API Definition")
+
 			return err
 		}
 
@@ -193,6 +201,7 @@ func (r *TykOASApiDefinitionReconciler) findOasApiDefDependingOnConfigMap(config
 		FieldSelector: fields.OneTermEqualSelector(OasRefKey, configMap.GetName()),
 		Namespace:     configMap.GetNamespace(),
 	}
+
 	if err := r.List(context.TODO(), apiDefList, listOps); err != nil {
 		return []reconcile.Request{}
 	}
@@ -208,7 +217,6 @@ func (r *TykOASApiDefinitionReconciler) findOasApiDefDependingOnConfigMap(config
 	}
 
 	return requests
-
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -439,6 +439,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 			err, "Failed to update ApiDefinition on Tyk",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
+
 		return err
 	}
 

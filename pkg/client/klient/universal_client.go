@@ -179,6 +179,6 @@ func (OAS) Create(ctx context.Context, data string) (*model.Result, error) {
 	return get(ctx).OAS().Create(ctx, data)
 }
 
-func (OAS) Update(ctx context.Context, id string, data string) error {
+func (OAS) Update(ctx context.Context, id, data string) error {
 	return get(ctx).OAS().Update(ctx, id, data)
 }
