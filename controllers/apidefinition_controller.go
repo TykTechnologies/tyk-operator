@@ -1050,7 +1050,6 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.ApiDefinition{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Owns(&v1.Secret{}).
 		Watches(
 			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
