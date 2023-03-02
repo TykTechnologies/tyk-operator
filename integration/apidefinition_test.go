@@ -664,18 +664,11 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 func TestApiDefinitionCertificatePinning(t *testing.T) {
 	var (
-		apiDefPinning = "apidef-certificate-pinning"
-
-		apiDefPinningViaSecret           = "apidef-with-secret"
-		apiDefPinningViaSecretListenPath = "/secret"
-
-		invalidApiDef           = "invalid-proxy-apidef"
-		invalidApiDefListenPath = "/invalid"
-
+		eval       = is.New(t)
+		tykCtx     context.Context
+		apiDef     *v1alpha1.ApiDefinition
 		secretName = "secret"
-
-		publicKeyID = "test-public-key-id"
-		pubKeyPem   = []byte(`-----BEGIN PUBLIC KEY-----
+		pubKeyPem  = []byte(`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyoiVyRRffvWcc/kQJj4h
 tRPZeafPYAZzCgd9tQfQmtCJXWDAynL3slPfhAAuO0vWxyNHTTELbCHxD43nPgST
 7HUwG/ZjsrY03+M4IaEiBvN53OsnJ5UekmH2G04HTZdsApoc9OSb+4aBGlkISsNx
@@ -687,17 +680,15 @@ pwIDAQAB
 	)
 
 	adCreate := features.New("Create ApiDefinition objects for Certificate Pinning").
-		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			client := envConf.Client()
-			eval := is.New(t)
 
-			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
-			// It contains a dummy public key which is not valid to be used.
-			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				apiDef.Name = apiDefPinning
-				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
-			})
+			opConfSecret := v1.Secret{}
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
 			// Create a secret to store the public key of httpbin.org.
@@ -710,7 +701,7 @@ pwIDAQAB
 				Data: map[string][]byte{"tls.crt": pubKeyPem, "tls.key": []byte("")},
 			}
 
-			err = client.Resources(testNS).Create(ctx, secret)
+			err = c.Client().Resources(testNS).Create(ctx, secret)
 			eval.NoErr(err)
 
 			// For all domains (`*`), use following secret that contains the public key of the httpbin.org
@@ -719,83 +710,58 @@ pwIDAQAB
 			publicKeySecrets := map[string]string{"*": secretName}
 
 			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
-			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				apiDef.Name = apiDefPinningViaSecret
-				apiDef.Spec.Name = "valid"
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefPinningViaSecretListenPath,
-					TargetURL:       "https://httpbin.org/",
-					StripListenPath: true,
-				}
+			apiDef, err = createTestAPIDef(ctx, c, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			})
 			eval.NoErr(err)
 
-			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
-			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
-			// to reach github.com, which must fail due to proxy error.
-			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				apiDef.Name = invalidApiDef
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      invalidApiDefListenPath,
-					TargetURL:       "https://github.com/",
-					StripListenPath: true,
-				}
-				apiDef.Spec.Name = "invalid"
-				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
 			})
-			eval.NoErr(err)
 
 			return ctx
 		}).
-		Assess("Allow making requests based on the pinned public key defined via secret",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				err := wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefPinningViaSecretListenPath),
-						nil,
-					)
-					eval.NoErr(err)
-
-					resp, err := hc.Do(req)
-					eval.NoErr(err)
-
-					if resp.StatusCode != 200 {
-						t.Log("expected to access httpbin.org since it is pinned via public key.")
-						return false, nil
-					}
-
-					return true, nil
-				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+		Assess("Ensure that the secret is created on Tyk and linked to ApiDefinition",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				// Wait until ApiDefinition is created on Tyk.
+				err := waitForTykResourceCreation(c, apiDef)
 				eval.NoErr(err)
 
-				return ctx
-			}).
-		Assess("Prevent making requests to disallowed addresses based on the pinned public key defined via secret",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				err := wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s%s", gatewayLocalhost, invalidApiDefListenPath),
-						nil,
-					)
-					eval.NoErr(err)
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDef, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
 
-					resp, err := hc.Do(req)
-					eval.NoErr(err)
+						tykCertID, exists := apiDefObj.Spec.PinnedPublicKeys["*"]
+						eval.True(exists)
 
-					if resp.StatusCode == 200 {
-						t.Log("unexpected access to invalid address")
-						return false, nil
-					}
+						if !klient.Universal.Certificate().Exists(tykCtx, tykCertID) {
+							t.Logf("failed to access certificate with ID %v on Tyk", tykCertID)
+							return false
+						}
 
-					return true, nil
-				}, wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
+						apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefObj.Status.ApiID)
+						eval.NoErr(err)
+
+						certIdOfApi, exists := apiDefOnTyk.PinnedPublicKeys["*"]
+						eval.True(exists)
+
+						if certIdOfApi != tykCertID {
+							t.Logf(
+								"The cert ID linked to ApiDefinition is wrong, expected %v, got %v",
+								tykCertID,
+								certIdOfApi,
+							)
+
+							eval.True(certIdOfApi != tykCertID)
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
 				eval.NoErr(err)
 
 				return ctx
