@@ -298,7 +298,6 @@ func TestApiDefinitionUpdate(t *testing.T) {
 }
 
 func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
-
 	var (
 		apiDefWithJSONValidationName = "apidef-json-validation"
 		apiDefListenPath             = "/validation"
