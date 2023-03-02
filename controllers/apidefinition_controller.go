@@ -134,14 +134,18 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if err := r.processCertificateReferences(ctx, &env, log, upstreamRequestStruct); err != nil {
 			return err
 		}
+		desired.Spec.Certificates = upstreamRequestStruct.Spec.Certificates
 
 		r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
+		desired.Spec.UpstreamCertificates = upstreamRequestStruct.Spec.UpstreamCertificates
 
 		// Check Pinned Public keys
 		r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
+		desired.Spec.PinnedPublicKeys = upstreamRequestStruct.Spec.PinnedPublicKeys
 
 		if desired.Spec.UseMutualTLSAuth {
 			r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
+			desired.Spec.ClientCertificates = upstreamRequestStruct.Spec.ClientCertificates
 		}
 
 		// Check GraphQL Federation
