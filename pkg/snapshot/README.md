@@ -16,29 +16,14 @@ Please use with caution.
 
 ---
 
-[Prerequisites](#prerequisites) | [Installation](#installation) | [Preparation](#preparation) | [Usage](#usage) | [Limitations](#limitations)
+[Prerequisites](#prerequisites) | [Preparation](#preparation) | [Usage](#usage) | [Limitations](#limitations)
 
 ---
 
 ## Prerequisites
 
-1. Access to `tyk-operator` repository.
-2. [go](https://go.dev/doc/install)
-> Please make sure that your Go version is compatible with the Go version defined in [`go.mod`](https://github.com/TykTechnologies/tyk-operator/blob/master/go.mod#L3).
-3. Credentials to connect Tyk Dashboard or Gateway. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator) for details.
-
-## Installation
-
-1. Clone Tyk Operator repository
-```bash
-git clone https://github.com/TykTechnologies/tyk-operator.git
-cd tyk-operator/
-```
-
-2. Build Tyk Operator
-```bash
-go build
-```
+1. Docker or Tyk Operator binaries,
+2. Credentials to connect Tyk Dashboard or Gateway. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator) for details.
 
 ## Preparation
 1. Specify the Kubernetes resource names in `Config Data`
@@ -97,23 +82,31 @@ Export Security Policies:
     	Pull a snapshot of SecurityPolicies from Tyk Dashboard and output as CR
 ```
 
+### Docker
+
+```bash
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator [FLAGS]
+```
+
+where `.env` file includes Tyk credentials, as follows:
+
+```
+TYK_ORG=${TYK_ORG}
+TYK_AUTH=${TYK_AUTH}
+TYK_URL=${TYK_URL}
+TYK_MODE=${TYK_MODE}
+```
+
 ### Setting required environment variables
 
 In order snapshot tool to connect your Tyk installation, store the Tyk Dashboard 
 or Gateway connection parameters in environment variables before running 
-`snapshot`, e.g.
+`snapshot`.
 
-```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} \
-./tyk-operator --apidef <OUTPUT_FILE>
-```
-
-where
 - `${TYK_MODE}`: `ce` for Tyk Open Source mode and `pro` for for Tyk Self Managed mode.
 - `${TYK_URL}`: Management URL of your Tyk Dashboard or Gateway.
 - `${TYK_AUTH}`: Operator user API Key.
 - `${TYK_ORG}`: Operator user ORG ID.
-- `<OUTPUT_FILE>`: The name of the output file in YAML format, e.g., `output.yaml`.
 
 > For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#step-3-configuring-tyk-operator).
 
@@ -126,7 +119,7 @@ or Gateway without considering their categories.
 
 You can specify a category to fetch via `--category` flag, as follows:
 ```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --apidef output.yaml --category k8s
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator --apidef output.yaml --category k8s
 ```
 The command above fetches all ApiDefinitions in `#k8s` category.
 
@@ -180,7 +173,7 @@ of the ApiDefinition as follows.
 
 So, the generated output for this environment will look as follows;
 ```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --apidef output.yaml --category testing
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator --apidef output.yaml --category testing
 ```
 ```yaml
 # output.yaml
@@ -204,12 +197,13 @@ contain ApiDefinition Custom Resource for `test-api-3 #testing`.
 
 You can export your SecurityPolicy objects by specifying `--policy` flag.
 ```bash
-TYK_MODE=${TYK_MODE} TYK_URL=${TYK_URL} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ./tyk-operator --apidef output.yaml --policy policies.yaml
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator --apidef output.yaml --policy policies.yaml
 ```
 SecurityPolicy CRs will be saved into a file specified in `--policy` command.
 
 _**Warning:**_ All ApiDefinitions that SecurityPolicy access must exist in Kubernetes.
-Otherwise, when you try to apply the policies, SecurityPolicy controller logs an error since it cannot find corresponding ApiDefinition resource in the environment.
+Otherwise, when you try to apply the policies, SecurityPolicy controller logs an error 
+since it cannot find corresponding ApiDefinition resource in the environment.
 
 ### Applying the API and Policy Custom Resources
 
