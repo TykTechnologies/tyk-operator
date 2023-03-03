@@ -28,12 +28,11 @@ Please use with caution.
 ## Preparation
 1. Specify the Kubernetes resource names in `Config Data`
 
-By default, `snapshot` tool outputs your APIs if its `Config Data` is configured
-properly. In the `Config Data`, you can specify Kubernetes metadata of your ApiDefinition
-Custom Resources. Each API must have a `Config Data` configured. Otherwise, `snapshot`
-tool skips APIs with missing or invalid `Config Data`.
+Before exporting the APIs, you have to specify the k8s resource name to be used for each APIDefinition resource. It can be configured in `config_data`. You can optionally provide the namespace too.
 
-Example `Config Data` for your APIs:
+NOTE: `snapshot` tool will skip exporting any APIs without "k8sName" specified in `config_data`.
+
+Example `config_data` for your APIs:
 ```json
 {
   "k8sName": "metadata_name",
@@ -43,14 +42,10 @@ Example `Config Data` for your APIs:
 
 ![config-data](./img/config-data.png)
 
-> The only required key for Config Data is `k8sName`. If Config Data of your ApiDefinition
-> does not include this key, snapshot tool does not export your ApiDefinition, which
-> means that the output file does not include the details of the ApiDefinition.
-
 
 2. Use API Category to group the APIs you want to export
 
-By default, snapshot tool will export **all** APIs that have proper `Config Data`
+By default, snapshot tool will export **all** APIs that have proper `config_data`
 configured. You can also categorize your APIs by teams, environments, or any way 
 you want. You can specify which API category to be exported in later steps.
 
