@@ -16,7 +16,7 @@ Please use with caution.
 
 ---
 
-[Prerequisites](#prerequisites) | [Preparation](#preparation) | [Usage](#usage) | [Limitations](#limitations)
+[Prerequisites](#prerequisites) | [Preparation](#preparation) | [Installation](#installation) | [Usage](#usage) | [Limitations](#limitations)
 
 ---
 
@@ -28,7 +28,8 @@ Please use with caution.
 ## Preparation
 1. Specify the Kubernetes resource names in `Config Data`
 
-Before exporting the APIs, you have to specify the k8s resource name to be used for each APIDefinition resource. It can be configured in `config_data`. You can optionally provide the namespace too.
+Before exporting the APIs, you have to specify the k8s resource name to be used for each APIDefinition resource. 
+It can be configured in `config_data`. You can optionally provide the namespace too.
 
 NOTE: `snapshot` tool will skip exporting any APIs without "k8sName" specified in `config_data`.
 
@@ -54,6 +55,16 @@ or `#production`. You can configure snapshot tool to export APIs from certain gr
 
 ![apis](./img/apis.png)
 
+## Installation
+
+Currently, snapshot tool is available via Docker and Tyk Operator binaries.
+
+```bash
+docker pull tykio/tyk-operator:{version_id}
+```
+
+For binaries, please visit [GitHub Releases](https://github.com/TykTechnologies/tyk-operator/releases) of Tyk Operator
+and install Tyk Operator binary based on your platform.
 
 ## Usage
 ```bash
