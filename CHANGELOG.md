@@ -3,7 +3,7 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
 **Fixed**:
-- Prevent reading k8s config while using `operator snapshot` as a CLI command.
+- Prevent reading Kubernetes config while using `operator snapshot` as a CLI command (this means you don't need to have a running Kubernetes cluster when running `operator snapshot`).
 - Fixed reconciliation failures when ApiDefinition does not exist on Tyk storage.
 - Fixed BDD tests dependency of `curl`. Instead of running `curl` within a container,
 implemented a port-forward mechanism to send raw HTTP requests to pods.
