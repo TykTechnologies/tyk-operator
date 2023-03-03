@@ -214,6 +214,89 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 	testenv.Test(t, testReconcilingNonexistentAPIs)
 }
 
+// TestApiDefinitionUpdate tests if changes in ApiDefinition CR updates corresponding ApiDefinition on Tyk.
+func TestApiDefinitionUpdate(t *testing.T) {
+	var (
+		opNs        = "tyk-operator-system"
+		eval        = is.New(t)
+		tykCtx      context.Context
+		tykEnv      environmet.Env
+		updatedName = "updatedName"
+	)
+
+	testApiDefinitionUpdate := features.New("Updating ApiDefinition CRs on k8s").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			return ctx
+		}).
+		Assess("Update ApiDefinition and check changes in k8s and Tyk",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// First, create the ApiDefinition
+				apiDefCR, err := createTestAPIDef(ctx, c, testNs, func(apiDef *v1alpha1.ApiDefinition) {})
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
+				apiDefCR.Spec.Name = updatedName
+
+				// Update ApiDefinition
+				err = c.Client().Resources(opNs).Update(ctx, apiDefCR)
+				eval.NoErr(err)
+
+				// Ensure that k8s state is updated.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						return apiDefObj.Spec.Name == updatedName
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// Ensure that Tyk is updated
+				err = wait.For(func() (done bool, err error) {
+					apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
+					if err != nil {
+						return false, err
+					}
+
+					if apiDefOnTyk.Name != updatedName {
+						return false, fmt.Errorf(
+							"ApiDefinition is not updated properly, expected %v, got %v",
+							updatedName, apiDefOnTyk.Name,
+						)
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testApiDefinitionUpdate)
+}
+
 func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 	var (
 		apiDefWithJSONValidationName = "apidef-json-validation"
