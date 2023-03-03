@@ -43,7 +43,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: APIDefinition represents the configuration for a single proxied API and it's versions.
+            description: APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
             properties:
               CORS:
                 properties:

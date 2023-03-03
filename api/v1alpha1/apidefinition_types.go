@@ -21,13 +21,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// APIDefinition represents the configuration for a single proxied API and it's versions.
+// APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
 type APIDefinitionSpec struct {
 	model.APIDefinitionSpec `json:",inline"`
 	// Context specify namespace/name of the OperatorContext object used for
 	// reconciling this APIDefinition
-	Context *model.Target `json:"contextRef,omitempty"`
+	Context *model.Target `json:"contextRef,omitempty" hash:"ignore"`
 }
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition
@@ -51,6 +51,7 @@ type ApiDefinitionStatus struct {
 	LinkedToSubgraph string `json:"linked_to_subgraph,omitempty"`
 }
 
+// ApiDefinition is the Schema for the apidefinitions API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Domain",type=string,JSONPath=`.spec.domain`
@@ -58,7 +59,6 @@ type ApiDefinitionStatus struct {
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
 // +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.active`
 // +kubebuilder:resource:shortName=tykapis
-// ApiDefinition is the Schema for the apidefinitions API
 type ApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
