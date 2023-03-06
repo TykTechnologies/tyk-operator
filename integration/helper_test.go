@@ -163,6 +163,12 @@ func waitForTykResourceCreation(envConf *envconf.Config, obj k8s.Object) error {
 			if val.Status.PolID != "" {
 				return true
 			}
+		case *v1alpha1.TykOASApiDefinition:
+			{
+				if val.Status.ApiID != "" {
+					return true
+				}
+			}
 		}
 
 		return false
