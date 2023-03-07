@@ -137,7 +137,12 @@ func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(
 		return "", err
 	}
 
-	data := cm.Data[tykOASDef.Spec.OASRef.KeyName]
+	data, ok := cm.Data[tykOASDef.Spec.OASRef.KeyName]
+	if !ok {
+		err = errors.New("could not find OAS Spec in ConfigMap")
+		return "", err
+	}
+
 	if data == "" {
 		err = errors.New("OAS Spec is empty")
 		return "", err
@@ -148,18 +153,22 @@ func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(
 		var result *model.Result
 
 		result, err = klient.Universal.OAS().Create(ctx, data)
+		if err != nil {
+			r.Log.Error(err, "Failed to create OAS API Definition")
+			return "", err
+		}
 
 		id = result.Meta
+
+		r.Log.Info("Successfully createdOAS API on Tyk", "id", id)
 	} else {
 		err = klient.Universal.OAS().Update(ctx, id, data)
+		if err != nil {
+			r.Log.Error(err, "Failed to update OAS API Definition")
+			return "", err
+		}
+		r.Log.Info("Successfully updated OAS API on Tyk", "id", id)
 	}
-
-	if err != nil {
-		r.Log.Error(err, "Failed to create/update OAS API Definition")
-		return "", err
-	}
-
-	r.Log.Info("Successfully created/updated OAS API on Tyk", "id", id)
 
 	return id, nil
 }
@@ -187,6 +196,20 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 			r.Log.Error(err, "Failed to delete OAS API Definition")
 
 			return err
+		} else if err != nil {
+			// If the OasTykApiDefinition/TykApiDefinition does not exist on Tyk, no need to reconcile with error.
+			// Older versions of GW does not return 404 while deleting non-existent ApiDefinitions.
+			// Therefore, check if ApiDefinition exists on Tyk before returning with error. If ApiDefinition
+			// exists, which means Get call returns successful response, Operator should reconcile to complete
+			// deletion of the ApiDefinition.
+			_, errTyk := klient.Universal.Api().Get(ctx, tykOASDef.Status.ApiID)
+			if errTyk == nil {
+				r.Log.Error(
+					err,
+					"Failed to delete OasApiDefinition from Tyk", "api_id", tykOASDef.Status.ApiID,
+				)
+				return err
+			}
 		}
 
 		r.Log.Info("Successfully deleted OAS API on Tyk")

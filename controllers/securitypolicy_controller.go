@@ -165,6 +165,7 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 					"Name", ad.Name,
 					"Namespace", ad.Namespace,
 				)
+				return errOas
 			}
 		}
 

@@ -34,14 +34,15 @@ type TykOASApiDefinitionSpec struct {
 
 type OASReference struct {
 	model.Target `json:",inline"`
-	KeyName      string `json:"key_name"`
+	// The key at which the JSON for the OAS definition is found in the CRD
+	KeyName string `json:"key_name"`
 }
 
 // TykOASApiDefinitionStatus defines the observed state of TykOASApiDefinition
 type TykOASApiDefinitionStatus struct {
 	ApiID string `json:"api_id"`
 
-	// LinkedByPolicies is a list policies that references this api definition
+	// LinkedByPolicies is a list of policies that references this OAS API definition
 	//+optional
 	LinkedByPolicies []model.Target `json:"linked_by_policies,omitempty"`
 }

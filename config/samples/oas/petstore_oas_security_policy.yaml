@@ -1,24 +1,3 @@
-#apiVersion: tyk.tyk.io/v1alpha1
-#kind: SecurityPolicy
-#metadata:
-#  name: petstore-oas
-#spec:
-#  name: Rate Limit, Quota and Throttling policy
-#  state: active
-#  active: true
-#  access_rights_array:
-#    - name: petstore-oas
-#      namespace: default
-#      versions:
-#        - Default
-#  quota_max: 3
-#  quota_renewal_rate: 60
-#  rate: 1
-#  per: 1
-#  throttle_interval: 2
-#  throttle_retry_limit: 2
-
-
 apiVersion: tyk.tyk.io/v1alpha1
 kind: SecurityPolicy
 metadata:
