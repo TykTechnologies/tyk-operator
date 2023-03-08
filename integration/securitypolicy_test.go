@@ -2,20 +2,17 @@ package integration
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/matryer/is"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/matryer/is"
 
 	v1 "k8s.io/api/core/v1"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,6 +24,17 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+func verifyPolicyApiVersion(t *testing.T, tykEnv *environmet.Env) {
+	v, err := version.ParseGeneric(tykEnv.TykVersion)
+	if err != nil {
+		t.Fatal("failed to parse Tyk Version")
+	}
+
+	if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
+		t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
+	}
+}
+
 func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 	eval := is.New(t)
 
@@ -34,24 +42,29 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 	api2Name := "test-api-2-status"
 	policyName := "test-policy"
 
-	mode := os.Getenv("TYK_MODE")
-	if mode == "ce" {
-		t.Skip("Skipping security policy test in CE mode")
-	}
-
 	policyCreate := features.New("SecurityPolicy status is updated").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			_, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+			opConfSecret := v1.Secret{}
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			verifyPolicyApiVersion(t, &tykEnv)
+
+			api1, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api1Name
 				ad.Spec.Name = api1Name
 				ad.Spec.Proxy.ListenPath = "/test-api-1"
 			})
 			eval.NoErr(err)
 
-			_, err = createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+			api2, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
 				ad.Name = api2Name
 				ad.Spec.Name = api2Name
 				ad.Spec.Proxy.ListenPath = "/test-api-2"
@@ -59,30 +72,30 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			eval.NoErr(err)
 
 			// ensure API is created on Tyk before creating policy
-			apiDef := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: api1Name, Namespace: testNs}}
-			err = waitForTykResourceCreation(c, apiDef)
+			err = waitForTykResourceCreation(c, api1)
 			eval.NoErr(err)
 
-			_, err = createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
+			// ensure API is created on Tyk before creating policy
+			err = waitForTykResourceCreation(c, api2)
+			eval.NoErr(err)
+
+			pol, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
 				policy.Name = policyName
 				policy.Spec.Name = policyName + testNs
 				policy.Spec.AccessRightsArray = []*v1alpha1.AccessDefinition{{Name: api1Name, Namespace: testNs}}
 			})
 			eval.NoErr(err)
 
-			pol := v1alpha1.SecurityPolicy{ObjectMeta: metav1.ObjectMeta{Name: policyName, Namespace: testNs}}
-			err = waitForTykResourceCreation(c, &pol)
+			err = waitForTykResourceCreation(c, pol)
 			eval.NoErr(err)
 
 			return ctx
 		}).Assess("validate links are created properly",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			var pol v1alpha1.SecurityPolicy
-			var api v1alpha1.ApiDefinition
-
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
+			var pol v1alpha1.SecurityPolicy
 			// check status of policy
 			err := c.Client().Resources().Get(ctx, policyName, testNs, &pol)
 			eval.NoErr(err)
@@ -90,6 +103,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			eval.True(len(pol.Status.LinkedAPIs) != 0)
 			eval.Equal(pol.Status.LinkedAPIs[0].Name, api1Name)
 
+			var api v1alpha1.ApiDefinition
 			// check status of ApiDefinition
 			err = c.Client().Resources().Get(ctx, api1Name, testNs, &api)
 			eval.NoErr(err)
@@ -98,12 +112,12 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			eval.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
 
 			return ctx
-		}).Assess("Add new api in the access rights",
+		}).Assess("Add a new api in the access rights",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			var updatePolicy v1alpha1.SecurityPolicy
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
+			var updatePolicy v1alpha1.SecurityPolicy
 			err := c.Client().Resources().Get(ctx, policyName, testNs, &updatePolicy)
 			eval.NoErr(err)
 
@@ -254,7 +268,6 @@ func deletePolicyOnTyk(ctx context.Context, id string) error {
 
 func TestSecurityPolicyMigration(t *testing.T) {
 	const (
-		opNs                  = "tyk-operator-system"
 		initialK8sPolicyTag   = "sample-tag"
 		initialK8sPolicyRate  = 50
 		initialK8sPolicyState = "deny"
@@ -299,19 +312,14 @@ func TestSecurityPolicyMigration(t *testing.T) {
 			eval := is.New(t)
 
 			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			v, err := version.ParseGeneric(tykEnv.TykVersion)
-			eval.NoErr(err)
-
-			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
-				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
-			}
+			verifyPolicyApiVersion(t, &tykEnv)
 
 			testCl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -489,8 +497,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 }
 
 func TestSecurityPolicy(t *testing.T) {
-	const opNs = "tyk-operator-system"
-
 	var (
 		reqCtx   context.Context
 		policyCR v1alpha1.SecurityPolicy
@@ -503,19 +509,14 @@ func TestSecurityPolicy(t *testing.T) {
 			eval := is.New(t)
 
 			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			v, err := version.ParseGeneric(tykEnv.TykVersion)
-			eval.NoErr(err)
-
-			if tykEnv.Mode == "ce" && !v.AtLeast(minPolicyGwVersion) {
-				t.Skip("Security Policies API in CE mode requires at least Tyk v4.1")
-			}
+			verifyPolicyApiVersion(t, &tykEnv)
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
@@ -672,7 +673,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(operatorNamespace).Get(ctx, operatorSecret, operatorNamespace, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.

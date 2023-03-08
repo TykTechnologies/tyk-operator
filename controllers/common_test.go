@@ -1,6 +1,10 @@
 package controllers
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/TykTechnologies/tyk-operator/api/model"
+)
 
 func TestDecodeID(t *testing.T) {
 	tests := []struct {
@@ -49,6 +53,67 @@ func TestDecodeID(t *testing.T) {
 
 			if gotName != tt.expectedName {
 				t.Errorf("decodeID() gotName = %v, want %v", gotName, tt.expectedName)
+			}
+		})
+	}
+}
+
+func TestIsSameApiDefinition(t *testing.T) {
+	type args struct {
+		apiDef1 *model.APIDefinitionSpec
+		apiDef2 *model.APIDefinitionSpec
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Checking two nil ApiDefinitionSpec objects ",
+			args: args{
+				apiDef1: &model.APIDefinitionSpec{},
+				apiDef2: &model.APIDefinitionSpec{},
+			},
+			want: true,
+		},
+		{
+			name: "Checking two non-nil same ApiDefinitionSpec objects ",
+			args: args{
+				apiDef1: &model.APIDefinitionSpec{Name: "My API"},
+				apiDef2: &model.APIDefinitionSpec{Name: "My API"},
+			},
+			want: true,
+		},
+		{
+			name: "Checking two non-nil different ApiDefinitionSpec objects ",
+			args: args{
+				apiDef1: &model.APIDefinitionSpec{Name: "My API2"},
+				apiDef2: &model.APIDefinitionSpec{Name: "My API"},
+			},
+			want: false,
+		},
+		{
+			name: "Checking one nil and one non-nil ApiDefinitionSpec objects ",
+			args: args{
+				apiDef1: &model.APIDefinitionSpec{},
+				apiDef2: &model.APIDefinitionSpec{Name: "My API"},
+			},
+			want: false,
+		},
+		{
+			name: "Checking whether ID field is ignored",
+			args: args{
+				apiDef1: &model.APIDefinitionSpec{ID: "sample"},
+				apiDef2: &model.APIDefinitionSpec{ID: "different"},
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isSameApiDefinition(tt.args.apiDef1, tt.args.apiDef2); got != tt.want {
+				t.Errorf("isSameApiDefinition() = %v, want %v", got, tt.want)
 			}
 		})
 	}

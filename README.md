@@ -90,7 +90,6 @@ spec:
   use_keyless: true
   protocol: http
   active: true
-  org_id: acme.com
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin

@@ -26,14 +26,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
-	tykclient "github.com/TykTechnologies/tyk-operator/pkg/client"
+	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
-	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -133,14 +134,18 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if err := r.processCertificateReferences(ctx, &env, log, upstreamRequestStruct); err != nil {
 			return err
 		}
+		desired.Spec.Certificates = upstreamRequestStruct.Spec.Certificates
 
 		r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
+		desired.Spec.UpstreamCertificates = upstreamRequestStruct.Spec.UpstreamCertificates
 
 		// Check Pinned Public keys
 		r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
+		desired.Spec.PinnedPublicKeys = upstreamRequestStruct.Spec.PinnedPublicKeys
 
 		if desired.Spec.UseMutualTLSAuth {
 			r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
+			desired.Spec.ClientCertificates = upstreamRequestStruct.Spec.ClientCertificates
 		}
 
 		// Check GraphQL Federation
@@ -392,6 +397,18 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 			"Failed to create ApiDefinition on Tyk",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
+
+		return err
+	}
+
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to hot-reload Tyk after creating the ApiDefinition",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
+
 		return err
 	}
 
@@ -414,17 +431,6 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	err = klient.Universal.HotReload(ctx)
-	if err != nil {
-		r.Log.Error(
-			err,
-			"Failed to hot-reload Tyk after creating the ApiDefinition",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
-
-		return err
-	}
-
 	return nil
 }
 
@@ -433,13 +439,33 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 	)
 
-	_, err := klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
 	if err != nil {
-		r.Log.Error(
-			err, "Failed to update ApiDefinition on Tyk",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
-		return err
+		_, err = klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+		if err != nil {
+			r.Log.Error(
+				err, "Failed to create ApiDefinition on Tyk",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
+
+			return err
+		}
+	} else {
+		// If we have same ApiDefinition on Tyk, we do not need to send Update and Hot Reload requests
+		// to Tyk. So, we can simply return to main reconciliation logic.
+		if isSameApiDefinition(&desired.Spec.APIDefinitionSpec, apiDefOnTyk) {
+			return nil
+		}
+
+		_, err = klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+		if err != nil {
+			r.Log.Error(
+				err, "Failed to update ApiDefinition on Tyk",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
+
+			return err
+		}
 	}
 
 	err = klient.Universal.HotReload(ctx)
@@ -572,7 +598,7 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 		r.Log.Info("Deleting an ApiDefinition from Tyk", "ApiDefinition ID", desired.Status.ApiID)
 
 		_, err = klient.Universal.Api().Delete(ctx, desired.Status.ApiID)
-		if err != nil && tykclient.IsNotFound(err) {
+		if err != nil && tykClient.IsNotFound(err) {
 			r.Log.Info(
 				"Ignoring nonexistent ApiDefinition on delete",
 				"api_id", desired.Status.ApiID,
@@ -1023,6 +1049,7 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		For(&tykv1alpha1.ApiDefinition{}).
 		Owns(&v1.Secret{}).
 		Watches(
