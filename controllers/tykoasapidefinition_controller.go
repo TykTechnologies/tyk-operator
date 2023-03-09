@@ -206,9 +206,9 @@ func getOasApiDefSpecWithoutIDs(data string) (string, error) {
 		delete(info.(map[string]interface{}), "dbId")
 	}
 
-	_, ok = info.(map[string]interface{})["id"]
+	_, ok = info.(map[string]interface{})["orgId"]
 	if ok {
-		delete(info.(map[string]interface{}), "id")
+		delete(info.(map[string]interface{}), "orgId")
 	}
 
 	cleanOasSpec, err := json.Marshal(oasApiDefSpec)
@@ -265,16 +265,13 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 }
 
 func (r *TykOASApiDefinitionReconciler) findOasApiDefDependingOnConfigMap(configMap client.Object) []reconcile.Request {
-	r.Log.Info("Andrei123 entered here1")
 	apiDefList := &tykv1alpha1.TykOASApiDefinitionList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(OasRefKey, configMap.GetName()),
 		Namespace:     configMap.GetNamespace(),
 	}
-	r.Log.Info("Andrei123 entered here2")
 
 	if err := r.List(context.TODO(), apiDefList, listOps); err != nil {
-		r.Log.Info("Andrei123 entered here3")
 		return []reconcile.Request{}
 	}
 
@@ -287,7 +284,6 @@ func (r *TykOASApiDefinitionReconciler) findOasApiDefDependingOnConfigMap(config
 			},
 		}
 	}
-	r.Log.Info("Andrei123 entered here4")
 
 	return requests
 }
@@ -300,7 +296,6 @@ func (r *TykOASApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error
 		OasRefKey,
 		func(rawObj client.Object) []string {
 			// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
-			r.Log.Info("Andrei456 entered here1")
 
 			apiDefDeployment, ok := rawObj.(*tykv1alpha1.TykOASApiDefinition)
 			if !ok {
@@ -308,22 +303,16 @@ func (r *TykOASApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error
 				return nil
 			}
 			if apiDefDeployment.Spec.OASRef == nil {
-				r.Log.Info("Andrei456 entered here2")
-
 				return nil
 			}
 
 			if apiDefDeployment.Spec.OASRef.Name == "" {
-				r.Log.Info("Andrei456 entered here3")
-
 				return nil
 			}
 
-			r.Log.Info("Andrei123456 " + apiDefDeployment.Spec.OASRef.Name)
 			return []string{apiDefDeployment.Spec.OASRef.Name}
 		})
 	if err != nil {
-		r.Log.Info("Andrei123456 " + err.Error())
 		return err
 	}
 
