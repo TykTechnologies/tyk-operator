@@ -371,7 +371,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: tyk-operator-controller-manager
   name: {{ include "tyk-operator-helm.fullname" . }}-controller-manager-metrics-service
   namespace: {{ .Release.Namespace }}
 spec:
@@ -380,7 +380,7 @@ spec:
     port: 8443
     targetPort: https
   selector:
-    control-plane: controller-manager
+    control-plane: tyk-operator-controller-manager
 ---
 apiVersion: v1
 kind: Service
@@ -392,20 +392,20 @@ spec:
   - port: 443
     targetPort: 9443
   selector:
-    control-plane: controller-manager
+    control-plane: tyk-operator-controller-manager
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: tyk-operator-controller-manager
   name: {{ include "tyk-operator-helm.fullname" . }}-controller-manager
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{default 1 .Values.replicaCount }}
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: tyk-operator-controller-manager
   template:
     metadata:
 {{- with .Values.podAnnotations }}
@@ -413,7 +413,7 @@ spec:
 {{- toYaml . | nindent 8 }}
 {{- end }}
       labels:
-        control-plane: controller-manager
+        control-plane: tyk-operator-controller-manager
     spec:
       containers:
       - args:
