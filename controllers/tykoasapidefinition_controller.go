@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/go-logr/logr"
@@ -137,15 +138,24 @@ func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(
 		return "", err
 	}
 
-	data, ok := cm.Data[tykOASDef.Spec.OASRef.KeyName]
-	if !ok {
-		err = errors.New("could not find OAS Spec in ConfigMap")
-		return "", err
-	}
+	var data string
+	if tykOASDef.Spec.OASRef != nil {
+		var ok bool
+		data, ok = cm.Data[tykOASDef.Spec.OASRef.KeyName]
+		if !ok {
+			err = errors.New("could not find OAS Spec in ConfigMap")
+			return "", err
+		}
 
-	if data == "" {
-		err = errors.New("OAS Spec is empty")
-		return "", err
+		if data == "" {
+			err = errors.New("OAS Spec is empty")
+			return "", err
+		}
+
+		data, err = getOasApiDefSpecWithoutIDs(data)
+		if err != nil {
+			return "", errors.New("cannot process oas spec in order to check if id and dbId exists")
+		}
 	}
 
 	id := tykOASDef.Status.ApiID
@@ -171,6 +181,42 @@ func (r *TykOASApiDefinitionReconciler) createOrUpdateTykOAS(
 	}
 
 	return id, nil
+}
+
+func getOasApiDefSpecWithoutIDs(data string) (string, error) {
+	oasApiDefSpec := make(map[string]interface{})
+
+	err := json.Unmarshal([]byte(data), &oasApiDefSpec)
+	if err != nil {
+		return "", errors.New("cannot unmarshall oasApiDef to map[string]interface{}")
+	}
+
+	xTykApiGateway, ok := oasApiDefSpec["x-tyk-api-gateway"]
+	if !ok {
+		return "", errors.New("oas spec is missing key x-tyk-api-gateway")
+	}
+
+	info, ok := xTykApiGateway.(map[string]interface{})["info"]
+	if !ok {
+		return "", errors.New("oas spec is missing child key info from x-tyk-api-gateway")
+	}
+
+	_, ok = info.(map[string]interface{})["dbId"]
+	if ok {
+		delete(info.(map[string]interface{}), "dbId")
+	}
+
+	_, ok = info.(map[string]interface{})["id"]
+	if ok {
+		delete(info.(map[string]interface{}), "id")
+	}
+
+	cleanOasSpec, err := json.Marshal(oasApiDefSpec)
+	if err != nil {
+		return "", errors.New("cannot marshall oasSpec after deleting id and dbId")
+	}
+
+	return string(cleanOasSpec), nil
 }
 
 func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *tykv1alpha1.TykOASApiDefinition) error {
@@ -219,13 +265,16 @@ func (r *TykOASApiDefinitionReconciler) delete(ctx context.Context, tykOASDef *t
 }
 
 func (r *TykOASApiDefinitionReconciler) findOasApiDefDependingOnConfigMap(configMap client.Object) []reconcile.Request {
+	r.Log.Info("Andrei123 entered here1")
 	apiDefList := &tykv1alpha1.TykOASApiDefinitionList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(OasRefKey, configMap.GetName()),
 		Namespace:     configMap.GetNamespace(),
 	}
+	r.Log.Info("Andrei123 entered here2")
 
 	if err := r.List(context.TODO(), apiDefList, listOps); err != nil {
+		r.Log.Info("Andrei123 entered here3")
 		return []reconcile.Request{}
 	}
 
@@ -238,6 +287,7 @@ func (r *TykOASApiDefinitionReconciler) findOasApiDefDependingOnConfigMap(config
 			},
 		}
 	}
+	r.Log.Info("Andrei123 entered here4")
 
 	return requests
 }
@@ -250,30 +300,35 @@ func (r *TykOASApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error
 		OasRefKey,
 		func(rawObj client.Object) []string {
 			// Extract the ConfigMap name from the ConfigDeployment Spec, if one is provided
+			r.Log.Info("Andrei456 entered here1")
+
 			apiDefDeployment, ok := rawObj.(*tykv1alpha1.TykOASApiDefinition)
 			if !ok {
 				r.Log.Info("Not OasApiDefinition")
 				return nil
 			}
 			if apiDefDeployment.Spec.OASRef == nil {
+				r.Log.Info("Andrei456 entered here2")
+
 				return nil
 			}
 
 			if apiDefDeployment.Spec.OASRef.Name == "" {
+				r.Log.Info("Andrei456 entered here3")
+
 				return nil
 			}
 
+			r.Log.Info("Andrei123456 " + apiDefDeployment.Spec.OASRef.Name)
 			return []string{apiDefDeployment.Spec.OASRef.Name}
 		})
 	if err != nil {
+		r.Log.Info("Andrei123456 " + err.Error())
 		return err
 	}
 
-	pred := predicate.GenerationChangedPredicate{}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.TykOASApiDefinition{}).
-		WithEventFilter(pred).
 		Watches(
 			&source.Kind{Type: &v1.ConfigMap{}},
 			handler.EnqueueRequestsFromMapFunc(r.findOasApiDefDependingOnConfigMap),

@@ -42,6 +42,8 @@ spec:
                   tykoasapidefinition_types.go to remove/update
                 properties:
                   key_name:
+                    description: The key at which the JSON for the OAS definition
+                      is found in the CRD
                     type: string
                   name:
                     description: k8s resource name
@@ -64,8 +66,8 @@ spec:
               api_id:
                 type: string
               linked_by_policies:
-                description: LinkedByPolicies is a list policies that references this
-                  api definition
+                description: LinkedByPolicies is a list of policies that references
+                  this OAS API definition
                 items:
                   properties:
                     name:
