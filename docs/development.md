@@ -61,8 +61,7 @@ This section will describe how you can set up local development environment for 
 Tyk Operator manages Tyk resources such as ApiDefinition or SecurityPolicy. In order to do that, 
 it needs to access your Tyk installation which can be any type of installation 
 ([tyk-headless](https://tyk.io/docs/tyk-oss/ce-helm-chart/), 
-[tyk-pro](https://tyk.io/docs/tyk-self-managed/tyk-helm-chart/) , 
-[tyk-hybrid](https://tyk.io/docs/4.0/tyk-cloud/environments-deployments/hybrid-gateways/#hybrid-gateways-in-a-kubernetes-cluster) 
+[tyk-pro](https://tyk.io/docs/tyk-self-managed/tyk-helm-chart/), 
 or [Tyk Cloud](https://tyk.io/docs/tyk-cloud/)).
 
 This guideline will go through how you can bootstrap a testing environment for Tyk Operator, including the deployment of 
@@ -71,7 +70,7 @@ Tyk Gateway / Dashboard and their dependencies (Redis or Mongo if you want to us
 <hr/>
 
 There are a couple of options to setting up development environment.
-You can either deploy Tyk Operator to Kubernetes cluster. Or, you can run Tyk Operator locally. 
+You can either deploy Tyk Operator to Kubernetes cluster or you can run Tyk Operator locally. 
 
 ### Deploying only Tyk Operator
 
@@ -96,8 +95,11 @@ Now, Tyk Operator is deployed in `tyk-operator-system` namespace with `ci` relea
 You can deploy fully functional environment for testing Tyk Operator by the using following command:
 
 ```shell
-make boot-ce IMG=tykio/tyk-operator:test
+TYK_VERSION=${TYK_VERSION} make boot-ce IMG=tykio/tyk-operator:test
 ```
+
+> By default, we deploy Tyk Gateway v4.3 by using [`tyk-headless`](https://tyk.io/docs/tyk-oss/ce-helm-chart/)
+chart.
 
 This will 
 - deploy `cert-manager`,
@@ -106,9 +108,6 @@ This will
 will be used by Tyk Operator to access the deployed Tyk Gateway.
 
 > The secret will contain required credentials mentioned [here](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-open-source).
-
-By default, we deploy Tyk Gateway v4.3 by using [`tyk-headless`](https://tyk.io/docs/tyk-oss/ce-helm-chart/)
-chart.
 
 #### Deploy Only Tyk Gateway
 
@@ -123,8 +122,8 @@ It is useful if your Tyk Operator is running on your local machine.
 
 In order to deploy Tyk Pro, you need a license.
 
-Set your license key inside an env var.
-```
+Set your license key as an environment variable.
+```bash
 export TYK_DB_LICENSEKEY=${REPLACE_WITH_YOUR_LICENSE}
 ```
 
@@ -137,7 +136,7 @@ This will
 - deploy [tyk-pro](https://tyk.io/docs/tyk-self-managed/tyk-helm-chart/) chart,
 - creates an organisation that you can use to log into your dashboard, 
   - By default, the username is `operator@example.com` and the password is `1234testing`.
-- setup secret that will be used by the operator to access the deployed dashboard.
+- setup secret that will be used by Tyk Operator to access the deployed dashboard.
 
 > The secret will contain required credentials mentioned [here](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#tyk-self-managed-hybrid).
 
@@ -169,7 +168,7 @@ This command will generate latest manifests (CRs, RBACs etc.) and run Tyk Operat
 
 Since Tyk Operator is not deployed on your cluster, it cannot access your Tyk installation.
 So, before setting up the credentials for `TYK_URL`, please make sure that your Tyk service is accessible
-in your local machine, please see [here](#check-if-the-environment-is-working) for details.
+in your local machine. Please see [here](#check-if-the-environment-is-working) for details.
 
 ### Specify Tyk Version
 
@@ -185,6 +184,10 @@ This will bootstrap Tyk Gateway v3.2.
 
 ### Check Tyk Operator logs
 
+```bash
+make log
+```
+which runs the following command for you,
 ```bash
 kubectl logs <tyk-controller-manager-pod-name> -n tyk-operator-system manager
 ```
