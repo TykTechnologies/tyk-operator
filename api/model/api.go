@@ -518,7 +518,7 @@ type OpenIDOptions struct {
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
 	// For server use only, do not use
-	ID string `json:"id,omitempty"`
+	ID string `json:"id,omitempty" hash:"ignore"`
 
 	// Only set this field if you are referring
 	// to an existing API def.
@@ -581,7 +581,7 @@ type APIDefinitionSpec struct {
 	// UseMutualTLSAuth enables mututal TLS authentication
 	UseMutualTLSAuth      bool     `json:"use_mutual_tls_auth,omitempty"`
 	ClientCertificates    []string `json:"client_certificates,omitempty"`
-	ClientCertificateRefs []string `json:"client_certificate_refs,omitempty"`
+	ClientCertificateRefs []string `json:"client_certificate_refs,omitempty" hash:"ignore"`
 
 	// PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in
 	// case an upstream certificate is compromised. Please use PinnedPublicKeysRefs if using cert-manager.
@@ -589,7 +589,7 @@ type APIDefinitionSpec struct {
 
 	// PinnedPublicKeysRefs allows you to specify public keys using k8s secret.
 	// It takes domain name as a key and secret name as a value.
-	PinnedPublicKeysRefs map[string]string `json:"pinned_public_keys_refs,omitempty"`
+	PinnedPublicKeysRefs map[string]string `json:"pinned_public_keys_refs,omitempty" hash:"ignore"`
 
 	// UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk
 	// Gateway to provide mTLS support for upstreams
@@ -597,7 +597,7 @@ type APIDefinitionSpec struct {
 
 	// UpstreamCertificateRefs is a map of domains and secret names that is used internally
 	// to obtain certificates from secrets in order to establish mTLS support for upstreams
-	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty"`
+	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty" hash:"ignore"`
 
 	// EnableJWT set JWT as the access method for this API.
 	EnableJWT bool `json:"enable_jwt,omitempty"`
