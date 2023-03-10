@@ -215,6 +215,7 @@
         }
     },
     "custom_middleware_bundle": "",
+    "overwrite_custom_middleware_bundle": false,
     "cache_options": {
         "cache_timeout": 0,
         "enable_cache": false,
