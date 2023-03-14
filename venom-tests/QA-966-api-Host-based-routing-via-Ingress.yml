@@ -1,0 +1,56 @@
+name: Test Host name based routing(http) via Ingress
+testcases:
+- name: Create API template
+  steps:
+  - type: applyManifests
+    filename: "samples/Ingress/apidefinition_template.yaml"
+    sleepTime: 0
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Create API via Ingress
+  steps:
+  - type: applyManifests
+    filename: "samples/Ingress/ingress.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test path only routing
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/pathonly/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+# please add the hostname entry for httpbin.tyk.io in etc/hosts file
+- name: Test path and host routing
+  steps:
+    - type: http
+      method: GET
+      url: http://httpbin.tyk.io:8080/httpbin/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+# please add the hostname entry for httpbin.tyk.io in etc/hosts file
+- name: Test host only routing
+  steps:
+    - type: http
+      method: GET
+      url: http://httpbin.tyk.io:8080/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/ingress/ingress-httpbin/ingress.yaml
+      assertions:
+      - result.code ShouldEqual 0
+
+- name: Delete API template
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/ingress/ingress-httpbin/apidefinition_template.yaml
+      assertions:
+      - result.code ShouldEqual 0

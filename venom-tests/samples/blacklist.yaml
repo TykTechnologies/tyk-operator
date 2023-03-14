@@ -1,0 +1,16 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-blacklist
+spec:
+  name: httpbin-blacklist
+  use_keyless: true
+  protocol: http
+  active: true
+  enable_ip_blacklisting: true
+  blacklisted_ips:
+    - 127.0.0.2
+  proxy:
+    target_url: http://httpbin.default.svc:8000
+    listen_path: /httpbin-blacklist
+    strip_listen_path: true

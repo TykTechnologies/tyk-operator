@@ -1,11 +1,11 @@
 executor: applyManifests
 input:
   filename: {}
+  sleepTime: 20
 steps: 
   - type: exec
     script: |
-      kubectl apply -f '{{.input.filename}}'
-      sleep 20
+      kubectl apply -f '{{.input.filename}}' && sleep {{.input.sleepTime}}
     assertions:
     - result.code ShouldEqual 0
 output:

@@ -32,6 +32,271 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+// deleteApiDefinitionFromTyk sends a Tyk API call to delete ApiDefinition with given ID.
+func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
+	err := wait.For(func() (done bool, err error) {
+		_, err = klient.Universal.Api().Delete(ctx, id)
+		if err != nil {
+			return false, err
+		}
+
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
+}
+
+// TestDeletingNonexistentAPI tests if deleting nonexistent resources cause an error or not on k8s level.
+// Assume that the user deleted ApiDefinition resource from Tyk instead of deleting it via kubectl.
+// This will create a drift between Tyk and K8s. Deleting the same resource from k8s shouldn't cause any
+// external API errors such as 404.
+func TestDeletingNonexistentAPI(t *testing.T) {
+	var (
+		eval   = is.New(t)
+		tykCtx context.Context
+		tykEnv environmet.Env
+	)
+
+	testDeletingNonexistentAPIs := features.New("Deleting Nonexistent APIs from k8s").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			return ctx
+		}).
+		Assess("Delete nonexistent ApiDefinition from k8s successfully",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				// To begin with, delete the ApiDefinition from Tyk, which is the wrong thing to do because it'll
+				// cause a drift between k8s and Tyk. Now, deleting ApiDefinition CR from k8s,
+				// `kubectl delete tykapis <resource_name>`, must be handled gracefully.
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// First, create the ApiDefinition
+				apiDefCR, err := createTestAPIDef(ctx, c, testNs, func(apiDef *v1alpha1.ApiDefinition) {})
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
+				err = deleteApiDefinitionFromTyk(tykCtx, apiDefCR.Status.ApiID)
+				eval.NoErr(err)
+
+				err = c.Client().Resources(testNs).Delete(ctx, apiDefCR)
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceDeleted(apiDefCR),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testDeletingNonexistentAPIs)
+}
+
+// TestReconcileNonexistentAPI tests whether reconciliation finishes successfully if ApiDefinition
+// does not exist on Tyk. Reconciliation logic must handle API calls to Tyk Gateway / Dashboard for
+// nonexistent ApiDefinitions and create it if needed. So that, the k8s remains as source of truth.
+func TestReconcileNonexistentAPI(t *testing.T) {
+	var (
+		eval   = is.New(t)
+		tykCtx context.Context
+		tykEnv environmet.Env
+		r      controllers.ApiDefinitionReconciler
+	)
+
+	testReconcilingNonexistentAPIs := features.New("Reconciling Nonexistent ApiDefinition CRs").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			// Create ApiDefinition Reconciler.
+			cl, err := createTestClient(c.Client())
+			eval.NoErr(err)
+
+			r = controllers.ApiDefinitionReconciler{
+				Client: cl,
+				Log:    log.NullLogger{},
+				Scheme: cl.Scheme(),
+				Env:    tykEnv,
+			}
+
+			return ctx
+		}).
+		Assess("Create a drift between Tyk and k8s by deleting an ApiDefinition from Tyk",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				// To begin with, we should create a drift between Tyk and K8s. In order to do that
+				// first create an ApiDefinition, then delete it from Tyk via Tyk API calls. The next
+				// reconciliation request must understand nonexistent entity and create it from scratch.
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// First, create the ApiDefinition.
+				apiDefCR, err := createTestAPIDef(ctx, c, testNs, nil)
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
+				// Here, we create a drift between Tyk and k8s. Although the resource is created on k8s,
+				// we manually delete it from Tyk. Since the k8s is unaware of this change, this scenario
+				// causes drift between them.
+				err = deleteApiDefinitionFromTyk(tykCtx, apiDefCR.Status.ApiID)
+				eval.NoErr(err)
+
+				// Ensure that the resource does not exist on Tyk.
+				err = wait.For(func() (done bool, err error) {
+					_, err = klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
+					if err != nil {
+						return true, nil
+					}
+
+					// TODO(buraksekili): API should return 404 in case of nonexistent resource deletion.
+					// Because the response may contain other types of errors.
+					//	if tykClient.IsNotFound(err) {
+					//		return true, nil
+					//	}
+
+					return false, err
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				// Now, send a reconciliation request to Operator. In the next reconciliation request, the operator
+				// must understand the change between Tyk and K8s and create nonexistent ApiDefinition again based
+				// on k8s state.
+				err = wait.For(func() (done bool, err error) {
+					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
+					return err == nil, err
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				// Ensure that the resource is recreated after reconciliation.
+				err = wait.For(func() (done bool, err error) {
+					_, err = klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
+					return err == nil, err
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testReconcilingNonexistentAPIs)
+}
+
+// TestApiDefinitionUpdate tests if changes in ApiDefinition CR updates corresponding ApiDefinition on Tyk.
+func TestApiDefinitionUpdate(t *testing.T) {
+	var (
+		opNs        = "tyk-operator-system"
+		eval        = is.New(t)
+		tykCtx      context.Context
+		tykEnv      environmet.Env
+		updatedName = "updatedName"
+	)
+
+	testApiDefinitionUpdate := features.New("Updating ApiDefinition CRs on k8s").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			return ctx
+		}).
+		Assess("Update ApiDefinition and check changes in k8s and Tyk",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// First, create the ApiDefinition
+				apiDefCR, err := createTestAPIDef(ctx, c, testNs, func(apiDef *v1alpha1.ApiDefinition) {})
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
+				apiDefCR.Spec.Name = updatedName
+
+				// Update ApiDefinition
+				err = c.Client().Resources(opNs).Update(ctx, apiDefCR)
+				eval.NoErr(err)
+
+				// Ensure that k8s state is updated.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						return apiDefObj.Spec.Name == updatedName
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// Ensure that Tyk is updated
+				err = wait.For(func() (done bool, err error) {
+					apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
+					if err != nil {
+						return false, err
+					}
+
+					if apiDefOnTyk.Name != updatedName {
+						return false, fmt.Errorf(
+							"ApiDefinition is not updated properly, expected %v, got %v",
+							updatedName, apiDefOnTyk.Name,
+						)
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testApiDefinitionUpdate)
+}
+
 func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 	var (
 		apiDefWithJSONValidationName = "apidef-json-validation"
@@ -482,18 +747,11 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 func TestApiDefinitionCertificatePinning(t *testing.T) {
 	var (
-		apiDefPinning = "apidef-certificate-pinning"
-
-		apiDefPinningViaSecret           = "apidef-with-secret"
-		apiDefPinningViaSecretListenPath = "/secret"
-
-		invalidApiDef           = "invalid-proxy-apidef"
-		invalidApiDefListenPath = "/invalid"
-
+		eval       = is.New(t)
+		tykCtx     context.Context
+		apiDef     *v1alpha1.ApiDefinition
 		secretName = "secret"
-
-		publicKeyID = "test-public-key-id"
-		pubKeyPem   = []byte(`-----BEGIN PUBLIC KEY-----
+		pubKeyPem  = []byte(`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyoiVyRRffvWcc/kQJj4h
 tRPZeafPYAZzCgd9tQfQmtCJXWDAynL3slPfhAAuO0vWxyNHTTELbCHxD43nPgST
 7HUwG/ZjsrY03+M4IaEiBvN53OsnJ5UekmH2G04HTZdsApoc9OSb+4aBGlkISsNx
@@ -505,17 +763,15 @@ pwIDAQAB
 	)
 
 	adCreate := features.New("Create ApiDefinition objects for Certificate Pinning").
-		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
-			client := envConf.Client()
-			eval := is.New(t)
 
-			// Create an ApiDefinition with Certificate Pinning using 'pinned_public_keys' field.
-			// It contains a dummy public key which is not valid to be used.
-			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				apiDef.Name = apiDefPinning
-				apiDef.Spec.PinnedPublicKeys = map[string]string{"*": publicKeyID}
-			})
+			opConfSecret := v1.Secret{}
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
 			// Create a secret to store the public key of httpbin.org.
@@ -528,7 +784,7 @@ pwIDAQAB
 				Data: map[string][]byte{"tls.crt": pubKeyPem, "tls.key": []byte("")},
 			}
 
-			err = client.Resources(testNS).Create(ctx, secret)
+			err = c.Client().Resources(testNS).Create(ctx, secret)
 			eval.NoErr(err)
 
 			// For all domains (`*`), use following secret that contains the public key of the httpbin.org
@@ -537,83 +793,58 @@ pwIDAQAB
 			publicKeySecrets := map[string]string{"*": secretName}
 
 			// Create an ApiDefinition with Certificate Pinning using Kubernetes Secret object.
-			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				apiDef.Name = apiDefPinningViaSecret
-				apiDef.Spec.Name = "valid"
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefPinningViaSecretListenPath,
-					TargetURL:       "https://httpbin.org/",
-					StripListenPath: true,
-				}
+			apiDef, err = createTestAPIDef(ctx, c, testNS, func(apiDef *v1alpha1.ApiDefinition) {
 				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
 			})
 			eval.NoErr(err)
 
-			// Create an invalid ApiDefinition with Certificate Pinning using Kubernetes Secret object.
-			// Although this ApiDefinition has a Public Key of httpbin.org for all domains, this ApiDefinition will try
-			// to reach github.com, which must fail due to proxy error.
-			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				apiDef.Name = invalidApiDef
-				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      invalidApiDefListenPath,
-					TargetURL:       "https://github.com/",
-					StripListenPath: true,
-				}
-				apiDef.Spec.Name = "invalid"
-				apiDef.Spec.PinnedPublicKeysRefs = publicKeySecrets
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
 			})
-			eval.NoErr(err)
 
 			return ctx
 		}).
-		Assess("Allow making requests based on the pinned public key defined via secret",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				err := wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s%s", gatewayLocalhost, apiDefPinningViaSecretListenPath),
-						nil,
-					)
-					eval.NoErr(err)
-
-					resp, err := hc.Do(req)
-					eval.NoErr(err)
-
-					if resp.StatusCode != 200 {
-						t.Log("expected to access httpbin.org since it is pinned via public key.")
-						return false, nil
-					}
-
-					return true, nil
-				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+		Assess("Ensure that the secret is created on Tyk and linked to ApiDefinition",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				// Wait until ApiDefinition is created on Tyk.
+				err := waitForTykResourceCreation(c, apiDef)
 				eval.NoErr(err)
 
-				return ctx
-			}).
-		Assess("Prevent making requests to disallowed addresses based on the pinned public key defined via secret",
-			func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-				eval := is.New(t)
-				err := wait.For(func() (done bool, err error) {
-					hc := &http.Client{}
-					req, err := http.NewRequest(
-						http.MethodGet,
-						fmt.Sprintf("%s%s", gatewayLocalhost, invalidApiDefListenPath),
-						nil,
-					)
-					eval.NoErr(err)
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDef, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
 
-					resp, err := hc.Do(req)
-					eval.NoErr(err)
+						tykCertID, exists := apiDefObj.Spec.PinnedPublicKeys["*"]
+						eval.True(exists)
 
-					if resp.StatusCode == 200 {
-						t.Log("unexpected access to invalid address")
-						return false, nil
-					}
+						if !klient.Universal.Certificate().Exists(tykCtx, tykCertID) {
+							t.Logf("failed to access certificate with ID %v on Tyk", tykCertID)
+							return false
+						}
 
-					return true, nil
-				}, wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
+						apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefObj.Status.ApiID)
+						eval.NoErr(err)
+
+						certIdOfApi, exists := apiDefOnTyk.PinnedPublicKeys["*"]
+						eval.True(exists)
+
+						if certIdOfApi != tykCertID {
+							t.Logf(
+								"The cert ID linked to ApiDefinition is wrong, expected %v, got %v",
+								tykCertID,
+								certIdOfApi,
+							)
+
+							eval.True(certIdOfApi != tykCertID)
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
 				eval.NoErr(err)
 
 				return ctx
@@ -627,7 +858,6 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 	var (
 		apiDefUpstreamCerts = "apidef-upstream-certs"
 		defaultVersion      = "Default"
-		opNs                = "tyk-operator-system"
 		certName            = "test-tls-secret-name"
 
 		tykEnv environmet.Env
@@ -641,7 +871,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
 
 			opConfSecret := v1.Secret{}
-			err := envConf.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
@@ -714,7 +944,6 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 	var (
 		apiDefBasicAuth = "apidef-basic-authentication"
 		defaultVersion  = "Default"
-		opNs            = "tyk-operator-system"
 
 		eval   = is.New(t)
 		reqCtx context.Context
@@ -726,7 +955,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 			client := envConf.Client()
 			opConfSecret := v1.Secret{}
 
-			err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := client.Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
@@ -799,7 +1028,6 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 		apiDefClientMTLSWithCert    = "apidef-client-mtls-with-cert"
 		apiDefClientMTLSWithoutCert = "apidef-client-mtls-without-cert"
 		defaultVersion              = "Default"
-		opNs                        = "tyk-operator-system"
 		certName                    = "test-tls-secret-name"
 
 		certIDCtxKey ContextKey = "certID"
@@ -813,7 +1041,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			client := envConf.Client()
 
 			opConfSecret := v1.Secret{}
-			err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := client.Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			tykEnv, err = generateEnvConfig(&opConfSecret)
@@ -948,7 +1176,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				testNS := ctx.Value(ctxNSKey).(string) //nolint:errcheck
 
 				opConfSecret := v1.Secret{}
-				err := client.Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+				err := client.Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 				eval.NoErr(err)
 
 				var apiDef *model.APIDefinitionSpec
@@ -1030,22 +1258,20 @@ func TestAPIDefinition_GraphQL_ExecutionMode(t *testing.T) {
 }
 
 func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
-	const (
-		opNs = "tyk-operator-system"
+	const supportedMajorTykVersion = uint(4)
 
-		supportedMajorTykVersion = uint(4)
+	var (
+		tykEnv          = environmet.Env{}
+		majorTykVersion = supportedMajorTykVersion
+		r               = controllers.ApiDefinitionReconciler{}
 	)
-
-	tykEnv := environmet.Env{}
-	majorTykVersion := supportedMajorTykVersion
-	r := &controllers.ApiDefinitionReconciler{}
 
 	gqlSubGraph := features.New("GraphQL SubGraph Execution mode").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			eval := is.New(t)
 			opConfSecret := v1.Secret{}
 
-			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			// Obtain Environment configuration to be able to connect Tyk.
@@ -1062,7 +1288,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 			// Create ApiDefinition Reconciler.
 			cl, err := createTestClient(c.Client())
 			eval.NoErr(err)
-			r = &controllers.ApiDefinitionReconciler{
+			r = controllers.ApiDefinitionReconciler{
 				Client: cl,
 				Log:    log.NullLogger{},
 				Scheme: cl.Scheme(),

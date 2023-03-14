@@ -1,0 +1,34 @@
+name: Test IP Blacklisting
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/blacklist.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test Blacklist IP address with blacklisted IP
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-blacklist/headers
+      headers:
+        "X-Real-IP": "127.0.0.2"    
+      assertions:
+      - result.statuscode ShouldEqual 403
+      - result.bodyjson.error ShouldContainSubstring access from this IP has been disallowed
+
+- name: Test Blacklist IP address without blacklisted IP
+  steps:      
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-blacklist/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../bdd/custom_resources/ip/blacklist.yaml
+      assertions:
+      - result.code ShouldEqual 0

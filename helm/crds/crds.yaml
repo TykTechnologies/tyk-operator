@@ -35,20 +35,15 @@ spec:
         description: ApiDefinition is the Schema for the apidefinitions API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: APIDefinition represents the configuration for a single proxied
-              API and it's versions.
+            description: APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
             properties:
               CORS:
                 properties:
@@ -56,14 +51,12 @@ spec:
                     description: AllowCredentials if true will allow cookies
                     type: boolean
                   allowed_headers:
-                    description: AllowedHeaders are headers that are allowed within
-                      a request.
+                    description: AllowedHeaders are headers that are allowed within a request.
                     items:
                       type: string
                     type: array
                   allowed_methods:
-                    description: AllowedMethods is a list of methods to allow access
-                      via.
+                    description: AllowedMethods is a list of methods to allow access via.
                     items:
                       description: HttpMethod represents HTTP request method
                       enum:
@@ -79,22 +72,18 @@ spec:
                       type: string
                     type: array
                   allowed_origins:
-                    description: AllowedOrigins is a list of origin domains to allow
-                      access from.
+                    description: AllowedOrigins is a list of origin domains to allow access from.
                     items:
                       type: string
                     type: array
                   debug:
-                    description: Debug if true, this option produces log files for
-                      the CORS middleware
+                    description: Debug if true, this option produces log files for the CORS middleware
                     type: boolean
                   enable:
-                    description: Enable when set to true it enables the cors middleware
-                      for the api
+                    description: Enable when set to true it enables the cors middleware for the api
                     type: boolean
                   exposed_headers:
-                    description: ExposedHeaders is a list of headers that are exposed
-                      back in the response.
+                    description: ExposedHeaders is a list of headers that are exposed back in the response.
                     items:
                       type: string
                     type: array
@@ -102,30 +91,19 @@ spec:
                     description: MaxAge is the maximum age of credentials
                     type: integer
                   options_passthrough:
-                    description: OptionsPassthrough allow CORS OPTIONS preflight request
-                      to be proxied directly to upstream, without authentication and
-                      rest of checks. This means that pre-flight requests generated
-                      by web-clients such as SwaggerUI or the Tyk Portal documentation
-                      system will be able to test the API using trial keys. If your
-                      service handles CORS natively, then enable this option.
+                    description: OptionsPassthrough allow CORS OPTIONS preflight request to be proxied directly to upstream, without authentication and rest of checks. This means that pre-flight requests generated by web-clients such as SwaggerUI or the Tyk Portal documentation system will be able to test the API using trial keys. If your service handles CORS natively, then enable this option.
                     type: boolean
                 type: object
               active:
                 description: Active specifies if the api is enabled or not
                 type: boolean
               allowed_ips:
-                description: AllowedIPs is a list of IP address that are whitelisted.When
-                  this is provided all IP address that is not on this list will be
-                  blocked and a 403 http status will be returned. The IP address can
-                  be IPv4 or IPv6.IP in CIDR notation is also supported.
+                description: AllowedIPs is a list of IP address that are whitelisted.When this is provided all IP address that is not on this list will be blocked and a 403 http status will be returned. The IP address can be IPv4 or IPv6.IP in CIDR notation is also supported.
                 items:
                   type: string
                 type: array
               api_id:
-                description: 'Only set this field if you are referring to an existing
-                  API def. The Operator will use this APIID to link the CR with the
-                  API in Tyk Note: The values in the CR will become the new source
-                  of truth, overriding the existing API Definition'
+                description: 'Only set this field if you are referring to an existing API def. The Operator will use this APIID to link the CR with the API in Tyk Note: The values in the CR will become the new source of truth, overriding the existing API Definition'
                 type: string
               auth:
                 properties:
@@ -214,33 +192,25 @@ spec:
                   type: object
                 type: object
               blacklisted_ips:
-                description: BlacklistedIPs is a list of IP address that will be blacklisted.This
-                  means if origin IP matches any IP in this list a 403 http status
-                  code will be returned. The IP address can be IPv4 or IPv6. IP in
-                  CIDR notation is also supported.
+                description: BlacklistedIPs is a list of IP address that will be blacklisted.This means if origin IP matches any IP in this list a 403 http status code will be returned. The IP address can be IPv4 or IPv6. IP in CIDR notation is also supported.
                 items:
                   type: string
                 type: array
               cache_options:
                 properties:
                   cache_all_safe_requests:
-                    description: CacheAllSafeRequests caches responses to (GET, HEAD,
-                      OPTIONS) requests overrides per-path cache settings in versions,
-                      applies across versions
+                    description: CacheAllSafeRequests caches responses to (GET, HEAD, OPTIONS) requests overrides per-path cache settings in versions, applies across versions
                     type: boolean
                   cache_by_headers:
-                    description: CacheByHeaders allows header values to be used as
-                      part of the cache key
+                    description: CacheByHeaders allows header values to be used as part of the cache key
                     items:
                       type: string
                     type: array
                   cache_control_ttl_header:
-                    description: CacheControlTTLHeader is the response header which
-                      tells Tyk how long it is safe to cache the response for
+                    description: CacheControlTTLHeader is the response header which tells Tyk how long it is safe to cache the response for
                     type: string
                   cache_response_codes:
-                    description: CacheOnlyResponseCodes is an array of response codes
-                      which are safe to cache. e.g. 404
+                    description: CacheOnlyResponseCodes is an array of response codes which are safe to cache. e.g. 404
                     items:
                       type: integer
                     type: array
@@ -249,27 +219,21 @@ spec:
                     format: int64
                     type: integer
                   enable_cache:
-                    description: EnableCache turns global cache middleware on or off.
-                      It is still possible to enable caching on a per-path basis by
-                      explicitly setting the endpoint cache middleware. see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
+                    description: EnableCache turns global cache middleware on or off. It is still possible to enable caching on a per-path basis by explicitly setting the endpoint cache middleware. see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
                     type: boolean
                   enable_upstream_cache_control:
-                    description: EnableUpstreamCacheControl instructs Tyk Cache to
-                      respect upstream cache control headers
+                    description: EnableUpstreamCacheControl instructs Tyk Cache to respect upstream cache control headers
                     type: boolean
                 required:
                 - cache_timeout
                 type: object
               certificate_secret_names:
-                description: CertificateSecretNames represents the names of the secrets
-                  that the controller should look for in the current namespace which
-                  contain the certificates.
+                description: CertificateSecretNames represents the names of the secrets that the controller should look for in the current namespace which contain the certificates.
                 items:
                   type: string
                 type: array
               certificates:
-                description: Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint.
-                  Use CertificateSecretNames if using cert-manager
+                description: Certificates is a list of Tyk Certificate IDs. e.g. orgid+fingerprint. Use CertificateSecretNames if using cert-manager
                 items:
                   type: string
                 type: array
@@ -282,23 +246,18 @@ spec:
                   type: string
                 type: array
               config_data:
-                description: ConfigData can be used to pass custom attributes (a JSON
-                  object) into your middleware, such as a virtual endpoint or header
-                  transform.
+                description: ConfigData can be used to pass custom attributes (a JSON object) into your middleware, such as a virtual endpoint or header transform.
                 nullable: true
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               contextRef:
-                description: Context specify namespace/name of the OperatorContext
-                  object used for reconciling this APIDefinition
+                description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
                 properties:
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
-                      When omitted this will be set to the namespace of the object
-                      that is being reconciled.
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -426,32 +385,24 @@ spec:
                 - strip_path
                 type: object
               disable_quota:
-                description: DisableQuota allows you to disable quota middleware in
-                  a given API Definition.
+                description: DisableQuota allows you to disable quota middleware in a given API Definition.
                 type: boolean
               disable_rate_limit:
-                description: DisableRateLimit allows you to disable rate limits in
-                  a given API Definition.
+                description: DisableRateLimit allows you to disable rate limits in a given API Definition.
                 type: boolean
               do_not_track:
                 description: DoNotTrack disables endpoint tracking for this API
                 type: boolean
               domain:
-                description: Domain represents a custom host header that the gateway
-                  will listen on for this API
+                description: Domain represents a custom host header that the gateway will listen on for this API
                 type: string
               enable_context_vars:
-                description: EnableContextVars extracts request context variables
-                  from the start of the middleware chain. Set this to true to make
-                  them available to your transforms. Context Variables are available
-                  in the url rewriter, modify headers and body transforms.
+                description: EnableContextVars extracts request context variables from the start of the middleware chain. Set this to true to make them available to your transforms. Context Variables are available in the url rewriter, modify headers and body transforms.
                 type: boolean
               enable_coprocess_auth:
                 type: boolean
               enable_detailed_recording:
-                description: EnableDetailedRecording instructs Tyk store the inbound
-                  request and outbound response data in HTTP Wire format as part of
-                  the Analytics data
+                description: EnableDetailedRecording instructs Tyk store the inbound request and outbound response data in HTTP Wire format as part of the Analytics data
                 type: boolean
               enable_ip_blacklisting:
                 description: EnableIPBlacklisting activates the ip blacklisting middleware.
@@ -465,41 +416,32 @@ spec:
               enable_proxy_protocol:
                 type: boolean
               global_rate_limit:
-                description: GlobalRateLimit is an API Level Global Rate Limit, which
-                  assesses all traffic coming into the API from all sources and ensures
-                  that the overall rate limit is not exceeded.
+                description: GlobalRateLimit is an API Level Global Rate Limit, which assesses all traffic coming into the API from all sources and ensures that the overall rate limit is not exceeded.
                 properties:
                   per:
                     description: Per represents a time window in seconds
                     type: integer
                   rate:
-                    description: Rate represents the number of requests allowed within
-                      a specified time window (Per)
+                    description: Rate represents the number of requests allowed within a specified time window (Per)
                     type: integer
                 required:
                 - per
                 - rate
                 type: object
               graphql:
-                description: GraphQLConfig is the root config object for a GraphQL
-                  API.
+                description: GraphQLConfig is the root config object for a GraphQL API.
                 properties:
                   enabled:
                     description: Enabled indicates if GraphQL proxy should be enabled.
                     type: boolean
                   engine:
-                    description: Engine holds the configuration for engine v2 and
-                      upwards.
+                    description: Engine holds the configuration for engine v2 and upwards.
                     properties:
                       data_sources:
                         items:
                           properties:
                             config:
-                              description: MapStringInterfaceType represents a generic
-                                struct used as a map[string]interface{}. Since an
-                                arbitrary JSON fields defined as map[string]interface{}
-                                is not feasible to use as a Kubernetes CRD, unstructured.Unstructured
-                                type is used.
+                              description: MapStringInterfaceType represents a generic struct used as a map[string]interface{}. Since an arbitrary JSON fields defined as map[string]interface{} is not feasible to use as a Kubernetes CRD, unstructured.Unstructured type is used.
                               type: object
                               x-kubernetes-preserve-unknown-fields: true
                             internal:
@@ -561,8 +503,7 @@ spec:
                     - field_configs
                     type: object
                   execution_mode:
-                    description: GraphQLExecutionMode is the mode to define how an
-                      api behaves.
+                    description: GraphQLExecutionMode is the mode to define how an api behaves.
                     enum:
                     - ""
                     - proxyOnly
@@ -573,20 +514,17 @@ spec:
                   graph_ref:
                     type: string
                   last_schema_update:
-                    description: LastSchemaUpdate contains the date and time of the
-                      last triggered schema update to the upstream.
+                    description: LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
                     format: date-time
                     type: string
                   playground:
                     description: GraphQLPlayground is the Playground specific configuration.
                     properties:
                       enabled:
-                        description: Enabled indicates if the playground should be
-                          enabled.
+                        description: Enabled indicates if the playground should be enabled.
                         type: boolean
                       path:
-                        description: Path sets the path on which the playground will
-                          be hosted if enabled.
+                        description: Path sets the path on which the playground will be hosted if enabled.
                         type: string
                     required:
                     - enabled
@@ -604,12 +542,10 @@ spec:
                     - auth_headers
                     type: object
                   schema:
-                    description: Schema is the GraphQL Schema exposed by the GraphQL
-                      API/Upstream/Engine.
+                    description: Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
                     type: string
                   subgraph:
-                    description: Subgraph holds the configuration for a GraphQL federation
-                      subgraph.
+                    description: Subgraph holds the configuration for a GraphQL federation subgraph.
                     properties:
                       sdl:
                         type: string
@@ -617,8 +553,7 @@ spec:
                     - sdl
                     type: object
                   supergraph:
-                    description: Supergraph holds the configuration for a GraphQL
-                      federation supergraph.
+                    description: Supergraph holds the configuration for a GraphQL federation supergraph.
                     properties:
                       disable_query_batching:
                         type: boolean
@@ -632,8 +567,7 @@ spec:
                         items:
                           properties:
                             api_id:
-                              description: UUID v4 string (!not the same as _id of
-                                APIDefinition)
+                              description: UUID v4 string (!not the same as _id of APIDefinition)
                               type: string
                             headers:
                               additionalProperties:
@@ -656,22 +590,18 @@ spec:
                           type: object
                         type: array
                       updated_at:
-                        description: UpdatedAt contains the date and time of the last
-                          update of a supergraph API.
+                        description: UpdatedAt contains the date and time of the last update of a supergraph API.
                         format: date-time
                         type: string
                     type: object
                   type_field_configurations:
-                    description: TypeFieldConfigurations is a rule set of data source
-                      and mapping of a schema field.
+                    description: TypeFieldConfigurations is a rule set of data source and mapping of a schema field.
                     items:
                       properties:
                         data_source:
                           properties:
                             data_source_config:
-                              description: Config is the DataSource specific configuration
-                                object Each Planner needs to make sure to parse their
-                                Config Object correctly
+                              description: Config is the DataSource specific configuration object Each Planner needs to make sure to parse their Config Object correctly
                               properties:
                                 body:
                                   type: string
@@ -682,8 +612,7 @@ spec:
                                     type: string
                                   type: array
                                 method:
-                                  description: HttpMethod represents HTTP request
-                                    method
+                                  description: HttpMethod represents HTTP request method
                                   enum:
                                   - GET
                                   - POST
@@ -713,9 +642,7 @@ spec:
                               - url
                               type: object
                             kind:
-                              description: Kind defines the unique identifier of the
-                                DataSource Kind needs to match to the Planner "DataSourceName"
-                                name
+                              description: Kind defines the unique identifier of the DataSource Kind needs to match to the Planner "DataSourceName" name
                               enum:
                               - GraphQLDataSource
                               - HTTPJSONDataSource
@@ -745,8 +672,7 @@ spec:
                       type: object
                     type: array
                   version:
-                    description: Version defines the version of the GraphQL config
-                      and engine to be used.
+                    description: Version defines the version of the GraphQL config and engine to be used.
                     enum:
                     - "1"
                     - "2"
@@ -759,65 +685,41 @@ spec:
                 description: For server use only, do not use
                 type: string
               internal:
-                description: Internal tells Tyk Gateway that this is a virtual API.
-                  It can only be routed to from other APIs.
+                description: Internal tells Tyk Gateway that this is a virtual API. It can only be routed to from other APIs.
                 type: boolean
               jwt_client_base_field:
-                description: JWTClientIDBaseField is the name of the field on JWT
-                  claim to use for client id. This field is mutually exclusive to
-                  jwt_identity_base_field, meaning you can only set/use one and jwt_identity_base_field
-                  takes precedence when both are set.
+                description: JWTClientIDBaseField is the name of the field on JWT claim to use for client id. This field is mutually exclusive to jwt_identity_base_field, meaning you can only set/use one and jwt_identity_base_field takes precedence when both are set.
                 type: string
               jwt_default_policies:
-                description: JWTDefaultPolicies is a list of policies that will be
-                  used when base policy can't be extracted from the JWT token. When
-                  this list is provided the first element will be used as the base
-                  policy while the rest of elements will be applied.
+                description: JWTDefaultPolicies is a list of policies that will be used when base policy can't be extracted from the JWT token. When this list is provided the first element will be used as the base policy while the rest of elements will be applied.
                 items:
                   type: string
                 type: array
               jwt_expires_at_validation_skew:
-                description: "JWTExpiresAtValidationSkew adds validation for  expired
-                  at JWT claim. Given \tnow = current unix time \tskew = jwt_expires_at_validation_skew
-                  \texp = expired at If exp > (now - skew) then validation will fail
-                  with \"token has expired\""
+                description: "JWTExpiresAtValidationSkew adds validation for  expired at JWT claim. Given \tnow = current unix time \tskew = jwt_expires_at_validation_skew \texp = expired at If exp > (now - skew) then validation will fail with \"token has expired\""
                 format: int64
                 type: integer
               jwt_identity_base_field:
-                description: JWTIdentityBaseField Identifies the user or identity
-                  to be used in the Claims of the JWT. This will fallback to sub if
-                  not found. This field forms the basis of a new “virtual” token that
-                  gets used after validation. It means policy attributes are carried
-                  forward through Tyk for attribution purposes.
+                description: JWTIdentityBaseField Identifies the user or identity to be used in the Claims of the JWT. This will fallback to sub if not found. This field forms the basis of a new “virtual” token that gets used after validation. It means policy attributes are carried forward through Tyk for attribution purposes.
                 type: string
               jwt_issued_at_validation_skew:
-                description: "JWTIssuedAtValidationSkew adds validation for  issued
-                  at JWT claim. Given \tnow = current unix time \tskew = jwt_issued_at_validation_skew
-                  \tiat = the issued at jwt claim If iat > (now + skew) then validation
-                  will fail with \"token used before issued\""
+                description: "JWTIssuedAtValidationSkew adds validation for  issued at JWT claim. Given \tnow = current unix time \tskew = jwt_issued_at_validation_skew \tiat = the issued at jwt claim If iat > (now + skew) then validation will fail with \"token used before issued\""
                 format: int64
                 type: integer
               jwt_not_before_validation_skew:
-                description: "JWTNotBeforeValidationSkew adds validation for  not
-                  before  JWT claim. Given \tnow = current unix time \tskew = jwt_not_before_validation_skew
-                  \tnbf = the not before  jwt claim If nbf > (now + skew) then validation
-                  will fail with \"token is not valid yet\""
+                description: "JWTNotBeforeValidationSkew adds validation for  not before  JWT claim. Given \tnow = current unix time \tskew = jwt_not_before_validation_skew \tnbf = the not before  jwt claim If nbf > (now + skew) then validation will fail with \"token is not valid yet\""
                 format: int64
                 type: integer
               jwt_policy_field_name:
-                description: JWTPolicyFieldName The policy ID to apply to the virtual
-                  token generated for a JWT
+                description: JWTPolicyFieldName The policy ID to apply to the virtual token generated for a JWT
                 type: string
               jwt_scope_claim_name:
-                description: JWTScopeClaimName overides the key used for scope values
-                  in the JWT claims. By default the value is "scope"
+                description: JWTScopeClaimName overides the key used for scope values in the JWT claims. By default the value is "scope"
                 type: string
               jwt_scope_to_policy_mapping:
                 additionalProperties:
                   type: string
-                description: JWTScopeToPolicyMapping this is a mapping of scope value
-                  to policy id. If this is set then a scope value found in this map
-                  will make the mappend policy to be applied.
+                description: JWTScopeToPolicyMapping this is a mapping of scope value to policy id. If this is set then a scope value found in this map will make the mappend policy to be applied.
                 type: object
               jwt_signing_method:
                 description: JWTSigningMethod algorithm used to sign jwt token
@@ -827,15 +729,10 @@ spec:
                 - ecdsa
                 type: string
               jwt_skip_kid:
-                description: JWTSkipKid when true we ingore using kid as the identity
-                  for a JWT token and instead use jwt_identity_base_field if it was
-                  set or fallback to sub JWT claim.
+                description: JWTSkipKid when true we ingore using kid as the identity for a JWT token and instead use jwt_identity_base_field if it was set or fallback to sub JWT claim.
                 type: boolean
               jwt_source:
-                description: JWTSource Must either be a base64 encoded valid RSA/HMAC
-                  key or a url to a resource serving JWK, this key will then be used
-                  to validate inbound JWT and throttle them according to the centralised
-                  JWT options and fields set in the configuration.
+                description: JWTSource Must either be a base64 encoded valid RSA/HMAC key or a url to a resource serving JWK, this key will then be used to validate inbound JWT and throttle them according to the centralised JWT options and fields set in the configuration.
                 type: string
               listen_port:
                 type: integer
@@ -844,8 +741,7 @@ spec:
               oauth_meta:
                 properties:
                   allowed_access_types:
-                    description: AllowedAccessTypes are an array of allowable access
-                      types.
+                    description: AllowedAccessTypes are an array of allowable access types.
                     items:
                       enum:
                       - authorization_code
@@ -855,9 +751,7 @@ spec:
                       type: string
                     type: array
                   allowed_authorize_types:
-                    description: AllowedAuthorizeTypes is an array of allowable `response_type`
-                      parameters `token` or authorization code `code`. Choose token
-                      for client_credentials or implicit grant types.
+                    description: AllowedAuthorizeTypes is an array of allowable `response_type` parameters `token` or authorization code `code`. Choose token for client_credentials or implicit grant types.
                     items:
                       enum:
                       - code
@@ -877,21 +771,15 @@ spec:
               pinned_public_keys:
                 additionalProperties:
                   type: string
-                description: PinnedPublicKeys allows you to whitelist public keys
-                  used to generate certificates, so you will be protected in case
-                  an upstream certificate is compromised. Please use PinnedPublicKeysRefs
-                  if using cert-manager.
+                description: PinnedPublicKeys allows you to whitelist public keys used to generate certificates, so you will be protected in case an upstream certificate is compromised. Please use PinnedPublicKeysRefs if using cert-manager.
                 type: object
               pinned_public_keys_refs:
                 additionalProperties:
                   type: string
-                description: PinnedPublicKeysRefs allows you to specify public keys
-                  using k8s secret. It takes domain name as a key and secret name
-                  as a value.
+                description: PinnedPublicKeysRefs allows you to specify public keys using k8s secret. It takes domain name as a key and secret name as a value.
                 type: object
               protocol:
-                description: APIProtocol is the network transport protocol supported
-                  by the gateway
+                description: APIProtocol is the network transport protocol supported by the gateway
                 enum:
                 - ""
                 - h2c
@@ -904,42 +792,22 @@ spec:
                 description: Proxy
                 properties:
                   check_host_against_uptime_tests:
-                    description: CheckHostAgainstUptimeTests will check the hostname
-                      of the outbound request against the downtime list generated
-                      by the uptime test host checker. If the host is found, then
-                      it is skipped or removed from the load balancer. This is only
-                      valid if uptime tests for the api are enabled.
+                    description: CheckHostAgainstUptimeTests will check the hostname of the outbound request against the downtime list generated by the uptime test host checker. If the host is found, then it is skipped or removed from the load balancer. This is only valid if uptime tests for the api are enabled.
                     type: boolean
                   disable_strip_slash:
-                    description: DisableStripSlash disables the stripping of the slash
-                      suffix from a URL. when `true` a request to http://foo.bar/baz/
-                      will be retained. when `false` a request to http://foo.bar/baz/
-                      will be matched to http://foo.bar/baz
+                    description: DisableStripSlash disables the stripping of the slash suffix from a URL. when `true` a request to http://foo.bar/baz/ will be retained. when `false` a request to http://foo.bar/baz/ will be matched to http://foo.bar/baz
                     type: boolean
                   enable_load_balancing:
-                    description: EnableLoadBalancing enables Tyk's round-robin loadbalancer.
-                      Tyk will ignore the TargetURL field, and rely on the hosts in
-                      the Targets list
+                    description: EnableLoadBalancing enables Tyk's round-robin loadbalancer. Tyk will ignore the TargetURL field, and rely on the hosts in the Targets list
                     type: boolean
                   listen_path:
-                    description: ListenPath represents the path to listen on. e.g.
-                      `/api` or `/` or `/httpbin`. Any requests coming into the host,
-                      on the port that Tyk is configured to run on, that match this
-                      path will have the rules defined in the API Definition applied.
-                      Versioning assumes that different versions of an API will live
-                      on the same URL structure. If you are using URL-based versioning
-                      (e.g. /v1/function, /v2/function) then it is recommended to
-                      set up a separate non-versioned definition for each version
-                      as they are essentially separate APIs.
+                    description: ListenPath represents the path to listen on. e.g. `/api` or `/` or `/httpbin`. Any requests coming into the host, on the port that Tyk is configured to run on, that match this path will have the rules defined in the API Definition applied. Versioning assumes that different versions of an API will live on the same URL structure. If you are using URL-based versioning (e.g. /v1/function, /v2/function) then it is recommended to set up a separate non-versioned definition for each version as they are essentially separate APIs.
                     type: string
                   preserve_host_header:
-                    description: If PreserveHostHeader is set to true then the host
-                      header in the outbound request is retained to be the inbound
-                      hostname of the proxy.
+                    description: If PreserveHostHeader is set to true then the host header in the outbound request is retained to be the inbound hostname of the proxy.
                     type: boolean
                   service_discovery:
-                    description: 'TODO: Untested. Is there a use-case for SD inside
-                      a K8s environment?'
+                    description: 'TODO: Untested. Is there a use-case for SD inside a K8s environment?'
                     properties:
                       cache_timeout:
                         format: int64
@@ -975,79 +843,56 @@ spec:
                     - use_target_list
                     type: object
                   strip_listen_path:
-                    description: StripListenPath removes the inbound listen path in
-                      the outgoing request. e.g. http://acme.com/httpbin/get where
-                      `httpbin` is the listen path. The `httpbin` listen path which
-                      is used to identify the API loaded in Tyk is removed, and the
-                      outbound request would be http://httpbin.org/get
+                    description: StripListenPath removes the inbound listen path in the outgoing request. e.g. http://acme.com/httpbin/get where `httpbin` is the listen path. The `httpbin` listen path which is used to identify the API loaded in Tyk is removed, and the outbound request would be http://httpbin.org/get
                     type: boolean
                   target_internal:
                     properties:
                       path:
-                        description: "Path path on target , this does not include
-                          query parameters. \texample /myendpoint"
+                        description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                         type: string
                       query:
-                        description: "Query url query string to add to target \texample
-                          check_limits=true"
+                        description: "Query url query string to add to target \texample check_limits=true"
                         type: string
                       target:
-                        description: API a namespaced/name to the api definition resource
-                          that you are targetting
+                        description: API a namespaced/name to the api definition resource that you are targetting
                         properties:
                           name:
                             description: k8s resource name
                             type: string
                           namespace:
-                            description: The k8s namespace of the resource being targetted.
-                              When omitted this will be set to the namespace of the
-                              object that is being reconciled.
+                            description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                             type: string
                         required:
                         - name
                         type: object
                     type: object
                   target_list:
-                    description: Targets defines a list of upstream host targets.
-                      Tyk will then round-robin load balance between these targets.
-                      EnableLoadBalancing must be set to true in order to take advantage
-                      of this feature.
+                    description: Targets defines a list of upstream host targets. Tyk will then round-robin load balance between these targets. EnableLoadBalancing must be set to true in order to take advantage of this feature.
                     items:
                       type: string
                     type: array
                   target_url:
-                    description: TargetURL defines the target URL that the request
-                      should be proxied to.
+                    description: TargetURL defines the target URL that the request should be proxied to.
                     type: string
                   transport:
-                    description: Transport section exposes advanced transport level
-                      configurations such as minimum TLS version.
+                    description: Transport section exposes advanced transport level configurations such as minimum TLS version.
                     properties:
                       proxy_url:
-                        description: ProxyURL specifies custom forward proxy & port.
-                          e.g. `http(s)://proxy.url:1234`
+                        description: ProxyURL specifies custom forward proxy & port. e.g. `http(s)://proxy.url:1234`
                         type: string
                       ssl_ciphers:
-                        description: SSLCipherSuites is an array of acceptable cipher
-                          suites. A list of allowed cipher suites can be found in
-                          the Go Crypto TLS package constants documentation https://golang.org/pkg/crypto/tls/#pkg-constants
+                        description: SSLCipherSuites is an array of acceptable cipher suites. A list of allowed cipher suites can be found in the Go Crypto TLS package constants documentation https://golang.org/pkg/crypto/tls/#pkg-constants
                         items:
                           type: string
                         type: array
                       ssl_force_common_name_check:
-                        description: SSLForceCommonNameCheck forces hostname validation
-                          against the certificate Common Name
+                        description: SSLForceCommonNameCheck forces hostname validation against the certificate Common Name
                         type: boolean
                       ssl_insecure_skip_verify:
-                        description: SSLInsecureSkipVerify controls whether it is
-                          possible to use self-signed certificates when connecting
-                          to the upstream. This is applied to `TykMakeHttpRequest`
-                          & `TykMakeBatchRequest` in virtual endpoint middleware.
+                        description: SSLInsecureSkipVerify controls whether it is possible to use self-signed certificates when connecting to the upstream. This is applied to `TykMakeHttpRequest` & `TykMakeBatchRequest` in virtual endpoint middleware.
                         type: boolean
                       ssl_min_version:
-                        description: 'SSLMinVersion defines the minimum TLS version
-                          the gateway will use to establish a connection to the upstream.
-                          1.0: 769; 1.1: 770; 1.2: 771; 1.3: 772.'
+                        description: 'SSLMinVersion defines the minimum TLS version the gateway will use to establish a connection to the upstream. 1.0: 769; 1.1: 770; 1.2: 771; 1.3: 772.'
                         enum:
                         - 769
                         - 770
@@ -1068,40 +913,30 @@ spec:
                   type: object
                 type: array
               session_lifetime:
-                description: "SessionLifetime this is duration in seconds before the
-                  session key expires in redis. \n Example: If you want the session
-                  keys to be alive only 24 hours you can set this value to 86400 that
-                  we can break down to \t60 * 60 * 24 = Total seconds in a day"
+                description: "SessionLifetime this is duration in seconds before the session key expires in redis. \n Example: If you want the session keys to be alive only 24 hours you can set this value to 86400 that we can break down to \t60 * 60 * 24 = Total seconds in a day"
                 format: int64
                 type: integer
               strip_auth_data:
-                description: StripAuthData ensures that any security tokens used for
-                  accessing APIs are stripped and not leaked to the upstream
+                description: StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
                 type: boolean
               tag_headers:
                 items:
                   type: string
                 type: array
               tags:
-                description: Tags are named gateway nodes which tell gateway clusters
-                  whether to load an API or not. for example, to load the API in an
-                  ARA gateway, you might want to include an `edge` tag.
+                description: Tags are named gateway nodes which tell gateway clusters whether to load an API or not. for example, to load the API in an ARA gateway, you might want to include an `edge` tag.
                 items:
                   type: string
                 type: array
               upstream_certificate_refs:
                 additionalProperties:
                   type: string
-                description: UpstreamCertificateRefs is a map of domains and secret
-                  names that is used internally to obtain certificates from secrets
-                  in order to establish mTLS support for upstreams
+                description: UpstreamCertificateRefs is a map of domains and secret names that is used internally to obtain certificates from secrets in order to establish mTLS support for upstreams
                 type: object
               upstream_certificates:
                 additionalProperties:
                   type: string
-                description: UpstreamCertificates is a map of domains and certificate
-                  IDs that is used by the Tyk Gateway to provide mTLS support for
-                  upstreams
+                description: UpstreamCertificates is a map of domains and certificate IDs that is used by the Tyk Gateway to provide mTLS support for upstreams
                 type: object
               use_basic_auth:
                 description: UseBasicAuth enables basic authentication
@@ -1110,10 +945,7 @@ spec:
                 description: Enable Go Plugin Auth. Needs to be combined with "use_keyless:false"
                 type: boolean
               use_keyless:
-                description: UseKeylessAccess will switch off all key checking. Some
-                  analytics will still be recorded, but rate-limiting, quotas and
-                  security policies will not be possible (there is no session to attach
-                  requests to).
+                description: UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting, quotas and security policies will not be possible (there is no session to attach requests to).
                 type: boolean
               use_mutual_tls_auth:
                 description: UseMutualTLSAuth enables mututal TLS authentication
@@ -1147,8 +979,7 @@ spec:
                                       type: integer
                                     type: array
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1203,8 +1034,7 @@ spec:
                                 type: object
                               type: array
                             cache:
-                              description: List of paths which cache middleware should
-                                be enabled on
+                              description: List of paths which cache middleware should be enabled on
                               items:
                                 type: string
                               type: array
@@ -1214,8 +1044,7 @@ spec:
                                   disable_half_open_state:
                                     type: boolean
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1230,17 +1059,14 @@ spec:
                                   path:
                                     type: string
                                   return_to_service_after:
-                                    description: ReturnToServiceAfter represents the
-                                      time in seconds to return back to the service
+                                    description: ReturnToServiceAfter represents the time in seconds to return back to the service
                                     type: integer
                                   samples:
-                                    description: Samples defines the number of requests
-                                      to base the ThresholdPercent on
+                                    description: Samples defines the number of requests to base the ThresholdPercent on
                                     format: int64
                                     type: integer
                                   threshold_percent:
-                                    description: ThresholdPercent is the percentage
-                                      of requests that fail before breaker is tripped
+                                    description: ThresholdPercent is the percentage of requests that fail before breaker is tripped
                                     pattern: ^0\.\d+|1\.0$
                                     type: string
                                 required:
@@ -1255,8 +1081,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1279,8 +1104,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1339,8 +1163,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1363,8 +1186,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1379,8 +1201,7 @@ spec:
                                   path:
                                     type: string
                                   to_method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1402,8 +1223,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1430,8 +1250,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1454,8 +1273,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1505,8 +1323,7 @@ spec:
                                       type: string
                                     type: array
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1534,8 +1351,7 @@ spec:
                                   filter:
                                     type: string
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1561,8 +1377,7 @@ spec:
                                   filter:
                                     type: string
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1586,8 +1401,7 @@ spec:
                               items:
                                 properties:
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1637,8 +1451,7 @@ spec:
                                       type: string
                                     type: array
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1664,12 +1477,10 @@ spec:
                               items:
                                 properties:
                                   match_pattern:
-                                    description: MatchPattern is a regular expression
-                                      pattern to match the path
+                                    description: MatchPattern is a regular expression pattern to match the path
                                     type: string
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1682,40 +1493,28 @@ spec:
                                     - TRACE
                                     type: string
                                   path:
-                                    description: Path represents the endpoint listen
-                                      path
+                                    description: Path represents the endpoint listen path
                                     type: string
                                   rewrite_to:
-                                    description: RewriteTo is the target path on the
-                                      upstream, or target URL we wish to rewrite to
+                                    description: RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
                                     type: string
                                   rewrite_to_internal:
-                                    description: RewriteToInternal serves as rewrite_to
-                                      but used when rewriting to target internal api's
-                                      When rewrite_to and rewrite_to_internal are
-                                      both provided then rewrite_to will take rewrite_to_internal
+                                    description: RewriteToInternal serves as rewrite_to but used when rewriting to target internal api's When rewrite_to and rewrite_to_internal are both provided then rewrite_to will take rewrite_to_internal
                                     properties:
                                       path:
-                                        description: "Path path on target , this does
-                                          not include query parameters. \texample
-                                          /myendpoint"
+                                        description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                                         type: string
                                       query:
-                                        description: "Query url query string to add
-                                          to target \texample check_limits=true"
+                                        description: "Query url query string to add to target \texample check_limits=true"
                                         type: string
                                       target:
-                                        description: API a namespaced/name to the
-                                          api definition resource that you are targetting
+                                        description: API a namespaced/name to the api definition resource that you are targetting
                                         properties:
                                           name:
                                             description: k8s resource name
                                             type: string
                                           namespace:
-                                            description: The k8s namespace of the
-                                              resource being targetted. When omitted
-                                              this will be set to the namespace of
-                                              the object that is being reconciled.
+                                            description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                                             type: string
                                         required:
                                         - name
@@ -1796,33 +1595,22 @@ spec:
                                         rewrite_to:
                                           type: string
                                         rewrite_to_internal:
-                                          description: RewriteToInternal defines options
-                                            that constructs a url that refers to an
-                                            api that is loaded into the gateway.
+                                          description: RewriteToInternal defines options that constructs a url that refers to an api that is loaded into the gateway.
                                           properties:
                                             path:
-                                              description: "Path path on target ,
-                                                this does not include query parameters.
-                                                \texample /myendpoint"
+                                              description: "Path path on target , this does not include query parameters. \texample /myendpoint"
                                               type: string
                                             query:
-                                              description: "Query url query string
-                                                to add to target \texample check_limits=true"
+                                              description: "Query url query string to add to target \texample check_limits=true"
                                               type: string
                                             target:
-                                              description: API a namespaced/name to
-                                                the api definition resource that you
-                                                are targetting
+                                              description: API a namespaced/name to the api definition resource that you are targetting
                                               properties:
                                                 name:
                                                   description: k8s resource name
                                                   type: string
                                                 namespace:
-                                                  description: The k8s namespace of
-                                                    the resource being targetted.
-                                                    When omitted this will be set
-                                                    to the namespace of the object
-                                                    that is being reconciled.
+                                                  description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                                                   type: string
                                               required:
                                               - name
@@ -1843,12 +1631,10 @@ spec:
                               items:
                                 properties:
                                   error_response_code:
-                                    description: Allows override of default 422 Unprocessable
-                                      Entity response code for validation errors.
+                                    description: Allows override of default 422 Unprocessable Entity response code for validation errors.
                                     type: integer
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -1863,10 +1649,7 @@ spec:
                                   path:
                                     type: string
                                   schema:
-                                    description: Schema represents schema field that
-                                      verifies user requests against a specified JSON
-                                      schema and check that the data sent to your
-                                      API by a consumer is in the right format.
+                                    description: Schema represents schema field that verifies user requests against a specified JSON schema and check that the data sent to your API by a consumer is in the right format.
                                     type: object
                                     x-kubernetes-preserve-unknown-fields: true
                                 required:
@@ -1884,8 +1667,7 @@ spec:
                                   function_source_uri:
                                     type: string
                                   method:
-                                    description: HttpMethod represents HTTP request
-                                      method
+                                    description: HttpMethod represents HTTP request method
                                     enum:
                                     - GET
                                     - POST
@@ -2010,61 +1792,49 @@ spec:
               api_id:
                 type: string
               linked_by_apis:
-                description: LinkedByAPIs is a list of ApiDefinition namespaced/name
-                  that links to this resource
+                description: LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this resource
                 items:
                   properties:
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
                   type: object
                 type: array
               linked_by_policies:
-                description: LinkedByPolicies is a list policies that references this
-                  api definition
+                description: LinkedByPolicies is a list policies that references this api definition
                 items:
                   properties:
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
                   type: object
                 type: array
               linked_to_apis:
-                description: LinkedToAPIs is a list of ApiDefinition namespaced/name
-                  that this resource links to.
+                description: LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource links to.
                 items:
                   properties:
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
                   type: object
                 type: array
               linked_to_subgraph:
-                description: LinkedToSubgraph corresponds to the name of the Subgraph
-                  CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition
-                  CR can only be linked to Subgraph CRs that are created in the same
-                  namespace as ApiDefinition CR.
+                description: LinkedToSubgraph corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
                 type: string
             required:
             - api_id
@@ -2103,14 +1873,10 @@ spec:
         description: APIDescription is the Schema for the apidescriptions API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -2118,8 +1884,7 @@ spec:
             description: APIDescriptionSpec defines the desired state of APIDescription
             properties:
               auth_type:
-                description: AuthType displays as a badge next to the name of the
-                  API
+                description: AuthType displays as a badge next to the name of the API
                 enum:
                 - keyless
                 - jwt
@@ -2127,24 +1892,19 @@ spec:
                 - authToken
                 type: string
               config:
-                description: 'Config allows you to optionally override various fields
-                  in the PortalConfig. TODO: This is an advanced capability which
-                  has not been fully tested with Tyk Operator as yet.'
+                description: 'Config allows you to optionally override various fields in the PortalConfig. TODO: This is an advanced capability which has not been fully tested with Tyk Operator as yet.'
                 properties:
                   catalogue_login_only:
-                    description: CatalogueLoginOnly limits access to catalogues for
-                      login users only.
+                    description: CatalogueLoginOnly limits access to catalogues for login users only.
                     type: boolean
                   dcr_options:
                     description: DCROptions dynamic client registration options.
                     properties:
                       access_token:
-                        description: AccessToken represents an optional bearer token
-                          to authenticate with against the registration endpoint
+                        description: AccessToken represents an optional bearer token to authenticate with against the registration endpoint
                         type: string
                       grant_types:
-                        description: GrantTypes is an array of OAuth 2.0 grant type
-                          strings that the client can use at the token endpoint.
+                        description: GrantTypes is an array of OAuth 2.0 grant type strings that the client can use at the token endpoint.
                         items:
                           enum:
                           - client_credentials
@@ -2153,28 +1913,20 @@ spec:
                           type: string
                         type: array
                       idp_host:
-                        description: IDPHost is the fully qualified hostname of the
-                          Identity Provider. e.g. https://mysubdomain.eu.auth0.com
+                        description: IDPHost is the fully qualified hostname of the Identity Provider. e.g. https://mysubdomain.eu.auth0.com
                         type: string
                       provider:
-                        description: Provider is an optional enum of the provider
-                          which allows Tyk to register clients outside the standard
-                          DCR spec and perform provider specific logic. If your provider
-                          is not in this list, please omit. Upon failure, submit a
-                          support ticket so that we may extend support for your provider.
+                        description: Provider is an optional enum of the provider which allows Tyk to register clients outside the standard DCR spec and perform provider specific logic. If your provider is not in this list, please omit. Upon failure, submit a support ticket so that we may extend support for your provider.
                         enum:
                         - gluu
                         - keycloak
                         - okta
                         type: string
                       registration_endpoint:
-                        description: RegistrationEndpoint is the registration_endpoint
-                          as presented in the /.well-known/openid-configuration document.
+                        description: RegistrationEndpoint is the registration_endpoint as presented in the /.well-known/openid-configuration document.
                         type: string
                       response_types:
-                        description: ResponseTypes is an array of OAuth 2.0 response
-                          type strings that the client can use at the authorization
-                          endpoint.
+                        description: ResponseTypes is an array of OAuth 2.0 response type strings that the client can use at the authorization endpoint.
                         items:
                           enum:
                           - code
@@ -2182,12 +1934,7 @@ spec:
                           type: string
                         type: array
                       token_endpoint_auth_method:
-                        description: 'TokenEndpointAuthMethod is an indicator of the
-                          requested authentication method for the token endpoint.
-                          "none": The client is a public client and does not have
-                          a client secret. "client_secret_post": The client uses the
-                          HTTP POST parameters "client_secret_basic": The client uses
-                          HTTP Basic authentication'
+                        description: 'TokenEndpointAuthMethod is an indicator of the requested authentication method for the token endpoint. "none": The client is a public client and does not have a client secret. "client_secret_post": The client uses the HTTP POST parameters "client_secret_basic": The client uses HTTP Basic authentication'
                         enum:
                         - client_secret_basic
                         - client_secret_post
@@ -2204,17 +1951,10 @@ spec:
                   disable_auto_login:
                     type: boolean
                   disable_login:
-                    description: DisableLogin disables login on developer portal.If
-                      you do not want developers to be able to login, set this value
-                      to true. You can use this configuration option in the portal
-                      templates to display or hide the login form as well as disabling
-                      the actual login method.
+                    description: DisableLogin disables login on developer portal.If you do not want developers to be able to login, set this value to true. You can use this configuration option in the portal templates to display or hide the login form as well as disabling the actual login method.
                     type: boolean
                   disable_signup:
-                    description: DisableSignup stop developer sign-up to the portal.This
-                      will stop developers from being able to signup, they will need
-                      to be created manually, or assigned keys via the key management
-                      API.
+                    description: DisableSignup stop developer sign-up to the portal.This will stop developers from being able to signup, they will need to be created manually, or assigned keys via the key management API.
                     type: boolean
                   email:
                     type: string
@@ -2222,17 +1962,13 @@ spec:
                     description: EnableDCR activates dynamic client registration.
                     type: boolean
                   enable_multi_selection:
-                    description: EnableMultiSelection enables subscribing to multiple
-                      APIs with single key.User will be able subscript any combination
-                      of exposed catalogues of the same authentication type
+                    description: EnableMultiSelection enables subscribing to multiple APIs with single key.User will be able subscript any combination of exposed catalogues of the same authentication type
                     type: boolean
                   id:
-                    description: Set by the server. DO NOT set this field it is read
-                      only.
+                    description: Set by the server. DO NOT set this field it is read only.
                     type: string
                   key_request_fields:
-                    description: KeyRequestFields is a slice of fields which are asked
-                      of the portal developer when requesting an api key
+                    description: KeyRequestFields is a slice of fields which are asked of the portal developer when requesting an api key
                     items:
                       type: string
                     type: array
@@ -2312,43 +2048,28 @@ spec:
                     - mail_from_name
                     type: object
                   oauth_usage_limit:
-                    description: OAuthUsageLimit is the maximum permitted number of
-                      OAuth clients
+                    description: OAuthUsageLimit is the maximum permitted number of OAuth clients
                     type: integer
                   org_id:
                     description: OrgID is the organization ID
                     type: string
                   override:
-                    description: Override overides global settings. These Catalogue
-                      settings are currently being overwritten by the Global Catalogue
-                      settings. Toggle the checkbox below to override them for this
-                      Catalogue.
+                    description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
                     type: boolean
                   redirect_on_key_request:
-                    description: RedirectOnKeyRequest redirects key requests. WHen
-                      set to true it will redirect key requests to the url specified
-                      in RedirectTo field
+                    description: RedirectOnKeyRequest redirects key requests. WHen set to true it will redirect key requests to the url specified in RedirectTo field
                     type: boolean
                   redirect_to:
                     description: RedirectTo is a url used to redirect key requests
                     type: string
                   require_key_approval:
-                    description: RequireKeyApproval requires reviewing of all key
-                      requests before approving them. By default developers will auto-enroll
-                      into an API and be given an API key. If you wish to review key
-                      requests before giving developers access to the API, enable
-                      this option and you will manually need to approve them in the
-                      'Key requests' section of the dashboard.
+                    description: RequireKeyApproval requires reviewing of all key requests before approving them. By default developers will auto-enroll into an API and be given an API key. If you wish to review key requests before giving developers access to the API, enable this option and you will manually need to approve them in the 'Key requests' section of the dashboard.
                     type: boolean
                   secure_key_approval:
-                    description: SecureKeyApproval enables Secure key approval.By
-                      default, API keys when approved are sent in an email to the
-                      Developer. By enabling this option, the Developer will instead
-                      receive a link where they can go to generate the API key securely
+                    description: SecureKeyApproval enables Secure key approval.By default, API keys when approved are sent in an email to the Developer. By enabling this option, the Developer will instead receive a link where they can go to generate the API key securely
                     type: boolean
                   signup_fields:
-                    description: SignUpFields is a slice of fields which are asked
-                      of the portal developer when they register for an account
+                    description: SignUpFields is a slice of fields which are asked of the portal developer when they register for an account
                     items:
                       type: string
                     type: array
@@ -2359,9 +2080,7 @@ spec:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
-                      When omitted this will be set to the namespace of the object
-                      that is being reconciled.
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -2385,28 +2104,19 @@ spec:
               fields:
                 additionalProperties:
                   type: string
-                description: Fields is a generic map of key:value pairs. You may wish
-                  to use this to tag a catalogue as type:internal or type:public Then
-                  apply logic at the template layer to dynamically display catalogue
-                  apis to different user types.
+                description: Fields is a generic map of key:value pairs. You may wish to use this to tag a catalogue as type:internal or type:public Then apply logic at the template layer to dynamically display catalogue apis to different user types.
                 type: object
               is_keyless:
-                description: IsKeyless toggles visibility of the `Request an API Key
-                  button`. Use this when AuthType is keyless, jwt or oauth.
+                description: IsKeyless toggles visibility of the `Request an API Key button`. Use this when AuthType is keyless, jwt or oauth.
                 type: boolean
               long_description:
-                description: LongDescription can be markdown. It allows you to describe
-                  the capabilities of the API and is displayed just below the name
-                  and AuthType in the catalogue listing page.
+                description: LongDescription can be markdown. It allows you to describe the capabilities of the API and is displayed just below the name and AuthType in the catalogue listing page.
                 type: string
               name:
-                description: Name is the title of the API that you wish to be published
-                  to the catalogue
+                description: Name is the title of the API that you wish to be published to the catalogue
                 type: string
               policy_id:
-                description: PolicyID explicitly sets the policy_id to be published.
-                  We do not recommend that this value is set directly. Rather, use
-                  `policyRef` instead.
+                description: PolicyID explicitly sets the policy_id to be published. We do not recommend that this value is set directly. Rather, use `policyRef` instead.
                 type: string
               policyRef:
                 properties:
@@ -2414,16 +2124,13 @@ spec:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
-                      When omitted this will be set to the namespace of the object
-                      that is being reconciled.
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
                 type: object
               short_description:
-                description: 'TODO: I don''t think this is exposed to the default
-                  portal templates.'
+                description: 'TODO: I don''t think this is exposed to the default portal templates.'
                 type: string
               show:
                 description: Show toggles visibility of the API in the portal catalogue
@@ -2472,14 +2179,10 @@ spec:
         description: OperatorContext is the Schema for the operatorcontexts API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -2487,8 +2190,7 @@ spec:
             description: OperatorContextSpec defines the desired state of OperatorContext
             properties:
               env:
-                description: Env is the values of the admin api endpoint that the
-                  operator will use to reconcile resources
+                description: Env is the values of the admin api endpoint that the operator will use to reconcile resources
                 properties:
                   auth:
                     type: string
@@ -2502,9 +2204,7 @@ spec:
                   insecureSkipVerify:
                     type: boolean
                   mode:
-                    description: OperatorContextMode is the mode to which the admin
-                      api binding is done values are ce for community edition and
-                      pro for dashboard
+                    description: OperatorContextMode is the mode to which the admin api binding is done values are ce for community edition and pro for dashboard
                     enum:
                     - ce
                     - pro
@@ -2523,16 +2223,13 @@ spec:
                     type: array
                 type: object
               secretRef:
-                description: Reference to k8s secret resource that we load environment
-                  from.
+                description: Reference to k8s secret resource that we load environment from.
                 properties:
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
-                      When omitted this will be set to the namespace of the object
-                      that is being reconciled.
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -2548,9 +2245,7 @@ spec:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2563,9 +2258,7 @@ spec:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2578,9 +2271,7 @@ spec:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2593,9 +2284,7 @@ spec:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2608,9 +2297,7 @@ spec:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2654,18 +2341,13 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: PortalAPICatalogue is the Schema for the portalapicatalogues
-          API
+        description: PortalAPICatalogue is the Schema for the portalapicatalogues API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -2673,8 +2355,7 @@ spec:
             description: PortalAPICatalogueSpec defines the desired state of PortalAPICatalogue
             properties:
               apis:
-                description: APIDescriptionList is a list of PortalCatalogueDescription
-                  published on this PortalAPICatalogue
+                description: APIDescriptionList is a list of PortalCatalogueDescription published on this PortalAPICatalogue
                 items:
                   properties:
                     apiDescriptionRef:
@@ -2683,16 +2364,13 @@ spec:
                           description: k8s resource name
                           type: string
                         namespace:
-                          description: The k8s namespace of the resource being targetted.
-                            When omitted this will be set to the namespace of the
-                            object that is being reconciled.
+                          description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                           type: string
                       required:
                       - name
                       type: object
                     auth_type:
-                      description: AuthType displays as a badge next to the name of
-                        the API
+                      description: AuthType displays as a badge next to the name of the API
                       enum:
                       - keyless
                       - jwt
@@ -2700,26 +2378,19 @@ spec:
                       - authToken
                       type: string
                     config:
-                      description: 'Config allows you to optionally override various
-                        fields in the PortalConfig. TODO: This is an advanced capability
-                        which has not been fully tested with Tyk Operator as yet.'
+                      description: 'Config allows you to optionally override various fields in the PortalConfig. TODO: This is an advanced capability which has not been fully tested with Tyk Operator as yet.'
                       properties:
                         catalogue_login_only:
-                          description: CatalogueLoginOnly limits access to catalogues
-                            for login users only.
+                          description: CatalogueLoginOnly limits access to catalogues for login users only.
                           type: boolean
                         dcr_options:
                           description: DCROptions dynamic client registration options.
                           properties:
                             access_token:
-                              description: AccessToken represents an optional bearer
-                                token to authenticate with against the registration
-                                endpoint
+                              description: AccessToken represents an optional bearer token to authenticate with against the registration endpoint
                               type: string
                             grant_types:
-                              description: GrantTypes is an array of OAuth 2.0 grant
-                                type strings that the client can use at the token
-                                endpoint.
+                              description: GrantTypes is an array of OAuth 2.0 grant type strings that the client can use at the token endpoint.
                               items:
                                 enum:
                                 - client_credentials
@@ -2728,30 +2399,20 @@ spec:
                                 type: string
                               type: array
                             idp_host:
-                              description: IDPHost is the fully qualified hostname
-                                of the Identity Provider. e.g. https://mysubdomain.eu.auth0.com
+                              description: IDPHost is the fully qualified hostname of the Identity Provider. e.g. https://mysubdomain.eu.auth0.com
                               type: string
                             provider:
-                              description: Provider is an optional enum of the provider
-                                which allows Tyk to register clients outside the standard
-                                DCR spec and perform provider specific logic. If your
-                                provider is not in this list, please omit. Upon failure,
-                                submit a support ticket so that we may extend support
-                                for your provider.
+                              description: Provider is an optional enum of the provider which allows Tyk to register clients outside the standard DCR spec and perform provider specific logic. If your provider is not in this list, please omit. Upon failure, submit a support ticket so that we may extend support for your provider.
                               enum:
                               - gluu
                               - keycloak
                               - okta
                               type: string
                             registration_endpoint:
-                              description: RegistrationEndpoint is the registration_endpoint
-                                as presented in the /.well-known/openid-configuration
-                                document.
+                              description: RegistrationEndpoint is the registration_endpoint as presented in the /.well-known/openid-configuration document.
                               type: string
                             response_types:
-                              description: ResponseTypes is an array of OAuth 2.0
-                                response type strings that the client can use at the
-                                authorization endpoint.
+                              description: ResponseTypes is an array of OAuth 2.0 response type strings that the client can use at the authorization endpoint.
                               items:
                                 enum:
                                 - code
@@ -2759,12 +2420,7 @@ spec:
                                 type: string
                               type: array
                             token_endpoint_auth_method:
-                              description: 'TokenEndpointAuthMethod is an indicator
-                                of the requested authentication method for the token
-                                endpoint. "none": The client is a public client and
-                                does not have a client secret. "client_secret_post":
-                                The client uses the HTTP POST parameters "client_secret_basic":
-                                The client uses HTTP Basic authentication'
+                              description: 'TokenEndpointAuthMethod is an indicator of the requested authentication method for the token endpoint. "none": The client is a public client and does not have a client secret. "client_secret_post": The client uses the HTTP POST parameters "client_secret_basic": The client uses HTTP Basic authentication'
                               enum:
                               - client_secret_basic
                               - client_secret_post
@@ -2781,17 +2437,10 @@ spec:
                         disable_auto_login:
                           type: boolean
                         disable_login:
-                          description: DisableLogin disables login on developer portal.If
-                            you do not want developers to be able to login, set this
-                            value to true. You can use this configuration option in
-                            the portal templates to display or hide the login form
-                            as well as disabling the actual login method.
+                          description: DisableLogin disables login on developer portal.If you do not want developers to be able to login, set this value to true. You can use this configuration option in the portal templates to display or hide the login form as well as disabling the actual login method.
                           type: boolean
                         disable_signup:
-                          description: DisableSignup stop developer sign-up to the
-                            portal.This will stop developers from being able to signup,
-                            they will need to be created manually, or assigned keys
-                            via the key management API.
+                          description: DisableSignup stop developer sign-up to the portal.This will stop developers from being able to signup, they will need to be created manually, or assigned keys via the key management API.
                           type: boolean
                         email:
                           type: string
@@ -2799,19 +2448,13 @@ spec:
                           description: EnableDCR activates dynamic client registration.
                           type: boolean
                         enable_multi_selection:
-                          description: EnableMultiSelection enables subscribing to
-                            multiple APIs with single key.User will be able subscript
-                            any combination of exposed catalogues of the same authentication
-                            type
+                          description: EnableMultiSelection enables subscribing to multiple APIs with single key.User will be able subscript any combination of exposed catalogues of the same authentication type
                           type: boolean
                         id:
-                          description: Set by the server. DO NOT set this field it
-                            is read only.
+                          description: Set by the server. DO NOT set this field it is read only.
                           type: string
                         key_request_fields:
-                          description: KeyRequestFields is a slice of fields which
-                            are asked of the portal developer when requesting an api
-                            key
+                          description: KeyRequestFields is a slice of fields which are asked of the portal developer when requesting an api key
                           items:
                             type: string
                           type: array
@@ -2891,46 +2534,28 @@ spec:
                           - mail_from_name
                           type: object
                         oauth_usage_limit:
-                          description: OAuthUsageLimit is the maximum permitted number
-                            of OAuth clients
+                          description: OAuthUsageLimit is the maximum permitted number of OAuth clients
                           type: integer
                         org_id:
                           description: OrgID is the organization ID
                           type: string
                         override:
-                          description: Override overides global settings. These Catalogue
-                            settings are currently being overwritten by the Global
-                            Catalogue settings. Toggle the checkbox below to override
-                            them for this Catalogue.
+                          description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
                           type: boolean
                         redirect_on_key_request:
-                          description: RedirectOnKeyRequest redirects key requests.
-                            WHen set to true it will redirect key requests to the
-                            url specified in RedirectTo field
+                          description: RedirectOnKeyRequest redirects key requests. WHen set to true it will redirect key requests to the url specified in RedirectTo field
                           type: boolean
                         redirect_to:
                           description: RedirectTo is a url used to redirect key requests
                           type: string
                         require_key_approval:
-                          description: RequireKeyApproval requires reviewing of all
-                            key requests before approving them. By default developers
-                            will auto-enroll into an API and be given an API key.
-                            If you wish to review key requests before giving developers
-                            access to the API, enable this option and you will manually
-                            need to approve them in the 'Key requests' section of
-                            the dashboard.
+                          description: RequireKeyApproval requires reviewing of all key requests before approving them. By default developers will auto-enroll into an API and be given an API key. If you wish to review key requests before giving developers access to the API, enable this option and you will manually need to approve them in the 'Key requests' section of the dashboard.
                           type: boolean
                         secure_key_approval:
-                          description: SecureKeyApproval enables Secure key approval.By
-                            default, API keys when approved are sent in an email to
-                            the Developer. By enabling this option, the Developer
-                            will instead receive a link where they can go to generate
-                            the API key securely
+                          description: SecureKeyApproval enables Secure key approval.By default, API keys when approved are sent in an email to the Developer. By enabling this option, the Developer will instead receive a link where they can go to generate the API key securely
                           type: boolean
                         signup_fields:
-                          description: SignUpFields is a slice of fields which are
-                            asked of the portal developer when they register for an
-                            account
+                          description: SignUpFields is a slice of fields which are asked of the portal developer when they register for an account
                           items:
                             type: string
                           type: array
@@ -2954,29 +2579,19 @@ spec:
                     fields:
                       additionalProperties:
                         type: string
-                      description: Fields is a generic map of key:value pairs. You
-                        may wish to use this to tag a catalogue as type:internal or
-                        type:public Then apply logic at the template layer to dynamically
-                        display catalogue apis to different user types.
+                      description: Fields is a generic map of key:value pairs. You may wish to use this to tag a catalogue as type:internal or type:public Then apply logic at the template layer to dynamically display catalogue apis to different user types.
                       type: object
                     is_keyless:
-                      description: IsKeyless toggles visibility of the `Request an
-                        API Key button`. Use this when AuthType is keyless, jwt or
-                        oauth.
+                      description: IsKeyless toggles visibility of the `Request an API Key button`. Use this when AuthType is keyless, jwt or oauth.
                       type: boolean
                     long_description:
-                      description: LongDescription can be markdown. It allows you
-                        to describe the capabilities of the API and is displayed just
-                        below the name and AuthType in the catalogue listing page.
+                      description: LongDescription can be markdown. It allows you to describe the capabilities of the API and is displayed just below the name and AuthType in the catalogue listing page.
                       type: string
                     name:
-                      description: Name is the title of the API that you wish to be
-                        published to the catalogue
+                      description: Name is the title of the API that you wish to be published to the catalogue
                       type: string
                     policy_id:
-                      description: PolicyID explicitly sets the policy_id to be published.
-                        We do not recommend that this value is set directly. Rather,
-                        use `policyRef` instead.
+                      description: PolicyID explicitly sets the policy_id to be published. We do not recommend that this value is set directly. Rather, use `policyRef` instead.
                       type: string
                     policyRef:
                       properties:
@@ -2984,20 +2599,16 @@ spec:
                           description: k8s resource name
                           type: string
                         namespace:
-                          description: The k8s namespace of the resource being targetted.
-                            When omitted this will be set to the namespace of the
-                            object that is being reconciled.
+                          description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                           type: string
                       required:
                       - name
                       type: object
                     short_description:
-                      description: 'TODO: I don''t think this is exposed to the default
-                        portal templates.'
+                      description: 'TODO: I don''t think this is exposed to the default portal templates.'
                       type: string
                     show:
-                      description: Show toggles visibility of the API in the portal
-                        catalogue
+                      description: Show toggles visibility of the API in the portal catalogue
                       type: boolean
                     version:
                       default: v2
@@ -3008,25 +2619,19 @@ spec:
                   type: object
                 type: array
               contextRef:
-                description: Context is reference to OperatorContext resource. Set
-                  this if you want to target a specific OperatorContext. When omitted
-                  default OperatorContext is used.
+                description: Context is reference to OperatorContext resource. Set this if you want to target a specific OperatorContext. When omitted default OperatorContext is used.
                 properties:
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
-                      When omitted this will be set to the namespace of the object
-                      that is being reconciled.
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
                 type: object
               email:
-                description: Email is Catalogue owner email address.Catalogue owner
-                  will be notified at this email address when an API subscription
-                  request is submitted or granted
+                description: Email is Catalogue owner email address.Catalogue owner will be notified at this email address when an API subscription request is submitted or granted
                 type: string
               org_id:
                 description: OrgID is the organization ID
@@ -3036,8 +2641,7 @@ spec:
             description: PortalAPICatalogueStatus defines the observed state of PortalAPICatalogue
             properties:
               id:
-                description: ID is the mongo ID of the PortalAPICatalogue object created
-                  by the dashboard.
+                description: ID is the mongo ID of the PortalAPICatalogue object created by the dashboard.
                 type: string
             type: object
         type: object
@@ -3074,14 +2678,10 @@ spec:
         description: PortalConfig is the Schema for the portalconfigs API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -3089,8 +2689,7 @@ spec:
             description: PortalConfigSpec defines the desired state of PortalConfig
             properties:
               catalogue_login_only:
-                description: CatalogueLoginOnly limits access to catalogues for login
-                  users only.
+                description: CatalogueLoginOnly limits access to catalogues for login users only.
                 type: boolean
               contextRef:
                 properties:
@@ -3098,9 +2697,7 @@ spec:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
-                      When omitted this will be set to the namespace of the object
-                      that is being reconciled.
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -3109,12 +2706,10 @@ spec:
                 description: DCROptions dynamic client registration options.
                 properties:
                   access_token:
-                    description: AccessToken represents an optional bearer token to
-                      authenticate with against the registration endpoint
+                    description: AccessToken represents an optional bearer token to authenticate with against the registration endpoint
                     type: string
                   grant_types:
-                    description: GrantTypes is an array of OAuth 2.0 grant type strings
-                      that the client can use at the token endpoint.
+                    description: GrantTypes is an array of OAuth 2.0 grant type strings that the client can use at the token endpoint.
                     items:
                       enum:
                       - client_credentials
@@ -3123,27 +2718,20 @@ spec:
                       type: string
                     type: array
                   idp_host:
-                    description: IDPHost is the fully qualified hostname of the Identity
-                      Provider. e.g. https://mysubdomain.eu.auth0.com
+                    description: IDPHost is the fully qualified hostname of the Identity Provider. e.g. https://mysubdomain.eu.auth0.com
                     type: string
                   provider:
-                    description: Provider is an optional enum of the provider which
-                      allows Tyk to register clients outside the standard DCR spec
-                      and perform provider specific logic. If your provider is not
-                      in this list, please omit. Upon failure, submit a support ticket
-                      so that we may extend support for your provider.
+                    description: Provider is an optional enum of the provider which allows Tyk to register clients outside the standard DCR spec and perform provider specific logic. If your provider is not in this list, please omit. Upon failure, submit a support ticket so that we may extend support for your provider.
                     enum:
                     - gluu
                     - keycloak
                     - okta
                     type: string
                   registration_endpoint:
-                    description: RegistrationEndpoint is the registration_endpoint
-                      as presented in the /.well-known/openid-configuration document.
+                    description: RegistrationEndpoint is the registration_endpoint as presented in the /.well-known/openid-configuration document.
                     type: string
                   response_types:
-                    description: ResponseTypes is an array of OAuth 2.0 response type
-                      strings that the client can use at the authorization endpoint.
+                    description: ResponseTypes is an array of OAuth 2.0 response type strings that the client can use at the authorization endpoint.
                     items:
                       enum:
                       - code
@@ -3151,11 +2739,7 @@ spec:
                       type: string
                     type: array
                   token_endpoint_auth_method:
-                    description: 'TokenEndpointAuthMethod is an indicator of the requested
-                      authentication method for the token endpoint. "none": The client
-                      is a public client and does not have a client secret. "client_secret_post":
-                      The client uses the HTTP POST parameters "client_secret_basic":
-                      The client uses HTTP Basic authentication'
+                    description: 'TokenEndpointAuthMethod is an indicator of the requested authentication method for the token endpoint. "none": The client is a public client and does not have a client secret. "client_secret_post": The client uses the HTTP POST parameters "client_secret_basic": The client uses HTTP Basic authentication'
                     enum:
                     - client_secret_basic
                     - client_secret_post
@@ -3172,16 +2756,10 @@ spec:
               disable_auto_login:
                 type: boolean
               disable_login:
-                description: DisableLogin disables login on developer portal.If you
-                  do not want developers to be able to login, set this value to true.
-                  You can use this configuration option in the portal templates to
-                  display or hide the login form as well as disabling the actual login
-                  method.
+                description: DisableLogin disables login on developer portal.If you do not want developers to be able to login, set this value to true. You can use this configuration option in the portal templates to display or hide the login form as well as disabling the actual login method.
                 type: boolean
               disable_signup:
-                description: DisableSignup stop developer sign-up to the portal.This
-                  will stop developers from being able to signup, they will need to
-                  be created manually, or assigned keys via the key management API.
+                description: DisableSignup stop developer sign-up to the portal.This will stop developers from being able to signup, they will need to be created manually, or assigned keys via the key management API.
                 type: boolean
               email:
                 type: string
@@ -3189,16 +2767,13 @@ spec:
                 description: EnableDCR activates dynamic client registration.
                 type: boolean
               enable_multi_selection:
-                description: EnableMultiSelection enables subscribing to multiple
-                  APIs with single key.User will be able subscript any combination
-                  of exposed catalogues of the same authentication type
+                description: EnableMultiSelection enables subscribing to multiple APIs with single key.User will be able subscript any combination of exposed catalogues of the same authentication type
                 type: boolean
               id:
                 description: Set by the server. DO NOT set this field it is read only.
                 type: string
               key_request_fields:
-                description: KeyRequestFields is a slice of fields which are asked
-                  of the portal developer when requesting an api key
+                description: KeyRequestFields is a slice of fields which are asked of the portal developer when requesting an api key
                 items:
                   type: string
                 type: array
@@ -3278,42 +2853,28 @@ spec:
                 - mail_from_name
                 type: object
               oauth_usage_limit:
-                description: OAuthUsageLimit is the maximum permitted number of OAuth
-                  clients
+                description: OAuthUsageLimit is the maximum permitted number of OAuth clients
                 type: integer
               org_id:
                 description: OrgID is the organization ID
                 type: string
               override:
-                description: Override overides global settings. These Catalogue settings
-                  are currently being overwritten by the Global Catalogue settings.
-                  Toggle the checkbox below to override them for this Catalogue.
+                description: Override overides global settings. These Catalogue settings are currently being overwritten by the Global Catalogue settings. Toggle the checkbox below to override them for this Catalogue.
                 type: boolean
               redirect_on_key_request:
-                description: RedirectOnKeyRequest redirects key requests. WHen set
-                  to true it will redirect key requests to the url specified in RedirectTo
-                  field
+                description: RedirectOnKeyRequest redirects key requests. WHen set to true it will redirect key requests to the url specified in RedirectTo field
                 type: boolean
               redirect_to:
                 description: RedirectTo is a url used to redirect key requests
                 type: string
               require_key_approval:
-                description: RequireKeyApproval requires reviewing of all key requests
-                  before approving them. By default developers will auto-enroll into
-                  an API and be given an API key. If you wish to review key requests
-                  before giving developers access to the API, enable this option and
-                  you will manually need to approve them in the 'Key requests' section
-                  of the dashboard.
+                description: RequireKeyApproval requires reviewing of all key requests before approving them. By default developers will auto-enroll into an API and be given an API key. If you wish to review key requests before giving developers access to the API, enable this option and you will manually need to approve them in the 'Key requests' section of the dashboard.
                 type: boolean
               secure_key_approval:
-                description: SecureKeyApproval enables Secure key approval.By default,
-                  API keys when approved are sent in an email to the Developer. By
-                  enabling this option, the Developer will instead receive a link
-                  where they can go to generate the API key securely
+                description: SecureKeyApproval enables Secure key approval.By default, API keys when approved are sent in an email to the Developer. By enabling this option, the Developer will instead receive a link where they can go to generate the API key securely
                 type: boolean
               signup_fields:
-                description: SignUpFields is a slice of fields which are asked of
-                  the portal developer when they register for an account
+                description: SignUpFields is a slice of fields which are asked of the portal developer when they register for an account
                 items:
                   type: string
                 type: array
@@ -3360,14 +2921,10 @@ spec:
         description: SecurityPolicy is the Schema for the securitypolicies API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -3375,20 +2932,16 @@ spec:
             description: SecurityPolicySpec defines the desired state of SecurityPolicy
             properties:
               _id:
-                description: MID ("_id") is generated by Tyk once the resource is
-                  created. Do NOT fill this in.
+                description: MID ("_id") is generated by Tyk once the resource is created. Do NOT fill this in.
                 type: string
               access_rights:
                 additionalProperties:
-                  description: AccessDefinition defines which versions of an API a
-                    key has access to
+                  description: AccessDefinition defines which versions of an API a key has access to
                   properties:
                     allowance_scope:
                       type: string
                     allowed_types:
-                      description: Field access of GraphQL APIs can be restricted
-                        by setting up an allowed types list in a policy or directly
-                        on a key.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -3405,8 +2958,7 @@ spec:
                       type: array
                     allowed_urls:
                       items:
-                        description: AccessSpec defines what URLS a user has access
-                          to and what methods are enabled
+                        description: AccessSpec defines what URLS a user has access to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -3420,44 +2972,34 @@ spec:
                         type: object
                       type: array
                     api_id:
-                      description: 'TODO: APIID should not really be needed, as is
-                        auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource'
                       type: string
                     api_name:
-                      description: 'TODO: APIName should not really be needed, as
-                        is auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource'
                       type: string
                     disable_introspection:
-                      description: DisableIntrospection disables GraphQL introspection
-                        if it is set to True.
+                      description: DisableIntrospection disables GraphQL introspection if it is set to True.
                       type: boolean
                     field_access_rights:
-                      description: FieldAccessRights is array of depth limit settings
-                        per GraphQL APIs.
+                      description: FieldAccessRights is array of depth limit settings per GraphQL APIs.
                       items:
-                        description: FieldAccessDefinition represent a struct for
-                          depth limit settings per API.
+                        description: FieldAccessDefinition represent a struct for depth limit settings per API.
                         properties:
                           field_name:
-                            description: FieldName represents the name of the Query
-                              or Mutation which the limit applies to.
+                            description: FieldName represents the name of the Query or Mutation which the limit applies to.
                             type: string
                           limits:
-                            description: Limit specifies the numerical value of the
-                              limit.
+                            description: Limit specifies the numerical value of the limit.
                             properties:
                               max_query_depth:
-                                description: MaxQueryDepth represents the numerical
-                                  value of the limit.
+                                description: MaxQueryDepth represents the numerical value of the limit.
                                 format: int64
                                 type: integer
                             required:
                             - max_query_depth
                             type: object
                           type_name:
-                            description: TypeName points to a type on which depth
-                              limit is set. It can be either Query (most common case)
-                              or Mutation
+                            description: TypeName points to a type on which depth limit is set. It can be either Query (most common case) or Mutation
                             type: string
                         type: object
                       type: array
@@ -3468,9 +3010,7 @@ spec:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
                     restricted_types:
-                      description: Field access of GraphQL APIs can be restricted
-                        by setting up an allowed types list in a policy or directly
-                        on a key.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -3496,15 +3036,12 @@ spec:
                 type: object
               access_rights_array:
                 items:
-                  description: AccessDefinition defines which versions of an API a
-                    key has access to
+                  description: AccessDefinition defines which versions of an API a key has access to
                   properties:
                     allowance_scope:
                       type: string
                     allowed_types:
-                      description: Field access of GraphQL APIs can be restricted
-                        by setting up an allowed types list in a policy or directly
-                        on a key.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -3521,8 +3058,7 @@ spec:
                       type: array
                     allowed_urls:
                       items:
-                        description: AccessSpec defines what URLS a user has access
-                          to and what methods are enabled
+                        description: AccessSpec defines what URLS a user has access to and what methods are enabled
                         properties:
                           methods:
                             items:
@@ -3536,44 +3072,34 @@ spec:
                         type: object
                       type: array
                     api_id:
-                      description: 'TODO: APIID should not really be needed, as is
-                        auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource'
                       type: string
                     api_name:
-                      description: 'TODO: APIName should not really be needed, as
-                        is auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource'
                       type: string
                     disable_introspection:
-                      description: DisableIntrospection disables GraphQL introspection
-                        if it is set to True.
+                      description: DisableIntrospection disables GraphQL introspection if it is set to True.
                       type: boolean
                     field_access_rights:
-                      description: FieldAccessRights is array of depth limit settings
-                        per GraphQL APIs.
+                      description: FieldAccessRights is array of depth limit settings per GraphQL APIs.
                       items:
-                        description: FieldAccessDefinition represent a struct for
-                          depth limit settings per API.
+                        description: FieldAccessDefinition represent a struct for depth limit settings per API.
                         properties:
                           field_name:
-                            description: FieldName represents the name of the Query
-                              or Mutation which the limit applies to.
+                            description: FieldName represents the name of the Query or Mutation which the limit applies to.
                             type: string
                           limits:
-                            description: Limit specifies the numerical value of the
-                              limit.
+                            description: Limit specifies the numerical value of the limit.
                             properties:
                               max_query_depth:
-                                description: MaxQueryDepth represents the numerical
-                                  value of the limit.
+                                description: MaxQueryDepth represents the numerical value of the limit.
                                 format: int64
                                 type: integer
                             required:
                             - max_query_depth
                             type: object
                           type_name:
-                            description: TypeName points to a type on which depth
-                              limit is set. It can be either Query (most common case)
-                              or Mutation
+                            description: TypeName points to a type on which depth limit is set. It can be either Query (most common case) or Mutation
                             type: string
                         type: object
                       type: array
@@ -3584,9 +3110,7 @@ spec:
                       description: Namespace of the ApiDefinition resource to target
                       type: string
                     restricted_types:
-                      description: Field access of GraphQL APIs can be restricted
-                        by setting up an allowed types list in a policy or directly
-                        on a key.
+                      description: Field access of GraphQL APIs can be restricted by setting up an allowed types list in a policy or directly on a key.
                       items:
                         description: GraphQLType represents a GraphQL Type for Tyk.
                         properties:
@@ -3611,20 +3135,16 @@ spec:
                   type: object
                 type: array
               active:
-                description: Active must be set to `true` for Tyk to load the security
-                  policy into memory.
+                description: Active must be set to `true` for Tyk to load the security policy into memory.
                 type: boolean
               contextRef:
-                description: Reference to k8s secret resource that we load environment
-                  from.
+                description: Reference to k8s secret resource that we load environment from.
                 properties:
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
-                      When omitted this will be set to the namespace of the object
-                      that is being reconciled.
+                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -3634,17 +3154,13 @@ spec:
               hmac_enabled:
                 type: boolean
               id:
-                description: If you are linking an existing Policy ID to a new YAML
-                  CRD, then fill in this ID field with the "_id" field. See policies.md
-                  readme for more info
+                description: If you are linking an existing Policy ID to a new YAML CRD, then fill in this ID field with the "_id" field. See policies.md readme for more info
                 type: string
               is_inactive:
-                description: IsInactive applies to the key itself. Allows enabling
-                  or disabling the policy without deleting it.
+                description: IsInactive applies to the key itself. Allows enabling or disabling the policy without deleting it.
                 type: boolean
               key_expires_in:
-                description: KeyExpiresIn is the number of seconds till key expiry.
-                  For 1 hour is 3600. Default never expire or 0
+                description: KeyExpiresIn is the number of seconds till key expiry. For 1 hour is 3600. Default never expire or 0
                 format: int64
                 type: integer
               max_query_depth:
@@ -3656,8 +3172,7 @@ spec:
                 description: LastUpdated                   string                           `json:"last_updated"`
                 type: object
               name:
-                description: Name represents the name of the security policy as displayed
-                  in the Dashboard
+                description: Name represents the name of the security policy as displayed in the Dashboard
                 type: string
               org_id:
                 description: OrgID is overwritten - no point setting this
@@ -3676,8 +3191,7 @@ spec:
                     type: boolean
                 type: object
               per:
-                description: To be used in conjunction with "Rate".  Per seconds.
-                  1 minute=60.  1 hour=3600 omit or "-1" for unlimited
+                description: To be used in conjunction with "Rate".  Per seconds. 1 minute=60.  1 hour=3600 omit or "-1" for unlimited
                 format: int64
                 type: integer
               quota_max:
@@ -3689,34 +3203,27 @@ spec:
                 format: int64
                 type: integer
               rate:
-                description: Rate limit per X seconds (x="Per"), omit or "-1" for
-                  unlimited
+                description: Rate limit per X seconds (x="Per"), omit or "-1" for unlimited
                 format: int64
                 type: integer
               state:
-                description: 'State can be active, draft or deny active: All keys
-                  are active and new keys can be created. draft: All keys are active
-                  but no new keys can be created. deny: All keys are deactivated and
-                  no keys can be created.'
+                description: 'State can be active, draft or deny active: All keys are active and new keys can be created. draft: All keys are active but no new keys can be created. deny: All keys are deactivated and no keys can be created.'
                 enum:
                 - active
                 - draft
                 - deny
                 type: string
               tags:
-                description: Custom tags to apply to the key, get transfered to the
-                  analytics
+                description: Custom tags to apply to the key, get transfered to the analytics
                 items:
                   type: string
                 type: array
               throttle_interval:
-                description: If rate limited, how many seconds to retry a request
-                  for.  omit or "-1" for unlimited
+                description: If rate limited, how many seconds to retry a request for.  omit or "-1" for unlimited
                 format: int64
                 type: integer
               throttle_retry_limit:
-                description: Number of retries before returning error.   omit or "-1"
-                  for unlimited
+                description: Number of retries before returning error.   omit or "-1" for unlimited
                 type: integer
             required:
             - active
@@ -3733,9 +3240,7 @@ spec:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -3780,14 +3285,10 @@ spec:
         description: SubGraph is the Schema for the subgraphs API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -3806,10 +3307,7 @@ spec:
             description: SubGraphStatus defines the observed state of SubGraph
             properties:
               linked_by_api:
-                description: LinkedByAPI specifies the ID of the ApiDefinition CR
-                  that is linked to this particular SubGraph CR. Please note that
-                  SubGraph CR can only be linked to one ApiDefinition CR that is created
-                  in the same namespace as SubGraph CR.
+                description: LinkedByAPI specifies the ID of the ApiDefinition CR that is linked to this particular SubGraph CR. Please note that SubGraph CR can only be linked to one ApiDefinition CR that is created in the same namespace as SubGraph CR.
                 type: string
             type: object
         type: object
@@ -3846,14 +3344,10 @@ spec:
         description: SuperGraph is the Schema for the supergraphs API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -3871,9 +3365,7 @@ spec:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
-                        When omitted this will be set to the namespace of the object
-                        that is being reconciled.
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name

@@ -1,0 +1,23 @@
+name: Test Keyless Authentication
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test API endpoint with Open Keyless Authentication
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin.yaml
+      assertions:
+      - result.code ShouldEqual 0

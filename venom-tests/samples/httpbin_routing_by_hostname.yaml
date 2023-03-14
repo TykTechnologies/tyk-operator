@@ -1,0 +1,14 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin
+spec:
+  name: httpbin
+  use_keyless: true
+  protocol: http
+  active: true
+  domain: httpbin.tyk.io
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /
+    strip_listen_path: true

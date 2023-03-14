@@ -62,7 +62,6 @@ func (a Api) Get(ctx context.Context, id string) (*model.APIDefinitionSpec, erro
 
 func (a Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.Result, error) {
 	var o model.Result
-
 	octx := client.GetContext(ctx)
 
 	err := client.Data(&o)(client.PutJSON(
