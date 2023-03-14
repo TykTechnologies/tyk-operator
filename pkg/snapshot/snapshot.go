@@ -39,17 +39,38 @@ var (
 )
 
 const (
-	NameKey      = "k8sName"
-	NamespaceKey = "k8sNamespace"
-	DefaultName  = "REPLACE_ME"
-	DefaultNs    = ""
+	SnapshotOutputDir = "./dist"
+	NameKey           = "k8sName"
+	NamespaceKey      = "k8sNamespace"
+	DefaultName       = "REPLACE_ME"
+	DefaultNs         = ""
 
 	ApiDefinitionKind = "ApiDefinition"
 	ApiVersion        = "tyk.tyk.io/v1alpha1"
 )
 
+func changeWorkingDir() error {
+	if _, err := os.Stat(SnapshotOutputDir); errors.Is(err, os.ErrNotExist) {
+		if err := os.Mkdir(SnapshotOutputDir, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create output directory %v, err: %v", SnapshotOutputDir, err)
+		}
+	}
+
+	err := os.Chdir(SnapshotOutputDir)
+	if err != nil {
+		return fmt.Errorf("failed to change the dir to %v, err: %v", SnapshotOutputDir, err)
+	}
+
+	return nil
+}
+
 // PrintSnapshot outputs a snapshot of the Dashboard as a CR.
 func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, category string, separate bool) error {
+	err := changeWorkingDir()
+	if err != nil {
+		return err
+	}
+
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
 		return err
@@ -380,6 +401,7 @@ func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.W
 
 	pol.Spec = *userPolicy
 	pol.Spec.ID = userPolicy.MID
+	pol.Spec.OrgID = ""
 
 	for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
 		apiID := pol.Spec.AccessRightsArray[i].APIID
