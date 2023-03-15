@@ -24,6 +24,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+      hostNetwork: CONTROLLER_MANAGER_HOST_NETWORK
       containers:
       - command:
         - /manager
@@ -34,13 +35,13 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8081
+            port: CONTROLLER_MANAGER_HEALTH_PROBE_PORT
           initialDelaySeconds: 15
           periodSeconds: 20
         readinessProbe:
           httpGet:
             path: /readyz
-            port: 8081
+            port: CONTROLLER_MANAGER_HEALTH_PROBE_PORT
           initialDelaySeconds: 5
           periodSeconds: 10
         resources:
