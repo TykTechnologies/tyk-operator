@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -40,6 +39,8 @@ const (
 	testSecurityPolicy     = "test-security-policy"
 	gatewayLocalhost       = "http://localhost:7000"
 	operatorSecret         = "tyk-operator-conf"
+	tlsSecretCrtKey        = "tls.crt"
+	tlsSecretKey           = "tls.key"
 )
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
@@ -179,53 +180,72 @@ func createTestPolicy(ctx context.Context, c *envconf.Config, namespace string, 
 	return &policy, err
 }
 
-func genServerCertificate() ([]byte, []byte, []byte) {
-	genCertificate := func(template *x509.Certificate, setLeaf bool) ([]byte, []byte, []byte, tls.Certificate) {
-		priv, _ := rsa.GenerateKey(rand.Reader, 1024)
+func genServerCertificate() ([]byte, []byte, error) {
+	genCertificate := func(template *x509.Certificate) ([]byte, []byte, error) {
+		priv, err := rsa.GenerateKey(rand.Reader, 1024)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-		serialNumber, _ := rand.Int(rand.Reader, serialNumberLimit)
+
+		serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		template.SerialNumber = serialNumber
 		template.BasicConstraintsValid = true
 		template.NotBefore = time.Now()
 		template.NotAfter = template.NotBefore.Add(time.Hour)
 
-		derBytes, _ := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
+		derBytes, err := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		var certPem, keyPem bytes.Buffer
-		pem.Encode(&certPem, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-		pem.Encode(&keyPem, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
 
-		clientCert, _ := tls.X509KeyPair(certPem.Bytes(), keyPem.Bytes())
-		if setLeaf {
-			clientCert.Leaf = template
+		err = pem.Encode(&certPem, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+		if err != nil {
+			return nil, nil, err
 		}
-		combinedPEM := bytes.Join([][]byte{certPem.Bytes(), keyPem.Bytes()}, []byte("\n"))
 
-		return certPem.Bytes(), keyPem.Bytes(), combinedPEM, clientCert
+		err = pem.Encode(&keyPem, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return certPem.Bytes(), keyPem.Bytes(), nil
 	}
 
-	certPem, privPem, combinedPEM, _ := genCertificate(&x509.Certificate{
+	certPem, privPem, err := genCertificate(&x509.Certificate{
 		DNSNames:    []string{"localhost"},
 		IPAddresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::")},
-	}, false)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return certPem, privPem, combinedPEM
+	return certPem, privPem, nil
 }
 
 // createTestTlsSecret creates a TLS type of Secret object on your k8s.
-func createTestTlsSecret(ctx context.Context, ns string, fn func(*v1.Secret), c *envconf.Config) (*v1.Secret, error) {
+func createTestTlsSecret(ctx context.Context, ns string, c *envconf.Config, fn func(*v1.Secret)) (*v1.Secret, error) {
 	var tlsSecret v1.Secret
 
 	tlsSecret.Name = "test-tls-secret-name"
 	tlsSecret.Namespace = ns
 	tlsSecret.Data = make(map[string][]byte)
 
-	certPem, privPem, _ := genServerCertificate()
+	certPem, privPem, err := genServerCertificate()
+	if err != nil {
+		return nil, err
+	}
 
-	tlsSecret.Type = "kubernetes.io/tls"
-	tlsSecret.Data["tls.key"] = privPem
-	tlsSecret.Data["tls.crt"] = certPem
+	tlsSecret.Type = v1.SecretTypeTLS
+	tlsSecret.Data[tlsSecretKey] = privPem
+	tlsSecret.Data[tlsSecretCrtKey] = certPem
 
 	if fn != nil {
 		fn(&tlsSecret)
