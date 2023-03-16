@@ -181,6 +181,10 @@ func main() {
 		preloadImages()
 	}
 
+	if config.Tyk.Mode == "pro" && config.Tyk.License == "" {
+		exit(errors.New("Dashboard license is empty"))
+	}
+
 	createNamespaces()
 	common()
 	installTykStack()
