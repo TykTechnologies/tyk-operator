@@ -7,6 +7,7 @@
 - Test each PR against Tyk v4.0 as well.
 - Allow Snapshot tool to filter by category regardless of the flags set
 - Documentation of snapshot tool, in order to explain how to use Snapshot with Docker.
+- Remove hardcoded TLS keys from integration tests to prevent possible CI failures.
 
 **Fixed**:
 - Remove ORGID from SecurityPolicy CRs while using Snapshot tool [#577](https://github.com/TykTechnologies/tyk-operator/pull/577).

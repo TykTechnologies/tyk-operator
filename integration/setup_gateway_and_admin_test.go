@@ -28,14 +28,12 @@ func teardownTyk(c1 context.Context, c2 *envconf.Config) (context.Context, error
 func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 	var ls v1.ServiceList
 
-	err := c2.Client().Resources(envNS()).
-		List(ctx, &ls)
+	err := c2.Client().Resources(envNS()).List(ctx, &ls)
 	if err != nil {
 		return err
 	}
 
-	gatewaySvcIndex := int(-1)
-	dashboardSvcIndex := int(-1)
+	gatewaySvcIndex, dashboardSvcIndex := -1, -1
 
 	for k, gw := range ls.Items {
 		if strings.HasPrefix(gw.Name, "gateway") {
@@ -55,9 +53,7 @@ func createLocalServices(ctx context.Context, c2 *envconf.Config) error {
 		return errors.New("failed to find tyk or dashboard service")
 	}
 
-	list := []v1.Service{ls.Items[gatewaySvcIndex], ls.Items[dashboardSvcIndex]}
-
-	return createServices(ctx, c2, list)
+	return createServices(ctx, c2, []v1.Service{ls.Items[gatewaySvcIndex], ls.Items[dashboardSvcIndex]})
 }
 
 func deleteLocalServices(ctx context.Context, c2 *envconf.Config) error {
