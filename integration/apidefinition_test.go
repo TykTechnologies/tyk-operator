@@ -1037,11 +1037,9 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 	)
 
 	testWithCert := features.New("Client MTLS with certificate").
-		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			client := envConf.Client()
-
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			opConfSecret := v1.Secret{}
-			err := client.Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
 			tykEnv, err = generateEnvConfig(&opConfSecret)
@@ -1055,9 +1053,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			return ctx
 		}).
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			testNS := ctx.Value(ctxNSKey).(string) //nolint: errcheck
-			eval := is.New(t)
-			t.Log(testNS)
+			testNS, ok := ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
 
 			_, err := createTestTlsSecret(ctx, testNS, nil, envConf)
 			eval.NoErr(err)
