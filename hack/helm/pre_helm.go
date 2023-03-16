@@ -47,7 +47,7 @@ const namespace = `apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: tyk-operator-controller-manager
   name: RELEASE_NAMESPACE
 ---`
 

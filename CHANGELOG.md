@@ -13,7 +13,8 @@
 implemented a port-forward mechanism to send raw HTTP requests to pods.
 - Fixed extra Update calls to Tyk GW / Dashboard. If no changes are made to 
 ApiDefinition resource, Operator won't send a request to Tyk GW / Dashboard.
-
+- Updated `control-plane` labels from `controller-manager` to `tyk-operator-controller-manager`
+to avoid selector issues.
 
 
 ## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.13.0)
