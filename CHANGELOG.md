@@ -1,15 +1,24 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.13.0...HEAD)
+
+**Updated**:
+- Test each PR against Tyk v4.0 as well.
+- Allow Snapshot tool to filter by category regardless of the flags set
+- Documentation of snapshot tool, in order to explain how to use Snapshot with Docker.
+- Remove hardcoded TLS keys from integration tests to prevent possible CI failures.
 
 **Fixed**:
+- Remove ORGID from SecurityPolicy CRs while using Snapshot tool [#577](https://github.com/TykTechnologies/tyk-operator/pull/577).
 - Prevent reading Kubernetes config while using `operator snapshot` as a CLI command (this means you don't need to have a running Kubernetes cluster when running `operator snapshot`).
 - Fixed reconciliation failures when ApiDefinition does not exist on Tyk storage.
 - Fixed BDD tests dependency of `curl`. Instead of running `curl` within a container,
 implemented a port-forward mechanism to send raw HTTP requests to pods.
 - Fixed extra Update calls to Tyk GW / Dashboard. If no changes are made to 
 ApiDefinition resource, Operator won't send a request to Tyk GW / Dashboard.
-
+- Updated `control-plane` labels from `controller-manager` to `tyk-operator-controller-manager`
+to avoid selector issues.
 
 
 ## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.13.0)
