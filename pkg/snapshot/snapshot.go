@@ -138,23 +138,26 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
 
 		var filteredApis []*model.APIDefinitionSpec
-		var filteredApisIDs map[string]string
+		filteredApisIDs := make(map[string]string)
+
 		for _, api := range apiDefSpecList.Apis {
 			if strings.Contains(api.Name, category) {
 				filteredApis = append(filteredApis, api)
-				filteredApisIDs[api.APIID] = "api"
+				filteredApisIDs[api.APIID] = api.APIID
 			}
 		}
 
 		var filteredPolicies []tykv1alpha1.SecurityPolicySpec
-		for _, policy := range policiesList {
+
+		for i := 0; i < len(policiesList); i++ {
 			found := false
-			for _, accessRight := range policy.AccessRightsArray {
+			for _, accessRight := range policiesList[i].AccessRightsArray {
 				if _, found = filteredApisIDs[accessRight.APIID]; found {
-					filteredPolicies = append(filteredPolicies, policy)
+					filteredPolicies = append(filteredPolicies, policiesList[i])
 					break
 				}
 			}
+
 			if found {
 				continue
 			}
