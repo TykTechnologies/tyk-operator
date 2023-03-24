@@ -334,6 +334,7 @@ If you require any features that we have not yet implemented, please take your t
 
 For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new) in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions).
 
+- [Contributing to Tyk Operator](./CONTRIBUTING.md)
 - [Configuring your development environment](./docs/development.md)
 - [Request a feature](https://github.com/TykTechnologies/tyk-operator/issues)
 - [Got an Idea or RFC](https://github.com/TykTechnologies/tyk-operator/discussions/categories/ideas)

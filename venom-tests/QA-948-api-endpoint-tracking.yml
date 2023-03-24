@@ -56,7 +56,7 @@ testcases:
       action:
         fill:
         - find: input[name="username"]
-          text: "operator@exmaple.com"
+          text: "operator@example.com"
     - type: web
       action:
         find: input[name="password"]
