@@ -1,8 +1,7 @@
 # Snapshot (PoC)
 
-The snapshot package provides a CLI tool that allows users to export their 
-existing Tyk APIs and Security Policies into CRD YAML format that can be used by 
-Tyk Operator. 
+Tyk Operator includes a snapshot package which provides a CLI tool that allows users to export their 
+existing Tyk APIs and Security Policies into CRD YAML format that can be used by Tyk Operator. 
 
 It can help you to migrate existing APIs and Policies to Kubernetes environment.
 
@@ -22,76 +21,74 @@ Please use with caution.
 
 ## Prerequisites
 
-1. Docker or Tyk Operator binaries,
+1. Docker or Tyk Operator binaries
 2. Credentials to connect Tyk Dashboard or Gateway. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator) for details.
 
-## Preparation
-1. Specify the Kubernetes resource names in `Config Data`
+## Preparation - API metadata
+1. **Specify the Kubernetes resource names in `Config Data` (Required)**
 
-Before exporting the APIs, you have to specify the k8s resource name to be used for each APIDefinition resource. 
-It can be configured in `config_data`. You can optionally provide the namespace too.
+Before exporting the APIs, you must specify the k8s metadata name to be used for each APIDefinition resource. 
+It can be saved in `config_data`. You can optionally provide the namespace too.
 
 NOTE: `snapshot` tool will skip exporting any APIs without "k8sName" specified in `config_data`.
 
 Example `config_data` for your APIs:
 ```json
 {
-  "k8sName": "metadata_name",
-  "k8sNamespace": "metadata_namespace"
+  "k8sName": "httpbin-api-5",
+  "k8sNamespace": "staging"
 }
 ```
 
+Corresponding resource will look like this:
+```yaml
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-api-5
+  namespace: staging
+```
+
+To edit Config Data through API Manager, 
+1) Go to API Manager
+2) Select the API you want to export
+3) Go to "Advanced Options" tab
+4) Scroll down to "Config Data" and put in the k8s metadata name and namespace (optional).
 ![config-data](./img/config-data.png)
 
 
-2. Use API Category to group the APIs you want to export
+2. **Use API Category to group the APIs you want to export (Optional)**
 
 By default, snapshot tool will export **all** APIs that have proper `config_data`
-configured. You can also categorize your APIs by teams, environments, or any way 
-you want. You can specify which API category to be exported in later steps.
+configured. If you do not want to export all APIs, you can use `--category` flag
+to select which API category you want to export. 
 
-In the example below, you can see that some APIs are categorized as `#testing` 
-or `#production`. You can configure snapshot tool to export APIs from certain groups.
+You can categorize your APIs by teams, environments, or any way 
+you want. In the example below, you can see that some APIs are categorized as `#testing` 
+or `#production`. 
 
+To set API Category through API Manager, 
+1) Go to API Manager
+2) Select the API you want to export
+3) Under "Core Settings" tab, scroll down to "API Settings".
+4) Type the Category name in the input box or select from dropdown list.
+5) You will see the Categories of each API on APIs page.
 ![apis](./img/apis.png)
 
 ## Installation
-
-Currently, snapshot tool is available via Docker and Tyk Operator binaries.
-
-```bash
-docker pull tykio/tyk-operator:{version_id}
-```
-
-For binaries, please visit [GitHub Releases](https://github.com/TykTechnologies/tyk-operator/releases) of Tyk Operator
-and install Tyk Operator binary based on your platform.
-
-## Usage
-```bash
-tyk-operator exports APIs and Security Policies from your Tyk installation to Custom 
-Resource that can be used with Tyk Operator
-
-  --separate 
-        Each ApiDefinition and Policy files will be written into separate files.
-  
-Export API Definitions:
-  --apidef <output_file>
-    	By passing an export flag, we are telling the Operator to connect to a Tyk
-    	 installation in order to pull a snapshot of ApiDefinitions from that 
-    	 environment and output as CR
-
-  --category <category_name>
-    	Dump APIs from specified category
-
-Export Security Policies:
-  --policy <output_file>
-    	Pull a snapshot of SecurityPolicies from Tyk Dashboard and output as CR
-```
+From `v0.14.0`, snapshot tool is available via Docker and Tyk Operator binaries.
 
 ### Docker
+To install a particular version of tyk-operator via docker image please run the command bellow with the appropriate version you want to use. All available versions could be found on the Tyk Operator Docker Hub page here: https://hub.docker.com/r/tykio/tyk-operator/tags
 
 ```bash
-docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator [FLAGS]
+docker pull tykio/tyk-operator:{tag}
+```
+
+Then the docker image tyk-operator can be used in the following way:
+
+```bash
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator:{tag} [FLAGS]
 ```
 
 where `.env` file includes Tyk credentials, as follows:
@@ -102,6 +99,11 @@ TYK_AUTH=${TYK_AUTH}
 TYK_URL=${TYK_URL}
 TYK_MODE=${TYK_MODE}
 ```
+
+### Tyk Operator binary
+
+Please visit [GitHub Releases](https://github.com/TykTechnologies/tyk-operator/releases) of Tyk Operator
+and install Tyk Operator binary based on your platform.
 
 ### Setting required environment variables
 
@@ -116,6 +118,32 @@ or Gateway connection parameters in environment variables before running
 
 > For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#step-3-configuring-tyk-operator).
 
+## Usage
+```bash
+tyk-operator connects to a Tyk installation, pull a snapshot of APIs and Security Policies from there and output
+as Custom Resource that can be used with Tyk Operator.
+  
+Export API Definitions to a file:
+  --apidef <output_file>
+    	Pull a snapshot of ApiDefinitions from Tyk and output as CR. All exported ApiDefinitions are included in
+       `output_file`.
+
+  --category <category_name>
+    	Only export APIs from specified category
+
+Export Security Policies to a file:
+  --policy <output_file>
+    	Pull a snapshot of all SecurityPolicies from Tyk and output as CR. All exported SecurityPolicies are 
+      included in `output_file`.
+
+Export API Definitions and Security Policies into separate files:
+  --separate 
+        Pull a snapshot of ApiDefinitions and SecurityPolicies from Tyk and output as CR.
+        Each ApiDefinition and SecurityPolicy CR will be output into separate files.
+        It can be used with --category flag to export only APIs from a category.
+```
+
+<!--
 ### Exporting API Definitions
 
 #### Specify Category to export
@@ -125,7 +153,7 @@ or Gateway without considering their categories.
 
 You can specify a category to fetch via `--category` flag, as follows:
 ```bash
-docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator --apidef output.yaml --category k8s
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator:{tag} --apidef output.yaml --category k8s
 ```
 The command above fetches all ApiDefinitions in `#k8s` category.
 
@@ -179,7 +207,7 @@ of the ApiDefinition as follows.
 
 So, the generated output for this environment will look as follows;
 ```bash
-docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator --apidef output.yaml --category testing
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator:{tag} --apidef output.yaml --category testing
 ```
 ```yaml
 # output.yaml
@@ -203,10 +231,10 @@ contain ApiDefinition Custom Resource for `test-api-3 #testing`.
 
 You can export your SecurityPolicy objects by specifying `--policy` flag.
 ```bash
-docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator --apidef output.yaml --policy policies.yaml
+docker run -it --rm --env-file=.env -v "$(pwd)":/dist tykio/tyk-operator:{tag} --policy policies.yaml
 ```
 SecurityPolicy CRs will be saved into a file specified in `--policy` command.
-
+-->
 _**Warning:**_ All ApiDefinitions that SecurityPolicy access must exist in Kubernetes.
 Otherwise, when you try to apply the policies, SecurityPolicy controller logs an error 
 since it cannot find corresponding ApiDefinition resource in the environment.
