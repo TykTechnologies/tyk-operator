@@ -29,6 +29,11 @@ func main() {
 		{"IfNotPresent", "{{ .Values.image.pullPolicy }}"},
 		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
 		{"tykio/tyk-operator:latest", "{{ .Values.image.repository }}:{{ .Values.image.tag }}"},
+		{"CONTROLLER_MANAGER_HEALTH_PROBE_PORT", "{{ .Values.healthProbePort }}"},
+		{"CONTROLLER_MANAGER_METRICS_PORT", "{{ .Values.metricsPort }}"},
+		{"CONTROLLER_MANAGER_WEBHOOK_PORT", "{{ .Values.webhookPort }}"},
+		{"CONTROLLER_MANAGER_RBAC_PORT", "{{ .Values.rbac.port }}"},
+		{"CONTROLLER_MANAGER_HOST_NETWORK", "{{ .Values.hostNetwork | default false }}"},
 	}
 
 	for _, v := range m {

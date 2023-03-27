@@ -9,6 +9,10 @@
 - Documentation of snapshot tool, in order to explain how to use Snapshot with Docker.
 - Remove hardcoded TLS keys from integration tests to prevent possible CI failures.
 
+**Added**
+
+- Added hostNetwork Support [Issue #532](https://github.com/TykTechnologies/tyk-operator/issues/532)
+
 **Fixed**:
 - Remove ORGID from SecurityPolicy CRs while using Snapshot tool [#577](https://github.com/TykTechnologies/tyk-operator/pull/577).
 - Prevent reading Kubernetes config while using `operator snapshot` as a CLI command (this means you don't need to have a running Kubernetes cluster when running `operator snapshot`).

@@ -15,6 +15,12 @@ image:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+# healthProbePort identifies the port the Controller Manager will listen on. Used by liveness and readiness probes
+healthProbePort: 8081
+# metricsPort identifies the port on which Tyk Operator metrics are served
+metricsPort: 8080
+# webhookPort identifies the port on which webhooks are handled
+webhookPort: 9443
 annotations: {}
 podAnnotations: {}
 podSecurityContext:
@@ -29,3 +35,4 @@ rbac:
     repository: gcr.io/kubebuilder/kube-rbac-proxy
     pullPolicy: IfNotPresent
     tag: "v0.8.0"
+  port: 8443
