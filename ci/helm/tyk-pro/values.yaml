@@ -80,7 +80,7 @@ dash:
   adminUser:
     firstName: Tyk
     lastName: Operator
-    email: operator@exmaple.com
+    email: operator@example.com
     # we need to be able to login into the dashboard
     password: "1234testing"
   org:
