@@ -65,7 +65,7 @@ func init() {
 		"By passing an export flag, we are telling the Operator to connect to a "+
 			"Tyk installation in order to pull a snapshot of SecurityPolicies from that environment and output as CR")
 
-	runSnapshot := apiDefFileFlag != "" || separateFileFlag
+	runSnapshot := apiDefFileFlag != "" || policyFileFlag != "" || separateFileFlag
 	if runSnapshot {
 		setupLog.Info("running snapshot tool")
 	} else {
@@ -94,7 +94,8 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
 	env.Parse()
 
-	if apiDefFileFlag != "" || separateFileFlag {
+	runSnapshot := apiDefFileFlag != "" || policyFileFlag != "" || separateFileFlag
+	if runSnapshot {
 		snapshotLog := ctrl.Log.WithName("snapshot").WithName("ApiDefinition")
 
 		_, ctx, err := controllers.HttpContext(context.Background(), nil, env, nil, snapshotLog)
