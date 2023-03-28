@@ -24,7 +24,9 @@ Please use with caution.
 1. Docker or Tyk Operator binaries
 2. Credentials to connect Tyk Dashboard or Gateway. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator) for details.
 
-## Preparation - API metadata
+## Preparation
+Prepare the API metadata before exporting.
+
 1. **Specify the Kubernetes resource names in `Config Data` (Required)**
 
 Before exporting the APIs, you must specify the k8s metadata name to be used for each APIDefinition resource. 
