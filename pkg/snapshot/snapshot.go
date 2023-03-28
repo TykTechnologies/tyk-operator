@@ -211,18 +211,36 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		return nil
 	}
 
-	f, err := os.Create(apiDefinitionsFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	bw := bufio.NewWriter(f)
-
 	// Output file will contain all ApiDefinitions without checking any category.
-	for i, v := range apiDefSpecList.Apis {
-		if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
+	if apiDefinitionsFile != "" {
+		f, err := os.Create(apiDefinitionsFile)
+		if err != nil {
 			return err
+		}
+		defer f.Close()
+
+		bw := bufio.NewWriter(f)
+
+		for i, v := range apiDefSpecList.Apis {
+			if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
+				return err
+			}
+		}
+
+		if policiesFile != "" {
+			policyFile, err := os.Create(policiesFile)
+			if err != nil {
+				return err
+			}
+
+			defer policyFile.Close()
+			pw := bufio.NewWriter(policyFile)
+
+			for i := 0; i < len(policiesList); i++ {
+				if err := exportPolicy(i, pw, policiesList[i]); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
