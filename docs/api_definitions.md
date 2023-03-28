@@ -23,6 +23,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Universal Data Graph v1        | ✅       | v0.1           | -                             | [Sample - with GraphQL V1 Engine (Tyk v3.1 or before) ](./../config/samples/udg_1.yaml) |
 | Universal Data Graph v2        | ✅       | v0.12          | -                             | [Sample - with GraphQL V2 Engine (Tyk v3.2 and after) ](./../config/samples/udg2/) |
 | GraphQL - Federation           | ✅       | v0.12          | -                             | [Sample](./../config/samples/federation/README.md)                                         |
+| OAS           | ❌️       | -          | Coming Soon!                             |                                  |
 
 ## Routing
 
