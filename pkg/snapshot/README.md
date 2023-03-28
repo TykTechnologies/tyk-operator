@@ -250,7 +250,8 @@ since it cannot find corresponding ApiDefinition resource in the environment.
 3. The APIs and Policies are now managed by Tyk Operator!
 
 ## Limitations
-- Not all features are supported by Operator. Non-supported features would be
+- Tyk Operator doesn't work with OAS HTTP API at the moment. Support for it is coming soon.
+- Not all API Definitions features are supported by Operator. Non-supported features would be
 _lost_ during the conversion. 
 
 > Please visit [ApiDefinition](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/api_definitions.md) and [Policies](https://github.com/TykTechnologies/tyk-operator/blob/master/docs/policies.md) documentations to see supported features.
