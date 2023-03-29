@@ -11,7 +11,14 @@ checksum:
 
 # https://goreleaser.com/customization/build/
 builds:
-  - skip: false
+  - 
+    main: ./main.go
+    binary: tyk-operator
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
 
 # https://goreleaser.com/customization/docker/
 dockers:
