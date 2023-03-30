@@ -11,14 +11,7 @@ checksum:
 
 # https://goreleaser.com/customization/build/
 builds:
-  - 
-    main: ./main.go
-    binary: tyk-operator
-    goos:
-      - linux
-    goarch:
-      - amd64
-      - arm64
+  - skip: false
 
 # https://goreleaser.com/customization/docker/
 dockers:
@@ -26,6 +19,26 @@ dockers:
       - "tykio/tyk-operator:v{{ .Major }}"
       - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
       - "tykio/tyk-operator:{{ .Tag }}"
+    dockerfile: goreleaser.Dockerfile
+    goos: linux
+    goarch: amd64
+    use: buildx
+    extra_files:
+      - go.mod
+      - go.sum
+      - main.go
+      - api
+      - controllers
+      - pkg
+      
+  - image_templates:
+      - "tykio/tyk-operator:v{{ .Major }}"
+      - "tykio/tyk-operator:v{{ .Major }}.{{ .Minor }}"
+      - "tykio/tyk-operator:{{ .Tag }}"
+    dockerfile: releaser.Dockerfile
+    goos: linux
+    goarch: arm64
+    use: buildx
     extra_files:
       - go.mod
       - go.sum
