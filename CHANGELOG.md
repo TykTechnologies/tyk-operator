@@ -15,6 +15,7 @@
 - snapshot tool can be used with Docker images. 
 - snapshot tool can now export only SecurityPolicy objects without specifying
   additional flag for ApiDefinition export.
+- Publish docker image for arm64 too during release.
 
 **Fixed**:
 - Remove ORGID from SecurityPolicy CRs while using Snapshot tool [#577](https://github.com/TykTechnologies/tyk-operator/pull/577).
