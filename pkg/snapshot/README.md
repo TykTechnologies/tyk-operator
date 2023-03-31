@@ -102,17 +102,6 @@ TYK_URL=${TYK_URL}
 TYK_MODE=${TYK_MODE}
 ```
 
-### Setting required environment variables
-
-In order snapshot tool to connect your Tyk installation, store the Tyk Dashboard 
-or Gateway connection parameters in environment variables before running 
-`snapshot`.
-
-- `${TYK_MODE}`: `ce` for Tyk Open Source mode and `pro` for for Tyk Self Managed mode.
-- `${TYK_URL}`: Management URL of your Tyk Dashboard or Gateway.
-- `${TYK_AUTH}`: Operator user API Key.
-- `${TYK_ORG}`: Operator user ORG ID.
-
 > For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#step-3-configuring-tyk-operator).
 
 ## Usage
