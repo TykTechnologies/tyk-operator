@@ -72,7 +72,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | API Tagging                          | ✅         | v0.1           | -                                                                      |                                                                 |
 | Config Data                          | ✅         | v0.8.2         | -                                                                      | [Sample](./../config/samples/config_data_virtual_endpoint.yaml) |
 | Context Variables                    | ✅         | v0.1           | -                                                                      |
-| Cross Origin Resource Sharing (CORS) | ⚠️        | v0.2           | [See ISSUE #3396 ](https://github.com/TykTechnologies/tyk/issues/3396) | [Sample](./../config/samples/httpbin_cors.yaml)                 |
+| Cross Origin Resource Sharing (CORS) | ✅        | v0.2           | - | [Sample](./../config/samples/httpbin_cors.yaml)                 |
 | Custom Plugins - Go                  | ⚠️        | v0.1           | Untested                                                               |
 | Custom Plugins - gRPC                | ✅         | v0.1           | -                                                                      | [Sample](./../bdd/features/api_http_grpc_plugin.feature)        |
 | Custom Plugins - Javascript          | ✅         | v0.1           | -                                                                      | [Sample](./api_definitions/custom_plugin.md)                    |
