@@ -21,7 +21,7 @@ Please use with caution.
 
 ## Prerequisites
 
-1. Docker or Tyk Operator binaries
+1. Docker
 2. Credentials to connect Tyk Dashboard or Gateway. Please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator) for details.
 
 ## Preparation
@@ -78,7 +78,7 @@ To set API Category through API Manager,
 ![apis](./img/apis.png)
 
 ## Installation
-From `v0.14.0`, snapshot tool is available via Docker and Tyk Operator binaries.
+From `v0.14.0`, snapshot tool is available via Docker.
 
 ### Docker
 To install a particular version of tyk-operator via docker image please run the command bellow with the appropriate version you want to use. All available versions could be found on the Tyk Operator Docker Hub page here: https://hub.docker.com/r/tykio/tyk-operator/tags
@@ -101,22 +101,6 @@ TYK_AUTH=${TYK_AUTH}
 TYK_URL=${TYK_URL}
 TYK_MODE=${TYK_MODE}
 ```
-
-### Tyk Operator binary
-
-Please visit [GitHub Releases](https://github.com/TykTechnologies/tyk-operator/releases) of Tyk Operator
-and install Tyk Operator binary based on your platform.
-
-### Setting required environment variables
-
-In order snapshot tool to connect your Tyk installation, store the Tyk Dashboard 
-or Gateway connection parameters in environment variables before running 
-`snapshot`.
-
-- `${TYK_MODE}`: `ce` for Tyk Open Source mode and `pro` for for Tyk Self Managed mode.
-- `${TYK_URL}`: Management URL of your Tyk Dashboard or Gateway.
-- `${TYK_AUTH}`: Operator user API Key.
-- `${TYK_ORG}`: Operator user ORG ID.
 
 > For more details on how to obtain the URL and credentials, please visit [Tyk Docs](https://tyk.io/docs/tyk-stack/tyk-operator/installing-tyk-operator/#step-3-configuring-tyk-operator).
 
