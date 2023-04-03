@@ -21,8 +21,8 @@ jobs:
         with:
           images: tykio/tyk-operator
           tags: |
-              type=semver,pattern={{version}}
-              type=semver,pattern={{major}}.{{minor}}
+              type=semver,pattern=v{{version}}
+              type=semver,pattern=v{{major}}.{{minor}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
