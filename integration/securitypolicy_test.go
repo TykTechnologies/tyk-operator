@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
+
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -82,7 +84,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			pol, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
 				policy.Name = policyName
 				policy.Spec.Name = policyName + testNs
-				policy.Spec.AccessRightsArray = []*v1alpha1.AccessDefinition{{Name: api1Name, Namespace: testNs}}
+				policy.Spec.AccessRightsArray = []*model.AccessDefinition{{Name: api1Name, Namespace: testNs}}
 			})
 			eval.NoErr(err)
 
@@ -122,7 +124,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			eval.NoErr(err)
 
 			updatePolicy.Spec.AccessRightsArray = append(updatePolicy.Spec.AccessRightsArray,
-				&v1alpha1.AccessDefinition{Name: api2Name, Namespace: testNs})
+				&model.AccessDefinition{Name: api2Name, Namespace: testNs})
 
 			err = c.Client().Resources().Update(ctx, &updatePolicy)
 			eval.NoErr(err)
@@ -276,12 +278,14 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 	var (
 		spec = v1alpha1.SecurityPolicySpec{
-			ID:     existingPolicyID,
-			Name:   "existing-spec",
-			State:  "draft",
-			Rate:   34,
-			Active: true,
-			Tags:   []string{"testing"},
+			SecurityPolicySpec: model.SecurityPolicySpec{
+				ID:     existingPolicyID,
+				Name:   "existing-spec",
+				State:  "draft",
+				Rate:   34,
+				Active: true,
+				Tags:   []string{"testing"},
+			},
 		}
 		polRec   controllers.SecurityPolicyReconciler
 		policyCR v1alpha1.SecurityPolicy
@@ -351,12 +355,14 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				policyCR = v1alpha1.SecurityPolicy{
 					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 					Spec: v1alpha1.SecurityPolicySpec{
-						Name:   envconf.RandomName("sample-policy", 32),
-						ID:     spec.MID,
-						Active: true,
-						State:  initialK8sPolicyState,
-						Rate:   initialK8sPolicyRate,
-						Tags:   []string{initialK8sPolicyTag},
+						SecurityPolicySpec: model.SecurityPolicySpec{
+							Name:   envconf.RandomName("sample-policy", 32),
+							ID:     spec.MID,
+							Active: true,
+							State:  initialK8sPolicyState,
+							Rate:   initialK8sPolicyRate,
+							Tags:   []string{initialK8sPolicyTag},
+						},
 					},
 				}
 
@@ -539,13 +545,15 @@ func TestSecurityPolicy(t *testing.T) {
 				policyCR = v1alpha1.SecurityPolicy{
 					ObjectMeta: metav1.ObjectMeta{Name: "sample-policy", Namespace: testNs},
 					Spec: v1alpha1.SecurityPolicySpec{
-						Name:   envconf.RandomName("sample-policy", 32),
-						Active: true,
-						State:  "draft",
-						AccessRightsArray: []*v1alpha1.AccessDefinition{{
-							Name:      apiDefCR.Name,
-							Namespace: apiDefCR.Namespace,
-						}},
+						SecurityPolicySpec: model.SecurityPolicySpec{
+							Name:   envconf.RandomName("sample-policy", 32),
+							Active: true,
+							State:  "draft",
+							AccessRightsArray: []*model.AccessDefinition{{
+								Name:      apiDefCR.Name,
+								Namespace: apiDefCR.Namespace,
+							}},
+						},
 					},
 				}
 
@@ -712,22 +720,22 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				apiDefID = createdResource.Status.ApiID
 
 				policyCR, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
-					policy.Spec.AccessRightsArray = []*v1alpha1.AccessDefinition{
+					policy.Spec.AccessRightsArray = []*model.AccessDefinition{
 						{
 							Name:      apiDefCR.Name,
 							Namespace: apiDefCR.Namespace,
-							AllowedTypes: []v1alpha1.GraphQLType{
+							AllowedTypes: []model.GraphQLType{
 								{Name: queryName, Fields: []string{accountsField}},
 							},
-							RestrictedTypes: []v1alpha1.GraphQLType{
+							RestrictedTypes: []model.GraphQLType{
 								{Name: queryName, Fields: []string{allField}},
 							},
 							DisableIntrospection: true,
-							FieldAccessRights: []v1alpha1.FieldAccessDefinition{
+							FieldAccessRights: []model.FieldAccessDefinition{
 								{
 									TypeName:  queryName,
 									FieldName: fieldName,
-									Limits:    v1alpha1.FieldLimits{MaxQueryDepth: limit},
+									Limits:    model.FieldLimits{MaxQueryDepth: limit},
 								},
 							},
 						},
@@ -803,4 +811,181 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 		Feature()
 
 	testenv.Test(t, securityPolicyForGraphQL)
+}
+
+// TestSecurityPolicyWithContextRef tests if OperatorContext is linked and unlinked to SecurityPolicy.
+func TestSecurityPolicyWithContextRef(t *testing.T) {
+	var (
+		eval   = is.New(t)
+		policy *v1alpha1.SecurityPolicy
+		opCtx  *v1alpha1.OperatorContext
+	)
+
+	policyAndOperatorCtx := features.New("SecurityPolicy and OperatorContext link").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			testNs, ok := ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
+
+			// TODO: align function parameter's order.
+			var err error
+			opCtx, err = createTestOperatorContext(ctx, testNs, c)
+			eval.NoErr(err)
+
+			policy, err = createTestPolicy(ctx, c, testNs, func(p *v1alpha1.SecurityPolicy) {
+				p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: opCtx.Namespace}
+			})
+			eval.NoErr(err)
+
+			return ctx
+		}).
+		Assess("Ensure the link between resources",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				err := wait.For(conditions.New(c.Client().Resources()).
+					ResourceMatch(policy, func(object k8s.Object) bool {
+						pol, ok := object.(*v1alpha1.SecurityPolicy)
+						if !ok {
+							return false
+						}
+
+						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == "" {
+							return false
+						}
+
+						return pol.Spec.Context.Name == opCtx.Name && pol.Spec.Context.Namespace == opCtx.Namespace
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).
+					ResourceMatch(opCtx, func(object k8s.Object) bool {
+						oc, ok := object.(*v1alpha1.OperatorContext)
+						if !ok {
+							return false
+						}
+
+						if len(oc.Status.LinkedSecurityPolicies) != 1 {
+							return false
+						}
+
+						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
+
+						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace == policy.Namespace
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Break the link between resources by deleting the SecurityPolicy CR",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				// Deleting SecurityPolicy CR must break the link between SecurityPolicy and OperatorContext.
+				err := c.Client().Resources(testNs).Delete(ctx, policy)
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources(testNs)).ResourceDeleted(policy),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				newctx := v1alpha1.OperatorContext{}
+				err = c.Client().Resources(testNs).Get(ctx, opCtx.Name, opCtx.Namespace, &newctx)
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources(testNs)).
+					ResourceMatch(opCtx, func(object k8s.Object) bool {
+						oc, ok := object.(*v1alpha1.OperatorContext)
+						if !ok {
+							return false
+						}
+
+						return len(oc.Status.LinkedSecurityPolicies) == 0
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Recreate SecurityPolicy and ensure the link between resources",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				var err error
+				policy, err = createTestPolicy(ctx, c, testNs, func(p *v1alpha1.SecurityPolicy) {
+					p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: opCtx.Namespace}
+				})
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).
+					ResourceMatch(policy, func(object k8s.Object) bool {
+						pol, ok := object.(*v1alpha1.SecurityPolicy)
+						if !ok {
+							return false
+						}
+
+						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == "" {
+							return false
+						}
+
+						return pol.Spec.Context.Name == opCtx.Name && pol.Spec.Context.Namespace == opCtx.Namespace
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).
+					ResourceMatch(opCtx, func(object k8s.Object) bool {
+						oc, ok := object.(*v1alpha1.OperatorContext)
+						if !ok {
+							return false
+						}
+
+						if len(oc.Status.LinkedSecurityPolicies) != 1 {
+							return false
+						}
+
+						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
+
+						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace == policy.Namespace
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Break the link between resources by removing reference",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				policy.Spec.Context = nil
+				err := c.Client().Resources(testNs).Update(ctx, policy)
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).
+					ResourceMatch(policy, func(object k8s.Object) bool {
+						p, ok := object.(*v1alpha1.SecurityPolicy)
+						if !ok {
+							return false
+						}
+
+						return p.Spec.Context == nil
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).
+					ResourceMatch(opCtx, func(object k8s.Object) bool {
+						oc, ok := object.(*v1alpha1.OperatorContext)
+						if !ok {
+							return false
+						}
+
+						return len(oc.Status.LinkedSecurityPolicies) == 0
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Test(t, policyAndOperatorCtx)
 }

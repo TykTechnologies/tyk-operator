@@ -97,7 +97,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return err
 		}
 
-		policy.Spec = *newSpec
+		policy.Spec.SecurityPolicySpec = *newSpec
 		return nil
 	})
 
@@ -127,7 +127,7 @@ func (r *SecurityPolicyReconciler) spec(
 		}
 
 		if spec.AccessRights == nil {
-			spec.AccessRights = map[string]tykv1.AccessDefinition{}
+			spec.AccessRights = map[string]model.AccessDefinition{}
 		}
 
 		// Set AccessRights for Tyk OSS.
@@ -139,7 +139,7 @@ func (r *SecurityPolicyReconciler) spec(
 
 // updateAccess updates given AccessDefinition's APIID and APIName fields based on ApiDefinition CR that is referred
 // in the AccessDefinition. So that, it includes k8s details of the referred ApiDefinitions.
-func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.AccessDefinition) error {
+func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *model.AccessDefinition) error {
 	api := &tykv1.ApiDefinition{}
 	if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
@@ -222,7 +222,7 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 
 func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	policy *tykv1.SecurityPolicy,
-) (*tykv1.SecurityPolicySpec, error) {
+) (*model.SecurityPolicySpec, error) {
 	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
 
 	policy.Spec.MID = policy.Status.PolID
@@ -243,7 +243,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 				return nil, err
 			}
 
-			return spec, r.updatePolicyStatus(ctx, policy)
+			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
 		}
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
@@ -287,7 +287,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 
 	r.Log.Info("Successfully updated Policy")
 
-	return spec, r.updatePolicyStatus(ctx, policy)
+	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {

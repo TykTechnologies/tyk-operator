@@ -163,9 +163,11 @@ func createTestPolicy(ctx context.Context, c *envconf.Config, namespace string, 
 	policy.Name = testSecurityPolicy
 	policy.Namespace = namespace
 	policy.Spec = v1alpha1.SecurityPolicySpec{
-		Name:   testSecurityPolicy,
-		Active: true,
-		State:  "active",
+		SecurityPolicySpec: model.SecurityPolicySpec{
+			Name:   testSecurityPolicy,
+			Active: true,
+			State:  "active",
+		},
 	}
 
 	if mutateFn != nil {

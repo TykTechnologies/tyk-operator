@@ -58,13 +58,15 @@ func TestUpdatePolicyStatus(t *testing.T) {
 					Name: "policy with access rights",
 				},
 				Spec: tykv1.SecurityPolicySpec{
-					Name: "policy with access rights",
-					AccessRightsArray: []*tykv1.AccessDefinition{
-						{
-							Name: "api1",
-						},
-						{
-							Name: "api2",
+					SecurityPolicySpec: model.SecurityPolicySpec{
+						Name: "policy with access rights",
+						AccessRightsArray: []*model.AccessDefinition{
+							{
+								Name: "api1",
+							},
+							{
+								Name: "api2",
+							},
 						},
 					},
 				},
