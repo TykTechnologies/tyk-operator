@@ -201,82 +201,83 @@ func updateOperatorContextStatus(
 
 	switch object.(type) {
 	case *v1alpha1.ApiDefinition:
-		for i := 0; i < opCtxList.Items; i++ {
+		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if ApiDefinition is still referring to same context and is not marked for deletion.
-			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
+			if ctxRef != nil &&
+				opCtxList.Items[i].Name == ctxRef.Name && opCtxList.Items[i].Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opCtx.Status.RemoveLinkedAPIDefinition(objectTarget)
+			opCtxList.Items[i].Status.RemoveLinkedAPIDefinition(objectTarget)
 
-			err := client.Status().Update(ctx, &opCtx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				log.Error(
 					err,
 					"Failed to remove link of APIDefinition from operator context",
-					"operatorContext", opCtx.Name, "ApiDefinition", objectTarget.String(),
+					"operatorContext", opCtxList.Items[i].Name, "ApiDefinition", objectTarget.String(),
 				)
 
 				return err
 			}
 		}
 	case *v1alpha1.SecurityPolicy:
-		for _, opCtx := range opCtxList.Items {
+		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if SecurityPolicy is still referring to context and is not marked for deletion.
-			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			//
-			opCtx.Status.RemoveLinkedSecurityPolicies(objectTarget)
+			opCtxList.Items[i].Status.RemoveLinkedSecurityPolicies(objectTarget)
 
-			err := client.Status().Update(ctx, &opCtx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.PortalAPICatalogue:
-		for _, opCtx := range opCtxList.Items {
+		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if PortalAPICatalogue is still referring to context and is not marked for deletion.
-			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name && opCtxList.Items[i].Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opCtx.Status.RemoveLinkedPortalAPICatalogues(objectTarget)
+			opCtxList.Items[i].Status.RemoveLinkedPortalAPICatalogues(objectTarget)
 
-			err := client.Status().Update(ctx, &opCtx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.APIDescription:
-		for _, opCtx := range opCtxList.Items {
+		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if APIDescription is still referring to context and is not marked for deletion.
-			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opCtx.Status.RemoveLinkedApiDescriptions(objectTarget)
+			opCtxList.Items[i].Status.RemoveLinkedApiDescriptions(objectTarget)
 
-			err := client.Status().Update(ctx, &opCtx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.PortalConfig:
-		for _, opCtx := range opCtxList.Items {
+		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if PortalConfig is still referring to context and is not marked for deletion.
-			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opCtx.Status.RemoveLinkedPortalConfig(objectTarget)
+			opCtxList.Items[i].Status.RemoveLinkedPortalConfig(objectTarget)
 
-			err := client.Status().Update(ctx, &opCtx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
