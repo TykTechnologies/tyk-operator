@@ -201,7 +201,7 @@ func updateOperatorContextStatus(
 	switch object.(type) {
 	case *v1alpha1.ApiDefinition:
 		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to same context and is not marked for deletion
+			// do not remove link if apidef is still referring to same context and is not marked for deletion
 			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
@@ -211,12 +211,18 @@ func updateOperatorContextStatus(
 
 			err := rClient.Status().Update(ctx, &opctx)
 			if err != nil {
-				log.Error(err, "Failed to remove link of APIDefintion from operator context", "operatorContext", opctx.Name, "apidefinition", target.Name)
+				log.Error(
+					err,
+					"Failed to remove link of APIDefinition from operator context",
+					"operatorContext", opctx.Name, "ApiDefinition", target.String(),
+				)
+
+				return err
 			}
 		}
 	case *v1alpha1.SecurityPolicy:
 		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
+			// do not remove link if policy is still referring to context and is not marked for deletion
 			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
@@ -231,7 +237,7 @@ func updateOperatorContextStatus(
 		}
 	case *v1alpha1.PortalAPICatalogue:
 		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
+			// do not remove link if apidef is still referring to context and is not marked for deletion
 			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
@@ -246,7 +252,7 @@ func updateOperatorContextStatus(
 		}
 	case *v1alpha1.APIDescription:
 		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
+			// do not remove link if apidef is still referring to context and is not marked for deletion
 			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
@@ -261,7 +267,7 @@ func updateOperatorContextStatus(
 		}
 	case *v1alpha1.PortalConfig:
 		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
+			// do not remove link if apidef is still referring to context and is not marked for deletion
 			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
@@ -276,7 +282,7 @@ func updateOperatorContextStatus(
 		}
 	}
 
-	// Add reference to the refered operator context
+	// Add reference to the referred operator context
 	// only if object is not marked for deletion
 	if object.GetDeletionTimestamp().IsZero() && ctxRef != nil {
 		// add reference to operator context

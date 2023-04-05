@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -277,6 +278,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 	)
 
 	var (
+		eval = is.New(t)
 		spec = v1alpha1.SecurityPolicySpec{
 			SecurityPolicySpec: model.SecurityPolicySpec{
 				ID:     existingPolicyID,
@@ -313,8 +315,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 	securityPolicyMigrationFeatures := features.New("Existing Security Policy Migration to K8s").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			eval := is.New(t)
-
 			opConfSecret := v1.Secret{}
 			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
@@ -344,8 +344,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		}).
 		Assess("Migrate a simple Security Policy from Dashboard to K8s",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				eval := is.New(t)
-
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
@@ -396,8 +394,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// by Operator from Dashboard. Now, in the next reconciliation, Operator should recreate same
 				// SecurityPolicy on Tyk Side based on the SecurityPolicy CR on k8s.
 
-				eval := is.New(t)
-
 				// Delete an existing Policy from Dashboard to create drift between Tyk and K8s state.
 				err := deletePolicyOnTyk(reqCtx, policyCR.Status.PolID)
 				eval.NoErr(err)
@@ -447,8 +443,6 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// Assume that the user updated the Policy from Dashboard, which creates a drift between k8s state
 				// and Tyk. In order to establish consistency, Operator must update Security Policy based on the
 				// k8s state on next reconciliation - so that k8s remains as a source of truth.
-				eval := is.New(t)
-
 				copySpec := policyCR.Spec.DeepCopy()
 				copySpec.Name = "Updating Existing Policy"
 
@@ -504,6 +498,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 func TestSecurityPolicy(t *testing.T) {
 	var (
+		eval     = is.New(t)
 		reqCtx   context.Context
 		policyCR v1alpha1.SecurityPolicy
 		apiDefCR *v1alpha1.ApiDefinition
@@ -512,8 +507,6 @@ func TestSecurityPolicy(t *testing.T) {
 
 	securityPolicyFeatures := features.New("Create Security Policy from scratch").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			eval := is.New(t)
-
 			opConfSecret := v1.Secret{}
 			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
@@ -533,8 +526,6 @@ func TestSecurityPolicy(t *testing.T) {
 		}).
 		Assess("Access ApiDefinition CR",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				eval := is.New(t)
-
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
@@ -609,8 +600,6 @@ func TestSecurityPolicy(t *testing.T) {
 			}).
 		Assess("Delete SecurityPolicy and check k8s and Tyk",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				eval := is.New(t)
-
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
@@ -826,7 +815,6 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			// TODO: align function parameter's order.
 			var err error
 			opCtx, err = createTestOperatorContext(ctx, testNs, c)
 			eval.NoErr(err)
@@ -890,19 +878,23 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				)
 				eval.NoErr(err)
 
-				newctx := v1alpha1.OperatorContext{}
-				err = c.Client().Resources(testNs).Get(ctx, opCtx.Name, opCtx.Namespace, &newctx)
-				eval.NoErr(err)
+				err = wait.For(func() (done bool, err error) {
+					oc := v1alpha1.OperatorContext{}
 
-				err = wait.For(conditions.New(c.Client().Resources(testNs)).
-					ResourceMatch(opCtx, func(object k8s.Object) bool {
-						oc, ok := object.(*v1alpha1.OperatorContext)
-						if !ok {
-							return false
-						}
+					err = c.Client().Resources(testNs).Get(ctx, opCtx.Name, opCtx.Namespace, &oc)
+					if err != nil {
+						return false, err
+					}
 
-						return len(oc.Status.LinkedSecurityPolicies) == 0
-					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+					if len(oc.Status.LinkedSecurityPolicies) > 0 {
+						return false, fmt.Errorf(
+							"failed to remove LinkedSecurityPolicy from OperatorContext"+
+								"want: %v, got: %v, ", 0, len(oc.Status.LinkedSecurityPolicies),
+						)
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				return ctx
@@ -972,15 +964,23 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
-				err = wait.For(conditions.New(c.Client().Resources()).
-					ResourceMatch(opCtx, func(object k8s.Object) bool {
-						oc, ok := object.(*v1alpha1.OperatorContext)
-						if !ok {
-							return false
-						}
+				err = wait.For(func() (done bool, err error) {
+					oc := v1alpha1.OperatorContext{}
 
-						return len(oc.Status.LinkedSecurityPolicies) == 0
-					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+					err = c.Client().Resources(testNs).Get(ctx, opCtx.Name, opCtx.Namespace, &oc)
+					if err != nil {
+						return false, err
+					}
+
+					if len(oc.Status.LinkedSecurityPolicies) > 0 {
+						return false, fmt.Errorf(
+							"failed to remove LinkedSecurityPolicy from OperatorContext"+
+								"want: %v, got: %v, ", 0, len(oc.Status.LinkedSecurityPolicies),
+						)
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				return ctx
