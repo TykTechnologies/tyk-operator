@@ -888,7 +888,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 					if len(oc.Status.LinkedSecurityPolicies) > 0 {
 						return false, fmt.Errorf(
-							"failed to remove LinkedSecurityPolicy from OperatorContext"+
+							"failed to remove LinkedSecurityPolicy from OperatorContext, "+
 								"want: %v, got: %v, ", 0, len(oc.Status.LinkedSecurityPolicies),
 						)
 					}

@@ -8,13 +8,13 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client"
+	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/go-logr/logr"
 	"github.com/mitchellh/hashstructure/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var hashOptions = hashstructure.HashOptions{ZeroNil: true}
@@ -40,7 +40,7 @@ const (
 )
 
 func hasherTagName(ctx context.Context) string {
-	r := client.GetContext(ctx)
+	r := tykClient.GetContext(ctx)
 	if r.Env.Mode == "pro" {
 		return proTagName
 	}
@@ -107,53 +107,54 @@ func EncodeNS(decoded string) string {
 // HttpContext creates a context.Context for Tyk API Client.
 func HttpContext(
 	ctx context.Context,
-	rClient runtimeClient.Client,
+	rClient client.Client,
 	e environmet.Env,
-	object runtimeClient.Object,
+	object client.Object,
 	log logr.Logger,
 ) (environmet.Env, context.Context, error) {
-	get := func(c *model.Target) error {
-		if c == nil {
+	get := func(opCtxRef *model.Target) error {
+		if opCtxRef == nil {
 			// To handle the case where operator context was used previously
 			// but was removed in update operation
-			if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+			if err := updateOperatorContextStatus(ctx, rClient, object, log, opCtxRef); err != nil {
 				log.Error(err, "Failed to update status of operator contexts")
+				return err
 			}
 
 			return nil
 		}
 
 		// If namespace is not specified in contextDef, use default namespace
-		if c.Namespace == "" {
+		if opCtxRef.Namespace == "" {
 			log.Info("Context namespace is not specified, using default")
 
-			c.Namespace = "default"
+			opCtxRef.Namespace = "default"
 		}
 
 		log.Info("Detected context for resource")
 
 		env, err := GetContext(
-			ctx, object.GetNamespace(), rClient, c, log,
+			ctx, object.GetNamespace(), rClient, opCtxRef, log,
 		)
 		if err != nil {
-			log.Error(err, "Failed to get context", "contextRef", c.String())
+			log.Error(err, "Failed to get context", "contextRef", opCtxRef.String())
 
 			return err
 		}
 
-		log.Info("Successful acquired context", "contextRef", c.String())
+		log.Info("Successful acquired context", "contextRef", opCtxRef.String())
 
 		e.Environment = *env.Spec.Env
 
-		if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+		if err := updateOperatorContextStatus(ctx, rClient, object, log, opCtxRef); err != nil {
 			log.Error(err, "Failed to update status of operator contexts")
+			return err
 		}
 
 		return nil
 	}
 
 	var err error
-
 	switch o := object.(type) {
 	case *v1alpha1.ApiDefinition:
 		err = get(o.Spec.Context)
@@ -171,111 +172,111 @@ func HttpContext(
 		return environmet.Env{}, nil, err
 	}
 
-	return e, client.SetContext(ctx, client.Context{
+	return e, tykClient.SetContext(ctx, tykClient.Context{
 		Env: e,
 		Log: log,
 	}), nil
 }
 
+// updateOperatorContextStatus updates links defined in the status of OperatorContext identified by ctxRef
+// and Custom Resource identified by object.
 func updateOperatorContextStatus(
 	ctx context.Context,
-	rClient runtimeClient.Client,
-	e environmet.Env,
-	object runtimeClient.Object,
+	client client.Client,
+	object client.Object,
 	log logr.Logger,
 	ctxRef *model.Target,
 ) error {
-	target := model.Target{
+	objectTarget := model.Target{
 		Name:      object.GetName(),
 		Namespace: object.GetNamespace(),
 	}
 
-	// Remove link from other operator context, if any,
-	// as we do not know if object was referencing to different context previously
+	// Remove link from other OperatorContext, if any,
+	// as we do not know if object was referencing to different context previously.
 	var opCtxList v1alpha1.OperatorContextList
-
-	if err := rClient.List(ctx, &opCtxList); err != nil {
+	if err := client.List(ctx, &opCtxList); err != nil {
 		return err
 	}
 
 	switch object.(type) {
 	case *v1alpha1.ApiDefinition:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still referring to same context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+		for i := 0; i < opCtxList.Items; i++ {
+			// do not remove link if ApiDefinition is still referring to same context and is not marked for deletion.
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedAPIDefinition(target)
+			opCtx.Status.RemoveLinkedAPIDefinition(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtx)
 			if err != nil {
 				log.Error(
 					err,
 					"Failed to remove link of APIDefinition from operator context",
-					"operatorContext", opctx.Name, "ApiDefinition", target.String(),
+					"operatorContext", opCtx.Name, "ApiDefinition", objectTarget.String(),
 				)
 
 				return err
 			}
 		}
 	case *v1alpha1.SecurityPolicy:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if policy is still referring to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+		for _, opCtx := range opCtxList.Items {
+			// do not remove link if SecurityPolicy is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedSecurityPolicies(target)
+			//
+			opCtx.Status.RemoveLinkedSecurityPolicies(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtx)
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.PortalAPICatalogue:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still referring to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+		for _, opCtx := range opCtxList.Items {
+			// do not remove link if PortalAPICatalogue is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedPortalAPICatalogues(target)
+			opCtx.Status.RemoveLinkedPortalAPICatalogues(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtx)
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.APIDescription:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still referring to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+		for _, opCtx := range opCtxList.Items {
+			// do not remove link if APIDescription is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedApiDescriptions(target)
+			opCtx.Status.RemoveLinkedApiDescriptions(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtx)
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.PortalConfig:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still referring to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+		for _, opCtx := range opCtxList.Items {
+			// do not remove link if PortalConfig is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtx.Name == ctxRef.Name && opCtx.Namespace == ctxRef.Namespace &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedPortalConfig(target)
+			opCtx.Status.RemoveLinkedPortalConfig(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtx)
 			if err != nil {
 				return err
 			}
@@ -292,25 +293,25 @@ func updateOperatorContextStatus(
 
 		key := types.NamespacedName{Name: ctxRef.Name, Namespace: ctxRef.Namespace}
 
-		if err := rClient.Get(ctx, key, &operatorContext); err != nil {
+		if err := client.Get(ctx, key, &operatorContext); err != nil {
 			log.Error(err, "failed to get operator context")
 			return err
 		}
 
 		switch object.(type) {
 		case *v1alpha1.ApiDefinition:
-			operatorContext.Status.AddLinkedAPIDefinition(target)
+			operatorContext.Status.AddLinkedAPIDefinition(objectTarget)
 		case *v1alpha1.SecurityPolicy:
-			operatorContext.Status.AddLinkedSecurityPolicies(target)
+			operatorContext.Status.AddLinkedSecurityPolicies(objectTarget)
 		case *v1alpha1.PortalAPICatalogue:
-			operatorContext.Status.AddLinkedPortalAPICatalogues(target)
+			operatorContext.Status.AddLinkedPortalAPICatalogues(objectTarget)
 		case *v1alpha1.APIDescription:
-			operatorContext.Status.AddLinkedApiDescriptions(target)
+			operatorContext.Status.AddLinkedApiDescriptions(objectTarget)
 		case *v1alpha1.PortalConfig:
-			operatorContext.Status.AddLinkedPortalConfig(target)
+			operatorContext.Status.AddLinkedPortalConfig(objectTarget)
 		}
 
-		return rClient.Status().Update(ctx, &operatorContext)
+		return client.Status().Update(ctx, &operatorContext)
 	}
 
 	return nil
@@ -325,7 +326,7 @@ func updateOperatorContextStatus(
 func GetContext(
 	ctx context.Context,
 	ns string,
-	client runtimeClient.Client,
+	client client.Client,
 	target *model.Target,
 	log logr.Logger,
 ) (*v1alpha1.OperatorContext, error) {

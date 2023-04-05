@@ -13,6 +13,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/uuid"
+
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -160,11 +162,11 @@ func createTestPolicy(ctx context.Context, c *envconf.Config, namespace string, 
 ) (*v1alpha1.SecurityPolicy, error) {
 	var policy v1alpha1.SecurityPolicy
 
-	policy.Name = testSecurityPolicy
+	policy.Name = testSecurityPolicy + uuid.New().String()[:8]
 	policy.Namespace = namespace
 	policy.Spec = v1alpha1.SecurityPolicySpec{
 		SecurityPolicySpec: model.SecurityPolicySpec{
-			Name:   testSecurityPolicy,
+			Name:   testSecurityPolicy + testSecurityPolicy + uuid.New().String()[:8],
 			Active: true,
 			State:  "active",
 		},
