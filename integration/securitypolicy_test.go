@@ -818,7 +818,16 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			var err error
+			opConfSecret := v1.Secret{}
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			verifyPolicyApiVersion(t, &tykEnv)
+
 			opCtx, err = createTestOperatorContext(ctx, testNs, c)
 			eval.NoErr(err)
 
