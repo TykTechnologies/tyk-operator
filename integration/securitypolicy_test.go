@@ -665,6 +665,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 		tykEnv                    environmet.Env
 		apiDefID                  string
 		minGraphQLPolicyGwVersion = version.MustParseGeneric("v4.3.0")
+		policyTarget              model.Target
 	)
 
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
@@ -732,6 +733,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				})
 				eval.NoErr(err)
 
+				policyTarget = model.Target{Name: policyCR.Name, Namespace: policyCR.Namespace}
+
 				err = waitForTykResourceCreation(c, policyCR)
 				eval.NoErr(err)
 
@@ -745,7 +748,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 				var pol v1alpha1.SecurityPolicy
 
-				err := c.Client().Resources().Get(ctx, testSecurityPolicy, testNs, &pol)
+				err := c.Client().Resources().Get(ctx, policyTarget.Name, policyTarget.Namespace, &pol)
 				eval.NoErr(err)
 
 				validPolSpec := func(mode v1alpha1.OperatorContextMode, s *v1alpha1.SecurityPolicySpec, k8s bool) bool {
