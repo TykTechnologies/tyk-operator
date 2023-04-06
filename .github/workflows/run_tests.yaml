@@ -88,6 +88,12 @@ jobs:
         run: |
           make test-all
 
+      - name: Check Operator logs if failures happen
+        if: ${{ failure() }}
+        run: |
+          POD=$(kubectl get pod -l control-plane=tyk-operator-controller-manager -n tyk-operator-system -o name)
+          kubectl logs -n tyk-operator-system ${POD} -c manager
+
       - name: Upload Coverage files
         uses: actions/upload-artifact@v3
         with:
