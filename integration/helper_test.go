@@ -8,10 +8,13 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"math/big"
 	"net"
 	"os"
 	"time"
+
+	rand2 "k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/google/uuid"
 
@@ -162,7 +165,7 @@ func createTestPolicy(ctx context.Context, c *envconf.Config, namespace string, 
 ) (*v1alpha1.SecurityPolicy, error) {
 	var policy v1alpha1.SecurityPolicy
 
-	policy.Name = testSecurityPolicy + uuid.New().String()[:8]
+	policy.Name = testSecurityPolicy + fmt.Sprintf("%d", rand2.Int())
 	policy.Namespace = namespace
 	policy.Spec = v1alpha1.SecurityPolicySpec{
 		SecurityPolicySpec: model.SecurityPolicySpec{
