@@ -63,6 +63,12 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	log.Info("checking secret type is kubernetes.io/tls")
+	if desired.Type != TLSSecretType {
+		// it's not for us
+		return ctrl.Result{}, nil
+	}
+
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		err = r.delete(ctx, env, desired, log)
@@ -70,13 +76,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 		}
 
-		return ctrl.Result{}, nil
-	}
-
-	log.Info("checking secret type is kubernetes.io/tls")
-
-	if desired.Type != TLSSecretType {
-		// it's not for us
 		return ctrl.Result{}, nil
 	}
 
