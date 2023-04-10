@@ -1,0 +1,11 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: petstore-oas-policy
+spec:
+  name: petstore-oas-policy
+  access_rights_array:
+  - name: petstore-oas
+    namespace: default
+  active: true
+  state: active
