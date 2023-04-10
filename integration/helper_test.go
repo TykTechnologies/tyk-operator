@@ -169,7 +169,7 @@ func createTestPolicy(ctx context.Context, c *envconf.Config, namespace string, 
 	policy.Namespace = namespace
 	policy.Spec = v1alpha1.SecurityPolicySpec{
 		SecurityPolicySpec: model.SecurityPolicySpec{
-			Name:   testSecurityPolicy + testSecurityPolicy + uuid.New().String(),
+			Name:   testSecurityPolicy + uuid.New().String(),
 			Active: true,
 			State:  "active",
 		},
