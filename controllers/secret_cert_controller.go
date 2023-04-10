@@ -65,46 +65,10 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("secret being deleted")
-		// If our finalizer is present, need to delete from Tyk still
-		if util.ContainsFinalizer(desired, certFinalizerName) {
-			log.Info("running finalizer logic")
-
-			certPemBytes, ok := desired.Data["tls.crt"]
-			if !ok {
-				return ctrl.Result{}, nil
-			}
-
-			orgID := env.Org
-
-			certFingerPrint, err := cert.CalculateFingerPrint(certPemBytes)
-			if err != nil {
-				log.Error(err, "Failed to delete Tyk certificate")
-				return ctrl.Result{}, nil
-			}
-
-			certID := orgID + certFingerPrint
-
-			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
-
-			if err := klient.Universal.Certificate().Delete(ctx, certID); err != nil {
-				log.Error(err, "unable to delete certificate")
-				return ctrl.Result{RequeueAfter: time.Second * 5}, err
-			}
-
-			if err := klient.Universal.HotReload(ctx); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			log.Info("removing finalizer from secret")
-			util.RemoveFinalizer(desired, certFinalizerName)
-
-			if err := r.Update(ctx, desired); err != nil {
-				return ctrl.Result{}, err
-			}
+		err = r.delete(ctx, env, desired, log)
+		if err != nil {
+			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 		}
-
-		log.Info("secret successfully deleted")
 
 		return ctrl.Result{}, nil
 	}
@@ -289,6 +253,51 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r SecretCertReconciler) delete(ctx context.Context, env environmet.Env, desired *v1.Secret, log logr.Logger) error {
+	log.Info("secret being deleted")
+	// If our finalizer is present, need to delete from Tyk still
+	if util.ContainsFinalizer(desired, certFinalizerName) {
+		log.Info("running finalizer logic")
+
+		certPemBytes, ok := desired.Data["tls.crt"]
+		if !ok {
+			return nil
+		}
+
+		orgID := env.Org
+
+		certFingerPrint, err := cert.CalculateFingerPrint(certPemBytes)
+		if err != nil {
+			log.Error(err, "Failed to delete Tyk certificate")
+			return nil
+		}
+
+		certID := orgID + certFingerPrint
+
+		log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
+
+		if err := klient.Universal.Certificate().Delete(ctx, certID); err != nil {
+			log.Error(err, "unable to delete certificate")
+			return err
+		}
+
+		if err := klient.Universal.HotReload(ctx); err != nil {
+			return err
+		}
+
+		log.Info("removing finalizer from secret")
+		util.RemoveFinalizer(desired, certFinalizerName)
+
+		if err := r.Update(ctx, desired); err != nil {
+			return err
+		}
+	}
+
+	log.Info("secret successfully deleted")
+
+	return nil
 }
 
 // https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#resources-watched-by-the-controller
