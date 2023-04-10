@@ -98,7 +98,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	// all apidefinitions in current namespace
+	// list all apidefinitions in namespace of the secret
 	apiDefList := v1alpha1.ApiDefinitionList{}
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
@@ -195,21 +195,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if apiDefUpstreamCertificateHasBeenUpdated {
 		// we can skip the rest here as the secret was required only for the upstream certificate uploading
-		return ctrl.Result{}, nil
-	}
-
-	ret := true
-
-	for _, apiDef := range apiDefList.Items {
-		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
-			log.Info("apidefinition references this secret", "apiid", apiDef.Status.ApiID)
-
-			ret = false
-		}
-	}
-
-	if ret {
-		log.Info("no apidefinitions reference this secret")
 		return ctrl.Result{}, nil
 	}
 
