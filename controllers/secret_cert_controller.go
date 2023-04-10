@@ -113,8 +113,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	apiDefUpstreamCertificateHasBeenUpdated := false
-
 	for idx := range apiDefList.Items {
 		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
@@ -148,8 +146,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 
 				log.Info("api def updated successfully")
-
-				return ctrl.Result{}, nil
 			}
 		}
 
@@ -186,15 +182,8 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 
 				log.Info("ApiDefinition updated successfully")
-
-				apiDefUpstreamCertificateHasBeenUpdated = true
 			}
 		}
-	}
-
-	if apiDefUpstreamCertificateHasBeenUpdated {
-		// we can skip the rest here as the secret was required only for the upstream certificate uploading
-		return ctrl.Result{}, nil
 	}
 
 	// If finalizer not present, add it; This is a new object
