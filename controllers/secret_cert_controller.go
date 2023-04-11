@@ -64,6 +64,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	log.Info("checking secret type is kubernetes.io/tls")
+
 	if desired.Type != TLSSecretType {
 		// it's not for us
 		return ctrl.Result{}, nil
@@ -71,7 +72,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// If object is being deleted
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		err = r.delete(ctx, env, desired, log)
+		err = r.delete(ctx, desired, log, env.Org)
 		if err != nil {
 			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 		}
@@ -230,7 +231,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r SecretCertReconciler) delete(ctx context.Context, env environmet.Env, desired *v1.Secret, log logr.Logger) error {
+func (r *SecretCertReconciler) delete(ctx context.Context, desired *v1.Secret, log logr.Logger, orgID string) error {
 	log.Info("secret being deleted")
 	// If our finalizer is present, need to delete from Tyk still
 	if util.ContainsFinalizer(desired, certFinalizerName) {
@@ -240,8 +241,6 @@ func (r SecretCertReconciler) delete(ctx context.Context, env environmet.Env, de
 		if !ok {
 			return nil
 		}
-
-		orgID := env.Org
 
 		certFingerPrint, err := cert.CalculateFingerPrint(certPemBytes)
 		if err != nil {

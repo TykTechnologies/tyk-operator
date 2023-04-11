@@ -910,36 +910,38 @@ func TestApiCertificates(t *testing.T) {
 			eval.NoErr(err)
 
 			return ctx
-		}).Assess("API Definition has the certificate id", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-		err := wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(object k8s.Object) bool {
-			api, ok := object.(*v1alpha1.ApiDefinition)
-			if !ok {
-				return false
-			}
-			return api.Spec.Certificates != nil && len(api.Spec.Certificates) > 0
-		}), wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
-		eval.NoErr(err)
+		}).Assess("API Definition has the certificate id",
+		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			err := wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(object k8s.Object) bool {
+				api, ok := object.(*v1alpha1.ApiDefinition)
+				if !ok {
+					return false
+				}
+				return api.Spec.Certificates != nil && len(api.Spec.Certificates) > 0
+			}), wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
+			eval.NoErr(err)
 
-		return ctx
-	}).Assess("Certificate is created on Tyk", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-		opConfSecret := v1.Secret{}
-		err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-		eval.NoErr(err)
+			return ctx
+		}).Assess("Certificate is created on Tyk",
+		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+			err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
 
-		// Obtain Environment configuration to be able to connect Tyk.
-		tykEnv, err := generateEnvConfig(&opConfSecret)
-		eval.NoErr(err)
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
 
-		tykCtx := tykClient.SetContext(context.Background(), tykClient.Context{
-			Env: tykEnv,
-			Log: log.NullLogger{},
-		})
+			tykCtx := tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
 
-		exists := klient.Universal.Certificate().Exists(tykCtx, apiDef.Spec.Certificates[0])
-		eval.True(exists)
+			exists := klient.Universal.Certificate().Exists(tykCtx, apiDef.Spec.Certificates[0])
+			eval.True(exists)
 
-		return ctx
-	}).Feature()
+			return ctx
+		}).Feature()
 
 	testenv.Test(t, f)
 }
