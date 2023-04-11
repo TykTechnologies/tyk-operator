@@ -354,11 +354,11 @@ data:
     apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
     kind: ControllerManagerConfig
     health:
-      healthProbeBindAddress: :8081
+      healthProbeBindAddress: :{{ .Values.healthProbePort }}
     metrics:
-      bindAddress: 127.0.0.1:8080
+      bindAddress: 127.0.0.1:{{ .Values.metricsPort }}
     webhook:
-      port: 9443
+      port: {{ .Values.webhookPort }}
     leaderElection:
       leaderElect: true
       resourceName: 91ad8c6e.tyk.io
@@ -433,18 +433,18 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8081
+            port: {{ .Values.healthProbePort }}
           initialDelaySeconds: 15
           periodSeconds: 20
         name: manager
         ports:
-        - containerPort: 9443
+        - containerPort: {{ .Values.webhookPort }}
           name: webhook-server
           protocol: TCP
         readinessProbe:
           httpGet:
             path: /readyz
-            port: 8081
+            port: {{ .Values.healthProbePort }}
           initialDelaySeconds: 5
           periodSeconds: 10
 {{- with .Values.resources }}
@@ -463,20 +463,21 @@ spec:
           name: manager-config
           subPath: controller_manager_config.yaml
       - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
+        - --secure-listen-address=0.0.0.0:{{ .Values.rbac.port }}
+        - --upstream=http://127.0.0.1:{{ .Values.metricsPort }}/
         - --logtostderr=true
         - --v=10
         image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
         imagePullPolicy: {{ .Values.rbac.image.pullPolicy }}
         name: kube-rbac-proxy
         ports:
-        - containerPort: 8443
+        - containerPort: {{ .Values.rbac.port }}
           name: https
 {{- with .Values.rbac.resources }}
         resources:
 {{- toYaml . | nindent 10 }}
 {{- end }}
+      hostNetwork: {{ .Values.hostNetwork | default false }}
 {{- if .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
