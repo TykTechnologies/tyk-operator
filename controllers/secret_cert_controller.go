@@ -141,20 +141,14 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 				err = r.Update(ctx, &apiDefList.Items[idx])
 
-				if apierrors.IsConflict(err) {
-					// The Pod has been updated since we read it.
-					// Requeue the Pod to try to reconciliate again.
-					return ctrl.Result{Requeue: true}, nil
-				}
-
-				if apierrors.IsNotFound(err) {
-					// The Pod has been deleted since we read it.
-					// Requeue the Pod to try to reconciliate again.
+				// The Pod has been updated/deleted since we read it.
+				// Requeue the Pod to try to reconciliate again.
+				if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
 					return ctrl.Result{Requeue: true}, nil
 				}
 
 				if err != nil {
-					log.Error(err, "Unable to update ApiDef with cert id", "apiID", apiDefList.Items[idx].Spec.APIID)
+					log.Error(err, "Unable to update API Definition with cert id", "apiID", apiDefList.Items[idx].Spec.APIID)
 				}
 
 				log.Info("api def updated successfully")
@@ -183,15 +177,9 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 				err = r.Update(ctx, &apiDefList.Items[idx])
 
-				if apierrors.IsConflict(err) {
-					// The ApiDefinition has been updated since we read it.
-					// Requeue to try to reconciliate again.
-					return ctrl.Result{Requeue: true}, nil
-				}
-
-				if apierrors.IsNotFound(err) {
-					// The ApiDefinition has been deleted since we read it.
-					// Requeue to try to reconciliate again.
+				// The ApiDefinition has been updated/deleted since we read it.
+				// Requeue to try to reconciliate again.
+				if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
 					return ctrl.Result{Requeue: true}, nil
 				}
 
@@ -223,15 +211,10 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			apiDefList.Items[idx].Spec.Certificates = []string{certID}
 
 			err = r.Update(ctx, &apiDefList.Items[idx])
-			if apierrors.IsConflict(err) {
-				// The ApiDefinition has been updated since we read it.
-				// Requeue to try to reconciliate again.
-				return ctrl.Result{Requeue: true}, nil
-			}
 
-			if apierrors.IsNotFound(err) {
-				// The ApiDefinition has been deleted since we read it.
-				// Requeue to try to reconciliate again.
+			// The ApiDefinition has been updated/deleted since we read it.
+			// Requeue to try to reconciliate again.
+			if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
 				return ctrl.Result{Requeue: true}, nil
 			}
 
