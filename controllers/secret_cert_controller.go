@@ -113,12 +113,22 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	certID := ""
+	isCertAlreadyUploaded := false
+
 	for idx := range apiDefList.Items {
 		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
-				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
-				if err != nil {
-					return ctrl.Result{Requeue: true}, err
+				// do not upload cert again if it is already uploaded
+				if !isCertAlreadyUploaded {
+					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+					if err != nil {
+						return ctrl.Result{Requeue: true}, err
+					}
+
+					log.Info("uploaded certificate to Tyk", "certID", certID)
+
+					isCertAlreadyUploaded = true
 				}
 
 				if apiDefList.Items[idx].Spec.UpstreamCertificates == nil {
@@ -142,7 +152,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 
 				if err != nil {
-					log.Error(err, "unable to update ApiDef")
+					log.Error(err, "Unable to update ApiDef with cert id", "apiID", apiDefList.Items[idx].Spec.APIID)
 				}
 
 				log.Info("api def updated successfully")
@@ -151,9 +161,16 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysRefs {
 			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysRefs[domain] {
-				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
-				if err != nil {
-					return ctrl.Result{Requeue: true}, err
+				// do not upload cert again if it is already uploaded
+				if !isCertAlreadyUploaded {
+					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+					if err != nil {
+						return ctrl.Result{Requeue: true}, err
+					}
+
+					log.Info("uploaded certificate to Tyk", "certID", certID)
+
+					isCertAlreadyUploaded = true
 				}
 
 				if apiDefList.Items[idx].Spec.PinnedPublicKeys == nil {
@@ -196,15 +213,19 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
-	if err != nil {
-		return ctrl.Result{Requeue: true}, err
-	}
-
-	log.Info("uploaded certificate to Tyk", "certID", certID)
-
 	for _, apiDef := range apiDefList.Items {
 		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
+			if !isCertAlreadyUploaded {
+				certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+				if err != nil {
+					return ctrl.Result{Requeue: true}, err
+				}
+
+				log.Info("uploaded certificate to Tyk", "certID", certID)
+
+				isCertAlreadyUploaded = true
+			}
+
 			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
 
 			apiDefObj, err := klient.Universal.Api().Get(ctx, apiDef.Status.ApiID)
