@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...HEAD)
+
+**Fixed**:
+- Operator removes `spec.contextRef` from SecurityPolicy CRs.
 
 ## [v0.14.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.13.0...HEAD)
