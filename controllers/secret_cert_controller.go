@@ -204,8 +204,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 		}
 
-	for _, apiDef := range apiDefList.Items {
-		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
+		if containsString(apiDefList.Items[idx].Spec.CertificateSecretNames, req.Name) {
 			if !isCertAlreadyUploaded {
 				certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
@@ -217,23 +216,31 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				isCertAlreadyUploaded = true
 			}
 
-			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
+			if apiDefList.Items[idx].Spec.Certificates == nil {
+				apiDefList.Items[idx].Spec.Certificates = []string{}
+			}
 
-			apiDefObj, err := klient.Universal.Api().Get(ctx, apiDef.Status.ApiID)
+			apiDefList.Items[idx].Spec.Certificates = []string{certID}
+
+			err = r.Update(ctx, &apiDefList.Items[idx])
+			if apierrors.IsConflict(err) {
+				// The ApiDefinition has been updated since we read it.
+				// Requeue to try to reconciliate again.
+				return ctrl.Result{Requeue: true}, nil
+			}
+
+			if apierrors.IsNotFound(err) {
+				// The ApiDefinition has been deleted since we read it.
+				// Requeue to try to reconciliate again.
+				return ctrl.Result{Requeue: true}, nil
+			}
+
 			if err != nil {
-				log.Error(err, "unable to get api definition", "apiID", apiDef.Status.ApiID)
-				continue
+				log.Error(err, "unable to update ApiDef")
+				return ctrl.Result{Requeue: true}, nil
 			}
 
-			if apiDefObj.Certificates == nil {
-				apiDefObj.Certificates = []string{}
-			}
-
-			apiDefObj.Certificates = []string{certID}
-			klient.Universal.Api().Update(ctx, apiDefObj)
-
-			// TODO: we only care about 1 secret - we don't need to support multiple for mvp
-			break
+			log.Info("ApiDefinition updated successfully")
 		}
 	}
 
