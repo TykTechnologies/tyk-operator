@@ -79,6 +79,8 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	util.AddFinalizer(desired, certFinalizerName)
+
 	log.Info("ensuring tls.key is present")
 
 	tlsKey, ok := desired.Data["tls.key"]
@@ -201,17 +203,6 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				log.Info("ApiDefinition updated successfully")
 			}
 		}
-	}
-
-	// If finalizer not present, add it; This is a new object
-	if !util.ContainsFinalizer(desired, certFinalizerName) {
-		log.Info("adding finalizer for cleanup")
-
-		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, certFinalizerName)
-		err := r.Update(ctx, desired)
-
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
 
 	for _, apiDef := range apiDefList.Items {
 		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
