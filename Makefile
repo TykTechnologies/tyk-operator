@@ -41,7 +41,7 @@ UNIT_TEST=$(shell go list ./... | grep -v bdd)
 test: generate fmt vet manifests
 	go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 	setup-envtest --arch=amd64 use
-	go test ${UNIT_TEST}  -coverprofile test_coverage.out --timeout 30m
+	go test ${UNIT_TEST}  -coverprofile test_coverage.out -coverpkg ./...  --timeout 30m
 
 
 manager: generate fmt vet	## build manager binary
