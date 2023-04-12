@@ -389,7 +389,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 		eval                     = is.New(t)
 		whiteListedPath          = "/whitelisted"
 		apiDefWithWhitelist      = "apidef-whitelist"
-		apiDefListenPath         = "/test"
+		apiDefListenPath         = "/test-whitelist"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
 		eps                      = &model.ExtendedPathsSet{
@@ -492,7 +492,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 		eval                     = is.New(t)
 		blackListedPath          = "/blacklisted"
 		apiDefWithBlacklist      = "apidef-blacklist"
-		apiDefListenPath         = "/test"
+		apiDefListenPath         = "/test-blacklist"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
 		eps                      = &model.ExtendedPathsSet{
@@ -596,7 +596,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 		whiteListedPath          = "/whitelisted"
 		ignoredPath              = "/ignored"
 		apiDefWithWhitelist      = "apidef-ignored"
-		apiDefListenPath         = "/test"
+		apiDefListenPath         = "/test-ignored"
 		defaultVersion           = "Default"
 		errForbiddenResponseCode = 403
 		eps                      = &model.ExtendedPathsSet{
@@ -699,6 +699,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 					eval.NoErr(err)
 
 					if resp.StatusCode != errForbiddenResponseCode {
+						t.Logf("Got response code %d when 403 was expected", resp.StatusCode)
 						return false, nil
 					}
 
