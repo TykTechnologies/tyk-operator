@@ -188,13 +188,13 @@ scrap: generate manifests helm cross-build-image ## Re-install operator with hel
 setup-pro:	## Install Tyk Pro
 	helm repo add tyk-helm https://helm.tyk.io/public/helm/charts/
 	helm repo update
-	go run hack/bootstrap/create/main.go -debug  -mode=pro -cluster=${CLUSTER_NAME} -tyk_version=$(TYK_VERSION)
+	go run hack/bootstrap/create/main.go -debug  -mode=pro -cluster_name=${CLUSTER_NAME} -tyk_version=$(TYK_VERSION)
 
 .PHONY: setup-ce
 setup-ce:	## Install Tyk CE
 	helm repo add tyk-helm https://helm.tyk.io/public/helm/charts/
 	helm repo update
-	go run hack/bootstrap/create/main.go -debug -mode=ce -cluster=${CLUSTER_NAME} -tyk_version=$(TYK_VERSION)
+	go run hack/bootstrap/create/main.go -debug -mode=ce -cluster_name=${CLUSTER_NAME} -tyk_version=$(TYK_VERSION)
 
 
 .PHONY: boot-pro

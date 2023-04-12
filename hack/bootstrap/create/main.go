@@ -158,7 +158,7 @@ var config Config
 var (
 	mode       = flag.String("mode", os.Getenv("TYK_MODE"), "ce for community and pro for pro")
 	debug      = flag.Bool("debug", false, "prints lots of details")
-	cluster    = flag.String("cluster", "", "cluster name") //nolint
+	cluster    = flag.String("cluster_name", "", "cluster name") //nolint
 	tykVersion = flag.String("tyk_version", "v4.2", "tyk version to test against")
 )
 

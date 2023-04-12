@@ -10,15 +10,15 @@ import (
 )
 
 var (
-	image   = flag.String("image", "", "docker image for the operator")
-	cluster = flag.String("cluster", "", "cluster name")
+	image        = flag.String("image", "", "docker image for the operator")
+	cluster_name = flag.String("cluster", "", "cluster name")
 )
 
 func main() {
 	flag.Parse()
 
 	if IsKind() {
-		cmd := exec.Command("kind", "load", "docker-image", *image, "--name", *cluster)
+		cmd := exec.Command("kind", "load", "docker-image", *image, "--name", *cluster_name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stdout
 
@@ -59,7 +59,7 @@ func IsKind() bool {
 		return false
 	}
 
-	return strings.Contains(buf.String(), *cluster)
+	return strings.Contains(buf.String(), *cluster_name)
 }
 
 // IsMinikube returns true if we are running minikube
