@@ -560,8 +560,10 @@ type APIDefinitionSpec struct {
 	//+optional
 	Oauth2Meta *OAuth2Meta `json:"oauth_meta,omitempty"`
 
-	// UseOpenID           bool          `json:"use_openid"`
-	// OpenIDOptions       OpenIDOptions `json:"openid_options"`
+	// UseOpenID enables OpenIDConnect authorization
+	UseOpenID bool `json:"use_openid"`
+	// OpenIDOptions OpenIDConnect authorization configuration
+	OpenIDOptions OpenIDOptions `json:"openid_options"`
 
 	// StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
 	StripAuthData bool `json:"strip_auth_data,omitempty"`

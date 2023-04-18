@@ -148,6 +148,11 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			desired.Spec.ClientCertificates = upstreamRequestStruct.Spec.ClientCertificates
 		}
 
+		if desired.Spec.UseOpenID {
+			r.processOIDCProviders(upstreamRequestStruct)
+			desired.Spec.OpenIDOptions = upstreamRequestStruct.Spec.OpenIDOptions
+		}
+
 		// Check GraphQL Federation
 		if desired.Spec.GraphQL != nil {
 			switch desired.Spec.GraphQL.ExecutionMode {
@@ -311,6 +316,15 @@ func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
 	}
 
 	upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
+}
+
+func (r *ApiDefinitionReconciler) processOIDCProviders(upstreamRequestStruct *tykv1alpha1.ApiDefinition) {
+	for p := range upstreamRequestStruct.Spec.OpenIDOptions.Providers {
+		for k, v := range upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs {
+			delete(upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs, k)
+			upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs[encodeIfNotBase64(k)] = encodeIfNotBase64(v)
+		}
+	}
 }
 
 func decodeID(encodedID string) (namespace, name string) {
