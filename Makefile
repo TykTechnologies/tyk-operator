@@ -19,7 +19,7 @@ TAG = $(lastword $(subst :, ,$(IMG)))
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 #The name of the kind cluster used for development
-tyk ?= kind
+CLUSTER_NAME ?= kind
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -51,8 +51,8 @@ run: generate fmt vet manifests ## Run against the configured Kubernetes cluster
 	TYK_URL=${TYK_URL} TYK_MODE=${TYK_MODE} TYK_TLS_INSECURE_SKIP_VERIFY=${TYK_TLS_INSECURE_SKIP_VERIFY} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ENABLE_WEBHOOKS=${ENABLE_WEBHOOKS} go run ./main.go
 
 log: ## This will print logs of Tyk Operator pod.
-	$(eval POD=$(shell kubectl get pod -l control-plane=tyk-operator-controller-manager -n tyk -o name))
-	kubectl logs -n tyk ${POD} -c manager -f
+	$(eval POD=$(shell kubectl get pod -l control-plane=tyk-operator-controller-manager -n tyk-operator-system -o name))
+	kubectl logs -n tyk-operator-system ${POD} -c manager -f
 
 install: manifests kustomize	## Install CRDs into a cluster
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
@@ -175,15 +175,15 @@ install-cert-manager: ## Install cert manager
 install-operator-helm: cross-build-image manifests helm	## Install operator using helm
 	@echo "===> installing operator with helm"
 	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
-	helm install tyk-operator ./helm --values ./ci/helm_values.yaml --set image.tag=${TAG} -n tyk --wait
+	helm install ci ./helm --values ./ci/helm_values.yaml --set image.tag=${TAG} -n tyk-operator-system --wait
 
 .PHONY: scrap
 scrap: generate manifests helm cross-build-image ## Re-install operator with helm
 	@echo "===> re installing operator with helm"
 	go run hack/cluster/load_image.go -image ${IMG} -cluster=${CLUSTER_NAME}
-	helm uninstall tyk-operator -n tyk
+	helm uninstall ci -n tyk-operator-system
 	kubectl apply -f ./helm/crds
-	helm install tyk-operator ./helm --values ./ci/helm_values.yaml -n tyk --wait
+	helm install ci ./helm --values ./ci/helm_values.yaml -n tyk-operator-system --wait
 
 .PHONY: setup-pro
 setup-pro:	## Install Tyk Pro

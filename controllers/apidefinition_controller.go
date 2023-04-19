@@ -323,11 +323,12 @@ func (r *ApiDefinitionReconciler) processOIDCProviders(
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
 	for p := range upstreamRequestStruct.Spec.OpenIDOptions.Providers {
-		var clientIDs = make(map[string]string)
 		for k, v := range upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs {
-			clientIDs[encodeStdIfNotBase64(k, log)] = encodeIfNotBase64(v)
+			delete(upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs, k)
+
+			base64Key := encodeStdIfNotBase64(k, log)
+			upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs[base64Key] = encodeIfNotBase64(v)
 		}
-		upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs = clientIDs
 	}
 }
 
