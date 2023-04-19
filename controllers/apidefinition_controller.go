@@ -149,7 +149,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 
 		if desired.Spec.UseOpenID {
-			r.processOIDCProviders(upstreamRequestStruct, log)
+			r.processOIDCProviders(log, upstreamRequestStruct)
 			desired.Spec.OpenIDOptions = upstreamRequestStruct.Spec.OpenIDOptions
 		}
 
@@ -318,15 +318,16 @@ func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
 	upstreamRequestStruct.Spec.UpstreamCertificateRefs = nil
 }
 
-func (r *ApiDefinitionReconciler) processOIDCProviders(upstreamRequestStruct *tykv1alpha1.ApiDefinition, log logr.Logger) {
+func (r *ApiDefinitionReconciler) processOIDCProviders(
+	log logr.Logger,
+	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
+) {
 	for p := range upstreamRequestStruct.Spec.OpenIDOptions.Providers {
+		var clientIDs = make(map[string]string)
 		for k, v := range upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs {
-			delete(upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs, k)
-			log.Info("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-			log.Info(encodeStdIfNotBase64(k, log))
-			log.Info("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-			upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs[encodeStdIfNotBase64(k, log)] = encodeIfNotBase64(v)
+			clientIDs[encodeStdIfNotBase64(k, log)] = encodeIfNotBase64(v)
 		}
+		upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs = clientIDs
 	}
 }
 
@@ -692,10 +693,6 @@ func encodeStdIfNotBase64(s string, log logr.Logger) string {
 	if err == nil {
 		return s
 	}
-	log.Info("_________________________________________________")
-	log.Info(err.Error())
-	log.Info("I have an error")
-	log.Info("_________________________________________________")
 
 	return base64.StdEncoding.EncodeToString([]byte(s))
 }
