@@ -85,7 +85,7 @@ dash:
     password: "1234testing"
   org:
     name: ACME Corp
-    cname: tyk-portal.local:3000/
+    cname: tyk-portal.local:3000
   image:
     repository: tykio/tyk-dashboard
     tag: v4.0.0
