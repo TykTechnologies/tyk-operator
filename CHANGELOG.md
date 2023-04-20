@@ -5,6 +5,7 @@
 
 **Fixed**:
 - Operator removes `spec.contextRef` from SecurityPolicy CRs.
+- Fixed panic happening when adding an ApiDefinition and Ingress with HTTPS when operator talked to OSS gateway
 
 ## [v0.14.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.13.0...HEAD)
