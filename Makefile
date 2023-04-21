@@ -51,7 +51,7 @@ run: generate fmt vet manifests ## Run against the configured Kubernetes cluster
 	TYK_URL=${TYK_URL} TYK_MODE=${TYK_MODE} TYK_TLS_INSECURE_SKIP_VERIFY=${TYK_TLS_INSECURE_SKIP_VERIFY} TYK_AUTH=${TYK_AUTH} TYK_ORG=${TYK_ORG} ENABLE_WEBHOOKS=${ENABLE_WEBHOOKS} go run ./main.go
 
 log: ## This will print logs of Tyk Operator pod.
-	$(eval POD=$(shell kubectl get pod -l control-plane=controller-manager -n tyk-operator-system -o name))
+	$(eval POD=$(shell kubectl get pod -l control-plane=tyk-operator-controller-manager -n tyk-operator-system -o name))
 	kubectl logs -n tyk-operator-system ${POD} -c manager -f
 
 install: manifests kustomize	## Install CRDs into a cluster

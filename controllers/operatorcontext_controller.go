@@ -61,8 +61,6 @@ func (r *OperatorContextReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	var desired v1alpha1.OperatorContext
 
 	if err := r.Get(ctx, req.NamespacedName, &desired); err != nil {
-		logger.Error(err, "Failed to fetch operator context object")
-
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
