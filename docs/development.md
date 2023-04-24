@@ -38,7 +38,7 @@ Note that these are tools which we use for development of this project.
 |----------------------------------------------------|-----------|
 | [kubectl](https://kubernetes.io/docs/tasks/tools/) |           |
 | [kind](https://kind.sigs.k8s.io)                   |           |
-| [go](https://go.dev/doc/install)                   | 1.17      |
+| [go](https://go.dev/doc/install)                   | 1.19      |
 | [operator-sdk](https://sdk.operatorframework.io/)  | v1.7.2+   |
 | controller-gen                                     | v0.4.1+   |
 | [kustomize](https://kustomize.io/)                 | v3.8.7+   |
