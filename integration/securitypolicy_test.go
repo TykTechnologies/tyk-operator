@@ -414,7 +414,13 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// After reconciliation, Operator should detect drift and recreate non-existing policy on Tyk side.
 				err = wait.For(func() (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					return err == nil, err
+					if err != nil {
+						t.Logf("Recociliation failed with error %s. Trying again", err.Error())
+						// Do not return error, as we want to retry reconciliation.
+						return false, nil
+					}
+
+					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
