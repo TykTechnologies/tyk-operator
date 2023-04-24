@@ -9,6 +9,7 @@
 
 **Updated**:
 - Run tests against latest k8s(v1.26.3) and tyk versions(v5.0)
+- Updated go version from 1.17 to 1.19
 
 **Removed**:
 - Operator is no longer tested against k8s v1.19.16
