@@ -1,22 +1,6 @@
 # Changelog
 
-## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.1...HEAD)
-
-**Fixed**:
-- Fix Operator removes spec.contextRef from security policy definitions [Issue #605](https://github.com/TykTechnologies/tyk-operator/issues/605)
-- Fix panic caused while uploading certificate [Issue #607](https://github.com/TykTechnologies/tyk-operator/issues/607)
-
-**Updated**:
-- Bump http://github.com/Masterminds/goutils from 1.1.0 to 1.1.1 [Issue #556](https://github.com/TykTechnologies/tyk-operator/issues/556)
-- Bump http://github.com/prometheus/client_golang from 1.11.0 to 1.11.1 [Issue #567](https://github.com/TykTechnologies/tyk-operator/issues/567)
-- Bump http://golang.org/x/text from 0.3.7 to 0.3.8 [Issue #572](https://github.com/TykTechnologies/tyk-operator/issues/572)
-- Upgrade go version to 1.19 [Issue #616](https://github.com/TykTechnologies/tyk-operator/issues/616)
-
-**Added**:
-- Testing matrix for with Tyk Gateway and Dashboard v3.2, v4.0, v4.3, v5.0 and Kubernetes version v1.20.15, v1.21.14, v1.22.15, v1.23.12, v1.24.6, v1.25.2, v1.26.3
-
+## [v0.14.1](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...HEAD)
 
 **Fixed**:
@@ -31,7 +15,7 @@
 - Operator is no longer tested against k8s v1.19.16
 
 ## [v0.14.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.13.0...HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.13.0...v0.14.0)
 
 **Updated**:
 - Test each PR against Tyk v4.0 as well.
