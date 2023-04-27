@@ -371,6 +371,8 @@ spec:
                 type: object
               custom_middleware_bundle:
                 type: string
+              overwrite_custom_middleware_bundle:
+                type: boolean
               definition:
                 properties:
                   key:

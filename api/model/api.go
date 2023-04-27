@@ -698,8 +698,9 @@ type APIDefinitionSpec struct {
 	// sources and ensures that the overall rate limit is not exceeded.
 	GlobalRateLimit GlobalRateLimit `json:"global_rate_limit,omitempty"`
 
-	CustomMiddleware       MiddlewareSection `json:"custom_middleware,omitempty"`
-	CustomMiddlewareBundle string            `json:"custom_middleware_bundle,omitempty"`
+	CustomMiddleware                MiddlewareSection `json:"custom_middleware,omitempty"`
+	CustomMiddlewareBundle          string            `json:"custom_middleware_bundle,omitempty"`
+	OverwriteCustomMiddlewareBundle bool              `json:"overwrite_custom_middleware_bundle,omitempty"`
 
 	CacheOptions CacheOptions `json:"cache_options,omitempty"`
 
