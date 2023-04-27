@@ -566,7 +566,9 @@ type APIDefinitionSpec struct {
 	// StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
 	StripAuthData bool `json:"strip_auth_data,omitempty"`
 
-	Auth AuthConfig `json:"auth,omitempty"`
+	// From v2.9.2, 'auth' has been deprecated in favour of auth_configs.
+	// Reference: https://tyk.io/docs/tyk-apis/tyk-gateway-api/api-definition-objects/authentication/
+	Auth AuthConfig `json:"auth,omitempty" hash:"ignore"`
 
 	// +optional
 	AuthConfigs map[string]AuthConfig `json:"auth_configs,omitempty"`
