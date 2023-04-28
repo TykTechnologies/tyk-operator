@@ -130,6 +130,8 @@ spec:
                   of truth, overriding the existing API Definition'
                 type: string
               auth:
+                description: 'From v2.9.2, ''auth'' has been deprecated in favour
+                  of auth_configs. Reference: https://tyk.io/docs/tyk-apis/tyk-gateway-api/api-definition-objects/authentication/'
                 properties:
                   auth_header_name:
                     type: string

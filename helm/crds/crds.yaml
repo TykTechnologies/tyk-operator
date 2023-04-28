@@ -106,6 +106,7 @@ spec:
                 description: 'Only set this field if you are referring to an existing API def. The Operator will use this APIID to link the CR with the API in Tyk Note: The values in the CR will become the new source of truth, overriding the existing API Definition'
                 type: string
               auth:
+                description: 'From v2.9.2, ''auth'' has been deprecated in favour of auth_configs. Reference: https://tyk.io/docs/tyk-apis/tyk-gateway-api/api-definition-objects/authentication/'
                 properties:
                   auth_header_name:
                     type: string
