@@ -5,6 +5,7 @@ issues:
     - linters:
         - lll
       source: "^// "
+
 linters:
   enable:
     - errcheck
