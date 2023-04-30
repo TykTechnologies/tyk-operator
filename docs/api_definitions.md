@@ -51,6 +51,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
 | HMAC                          | ❌        | -              | Not implemented | |
 | Basic Authentication          | ✅        | v0.12          | Only enabling with default metadata values is supported  | [Sample](./../config/samples/basic-auth/httpbin_basic_authentication.yaml) |
+| Multiple (Chained) Auth       | ✅        | v0.14          | - | [Sample](./../config/samples/multiple-auth/httpbin_basic_authentication_and_mTLS.yaml) |
 | Plugin Auth - Go              | ✅        | v0.11          | - | [Sample](./api_definitions/custom_plugin_goauth.yaml) |
 | Plugin Auth - gRPC            | ✅        | v0.1           | - | [Sample](./../bdd/features/api_http_grpc_plugin.feature) |
 | IP Whitelisting               | ✅        | v0.5           | - | [Sample](./api_definitions/ip.md#whitelisting) |

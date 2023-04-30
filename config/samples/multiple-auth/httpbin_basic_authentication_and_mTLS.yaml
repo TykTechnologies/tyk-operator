@@ -1,0 +1,24 @@
+# Here we are creating an API definition with basic authentication and mTLS with basic authentication as base identy for httpbin 
+
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-multiple-authentications
+spec:
+  name: Httpbin Multiple Authentications
+  protocol: http
+  active: true
+  base_identity_provided_by: BasicAuthUser
+  proxy:
+    target_url: http://httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default
+  use_basic_auth: true
+  use_mutual_tls_auth: true
+  
