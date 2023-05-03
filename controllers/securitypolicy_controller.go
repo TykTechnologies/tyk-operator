@@ -237,8 +237,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	// Policy on Tyk based on k8s state. So, unintended deletions from Dashboard can be avoided.
 	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
-		if isSameSecurityPolicy(ctx, specTyk, spec) {
-			// TODO(buraksekili): needs refactoring - no need for code duplication.
+		if isSameSecurityPolicy(&tykv1.SecurityPolicy{Spec: *spec, Status: policy.Status}, specTyk) {
 			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 			if err != nil {
 				return nil, err
@@ -287,6 +286,12 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	}
 
 	r.Log.Info("Successfully updated Policy")
+
+	policyOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
+
+	tykHash, crdHash := calculateHashes(policyOnTyk, spec)
+	policy.Status.LatestTykHash = tykHash
+	policy.Status.LatestCRDHash = crdHash
 
 	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
 }
@@ -353,6 +358,13 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	r.Log.Info("Successfully created Policy")
 
 	policy.Spec.MID = spec.MID
+
+	policyOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+
+	// what happens contextRef???
+	tykHash, crdHash := calculateHashes(policyOnTyk, spec)
+	policy.Status.LatestTykHash = tykHash
+	policy.Status.LatestCRDHash = crdHash
 
 	return r.updatePolicyStatus(ctx, policy)
 }

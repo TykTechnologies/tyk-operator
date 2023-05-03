@@ -38,16 +38,16 @@ func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
 
 // changed returns if the given hash equals to hash of given interface.
 func changed(latestHash string, i1 interface{}) bool {
-	api1Hash, err := hashstructure.Hash(i1, hashstructure.FormatV2, &hashOptions)
+	iHash, err := hashstructure.Hash(i1, hashstructure.FormatV2, &hashOptions)
 	if err != nil {
 		return true
 	}
 
-	return latestHash != strconv.FormatUint(api1Hash, 10)
+	return latestHash != strconv.FormatUint(iHash, 10)
 }
 
 // isSameApiDefinition returns if given ApiDefinition CR equals ApiDefinition resource stored in Tyk, by
-// comparing hash of latest observed hash of CR and Policy resource. If there is no change detected,
+// comparing hash of latest observed hash of CR and ApiDefinition resource. If there is no change detected,
 // subsequent update API calls to Tyk Gateway or Dashboard will be omitted.
 func isSameApiDefinition(desired *v1alpha1.ApiDefinition, apiDefOnTyk *model.APIDefinitionSpec) bool {
 	if desired == nil && apiDefOnTyk == nil {
@@ -56,41 +56,26 @@ func isSameApiDefinition(desired *v1alpha1.ApiDefinition, apiDefOnTyk *model.API
 		return false
 	}
 
-	k8sChanged := changed(desired.Status.LatestCRDHash, desired.Spec.APIDefinitionSpec)
+	k8sChanged := changed(desired.Status.LatestCRDHash, desired.Spec)
 	tykChanged := changed(desired.Status.LatestTykHash, apiDefOnTyk)
 
 	return !k8sChanged && !tykChanged
 }
 
-const (
-	proTagName = "pro"
-	ossTagName = "oss"
-)
-
-func hasherTagName(ctx context.Context) string {
-	r := tykClient.GetContext(ctx)
-	if r.Env.Mode == "pro" {
-		return proTagName
+// isSameSecurityPolicy returns if given SecurityPolicy CR equals SecurityPolicy resource stored in Tyk, by
+// comparing hash of latest observed hash of CR and Policy resource. If there is no change detected,
+// subsequent update API calls to Tyk Gateway or Dashboard will be omitted.
+func isSameSecurityPolicy(desired *v1alpha1.SecurityPolicy, policyOnTyk *v1alpha1.SecurityPolicySpec) bool {
+	if desired == nil && policyOnTyk == nil {
+		return true
+	} else if desired == nil || policyOnTyk == nil {
+		return false
 	}
 
-	return ossTagName
-}
+	k8sChanged := changed(desired.Status.LatestCRDHash, desired.Spec)
+	tykChanged := changed(desired.Status.LatestTykHash, policyOnTyk)
 
-// isSameSecurityPolicy calculates the hash of two SecurityPolicySpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameSecurityPolicy(ctx context.Context, policy1, policy2 *v1alpha1.SecurityPolicySpec) bool {
-	myHashOptions := hashstructure.HashOptions{ZeroNil: true, TagName: hasherTagName(ctx)}
-
-	pol1Hash, err1 := hashstructure.Hash(policy1, hashstructure.FormatV2, &myHashOptions)
-	if err1 == nil {
-		pol2Hash, err2 := hashstructure.Hash(policy2, hashstructure.FormatV2, &myHashOptions)
-		if err2 == nil {
-			return pol1Hash == pol2Hash
-		}
-	}
-
-	return false
+	return !k8sChanged && !tykChanged
 }
 
 // containsString is a helper function to check string exists in a slice of strings.

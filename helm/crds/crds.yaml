@@ -3144,7 +3144,7 @@ spec:
                 description: Active must be set to `true` for Tyk to load the security policy into memory.
                 type: boolean
               contextRef:
-                description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
+                description: Context specify namespace/name of the OperatorContext object used for reconciling this SecurityPolicy CR.
                 properties:
                   name:
                     description: k8s resource name
@@ -3239,6 +3239,12 @@ spec:
           status:
             description: SecurityPolicyStatus defines the observed state of SecurityPolicy
             properties:
+              latestK8sHash:
+                description: LatestCRDHash corresponds to hash of lastly created or updated SecurityPolicy CR.
+                type: string
+              latestTykHash:
+                description: LatestTykHash corresponds to hash of lastly created or updated SecurityPolicy on Tyk.
+                type: string
               linked_apis:
                 items:
                   properties:
