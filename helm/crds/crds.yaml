@@ -1791,6 +1791,12 @@ spec:
             properties:
               api_id:
                 type: string
+              latestK8sHash:
+                description: LatestCRDHash corresponds to hash of lastly created or updated ApiDefinition CR.
+                type: string
+              latestTykHash:
+                description: LatestTykHash corresponds to hash of lastly created or updated ApiDefinition on Tyk.
+                type: string
               linked_by_apis:
                 description: LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this resource
                 items:

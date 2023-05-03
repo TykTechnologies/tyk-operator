@@ -49,6 +49,12 @@ type ApiDefinitionStatus struct {
 	// LinkedToSubgraph corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph.
 	// ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
 	LinkedToSubgraph string `json:"linked_to_subgraph,omitempty"`
+
+	// LatestTykHash corresponds to hash of lastly created or updated ApiDefinition on Tyk.
+	LatestTykHash string `json:"latestTykHash,omitempty"`
+
+	// LatestCRDHash corresponds to hash of lastly created or updated ApiDefinition CR.
+	LatestCRDHash string `json:"latestK8sHash,omitempty"`
 }
 
 // ApiDefinition is the Schema for the apidefinitions API

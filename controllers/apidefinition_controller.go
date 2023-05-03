@@ -412,6 +412,17 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
+	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to fetch ApiDefinition from Tyk after creating it",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
+
+		return err
+	}
+
 	err = r.updateStatus(
 		ctx,
 		desired.Namespace,
@@ -419,6 +430,10 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.ApiID = desired.Spec.APIID
+
+			tykHash, k8sHash := calculateHashes(apiDefOnTyk, desired.Spec.APIDefinitionSpec)
+			status.LatestTykHash = tykHash
+			status.LatestCRDHash = k8sHash
 		},
 	)
 	if err != nil {
@@ -453,7 +468,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 	} else {
 		// If we have same ApiDefinition on Tyk, we do not need to send Update and Hot Reload requests
 		// to Tyk. So, we can simply return to main reconciliation logic.
-		if isSameApiDefinition(&desired.Spec.APIDefinitionSpec, apiDefOnTyk) {
+		if isSameApiDefinition(desired, apiDefOnTyk) {
 			return nil
 		}
 
@@ -466,17 +481,49 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 
 			return err
 		}
-	}
 
-	err = klient.Universal.HotReload(ctx)
-	if err != nil {
-		r.Log.Error(
-			err,
-			"Failed to hot-reload Tyk after updating the ApiDefinition",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			r.Log.Error(
+				err,
+				"Failed to hot-reload Tyk after updating the ApiDefinition",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
+
+			return err
+		}
+
+		latestApiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
+		if err != nil {
+			r.Log.Error(
+				err,
+				"Failed to fetch ApiDefinition from Tyk after updating it",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
+
+			return err
+		}
+
+		err = r.updateStatus(
+			ctx,
+			desired.Namespace,
+			model.Target{Namespace: desired.Namespace, Name: desired.Name},
+			false,
+			func(status *tykv1alpha1.ApiDefinitionStatus) {
+				tykHash, k8sHash := calculateHashes(latestApiDefOnTyk, desired.Spec.APIDefinitionSpec)
+				status.LatestTykHash = tykHash
+				status.LatestCRDHash = k8sHash
+			},
 		)
+		if err != nil {
+			r.Log.Error(
+				err,
+				"Failed to update Status ID",
+				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			)
 
-		return err
+			return err
+		}
 	}
 
 	return nil

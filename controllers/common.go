@@ -17,21 +17,49 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// hashOptions is a common hashing options to be used.
 var hashOptions = hashstructure.HashOptions{ZeroNil: true}
 
-// isSameApiDefinition calculates the hash of two ApiDefinitionSpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameApiDefinition(apiDef1, apiDef2 *model.APIDefinitionSpec) bool {
-	api1Hash, err1 := hashstructure.Hash(apiDef1, hashstructure.FormatV2, &hashOptions)
+// calculateHashes calculates hashes of given two interfaces. Returns empty string for hash
+// if any error occurs during calculation.
+func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
+	h1, err1 := hashstructure.Hash(i1, hashstructure.FormatV2, &hashOptions)
 	if err1 == nil {
-		api2Hash, err2 := hashstructure.Hash(apiDef2, hashstructure.FormatV2, &hashOptions)
+		hash1 = strconv.FormatUint(h1, 10)
+
+		h2, err2 := hashstructure.Hash(i2, hashstructure.FormatV2, &hashOptions)
 		if err2 == nil {
-			return api1Hash == api2Hash
+			return hash1, strconv.FormatUint(h2, 10)
 		}
 	}
 
-	return false
+	return
+}
+
+// changed returns if the given hash equals to hash of given interface.
+func changed(latestHash string, i1 interface{}) bool {
+	api1Hash, err := hashstructure.Hash(i1, hashstructure.FormatV2, &hashOptions)
+	if err != nil {
+		return true
+	}
+
+	return latestHash != strconv.FormatUint(api1Hash, 10)
+}
+
+// isSameApiDefinition returns if given ApiDefinition CR equals ApiDefinition resource stored in Tyk, by
+// comparing hash of latest observed hash of CR and Policy resource. If there is no change detected,
+// subsequent update API calls to Tyk Gateway or Dashboard will be omitted.
+func isSameApiDefinition(desired *v1alpha1.ApiDefinition, apiDefOnTyk *model.APIDefinitionSpec) bool {
+	if desired == nil && apiDefOnTyk == nil {
+		return true
+	} else if desired == nil || apiDefOnTyk == nil {
+		return false
+	}
+
+	k8sChanged := changed(desired.Status.LatestCRDHash, desired.Spec.APIDefinitionSpec)
+	tykChanged := changed(desired.Status.LatestTykHash, apiDefOnTyk)
+
+	return !k8sChanged && !tykChanged
 }
 
 const (
