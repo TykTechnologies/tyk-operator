@@ -324,10 +324,7 @@ func (r *ApiDefinitionReconciler) processOIDCProviders(
 ) {
 	for p := range upstreamRequestStruct.Spec.OpenIDOptions.Providers {
 		for k, v := range upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs {
-			delete(upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs, k)
-
-			base64Key := encodeStdIfNotBase64(k, log)
-			upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs[base64Key] = encodeIfNotBase64(v)
+			upstreamRequestStruct.Spec.OpenIDOptions.Providers[p].ClientIDs[k] = encodeIfNotBase64(v)
 		}
 	}
 }
@@ -687,15 +684,6 @@ func encodeIfNotBase64(s string) string {
 	}
 
 	return EncodeNS(s)
-}
-
-func encodeStdIfNotBase64(s string, log logr.Logger) string {
-	_, err := base64.StdEncoding.DecodeString(s)
-	if err == nil {
-		return s
-	}
-
-	return base64.StdEncoding.EncodeToString([]byte(s))
 }
 
 // updateLinkedPolicies ensure that all policies needed by this api definition are updated.
