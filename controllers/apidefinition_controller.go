@@ -431,7 +431,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.ApiID = desired.Spec.APIID
 
-			tykHash, k8sHash := calculateHashes(apiDefOnTyk, desired.Spec.APIDefinitionSpec)
+			tykHash, k8sHash := calculateHashes(apiDefOnTyk, desired.Spec)
 			status.LatestTykHash = tykHash
 			status.LatestCRDHash = k8sHash
 		},
@@ -510,7 +510,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 			model.Target{Namespace: desired.Namespace, Name: desired.Name},
 			false,
 			func(status *tykv1alpha1.ApiDefinitionStatus) {
-				tykHash, k8sHash := calculateHashes(latestApiDefOnTyk, desired.Spec.APIDefinitionSpec)
+				tykHash, k8sHash := calculateHashes(latestApiDefOnTyk, desired.Spec)
 				status.LatestTykHash = tykHash
 				status.LatestCRDHash = k8sHash
 			},
