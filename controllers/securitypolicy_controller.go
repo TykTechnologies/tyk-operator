@@ -287,7 +287,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 
 	r.Log.Info("Successfully updated Policy")
 
-	policyOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
+	policyOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
 
 	tykHash, crdHash := calculateHashes(policyOnTyk, spec)
 	policy.Status.LatestTykHash = tykHash
