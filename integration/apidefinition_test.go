@@ -100,6 +100,9 @@ func TestReconciliationCalls(t *testing.T) {
 			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
+			url, exists := opConfSecret.Data["TYK_URL"]
+			eval.True(exists)
+
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
@@ -110,6 +113,7 @@ func TestReconciliationCalls(t *testing.T) {
 			})
 
 			tykEnv.Mode = mockVersion(tykEnv)
+			tykEnv.URL = string(url)
 
 			cl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -223,9 +227,12 @@ func TestReconciliationCalls(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
+						apiDefObj.Spec.Name = "updatingname"
+						apiDefObj.Spec.APIID = apiDefObj.Status.ApiID
+
 						// Creating a drift between Tyk and Kubernetes via updating Tyk should trigger
 						// Update operation in next reconciliation.
-						_, err := klient.Universal.Api().Delete(tykCtx, apiDefObj.Status.ApiID)
+						_, err := klient.Universal.Api().Update(tykCtx, &apiDefObj.Spec.APIDefinitionSpec)
 						if err != nil {
 							t.Logf("failed to update ApiDefinition, err: %v", err)
 							return false
@@ -238,7 +245,6 @@ func TestReconciliationCalls(t *testing.T) {
 				)
 				eval.NoErr(err)
 
-				// TODO(buraksekili): add test cases including k8s specific field updates.
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
