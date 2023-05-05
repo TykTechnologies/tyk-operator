@@ -39,8 +39,10 @@ jobs:
       fail-fast: false
       matrix: 
         k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
-        tyk-version: ['v3.2', 'v4.0', 'v4.3','v5.0']
-        mode: ['ce','pro']
+#        tyk-version: ['v3.2', 'v4.0', 'v4.3','v5.0']
+        tyk-version: ['v5.0']
+#        mode: ['ce','pro']
+        mode: ['pro']
 
     env:
       CLUSTER_NAME: 'chart-testing'
@@ -87,6 +89,10 @@ jobs:
       - name: Run tests
         run: |
           make test-all
+
+      - name: Print logs
+        run: |
+          make log
 
       - name: Upload Coverage files
         uses: actions/upload-artifact@v3

@@ -97,6 +97,7 @@ func (a *mockDashApi) Update(ctx context.Context, spec *model.APIDefinitionSpec)
 	err = cl.List(ctx, &apiDefList, ctrl.MatchingLabels(labels))
 	if err != nil {
 		fmt.Println("failed: ", err)
+		return nil, err
 	} else {
 		for _, item := range apiDefList.Items {
 			annotations := item.GetAnnotations()
@@ -107,6 +108,7 @@ func (a *mockDashApi) Update(ctx context.Context, spec *model.APIDefinitionSpec)
 				uc, err := strconv.Atoi(annotations["mock_test"])
 				if err != nil {
 					fmt.Println("cannot convert: ", err)
+					return nil, err
 				}
 
 				uc++
@@ -116,6 +118,7 @@ func (a *mockDashApi) Update(ctx context.Context, spec *model.APIDefinitionSpec)
 			err = cl.Update(ctx, &item)
 			if err != nil {
 				fmt.Println("cannot update: ", err)
+				return nil, err
 			}
 		}
 	}

@@ -202,6 +202,11 @@ func TestReconciliationCalls(t *testing.T) {
 							return false
 						}
 
+						if uc != expectedUpdateCount {
+							t.Logf("unexpected update count, want %v got %v\n", expectedUpdateCount, uc)
+							return false
+						}
+
 						return uc == expectedUpdateCount
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -233,6 +238,7 @@ func TestReconciliationCalls(t *testing.T) {
 				)
 				eval.NoErr(err)
 
+				// TODO(buraksekili): add test cases including k8s specific field updates.
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
