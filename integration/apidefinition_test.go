@@ -1065,7 +1065,7 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 				apiDef.Name = apiDefBasicAndMTLSAuth
 				apiDef.Spec.UseBasicAuth = true
 				apiDef.Spec.UseMutualTLSAuth = true
-				apiDef.Spec.BaseIdentityProvidedBy = "BasicAuthUser"
+				apiDef.Spec.BaseIdentityProvidedBy = "basic_auth_user"
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
@@ -1100,7 +1100,7 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 					eval.True(apiDef.UseBasicAuth)
 					eval.True(apiDef.UseMutualTLSAuth)
-					eval.Equal(apiDef.BaseIdentityProvidedBy, model.AuthTypeEnum("BasicAuthUser"))
+					eval.Equal(apiDef.BaseIdentityProvidedBy, model.AuthTypeEnum("basic_auth_user"))
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))

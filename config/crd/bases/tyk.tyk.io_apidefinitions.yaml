@@ -218,6 +218,13 @@ spec:
               base_identity_provided_by:
                 description: BaseIdentityProvidedBy sets Base Identity Provider for
                   situation when multiple authentication mechanisms are used
+                enum:
+                - auth_token
+                - hmac_key
+                - basic_auth_user
+                - jwt_claim
+                - oidc_user
+                - oauth_key
                 type: string
               blacklisted_ips:
                 description: BlacklistedIPs is a list of IP address that will be blacklisted.This
