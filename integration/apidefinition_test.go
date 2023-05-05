@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -49,6 +50,263 @@ func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
 	return err
+}
+
+const mockTestMetaKey = "mock_test"
+
+// getUpdateCount returns update count stored in annotations of given object.
+func getUpdateCount(object metav1.Object) (int, error) {
+	annotations := object.GetAnnotations()
+	if annotations == nil {
+		return 0, fmt.Errorf(
+			"failed to get annotations from %v/%v, nil annotations", object.GetName(), object.GetNamespace(),
+		)
+	}
+
+	val, ok := annotations[mockTestMetaKey]
+	if !ok {
+		return 0, fmt.Errorf("key %v does not exist on annotations", mockTestMetaKey)
+	}
+
+	valInt, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, fmt.Errorf("failed to convert annotation to integer, err: %v", err)
+	}
+
+	return valInt, nil
+}
+
+// TestReconciliationCalls checks the number of PUT requests made during reconciliation. The purpose of this test is
+// to verify that if API calls are not sent to Tyk if no changes happen on ApiDefinition.
+// ApiDefinition Reconciler understands differences by comparing hashes of structures. It stores k8s spec hash and
+// ApiDefinition spec hash returned by Tyk Dashboard / GW in status subresource. Whenever reconciliation happens again,
+// if current object's hashes are different than the previously stored ones, it runs Update logic. Otherwise, it
+// skips the Update logic to minimize load created on Tyk.
+func TestReconciliationCalls(t *testing.T) {
+	var (
+		eval                = is.New(t)
+		tykEnv              environmet.Env
+		tykCtx              context.Context
+		r                   controllers.ApiDefinitionReconciler
+		apiDefCR            *v1alpha1.ApiDefinition
+		opCtx               *v1alpha1.OperatorContext
+		expectedUpdateCount = 0
+	)
+
+	testReconciliationCalls := features.New("Check API calls in reconciliation").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			tykEnv.Mode = mockVersion(tykEnv)
+
+			cl, err := createTestClient(c.Client())
+			eval.NoErr(err)
+
+			r = controllers.ApiDefinitionReconciler{
+				Client: cl,
+				Log:    log.NullLogger{},
+				Scheme: cl.Scheme(),
+				Env:    tykEnv,
+			}
+
+			return ctx
+
+		}).
+		Assess("Creating a resource should not trigger Update",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				var err error
+				opCtx, err = createTestOperatorContext2(ctx, testNs, c, func(oc *v1alpha1.OperatorContext) {
+					oc.Spec.FromSecret = nil
+					oc.Spec.Env = &v1alpha1.Environment{
+						URL:  tykEnv.URL,
+						Mode: tykEnv.Mode,
+						Org:  tykEnv.Org,
+						Auth: tykEnv.Auth,
+					}
+				})
+				eval.NoErr(err)
+
+				// First, create the ApiDefinition.
+				apiDefCR, err = createTestAPIDef(ctx, c, testNs, func(apiDef *v1alpha1.ApiDefinition) {
+					labels := apiDef.GetLabels()
+					if labels == nil {
+						labels = make(map[string]string)
+					}
+					labels[mockTestMetaKey] = "tyk"
+					apiDef.SetLabels(labels)
+
+					annotations := apiDef.GetAnnotations()
+					if annotations == nil {
+						annotations = make(map[string]string)
+					}
+					annotations[mockTestMetaKey] = strconv.Itoa(0)
+					apiDef.SetAnnotations(annotations)
+
+					apiDef.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: opCtx.Namespace}
+				})
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						uc, err := getUpdateCount(apiDefObj)
+						if err != nil {
+							t.Logf("failed to get update count, err: %v", err)
+							return false
+						}
+
+						return uc == expectedUpdateCount
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Updating resource on k8s should trigger Update",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				apiDefCR.Spec.Name = "something-else"
+				err := c.Client().Resources(testNs).Update(ctx, apiDefCR)
+				eval.NoErr(err)
+				expectedUpdateCount++
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						uc, err := getUpdateCount(apiDefObj)
+						if err != nil {
+							t.Logf("failed to get update count, err: %v", err)
+							return false
+						}
+
+						return uc == expectedUpdateCount
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Updating resource on Tyk should trigger Update",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				err := wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						// Creating a drift between Tyk and Kubernetes via updating Tyk should trigger
+						// Update operation in next reconciliation.
+						_, err := klient.Universal.Api().Delete(tykCtx, apiDefObj.Status.ApiID)
+						if err != nil {
+							t.Logf("failed to update ApiDefinition, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
+						if err != nil {
+							t.Logf("failed to reconcile, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				expectedUpdateCount++
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
+						if err != nil {
+							t.Logf("failed to reconcile, err: %v", err)
+							return false
+						}
+
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						uc, err := getUpdateCount(apiDefObj)
+						if err != nil {
+							t.Logf("failed to get update count, err: %v", err)
+							return false
+						}
+
+						return uc == expectedUpdateCount
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Periodic reconciliation should not trigger Update",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				err := wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
+						if err != nil {
+							t.Logf("failed to reconcile, err: %v", err)
+							return false
+						}
+
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						uc, err := getUpdateCount(apiDefObj)
+						if err != nil {
+							t.Logf("failed to get update count, err: %v", err)
+							return false
+						}
+
+						return uc == expectedUpdateCount
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Test(t, testReconciliationCalls)
 }
 
 // TestDeletingNonexistentAPI tests if deleting nonexistent resources cause an error or not on k8s level.

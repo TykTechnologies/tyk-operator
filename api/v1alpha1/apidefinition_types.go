@@ -27,7 +27,7 @@ type APIDefinitionSpec struct {
 	model.APIDefinitionSpec `json:",inline"`
 	// Context specify namespace/name of the OperatorContext object used for
 	// reconciling this APIDefinition
-	Context *model.Target `json:"contextRef,omitempty" hash:"ignore"`
+	Context *model.Target `json:"contextRef,omitempty"`
 }
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition

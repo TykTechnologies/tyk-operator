@@ -58,8 +58,9 @@ const (
 )
 
 // OperatorContextMode is the mode to which the admin api binding is done values are
-// ce for community edition and pro for dashboard
-// +kubebuilder:validation:Enum=ce;pro
+// ce for community edition and pro for dashboard. Don't use modes with mock prefix since they
+// are intended to be used in testing.
+// +kubebuilder:validation:Enum=ce;pro;mockdash
 type OperatorContextMode string
 
 // OperatorContextSpec defines the desired state of OperatorContext

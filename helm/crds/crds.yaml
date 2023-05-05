@@ -2210,10 +2210,11 @@ spec:
                   insecureSkipVerify:
                     type: boolean
                   mode:
-                    description: OperatorContextMode is the mode to which the admin api binding is done values are ce for community edition and pro for dashboard
+                    description: OperatorContextMode is the mode to which the admin api binding is done values are ce for community edition and pro for dashboard. Don't use modes with mock prefix since they are intended to be used in testing.
                     enum:
                     - ce
                     - pro
+                    - mockdash
                     type: string
                   org:
                     type: string

@@ -492,38 +492,38 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 
 			return err
 		}
+	}
 
-		latestApiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
-		if err != nil {
-			r.Log.Error(
-				err,
-				"Failed to fetch ApiDefinition from Tyk after updating it",
-				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-			)
-
-			return err
-		}
-
-		err = r.updateStatus(
-			ctx,
-			desired.Namespace,
-			model.Target{Namespace: desired.Namespace, Name: desired.Name},
-			false,
-			func(status *tykv1alpha1.ApiDefinitionStatus) {
-				tykHash, k8sHash := calculateHashes(latestApiDefOnTyk, desired.Spec)
-				status.LatestTykHash = tykHash
-				status.LatestCRDHash = k8sHash
-			},
+	latestApiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to fetch ApiDefinition from Tyk after updating it",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
-		if err != nil {
-			r.Log.Error(
-				err,
-				"Failed to update Status ID",
-				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-			)
 
-			return err
-		}
+		return err
+	}
+
+	err = r.updateStatus(
+		ctx,
+		desired.Namespace,
+		model.Target{Namespace: desired.Namespace, Name: desired.Name},
+		false,
+		func(status *tykv1alpha1.ApiDefinitionStatus) {
+			tykHash, k8sHash := calculateHashes(latestApiDefOnTyk, desired.Spec)
+			status.LatestTykHash = tykHash
+			status.LatestCRDHash = k8sHash
+		},
+	)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to update Status ID",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
+
+		return err
 	}
 
 	return nil
