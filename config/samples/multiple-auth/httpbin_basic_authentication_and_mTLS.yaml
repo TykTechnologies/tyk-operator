@@ -8,7 +8,7 @@ spec:
   name: Httpbin Multiple Authentications
   protocol: http
   active: true
-  base_identity_provided_by: BasicAuthUser
+  base_identity_provided_by: basic_auth_user
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin
