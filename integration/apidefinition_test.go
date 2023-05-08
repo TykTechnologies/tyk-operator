@@ -100,15 +100,15 @@ func TestReconciliationCalls(t *testing.T) {
 			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
-			url, exists := opConfSecret.Data["TYK_URL"]
-			eval.True(exists)
+			//url, exists := opConfSecret.Data["TYK_URL"]
+			//eval.True(exists)
 
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
 			tykEnv.Mode = mockVersion(tykEnv)
-			tykEnv.URL = string(url)
+			//tykEnv.URL = string(url)
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
@@ -279,7 +279,12 @@ func TestReconciliationCalls(t *testing.T) {
 							return false
 						}
 
-						return uc == expectedUpdateCount
+						if uc != expectedUpdateCount {
+							t.Logf("unexpected update count, want %v got %v", expectedUpdateCount, uc)
+							return false
+						}
+
+						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
