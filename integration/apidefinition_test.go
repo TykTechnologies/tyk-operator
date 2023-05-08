@@ -107,13 +107,13 @@ func TestReconciliationCalls(t *testing.T) {
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
+			tykEnv.Mode = mockVersion(tykEnv)
+			tykEnv.URL = string(url)
+
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
 				Log: log.NullLogger{},
 			})
-
-			tykEnv.Mode = mockVersion(tykEnv)
-			tykEnv.URL = string(url)
 
 			cl, err := createTestClient(c.Client())
 			eval.NoErr(err)
