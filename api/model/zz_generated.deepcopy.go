@@ -52,6 +52,11 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.UseKeylessAccess != nil {
+		in, out := &in.UseKeylessAccess, &out.UseKeylessAccess
+		*out = new(bool)
+		**out = **in
+	}
 	if in.Oauth2Meta != nil {
 		in, out := &in.Oauth2Meta, &out.Oauth2Meta
 		*out = new(OAuth2Meta)

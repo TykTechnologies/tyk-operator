@@ -201,6 +201,8 @@ func hasError(errs field.ErrorList, needle string) bool {
 func TestApiDefinition_Validate_Auth(t *testing.T) {
 	eval := is.New(t)
 
+	useKeyLess := true
+
 	tests := map[string]struct {
 		ApiDefinition ApiDefinition
 		ErrCause      field.ErrorType
@@ -209,7 +211,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						UseStandardAuth:  true,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 					},
@@ -221,7 +223,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 					},
 				},
@@ -283,6 +285,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 
 func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 	eval := is.New(t)
+	useKeyLess := true
 
 	tests := map[string]struct {
 		ApiDefinition ApiDefinition
@@ -292,7 +295,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 						GraphQL: &model.GraphQLConfig{
 							Enabled:       true,
@@ -314,7 +317,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 						GraphQL: &model.GraphQLConfig{
 							Enabled:       true,
@@ -336,7 +339,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 						GraphQL: &model.GraphQLConfig{
 							Enabled:       true,
@@ -359,7 +362,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 						GraphQL: &model.GraphQLConfig{
 							Enabled:       true,
@@ -385,7 +388,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 						GraphQL: &model.GraphQLConfig{
 							Enabled:       true,
@@ -410,7 +413,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 						GraphQL: &model.GraphQLConfig{
 							Enabled:       true,
@@ -435,7 +438,7 @@ func TestApiDefinition_Validate_GraphQLDataSource(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseKeylessAccess: true,
+						UseKeylessAccess: &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 						GraphQL: &model.GraphQLConfig{
 							Enabled:       true,

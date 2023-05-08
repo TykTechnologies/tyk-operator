@@ -65,11 +65,13 @@ func createTestClient(k e2eKlient.Client) (cr.Client, error) {
 func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1.ApiDefinition {
 	var apiDef v1alpha1.ApiDefinition
 
+	useKeylessAccess := true
+
 	apiDef.Name = testApiDef
 	apiDef.Namespace = ns
 	apiDef.Spec.Name = testApiDef
 	apiDef.Spec.Protocol = "http"
-	apiDef.Spec.UseKeylessAccess = true
+	apiDef.Spec.UseKeylessAccess = &useKeylessAccess
 	apiDef.Spec.Active = true
 	apiDef.Spec.VersionData = model.VersionData{
 		DefaultVersion: "Default",

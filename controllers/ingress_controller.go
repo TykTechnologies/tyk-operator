@@ -121,12 +121,14 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
+	useKeyless := true
+
 	return &v1alpha1.ApiDefinition{
 		Spec: v1alpha1.APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
 				Name:             "default-keyless",
 				Protocol:         "http",
-				UseKeylessAccess: true,
+				UseKeylessAccess: &useKeyless,
 				Active:           true,
 				Proxy: model.Proxy{
 					TargetURL: "http://example.com",

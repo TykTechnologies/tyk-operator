@@ -552,7 +552,7 @@ type APIDefinitionSpec struct {
 
 	// UseKeylessAccess will switch off all key checking. Some analytics will still be recorded, but rate-limiting,
 	// quotas and security policies will not be possible (there is no session to attach requests to).
-	UseKeylessAccess bool `json:"use_keyless,omitempty"`
+	UseKeylessAccess *bool `json:"use_keyless,omitempty"`
 
 	// UseOAuth2 enables oauth2 authorization
 	UseOauth2 bool `json:"use_oauth2,omitempty"`
