@@ -90,6 +90,7 @@ func TestReconciliationCalls(t *testing.T) {
 		r                   controllers.ApiDefinitionReconciler
 		apiDefCR            *v1alpha1.ApiDefinition
 		opCtx               *v1alpha1.OperatorContext
+		opCtxURL            string
 		expectedUpdateCount = 0
 	)
 
@@ -100,15 +101,15 @@ func TestReconciliationCalls(t *testing.T) {
 			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
 			eval.NoErr(err)
 
-			//url, exists := opConfSecret.Data["TYK_URL"]
-			//eval.True(exists)
+			url, exists := opConfSecret.Data["TYK_URL"]
+			eval.True(exists)
+			opCtxURL = string(url)
 
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
 			tykEnv.Mode = mockVersion(tykEnv)
-			//tykEnv.URL = string(url)
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
@@ -137,7 +138,7 @@ func TestReconciliationCalls(t *testing.T) {
 				opCtx, err = createTestOperatorContext2(ctx, testNs, c, func(oc *v1alpha1.OperatorContext) {
 					oc.Spec.FromSecret = nil
 					oc.Spec.Env = &v1alpha1.Environment{
-						URL:  tykEnv.URL,
+						URL:  opCtxURL,
 						Mode: tykEnv.Mode,
 						Org:  tykEnv.Org,
 						Auth: tykEnv.Auth,
