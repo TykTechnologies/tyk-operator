@@ -287,7 +287,10 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 
 	r.Log.Info("Successfully updated Policy")
 
-	policyOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+	policyOnTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+	if err != nil {
+		return nil, err
+	}
 
 	tykHash, crdHash := calculateHashes(policyOnTyk, spec)
 	policy.Status.LatestTykHash = tykHash
@@ -359,7 +362,10 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	policy.Spec.MID = spec.MID
 
-	policyOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+	policyOnTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+	if err != nil {
+		return err
+	}
 
 	// what happens contextRef???
 	tykHash, crdHash := calculateHashes(policyOnTyk, spec)

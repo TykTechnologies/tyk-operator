@@ -22,8 +22,6 @@ func get(ctx context.Context) universal.Client {
 		return dashboard.Client{}
 	} else if r.Env.Mode == "mockdash" {
 		return mockdash.Client{}
-	} else if r.Env.Mode == "mockgw" {
-
 	}
 
 	return gateway.Client{}

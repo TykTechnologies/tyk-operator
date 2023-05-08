@@ -45,7 +45,7 @@ const (
 	tlsSecretKey           = "tls.key"
 )
 
-func mockVersion(e environmet.Env) v1alpha1.OperatorContextMode {
+func mockVersion(e *environmet.Env) v1alpha1.OperatorContextMode {
 	if e.Mode == "pro" {
 		return "mockdash"
 	}

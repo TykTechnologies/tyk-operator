@@ -114,7 +114,7 @@ func TestReconciliationCalls(t *testing.T) {
 				Log: log.NullLogger{},
 			})
 
-			tykEnv.Mode = mockVersion(tykEnv)
+			tykEnv.Mode = mockVersion(&tykEnv)
 
 			cl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -127,7 +127,6 @@ func TestReconciliationCalls(t *testing.T) {
 			}
 
 			return ctx
-
 		}).
 		Assess("Creating a resource should not trigger Update",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {

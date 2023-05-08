@@ -5,6 +5,11 @@ issues:
     - linters:
         - lll
       source: "^// "
+
+run:
+  skip-dirs:
+    - pkg/client/mock
+
 linters:
   enable:
     - errcheck

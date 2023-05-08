@@ -56,7 +56,7 @@ func TestDecodeID(t *testing.T) {
 	}
 }
 
-//func TestIsSameApiDefinition(t *testing.T) {
+//	func TestIsSameApiDefinition(t *testing.T) {
 //	type args struct {
 //		crdApi *v1alpha1.ApiDefinition
 //		tykApi *model.APIDefinitionSpec
@@ -166,4 +166,4 @@ func TestDecodeID(t *testing.T) {
 //			}
 //		})
 //	}
-//}
+//	}
