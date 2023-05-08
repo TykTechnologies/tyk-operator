@@ -109,12 +109,12 @@ func TestReconciliationCalls(t *testing.T) {
 			tykEnv, err = generateEnvConfig(&opConfSecret)
 			eval.NoErr(err)
 
-			tykEnv.Mode = mockVersion(tykEnv)
-
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
 				Log: log.NullLogger{},
 			})
+
+			tykEnv.Mode = mockVersion(tykEnv)
 
 			cl, err := createTestClient(c.Client())
 			eval.NoErr(err)
@@ -148,6 +148,7 @@ func TestReconciliationCalls(t *testing.T) {
 
 				// First, create the ApiDefinition.
 				apiDefCR, err = createTestAPIDef(ctx, c, testNs, func(apiDef *v1alpha1.ApiDefinition) {
+					// We are setting labels because mock client fetches pods based on these labels.
 					labels := apiDef.GetLabels()
 					if labels == nil {
 						labels = make(map[string]string)
@@ -246,8 +247,28 @@ func TestReconciliationCalls(t *testing.T) {
 				)
 				eval.NoErr(err)
 
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(opCtx, func(object k8s.Object) bool {
+						opCtx.Spec.Env.URL = tykEnv.URL
+						err = c.Client().Resources(testNs).Update(ctx, opCtx)
+						if err != nil {
+							t.Logf("failed to update OperatorContext, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						// TODO(buraksekili): after reconciliation, make sure that drift is recovered.
 						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
 						if err != nil {
 							t.Logf("failed to reconcile, err: %v", err)
