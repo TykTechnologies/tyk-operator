@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+
+**Added**
+- Added possiblility to set base identity provider
+
 ## [v0.14.1](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...HEAD)
 

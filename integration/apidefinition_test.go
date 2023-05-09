@@ -1010,10 +1010,97 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						return false, errors.New("API is not created yet")
+						t.Logf("API %v is not created yet on Tyk", apiDefCRD.Status.ApiID)
+						return false, nil
 					}
 
 					eval.True(apiDef.UseBasicAuth)
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				eval.True(apiDef.UseBasicAuth)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testBasicAuth)
+}
+
+func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
+	var (
+		apiDefBasicAndMTLSAuth = "apidef-basic-and-mtls-authentication"
+		defaultVersion         = "Default"
+
+		eval   = is.New(t)
+		reqCtx context.Context
+		tykEnv environmet.Env
+	)
+
+	testBasicAuth := features.New("Base Identity Provider for Basic Auth and mTLS").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			opConfSecret := v1.Secret{}
+
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			return ctx
+		}).
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS, ok := ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
+
+			// Create ApiDefinition with Basic Authentication and mTLS enabled with BasicAuthUser as base identity provider
+			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Name = apiDefBasicAndMTLSAuth
+				apiDef.Spec.UseBasicAuth = true
+				apiDef.Spec.UseMutualTLSAuth = true
+				apiDef.Spec.BaseIdentityProvidedBy = "basic_auth_user"
+				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
+				apiDef.Spec.VersionData.NotVersioned = true
+				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
+					defaultVersion: {Name: defaultVersion},
+				}
+			})
+			eval.NoErr(err) // failed to create apiDefinition
+
+			return ctx
+		}).
+		Assess("API must have base identity provider set",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNS, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				var apiDef *model.APIDefinitionSpec
+
+				err := wait.For(func() (done bool, err error) {
+					// validate base identity provider and all authentication fields
+					var apiDefCRD v1alpha1.ApiDefinition
+
+					err = c.Client().Resources().Get(ctx, apiDefBasicAndMTLSAuth, testNS, &apiDefCRD)
+					if err != nil {
+						return false, err
+					}
+
+					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
+					if err != nil {
+						t.Logf("API %v is not created yet on Tyk", apiDefCRD.Status.ApiID)
+						return false, nil
+					}
+
+					eval.True(apiDef.UseBasicAuth)
+					eval.True(apiDef.UseMutualTLSAuth)
+					eval.Equal(apiDef.BaseIdentityProvidedBy, model.AuthTypeEnum("basic_auth_user"))
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
