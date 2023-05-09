@@ -158,13 +158,13 @@ type CircuitBreakerMeta struct {
 	// Samples defines the number of requests to base the ThresholdPercent on
 	Samples int64 `json:"samples"`
 	// ReturnToServiceAfter represents the time in seconds to return back to the service
-	ReturnToServiceAfter int  `json:"return_to_service_after"`
-	DisableHalfOpenState bool `json:"disable_half_open_state,omitempty"`
+	ReturnToServiceAfter int   `json:"return_to_service_after"`
+	DisableHalfOpenState *bool `json:"disable_half_open_state,omitempty"`
 }
 
 type StringRegexMap struct {
 	MatchPattern string `json:"match_rx"`
-	Reverse      bool   `json:"reverse,omitempty"`
+	Reverse      *bool  `json:"reverse,omitempty"`
 }
 
 type RoutingTriggerOptions struct {
@@ -379,13 +379,13 @@ type VersionInfo struct {
 	Name                        string            `json:"name"`
 	Expires                     string            `json:"expires,omitempty"`
 	Paths                       *VersionInfoPaths `json:"paths,omitempty"`
-	UseExtendedPaths            bool              `json:"use_extended_paths,omitempty"`
+	UseExtendedPaths            *bool             `json:"use_extended_paths,omitempty"`
 	ExtendedPaths               *ExtendedPathsSet `json:"extended_paths,omitempty"`
 	GlobalHeaders               map[string]string `json:"global_headers,omitempty"`
 	GlobalHeadersRemove         []string          `json:"global_headers_remove,omitempty"`
 	GlobalResponseHeaders       map[string]string `json:"global_response_headers,omitempty"`
 	GlobalResponseHeadersRemove []string          `json:"global_response_headers_remove,omitempty"`
-	IgnoreEndpointCase          bool              `json:"ignore_endpoint_case,omitempty"`
+	IgnoreEndpointCase          *bool             `json:"ignore_endpoint_case,omitempty"`
 	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
 	OverrideTarget              string            `json:"override_target,omitempty"`
 }
@@ -424,8 +424,8 @@ type EventHandlerMetaConfig struct {
 type MiddlewareDefinition struct {
 	Name           string `json:"name"`
 	Path           string `json:"path"`
-	RequireSession bool   `json:"require_session,omitempty"`
-	RawBodyOnly    bool   `json:"raw_body_only,omitempty"`
+	RequireSession *bool  `json:"require_session,omitempty"`
+	RawBodyOnly    *bool  `json:"raw_body_only,omitempty"`
 }
 
 type IdExtractorConfig struct {
@@ -455,16 +455,16 @@ type CacheOptions struct {
 	// EnableCache turns global cache middleware on or off.
 	// It is still possible to enable caching on a per-path basis by explicitly setting the endpoint cache middleware.
 	// see `spec.version_data.versions.{VERSION}.extended_paths.cache[]`
-	EnableCache bool `json:"enable_cache,omitempty"`
+	EnableCache *bool `json:"enable_cache,omitempty"`
 	// CacheTimeout is the TTL for a cached object in seconds
 	CacheTimeout int64 `json:"cache_timeout"`
 	// CacheAllSafeRequests caches responses to (GET, HEAD, OPTIONS) requests
 	// overrides per-path cache settings in versions, applies across versions
-	CacheAllSafeRequests bool `json:"cache_all_safe_requests,omitempty"`
+	CacheAllSafeRequests *bool `json:"cache_all_safe_requests,omitempty"`
 	// CacheOnlyResponseCodes is an array of response codes which are safe to cache. e.g. 404
 	CacheOnlyResponseCodes []int `json:"cache_response_codes,omitempty"`
 	// EnableUpstreamCacheControl instructs Tyk Cache to respect upstream cache control headers
-	EnableUpstreamCacheControl bool `json:"enable_upstream_cache_control,omitempty"`
+	EnableUpstreamCacheControl *bool `json:"enable_upstream_cache_control,omitempty"`
 	// CacheControlTTLHeader is the response header which tells Tyk how long it is safe to cache the response for
 	CacheControlTTLHeader string `json:"cache_control_ttl_header,omitempty"`
 	// CacheByHeaders allows header values to be used as part of the cache key
@@ -532,7 +532,7 @@ type APIDefinitionSpec struct {
 	OrgID string `json:"org_id,omitempty"`
 
 	// Active specifies if the api is enabled or not
-	Active bool `json:"active,omitempty"`
+	Active *bool `json:"active,omitempty"`
 
 	// Proxy
 	Proxy Proxy `json:"proxy"`
@@ -542,7 +542,7 @@ type APIDefinitionSpec struct {
 
 	Protocol APIProtocol `json:"protocol"`
 
-	EnableProxyProtocol bool `json:"enable_proxy_protocol,omitempty"`
+	EnableProxyProtocol *bool `json:"enable_proxy_protocol,omitempty"`
 
 	// Domain represents a custom host header that the gateway will listen on for this API
 	Domain string `json:"domain,omitempty"`
@@ -555,7 +555,7 @@ type APIDefinitionSpec struct {
 	UseKeylessAccess *bool `json:"use_keyless,omitempty"`
 
 	// UseOAuth2 enables oauth2 authorization
-	UseOauth2 bool `json:"use_oauth2,omitempty"`
+	UseOauth2 *bool `json:"use_oauth2,omitempty"`
 
 	//+optional
 	Oauth2Meta *OAuth2Meta `json:"oauth_meta,omitempty"`
@@ -564,7 +564,7 @@ type APIDefinitionSpec struct {
 	// OpenIDOptions       OpenIDOptions `json:"openid_options"`
 
 	// StripAuthData ensures that any security tokens used for accessing APIs are stripped and not leaked to the upstream
-	StripAuthData bool `json:"strip_auth_data,omitempty"`
+	StripAuthData *bool `json:"strip_auth_data,omitempty"`
 
 	Auth AuthConfig `json:"auth,omitempty"`
 
@@ -572,14 +572,14 @@ type APIDefinitionSpec struct {
 	AuthConfigs map[string]AuthConfig `json:"auth_configs,omitempty"`
 
 	// UseStandardAuth enables simple bearer token authentication
-	UseStandardAuth bool `json:"use_standard_auth,omitempty"`
+	UseStandardAuth *bool `json:"use_standard_auth,omitempty"`
 
 	// UseBasicAuth enables basic authentication
-	UseBasicAuth bool `json:"use_basic_auth,omitempty"`
+	UseBasicAuth *bool `json:"use_basic_auth,omitempty"`
 	// BasicAuth                  BasicAuthMeta         `json:"basic_auth"`
 
 	// UseMutualTLSAuth enables mututal TLS authentication
-	UseMutualTLSAuth      bool     `json:"use_mutual_tls_auth,omitempty"`
+	UseMutualTLSAuth      *bool    `json:"use_mutual_tls_auth,omitempty"`
 	ClientCertificates    []string `json:"client_certificates,omitempty"`
 	ClientCertificateRefs []string `json:"client_certificate_refs,omitempty" hash:"ignore"`
 
@@ -600,12 +600,12 @@ type APIDefinitionSpec struct {
 	UpstreamCertificateRefs map[string]string `json:"upstream_certificate_refs,omitempty" hash:"ignore"`
 
 	// EnableJWT set JWT as the access method for this API.
-	EnableJWT bool `json:"enable_jwt,omitempty"`
+	EnableJWT *bool `json:"enable_jwt,omitempty"`
 
 	// Enable Go Plugin Auth. Needs to be combined with "use_keyless:false"
-	UseGoPluginAuth bool `json:"use_go_plugin_auth,omitempty"`
+	UseGoPluginAuth *bool `json:"use_go_plugin_auth,omitempty"`
 
-	EnableCoProcessAuth bool `json:"enable_coprocess_auth,omitempty"`
+	EnableCoProcessAuth *bool `json:"enable_coprocess_auth,omitempty"`
 
 	// JWTSigningMethod algorithm used to sign jwt token
 	// +kubebuilder:validation:Enum=rsa;hmac;ecdsa
@@ -664,7 +664,7 @@ type APIDefinitionSpec struct {
 	// JWTSkipKid when true we ingore using kid as the identity for a JWT token and
 	// instead use jwt_identity_base_field if it was set or fallback to sub JWT
 	// claim.
-	JWTSkipKid bool `json:"jwt_skip_kid,omitempty"`
+	JWTSkipKid *bool `json:"jwt_skip_kid,omitempty"`
 
 	// JWTScopeToPolicyMapping this is a mapping of scope value to policy id. If
 	// this is set then a scope value found in this map will make the mappend
@@ -689,10 +689,10 @@ type APIDefinitionSpec struct {
 	// UptimeTests                UptimeTests           `json:"uptime_tests"`
 
 	// DisableRateLimit allows you to disable rate limits in a given API Definition.
-	DisableRateLimit bool `json:"disable_rate_limit,omitempty"`
+	DisableRateLimit *bool `json:"disable_rate_limit,omitempty"`
 
 	// DisableQuota allows you to disable quota middleware in a given API Definition.
-	DisableQuota bool `json:"disable_quota,omitempty"`
+	DisableQuota *bool `json:"disable_quota,omitempty"`
 
 	// GlobalRateLimit is an API Level Global Rate Limit, which assesses all traffic coming into the API from all
 	// sources and ensures that the overall rate limit is not exceeded.
@@ -714,14 +714,14 @@ type APIDefinitionSpec struct {
 	SessionLifetime int64 `json:"session_lifetime,omitempty"`
 
 	// Internal tells Tyk Gateway that this is a virtual API. It can only be routed to from other APIs.
-	Internal bool `json:"internal,omitempty"`
+	Internal *bool `json:"internal,omitempty"`
 	//AuthProvider           AuthProviderMeta    `json:"auth_provider"`
 	//SessionProvider        SessionProviderMeta `json:"session_provider"`
 	////EventHandlers             EventHandlerMetaConfig `json:"event_handlers"`
 	//EnableBatchRequestSupport bool `json:"enable_batch_request_support"`
 
 	// EnableIPWhiteListing activates the ip whitelisting middleware.
-	EnableIPWhiteListing bool `json:"enable_ip_whitelisting,omitempty"`
+	EnableIPWhiteListing *bool `json:"enable_ip_whitelisting,omitempty"`
 
 	// AllowedIPs is a list of IP address that are whitelisted.When this is
 	// provided all IP address that is not on this list will be blocked and a 403 http
@@ -730,7 +730,7 @@ type APIDefinitionSpec struct {
 	AllowedIPs []string `json:"allowed_ips,omitempty"`
 
 	// EnableIPBlacklisting activates the ip blacklisting middleware.
-	EnableIPBlacklisting bool `json:"enable_ip_blacklisting,omitempty"`
+	EnableIPBlacklisting *bool `json:"enable_ip_blacklisting,omitempty"`
 
 	// BlacklistedIPs is a list of IP address that will be blacklisted.This means if
 	// origin IP matches any IP in this list a 403 http status code will be
@@ -759,7 +759,7 @@ type APIDefinitionSpec struct {
 	// EnableContextVars extracts request context variables from the start of the middleware chain.
 	// Set this to true to make them available to your transforms.
 	// Context Variables are available in the url rewriter, modify headers and body transforms.
-	EnableContextVars bool `json:"enable_context_vars,omitempty"`
+	EnableContextVars *bool `json:"enable_context_vars,omitempty"`
 
 	// ConfigData can be used to pass custom attributes (a JSON object) into your middleware, such
 	// as a virtual endpoint or header transform.
@@ -771,7 +771,7 @@ type APIDefinitionSpec struct {
 
 	// EnableDetailedRecording instructs Tyk store the inbound request and outbound response data in HTTP Wire format
 	// as part of the Analytics data
-	EnableDetailedRecording bool `json:"enable_detailed_recording,omitempty"`
+	EnableDetailedRecording *bool `json:"enable_detailed_recording,omitempty"`
 
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 }
@@ -791,7 +791,7 @@ func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
 type Proxy struct {
 	// If PreserveHostHeader is set to true then the host header in the outbound request is retained to be the
 	// inbound hostname of the proxy.
-	PreserveHostHeader bool `json:"preserve_host_header,omitempty"`
+	PreserveHostHeader *bool `json:"preserve_host_header,omitempty"`
 
 	// ListenPath represents the path to listen on. e.g. `/api` or `/` or `/httpbin`.
 	// Any requests coming into the host, on the port that Tyk is configured to run on, that match this path will
@@ -808,16 +808,16 @@ type Proxy struct {
 	// DisableStripSlash disables the stripping of the slash suffix from a URL.
 	// when `true` a request to http://foo.bar/baz/ will be retained.
 	// when `false` a request to http://foo.bar/baz/ will be matched to http://foo.bar/baz
-	DisableStripSlash bool `json:"disable_strip_slash,omitempty"`
+	DisableStripSlash *bool `json:"disable_strip_slash,omitempty"`
 
 	// StripListenPath removes the inbound listen path in the outgoing request.
 	// e.g. http://acme.com/httpbin/get where `httpbin` is the listen path. The `httpbin` listen path which is used
 	// to identify the API loaded in Tyk is removed, and the outbound request would be http://httpbin.org/get
-	StripListenPath bool `json:"strip_listen_path,omitempty"`
+	StripListenPath *bool `json:"strip_listen_path,omitempty"`
 
 	// EnableLoadBalancing enables Tyk's round-robin loadbalancer. Tyk will ignore the TargetURL field, and rely on
 	// the hosts in the Targets list
-	EnableLoadBalancing bool `json:"enable_load_balancing,omitempty"`
+	EnableLoadBalancing *bool `json:"enable_load_balancing,omitempty"`
 
 	// Targets defines a list of upstream host targets. Tyk will then round-robin load balance between these targets.
 	// EnableLoadBalancing must be set to true in order to take advantage of this feature.
@@ -826,7 +826,7 @@ type Proxy struct {
 	// CheckHostAgainstUptimeTests will check the hostname of the outbound request against the downtime list generated
 	// by the uptime test host checker. If the host is found, then it is skipped or removed from the load balancer.
 	// This is only valid if uptime tests for the api are enabled.
-	CheckHostAgainstUptimeTests bool `json:"check_host_against_uptime_tests,omitempty"`
+	CheckHostAgainstUptimeTests *bool `json:"check_host_against_uptime_tests,omitempty"`
 
 	// Transport section exposes advanced transport level configurations such as minimum TLS version.
 	Transport ProxyTransport `json:"transport,omitempty"`
@@ -848,7 +848,7 @@ func (p *Proxy) collectLoopingTarget(fn func(Target)) {
 type ProxyTransport struct {
 	// SSLInsecureSkipVerify controls whether it is possible to use self-signed certificates when connecting to the
 	// upstream. This is applied to `TykMakeHttpRequest` & `TykMakeBatchRequest` in virtual endpoint middleware.
-	SSLInsecureSkipVerify bool `json:"ssl_insecure_skip_verify,omitempty"`
+	SSLInsecureSkipVerify *bool `json:"ssl_insecure_skip_verify,omitempty"`
 
 	// SSLCipherSuites is an array of acceptable cipher suites. A list of allowed cipher suites can be found in the
 	// Go Crypto TLS package constants documentation https://golang.org/pkg/crypto/tls/#pkg-constants
@@ -860,7 +860,7 @@ type ProxyTransport struct {
 	SSLMinVersion uint16 `json:"ssl_min_version,omitempty"`
 
 	// SSLForceCommonNameCheck forces hostname validation against the certificate Common Name
-	SSLForceCommonNameCheck bool `json:"ssl_force_common_name_check,omitempty"`
+	SSLForceCommonNameCheck *bool `json:"ssl_force_common_name_check,omitempty"`
 
 	// ProxyURL specifies custom forward proxy & port. e.g. `http(s)://proxy.url:1234`
 	ProxyURL string `json:"proxy_url,omitempty"`
@@ -870,7 +870,7 @@ type ProxyTransport struct {
 
 type CORS struct {
 	// Enable when set to true it enables the cors middleware for the api
-	Enable bool `json:"enable,omitempty"`
+	Enable *bool `json:"enable,omitempty"`
 
 	// AllowedOrigins is a list of origin domains to allow access from.
 	AllowedOrigins []string `json:"allowed_origins,omitempty"`
@@ -885,7 +885,7 @@ type CORS struct {
 	ExposedHeaders []string `json:"exposed_headers,omitempty"`
 
 	// AllowCredentials if true will allow cookies
-	AllowCredentials bool `json:"allow_credentials,omitempty"`
+	AllowCredentials *bool `json:"allow_credentials,omitempty"`
 
 	// MaxAge is the maximum age of credentials
 	MaxAge int `json:"max_age,omitempty"`
@@ -895,10 +895,10 @@ type CORS struct {
 	// that pre-flight requests generated by web-clients such as SwaggerUI or the
 	// Tyk Portal documentation system will be able to test the API using trial
 	// keys. If your service handles CORS natively, then enable this option.
-	OptionsPassthrough bool `json:"options_passthrough,omitempty"`
+	OptionsPassthrough *bool `json:"options_passthrough,omitempty"`
 
 	// Debug if true, this option produces log files for the CORS middleware
-	Debug bool `json:"debug,omitempty"`
+	Debug *bool `json:"debug,omitempty"`
 }
 
 type UptimeTests struct {
@@ -958,13 +958,13 @@ type AccessTypeEnum string
 type AuthorizeTypeEnum string
 
 type AuthConfig struct {
-	UseParam          bool            `json:"use_param,omitempty"`
+	UseParam          *bool           `json:"use_param,omitempty"`
 	ParamName         string          `json:"param_name,omitempty"`
-	UseCookie         bool            `json:"use_cookie,omitempty"`
+	UseCookie         *bool           `json:"use_cookie,omitempty"`
 	CookieName        string          `json:"cookie_name,omitempty"`
 	AuthHeaderName    string          `json:"auth_header_name"`
-	UseCertificate    bool            `json:"use_certificate,omitempty"`
-	ValidateSignature bool            `json:"validate_signature,omitempty"`
+	UseCertificate    *bool           `json:"use_certificate,omitempty"`
+	ValidateSignature *bool           `json:"validate_signature,omitempty"`
 	Signature         SignatureConfig `json:"signature,omitempty"`
 }
 
@@ -1053,7 +1053,7 @@ type GraphQLSupergraphConfig struct {
 	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
 	MergedSDL            string                  `json:"merged_sdl,omitempty"`
 	GlobalHeaders        map[string]string       `json:"global_headers,omitempty"`
-	DisableQueryBatching bool                    `json:"disable_query_batching,omitempty"`
+	DisableQueryBatching *bool                   `json:"disable_query_batching,omitempty"`
 }
 
 // +kubebuilder:validation:Enum="1";"2"
@@ -1152,13 +1152,13 @@ type APIDefinitionSpecList struct {
 
 // ListAPIOptions options passed as url query when getting a list of api's
 type ListAPIOptions struct {
-	Compressed bool   `json:"compressed,omitempty"`
+	Compressed *bool  `json:"compressed,omitempty"`
 	Query      string `json:"q,omitempty"`
 	Pages      int    `json:"p,omitempty"`
 	Sort       string `json:"sort,omitempty"`
 	Category   string `json:"category,omitempty"`
 	AuthType   string `json:"auth_type,omitempty"`
-	Graph      bool   `json:"graph,omitempty"`
+	Graph      *bool  `json:"graph,omitempty"`
 }
 
 // Params returns url.Values that matches what the admin api expects from ls.

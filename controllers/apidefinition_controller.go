@@ -143,7 +143,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
 		desired.Spec.PinnedPublicKeys = upstreamRequestStruct.Spec.PinnedPublicKeys
 
-		if desired.Spec.UseMutualTLSAuth {
+		if desired.Spec.UseMutualTLSAuth != nil && *desired.Spec.UseMutualTLSAuth == true {
 			r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 			desired.Spec.ClientCertificates = upstreamRequestStruct.Spec.ClientCertificates
 		}

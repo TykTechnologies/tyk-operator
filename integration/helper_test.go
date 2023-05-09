@@ -66,13 +66,15 @@ func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1
 	var apiDef v1alpha1.ApiDefinition
 
 	useKeylessAccess := true
+	active := true
+	stripListenPath := true
 
 	apiDef.Name = testApiDef
 	apiDef.Namespace = ns
 	apiDef.Spec.Name = testApiDef
 	apiDef.Spec.Protocol = "http"
 	apiDef.Spec.UseKeylessAccess = &useKeylessAccess
-	apiDef.Spec.Active = true
+	apiDef.Spec.Active = &active
 	apiDef.Spec.VersionData = model.VersionData{
 		DefaultVersion: "Default",
 		NotVersioned:   true,
@@ -81,7 +83,7 @@ func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1
 	apiDef.Spec.Proxy = model.Proxy{
 		ListenPath:      "/httpbin",
 		TargetURL:       "http://httpbin.default.svc:8000",
-		StripListenPath: true,
+		StripListenPath: &stripListenPath,
 	}
 
 	if mutateFn != nil {

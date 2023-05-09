@@ -129,7 +129,7 @@ func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
 				Name:             "default-keyless",
 				Protocol:         "http",
 				UseKeylessAccess: &useKeyless,
-				Active:           true,
+				Active:           &useKeyless,
 				Proxy: model.Proxy{
 					TargetURL: "http://example.com",
 				},
@@ -192,8 +192,11 @@ func (r *IngressReconciler) createAPI(
 					}
 				} else {
 					// for the acme challenge
-					api.Spec.Proxy.StripListenPath = false
-					api.Spec.Proxy.PreserveHostHeader = true
+					stripListenPath := false
+					preserveHostHeader := true
+
+					api.Spec.Proxy.StripListenPath = &stripListenPath
+					api.Spec.Proxy.PreserveHostHeader = &preserveHostHeader
 				}
 				return util.SetControllerReference(desired, api, r.Scheme)
 			})

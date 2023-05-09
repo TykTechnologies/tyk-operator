@@ -12,9 +12,11 @@ import (
 )
 
 func TestApiDefinition_Default(t *testing.T) {
+	useStandardAuth := true
+
 	in := ApiDefinition{
 		Spec: APIDefinitionSpec{
-			APIDefinitionSpec: model.APIDefinitionSpec{UseStandardAuth: true},
+			APIDefinitionSpec: model.APIDefinitionSpec{UseStandardAuth: &useStandardAuth},
 		},
 	}
 	in.Default()
@@ -212,7 +214,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
 						UseKeylessAccess: &useKeyLess,
-						UseStandardAuth:  true,
+						UseStandardAuth:  &useKeyLess,
 						Proxy:            model.Proxy{TargetURL: "/test"},
 					},
 				},
@@ -233,7 +235,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseStandardAuth: true,
+						UseStandardAuth: &useKeyLess,
 						Proxy:           model.Proxy{TargetURL: "/test"},
 					},
 				},
@@ -244,7 +246,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseStandardAuth: true,
+						UseStandardAuth: &useKeyLess,
 						AuthConfigs: map[string]model.AuthConfig{
 							"random": {
 								AuthHeaderName: "Authorization",
@@ -260,7 +262,7 @@ func TestApiDefinition_Validate_Auth(t *testing.T) {
 			ApiDefinition: ApiDefinition{
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
-						UseStandardAuth: true,
+						UseStandardAuth: &useKeyLess,
 						AuthConfigs: map[string]model.AuthConfig{
 							"authToken": {
 								AuthHeaderName: "Authorization",
