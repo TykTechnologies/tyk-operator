@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/matryer/is"
@@ -88,7 +90,11 @@ func TestUpdatePolicyStatus(t *testing.T) {
 			err = r.updatePolicyStatus(context.TODO(), test.Policy)
 			is.NoErr(err)
 
-			is.Equal(test.Policy.Status.LinkedAPIs, test.LinkedAPIs)
+			pol := tykv1.SecurityPolicy{}
+			err = c.Get(context.Background(), client.ObjectKeyFromObject(test.Policy), &pol)
+			is.NoErr(err)
+
+			is.Equal(pol.Status.LinkedAPIs, test.LinkedAPIs)
 		})
 	}
 }
