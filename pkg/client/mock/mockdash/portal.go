@@ -2,20 +2,20 @@ package mockdash
 
 import "github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 
-type Portal struct{}
+type mockPortal struct{}
 
-func (p Portal) Policy() universal.Policy {
-	return SecurityPolicy{}
+func (p mockPortal) Policy() universal.Policy {
+	return mockSecurityPolicy{}
 }
 
-func (Portal) Documentation() universal.Documentation {
+func (mockPortal) Documentation() universal.Documentation {
 	return Documentation{}
 }
 
-func (Portal) Catalogue() universal.Catalogue {
+func (mockPortal) Catalogue() universal.Catalogue {
 	return Catalogue{}
 }
 
-func (Portal) Configuration() universal.Configuration {
+func (mockPortal) Configuration() universal.Configuration {
 	return Configuration{}
 }

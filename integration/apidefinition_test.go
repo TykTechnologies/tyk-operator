@@ -76,13 +76,13 @@ func getUpdateCount(object metav1.Object) (int, error) {
 	return valInt, nil
 }
 
-// TestReconciliationCalls checks the number of PUT requests made during reconciliation. The purpose of this test is
-// to verify that if API calls are not sent to Tyk if no changes happen on ApiDefinition.
+// TestApiDefinitionReconciliationCalls checks the number of PUT requests made during reconciliation.
+// The purpose of this test is to verify that if API calls are not sent to Tyk if no changes happen on ApiDefinition.
 // ApiDefinition Reconciler understands differences by comparing hashes of structures. It stores k8s spec hash and
 // ApiDefinition spec hash returned by Tyk Dashboard / GW in status subresource. Whenever reconciliation happens again,
 // if current object's hashes are different than the previously stored ones, it runs Update logic. Otherwise, it
 // skips the Update logic to minimize load created on Tyk.
-func TestReconciliationCalls(t *testing.T) {
+func TestApiDefinitionReconciliationCalls(t *testing.T) {
 	var (
 		eval                = is.New(t)
 		tykEnv              environmet.Env
@@ -191,9 +191,20 @@ func TestReconciliationCalls(t *testing.T) {
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
-				apiDefCR.Spec.Name = "something-else"
-				err := c.Client().Resources(testNs).Update(ctx, apiDefCR)
+				err := wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						apiDefObj.Spec.Name = "something-else"
+
+						return c.Client().Resources(testNs).Update(ctx, apiDefObj) == nil
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
 				eval.NoErr(err)
+
 				expectedUpdateCount++
 
 				err = wait.For(
@@ -223,11 +234,16 @@ func TestReconciliationCalls(t *testing.T) {
 			}).
 		Assess("Updating resource on Tyk should trigger Update",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				var previousAPIName string
 				err := wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
+						previousAPIName = apiDefObj.Spec.Name
 						apiDefObj.Spec.Name = "updatingname"
 						apiDefObj.Spec.APIID = apiDefObj.Status.ApiID
 
@@ -245,9 +261,6 @@ func TestReconciliationCalls(t *testing.T) {
 					wait.WithInterval(defaultWaitInterval),
 				)
 				eval.NoErr(err)
-
-				testNs, ok := ctx.Value(ctxNSKey).(string)
-				eval.True(ok)
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(opCtx, func(object k8s.Object) bool {
@@ -267,7 +280,21 @@ func TestReconciliationCalls(t *testing.T) {
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
-						// TODO(buraksekili): after reconciliation, make sure that drift is recovered.
+						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
+						if err != nil {
+							t.Logf("failed to reconcile, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
 						if err != nil {
 							t.Logf("failed to reconcile, err: %v", err)
@@ -283,16 +310,25 @@ func TestReconciliationCalls(t *testing.T) {
 
 				expectedUpdateCount++
 
+				// After reconciliation, make sure that drift is recovered on Tyk side.
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
-						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefObj.Status.ApiID)
 						if err != nil {
-							t.Logf("failed to reconcile, err: %v", err)
+							t.Logf("failed to fetch API from Tyk, err: %v", err)
 							return false
 						}
 
-						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
-						eval.True(ok)
+						if apiDefOnTyk.Name != previousAPIName {
+							t.Logf(
+								"failed to recover from drift, want: %v got: %v",
+								apiDefOnTyk.Name, previousAPIName,
+							)
+							return false
+						}
 
 						uc, err := getUpdateCount(apiDefObj)
 						if err != nil {

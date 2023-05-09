@@ -74,11 +74,6 @@ func (a *mockDashApi) Update(ctx context.Context, spec *model.APIDefinitionSpec)
 	octx := client.GetContext(ctx)
 
 	conf := config.GetConfigOrDie()
-	//conf, err := rest.InClusterConfig()
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	scheme := runtime.NewScheme()
 
 	cl, err := ctrl.New(conf, ctrl.Options{Scheme: scheme})

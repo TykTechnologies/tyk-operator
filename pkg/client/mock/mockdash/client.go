@@ -34,7 +34,7 @@ func (c Client) Certificate() universal.Certificate {
 }
 
 func (c Client) Portal() universal.Portal {
-	return Portal{}
+	return mockPortal{}
 }
 
 func (c Client) Api() universal.Api {
