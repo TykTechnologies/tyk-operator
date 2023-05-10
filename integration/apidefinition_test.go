@@ -33,6 +33,25 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+// updateApiDefinitionOnTyk sends a Tyk API call to delete ApiDefinition with given ID.
+func updateApiDefinitionOnTyk(ctx context.Context, spec *model.APIDefinitionSpec) error {
+	err := wait.For(func() (done bool, err error) {
+		_, err = klient.Universal.Api().Update(ctx, spec)
+		if err != nil {
+			return false, err
+		}
+
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
+}
+
 // deleteApiDefinitionFromTyk sends a Tyk API call to delete ApiDefinition with given ID.
 func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	err := wait.For(func() (done bool, err error) {
@@ -142,6 +161,9 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 				})
 				eval.NoErr(err)
 
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
@@ -168,13 +190,18 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 				eval.True(ok)
 
 				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
 						apiDefObj.Spec.Name = "something-else"
+						err := c.Client().Resources(testNs).Update(ctx, apiDefObj)
+						if err != nil {
+							t.Logf("failed to update ApiDefinition, err: %v", err)
+							return false
+						}
 
-						return c.Client().Resources(testNs).Update(ctx, apiDefObj) == nil
+						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -184,7 +211,7 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 				expectedUpdateCount++
 
 				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
@@ -215,7 +242,7 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 
 				var previousAPIName string
 				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
@@ -225,7 +252,7 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 
 						// Creating a drift between Tyk and Kubernetes via updating Tyk should trigger
 						// Update operation in next reconciliation.
-						_, err := klient.Universal.Api().Update(tykCtx, &apiDefObj.Spec.APIDefinitionSpec)
+						err := updateApiDefinitionOnTyk(tykCtx, &apiDefObj.Spec.APIDefinitionSpec)
 						if err != nil {
 							t.Logf("failed to update ApiDefinition, err: %v", err)
 							return false
@@ -239,7 +266,7 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 				eval.NoErr(err)
 
 				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(opCtx, func(object k8s.Object) bool {
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(opCtx, func(object k8s.Object) bool {
 						opCtx.Spec.Env.URL = tykEnv.URL
 						err = c.Client().Resources(testNs).Update(ctx, opCtx)
 						if err != nil {
@@ -255,22 +282,7 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 				eval.NoErr(err)
 
 				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
-						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
-						if err != nil {
-							t.Logf("failed to reconcile, err: %v", err)
-							return false
-						}
-
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
 						if err != nil {
 							t.Logf("failed to reconcile, err: %v", err)
@@ -288,7 +300,7 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 
 				// After reconciliation, make sure that drift is recovered on Tyk side.
 				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
@@ -346,6 +358,58 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 						}
 
 						return uc == expectedUpdateCount
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Removing contextRef from ApiDefinition should trigger Update",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				err := wait.For(
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						apiDefObj.Spec.Context = nil
+
+						err := c.Client().Resources(testNs).Update(ctx, apiDefObj)
+						if err != nil {
+							t.Logf("failed to update ApiDefinition, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				expectedUpdateCount++
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						uc, err := getUpdateCount(apiDefObj)
+						if err != nil {
+							t.Logf("failed to get update count, err: %v", err)
+							return false
+						}
+
+						if uc != expectedUpdateCount {
+							t.Logf("unexpected update count, want %v got %v", expectedUpdateCount, uc)
+							return false
+						}
+
+						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),

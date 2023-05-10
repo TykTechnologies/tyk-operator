@@ -35,6 +35,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const policyFinalizer = "finalizers.tyk.io/securitypolicy"
@@ -322,7 +323,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *v1alpha1.
 			r.Log.Error(
 				err,
 				"Failed to create policy on Tyk",
-				"Policy", client.ObjectKeyFromObject(policy),
+				"Policy", client.ObjectKeyFromObject(policy).String(),
 			)
 
 			return err
@@ -493,6 +494,7 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 // SetupWithManager initializes the security policy controller.
 func (r *SecurityPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		For(&v1alpha1.SecurityPolicy{}).
 		Complete(r)
 }

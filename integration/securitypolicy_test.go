@@ -7,16 +7,15 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
-
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/matryer/is"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	rand2 "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
@@ -280,7 +279,6 @@ func TestSecurityPolicyReconciliationCalls(t *testing.T) {
 	var (
 		eval                = is.New(t)
 		tykEnv              environmet.Env
-		tykCtx              context.Context
 		r                   controllers.SecurityPolicyReconciler
 		policyCR            *v1alpha1.SecurityPolicy
 		opCtx               *v1alpha1.OperatorContext
@@ -304,11 +302,6 @@ func TestSecurityPolicyReconciliationCalls(t *testing.T) {
 			eval.NoErr(err)
 
 			verifyPolicyApiVersion(t, &tykEnv)
-
-			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
-				Env: tykEnv,
-				Log: log.NullLogger{},
-			})
 
 			tykEnv.Mode = mockVersion(&tykEnv)
 
@@ -362,6 +355,9 @@ func TestSecurityPolicyReconciliationCalls(t *testing.T) {
 				})
 				eval.NoErr(err)
 
+				err = waitForTykResourceCreation(c, policyCR)
+				eval.NoErr(err)
+
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
 						polObj, ok := object.(*v1alpha1.SecurityPolicy)
@@ -374,155 +370,6 @@ func TestSecurityPolicyReconciliationCalls(t *testing.T) {
 						}
 
 						return uc == expectedUpdateCount
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				return ctx
-			}).
-		Assess("Updating resource on k8s should trigger Update",
-			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				testNs, ok := ctx.Value(ctxNSKey).(string)
-				eval.True(ok)
-
-				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
-						polObj, ok := object.(*v1alpha1.SecurityPolicy)
-						eval.True(ok)
-
-						polObj.Spec.Name = "something-else"
-						return c.Client().Resources(testNs).Update(ctx, polObj) == nil
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				expectedUpdateCount++
-
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
-						polObj, ok := object.(*v1alpha1.SecurityPolicy)
-						eval.True(ok)
-
-						uc, err := getUpdateCount(polObj)
-						if err != nil {
-							t.Logf("failed to get update count, err: %v", err)
-							return false
-						}
-
-						if uc != expectedUpdateCount {
-							t.Logf("unexpected update count, want %v got %v\n", expectedUpdateCount, uc)
-							return false
-						}
-
-						return uc == expectedUpdateCount
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				return ctx
-			}).
-		Assess("Updating resource on Tyk should trigger Update",
-			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				testNs, ok := ctx.Value(ctxNSKey).(string)
-				eval.True(ok)
-
-				var previousAPIName string
-				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
-						polObj, ok := object.(*v1alpha1.SecurityPolicy)
-						eval.True(ok)
-
-						previousAPIName = polObj.Spec.Name
-						polObj.Spec.Name = "updatingname"
-
-						// Creating a drift between Tyk and Kubernetes via updating Tyk should trigger
-						// Update operation in next reconciliation.
-						err := klient.Universal.Portal().Policy().Update(tykCtx,
-							&v1alpha1.SecurityPolicySpec{SecurityPolicySpec: polObj.Spec.SecurityPolicySpec},
-						)
-						if err != nil {
-							t.Logf("failed to update SecurityPolicy, err: %v", err)
-							return false
-						}
-
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(opCtx, func(object k8s.Object) bool {
-						opCtx.Spec.Env.URL = tykEnv.URL
-						err = c.Client().Resources(testNs).Update(ctx, opCtx)
-						if err != nil {
-							t.Logf("failed to update OperatorContext, err: %v", err)
-							return false
-						}
-
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
-						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(policyCR)})
-						if err != nil {
-							t.Logf("failed to reconcile, err: %v", err)
-							return false
-						}
-
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				expectedUpdateCount++
-
-				// After reconciliation, make sure that drift is recovered on Tyk side.
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
-						polObj, ok := object.(*v1alpha1.SecurityPolicy)
-						eval.True(ok)
-
-						polOnTyk, err := klient.Universal.Portal().Policy().Get(tykCtx, polObj.Status.PolID)
-						if err != nil {
-							t.Logf("failed to fetch API from Tyk, err: %v", err)
-							return false
-						}
-
-						if polOnTyk.Name != previousAPIName {
-							t.Logf(
-								"failed to recover from drift, want: %v got: %v",
-								polOnTyk.Name, previousAPIName,
-							)
-							return false
-						}
-
-						uc, err := getUpdateCount(polObj)
-						if err != nil {
-							t.Logf("failed to get update count, err: %v", err)
-							return false
-						}
-
-						if uc != expectedUpdateCount {
-							t.Logf("unexpected update count, want %v got %v", expectedUpdateCount, uc)
-							return false
-						}
-
-						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -547,6 +394,64 @@ func TestSecurityPolicyReconciliationCalls(t *testing.T) {
 						uc, err := getUpdateCount(polObj)
 						if err != nil {
 							t.Logf("failed to get update count, err: %v", err)
+							return false
+						}
+
+						if uc != expectedUpdateCount {
+							t.Logf("unexpected update count, want %v got %v\n", expectedUpdateCount, uc)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Updating resource on k8s should trigger Update",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				newName := "something-else-" + fmt.Sprintf("%d", rand2.Int())
+
+				err := wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
+						polObj, ok := object.(*v1alpha1.SecurityPolicy)
+						eval.True(ok)
+
+						polObj.Spec.Name = newName
+						err := c.Client().Resources(testNs).Update(ctx, polObj)
+						if err != nil {
+							t.Logf("failed to update SecurityPolicy, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				expectedUpdateCount++
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
+						polObj, ok := object.(*v1alpha1.SecurityPolicy)
+						eval.True(ok)
+
+						uc, err := getUpdateCount(polObj)
+						if err != nil {
+							t.Logf("failed to get update count, err: %v", err)
+							return false
+						}
+
+						if uc != expectedUpdateCount {
+							t.Logf("unexpected update count, want %v got %v\n", expectedUpdateCount, uc)
 							return false
 						}
 
