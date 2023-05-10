@@ -2,16 +2,11 @@ package mockdash
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"sync"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
-	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"github.com/TykTechnologies/tyk-operator/pkg/client/mock/internal/helper"
 )
 
 const endpointAPIs = "/api/apis"
@@ -73,49 +68,9 @@ func (a *mockDashApi) Update(ctx context.Context, spec *model.APIDefinitionSpec)
 	var o model.Result
 	octx := client.GetContext(ctx)
 
-	conf := config.GetConfigOrDie()
-	scheme := runtime.NewScheme()
-
-	cl, err := ctrl.New(conf, ctrl.Options{Scheme: scheme})
+	err := helper.UpdateApiDefinitionAnnotations(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	err = v1alpha1.AddToScheme(scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	labels := map[string]string{"mock_test": "tyk"}
-	apiDefList := v1alpha1.ApiDefinitionList{}
-
-	err = cl.List(ctx, &apiDefList, ctrl.MatchingLabels(labels))
-	if err != nil {
-		fmt.Println("failed: ", err)
-		return nil, err
-	} else {
-		for _, item := range apiDefList.Items {
-			annotations := item.GetAnnotations()
-			if annotations == nil {
-				annotations = make(map[string]string)
-				annotations["mock_test"] = strconv.Itoa(0)
-			} else {
-				uc, err := strconv.Atoi(annotations["mock_test"])
-				if err != nil {
-					fmt.Println("cannot convert: ", err)
-					return nil, err
-				}
-
-				uc++
-				annotations["mock_test"] = strconv.Itoa(uc)
-				item.SetAnnotations(annotations)
-			}
-			err = cl.Update(ctx, &item)
-			if err != nil {
-				fmt.Println("cannot update: ", err)
-				return nil, err
-			}
-		}
 	}
 
 	err = client.Data(&o)(client.PutJSON(

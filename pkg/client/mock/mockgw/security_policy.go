@@ -1,4 +1,4 @@
-package mockdash
+package mockgw
 
 import (
 	"context"
@@ -6,15 +6,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/pkg/client/mock/internal/helper"
+
 	v1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/mock/internal/helper"
 )
 
+// mockSecurityPolicy provides api for accessing policies on the tyk gateway
 type mockSecurityPolicy struct{}
 
-// All Returns all policies from the Dashboard
-func (p mockSecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error) {
+func (a mockSecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, error) {
 	res, err := client.Get(ctx, client.Join(fmt.Sprintf("%s?p=-2", endpointPolicies)), nil)
 	if err != nil {
 		return nil, err
@@ -22,7 +23,7 @@ func (p mockSecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, e
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API Returned error: %d", res.StatusCode)
+		return nil, fmt.Errorf("failed to get all Policies, API Returned error: %d", res.StatusCode)
 	}
 
 	var response PoliciesResponse
@@ -33,8 +34,7 @@ func (p mockSecurityPolicy) All(ctx context.Context) ([]v1.SecurityPolicySpec, e
 	return response.Policies, nil
 }
 
-// Get find the Policy by id.
-func (p mockSecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicySpec, error) {
+func (a mockSecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPolicySpec, error) {
 	res, err := client.Get(ctx, client.Join(endpointPolicies, id), nil)
 	if err != nil {
 		return nil, err
@@ -51,8 +51,7 @@ func (p mockSecurityPolicy) Get(ctx context.Context, id string) (*v1.SecurityPol
 	return &o, nil
 }
 
-// Create creates a new policy using the def object
-func (p mockSecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) error {
+func (a mockSecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) error {
 	res, err := client.PostJSON(ctx, client.Join(endpointPolicies), def)
 	if err != nil {
 		return err
@@ -71,15 +70,14 @@ func (p mockSecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySp
 
 	switch strings.ToLower(msg.Status) {
 	case "ok":
-		def.MID = msg.Message
+		def.MID = msg.Key
 		return nil
 	default:
 		return client.Error(res)
 	}
 }
 
-// Update updates a resource object def
-func (p mockSecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) error {
+func (a mockSecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) error {
 	err := helper.UpdateSecurityPolicyAnnotations(ctx)
 	if err != nil {
 		return err
@@ -96,11 +94,10 @@ func (p mockSecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySp
 		return client.Error(res)
 	}
 
-	return client.JSON(res, def)
+	return nil
 }
 
-// Delete deletes the resource by ID
-func (p mockSecurityPolicy) Delete(ctx context.Context, id string) error {
+func (a mockSecurityPolicy) Delete(ctx context.Context, id string) error {
 	res, err := client.Delete(ctx, client.Join(endpointPolicies, id), nil)
 	if err != nil {
 		return err
