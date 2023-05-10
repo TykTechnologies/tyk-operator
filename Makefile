@@ -52,7 +52,7 @@ run: generate fmt vet manifests ## Run against the configured Kubernetes cluster
 
 log: ## This will print logs of Tyk Operator pod.
 	$(eval POD=$(shell kubectl get pod -l control-plane=tyk-operator-controller-manager -n tyk-operator-system -o name))
-	kubectl logs -n tyk-operator-system ${POD} -c manager
+	kubectl logs -n tyk-operator-system ${POD} -c manager -f
 
 install: manifests kustomize	## Install CRDs into a cluster
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -

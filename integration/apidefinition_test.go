@@ -52,30 +52,6 @@ func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	return err
 }
 
-const mockTestMetaKey = "mock_test"
-
-// getUpdateCount returns update count stored in annotations of given object.
-func getUpdateCount(object metav1.Object) (int, error) {
-	annotations := object.GetAnnotations()
-	if annotations == nil {
-		return 0, fmt.Errorf(
-			"failed to get annotations from %v/%v, nil annotations", object.GetName(), object.GetNamespace(),
-		)
-	}
-
-	val, ok := annotations[mockTestMetaKey]
-	if !ok {
-		return 0, fmt.Errorf("key %v does not exist on annotations", mockTestMetaKey)
-	}
-
-	valInt, err := strconv.Atoi(val)
-	if err != nil {
-		return 0, fmt.Errorf("failed to convert annotation to integer, err: %v", err)
-	}
-
-	return valInt, nil
-}
-
 // TestApiDefinitionReconciliationCalls checks the number of PUT requests made during reconciliation.
 // The purpose of this test is to verify that if API calls are not sent to Tyk if no changes happen on ApiDefinition.
 // ApiDefinition Reconciler understands differences by comparing hashes of structures. It stores k8s spec hash and
