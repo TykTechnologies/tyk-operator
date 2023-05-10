@@ -191,6 +191,16 @@ spec:
                   - auth_header_name
                   type: object
                 type: object
+              base_identity_provided_by:
+                description: BaseIdentityProvidedBy sets Base Identity Provider for situation when multiple authentication mechanisms are used
+                enum:
+                - auth_token
+                - hmac_key
+                - basic_auth_user
+                - jwt_claim
+                - oidc_user
+                - oauth_key
+                type: string
               blacklisted_ips:
                 description: BlacklistedIPs is a list of IP address that will be blacklisted.This means if origin IP matches any IP in this list a 403 http status code will be returned. The IP address can be IPv4 or IPv6. IP in CIDR notation is also supported.
                 items:
