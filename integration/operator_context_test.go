@@ -26,7 +26,7 @@ func TestOperatorContextCreate(t *testing.T) {
 			eval := is.New(t)
 
 			// create operator context
-			opCtx, err := createTestOperatorContext(ctx, testNS, envConf)
+			opCtx, err := createTestOperatorContext(ctx, testNS, envConf, nil)
 			eval.NoErr(err) // failed to create operatorcontext
 
 			// create api definition
@@ -132,7 +132,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			eval := is.New(t)
 			client := envConf.Client()
 
-			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
+			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf, nil)
 			eval.NoErr(err) // failed to create operatorcontext
 
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
@@ -208,7 +208,7 @@ func TestOperatorContextDelete(t *testing.T) {
 			eval := is.New(t)
 			client := envConf.Client()
 
-			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf)
+			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf, nil)
 			eval.NoErr(err) // failed to create operatorcontext
 
 			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)

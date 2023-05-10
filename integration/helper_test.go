@@ -177,7 +177,8 @@ func waitForTykResourceCreation(envConf *envconf.Config, obj k8s.Object) error {
 	return err
 }
 
-func createTestOperatorContext2(
+// createTestOperatorContext creates a sample OperatorContext resource on k8s.
+func createTestOperatorContext(
 	ctx context.Context,
 	ns string,
 	c *envconf.Config,
@@ -194,20 +195,6 @@ func createTestOperatorContext2(
 
 	if fn != nil {
 		fn(&operatorCtx)
-	}
-
-	return &operatorCtx, c.Client().Resources(ns).Create(ctx, &operatorCtx)
-}
-
-// createTestOperatorContext creates a sample OperatorContext resource on k8s.
-func createTestOperatorContext(ctx context.Context, ns string, c *envconf.Config) (*v1alpha1.OperatorContext, error) {
-	var operatorCtx v1alpha1.OperatorContext
-
-	operatorCtx.Name = testOperatorCtx
-	operatorCtx.Namespace = ns
-	operatorCtx.Spec.FromSecret = &model.Target{
-		Name:      operatorSecret,
-		Namespace: opNs,
 	}
 
 	return &operatorCtx, c.Client().Resources(ns).Create(ctx, &operatorCtx)

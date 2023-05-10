@@ -129,7 +129,7 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 				eval.True(ok)
 
 				var err error
-				opCtx, err = createTestOperatorContext2(ctx, testNs, c, func(oc *v1alpha1.OperatorContext) {
+				opCtx, err = createTestOperatorContext(ctx, testNs, c, func(oc *v1alpha1.OperatorContext) {
 					oc.Spec.FromSecret = nil
 					oc.Spec.Env = &v1alpha1.Environment{
 						URL:  opCtxURL,
