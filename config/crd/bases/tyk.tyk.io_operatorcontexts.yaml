@@ -60,6 +60,7 @@ spec:
                     - ce
                     - pro
                     - mockdash
+                    - mockgw
                     type: string
                   org:
                     type: string
