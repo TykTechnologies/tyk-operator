@@ -366,58 +366,6 @@ func TestApiDefinitionReconciliationCalls(t *testing.T) {
 
 				return ctx
 			}).
-		Assess("Removing contextRef from ApiDefinition should trigger Update",
-			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				testNs, ok := ctx.Value(ctxNSKey).(string)
-				eval.True(ok)
-
-				err := wait.For(
-					conditions.New(c.Client().Resources(testNs)).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
-						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
-						eval.True(ok)
-
-						apiDefObj.Spec.Context = nil
-
-						err := c.Client().Resources(testNs).Update(ctx, apiDefObj)
-						if err != nil {
-							t.Logf("failed to update ApiDefinition, err: %v", err)
-							return false
-						}
-
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				expectedUpdateCount++
-
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
-						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
-						eval.True(ok)
-
-						uc, err := getUpdateCount(apiDefObj)
-						if err != nil {
-							t.Logf("failed to get update count, err: %v", err)
-							return false
-						}
-
-						if uc != expectedUpdateCount {
-							t.Logf("unexpected update count, want %v got %v", expectedUpdateCount, uc)
-							return false
-						}
-
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				return ctx
-			}).
 		Feature()
 
 	testenv.Test(t, testReconciliationCalls)

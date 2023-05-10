@@ -380,7 +380,26 @@ func TestSecurityPolicyReconciliationCalls(t *testing.T) {
 			}).
 		Assess("Periodic reconciliation should not trigger Update",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
 				err := wait.For(
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(opCtx, func(object k8s.Object) bool {
+						opCtx.Spec.Env.URL = tykEnv.URL
+						err := c.Client().Resources(testNs).Update(ctx, opCtx)
+						if err != nil {
+							t.Logf("failed to update OperatorContext, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
 						_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(policyCR)})
 						if err != nil {
@@ -416,9 +435,25 @@ func TestSecurityPolicyReconciliationCalls(t *testing.T) {
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
+				err := wait.For(
+					conditions.New(c.Client().Resources(testNs)).ResourceMatch(opCtx, func(object k8s.Object) bool {
+						opCtx.Spec.Env.URL = opCtxURL
+						err := c.Client().Resources(testNs).Update(ctx, opCtx)
+						if err != nil {
+							t.Logf("failed to update OperatorContext, err: %v", err)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
 				newName := "something-else-" + fmt.Sprintf("%d", rand2.Int())
 
-				err := wait.For(
+				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(policyCR, func(object k8s.Object) bool {
 						polObj, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
