@@ -12,7 +12,6 @@ import (
 	"math/big"
 	"net"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -44,40 +43,7 @@ const (
 	operatorSecret         = "tyk-operator-conf"
 	tlsSecretCrtKey        = "tls.crt"
 	tlsSecretKey           = "tls.key"
-	mockTestMetaKey        = "mock_test"
 )
-
-// getUpdateCount returns update count stored in annotations of given object.
-func getUpdateCount(object metav1.Object) (int, error) {
-	annotations := object.GetAnnotations()
-	if annotations == nil {
-		return 0, fmt.Errorf(
-			"failed to get annotations from %v/%v, nil annotations", object.GetName(), object.GetNamespace(),
-		)
-	}
-
-	val, ok := annotations[mockTestMetaKey]
-	if !ok {
-		return 0, fmt.Errorf("key %v does not exist on annotations", mockTestMetaKey)
-	}
-
-	valInt, err := strconv.Atoi(val)
-	if err != nil {
-		return 0, fmt.Errorf("failed to convert annotation to integer, err: %v", err)
-	}
-
-	return valInt, nil
-}
-
-// mockVersion returns mock environment mode according to given environment mode. If the mode is "pro", it returns
-// "mockdash"; otherwise, returns "mockgw".
-func mockVersion(e *environmet.Env) v1alpha1.OperatorContextMode {
-	if e.Mode == "pro" {
-		return "mockdash"
-	}
-
-	return "mockgw"
-}
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
 // Reconciler for CRs such as ApiDefinitionReconciler.
