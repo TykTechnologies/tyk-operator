@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tidwall/gjson"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -1200,4 +1201,141 @@ func (in *MapStringInterfaceType) UnmarshalJSON(data []byte) error {
 
 func (in *MapStringInterfaceType) MarshalJSON() (data []byte, err error) {
 	return json.Marshal(in.Object)
+}
+
+func (api *APIDefinitionSpec) UnmarshalJSON(data []byte) error {
+	origParsedJSON := gjson.ParseBytes(data)
+	fmt.Println("Orig JSON: ", origParsedJSON.Raw)
+
+	type alias APIDefinitionSpec
+
+	// Unmarshal into alias
+	var tmp alias
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+
+	parsedData, err := json.Marshal(tmp)
+	if err != nil {
+		return err
+	}
+
+	parsedJSON := gjson.Parse(string(parsedData))
+
+	fmt.Println("Parsed JSON: ", parsedJSON.Raw)
+
+	// Remove empty values
+	newParsed := removeEmptyValues(parsedJSON, origParsedJSON)
+
+	outputJSON, err := json.MarshalIndent(newParsed.Value(), "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(outputJSON, &tmp)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Result: ", string(outputJSON))
+
+	*api = APIDefinitionSpec(tmp)
+
+	return nil
+}
+
+func (api *APIDefinitionSpec) MarshalJSON() ([]byte, error) {
+	fmt.Println(" Inside marshal json")
+
+	fmt.Printf("API:%+v \n ", *api)
+	return json.Marshal(api)
+}
+
+func removeEmptyValues(parsed gjson.Result, originalParsed gjson.Result) gjson.Result {
+	// Recurse into nested structures
+	if parsed.Type == gjson.JSON {
+		if parsed.IsArray() {
+			orginalValues := originalParsed.Array()
+
+			newObj := make([]interface{}, 0)
+			idx := 0
+			parsed.ForEach(func(key, value gjson.Result) bool {
+				if value.Type == gjson.JSON {
+					newValue := removeEmptyValues(value, orginalValues[idx])
+
+					newObj = append(newObj, newValue.Value())
+				} else {
+					newObj = append(newObj, value.Value())
+				}
+
+				idx++
+				return true
+			})
+			if len(newObj) == 0 {
+				return gjson.Result{}
+			}
+
+			marshaled, _ := json.Marshal(newObj)
+
+			return gjson.Parse(string(marshaled))
+		} else {
+			newObj := make(map[string]interface{})
+
+			orginalValues := originalParsed.Map()
+			usedOriginalValues := make(map[string]bool)
+
+			parsed.ForEach(func(key, value gjson.Result) bool {
+				origValue := orginalValues[key.String()]
+				newValue := removeEmptyValues(value, origValue)
+				usedOriginalValues[key.String()] = true
+
+				if newValue.Exists() || (newValue.Type != gjson.JSON && newValue.String() != "") {
+					//				fmt.Println(key.String(), newValue.Value())
+					newObj[key.String()] = newValue.Value()
+				}
+				return true
+			})
+
+			for k, v := range orginalValues {
+				if _, used := usedOriginalValues[k]; !used {
+					newObj[k] = v.Value()
+				}
+			}
+
+			if len(newObj) == 0 {
+				return gjson.Result{}
+			}
+
+			marshaled, _ := json.Marshal(newObj)
+
+			return gjson.Parse(string(marshaled))
+		}
+	}
+
+	// Remove boolean values if they are false
+	if parsed.Type == gjson.False && originalParsed.Type == gjson.Null {
+		return gjson.Result{}
+	}
+
+	// Remove numeric values if they are 0
+	if parsed.Type == gjson.Number && parsed.Float() == 0 && originalParsed.Type == gjson.Null {
+		return gjson.Result{}
+	}
+
+	// Remove null values
+	if parsed.Type == gjson.Null {
+		if originalParsed.Type != gjson.Null {
+			return originalParsed
+		}
+		return gjson.Result{}
+	}
+
+	// Remove string values if they are empty
+	if parsed.Type == gjson.String && parsed.String() == "" && originalParsed.Type == gjson.Null {
+		return gjson.Result{}
+	}
+
+	// Return the original value if it's not empty
+	return parsed
 }
