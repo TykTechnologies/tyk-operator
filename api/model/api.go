@@ -1208,20 +1208,15 @@ func (api *APIDefinitionSpec) UnmarshalJSON(data []byte) error {
 	fmt.Println("Orig JSON: ", origParsedJSON.Raw)
 
 	type alias APIDefinitionSpec
-
-	// Unmarshal into alias
 	var tmp alias
-	err := json.Unmarshal(data, &tmp)
+
+	parsedData, err := json.Marshal(api)
 	if err != nil {
+		fmt.Println("Error marshalling api: ", err)
 		return err
 	}
 
-	parsedData, err := json.Marshal(tmp)
-	if err != nil {
-		return err
-	}
-
-	parsedJSON := gjson.Parse(string(parsedData))
+	parsedJSON := gjson.ParseBytes(parsedData)
 
 	fmt.Println("Parsed JSON: ", parsedJSON.Raw)
 
@@ -1243,13 +1238,6 @@ func (api *APIDefinitionSpec) UnmarshalJSON(data []byte) error {
 	*api = APIDefinitionSpec(tmp)
 
 	return nil
-}
-
-func (api *APIDefinitionSpec) MarshalJSON() ([]byte, error) {
-	fmt.Println(" Inside marshal json")
-
-	fmt.Printf("API:%+v \n ", *api)
-	return json.Marshal(api)
 }
 
 func removeEmptyValues(parsed gjson.Result, originalParsed gjson.Result) gjson.Result {
