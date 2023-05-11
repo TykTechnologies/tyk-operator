@@ -31,19 +31,22 @@ func TestOperatorContextCreate(t *testing.T) {
 
 			// create api definition
 			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				namespace := opCtx.Namespace
 				apiDef.Spec.Context = &model.Target{
 					Name:      opCtx.Name,
-					Namespace: opCtx.Namespace,
+					Namespace: &namespace,
 				}
-				apiDef.Spec.Proxy.ListenPath = listenPath
+				apiDef.Spec.Proxy.ListenPath = &listenPath
 			})
 			eval.NoErr(err) // failed to create apiDefinition
 
 			// create api definition with empty namespace for contextRef
 			_, err = createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				listenPath := "/empty-ns"
+
 				apiDef.Name = "empty-ns"
 				apiDef.Spec.Context = &model.Target{Name: opCtx.Name}
-				apiDef.Spec.Proxy.ListenPath = "/empty-ns"
+				apiDef.Spec.Proxy.ListenPath = &listenPath
 			})
 
 			eval.NoErr(err) // failed to create apiDefinition
@@ -64,11 +67,14 @@ func TestOperatorContextCreate(t *testing.T) {
 					// only one apidef will get linked
 					// other one has empty namespace
 					if len(operatCtx.Status.LinkedApiDefinitions) != 1 {
+						t.Log("Length of operator status =", len(operatCtx.Status.LinkedApiDefinitions))
+						t.Log("Linked API Definition =", operatCtx.Status.LinkedApiDefinitions)
 						return false
 					}
 
-					if operatCtx.Status.LinkedApiDefinitions[0].Namespace != testNS ||
+					if !operatCtx.Status.LinkedApiDefinitions[0].NamespaceMatches(testNS) ||
 						operatCtx.Status.LinkedApiDefinitions[0].Name != testApiDef {
+						t.Logf("Namespace of linked API Definition = %s and in the status %s", testNS, *operatCtx.Status.LinkedApiDefinitions[0].Namespace)
 						return false
 					}
 
@@ -139,9 +145,10 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			// create api definition
 			def, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				namespace := operatorCtx.Namespace
 				apiDef.Spec.Context = &model.Target{
 					Name:      operatorCtx.Name,
-					Namespace: operatorCtx.Namespace,
+					Namespace: &namespace,
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
@@ -215,9 +222,10 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			// create api definition
 			def, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				namespace := operatorCtx.Namespace
 				apiDef.Spec.Context = &model.Target{
 					Name:      operatorCtx.Name,
-					Namespace: operatorCtx.Namespace,
+					Namespace: &namespace,
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition

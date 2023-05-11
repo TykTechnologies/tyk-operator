@@ -32,6 +32,8 @@ var (
 
 	// ErrFailed represents errors occurred during API calls to Tyk.
 	ErrFailed = errors.New("Failed api call")
+
+	ErrMissingAPIID = errors.New("Missing API ID")
 )
 
 func IsTODO(err error) bool {

@@ -12,9 +12,13 @@ const endpointAPIs = "/api/apis"
 type Api struct{}
 
 func (a Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
-	_, err := a.Get(ctx, def.APIID)
+	if def.APIID == nil || *def.APIID == "" {
+		return nil, client.ErrMissingAPIID
+	}
+
+	_, err := a.Get(ctx, *def.APIID)
 	if err == nil {
-		return a.update(ctx, &model.Result{Meta: def.APIID}, def)
+		return a.update(ctx, &model.Result{Meta: *def.APIID}, def)
 	}
 
 	var o model.Result
@@ -64,8 +68,12 @@ func (a Api) Update(ctx context.Context, spec *model.APIDefinitionSpec) (*model.
 	var o model.Result
 	octx := client.GetContext(ctx)
 
+	if spec.APIID == nil || *spec.APIID == "" {
+		return nil, client.ErrMissingAPIID
+	}
+
 	err := client.Data(&o)(client.PutJSON(
-		ctx, client.Join(endpointAPIs, spec.APIID), DashboardApi{
+		ctx, client.Join(endpointAPIs, *spec.APIID), DashboardApi{
 			ApiDefinition:   *spec,
 			UserOwners:      octx.Env.UserOwners,
 			UserGroupOwners: octx.Env.UserGroupOwners,

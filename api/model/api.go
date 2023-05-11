@@ -200,7 +200,7 @@ type URLRewriteMeta struct {
 	// MatchPattern is a regular expression pattern to match the path
 	MatchPattern string `json:"match_pattern"`
 	// RewriteTo is the target path on the upstream, or target URL we wish to rewrite to
-	RewriteTo string `json:"rewrite_to,omitempty"`
+	RewriteTo *string `json:"rewrite_to,omitempty"`
 	// RewriteToInternal serves as rewrite_to but used when rewriting to target
 	// internal api's
 	// When rewrite_to and rewrite_to_internal are both provided then
@@ -212,7 +212,12 @@ type URLRewriteMeta struct {
 func (u *URLRewriteMeta) collectLoopingTarget(fn func(Target)) {
 	if u.RewriteToInternal != nil {
 		x := u.RewriteToInternal.Target
-		u.RewriteTo = u.RewriteToInternal.String()
+
+		if u.RewriteTo == nil {
+			u.RewriteTo = new(string)
+		}
+
+		*u.RewriteTo = u.RewriteToInternal.String()
 		u.RewriteToInternal = nil
 
 		fn(x)
@@ -232,21 +237,33 @@ type TargetInternal struct {
 	Target Target `json:"target,omitempty"`
 	// Path path on target , this does not include query parameters.
 	//	example /myendpoint
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 
 	// Query url query string to add to target
 	//	example check_limits=true
-	Query string `json:"query,omitempty"`
+	Query *string `json:"query,omitempty"`
 }
 
 func (i TargetInternal) String() string {
 	host := i.Target.String()
 	host = base64.RawURLEncoding.EncodeToString([]byte(host))
+
+	path := ""
+	query := ""
+
+	if i.Path != nil {
+		path = *i.Path
+	}
+
+	if i.Query != nil {
+		query = *i.Query
+	}
+
 	u := url.URL{
 		Scheme:   "tyk",
 		Host:     host,
-		RawPath:  i.Path,
-		RawQuery: i.Query,
+		RawPath:  path,
+		RawQuery: query,
 	}
 
 	return u.String()
@@ -260,21 +277,33 @@ type RewriteToInternal struct {
 	Target Target `json:"target,omitempty"`
 	// Path path on target , this does not include query parameters.
 	//	example /myendpoint
-	Path string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 
 	// Query url query string to add to target
 	//	example check_limits=true
-	Query string `json:"query,omitempty"`
+	Query *string `json:"query,omitempty"`
 }
 
 func (i RewriteToInternal) String() string {
 	host := i.Target.String()
 	host = base64.RawURLEncoding.EncodeToString([]byte(host))
+
+	path := ""
+	query := ""
+
+	if i.Path != nil {
+		path = *i.Path
+	}
+
+	if i.Query != nil {
+		query = *i.Query
+	}
+
 	u := url.URL{
 		Scheme:   "tyk",
 		Host:     host,
-		Path:     i.Path,
-		RawQuery: i.Query,
+		Path:     path,
+		RawQuery: query,
 	}
 
 	return u.String()
@@ -285,13 +314,17 @@ type Target struct {
 	Name string `json:"name"`
 	// The k8s namespace of the resource being targetted. When omitted this will be
 	// set to the namespace of the object that is being reconciled.
-	Namespace string `json:"namespace,omitempty"`
+	Namespace *string `json:"namespace,omitempty"`
 }
 
 func (t *Target) Parse(v string) {
 	if strings.Contains(v, "/") {
 		if p := strings.Split(v, "/"); len(p) == 2 {
-			t.Namespace = p[0]
+			if t.Namespace == nil {
+				t.Namespace = new(string)
+			}
+
+			*t.Namespace = p[0]
 			t.Name = p[1]
 		}
 	}
@@ -303,15 +336,35 @@ func (t Target) String() string {
 
 // Equal returns true if t and o are equal
 func (t Target) Equal(o Target) bool {
-	return t.Namespace == o.Namespace && t.Name == o.Name
+	namespaceMatches := false
+
+	if t.Namespace == nil && o.Namespace == nil {
+		namespaceMatches = true
+	} else if t.Namespace != nil && o.Namespace != nil {
+		namespaceMatches = *t.Namespace == *o.Namespace
+	}
+
+	return namespaceMatches && t.Name == o.Name
 }
 
 func (t Target) NS(defaultNS string) types.NamespacedName {
-	if t.Namespace != "" {
-		defaultNS = t.Namespace
+	if t.Namespace != nil && *t.Namespace != "" {
+		defaultNS = *t.Namespace
 	}
 
 	return types.NamespacedName{Namespace: defaultNS, Name: t.Name}
+}
+
+func (t Target) NamespaceMatches(ns string) bool {
+	if t.Namespace == nil && ns == "" {
+		return true
+	}
+
+	if t.Namespace != nil && *t.Namespace == ns {
+		return true
+	}
+
+	return false
 }
 
 type VirtualMeta struct {
@@ -377,7 +430,7 @@ func (e *ExtendedPathsSet) collectLoopingTarget(fn func(Target)) {
 
 type VersionInfo struct {
 	Name                        string            `json:"name"`
-	Expires                     string            `json:"expires,omitempty"`
+	Expires                     *string           `json:"expires,omitempty"`
 	Paths                       *VersionInfoPaths `json:"paths,omitempty"`
 	UseExtendedPaths            *bool             `json:"use_extended_paths,omitempty"`
 	ExtendedPaths               *ExtendedPathsSet `json:"extended_paths,omitempty"`
@@ -387,7 +440,7 @@ type VersionInfo struct {
 	GlobalResponseHeadersRemove []string          `json:"global_response_headers_remove,omitempty"`
 	IgnoreEndpointCase          *bool             `json:"ignore_endpoint_case,omitempty"`
 	GlobalSizeLimit             int64             `json:"global_size_limit,omitempty"`
-	OverrideTarget              string            `json:"override_target,omitempty"`
+	OverrideTarget              *string           `json:"override_target,omitempty"`
 }
 
 func (v *VersionInfo) collectLoopingTarget(fn func(Target)) {
@@ -429,10 +482,10 @@ type MiddlewareDefinition struct {
 }
 
 type IdExtractorConfig struct {
-	HeaderName      string `json:"header_name,omitempty"`
-	FormParamName   string `json:"param_name,omitempty"`
-	RegexExpression string `json:"regex_expression,omitempty"`
-	RegexMatchIndex int    `json:"regex_match_index,omitempty"`
+	HeaderName      *string `json:"header_name,omitempty"`
+	FormParamName   *string `json:"param_name,omitempty"`
+	RegexExpression *string `json:"regex_expression,omitempty"`
+	RegexMatchIndex int     `json:"regex_match_index,omitempty"`
 }
 
 type MiddlewareIdExtractor struct {
@@ -466,7 +519,7 @@ type CacheOptions struct {
 	// EnableUpstreamCacheControl instructs Tyk Cache to respect upstream cache control headers
 	EnableUpstreamCacheControl *bool `json:"enable_upstream_cache_control,omitempty"`
 	// CacheControlTTLHeader is the response header which tells Tyk how long it is safe to cache the response for
-	CacheControlTTLHeader string `json:"cache_control_ttl_header,omitempty"`
+	CacheControlTTLHeader *string `json:"cache_control_ttl_header,omitempty"`
 	// CacheByHeaders allows header values to be used as part of the cache key
 	CacheByHeaders []string `json:"cache_by_headers,omitempty"`
 }
@@ -518,18 +571,18 @@ type OpenIDOptions struct {
 // APIDefinitionSpec represents the configuration for a single proxied API and it's versions.
 type APIDefinitionSpec struct {
 	// For server use only, do not use
-	ID string `json:"id,omitempty" hash:"ignore"`
+	ID *string `json:"id,omitempty" hash:"ignore"`
 
 	// Only set this field if you are referring
 	// to an existing API def.
 	// The Operator will use this APIID to link the CR with the API in Tyk
 	// Note: The values in the CR will become the new source of truth, overriding the existing API Definition
-	APIID string `json:"api_id,omitempty"`
+	APIID *string `json:"api_id,omitempty"`
 
 	Name string `json:"name"`
 
 	// OrgID is overwritten - no point setting this
-	OrgID string `json:"org_id,omitempty"`
+	OrgID *string `json:"org_id,omitempty"`
 
 	// Active specifies if the api is enabled or not
 	Active *bool `json:"active,omitempty"`
@@ -545,7 +598,7 @@ type APIDefinitionSpec struct {
 	EnableProxyProtocol *bool `json:"enable_proxy_protocol,omitempty"`
 
 	// Domain represents a custom host header that the gateway will listen on for this API
-	Domain string `json:"domain,omitempty"`
+	Domain *string `json:"domain,omitempty"`
 
 	// DoNotTrack disables endpoint tracking for this API
 	DoNotTrack *bool `json:"do_not_track,omitempty"`
@@ -609,28 +662,28 @@ type APIDefinitionSpec struct {
 
 	// JWTSigningMethod algorithm used to sign jwt token
 	// +kubebuilder:validation:Enum=rsa;hmac;ecdsa
-	JWTSigningMethod string `json:"jwt_signing_method,omitempty"`
+	JWTSigningMethod *string `json:"jwt_signing_method,omitempty"`
 
 	// JWTSource Must either be a base64 encoded valid RSA/HMAC key or a url to a
 	// resource serving JWK, this key will then be used to validate inbound JWT and
 	// throttle them according to the centralised JWT options and fields set in the
 	// configuration.
-	JWTSource string `json:"jwt_source,omitempty"`
+	JWTSource *string `json:"jwt_source,omitempty"`
 
 	// JWTIdentityBaseField Identifies the user or identity to be used in the
 	// Claims of the JWT. This will fallback to sub if not found. This field forms
 	// the basis of a new “virtual” token that gets used after validation. It means
 	// policy attributes are carried forward through Tyk for attribution purposes.
-	JWTIdentityBaseField string `json:"jwt_identity_base_field,omitempty"`
+	JWTIdentityBaseField *string `json:"jwt_identity_base_field,omitempty"`
 
 	// JWTClientIDBaseField is the name of the field on JWT claim to use for client
 	// id. This field is mutually exclusive to jwt_identity_base_field, meaning you
 	// can only set/use one and jwt_identity_base_field takes precedence when both
 	// are set.
-	JWTClientIDBaseField string `json:"jwt_client_base_field,omitempty"`
+	JWTClientIDBaseField *string `json:"jwt_client_base_field,omitempty"`
 
 	// JWTPolicyFieldName The policy ID to apply to the virtual token generated for a JWT
-	JWTPolicyFieldName string `json:"jwt_policy_field_name,omitempty"`
+	JWTPolicyFieldName *string `json:"jwt_policy_field_name,omitempty"`
 
 	// JWTDefaultPolicies is a list of policies that will be used when base policy
 	// can't be extracted from the JWT token. When this list is provided the first
@@ -673,7 +726,7 @@ type APIDefinitionSpec struct {
 
 	// JWTScopeClaimName overides the key used for scope values in the JWT claims.
 	// By default the value is "scope"
-	JWTScopeClaimName string `json:"jwt_scope_claim_name,omitempty"`
+	JWTScopeClaimName *string `json:"jwt_scope_claim_name,omitempty"`
 
 	// NotificationsDetails       NotificationsManager  `json:"notifications"`
 	// EnableSignatureChecking    bool                  `json:"enable_signature_checking"`
@@ -699,7 +752,7 @@ type APIDefinitionSpec struct {
 	GlobalRateLimit GlobalRateLimit `json:"global_rate_limit,omitempty"`
 
 	CustomMiddleware       MiddlewareSection `json:"custom_middleware,omitempty"`
-	CustomMiddlewareBundle string            `json:"custom_middleware_bundle,omitempty"`
+	CustomMiddlewareBundle *string           `json:"custom_middleware_bundle,omitempty"`
 
 	CacheOptions CacheOptions `json:"cache_options,omitempty"`
 
@@ -799,7 +852,7 @@ type Proxy struct {
 	// will live on the same URL structure. If you are using URL-based versioning (e.g. /v1/function, /v2/function)
 	// then it is recommended to set up a separate non-versioned definition for each version as they are essentially
 	// separate APIs.
-	ListenPath string `json:"listen_path,omitempty"`
+	ListenPath *string `json:"listen_path,omitempty"`
 
 	// TargetURL defines the target URL that the request should be proxied to.
 	TargetURL      string          `json:"target_url"`
@@ -863,7 +916,7 @@ type ProxyTransport struct {
 	SSLForceCommonNameCheck *bool `json:"ssl_force_common_name_check,omitempty"`
 
 	// ProxyURL specifies custom forward proxy & port. e.g. `http(s)://proxy.url:1234`
-	ProxyURL string `json:"proxy_url,omitempty"`
+	ProxyURL *string `json:"proxy_url,omitempty"`
 }
 
 // CORS cors settings
@@ -948,7 +1001,7 @@ type OAuth2Meta struct {
 	AllowedAuthorizeTypes []AuthorizeTypeEnum `json:"allowed_authorize_types"` // osin.AuthorizeRequestType
 
 	// Login form to handle user login.
-	AuthLoginRedirect string `json:"auth_login_redirect,omitempty"`
+	AuthLoginRedirect *string `json:"auth_login_redirect,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=authorization_code;refresh_token;password;client_credentials
@@ -959,9 +1012,9 @@ type AuthorizeTypeEnum string
 
 type AuthConfig struct {
 	UseParam          *bool           `json:"use_param,omitempty"`
-	ParamName         string          `json:"param_name,omitempty"`
+	ParamName         *string         `json:"param_name,omitempty"`
 	UseCookie         *bool           `json:"use_cookie,omitempty"`
-	CookieName        string          `json:"cookie_name,omitempty"`
+	CookieName        *string         `json:"cookie_name,omitempty"`
 	AuthHeaderName    string          `json:"auth_header_name"`
 	UseCertificate    *bool           `json:"use_certificate,omitempty"`
 	ValidateSignature *bool           `json:"validate_signature,omitempty"`
@@ -1051,7 +1104,7 @@ type GraphQLSupergraphConfig struct {
 	// UpdatedAt contains the date and time of the last update of a supergraph API.
 	UpdatedAt            *metav1.Time            `json:"updated_at,omitempty"`
 	Subgraphs            []GraphQLSubgraphEntity `json:"subgraphs,omitempty"`
-	MergedSDL            string                  `json:"merged_sdl,omitempty"`
+	MergedSDL            *string                 `json:"merged_sdl,omitempty"`
 	GlobalHeaders        map[string]string       `json:"global_headers,omitempty"`
 	DisableQueryBatching *bool                   `json:"disable_query_batching,omitempty"`
 }
@@ -1070,7 +1123,7 @@ type GraphQLConfig struct {
 	Version GraphQLConfigVersion `json:"version,omitempty"`
 
 	// Schema is the GraphQL Schema exposed by the GraphQL API/Upstream/Engine.
-	Schema string `json:"schema,omitempty"`
+	Schema *string `json:"schema,omitempty"`
 
 	// LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.
 	LastSchemaUpdate *metav1.Time `json:"last_schema_update,omitempty"`
@@ -1090,7 +1143,7 @@ type GraphQLConfig struct {
 	// Subgraph holds the configuration for a GraphQL federation subgraph.
 	Subgraph GraphQLSubgraphConfig `json:"subgraph,omitempty"`
 
-	GraphRef string `json:"graph_ref,omitempty"`
+	GraphRef *string `json:"graph_ref,omitempty"`
 
 	// Supergraph holds the configuration for a GraphQL federation supergraph.
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`
@@ -1121,15 +1174,15 @@ type SourceConfig struct {
 type DataSourceConfig struct {
 	URL                        string                      `json:"url"`
 	Method                     HttpMethod                  `json:"method"`
-	Body                       string                      `json:"body,omitempty"`
-	DefaultTypeName            string                      `json:"default_type_name,omitempty"`
+	Body                       *string                     `json:"body,omitempty"`
+	DefaultTypeName            *string                     `json:"default_type_name,omitempty"`
 	Headers                    []string                    `json:"headers,omitempty"`
 	StatusCodeTypeNameMappings []StatusCodeTypeNameMapping `json:"status_code_type_name_mappings,omitempty"`
 }
 
 type StatusCodeTypeNameMapping struct {
-	StatusCode int    `json:"status_code"`
-	TypeName   string `json:"type_name,omitempty"`
+	StatusCode int     `json:"status_code"`
+	TypeName   *string `json:"type_name,omitempty"`
 }
 
 type MappingConfiguration struct {
@@ -1152,13 +1205,13 @@ type APIDefinitionSpecList struct {
 
 // ListAPIOptions options passed as url query when getting a list of api's
 type ListAPIOptions struct {
-	Compressed *bool  `json:"compressed,omitempty"`
-	Query      string `json:"q,omitempty"`
-	Pages      int    `json:"p,omitempty"`
-	Sort       string `json:"sort,omitempty"`
-	Category   string `json:"category,omitempty"`
-	AuthType   string `json:"auth_type,omitempty"`
-	Graph      *bool  `json:"graph,omitempty"`
+	Compressed *bool   `json:"compressed,omitempty"`
+	Query      *string `json:"q,omitempty"`
+	Pages      int     `json:"p,omitempty"`
+	Sort       *string `json:"sort,omitempty"`
+	Category   *string `json:"category,omitempty"`
+	AuthType   *string `json:"auth_type,omitempty"`
+	Graph      *bool   `json:"graph,omitempty"`
 }
 
 // Params returns url.Values that matches what the admin api expects from ls.

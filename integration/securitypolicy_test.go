@@ -61,16 +61,20 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			verifyPolicyApiVersion(t, &tykEnv)
 
 			api1, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+				listenPath := "test-api-1"
+
 				ad.Name = api1Name
 				ad.Spec.Name = api1Name
-				ad.Spec.Proxy.ListenPath = "/test-api-1"
+				ad.Spec.Proxy.ListenPath = &listenPath
 			})
 			eval.NoErr(err)
 
 			api2, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+				listenPath := "test-api-2"
+
 				ad.Name = api2Name
 				ad.Spec.Name = api2Name
-				ad.Spec.Proxy.ListenPath = "/test-api-2"
+				ad.Spec.Proxy.ListenPath = &listenPath
 			})
 			eval.NoErr(err)
 
@@ -111,6 +115,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			err = c.Client().Resources().Get(ctx, api1Name, testNs, &api)
 			eval.NoErr(err)
 
+			t.Log("", api.Status.LinkedByPolicies)
 			eval.True(len(api.Status.LinkedByPolicies) != 0)
 			eval.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
 
@@ -739,7 +744,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				})
 				eval.NoErr(err)
 
-				policyTarget = model.Target{Name: policyCR.Name, Namespace: policyCR.Namespace}
+				namespace := policyCR.Namespace
+				policyTarget = model.Target{Name: policyCR.Name, Namespace: &namespace}
 
 				err = waitForTykResourceCreation(c, policyCR)
 				eval.NoErr(err)
@@ -754,7 +760,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 				var pol v1alpha1.SecurityPolicy
 
-				err := c.Client().Resources().Get(ctx, policyTarget.Name, policyTarget.Namespace, &pol)
+				err := c.Client().Resources().Get(ctx, policyTarget.Name, *policyTarget.Namespace, &pol)
 				eval.NoErr(err)
 
 				validPolSpec := func(mode v1alpha1.OperatorContextMode, s *v1alpha1.SecurityPolicySpec, k8s bool) bool {
@@ -838,7 +844,8 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 			eval.NoErr(err)
 
 			policy, err = createTestPolicy(ctx, c, testNs, func(p *v1alpha1.SecurityPolicy) {
-				p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: opCtx.Namespace}
+				namespace := opCtx.Namespace
+				p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: &namespace}
 			})
 			eval.NoErr(err)
 
@@ -853,11 +860,11 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 							return false
 						}
 
-						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == "" {
+						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == nil || *pol.Spec.Context.Namespace == "" {
 							return false
 						}
 
-						return pol.Spec.Context.Name == opCtx.Name && pol.Spec.Context.Namespace == opCtx.Namespace
+						return pol.Spec.Context.Name == opCtx.Name && *pol.Spec.Context.Namespace == opCtx.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -874,7 +881,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
 
-						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace == policy.Namespace
+						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace != nil && *linkedPolMeta.Namespace == policy.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -923,8 +930,9 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				eval.True(ok)
 
 				var err error
+				namespace := opCtx.Namespace
 				policy, err = createTestPolicy(ctx, c, testNs, func(p *v1alpha1.SecurityPolicy) {
-					p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: opCtx.Namespace}
+					p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: &namespace}
 				})
 				eval.NoErr(err)
 
@@ -935,11 +943,12 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 							return false
 						}
 
-						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == "" {
+						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == nil ||
+							*pol.Spec.Context.Namespace == "" {
 							return false
 						}
 
-						return pol.Spec.Context.Name == opCtx.Name && pol.Spec.Context.Namespace == opCtx.Namespace
+						return pol.Spec.Context.Name == opCtx.Name && *pol.Spec.Context.Namespace == opCtx.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -956,7 +965,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
 
-						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace == policy.Namespace
+						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace != nil && *linkedPolMeta.Namespace == policy.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 

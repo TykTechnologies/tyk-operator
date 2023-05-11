@@ -107,7 +107,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		apiDef := createApiDef(name, ns)
 		apiDef.Spec.APIDefinitionSpec = *v
 
-		storeMetadata(apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
+		storeMetadata(*apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
 
 		if err := e.Encode(&apiDef, w); err != nil {
 			return err
@@ -382,7 +382,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 		if strings.Contains(v, " ") {
 			fmt.Printf(
 				"WARNING: Please ensure that API identified by %s does not include empty space in its ConfigData[%s].\n",
-				apiDefSpec.APIID,
+				*apiDefSpec.APIID,
 				NamespaceKey,
 			)
 		}

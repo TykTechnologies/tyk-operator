@@ -333,7 +333,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 				apiDef.Name = apiDefWithJSONValidationName
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath: apiDefListenPath,
+					ListenPath: &apiDefListenPath,
 					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
@@ -419,7 +419,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath: apiDefListenPath,
+					ListenPath: &apiDefListenPath,
 					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
@@ -523,7 +523,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 				apiDef.Name = apiDefWithBlacklist
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath: apiDefListenPath,
+					ListenPath: &apiDefListenPath,
 					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
@@ -639,7 +639,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath: apiDefListenPath,
+					ListenPath: &apiDefListenPath,
 					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
@@ -1113,7 +1113,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				// validate certificate was created
 				exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 				if !exists {
-					return false, errors.New("certificate is not created yet")
+					t.Log("certificate is not created yet")
+					return false, nil
 				}
 
 				return true, nil
@@ -1321,8 +1322,10 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 
 				// Generate ApiDefinition CR and create it.
 				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					graphRef := testSubGraphCRMetaName
+
 					definition.Spec.GraphQL = &model.GraphQLConfig{
-						GraphRef:      testSubGraphCRMetaName,
+						GraphRef:      &graphRef,
 						ExecutionMode: model.SubGraphExecutionMode,
 						Version:       "1",
 					}
@@ -1356,9 +1359,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						return apiDefObj.Spec.GraphQL != nil &&
-							apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName &&
-							apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
+						return apiDefObj.Spec.GraphQL != nil && apiDefObj.Spec.GraphQL.GraphRef != nil &&
+							*apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName && apiDefObj.Spec.GraphQL.Schema != nil &&
+							*apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == testSubGraphSDL &&
 							apiDefObj.Status.LinkedToSubgraph == testSubGraphCRMetaName
 					}),
@@ -1391,11 +1394,13 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 
 				// Generate another ApiDefinition CR and create it.
 				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					graphRef := testSubGraphCRMetaName
+
 					definition.ObjectMeta = metav1.ObjectMeta{
 						Name: "another-api", Namespace: testNs,
 					}
 					definition.Spec.GraphQL = &model.GraphQLConfig{
-						GraphRef:      testSubGraphCRMetaName,
+						GraphRef:      &graphRef,
 						ExecutionMode: model.SubGraphExecutionMode,
 						Version:       "1",
 					}
@@ -1454,7 +1459,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				eval.NoErr(err)
 
 				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
-					api.Spec.GraphQL.GraphRef = newSgName
+					graphRef := newSgName
+
+					api.Spec.GraphQL.GraphRef = &graphRef
 					return nil
 				})
 				eval.NoErr(err)
@@ -1476,9 +1483,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						return apiDefObj.Spec.GraphQL != nil &&
-							apiDefObj.Spec.GraphQL.GraphRef == newSgName &&
-							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+						return apiDefObj.Spec.GraphQL != nil && apiDefObj.Spec.GraphQL.GraphRef != nil &&
+							*apiDefObj.Spec.GraphQL.GraphRef == newSgName && apiDefObj.Spec.GraphQL.Schema != nil &&
+							*apiDefObj.Spec.GraphQL.Schema == newSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
 							apiDefObj.Status.LinkedToSubgraph == newSgName
 					}),
@@ -1521,7 +1528,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				eval.NoErr(err)
 
 				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
-					api.Spec.GraphQL.GraphRef = ""
+					api.Spec.GraphQL.GraphRef = nil
 					return nil
 				})
 				eval.NoErr(err)
@@ -1551,9 +1558,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 							return false
 						}
 
-						return apiDefObj.Spec.GraphQL != nil &&
-							apiDefObj.Spec.GraphQL.GraphRef == "" &&
-							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+						return apiDefObj.Spec.GraphQL != nil && (apiDefObj.Spec.GraphQL.GraphRef == nil ||
+							*apiDefObj.Spec.GraphQL.GraphRef == "") && apiDefObj.Spec.GraphQL.Schema != nil &&
+							*apiDefObj.Spec.GraphQL.Schema == newSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
 							apiDefObj.Status.LinkedToSubgraph == ""
 					}),

@@ -59,6 +59,9 @@ func TestDecodeID(t *testing.T) {
 }
 
 func TestIsSameApiDefinition(t *testing.T) {
+	apiID1 := "sample"
+	apiID2 := "different"
+
 	type args struct {
 		apiDef1 *model.APIDefinitionSpec
 		apiDef2 *model.APIDefinitionSpec
@@ -103,8 +106,8 @@ func TestIsSameApiDefinition(t *testing.T) {
 		{
 			name: "Checking whether ID field is ignored",
 			args: args{
-				apiDef1: &model.APIDefinitionSpec{ID: "sample"},
-				apiDef2: &model.APIDefinitionSpec{ID: "different"},
+				apiDef1: &model.APIDefinitionSpec{ID: &apiID1},
+				apiDef2: &model.APIDefinitionSpec{ID: &apiID2},
 			},
 			want: true,
 		},

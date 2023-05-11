@@ -229,7 +229,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 	for _, v := range in.Spec.VersionData.Versions {
 		if v.ExtendedPaths != nil {
 			for _, u := range v.ExtendedPaths.URLRewrite {
-				if u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
+				if u.RewriteTo != nil && *u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
 					all = append(all,
 						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
 							ErrEmptyValue,

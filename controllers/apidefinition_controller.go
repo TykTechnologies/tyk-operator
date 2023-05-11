@@ -121,12 +121,14 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return err
 		}
 
-		if desired.Spec.APIID == "" {
-			upstreamRequestStruct.Spec.APIID = EncodeNS(req.NamespacedName.String())
+		if desired.Spec.APIID == nil || *desired.Spec.APIID == "" {
+			apiID := EncodeNS(req.NamespacedName.String())
+			upstreamRequestStruct.Spec.APIID = &apiID
 		}
 
-		if desired.Spec.OrgID == "" {
-			upstreamRequestStruct.Spec.OrgID = env.Org
+		if desired.Spec.OrgID == nil || *desired.Spec.OrgID == "" {
+			orgID := env.Org
+			upstreamRequestStruct.Spec.OrgID = &orgID
 		}
 
 		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
@@ -412,13 +414,15 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
+	namespace := desired.Namespace
+	target := model.Target{Namespace: &namespace, Name: desired.Name}
 	err = r.updateStatus(
 		ctx,
 		desired.Namespace,
-		model.Target{Namespace: desired.Namespace, Name: desired.Name},
+		target,
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
-			status.ApiID = desired.Spec.APIID
+			status.ApiID = *desired.Spec.APIID
 		},
 	)
 	if err != nil {
@@ -576,9 +580,10 @@ func (r *ApiDefinitionReconciler) delete(ctx context.Context, desired *tykv1alph
 			return queueAfter, err
 		}
 
+		namespace := desired.Namespace
 		ns := model.Target{
 			Name:      desired.Name,
-			Namespace: desired.Namespace,
+			Namespace: &namespace,
 		}
 
 		for _, target := range desired.Status.LinkedToAPIs {
@@ -727,9 +732,10 @@ func (r *ApiDefinitionReconciler) updateLoopingTargets(ctx context.Context,
 		return nil
 	}
 
+	namespace := a.Namespace
 	ns := model.Target{
 		Name:      a.Name,
-		Namespace: a.Namespace,
+		Namespace: &namespace,
 	}
 
 	for _, target := range links {
@@ -835,11 +841,13 @@ func (r *ApiDefinitionReconciler) breakSubgraphLink(
 		}
 	}
 
+	namespace := desired.Namespace
+	target := model.Target{Namespace: &namespace, Name: desired.Name}
 	if !pass {
 		err = r.updateStatus(
 			ctx,
 			desired.ObjectMeta.Namespace,
-			model.Target{Namespace: desired.Namespace, Name: desired.Name},
+			target,
 			false,
 			func(status *tykv1alpha1.ApiDefinitionStatus) {
 				status.LinkedToSubgraph = ""
@@ -864,7 +872,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 		return nil
 	}
 
-	if urs.Spec.GraphQL.GraphRef == "" {
+	if urs.Spec.GraphQL.GraphRef == nil || *urs.Spec.GraphQL.GraphRef == "" {
 		err := r.breakSubgraphLink(ctx, urs, false)
 		if err != nil {
 			return err
@@ -881,7 +889,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 	subgraph := &tykv1alpha1.SubGraph{}
 	subgraphNamespacedName := types.NamespacedName{
 		Namespace: urs.ObjectMeta.Namespace,
-		Name:      urs.Spec.GraphQL.GraphRef,
+		Name:      *urs.Spec.GraphQL.GraphRef,
 	}
 
 	err := r.Client.Get(ctx, subgraphNamespacedName, subgraph)
@@ -893,7 +901,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 	// and SubGraph CRs. If another ApiDefinition tries to refer to the SubGraph that is already referred by
 	// another ApiDefinition, we should return error to indicate that multiple linking is not allowed.
 	if subgraph.Status.LinkedByAPI != "" &&
-		subgraph.Status.LinkedByAPI != urs.Spec.APIID {
+		subgraph.Status.LinkedByAPI != *urs.Spec.APIID {
 		r.Log.Error(ErrMultipleLinkSubGraph, fmt.Sprintf(
 			"failed to link ApiDefinition CR with SubGraph CR; SubGraph %q is already linked by %s",
 			client.ObjectKeyFromObject(subgraph), subgraph.Status.LinkedByAPI,
@@ -905,20 +913,23 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 	// If ApiDefinition refers to another Subgraph, the link between the previous Subgraph CR and
 	// ApiDefinition CR must be broken before updating the current ApiDefinition CR based on the new
 	// Subgraph CR.
-	if urs.Status.LinkedToSubgraph != urs.Spec.GraphQL.GraphRef {
+	if urs.Status.LinkedToSubgraph != *urs.Spec.GraphQL.GraphRef {
 		err = r.breakSubgraphLink(ctx, urs, false)
 		if err != nil {
 			return err
 		}
 	}
 
-	urs.Spec.GraphQL.Schema = subgraph.Spec.Schema
+	schema := subgraph.Spec.Schema
+	urs.Spec.GraphQL.Schema = &schema
 	urs.Spec.GraphQL.Subgraph.SDL = subgraph.Spec.SDL
 
+	namespace := urs.Namespace
+	target := model.Target{Namespace: &namespace, Name: urs.Name}
 	err = r.updateStatus(
 		ctx,
 		urs.ObjectMeta.Namespace,
-		model.Target{Namespace: urs.Namespace, Name: urs.Name},
+		target,
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.LinkedToSubgraph = subgraph.ObjectMeta.Name
@@ -932,7 +943,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 		return err
 	}
 
-	subgraph.Status.LinkedByAPI = urs.Spec.APIID
+	subgraph.Status.LinkedByAPI = *urs.Spec.APIID
 
 	err = r.Status().Update(ctx, subgraph)
 	if err != nil {
@@ -952,7 +963,7 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 
 	err := r.Client.Get(ctx, types.NamespacedName{
 		Namespace: urs.Namespace,
-		Name:      urs.Spec.GraphQL.GraphRef,
+		Name:      *urs.Spec.GraphQL.GraphRef,
 	}, supergraph)
 	if err != nil {
 		return err
@@ -960,24 +971,29 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 
 	for _, ref := range supergraph.Spec.SubgraphRefs {
 		ns := ref.Namespace
-		if ns == "" {
-			ns = supergraph.Namespace
+
+		if ns == nil || *ns == "" {
+			if ns == nil {
+				ns = new(string)
+			}
+
+			*ns = supergraph.Namespace
 		}
 
 		subGraph := &tykv1alpha1.SubGraph{}
 
 		err := r.Client.Get(ctx, types.NamespacedName{
 			Name:      ref.Name,
-			Namespace: ns,
+			Namespace: *ns,
 		}, subGraph)
 		if err != nil {
 			return err
 		}
 
-		ns, name := decodeID(subGraph.Status.LinkedByAPI)
+		api_ns, api_name := decodeID(subGraph.Status.LinkedByAPI)
 		apiDef := &tykv1alpha1.ApiDefinition{}
 
-		err = r.Client.Get(ctx, types.NamespacedName{Namespace: ns, Name: name}, apiDef)
+		err = r.Client.Get(ctx, types.NamespacedName{Namespace: api_ns, Name: api_name}, apiDef)
 		if err != nil {
 			return err
 		}
@@ -991,8 +1007,11 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 			})
 	}
 
-	urs.Spec.GraphQL.Schema = supergraph.Spec.Schema
-	urs.Spec.GraphQL.Supergraph.MergedSDL = supergraph.Spec.MergedSDL
+	schema := supergraph.Spec.Schema
+	mergedSDL := supergraph.Spec.MergedSDL
+
+	urs.Spec.GraphQL.Schema = &schema
+	urs.Spec.GraphQL.Supergraph.MergedSDL = &mergedSDL
 
 	return err
 }
@@ -1038,11 +1057,11 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return nil
 			}
 
-			if apiDefDeployment.Spec.GraphQL.GraphRef == "" {
+			if apiDefDeployment.Spec.GraphQL.GraphRef == nil || *apiDefDeployment.Spec.GraphQL.GraphRef == "" {
 				return nil
 			}
 
-			return []string{apiDefDeployment.Spec.GraphQL.GraphRef}
+			return []string{*apiDefDeployment.Spec.GraphQL.GraphRef}
 		})
 	if err != nil {
 		return err

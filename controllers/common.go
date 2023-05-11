@@ -79,7 +79,17 @@ func containsString(slice []string, s string) bool {
 // addTarget adds given target to given slice if the slice does not contain the target.
 func addTarget(slice []model.Target, target model.Target) (result []model.Target) {
 	for _, item := range slice {
-		if item == target {
+		namespaceMatches := false
+
+		if item.Namespace == nil && target.Namespace == nil {
+			namespaceMatches = true
+		}
+
+		if item.Namespace != nil && target.Namespace != nil {
+			namespaceMatches = *item.Namespace == *target.Namespace
+		}
+
+		if item.Name == target.Name && namespaceMatches {
 			return slice
 		}
 	}
@@ -125,10 +135,14 @@ func HttpContext(
 		}
 
 		// If namespace is not specified in contextDef, use default namespace
-		if opCtxRef.Namespace == "" {
+		if opCtxRef.Namespace == nil || *opCtxRef.Namespace == "" {
 			log.Info("Context namespace is not specified, using default")
 
-			opCtxRef.Namespace = "default"
+			if opCtxRef.Namespace == nil {
+				opCtxRef.Namespace = new(string)
+			}
+
+			*opCtxRef.Namespace = "default"
 		}
 
 		log.Info("Detected context for resource")
@@ -187,9 +201,11 @@ func updateOperatorContextStatus(
 	log logr.Logger,
 	ctxRef *model.Target,
 ) error {
+	namespace := object.GetNamespace()
+
 	objectTarget := model.Target{
 		Name:      object.GetName(),
-		Namespace: object.GetNamespace(),
+		Namespace: &namespace,
 	}
 
 	// Remove link from other OperatorContext, if any,
@@ -204,7 +220,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if ApiDefinition is still referring to same context and is not marked for deletion.
 			if ctxRef != nil &&
-				opCtxList.Items[i].Name == ctxRef.Name && opCtxList.Items[i].Namespace == ctxRef.Namespace &&
+				opCtxList.Items[i].Name == ctxRef.Name && ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
@@ -226,7 +242,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if SecurityPolicy is still referring to context and is not marked for deletion.
 			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
-				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -240,7 +256,7 @@ func updateOperatorContextStatus(
 	case *v1alpha1.PortalAPICatalogue:
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if PortalAPICatalogue is still referring to context and is not marked for deletion.
-			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name && opCtxList.Items[i].Namespace == ctxRef.Namespace &&
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name && ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
@@ -256,7 +272,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if APIDescription is still referring to context and is not marked for deletion.
 			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
-				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -271,7 +287,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if PortalConfig is still referring to context and is not marked for deletion.
 			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
-				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -291,8 +307,13 @@ func updateOperatorContextStatus(
 		log.Info("Adding link to apiContext", "key", ctxRef.String())
 
 		var operatorContext v1alpha1.OperatorContext
+		var namespace = ""
 
-		key := types.NamespacedName{Name: ctxRef.Name, Namespace: ctxRef.Namespace}
+		if ctxRef.Namespace != nil {
+			namespace = *ctxRef.Namespace
+		}
+
+		key := types.NamespacedName{Name: ctxRef.Name, Namespace: namespace}
 
 		if err := client.Get(ctx, key, &operatorContext); err != nil {
 			log.Error(err, "failed to get operator context")

@@ -108,16 +108,19 @@ func (r *APIDescriptionReconciler) delete(
 
 	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
 
+	namespace := desired.Namespace
 	target := model.Target{
 		Name:      desired.Name,
-		Namespace: desired.Namespace,
+		Namespace: &namespace,
 	}
 
 	for _, catalogue := range ls.Items {
 		for _, desc := range catalogue.Spec.APIDescriptionList {
 			if desc.APIDescriptionRef != nil && target.Equal(*desc.APIDescriptionRef) {
+				cat_ns := catalogue.Namespace
+
 				return fmt.Errorf("Unable to delete api description due to partal catalogue dependency %q",
-					model.Target{Name: catalogue.Name, Namespace: catalogue.Namespace}.String(),
+					model.Target{Name: catalogue.Name, Namespace: &cat_ns}.String(),
 				)
 			}
 		}
@@ -150,9 +153,10 @@ func (r *APIDescriptionReconciler) sync(
 
 	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
 
+	namespace := desired.Namespace
 	target := model.Target{
 		Name:      desired.Name,
-		Namespace: desired.Namespace,
+		Namespace: &namespace,
 	}
 
 	for _, catalogue := range ls.Items {
@@ -171,9 +175,10 @@ func (r *APIDescriptionReconciler) sync(
 				// updates label for this
 				v, _ := strconv.Atoi(catalogue.Labels["updates"])
 				catalogue.Labels["updates"] = strconv.Itoa(v + 1)
-				ns := model.Target{Name: catalogue.Name, Namespace: catalogue.Namespace}
+				namespace := catalogue.Namespace
+				target := model.Target{Name: catalogue.Name, Namespace: &namespace}
 
-				log.Info("Updating catalogue", "resource", ns.String())
+				log.Info("Updating catalogue", "resource", target.String())
 
 				if err := r.Update(ctx, &catalogue); err != nil {
 					return err

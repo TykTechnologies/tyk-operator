@@ -370,7 +370,8 @@ func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, polic
 	}
 
 	for _, v := range policy.Spec.AccessRightsArray {
-		target := model.Target{Name: v.Name, Namespace: v.Namespace}
+		namespace := v.Namespace
+		target := model.Target{Name: v.Name, Namespace: &namespace}
 
 		policy.Status.LinkedAPIs = append(policy.Status.LinkedAPIs, target)
 	}
@@ -385,21 +386,28 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 ) error {
 	r.Log.Info("Updating linked api definitions")
 
-	ns := model.Target{
-		Namespace: policy.Namespace, Name: policy.Name,
+	namespace := policy.Namespace
+
+	target := model.Target{
+		Namespace: &namespace, Name: policy.Name,
 	}
 
 	// Remove links from api definitions
 	for _, t := range policy.Status.LinkedAPIs {
 		api := &tykv1.ApiDefinition{}
 
-		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, api); err != nil {
+		namespace := ""
+		if t.Namespace != nil {
+			namespace = *t.Namespace
+		}
+
+		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: namespace}, api); err != nil {
 			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
 
 			return err
 		}
 
-		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, target)
 
 		if err := r.Status().Update(ctx, api); err != nil {
 			r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
@@ -420,9 +428,9 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		}
 
 		if policyDeleted {
-			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, target)
 		} else {
-			api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, ns)
+			api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, target)
 		}
 
 		if err := r.Status().Update(ctx, api); err != nil {

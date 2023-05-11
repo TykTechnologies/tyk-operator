@@ -44,6 +44,9 @@ func TestApiDefinition_Default(t *testing.T) {
 }
 
 func TestApiDefinition_validateTarget(t *testing.T) {
+	rewriteTo := ""
+	namespace := "resource-ns"
+
 	invalidRewriteApiDef := ApiDefinition{
 		Spec: APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
@@ -52,7 +55,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 					Versions: map[string]model.VersionInfo{
 						"Default": {
 							ExtendedPaths: &model.ExtendedPathsSet{
-								URLRewrite: []model.URLRewriteMeta{{RewriteTo: ""}},
+								URLRewrite: []model.URLRewriteMeta{{RewriteTo: &rewriteTo}},
 							},
 						},
 					},
@@ -70,7 +73,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 						"Default": {
 							ExtendedPaths: &model.ExtendedPathsSet{
 								URLRewrite: []model.URLRewriteMeta{
-									{RewriteTo: "", Triggers: []model.RoutingTrigger{{}}},
+									{RewriteTo: &rewriteTo, Triggers: []model.RoutingTrigger{{}}},
 								},
 							},
 						},
@@ -120,7 +123,7 @@ func TestApiDefinition_validateTarget(t *testing.T) {
 				Spec: APIDefinitionSpec{
 					APIDefinitionSpec: model.APIDefinitionSpec{
 						Proxy: model.Proxy{TargetURL: "", TargetInternal: &model.TargetInternal{
-							Target: model.Target{Name: "resource-name", Namespace: "resource-ns"},
+							Target: model.Target{Name: "resource-name", Namespace: &namespace},
 						}},
 					},
 				},

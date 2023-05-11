@@ -68,6 +68,7 @@ func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1
 	useKeylessAccess := true
 	active := true
 	stripListenPath := true
+	listenPath := "httpbin"
 
 	apiDef.Name = testApiDef
 	apiDef.Namespace = ns
@@ -81,7 +82,7 @@ func generateApiDef(ns string, mutateFn func(*v1alpha1.ApiDefinition)) *v1alpha1
 		Versions:       map[string]model.VersionInfo{"Default": {Name: "Default"}},
 	}
 	apiDef.Spec.Proxy = model.Proxy{
-		ListenPath:      "/httpbin",
+		ListenPath:      &listenPath,
 		TargetURL:       "http://httpbin.default.svc:8000",
 		StripListenPath: &stripListenPath,
 	}
@@ -154,11 +155,12 @@ func waitForTykResourceCreation(envConf *envconf.Config, obj k8s.Object) error {
 func createTestOperatorContext(ctx context.Context, ns string, c *envconf.Config) (*v1alpha1.OperatorContext, error) {
 	var operatorCtx v1alpha1.OperatorContext
 
+	secret_ns := opNs
 	operatorCtx.Name = testOperatorCtx
 	operatorCtx.Namespace = ns
 	operatorCtx.Spec.FromSecret = &model.Target{
 		Name:      operatorSecret,
-		Namespace: opNs,
+		Namespace: &secret_ns,
 	}
 
 	return &operatorCtx, c.Client().Resources(ns).Create(ctx, &operatorCtx)
