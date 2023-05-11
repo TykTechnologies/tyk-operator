@@ -3,14 +3,11 @@ package klient
 import (
 	"context"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/client/mock/mockgw"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/dashboard"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/gateway"
-	"github.com/TykTechnologies/tyk-operator/pkg/client/mock/mockdash"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
 )
 
@@ -22,10 +19,6 @@ func get(ctx context.Context) universal.Client {
 	r := client.GetContext(ctx)
 	if r.Env.Mode == "pro" {
 		return dashboard.Client{}
-	} else if r.Env.Mode == "mockdash" {
-		return mockdash.Client{}
-	} else if r.Env.Mode == "mockgw" {
-		return mockgw.Client{}
 	}
 
 	return gateway.Client{}

@@ -600,9 +600,20 @@ func TestSecurityPolicy(t *testing.T) {
 							return false
 						}
 
-						eval.True(policyOnK8s.Status.PolID == policyCR.Spec.MID)
-						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
-						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
+						if policyOnK8s.Status.PolID != policyCR.Spec.MID {
+							t.Logf("not equal policy ids")
+							return false
+						}
+
+						if policyOnK8s.Spec.Name != policyOnTyk.Name {
+							t.Logf("not equal policy names")
+							return false
+						}
+
+						if len(policyOnK8s.Spec.AccessRightsArray) != 1 {
+							t.Logf("invalid accessrightsarray")
+							return false
+						}
 
 						if tykEnv.Mode == "pro" {
 							eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), len(policyOnTyk.AccessRightsArray))

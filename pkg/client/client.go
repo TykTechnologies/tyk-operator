@@ -287,11 +287,7 @@ func BeforeRequest(r *http.Request) {
 	switch ctx.Env.Mode {
 	case "pro":
 		r.Header.Set("authorization", ctx.Env.Auth)
-	case "mockdash":
-		r.Header.Set("authorization", ctx.Env.Auth)
 	case "ce":
-		r.Header.Set("x-tyk-authorization", ctx.Env.Auth)
-	case "mockgw":
 		r.Header.Set("x-tyk-authorization", ctx.Env.Auth)
 	}
 

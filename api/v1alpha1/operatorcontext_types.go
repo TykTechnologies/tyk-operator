@@ -58,7 +58,7 @@ const (
 )
 
 // OperatorContextMode is the mode to which the admin api binding is done values are
-// ce for community edition and pro for dashboard.
+// ce for community edition and pro for dashboard
 // +kubebuilder:validation:Enum=ce;pro
 type OperatorContextMode string
 

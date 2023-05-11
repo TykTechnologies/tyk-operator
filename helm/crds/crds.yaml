@@ -2220,7 +2220,7 @@ spec:
                   insecureSkipVerify:
                     type: boolean
                   mode:
-                    description: OperatorContextMode is the mode to which the admin api binding is done values are ce for community edition and pro for dashboard.
+                    description: OperatorContextMode is the mode to which the admin api binding is done values are ce for community edition and pro for dashboard
                     enum:
                     - ce
                     - pro
