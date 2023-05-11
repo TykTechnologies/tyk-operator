@@ -481,17 +481,17 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 
 			return err
 		}
+	}
 
-		err = klient.Universal.HotReload(ctx)
-		if err != nil {
-			r.Log.Error(
-				err,
-				"Failed to hot-reload Tyk after updating the ApiDefinition",
-				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-			)
+	err = klient.Universal.HotReload(ctx)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to hot-reload Tyk after updating the ApiDefinition",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
 
-			return err
-		}
+		return err
 	}
 
 	latestApiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)

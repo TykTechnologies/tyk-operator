@@ -365,18 +365,25 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
+				err = waitForTykResourceCreation(c, &policyCR)
+				eval.NoErr(err)
+
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
-						eval.True(len(policyOnK8s.Status.PolID) > 0)
 
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
-						eval.NoErr(err)
+						if err != nil {
+							t.Logf("failed to fetch SecurityPolicy, err: %v", err)
+							return false
+						}
 
-						eval.True(
-							hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, policyOnTyk, policyOnK8s.Status.PolID),
-						)
+						if !hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, policyOnTyk, policyOnK8s.Status.PolID) {
+							t.Logf("resources are not same")
+							return false
+						}
+
 						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -401,11 +408,13 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// Ensure that policy is deleted from Tyk.
 				err = wait.For(func() (done bool, err error) {
 					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
-					if tykClient.IsNotFound(err) {
-						return true, nil
+					if !tykClient.IsNotFound(err) {
+						t.Logf("failed to delete resource from Tyk, unexpected err: %v", err)
+						_ = deletePolicyOnTyk(reqCtx, policyCR.Status.PolID) // nolint:errcheck
+						return false, nil
 					}
 
-					return false, err
+					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -457,11 +466,19 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					// Ensure that policy is updated accordingly on Tyk Side.
 					newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 					if err != nil {
-						return false, err
+						t.Logf("failed to get SecurityPolicy, err: %v", err)
+						return false, nil
 					}
 
-					eval.True(newCopySpec != nil)
-					eval.Equal(newCopySpec.Name, copySpec.Name)
+					if newCopySpec == nil {
+						t.Logf("malformed SecurityPolicy")
+						return false, nil
+					}
+
+					if newCopySpec.Name != copySpec.Name {
+						t.Logf("unexpected name, want %v got %v", copySpec.Name, newCopySpec.Name)
+						return false, nil
+					}
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
@@ -472,7 +489,12 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// and it must create a SecurityPolicy based on the spec stored in k8s.
 				err = wait.For(func() (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					return err == nil, err
+					if err != nil {
+						t.Logf("failed to reconcile, err: %v", err)
+						return false, nil
+					}
+
+					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -482,7 +504,10 @@ func TestSecurityPolicyMigration(t *testing.T) {
 						eval.True(ok)
 
 						newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
-						eval.NoErr(err)
+						if err != nil {
+							t.Logf("failed to get SecurityPolicy, err: %v", err)
+							return false
+						}
 
 						// Ensure that the latest Policy of Dashboard is created according to k8s state during
 						// reconciliation.

@@ -197,7 +197,12 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				// on k8s state.
 				err = wait.For(func() (done bool, err error) {
 					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
-					return err == nil, err
+					if err != nil {
+						t.Logf("failed to reconcile, err: %v", err)
+						return false, nil
+					}
+
+					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
