@@ -27,10 +27,11 @@ func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
 	if err1 == nil {
 		hash1 = strconv.FormatUint(h1, 10)
 
-		h2, err2 := hashstructure.Hash(i2, hashstructure.FormatV2, &hashOptions)
-		if err2 == nil {
-			return hash1, strconv.FormatUint(h2, 10)
-		}
+	}
+
+	h2, err2 := hashstructure.Hash(i2, hashstructure.FormatV2, &hashOptions)
+	if err2 == nil {
+		return hash1, strconv.FormatUint(h2, 10)
 	}
 
 	return
@@ -146,9 +147,7 @@ func HttpContext(
 
 		log.Info("Detected context for resource")
 
-		env, err := GetContext(
-			ctx, object.GetNamespace(), rClient, opCtxRef, log,
-		)
+		env, err := GetContext(ctx, object.GetNamespace(), rClient, opCtxRef, log)
 		if err != nil {
 			log.Error(err, "Failed to get context", "contextRef", opCtxRef.String())
 
