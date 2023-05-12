@@ -40,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -197,6 +198,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		log.Info("Completed reconciling ApiDefinition instance")
 	} else {
 		queueA = queueAfter
+
+		if strings.Contains(err.Error(), registry.OptimisticLockErrorMsg) {
+			return ctrl.Result{RequeueAfter: queueA}, nil
+		}
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
