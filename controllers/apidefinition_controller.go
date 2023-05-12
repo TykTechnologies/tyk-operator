@@ -502,14 +502,22 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	latestApiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
-	if err != nil {
-		r.Log.Error(
-			err,
-			"Failed to fetch ApiDefinition from Tyk after updating it",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
+	tykHash := ""
+	backoff := retry.DefaultBackoff
+	backoff.Duration = 100 * time.Millisecond
+	backoff.Steps = 5
 
+	err = retry.OnError(backoff, func(err error) bool { return true }, func() error {
+		latestApiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
+		if err != nil {
+			return err
+		}
+
+		tykHash, _ = calculateHashes(latestApiDefOnTyk, nil)
+
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 
@@ -519,7 +527,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		model.Target{Namespace: desired.Namespace, Name: desired.Name},
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
-			tykHash, k8sHash := calculateHashes(latestApiDefOnTyk, desired.Spec)
+			_, k8sHash := calculateHashes(nil, desired.Spec)
 			status.LatestTykHash = tykHash
 			status.LatestCRDHash = k8sHash
 		},
