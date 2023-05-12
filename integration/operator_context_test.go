@@ -149,6 +149,17 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			ctx = context.WithValue(ctx, ctxApiName, def.Name)
 
+			wait.For(conditions.New(client.Resources()).ResourceMatch(def, func(object k8s.Object) bool {
+				def := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
+
+				if def.Status.ApiID == "" {
+					t.Logf("Api definition %s is not created yet", def.Name)
+					return false
+				}
+
+				return true
+			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
 			err = wait.For(conditions.New(client.Resources()).ResourceMatch(operatorCtx, func(object k8s.Object) bool {
 				opCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
 
