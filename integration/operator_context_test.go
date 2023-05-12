@@ -209,8 +209,8 @@ func TestOperatorContextDelete(t *testing.T) {
 				)
 				eval.NoErr(err)
 
-				//err = envConf.Client().Resources(testNS).Delete(ctx, &apiDef)
-				//eval.NoErr(err)
+				// err = c.Client().Resources(testNS).Delete(ctx, &apiDef)
+				// eval.NoErr(err)
 
 				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
@@ -222,88 +222,88 @@ func TestOperatorContextDelete(t *testing.T) {
 			}).
 		Feature()
 
-	//updateApiDef := features.New("Remove context from Api Definition").
-	//	Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-	//		testNS := ctx.Value(ctxNSKey).(string)
-	//		eval := is.New(t)
-	//		client := envConf.Client()
-	//
-	//		operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf, nil)
-	//		eval.NoErr(err) // failed to create operatorcontext
-	//
-	//		ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
-	//
-	//		// create api definition
-	//		def, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-	//			apiDef.Spec.Context = &model.Target{
-	//				Name:      operatorCtx.Name,
-	//				Namespace: operatorCtx.Namespace,
-	//			}
-	//		})
-	//		eval.NoErr(err) // failed to create apiDefinition
-	//
-	//		ctx = context.WithValue(ctx, ctxApiName, def.Name)
-	//
-	//		err = wait.For(conditions.New(client.Resources()).ResourceMatch(operatorCtx, func(object k8s.Object) bool {
-	//			opCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
-	//
-	//			if len(opCtx.Status.LinkedApiDefinitions) == 0 {
-	//				return false
-	//			}
-	//
-	//			return true
-	//		}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-	//
-	//		eval.NoErr(err)
-	//
-	//		return ctx
-	//	}).Assess("context ref should not get deleted while it is still been refered",
-	//	func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-	//		testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
-	//		opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
-	//
-	//		client := envConf.Client()
-	//		eval := is.New(t)
-	//
-	//		opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
-	//
-	//		err := client.Resources().Delete(ctx, &opCtx)
-	//		eval.NoErr(err)
-	//
-	//		err = client.Resources(testNS).Get(ctx, testOperatorCtx, testNS, &opCtx)
-	//		eval.NoErr(err)
-	//
-	//		return ctx
-	//	}).
-	//	Assess("removing reference from apiDefinition should delete operator context",
-	//		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-	//			testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
-	//			opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
-	//			apiDefName := ctx.Value(ctxApiName).(string)  //nolint:errcheck
-	//
-	//			client := envConf.Client()
-	//			eval := is.New(t)
-	//
-	//			var apiDef v1alpha1.ApiDefinition
-	//			opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
-	//
-	//			err := client.Resources(testNS).Get(ctx, apiDefName, testNS, &apiDef)
-	//			eval.NoErr(err)
-	//
-	//			apiDef.Spec.Context = nil
-	//
-	//			err = client.Resources(testNS).Update(ctx, &apiDef)
-	//			eval.NoErr(err)
-	//
-	//			err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx),
-	//				wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
-	//
-	//			eval.NoErr(err)
-	//
-	//			return ctx
-	//		}).
-	//	Feature()
+	updateApiDef := features.New("Remove context from Api Definition").
+		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string)
+			eval := is.New(t)
+			client := envConf.Client()
+
+			operatorCtx, err := createTestOperatorContext(ctx, testNS, envConf, nil)
+			eval.NoErr(err) // failed to create operatorcontext
+
+			ctx = context.WithValue(ctx, ctxOpCtxName, operatorCtx.Name)
+
+			// create api definition
+			def, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				apiDef.Spec.Context = &model.Target{
+					Name:      operatorCtx.Name,
+					Namespace: operatorCtx.Namespace,
+				}
+			})
+			eval.NoErr(err) // failed to create apiDefinition
+
+			ctx = context.WithValue(ctx, ctxApiName, def.Name)
+
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(operatorCtx, func(object k8s.Object) bool {
+				opCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
+
+				if len(opCtx.Status.LinkedApiDefinitions) == 0 {
+					return false
+				}
+
+				return true
+			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+			eval.NoErr(err)
+
+			return ctx
+		}).Assess("context ref should not get deleted while it is still been refered",
+		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
+			opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
+
+			client := envConf.Client()
+			eval := is.New(t)
+
+			opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
+
+			err := client.Resources().Delete(ctx, &opCtx)
+			eval.NoErr(err)
+
+			err = client.Resources(testNS).Get(ctx, testOperatorCtx, testNS, &opCtx)
+			eval.NoErr(err)
+
+			return ctx
+		}).
+		Assess("removing reference from apiDefinition should delete operator context",
+			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+				testNS := ctx.Value(ctxNSKey).(string)        //nolint:errcheck
+				opCtxName := ctx.Value(ctxOpCtxName).(string) //nolint:errcheck
+				apiDefName := ctx.Value(ctxApiName).(string)  //nolint:errcheck
+
+				client := envConf.Client()
+				eval := is.New(t)
+
+				var apiDef v1alpha1.ApiDefinition
+				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
+
+				err := client.Resources(testNS).Get(ctx, apiDefName, testNS, &apiDef)
+				eval.NoErr(err)
+
+				apiDef.Spec.Context = nil
+
+				err = client.Resources(testNS).Update(ctx, &apiDef)
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx),
+					wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
 
 	testenv.Test(t, delApiDef)
-	//testenv.Test(t, updateApiDef)
+	testenv.Test(t, updateApiDef)
 }

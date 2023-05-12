@@ -1228,11 +1228,13 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						return false, errors.New("API is not created yet")
+						t.Logf("API is not created yet")
+						return false, nil
 					}
 
 					if len(apiDef.ClientCertificates) == 0 {
-						return false, errors.New("Client certificate field is not set yet")
+						t.Logf("Client certificate field is not set yet")
+						return false, nil
 					}
 
 					return true, nil

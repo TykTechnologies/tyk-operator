@@ -26,7 +26,6 @@ func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
 	h1, err1 := hashstructure.Hash(i1, hashstructure.FormatV2, &hashOptions)
 	if err1 == nil {
 		hash1 = strconv.FormatUint(h1, 10)
-
 	}
 
 	h2, err2 := hashstructure.Hash(i2, hashstructure.FormatV2, &hashOptions)
