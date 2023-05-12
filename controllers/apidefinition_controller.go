@@ -26,8 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-logr/logr"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -35,6 +33,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -42,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -412,14 +412,22 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
-	if err != nil {
-		r.Log.Error(
-			err,
-			"Failed to fetch ApiDefinition from Tyk after creating it",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
+	tykHash := ""
+	backoff := retry.DefaultBackoff
+	backoff.Duration = 100 * time.Millisecond
+	backoff.Steps = 5
 
+	err = retry.OnError(backoff, func(err error) bool { return true }, func() error {
+		apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Spec.APIID)
+		if err != nil {
+			return err
+		}
+
+		tykHash, _ = calculateHashes(apiDefOnTyk, nil)
+
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 
@@ -431,7 +439,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.ApiID = desired.Spec.APIID
 
-			tykHash, k8sHash := calculateHashes(apiDefOnTyk, desired.Spec)
+			_, k8sHash := calculateHashes(nil, desired.Spec)
 			status.LatestTykHash = tykHash
 			status.LatestCRDHash = k8sHash
 		},

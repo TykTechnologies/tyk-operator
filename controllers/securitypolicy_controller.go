@@ -365,14 +365,26 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *v1alpha1.
 	r.Log.Info("Successfully created Policy")
 
 	policy.Spec.MID = spec.MID
+	backoff := retry.DefaultBackoff
+	backoff.Duration = 100 * time.Millisecond
+	backoff.Steps = 5
+	tykHash := ""
 
-	policyOnTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+	err = retry.OnError(backoff, func(err error) bool { return true }, func() error {
+		policyOnTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+		if err != nil {
+			return err
+		}
+
+		tykHash, _ = calculateHashes(policyOnTyk, nil)
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	// what happens contextRef???
-	tykHash, crdHash := calculateHashes(policyOnTyk, spec)
+	_, crdHash := calculateHashes(nil, spec)
 	policy.Status.LatestTykHash = tykHash
 	policy.Status.LatestCRDHash = crdHash
 
