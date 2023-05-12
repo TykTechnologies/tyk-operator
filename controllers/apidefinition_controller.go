@@ -431,23 +431,25 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	err = r.updateStatus(
-		ctx,
-		desired.Namespace,
-		model.Target{Namespace: desired.Namespace, Name: desired.Name},
-		false,
-		func(status *tykv1alpha1.ApiDefinitionStatus) {
-			status.ApiID = desired.Spec.APIID
+	err = retry.OnError(retry.DefaultRetry, func(err error) bool { return true }, func() error {
+		return r.updateStatus(
+			ctx,
+			desired.Namespace,
+			model.Target{Namespace: desired.Namespace, Name: desired.Name},
+			false,
+			func(status *tykv1alpha1.ApiDefinitionStatus) {
+				status.ApiID = desired.Spec.APIID
 
-			_, k8sHash := calculateHashes(nil, desired.Spec)
-			status.LatestTykHash = tykHash
-			status.LatestCRDHash = k8sHash
-		},
-	)
+				_, k8sHash := calculateHashes(nil, desired.Spec)
+				status.LatestTykHash = tykHash
+				status.LatestCRDHash = k8sHash
+			},
+		)
+	})
 	if err != nil {
 		r.Log.Error(
 			err,
-			"Failed to update Status ID",
+			"Failed to update ApiDefinition Status",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
@@ -521,17 +523,19 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	err = r.updateStatus(
-		ctx,
-		desired.Namespace,
-		model.Target{Namespace: desired.Namespace, Name: desired.Name},
-		false,
-		func(status *tykv1alpha1.ApiDefinitionStatus) {
-			_, k8sHash := calculateHashes(nil, desired.Spec)
-			status.LatestTykHash = tykHash
-			status.LatestCRDHash = k8sHash
-		},
-	)
+	err = retry.OnError(retry.DefaultRetry, func(err error) bool { return true }, func() error {
+		return r.updateStatus(
+			ctx,
+			desired.Namespace,
+			model.Target{Namespace: desired.Namespace, Name: desired.Name},
+			false,
+			func(status *tykv1alpha1.ApiDefinitionStatus) {
+				_, k8sHash := calculateHashes(nil, desired.Spec)
+				status.LatestTykHash = tykHash
+				status.LatestCRDHash = k8sHash
+			},
+		)
+	})
 	if err != nil {
 		r.Log.Error(
 			err,

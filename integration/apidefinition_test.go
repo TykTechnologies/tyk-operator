@@ -1197,7 +1197,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				// validate certificate was created
 				exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 				if !exists {
-					return false, errors.New("certificate is not created yet")
+					t.Log("certificate is not created yet")
+					return false, nil
 				}
 
 				return true, nil
@@ -1283,12 +1284,14 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 					err = c.Client().Resources().Get(ctx, apiDefClientMTLSWithoutCert, testNS, &apiDefCRD)
 					if err != nil {
-						return false, err
+						t.Logf("failed to get ApiDefinition CRD, err: %v", err)
+						return false, nil
 					}
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						return false, err
+						t.Logf("failed to get ApiDefinition from Tyk, err: %v", err)
+						return false, nil
 					}
 
 					return true, nil

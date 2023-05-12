@@ -935,14 +935,16 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 					err = c.Client().Resources(testNs).Get(ctx, opCtx.Name, opCtx.Namespace, &oc)
 					if err != nil {
-						return false, err
+						t.Logf("failed to get OperatorContext CR, err: %v", err)
+						return false, nil
 					}
 
 					if len(oc.Status.LinkedSecurityPolicies) > 0 {
-						return false, fmt.Errorf(
+						t.Logf(
 							"failed to remove LinkedSecurityPolicy from OperatorContext, "+
 								"want: %v, got: %v, ", 0, len(oc.Status.LinkedSecurityPolicies),
 						)
+						return false, nil
 					}
 
 					return true, nil

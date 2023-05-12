@@ -149,7 +149,7 @@ func TestOperatorContextDelete(t *testing.T) {
 
 			ctx = context.WithValue(ctx, ctxApiName, def.Name)
 
-			wait.For(conditions.New(client.Resources()).ResourceMatch(def, func(object k8s.Object) bool {
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(def, func(object k8s.Object) bool {
 				def := object.(*v1alpha1.ApiDefinition) //nolint:errcheck
 
 				if def.Status.ApiID == "" {
@@ -159,6 +159,7 @@ func TestOperatorContextDelete(t *testing.T) {
 
 				return true
 			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+			eval.NoErr(err)
 
 			err = wait.For(conditions.New(client.Resources()).ResourceMatch(operatorCtx, func(object k8s.Object) bool {
 				opCtx := object.(*v1alpha1.OperatorContext) //nolint:errcheck
