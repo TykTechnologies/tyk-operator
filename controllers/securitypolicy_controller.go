@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -31,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -110,10 +108,6 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		r.Log.Info("Completed reconciling SecurityPolicy instance")
 	} else {
 		reqA = queueAfter
-
-		if strings.Contains(err.Error(), registry.OptimisticLockErrorMsg) {
-			return ctrl.Result{RequeueAfter: reqA}, nil
-		}
 	}
 
 	return ctrl.Result{RequeueAfter: reqA}, err
