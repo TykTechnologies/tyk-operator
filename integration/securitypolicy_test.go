@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -923,6 +924,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				err := c.Client().Resources(testNs).Delete(ctx, policy)
 				eval.NoErr(err)
 
+				wait.WithTimeout(1 * time.Second)
 				err = wait.For(
 					conditions.New(c.Client().Resources(testNs)).ResourceDeleted(policy),
 					wait.WithTimeout(defaultWaitTimeout),
