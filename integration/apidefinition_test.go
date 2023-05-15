@@ -32,6 +32,11 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+var (
+	errFailedToGetApiDefCR  = fmt.Errorf("failed to get ApiDefinition CR")
+	errFailedToGetApiDefTyk = fmt.Errorf("failed to get ApiDefinition from Tyk")
+)
+
 // deleteApiDefinitionFromTyk sends a Tyk API call to delete ApiDefinition with given ID.
 func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	err := wait.For(func() (done bool, err error) {
@@ -1192,7 +1197,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				// validate certificate was created
 				exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 				if !exists {
-					return false, errors.New("certificate is not created yet")
+					t.Log("certificate is not created yet")
+					return false, nil
 				}
 
 				return true, nil
@@ -1276,12 +1282,14 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 					err = c.Client().Resources().Get(ctx, apiDefClientMTLSWithoutCert, testNS, &apiDefCRD)
 					if err != nil {
-						return false, err
+						t.Logf("%v, err: %v", errFailedToGetApiDefCR, err)
+						return false, nil
 					}
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						return false, err
+						t.Logf("%v, err: %v", errFailedToGetApiDefTyk, err)
+						return false, nil
 					}
 
 					return true, nil
