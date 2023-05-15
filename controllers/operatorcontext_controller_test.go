@@ -10,12 +10,12 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"github.com/matryer/is"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -41,7 +41,7 @@ func TestOperatorContextCreate(t *testing.T) {
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
 		Scheme: scheme.Scheme,
-		Log:    log.NullLogger{},
+		Log:    logr.Discard(),
 	}
 
 	req := reconcile.Request{}
@@ -72,7 +72,7 @@ func TestOperatorContextDelete(t *testing.T) {
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
 		Scheme: scheme.Scheme,
-		Log:    log.NullLogger{},
+		Log:    logr.Discard(),
 	}
 
 	t.Parallel()

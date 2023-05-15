@@ -6,12 +6,12 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/go-logr/logr"
 	"github.com/matryer/is"
 	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestShortHash(t *testing.T) {
@@ -116,7 +116,7 @@ func TestCreateAPI(t *testing.T) {
 
 	reconciler := IngressReconciler{
 		Client: client,
-		Log:    log.NullLogger{},
+		Log:    logr.Discard(),
 		Scheme: scheme.Scheme,
 		Env:    environmet.Env{},
 	}
