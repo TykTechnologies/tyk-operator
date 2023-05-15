@@ -16,8 +16,8 @@ require (
 	k8s.io/apimachinery v0.26.0
 	k8s.io/client-go v0.26.0
 	moul.io/http2curl/v2 v2.2.2
-	sigs.k8s.io/controller-runtime v0.14.0
-	sigs.k8s.io/e2e-framework v0.0.5
+	sigs.k8s.io/controller-runtime v0.14.1
+	sigs.k8s.io/e2e-framework v0.1.0
 )
 
 require (
@@ -45,7 +45,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/gofuzz v1.1.0 // indirect
+	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.0 // indirect
 	github.com/hashicorp/go-memdb v1.3.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
