@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/client-go/util/retry"
+
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -357,7 +359,15 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	}
 
 	// what happens if spec is not created on Tyk? CE mode?
-	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, spec.MID) //nolint:errcheck
+	var polOnTyk *tykv1.SecurityPolicySpec
+	retry.OnError(tykAPIRetryBackoff, func(err error) bool { return true }, func() error { //nolint:errcheck
+		polOnTyk, err = klient.Universal.Portal().Policy().Get(ctx, spec.MID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	policy.Spec.MID = spec.MID
 

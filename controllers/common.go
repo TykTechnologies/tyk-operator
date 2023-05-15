@@ -5,6 +5,9 @@ import (
 	"encoding/base64"
 	"strconv"
 	"strings"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -48,6 +51,13 @@ func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
 	}
 
 	return
+}
+
+var tykAPIRetryBackoff = wait.Backoff{
+	Steps:    3,
+	Duration: 150 * time.Millisecond,
+	Factor:   5,
+	Jitter:   0.5,
 }
 
 func isSame(latestHash string, i interface{}) bool {
