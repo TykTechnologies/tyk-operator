@@ -237,14 +237,14 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	// Policy on Tyk based on k8s state. So, unintended deletions from Dashboard can be avoided.
 	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
-		if isSameSecurityPolicy(ctx, specTyk, spec) {
+		if isSame(policy.Status.LatestCRDSpecHash, spec) && isSame(policy.Status.LatestTykSpecHash, specTyk) {
 			// TODO(buraksekili): needs refactoring - no need for code duplication.
 			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 			if err != nil {
 				return nil, err
 			}
 
-			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
+			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, nil)
 		}
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
@@ -286,9 +286,13 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		return nil, err
 	}
 
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID) //nolint:errcheck
+
 	r.Log.Info("Successfully updated Policy")
 
-	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
+	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
+		status.LatestTykSpecHash, status.LatestCRDSpecHash = calculateHashes(polOnTyk, spec)
+	})
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
@@ -331,16 +335,6 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		}
 	}
 
-	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
-	if err != nil {
-		r.Log.Error(err,
-			"failed to update linkedAPI status",
-			"Policy", client.ObjectKeyFromObject(policy),
-		)
-
-		return err
-	}
-
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after creating a Policy",
@@ -352,13 +346,32 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	r.Log.Info("Successfully created Policy")
 
+	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
+	if err != nil {
+		r.Log.Error(err,
+			"failed to update linkedAPI status",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return err
+	}
+
+	// what happens if spec is not created on Tyk? CE mode?
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, spec.MID) //nolint:errcheck
+
 	policy.Spec.MID = spec.MID
 
-	return r.updatePolicyStatus(ctx, policy)
+	return r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
+		status.LatestTykSpecHash, status.LatestCRDSpecHash = calculateHashes(polOnTyk, spec)
+	})
 }
 
 // updatePolicyStatus updates the status of the policy.
-func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+func (r *SecurityPolicyReconciler) updatePolicyStatus(
+	ctx context.Context,
+	policy *tykv1.SecurityPolicy,
+	fn func(status *tykv1.SecurityPolicyStatus),
+) error {
 	r.Log.Info("Updating policy status")
 
 	policy.Status.PolID = policy.Spec.MID
@@ -373,6 +386,10 @@ func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, polic
 		target := model.Target{Name: v.Name, Namespace: v.Namespace}
 
 		policy.Status.LinkedAPIs = append(policy.Status.LinkedAPIs, target)
+	}
+
+	if fn != nil {
+		fn(&policy.Status)
 	}
 
 	return r.Status().Update(ctx, policy)

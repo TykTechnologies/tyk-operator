@@ -27,13 +27,16 @@ type SecurityPolicySpec struct {
 
 	// Context specify namespace/name of the OperatorContext object used for
 	// reconciling this APIDefinition
-	Context *model.Target `json:"contextRef,omitempty" oss:"ignore" pro:"ignore"`
+	Context *model.Target `json:"contextRef,omitempty"`
 }
 
 // SecurityPolicyStatus defines the observed state of SecurityPolicy
 type SecurityPolicyStatus struct {
 	PolID      string         `json:"pol_id"`
 	LinkedAPIs []model.Target `json:"linked_apis,omitempty"`
+
+	LatestTykSpecHash string `json:"latestTykSpecHash,omitempty"`
+	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
 }
 
 // SecurityPolicy is the Schema for the securitypolicies API

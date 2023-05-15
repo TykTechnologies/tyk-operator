@@ -34,35 +34,29 @@ func isSameApiDefinition(apiDef1, apiDef2 *model.APIDefinitionSpec) bool {
 	return false
 }
 
-const (
-	proTagName = "pro"
-	ossTagName = "oss"
-)
-
-func hasherTagName(ctx context.Context) string {
-	r := tykClient.GetContext(ctx)
-	if r.Env.Mode == "pro" {
-		return proTagName
+// calculateHashes calculates hashes of given two interfaces. Returns empty string for hash
+// if any error occurs during calculation.
+func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
+	h1, err1 := hashstructure.Hash(i1, hashstructure.FormatV2, &hashOptions)
+	if err1 == nil {
+		hash1 = strconv.FormatUint(h1, 10)
 	}
 
-	return ossTagName
+	h2, err2 := hashstructure.Hash(i2, hashstructure.FormatV2, &hashOptions)
+	if err2 == nil {
+		return hash1, strconv.FormatUint(h2, 10)
+	}
+
+	return
 }
 
-// isSameSecurityPolicy calculates the hash of two SecurityPolicySpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameSecurityPolicy(ctx context.Context, policy1, policy2 *v1alpha1.SecurityPolicySpec) bool {
-	myHashOptions := hashstructure.HashOptions{ZeroNil: true, TagName: hasherTagName(ctx)}
-
-	pol1Hash, err1 := hashstructure.Hash(policy1, hashstructure.FormatV2, &myHashOptions)
-	if err1 == nil {
-		pol2Hash, err2 := hashstructure.Hash(policy2, hashstructure.FormatV2, &myHashOptions)
-		if err2 == nil {
-			return pol1Hash == pol2Hash
-		}
+func isSame(latestHash string, i interface{}) bool {
+	iHash, err := hashstructure.Hash(i, hashstructure.FormatV2, &hashOptions)
+	if err != nil {
+		return false
 	}
 
-	return false
+	return latestHash == strconv.FormatUint(iHash, 10)
 }
 
 // containsString is a helper function to check string exists in a slice of strings.
