@@ -3,7 +3,13 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
 **Added**
-- Added possiblility to set base identity provider
+- Added possibility to set base identity provider
+
+**Fixed**
+- Fixed panic in snapshot tool.
+
+**Updated**
+- Updated controller-runtime library to v0.14.0 to make it compatible with Go 1.19
 
 ## [v0.14.1](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...HEAD)
