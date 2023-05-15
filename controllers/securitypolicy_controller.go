@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/client-go/util/retry"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -33,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"

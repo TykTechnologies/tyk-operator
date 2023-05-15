@@ -26,8 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-logr/logr"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -35,6 +33,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -42,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -412,6 +412,16 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
+	var apiOnTyk *model.APIDefinitionSpec
+	retry.OnError(tykAPIRetryBackoff, func(err error) bool { return true }, func() error { //nolint:errcheck
+		apiOnTyk, err = klient.Universal.Api().Get(ctx, desired.Spec.APIID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	err = r.updateStatus(
 		ctx,
 		desired.Namespace,
@@ -419,6 +429,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.ApiID = desired.Spec.APIID
+			status.LatestTykSpecHash, status.LatestCRDSpecHash = calculateHashes(apiOnTyk, desired.Spec)
 		},
 	)
 	if err != nil {
@@ -453,7 +464,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 	} else {
 		// If we have same ApiDefinition on Tyk, we do not need to send Update and Hot Reload requests
 		// to Tyk. So, we can simply return to main reconciliation logic.
-		if isSameApiDefinition(&desired.Spec.APIDefinitionSpec, apiDefOnTyk) {
+		if isSame(desired.Status.LatestTykSpecHash, apiDefOnTyk) && isSame(desired.Status.LatestCRDSpecHash, desired.Spec) {
 			return nil
 		}
 
@@ -473,6 +484,27 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		r.Log.Error(
 			err,
 			"Failed to hot-reload Tyk after updating the ApiDefinition",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
+
+		return err
+	}
+
+	apiOnTyk, _ := klient.Universal.Api().Get(ctx, desired.Spec.APIID) //nolint:errcheck
+
+	err = r.updateStatus(
+		ctx,
+		desired.Namespace,
+		model.Target{Namespace: desired.Namespace, Name: desired.Name},
+		false,
+		func(status *tykv1alpha1.ApiDefinitionStatus) {
+			status.LatestTykSpecHash, status.LatestCRDSpecHash = calculateHashes(apiOnTyk, desired.Spec)
+		},
+	)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to update Status",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
