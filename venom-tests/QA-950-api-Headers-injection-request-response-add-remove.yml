@@ -23,6 +23,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/httpbin_global-headers.yaml
+      script: kubectl delete -f ../config/samples/httpbin_global-headers.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0    

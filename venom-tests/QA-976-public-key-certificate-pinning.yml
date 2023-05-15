@@ -1,0 +1,29 @@
+# In this example, we have an HTTPS upstream target as `https://httpbin.org`. The public key of httpbin.org is obtained
+# with the following command:
+#   $ openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null | openssl x509 -pubkey -noout
+#
+# Note: Please set tls.crt field of your secret to actual public key of httpbin.org in "httpbin_certificate_pinning.yaml" manifest file prior to running this script
+
+name:  Test Public key certificate pinning
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_certificate_pinning.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test user can use whitelist public keys to generate upstream certificates
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/pinning
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_certificate_pinning.yaml && sleep 20
+      assertions:
+      - result.code ShouldEqual 0

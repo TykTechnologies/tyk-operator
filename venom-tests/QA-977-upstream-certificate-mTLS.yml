@@ -1,0 +1,47 @@
+# Before running this test script
+
+# Generate your public-private key pair using command 
+# $ openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out tls.crt -keyout tls.key
+
+# and run the following command to obtain the values that must be put inside the yaml that contians the secret resource 
+# $ kubectl create secret tls my-test-tls --key="tls.key" --cert="tls.crt" -n default -o yaml --dry-run=client
+
+# and enter tls.crt and tls.key in the file "simple_tls_secret.yaml" from the above generated keys
+
+name:  Test Upstream Certificate mTLS
+testcases:
+- name: Create Secret 
+  steps:
+  - type: applyManifests
+    filename: "samples/simple_tls_secret.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_upstream_cert.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test user can specify a client SSL certificate to be used by Tyk for performing requests to an upstream API
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete Secret
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/simple_tls_secret.yaml && sleep 20
+      assertions:
+      - result.code ShouldEqual 0
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_upstream_cert.yaml && sleep 20
+      assertions:
+      - result.code ShouldEqual 0

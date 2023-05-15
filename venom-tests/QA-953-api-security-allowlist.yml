@@ -18,6 +18,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/httpbin_whitelist.yaml
+      script: kubectl delete -f ../config/samples/httpbin_whitelist.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0

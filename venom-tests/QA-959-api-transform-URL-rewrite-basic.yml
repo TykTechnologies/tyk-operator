@@ -26,6 +26,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/url_rewrite_basic.yaml
+      script: kubectl delete -f ../config/samples/url_rewrite_basic.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0

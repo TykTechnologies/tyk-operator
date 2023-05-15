@@ -29,6 +29,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../bdd/custom_resources/ip/blacklist.yaml
+      script: kubectl delete -f ../bdd/custom_resources/ip/blacklist.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0

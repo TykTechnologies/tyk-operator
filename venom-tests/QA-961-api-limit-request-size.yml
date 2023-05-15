@@ -20,6 +20,7 @@ testcases:
       assertions:
       - result.statuscode ShouldEqual 400
       - result.bodyjson.error ShouldContainSubstring Request is too large
+      sleepTime: 10
 
 - name: Test with valid request size within 5 bytes
   steps:      
@@ -32,6 +33,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/request_size.yaml
+      script: kubectl delete -f ../config/samples/request_size.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0
