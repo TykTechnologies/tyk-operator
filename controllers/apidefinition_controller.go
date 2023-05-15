@@ -54,7 +54,7 @@ import (
 )
 
 const (
-	queueAfter = time.Second * 5
+	queueAfter = time.Second * 3
 	GraphKey   = "graph_ref"
 )
 
@@ -431,7 +431,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	err = retry.OnError(retry.DefaultRetry, func(err error) bool { return true }, func() error {
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.updateStatus(
 			ctx,
 			desired.Namespace,
@@ -523,7 +523,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	err = retry.OnError(retry.DefaultRetry, func(err error) bool { return true }, func() error {
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.updateStatus(
 			ctx,
 			desired.Namespace,

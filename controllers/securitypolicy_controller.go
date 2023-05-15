@@ -287,20 +287,31 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		return nil, err
 	}
 
-	r.Log.Info("Successfully updated Policy")
+	tykHash, crdHash := "", ""
+	backoff := retry.DefaultBackoff
+	backoff.Duration = 150 * time.Millisecond
+	backoff.Steps = 5
 
-	policyOnTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+	err = retry.OnError(backoff, func(err error) bool { return true }, func() error {
+		policyOnTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID)
+		if err != nil {
+			return err
+		}
+
+		tykHash, crdHash = calculateHashes(policyOnTyk, spec)
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	tykHash, crdHash := calculateHashes(policyOnTyk, spec)
 	policy.Status.LatestTykHash = tykHash
 	policy.Status.LatestCRDHash = crdHash
 
-	err = r.updatePolicyStatus(ctx, policy)
+	r.Log.Info("Successfully updated Policy")
 
-	return &spec.SecurityPolicySpec, err
+	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *v1alpha1.SecurityPolicy) error {
@@ -395,7 +406,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *v1alpha1.
 func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, desired *v1alpha1.SecurityPolicy) error {
 	r.Log.Info("Updating policy status")
 
-	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		pol := v1alpha1.SecurityPolicy{}
 
 		err := r.Get(ctx, client.ObjectKeyFromObject(desired), &pol)
@@ -443,7 +454,7 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 	for _, t := range policy.Status.LinkedAPIs {
 		api := &v1alpha1.ApiDefinition{}
 
-		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 			err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, api)
 			if err != nil {
 				r.Log.Error(err, "Failed to get the linked API", "api", t.String())
@@ -470,7 +481,7 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 	for _, a := range policy.Spec.AccessRightsArray {
 		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
 
-		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 			api := &v1alpha1.ApiDefinition{}
 
 			err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api)

@@ -920,11 +920,11 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
+				wait.WithTimeout(1 * time.Second)
 				// Deleting SecurityPolicy CR must break the link between SecurityPolicy and OperatorContext.
 				err := c.Client().Resources(testNs).Delete(ctx, policy)
 				eval.NoErr(err)
 
-				wait.WithTimeout(1 * time.Second)
 				err = wait.For(
 					conditions.New(c.Client().Resources(testNs)).ResourceDeleted(policy),
 					wait.WithTimeout(defaultWaitTimeout),
