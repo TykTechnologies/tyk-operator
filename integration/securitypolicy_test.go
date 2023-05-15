@@ -27,6 +27,8 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+var errFailedToUpdatePolicyCR = fmt.Errorf("failed to update SecurityPolicy")
+
 func verifyPolicyApiVersion(t *testing.T, tykEnv *environmet.Env) {
 	v, err := version.ParseGeneric(tykEnv.TykVersion)
 	if err != nil {
@@ -170,7 +172,15 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 
 		updatePolicy.Spec.AccessRightsArray = nil
 
-		err = c.Client().Resources().Update(ctx, &updatePolicy)
+		err = wait.For(func() (done bool, err error) {
+			err = c.Client().Resources().Update(ctx, &updatePolicy)
+			if err != nil {
+				t.Logf("%v, err: %v", errFailedToUpdatePolicyCR, err)
+				return false, nil
+			}
+
+			return true, nil
+		})
 		eval.NoErr(err)
 
 		var pol v1alpha1.SecurityPolicy
@@ -968,7 +978,15 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				eval.True(ok)
 
 				policy.Spec.Context = nil
-				err := c.Client().Resources(testNs).Update(ctx, policy)
+				err := wait.For(func() (done bool, err error) {
+					err = c.Client().Resources(testNs).Update(ctx, policy)
+					if err != nil {
+						t.Logf("%v, err: %v", errFailedToUpdatePolicyCR, err)
+						return false, nil
+					}
+
+					return true, nil
+				})
 				eval.NoErr(err)
 
 				err = wait.For(conditions.New(c.Client().Resources()).
