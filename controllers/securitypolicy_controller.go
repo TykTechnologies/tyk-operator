@@ -85,9 +85,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			policy.Spec.ID = EncodeNS(ns)
 		}
 
-		if policy.Spec.OrgID == "" {
-			policy.Spec.OrgID = env.Org
-		}
+		policy.Spec.OrgID = env.Org
 
 		if policy.Status.PolID == "" {
 			return r.create(ctx, policy)

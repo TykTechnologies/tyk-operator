@@ -5,9 +5,6 @@ import (
 	"encoding/base64"
 	"strconv"
 	"strings"
-	"time"
-
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
@@ -21,21 +18,6 @@ import (
 )
 
 var hashOptions = hashstructure.HashOptions{ZeroNil: true}
-
-// isSameApiDefinition calculates the hash of two ApiDefinitionSpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameApiDefinition(apiDef1, apiDef2 *model.APIDefinitionSpec) bool {
-	api1Hash, err1 := hashstructure.Hash(apiDef1, hashstructure.FormatV2, &hashOptions)
-	if err1 == nil {
-		api2Hash, err2 := hashstructure.Hash(apiDef2, hashstructure.FormatV2, &hashOptions)
-		if err2 == nil {
-			return api1Hash == api2Hash
-		}
-	}
-
-	return false
-}
 
 // calculateHashes calculates hashes of given two interfaces. Returns empty string for hash
 // if any error occurs during calculation.
@@ -53,13 +35,8 @@ func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
 	return
 }
 
-var tykAPIRetryBackoff = wait.Backoff{
-	Steps:    3,
-	Duration: 150 * time.Millisecond,
-	Factor:   5,
-	Jitter:   0.5,
-}
-
+// isSame compares given hash string with the hash of given interface and return true
+// if these values are same; otherwise, returns false.
 func isSame(latestHash string, i interface{}) bool {
 	iHash, err := hashstructure.Hash(i, hashstructure.FormatV2, &hashOptions)
 	if err != nil {
