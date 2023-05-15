@@ -29,7 +29,6 @@ import (
 
 var (
 	errFailedToUpdatePolicyCR = fmt.Errorf("failed to update SecurityPolicy")
-	errFailedToGetPolicyCR    = fmt.Errorf("failed to get SecurityPolicy CR")
 	errFailedToGetPolicyTyk   = fmt.Errorf("failed to get SecurityPolicy from Tyk")
 )
 

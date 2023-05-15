@@ -41,7 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -412,15 +411,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	var apiOnTyk *model.APIDefinitionSpec
-	retry.OnError(tykAPIRetryBackoff, func(err error) bool { return true }, func() error { //nolint:errcheck
-		apiOnTyk, err = klient.Universal.Api().Get(ctx, desired.Spec.APIID)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	apiOnTyk, _ := klient.Universal.Api().Get(ctx, desired.Spec.APIID) //nolint:errcheck
 
 	err = r.updateStatus(
 		ctx,

@@ -31,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -357,16 +356,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	// what happens if spec is not created on Tyk? CE mode?
-	var polOnTyk *tykv1.SecurityPolicySpec
-	retry.OnError(tykAPIRetryBackoff, func(err error) bool { return true }, func() error { //nolint:errcheck
-		polOnTyk, err = klient.Universal.Portal().Policy().Get(ctx, spec.MID)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, spec.MID) //nolint:errcheck
 
 	policy.Spec.MID = spec.MID
 
