@@ -46,7 +46,11 @@ func (a Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.R
 		return nil, err
 	}
 
-	api.APIID = def.APIID
+	if api.APIID == nil {
+		api.APIID = new(string)
+	}
+
+	*api.APIID = *def.APIID
 
 	return a.update(ctx, &o, api)
 }

@@ -99,13 +99,18 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		// Parse Config Data of the ApiDefinition created on Dashboard.
 		name, ns, err := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
 		if err != nil {
-			fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n", v.APIID, err)
+			fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n", v.Name, err)
+
 			return err
 		}
 
 		// create an ApiDefinition object.
 		apiDef := createApiDef(name, ns)
 		apiDef.Spec.APIDefinitionSpec = *v
+
+		if apiDef.Spec.APIID == nil {
+			return fmt.Errorf("APIID of %v is empty", v.Name)
+		}
 
 		storeMetadata(*apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
 
@@ -153,7 +158,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 			name, ns, err := parseConfigData(apiDefSpec, "")
 			if err != nil {
 				fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n",
-					apiDefSpec.APIID,
+					apiDefSpec.Name,
 					err,
 				)
 
@@ -382,7 +387,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 		if strings.Contains(v, " ") {
 			fmt.Printf(
 				"WARNING: Please ensure that API identified by %s does not include empty space in its ConfigData[%s].\n",
-				*apiDefSpec.APIID,
+				apiDefSpec.Name,
 				NamespaceKey,
 			)
 		}

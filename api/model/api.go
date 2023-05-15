@@ -179,14 +179,16 @@ type RoutingTriggerOptions struct {
 type RoutingTrigger struct {
 	On                RoutingTriggerOnType  `json:"on"`
 	Options           RoutingTriggerOptions `json:"options"`
-	RewriteTo         string                `json:"rewrite_to,omitempty"`
+	RewriteTo         *string               `json:"rewrite_to,omitempty"`
 	RewriteToInternal *RewriteToInternal    `json:"rewrite_to_internal,omitempty"`
 }
 
 func (r *RoutingTrigger) collectLoopingTarget(fn func(Target)) {
 	if r.RewriteToInternal != nil {
 		x := r.RewriteToInternal.Target
-		r.RewriteTo = r.RewriteToInternal.String()
+
+		rewriteToInternal := r.RewriteToInternal.String()
+		r.RewriteTo = &rewriteToInternal
 		r.RewriteToInternal = nil
 
 		fn(x)

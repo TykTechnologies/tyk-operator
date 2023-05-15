@@ -159,7 +159,9 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					return err
 				}
 
-				desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
+				desired.Spec.GraphQL.Schema = new(string)
+
+				*desired.Spec.GraphQL.Schema = *upstreamRequestStruct.Spec.GraphQL.Schema
 				desired.Spec.GraphQL.Subgraph.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
 			case model.SuperGraphExecutionMode:
 				err = r.processSuperGraphExec(ctx, upstreamRequestStruct)
@@ -167,8 +169,11 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					return err
 				}
 
-				desired.Spec.GraphQL.Schema = upstreamRequestStruct.Spec.GraphQL.Schema
-				desired.Spec.GraphQL.Supergraph.MergedSDL = upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL
+				desired.Spec.GraphQL.Schema = new(string)
+				desired.Spec.GraphQL.Supergraph.MergedSDL = new(string)
+
+				*desired.Spec.GraphQL.Schema = *upstreamRequestStruct.Spec.GraphQL.Schema
+				*desired.Spec.GraphQL.Supergraph.MergedSDL = *upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL
 			}
 		}
 
@@ -959,6 +964,10 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 }
 
 func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs *tykv1alpha1.ApiDefinition) error {
+	if urs.Spec.GraphQL.GraphRef == nil || *urs.Spec.GraphQL.GraphRef == "" {
+		return errors.New("GraphRef is not set")
+	}
+
 	supergraph := &tykv1alpha1.SuperGraph{}
 
 	err := r.Client.Get(ctx, types.NamespacedName{

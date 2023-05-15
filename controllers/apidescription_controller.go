@@ -119,7 +119,7 @@ func (r *APIDescriptionReconciler) delete(
 			if desc.APIDescriptionRef != nil && target.Equal(*desc.APIDescriptionRef) {
 				cat_ns := catalogue.Namespace
 
-				return fmt.Errorf("Unable to delete api description due to partal catalogue dependency %q",
+				return fmt.Errorf("Unable to delete api description due to portal catalogue dependency %q",
 					model.Target{Name: catalogue.Name, Namespace: &cat_ns}.String(),
 				)
 			}
@@ -175,6 +175,7 @@ func (r *APIDescriptionReconciler) sync(
 				// updates label for this
 				v, _ := strconv.Atoi(catalogue.Labels["updates"])
 				catalogue.Labels["updates"] = strconv.Itoa(v + 1)
+
 				namespace := catalogue.Namespace
 				target := model.Target{Name: catalogue.Name, Namespace: &namespace}
 

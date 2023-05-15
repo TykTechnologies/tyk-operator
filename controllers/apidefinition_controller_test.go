@@ -96,7 +96,11 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 			t.Fatalf("expected %v got %v", target.Target, got[0])
 		}
 		meta := a.Spec.VersionData.Versions["Default"].ExtendedPaths.URLRewrite[0]
-		if meta.RewriteTo != nil && *meta.RewriteTo != target.String() {
+		if meta.RewriteTo == nil {
+			t.Error("RewriteTo is nil")
+		}
+
+		if *meta.RewriteTo != target.String() {
 			t.Errorf("expected %q got %q", target.String(), *meta.RewriteTo)
 		}
 		// make sure we the looping target was set to null
@@ -144,9 +148,14 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 			t.Fatalf("expected %v got %v", target.Target, got[0])
 		}
 		meta := a.Spec.VersionData.Versions["Default"].ExtendedPaths.URLRewrite[0].Triggers[0]
-		if meta.RewriteTo != target.String() {
-			t.Errorf("expected %q got %q", target.String(), meta.RewriteTo)
+		if meta.RewriteTo == nil {
+			t.Error("RewriteTo is nil")
 		}
+
+		if *meta.RewriteTo != target.String() {
+			t.Errorf("expected %q got %q", target.String(), *meta.RewriteTo)
+		}
+
 		// make sure we the looping target was set to null
 		if meta.RewriteToInternal != nil {
 			t.Errorf("expected .spec.proxy.target_internal to be nil ")

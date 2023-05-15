@@ -202,7 +202,6 @@ func updateOperatorContextStatus(
 	ctxRef *model.Target,
 ) error {
 	namespace := object.GetNamespace()
-
 	objectTarget := model.Target{
 		Name:      object.GetName(),
 		Namespace: &namespace,

@@ -238,7 +238,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 				}
 
 				for _, t := range u.Triggers {
-					if t.RewriteTo == "" && t.RewriteToInternal == nil {
+					if (t.RewriteTo == nil || *t.RewriteTo == "") && t.RewriteToInternal == nil {
 						all = append(all,
 							field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
 								ErrEmptyValue,
