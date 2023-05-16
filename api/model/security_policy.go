@@ -30,7 +30,7 @@ type SecurityPolicySpec struct {
 	Active bool `json:"active"`
 
 	// IsInactive applies to the key itself. Allows enabling or disabling the policy without deleting it.
-	IsInactive        bool                        `json:"is_inactive,omitempty"`
+	IsInactive        *bool                       `json:"is_inactive,omitempty"`
 	AccessRightsArray []*AccessDefinition         `json:"access_rights_array,omitempty" oss:"ignore"`
 	AccessRights      map[string]AccessDefinition `json:"access_rights,omitempty"`
 
@@ -54,9 +54,9 @@ type SecurityPolicySpec struct {
 	ThrottleRetryLimit int `json:"throttle_retry_limit,omitempty"`
 
 	// Max depth of a GraphQL query
-	MaxQueryDepth                 int  `json:"max_query_depth,omitempty"`
-	HMACEnabled                   bool `json:"hmac_enabled,omitempty"`
-	EnableHTTPSignatureValidation bool `json:"enable_http_signature_validation,omitempty"`
+	MaxQueryDepth                 int   `json:"max_query_depth,omitempty"`
+	HMACEnabled                   *bool `json:"hmac_enabled,omitempty"`
+	EnableHTTPSignatureValidation *bool `json:"enable_http_signature_validation,omitempty"`
 
 	// Custom tags to apply to the key, get transfered to the analytics
 	Tags []string `json:"tags,omitempty"`
@@ -98,7 +98,7 @@ type AccessDefinition struct {
 	RestrictedTypes GraphQLTypeList `json:"restricted_types,omitempty"`
 
 	// DisableIntrospection disables GraphQL introspection if it is set to True.
-	DisableIntrospection bool `json:"disable_introspection,omitempty"`
+	DisableIntrospection *bool `json:"disable_introspection,omitempty"`
 
 	// FieldAccessRights is array of depth limit settings per GraphQL APIs.
 	FieldAccessRights []FieldAccessDefinition `json:"field_access_rights,omitempty"`
@@ -146,9 +146,9 @@ type AccessSpec struct {
 }
 
 type PolicyPartitions struct {
-	Quota      bool `json:"quota,omitempty"`
-	RateLimit  bool `json:"rate_limit,omitempty"`
-	Complexity bool `json:"complexity,omitempty"`
-	Acl        bool `json:"acl,omitempty"`
-	PerAPI     bool `json:"per_api,omitempty"`
+	Quota      *bool `json:"quota,omitempty"`
+	RateLimit  *bool `json:"rate_limit,omitempty"`
+	Complexity *bool `json:"complexity,omitempty"`
+	Acl        *bool `json:"acl,omitempty"`
+	PerAPI     *bool `json:"per_api,omitempty"`
 }

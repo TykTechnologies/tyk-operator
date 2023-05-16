@@ -721,6 +721,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				apiDefID = createdResource.Status.ApiID
 
 				policyCR, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
+					disableIntrospection := true
+
 					policy.Spec.AccessRightsArray = []*model.AccessDefinition{
 						{
 							Name:      apiDefCR.Name,
@@ -731,7 +733,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							RestrictedTypes: []model.GraphQLType{
 								{Name: queryName, Fields: []string{allField}},
 							},
-							DisableIntrospection: true,
+							DisableIntrospection: &disableIntrospection,
 							FieldAccessRights: []model.FieldAccessDefinition{
 								{
 									TypeName:  queryName,
@@ -774,7 +776,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
 						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
 
-						eval.Equal(s.AccessRightsArray[0].DisableIntrospection, true)
+						eval.True(s.AccessRightsArray[0].DisableIntrospection != nil)
+						eval.True(*s.AccessRightsArray[0].DisableIntrospection)
 					} else {
 						if mode == "ce" {
 							ad, exists := s.AccessRights[apiDefID]
@@ -786,7 +789,9 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							eval.Equal(len(ad.AllowedTypes[0].Fields), 1)
 							eval.Equal(ad.AllowedTypes[0].Fields[0], accountsField)
 
-							eval.Equal(ad.DisableIntrospection, true)
+							eval.True(ad.DisableIntrospection != nil)
+							eval.True(*ad.DisableIntrospection)
+
 						} else {
 							eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes), 1)
 							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
