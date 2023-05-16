@@ -340,10 +340,18 @@ func (t Target) String() string {
 func (t Target) Equal(o Target) bool {
 	namespaceMatches := false
 
-	if t.Namespace == nil && o.Namespace == nil {
-		namespaceMatches = true
-	} else if t.Namespace != nil && o.Namespace != nil {
-		namespaceMatches = *t.Namespace == *o.Namespace
+	if t.Namespace == nil {
+		if o.Namespace == nil {
+			namespaceMatches = true
+		} else if *o.Namespace == "" {
+			namespaceMatches = true
+		}
+	} else {
+		if *t.Namespace == "" && o.Namespace == nil {
+			namespaceMatches = true
+		} else if o.Namespace != nil {
+			namespaceMatches = *t.Namespace == *o.Namespace
+		}
 	}
 
 	return namespaceMatches && t.Name == o.Name
