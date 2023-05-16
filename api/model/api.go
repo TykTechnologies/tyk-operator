@@ -743,7 +743,10 @@ type APIDefinitionSpec struct {
 	// HmacAllowedClockSkew       json.Number           `json:"hmac_allowed_clock_skew"` // TODO: convert to float64
 	// HmacAllowedAlgorithms      []string              `json:"hmac_allowed_algorithms"`
 	// RequestSigning             RequestSigningMeta    `json:"request_signing"`
-	// BaseIdentityProvidedBy     AuthTypeEnum          `json:"base_identity_provided_by"`
+
+	// BaseIdentityProvidedBy sets Base Identity Provider for situation when multiple authentication mechanisms are used
+	// +kubebuilder:validation:Enum=auth_token;hmac_key;basic_auth_user;jwt_claim;oidc_user;oauth_key
+	BaseIdentityProvidedBy AuthTypeEnum `json:"base_identity_provided_by,omitempty"`
 
 	VersionDefinition VersionDefinition `json:"definition,omitempty"`
 
