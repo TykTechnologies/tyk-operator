@@ -339,6 +339,10 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 			return err
 		}
 	} else {
+		if spec.MID == nil {
+			spec.MID = new(string)
+		}
+
 		*spec.MID = *existingSpec.MID
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
@@ -373,6 +377,10 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	}
 
 	r.Log.Info("Successfully created Policy")
+
+	if policy.Spec.MID == nil {
+		policy.Spec.MID = new(string)
+	}
 
 	*policy.Spec.MID = *spec.MID
 
