@@ -68,7 +68,12 @@ func (a SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 
 	switch strings.ToLower(msg.Status) {
 	case "ok":
-		def.MID = msg.Key
+		if def.MID == nil {
+			def.MID = new(string)
+		}
+
+		*def.MID = msg.Key
+
 		return nil
 	default:
 		return client.Error(res)
@@ -76,7 +81,11 @@ func (a SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 }
 
 func (a SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) error {
-	res, err := client.PutJSON(ctx, client.Join(endpointPolicies, def.MID), def)
+	if def.MID == nil || *def.MID == "" {
+		return fmt.Errorf("Failed to update policy. Missing policy id")
+	}
+
+	res, err := client.PutJSON(ctx, client.Join(endpointPolicies, *def.MID), def)
 	if err != nil {
 		return err
 	}

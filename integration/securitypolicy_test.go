@@ -279,14 +279,15 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		initialK8sPolicyTag   = "sample-tag"
 		initialK8sPolicyRate  = 50
 		initialK8sPolicyState = "deny"
-		existingPolicyID      = "my-testing-id"
 	)
+
+	var existingPolicyID = "my-testing-id"
 
 	var (
 		eval = is.New(t)
 		spec = v1alpha1.SecurityPolicySpec{
 			SecurityPolicySpec: model.SecurityPolicySpec{
-				ID:     existingPolicyID,
+				ID:     &existingPolicyID,
 				Name:   "existing-spec",
 				State:  "draft",
 				Rate:   34,
@@ -300,8 +301,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 		hasSameValues = func(m v1alpha1.OperatorContextMode, k8s, tyk *v1alpha1.SecurityPolicySpec, k8sID string) bool {
 			if m == "pro" {
-				return k8s.MID == tyk.MID &&
-					k8sID == tyk.MID &&
+				return *k8s.MID == *tyk.MID &&
+					tyk.MID != nil &&
+					k8sID == *tyk.MID &&
 					len(k8s.Tags) == len(tyk.Tags) &&
 					len(tyk.Tags) == 1 &&
 					tyk.Tags[0] == initialK8sPolicyTag &&
@@ -309,8 +311,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					tyk.State == initialK8sPolicyState
 			}
 
-			return k8s.MID == tyk.ID &&
-				k8sID == tyk.ID &&
+			return *k8s.MID == *tyk.ID &&
+				tyk.ID != nil &&
+				k8sID == *tyk.ID &&
 				len(k8s.Tags) == len(tyk.Tags) &&
 				len(tyk.Tags) == 1 &&
 				tyk.Tags[0] == initialK8sPolicyTag &&
@@ -582,7 +585,7 @@ func TestSecurityPolicy(t *testing.T) {
 							return false
 						}
 
-						eval.True(policyOnK8s.Status.PolID == policyCR.Spec.MID)
+						eval.True(policyOnK8s.Status.PolID == *policyCR.Spec.MID)
 						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
 
@@ -592,9 +595,9 @@ func TestSecurityPolicy(t *testing.T) {
 								policyOnK8s.Spec.AccessRightsArray[0].APIID,
 								policyOnTyk.AccessRightsArray[0].APIID,
 							)
-							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.MID)
+							eval.Equal(policyOnK8s.Status.PolID, *policyOnTyk.MID)
 						} else {
-							ad, exists := policyOnTyk.AccessRights[policyOnK8s.Spec.AccessRightsArray[0].APIID]
+							ad, exists := policyOnTyk.AccessRights[*policyOnK8s.Spec.AccessRightsArray[0].APIID]
 							eval.True(exists)
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
 							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
@@ -664,10 +667,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 	eval := is.New(t)
 
 	const (
-		queryName     = "Query"
 		accountsField = "accounts"
 		allField      = "*"
-		fieldName     = "getMovers"
 		limit         = int64(2)
 	)
 
@@ -677,6 +678,9 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 		apiDefID                  string
 		minGraphQLPolicyGwVersion = version.MustParseGeneric("v4.3.0")
 		policyTarget              model.Target
+
+		queryName = "Query"
+		fieldName = "getMovers"
 	)
 
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
@@ -736,8 +740,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							DisableIntrospection: &disableIntrospection,
 							FieldAccessRights: []model.FieldAccessDefinition{
 								{
-									TypeName:  queryName,
-									FieldName: fieldName,
+									TypeName:  &queryName,
+									FieldName: &fieldName,
 									Limits:    model.FieldLimits{MaxQueryDepth: limit},
 								},
 							},
@@ -799,8 +803,13 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Fields[0], allField)
 
 							eval.Equal(len(s.AccessRightsArray[0].FieldAccessRights), 1)
-							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
-							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
+
+							eval.True(s.AccessRightsArray[0].FieldAccessRights[0].TypeName != nil)
+							eval.Equal(*s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
+
+							eval.True(s.AccessRightsArray[0].FieldAccessRights[0].FieldName != nil)
+							eval.Equal(*s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
+
 							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].Limits.MaxQueryDepth, limit)
 						}
 					}

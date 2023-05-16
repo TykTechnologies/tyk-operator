@@ -195,7 +195,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		}
 
 		for i := 0; i < len(policiesList); i++ {
-			policiesFile = fmt.Sprintf("%s-%s.yaml", "policy", policiesList[i].MID)
+			policiesFile = fmt.Sprintf("%s-%s.yaml", "policy", *policiesList[i].MID)
 
 			policyFile, err := os.Create(policiesFile)
 			if err != nil {
@@ -408,10 +408,15 @@ func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.W
 
 	pol.Spec = *userPolicy
 	pol.Spec.ID = userPolicy.MID
-	pol.Spec.OrgID = ""
+
+	if pol.Spec.OrgID == nil {
+		pol.Spec.OrgID = new(string)
+	}
+
+	*pol.Spec.OrgID = ""
 
 	for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
-		apiID := pol.Spec.AccessRightsArray[i].APIID
+		apiID := *pol.Spec.AccessRightsArray[i].APIID
 
 		name, namespace := getMetadata(apiID)
 		if name == "" {
