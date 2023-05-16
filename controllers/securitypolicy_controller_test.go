@@ -91,7 +91,9 @@ func TestUpdatePolicyStatus(t *testing.T) {
 			err = r.updatePolicyStatus(context.TODO(), test.Policy)
 			is.NoErr(err)
 
-			is.Equal(test.Policy.Status.LinkedAPIs, test.LinkedAPIs)
+			for t := range test.LinkedAPIs {
+				is.True(test.Policy.Status.LinkedAPIs[t].Equal(test.LinkedAPIs[t]))
+			}
 		})
 	}
 }
