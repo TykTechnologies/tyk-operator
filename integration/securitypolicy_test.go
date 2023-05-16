@@ -281,7 +281,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		initialK8sPolicyState = "deny"
 	)
 
-	var existingPolicyID = "my-testing-id"
+	existingPolicyID := "my-testing-id"
 
 	var (
 		eval = is.New(t)
@@ -795,7 +795,6 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 							eval.True(ad.DisableIntrospection != nil)
 							eval.True(*ad.DisableIntrospection)
-
 						} else {
 							eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes), 1)
 							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
