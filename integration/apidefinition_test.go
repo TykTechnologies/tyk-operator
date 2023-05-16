@@ -329,7 +329,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 			// Create ApiDefinition with JSON Schema Validation support.
 			apiDef, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				var useExtendedPaths = true
+				useExtendedPaths := true
 
 				apiDef.Name = apiDefWithJSONValidationName
 				apiDef.Spec.Proxy = model.Proxy{
@@ -415,7 +415,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 			// Create ApiDefinition with whitelist extended path
 			apiDef, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				var useExtendedPaths = true
+				useExtendedPaths := true
 
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
@@ -519,7 +519,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 			// Create ApiDefinition with whitelist extended path
 			apiDef, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				var useExtendedPaths = true
+				useExtendedPaths := true
 
 				apiDef.Name = apiDefWithBlacklist
 				apiDef.Spec.Proxy = model.Proxy{
@@ -984,7 +984,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 			// Create ApiDefinition with Basic Authentication
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				var useBasicAuth = true
+				useBasicAuth := true
 
 				apiDef.Name = apiDefBasicAuth
 				apiDef.Spec.UseBasicAuth = &useBasicAuth
@@ -1170,7 +1170,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 			// Create ApiDefinition with Client certificate
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				var useMutualTLS = true
+				useMutualTLS := true
 
 				apiDef.Name = apiDefClientMTLSWithCert
 				apiDef.Spec.UseMutualTLSAuth = &useMutualTLS
@@ -1260,7 +1260,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 			// Create ApiDefinition with Upstream certificate
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
-				var useMutualTLS = true
+				useMutualTLS := true
 
 				apiDef.Name = apiDefClientMTLSWithoutCert
 				apiDef.Spec.UseMutualTLSAuth = &useMutualTLS

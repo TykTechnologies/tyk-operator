@@ -255,8 +255,8 @@ func updateOperatorContextStatus(
 	case *v1alpha1.PortalAPICatalogue:
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if PortalAPICatalogue is still referring to context and is not marked for deletion.
-			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name && ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) &&
-				object.GetDeletionTimestamp().IsZero() {
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -306,7 +306,7 @@ func updateOperatorContextStatus(
 		log.Info("Adding link to apiContext", "key", ctxRef.String())
 
 		var operatorContext v1alpha1.OperatorContext
-		var namespace = ""
+		namespace := ""
 
 		if ctxRef.Namespace != nil {
 			namespace = *ctxRef.Namespace

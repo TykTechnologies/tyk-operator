@@ -64,7 +64,7 @@ func (in *ApiDefinition) Default() {
 		}
 	}
 
-	if in.Spec.UseStandardAuth != nil && *in.Spec.UseStandardAuth == true {
+	if in.Spec.UseStandardAuth != nil && *in.Spec.UseStandardAuth {
 		if in.Spec.AuthConfigs == nil {
 			in.Spec.AuthConfigs = make(map[string]model.AuthConfig)
 		}
@@ -105,14 +105,14 @@ func (in *ApiDefinition) validate() error {
 	spec := in.Spec
 
 	// auth
-	if spec.UseKeylessAccess != nil && *spec.UseKeylessAccess == true {
-		if spec.UseStandardAuth != nil && *spec.UseStandardAuth == true {
+	if spec.UseKeylessAccess != nil && *spec.UseKeylessAccess {
+		if spec.UseStandardAuth != nil && *spec.UseStandardAuth {
 			all = append(all,
 				field.Forbidden(path("use_standard_auth"), "use_keyless_access and use_standard_auth cannot be set together"),
 			)
 		}
 	} else {
-		if spec.UseStandardAuth != nil && *spec.UseStandardAuth == true {
+		if spec.UseStandardAuth != nil && *spec.UseStandardAuth {
 			if len(spec.AuthConfigs) > 0 {
 				_, ok := spec.AuthConfigs["authToken"]
 				if !ok {

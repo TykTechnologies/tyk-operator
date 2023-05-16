@@ -74,7 +74,8 @@ func TestOperatorContextCreate(t *testing.T) {
 
 					if !operatCtx.Status.LinkedApiDefinitions[0].NamespaceMatches(testNS) ||
 						operatCtx.Status.LinkedApiDefinitions[0].Name != testApiDef {
-						t.Logf("Namespace of linked API Definition = %s and in the status %s", testNS, *operatCtx.Status.LinkedApiDefinitions[0].Namespace)
+						t.Logf("Namespace of linked API Definition = %s and in the status %s",
+							testNS, *operatCtx.Status.LinkedApiDefinitions[0].Namespace)
 						return false
 					}
 

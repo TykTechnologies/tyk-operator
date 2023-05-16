@@ -22,7 +22,7 @@ import (
 
 func TestUpdatingLoopingTargets(t *testing.T) {
 	t.Run(".spec.proxy.target_internal", func(t *testing.T) {
-		//TODO: why this is skipped?
+		// TODO: why this is skipped?
 		t.Skip()
 
 		namespace := "default"

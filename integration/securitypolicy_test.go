@@ -860,7 +860,8 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 							return false
 						}
 
-						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == nil || *pol.Spec.Context.Namespace == "" {
+						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" ||
+							pol.Spec.Context.Namespace == nil || *pol.Spec.Context.Namespace == "" {
 							return false
 						}
 
@@ -881,7 +882,9 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
 
-						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace != nil && *linkedPolMeta.Namespace == policy.Namespace
+						return linkedPolMeta.Name == policy.Name &&
+							linkedPolMeta.Namespace != nil &&
+							*linkedPolMeta.Namespace == policy.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -965,7 +968,9 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
 
-						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace != nil && *linkedPolMeta.Namespace == policy.Namespace
+						return linkedPolMeta.Name == policy.Name &&
+							linkedPolMeta.Namespace != nil &&
+							*linkedPolMeta.Namespace == policy.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
