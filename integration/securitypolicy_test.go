@@ -600,7 +600,7 @@ func TestSecurityPolicy(t *testing.T) {
 							ad, exists := policyOnTyk.AccessRights[*policyOnK8s.Spec.AccessRightsArray[0].APIID]
 							eval.True(exists)
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
-							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
+							eval.Equal(policyOnK8s.Status.PolID, *policyOnTyk.ID)
 						}
 
 						return true
