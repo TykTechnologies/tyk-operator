@@ -999,10 +999,10 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 			return err
 		}
 
-		api_ns, api_name := decodeID(subGraph.Status.LinkedByAPI)
+		apiNS, apiName := decodeID(subGraph.Status.LinkedByAPI)
 		apiDef := &tykv1alpha1.ApiDefinition{}
 
-		err = r.Client.Get(ctx, types.NamespacedName{Namespace: api_ns, Name: api_name}, apiDef)
+		err = r.Client.Get(ctx, types.NamespacedName{Namespace: apiNS, Name: apiName}, apiDef)
 		if err != nil {
 			return err
 		}
