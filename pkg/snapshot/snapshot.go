@@ -420,6 +420,10 @@ func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.W
 	*pol.Spec.OrgID = ""
 
 	for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
+		if pol.Spec.AccessRightsArray[i].APIID == nil {
+			return errors.New("APIID in AccessRights of Policy is empty")
+		}
+
 		apiID := *pol.Spec.AccessRightsArray[i].APIID
 
 		name, namespace := getMetadata(apiID)
