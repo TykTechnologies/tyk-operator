@@ -407,7 +407,11 @@ func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.W
 	}
 
 	pol.Spec = *userPolicy
-	pol.Spec.ID = userPolicy.MID
+
+	pol.Spec.ID = new(string)
+	if userPolicy.MID != nil {
+		*pol.Spec.ID = *userPolicy.MID
+	}
 
 	if pol.Spec.OrgID == nil {
 		pol.Spec.OrgID = new(string)

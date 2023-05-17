@@ -285,7 +285,11 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 				return nil, err
 			}
 
-			policy.Spec.MID = spec.MID
+			if policy.Spec.MID == nil {
+				policy.Spec.MID = new(string)
+			}
+
+			*policy.Spec.MID = *spec.MID
 			policy.Status.PolID = *spec.MID
 		} else {
 			r.Log.Error(err, "Failed to get Policy from Tyk", err)

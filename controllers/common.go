@@ -79,17 +79,7 @@ func containsString(slice []string, s string) bool {
 // addTarget adds given target to given slice if the slice does not contain the target.
 func addTarget(slice []model.Target, target model.Target) (result []model.Target) {
 	for _, item := range slice {
-		namespaceMatches := false
-
-		if item.Namespace == nil && target.Namespace == nil {
-			namespaceMatches = true
-		}
-
-		if item.Namespace != nil && target.Namespace != nil {
-			namespaceMatches = *item.Namespace == *target.Namespace
-		}
-
-		if item.Name == target.Name && namespaceMatches {
+		if item.Equal(target) {
 			return slice
 		}
 	}
