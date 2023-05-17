@@ -236,9 +236,6 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
 		if isSame(policy.Status.LatestCRDSpecHash, spec) && isSame(policy.Status.LatestTykSpecHash, specTyk) {
-			fmt.Println("===================>")
-			fmt.Println("===================> NO NEED TO UPDATE THE POLICY")
-			fmt.Println("===================>")
 			// TODO(buraksekili): needs refactoring - no need for code duplication.
 			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 			if err != nil {
@@ -247,10 +244,6 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 
 			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, nil)
 		}
-
-		fmt.Println("===================>")
-		fmt.Println("===================> WILL UPDATE THE POLICY")
-		fmt.Println("===================>")
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
