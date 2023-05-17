@@ -236,6 +236,9 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
 		if isSame(policy.Status.LatestCRDSpecHash, spec) && isSame(policy.Status.LatestTykSpecHash, specTyk) {
+			fmt.Println("===================>")
+			fmt.Println("===================> NO NEED TO UPDATE THE POLICY")
+			fmt.Println("===================>")
 			// TODO(buraksekili): needs refactoring - no need for code duplication.
 			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 			if err != nil {
@@ -244,6 +247,10 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 
 			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, nil)
 		}
+
+		fmt.Println("===================>")
+		fmt.Println("===================> WILL UPDATE THE POLICY")
+		fmt.Println("===================>")
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
@@ -273,7 +280,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after updating the Policy",
-			"Policy", client.ObjectKeyFromObject(policy),
+			"SecurityPolicy", client.ObjectKeyFromObject(policy),
 		)
 
 		return nil, err
@@ -289,7 +296,8 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	r.Log.Info("Successfully updated Policy")
 
 	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
-		status.LatestTykSpecHash, status.LatestCRDSpecHash = calculateHashes(polOnTyk, spec)
+		status.LatestTykSpecHash = calculateHash(polOnTyk)
+		status.LatestCRDSpecHash = calculateHash(spec)
 	})
 }
 
@@ -359,7 +367,8 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	policy.Spec.MID = spec.MID
 
 	return r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
-		status.LatestTykSpecHash, status.LatestCRDSpecHash = calculateHashes(polOnTyk, spec)
+		status.LatestTykSpecHash = calculateHash(polOnTyk)
+		status.LatestCRDSpecHash = calculateHash(spec)
 	})
 }
 

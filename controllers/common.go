@@ -19,31 +19,21 @@ import (
 
 var hashOptions = hashstructure.HashOptions{ZeroNil: true}
 
-// calculateHashes calculates hashes of given two interfaces. Returns empty string for hash
+// calculateHash calculates hashes of the given interfaces. Returns empty string for hash
 // if any error occurs during calculation.
-func calculateHashes(i1, i2 interface{}) (hash1, hash2 string) {
-	h1, err1 := hashstructure.Hash(i1, hashstructure.FormatV2, &hashOptions)
+func calculateHash(i interface{}) (h string) {
+	h1, err1 := hashstructure.Hash(i, hashstructure.FormatV2, &hashOptions)
 	if err1 == nil {
-		hash1 = strconv.FormatUint(h1, 10)
-	}
-
-	h2, err2 := hashstructure.Hash(i2, hashstructure.FormatV2, &hashOptions)
-	if err2 == nil {
-		return hash1, strconv.FormatUint(h2, 10)
+		h = strconv.FormatUint(h1, 10)
 	}
 
 	return
 }
 
-// isSame compares given hash string with the hash of given interface and return true
+// isSame compares given hash string with the hash of given interface and returns true
 // if these values are same; otherwise, returns false.
 func isSame(latestHash string, i interface{}) bool {
-	iHash, err := hashstructure.Hash(i, hashstructure.FormatV2, &hashOptions)
-	if err != nil {
-		return false
-	}
-
-	return latestHash == strconv.FormatUint(iHash, 10)
+	return latestHash == calculateHash(i)
 }
 
 // containsString is a helper function to check string exists in a slice of strings.
