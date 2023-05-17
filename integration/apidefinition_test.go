@@ -32,9 +32,9 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-var (
-	errFailedToGetApiDefCR  = fmt.Errorf("failed to get ApiDefinition CR")
-	errFailedToGetApiDefTyk = fmt.Errorf("failed to get ApiDefinition from Tyk")
+const (
+	errFailedToGetApiDefCRMsg  = "failed to get ApiDefinition CR"
+	errFailedToGetApiDefTykMsg = "failed to get ApiDefinition from Tyk"
 )
 
 // deleteApiDefinitionFromTyk sends a Tyk API call to delete ApiDefinition with given ID.
@@ -1282,13 +1282,13 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 					err = c.Client().Resources().Get(ctx, apiDefClientMTLSWithoutCert, testNS, &apiDefCRD)
 					if err != nil {
-						t.Logf("%v, err: %v", errFailedToGetApiDefCR, err)
+						t.Logf("%v, err: %v", errFailedToGetApiDefCRMsg, err)
 						return false, nil
 					}
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						t.Logf("%v, err: %v", errFailedToGetApiDefTyk, err)
+						t.Logf("%v, err: %v", errFailedToGetApiDefTykMsg, err)
 						return false, nil
 					}
 

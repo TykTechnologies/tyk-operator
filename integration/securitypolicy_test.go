@@ -27,9 +27,9 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
-var (
-	errFailedToUpdatePolicyCR = fmt.Errorf("failed to update SecurityPolicy")
-	errFailedToGetPolicyTyk   = fmt.Errorf("failed to get SecurityPolicy from Tyk")
+const (
+	errUpdatePolicyCR   = "failed to update SecurityPolicy"
+	errGetPolicyFromTyk = "failed to get SecurityPolicy fom Tyk"
 )
 
 func verifyPolicyApiVersion(t *testing.T, tykEnv *environmet.Env) {
@@ -178,7 +178,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 		err = wait.For(func() (done bool, err error) {
 			err = c.Client().Resources().Update(ctx, &updatePolicy)
 			if err != nil {
-				t.Logf("%v, err: %v", errFailedToUpdatePolicyCR, err)
+				t.Logf("%v, err: %v", errUpdatePolicyCR, err)
 				return false, nil
 			}
 
@@ -390,7 +390,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						if err != nil {
-							t.Logf("%v, err: %v", errFailedToGetPolicyTyk, err)
+							t.Logf("%v, err: %v", errGetPolicyFromTyk, err)
 							return false
 						}
 
@@ -991,7 +991,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				err := wait.For(func() (done bool, err error) {
 					err = c.Client().Resources(testNs).Update(ctx, policy)
 					if err != nil {
-						t.Logf("%v, err: %v", errFailedToUpdatePolicyCR, err)
+						t.Logf("%v, err: %v", errUpdatePolicyCR, err)
 						return false, nil
 					}
 
