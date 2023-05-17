@@ -82,7 +82,7 @@ func (a SecurityPolicy) Create(ctx context.Context, def *v1.SecurityPolicySpec) 
 
 func (a SecurityPolicy) Update(ctx context.Context, def *v1.SecurityPolicySpec) error {
 	if def.MID == nil || *def.MID == "" {
-		return fmt.Errorf("Failed to update policy. Missing policy id")
+		return client.ErrMissingPolicyID
 	}
 
 	res, err := client.PutJSON(ctx, client.Join(endpointPolicies, *def.MID), def)
