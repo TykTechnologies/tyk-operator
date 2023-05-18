@@ -431,7 +431,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.ApiID = *desired.Spec.APIID
 			status.LatestTykSpecHash = calculateHash(apiOnTyk)
-			status.LatestCRDSpecHash = calculateHash(apiOnTyk)
+			status.LatestCRDSpecHash = calculateHash(desired.Spec)
 		},
 	)
 	if err != nil {

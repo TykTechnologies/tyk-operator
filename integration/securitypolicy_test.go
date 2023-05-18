@@ -29,7 +29,7 @@ import (
 
 const (
 	errUpdatePolicyCR   = "failed to update SecurityPolicy"
-	errGetPolicyFromTyk = "failed to get SecurityPolicy fom Tyk"
+	errGetPolicyFromTyk = "failed to get SecurityPolicy from Tyk"
 )
 
 func verifyPolicyApiVersion(t *testing.T, tykEnv *environmet.Env) {

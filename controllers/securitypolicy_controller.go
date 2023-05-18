@@ -393,9 +393,12 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *spec.MID) //nolint:errcheck
+	if policy.Spec.MID == nil {
+		policy.Spec.MID = new(string)
+	}
 
 	policy.Spec.MID = spec.MID
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *spec.MID) //nolint:errcheck
 
 	return r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
 		status.LatestTykSpecHash = calculateHash(polOnTyk)
