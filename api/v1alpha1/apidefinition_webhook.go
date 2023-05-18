@@ -49,6 +49,8 @@ var _ webhook.Defaulter = &ApiDefinition{}
 func (in *ApiDefinition) Default() {
 	apidefinitionlog.Info("default", "name", in.Name)
 
+	useExtendedPaths := false
+
 	if len(in.Spec.VersionData.Versions) == 0 {
 		in.Spec.VersionData = model.VersionData{
 			NotVersioned:   true,
@@ -56,13 +58,13 @@ func (in *ApiDefinition) Default() {
 			Versions: map[string]model.VersionInfo{
 				"Default": {
 					Name:             "Default",
-					UseExtendedPaths: false,
+					UseExtendedPaths: &useExtendedPaths,
 				},
 			},
 		}
 	}
 
-	if in.Spec.UseStandardAuth {
+	if in.Spec.UseStandardAuth != nil && *in.Spec.UseStandardAuth {
 		if in.Spec.AuthConfigs == nil {
 			in.Spec.AuthConfigs = make(map[string]model.AuthConfig)
 		}
@@ -103,14 +105,14 @@ func (in *ApiDefinition) validate() error {
 	spec := in.Spec
 
 	// auth
-	if spec.UseKeylessAccess {
-		if spec.UseStandardAuth {
+	if spec.UseKeylessAccess != nil && *spec.UseKeylessAccess {
+		if spec.UseStandardAuth != nil && *spec.UseStandardAuth {
 			all = append(all,
 				field.Forbidden(path("use_standard_auth"), "use_keyless_access and use_standard_auth cannot be set together"),
 			)
 		}
 	} else {
-		if spec.UseStandardAuth {
+		if spec.UseStandardAuth != nil && *spec.UseStandardAuth {
 			if len(spec.AuthConfigs) > 0 {
 				_, ok := spec.AuthConfigs["authToken"]
 				if !ok {
@@ -227,7 +229,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 	for _, v := range in.Spec.VersionData.Versions {
 		if v.ExtendedPaths != nil {
 			for _, u := range v.ExtendedPaths.URLRewrite {
-				if u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
+				if u.RewriteTo != nil && *u.RewriteTo == "" && u.RewriteToInternal == nil && len(u.Triggers) == 0 {
 					all = append(all,
 						field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "rewrite_to"),
 							ErrEmptyValue,
@@ -236,7 +238,7 @@ func (in *ApiDefinition) validateTarget() field.ErrorList {
 				}
 
 				for _, t := range u.Triggers {
-					if t.RewriteTo == "" && t.RewriteToInternal == nil {
+					if (t.RewriteTo == nil || *t.RewriteTo == "") && t.RewriteToInternal == nil {
 						all = append(all,
 							field.Required(path("version_data", "versions", v.Name, "extended_paths", "url_rewrites", "triggers", "rewrite_to"),
 								ErrEmptyValue,
