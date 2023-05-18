@@ -108,14 +108,18 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// In the subgraph_refs field of the SuperGraph, the namespace for referenced subgraph is optional. If the
 		// namespace is not specified, use req.Namespace.
 		ns := subGraphRef.Namespace
-		if ns == "" {
-			ns = req.Namespace
+		if ns == nil || *ns == "" {
+			if ns == nil {
+				ns = new(string)
+			}
+
+			*ns = req.Namespace
 		}
 
 		subGraph := &tykv1alpha1.SubGraph{}
 		if err := r.Client.Get(ctx, types.NamespacedName{
 			Name:      subGraphRef.Name,
-			Namespace: ns,
+			Namespace: *ns,
 		}, subGraph); err != nil {
 			return ctrl.Result{}, err
 		}

@@ -125,7 +125,7 @@ func init() {
 
 func removeLinkedResource(target model.Target, from []model.Target) []model.Target {
 	for i, item := range from {
-		if item.Namespace == target.Namespace && item.Name == target.Name {
+		if item.Equal(target) {
 			from = append(from[:i], from[i+1:]...)
 
 			return from

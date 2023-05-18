@@ -22,11 +22,14 @@ import (
 
 func TestUpdatingLoopingTargets(t *testing.T) {
 	t.Run(".spec.proxy.target_internal", func(t *testing.T) {
+		// TODO: why this is skipped?
 		t.Skip()
+
+		namespace := "default"
 		target := &model.TargetInternal{
 			Target: model.Target{
 				Name:      "test",
-				Namespace: "default",
+				Namespace: &namespace,
 			},
 		}
 		a := &tykv1alpha1.ApiDefinition{
@@ -56,11 +59,14 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		}
 	})
 	t.Run(".spec.version_data[url_rewrite]", func(t *testing.T) {
+		// TODO: why this is skipped?
 		t.Skip()
+
+		namespace := "default"
 		target := &model.RewriteToInternal{
 			Target: model.Target{
 				Name:      "test",
-				Namespace: "default",
+				Namespace: &namespace,
 			},
 		}
 		a := &tykv1alpha1.ApiDefinition{
@@ -90,8 +96,12 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 			t.Fatalf("expected %v got %v", target.Target, got[0])
 		}
 		meta := a.Spec.VersionData.Versions["Default"].ExtendedPaths.URLRewrite[0]
-		if meta.RewriteTo != target.String() {
-			t.Errorf("expected %q got %q", target.String(), meta.RewriteTo)
+		if meta.RewriteTo == nil {
+			t.Error("RewriteTo is nil")
+		}
+
+		if *meta.RewriteTo != target.String() {
+			t.Errorf("expected %q got %q", target.String(), *meta.RewriteTo)
 		}
 		// make sure we the looping target was set to null
 		if meta.RewriteToInternal != nil {
@@ -99,10 +109,12 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 		}
 	})
 	t.Run(".spec.version_data[url_rewrite triggers]", func(t *testing.T) {
+		namespace := "default"
+
 		target := &model.RewriteToInternal{
 			Target: model.Target{
 				Name:      "test",
-				Namespace: "default",
+				Namespace: &namespace,
 			},
 		}
 		a := &tykv1alpha1.ApiDefinition{
@@ -136,34 +148,50 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 			t.Fatalf("expected %v got %v", target.Target, got[0])
 		}
 		meta := a.Spec.VersionData.Versions["Default"].ExtendedPaths.URLRewrite[0].Triggers[0]
-		if meta.RewriteTo != target.String() {
-			t.Errorf("expected %q got %q", target.String(), meta.RewriteTo)
+		if meta.RewriteTo == nil {
+			t.Error("RewriteTo is nil")
 		}
+
+		if *meta.RewriteTo != target.String() {
+			t.Errorf("expected %q got %q", target.String(), *meta.RewriteTo)
+		}
+
 		// make sure we the looping target was set to null
 		if meta.RewriteToInternal != nil {
 			t.Errorf("expected .spec.proxy.target_internal to be nil ")
 		}
 	})
 	t.Run("all", func(t *testing.T) {
+		// TODO: why this is skipped?
 		t.Skip()
+
 		target1 := &model.TargetInternal{
 			Target: model.Target{
-				Name:      "test1",
-				Namespace: "default",
+				Name: "test1",
 			},
 		}
+
+		target1.Target.Namespace = new(string)
+		*target1.Target.Namespace = "default"
+
 		target2 := &model.RewriteToInternal{
 			Target: model.Target{
-				Name:      "test2",
-				Namespace: "default",
+				Name: "test2",
 			},
 		}
+
+		target2.Target.Namespace = new(string)
+		*target2.Target.Namespace = "default"
+
 		target3 := &model.RewriteToInternal{
 			Target: model.Target{
-				Name:      "test3",
-				Namespace: "default",
+				Name: "test3",
 			},
 		}
+
+		target3.Target.Namespace = new(string)
+		*target3.Target.Namespace = "default"
+
 		a := &tykv1alpha1.ApiDefinition{
 			Spec: tykv1alpha1.APIDefinitionSpec{
 				APIDefinitionSpec: model.APIDefinitionSpec{
@@ -208,13 +236,17 @@ func TestUpdatingLoopingTargets(t *testing.T) {
 }
 
 func TestTargetInternal(t *testing.T) {
+	namespace := "default"
+	path := "proxy/$1"
+	query := "a=1&b=2"
+
 	target3 := &model.RewriteToInternal{
 		Target: model.Target{
 			Name:      "test3",
-			Namespace: "default",
+			Namespace: &namespace,
 		},
-		Path:  "proxy/$1",
-		Query: "a=1&b=2",
+		Path:  &path,
+		Query: &query,
 	}
 	if expert, got := "tyk://ZGVmYXVsdC90ZXN0Mw/proxy/$1?a=1&b=2", target3.String(); expert != got {
 		t.Errorf("expected %q got %q", expert, got)
@@ -244,15 +276,18 @@ func TestEncodeIfNotBase64(t *testing.T) {
 
 func TestProcessSubGraphExecution(t *testing.T) {
 	const (
-		subgraphName = "test-subgraph"
-		testSDL      = "sdl"
-		testSchema   = "schema"
+		testSDL    = "sdl"
+		testSchema = "schema"
 
-		newSubgraphName = "test-subgraph-new"
-		newTestSDL      = "new-sdl"
-		newTestSchema   = "new-schema"
+		newTestSDL    = "new-sdl"
+		newTestSchema = "new-schema"
 
 		testNs = "test-ns"
+	)
+
+	var (
+		subgraphName    = "test-subgraph"
+		newSubgraphName = "test-subgraph-new"
 	)
 
 	subGraph := &tykv1alpha1.SubGraph{
@@ -280,6 +315,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 		},
 	}
 
+	apiID := EncodeNS(types.NamespacedName{Name: "test-name", Namespace: testNs}.String())
 	apiDef := tykv1alpha1.ApiDefinition{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test-name",
@@ -287,9 +323,9 @@ func TestProcessSubGraphExecution(t *testing.T) {
 		},
 		Spec: tykv1alpha1.APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
-				APIID: EncodeNS(types.NamespacedName{Name: "test-name", Namespace: testNs}.String()),
+				APIID: &apiID,
 				GraphQL: &model.GraphQLConfig{
-					GraphRef: subgraphName,
+					GraphRef: &subgraphName,
 				},
 			},
 		},
@@ -303,11 +339,12 @@ func TestProcessSubGraphExecution(t *testing.T) {
 	apiDefLinkedMultiple := &tykv1alpha1.ApiDefinition{}
 	apiDef.DeepCopyInto(apiDefLinkedMultiple)
 	apiDefLinkedMultiple.ObjectMeta.Name = "test-name-multiple-link"
-	apiDefLinkedMultiple.Spec.APIID = EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
+	multiple_link_apiID := EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
+	apiDefLinkedMultiple.Spec.APIID = &multiple_link_apiID
 
 	apiDefNewGraphRef := &tykv1alpha1.ApiDefinition{}
 	apiDef.DeepCopyInto(apiDefNewGraphRef)
-	apiDefNewGraphRef.Spec.GraphQL.GraphRef = newSubgraphName
+	apiDefNewGraphRef.Spec.GraphQL.GraphRef = &newSubgraphName
 
 	objects := []runtime.Object{&apiDef, apiDefMalformed, apiDefLinkedMultiple, subGraph, newSubGraph}
 	eval := is.New(t)
@@ -342,7 +379,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			apiDef:   apiDefNewGraphRef,
 			subGraph: newSubGraph,
 			apiMutator: func(definition *tykv1alpha1.ApiDefinition) {
-				definition.Spec.GraphQL.GraphRef = newSubgraphName
+				definition.Spec.GraphQL.GraphRef = &newSubgraphName
 			},
 		},
 	}
@@ -367,7 +404,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			eval.Equal(tc.expectedErr, err)
 
 			if tc.expectedErr == nil && tc.apiDef.Spec.GraphQL != nil {
-				eval.Equal(tc.subGraph.Spec.Schema, api.Spec.GraphQL.Schema)
+				eval.Equal(tc.subGraph.Spec.Schema, *api.Spec.GraphQL.Schema)
 				eval.Equal(tc.subGraph.Spec.SDL, api.Spec.GraphQL.Subgraph.SDL)
 
 				ad := &tykv1alpha1.ApiDefinition{}
@@ -378,7 +415,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 				sg := &tykv1alpha1.SubGraph{}
 				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.subGraph), sg)
 				eval.NoErr(client.IgnoreNotFound(err))
-				eval.Equal(sg.Status.LinkedByAPI, api.Spec.APIID)
+				eval.Equal(sg.Status.LinkedByAPI, *api.Spec.APIID)
 			}
 		})
 	}
