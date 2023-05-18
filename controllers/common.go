@@ -296,7 +296,7 @@ func updateOperatorContextStatus(
 		log.Info("Adding link to apiContext", "key", ctxRef.String())
 
 		var operatorContext v1alpha1.OperatorContext
-		namespace := ""
+		namespace := "default"
 
 		if ctxRef.Namespace != nil {
 			namespace = *ctxRef.Namespace
