@@ -2,6 +2,9 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
+**Fixed**
+- Fixed panic of snapshot tool
+
 **Added**
 - Added possiblility to set base identity provider
 
