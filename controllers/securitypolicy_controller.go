@@ -382,6 +382,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	}
 
 	*policy.Spec.MID = *spec.MID
+
 	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 	if err != nil {
 		r.Log.Error(err,
