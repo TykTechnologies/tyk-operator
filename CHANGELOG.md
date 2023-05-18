@@ -2,6 +2,9 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
+**Changed**
+- Changed optional fields of type string and bool to pointers for APIDefinition and Security Policy Custom Resources
+
 **Added**
 - Added possiblility to set base identity provider
 

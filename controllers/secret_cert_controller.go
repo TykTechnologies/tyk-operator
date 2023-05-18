@@ -149,7 +149,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 
 				if err != nil {
-					log.Error(err, "Unable to update API Definition with cert id", "apiID", apiDefList.Items[idx].Spec.APIID)
+					log.Error(err, "Unable to update API Definition with cert id", "apiID", *apiDefList.Items[idx].Spec.APIID)
 					return ctrl.Result{Requeue: true}, nil
 				}
 
