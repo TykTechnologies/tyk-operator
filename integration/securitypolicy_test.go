@@ -66,16 +66,20 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			verifyPolicyApiVersion(t, &tykEnv)
 
 			api1, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+				listenPath := "test-api-1"
+
 				ad.Name = api1Name
 				ad.Spec.Name = api1Name
-				ad.Spec.Proxy.ListenPath = "/test-api-1"
+				ad.Spec.Proxy.ListenPath = &listenPath
 			})
 			eval.NoErr(err)
 
 			api2, err := createTestAPIDef(ctx, c, testNs, func(ad *v1alpha1.ApiDefinition) {
+				listenPath := "test-api-2"
+
 				ad.Name = api2Name
 				ad.Spec.Name = api2Name
-				ad.Spec.Proxy.ListenPath = "/test-api-2"
+				ad.Spec.Proxy.ListenPath = &listenPath
 			})
 			eval.NoErr(err)
 
@@ -116,6 +120,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			err = c.Client().Resources().Get(ctx, api1Name, testNs, &api)
 			eval.NoErr(err)
 
+			t.Log("", api.Status.LinkedByPolicies)
 			eval.True(len(api.Status.LinkedByPolicies) != 0)
 			eval.Equal(api.Status.LinkedByPolicies[0].Name, policyName)
 
@@ -287,14 +292,15 @@ func TestSecurityPolicyMigration(t *testing.T) {
 		initialK8sPolicyTag   = "sample-tag"
 		initialK8sPolicyRate  = 50
 		initialK8sPolicyState = "deny"
-		existingPolicyID      = "my-testing-id"
 	)
+
+	existingPolicyID := "my-testing-id"
 
 	var (
 		eval = is.New(t)
 		spec = v1alpha1.SecurityPolicySpec{
 			SecurityPolicySpec: model.SecurityPolicySpec{
-				ID:     existingPolicyID,
+				ID:     &existingPolicyID,
 				Name:   "existing-spec",
 				State:  "draft",
 				Rate:   34,
@@ -308,8 +314,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 		hasSameValues = func(m v1alpha1.OperatorContextMode, k8s, tyk *v1alpha1.SecurityPolicySpec, k8sID string) bool {
 			if m == "pro" {
-				return k8s.MID == tyk.MID &&
-					k8sID == tyk.MID &&
+				return *k8s.MID == *tyk.MID &&
+					tyk.MID != nil &&
+					k8sID == *tyk.MID &&
 					len(k8s.Tags) == len(tyk.Tags) &&
 					len(tyk.Tags) == 1 &&
 					tyk.Tags[0] == initialK8sPolicyTag &&
@@ -317,8 +324,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					tyk.State == initialK8sPolicyState
 			}
 
-			return k8s.MID == tyk.ID &&
-				k8sID == tyk.ID &&
+			return *k8s.MID == *tyk.ID &&
+				tyk.ID != nil &&
+				k8sID == *tyk.ID &&
 				len(k8s.Tags) == len(tyk.Tags) &&
 				len(tyk.Tags) == 1 &&
 				tyk.Tags[0] == initialK8sPolicyTag &&
@@ -597,7 +605,7 @@ func TestSecurityPolicy(t *testing.T) {
 							return false
 						}
 
-						eval.True(policyOnK8s.Status.PolID == policyCR.Spec.MID)
+						eval.True(policyOnK8s.Status.PolID == *policyCR.Spec.MID)
 						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
 
@@ -607,12 +615,12 @@ func TestSecurityPolicy(t *testing.T) {
 								policyOnK8s.Spec.AccessRightsArray[0].APIID,
 								policyOnTyk.AccessRightsArray[0].APIID,
 							)
-							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.MID)
+							eval.Equal(policyOnK8s.Status.PolID, *policyOnTyk.MID)
 						} else {
-							ad, exists := policyOnTyk.AccessRights[policyOnK8s.Spec.AccessRightsArray[0].APIID]
+							ad, exists := policyOnTyk.AccessRights[*policyOnK8s.Spec.AccessRightsArray[0].APIID]
 							eval.True(exists)
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
-							eval.Equal(policyOnK8s.Status.PolID, policyOnTyk.ID)
+							eval.Equal(policyOnK8s.Status.PolID, *policyOnTyk.ID)
 						}
 
 						return true
@@ -679,10 +687,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 	eval := is.New(t)
 
 	const (
-		queryName     = "Query"
 		accountsField = "accounts"
 		allField      = "*"
-		fieldName     = "getMovers"
 		limit         = int64(2)
 	)
 
@@ -692,6 +698,9 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 		apiDefID                  string
 		minGraphQLPolicyGwVersion = version.MustParseGeneric("v4.3.0")
 		policyTarget              model.Target
+
+		queryName = "Query"
+		fieldName = "getMovers"
 	)
 
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
@@ -736,6 +745,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				apiDefID = createdResource.Status.ApiID
 
 				policyCR, err := createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
+					disableIntrospection := true
+
 					policy.Spec.AccessRightsArray = []*model.AccessDefinition{
 						{
 							Name:      apiDefCR.Name,
@@ -746,11 +757,11 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							RestrictedTypes: []model.GraphQLType{
 								{Name: queryName, Fields: []string{allField}},
 							},
-							DisableIntrospection: true,
+							DisableIntrospection: &disableIntrospection,
 							FieldAccessRights: []model.FieldAccessDefinition{
 								{
-									TypeName:  queryName,
-									FieldName: fieldName,
+									TypeName:  &queryName,
+									FieldName: &fieldName,
 									Limits:    model.FieldLimits{MaxQueryDepth: limit},
 								},
 							},
@@ -759,7 +770,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 				})
 				eval.NoErr(err)
 
-				policyTarget = model.Target{Name: policyCR.Name, Namespace: policyCR.Namespace}
+				namespace := policyCR.Namespace
+				policyTarget = model.Target{Name: policyCR.Name, Namespace: &namespace}
 
 				err = waitForTykResourceCreation(c, policyCR)
 				eval.NoErr(err)
@@ -774,7 +786,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 				var pol v1alpha1.SecurityPolicy
 
-				err := c.Client().Resources().Get(ctx, policyTarget.Name, policyTarget.Namespace, &pol)
+				err := c.Client().Resources().Get(ctx, policyTarget.Name, *policyTarget.Namespace, &pol)
 				eval.NoErr(err)
 
 				validPolSpec := func(mode v1alpha1.OperatorContextMode, s *v1alpha1.SecurityPolicySpec, k8s bool) bool {
@@ -788,7 +800,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 						eval.Equal(len(s.AccessRightsArray[0].AllowedTypes[0].Fields), 1)
 						eval.Equal(s.AccessRightsArray[0].AllowedTypes[0].Fields[0], accountsField)
 
-						eval.Equal(s.AccessRightsArray[0].DisableIntrospection, true)
+						eval.True(s.AccessRightsArray[0].DisableIntrospection != nil)
+						eval.True(*s.AccessRightsArray[0].DisableIntrospection)
 					} else {
 						if mode == "ce" {
 							ad, exists := s.AccessRights[apiDefID]
@@ -800,7 +813,8 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							eval.Equal(len(ad.AllowedTypes[0].Fields), 1)
 							eval.Equal(ad.AllowedTypes[0].Fields[0], accountsField)
 
-							eval.Equal(ad.DisableIntrospection, true)
+							eval.True(ad.DisableIntrospection != nil)
+							eval.True(*ad.DisableIntrospection)
 						} else {
 							eval.Equal(len(s.AccessRightsArray[0].RestrictedTypes), 1)
 							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Name, queryName)
@@ -808,8 +822,13 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 							eval.Equal(s.AccessRightsArray[0].RestrictedTypes[0].Fields[0], allField)
 
 							eval.Equal(len(s.AccessRightsArray[0].FieldAccessRights), 1)
-							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
-							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
+
+							eval.True(s.AccessRightsArray[0].FieldAccessRights[0].TypeName != nil)
+							eval.Equal(*s.AccessRightsArray[0].FieldAccessRights[0].TypeName, queryName)
+
+							eval.True(s.AccessRightsArray[0].FieldAccessRights[0].FieldName != nil)
+							eval.Equal(*s.AccessRightsArray[0].FieldAccessRights[0].FieldName, fieldName)
+
 							eval.Equal(s.AccessRightsArray[0].FieldAccessRights[0].Limits.MaxQueryDepth, limit)
 						}
 					}
@@ -858,7 +877,8 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 			eval.NoErr(err)
 
 			policy, err = createTestPolicy(ctx, c, testNs, func(p *v1alpha1.SecurityPolicy) {
-				p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: opCtx.Namespace}
+				namespace := opCtx.Namespace
+				p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: &namespace}
 			})
 			eval.NoErr(err)
 
@@ -873,11 +893,12 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 							return false
 						}
 
-						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == "" {
+						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" ||
+							pol.Spec.Context.Namespace == nil || *pol.Spec.Context.Namespace == "" {
 							return false
 						}
 
-						return pol.Spec.Context.Name == opCtx.Name && pol.Spec.Context.Namespace == opCtx.Namespace
+						return pol.Spec.Context.Name == opCtx.Name && *pol.Spec.Context.Namespace == opCtx.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -894,7 +915,9 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
 
-						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace == policy.Namespace
+						return linkedPolMeta.Name == policy.Name &&
+							linkedPolMeta.Namespace != nil &&
+							*linkedPolMeta.Namespace == policy.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -943,8 +966,9 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				eval.True(ok)
 
 				var err error
+				namespace := opCtx.Namespace
 				policy, err = createTestPolicy(ctx, c, testNs, func(p *v1alpha1.SecurityPolicy) {
-					p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: opCtx.Namespace}
+					p.Spec.Context = &model.Target{Name: opCtx.Name, Namespace: &namespace}
 				})
 				eval.NoErr(err)
 
@@ -955,11 +979,12 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 							return false
 						}
 
-						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == "" {
+						if pol.Spec.Context == nil || pol.Spec.Context.Name == "" || pol.Spec.Context.Namespace == nil ||
+							*pol.Spec.Context.Namespace == "" {
 							return false
 						}
 
-						return pol.Spec.Context.Name == opCtx.Name && pol.Spec.Context.Namespace == opCtx.Namespace
+						return pol.Spec.Context.Name == opCtx.Name && *pol.Spec.Context.Namespace == opCtx.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -976,7 +1001,9 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 						linkedPolMeta := oc.Status.LinkedSecurityPolicies[0]
 
-						return linkedPolMeta.Name == policy.Name && linkedPolMeta.Namespace == policy.Namespace
+						return linkedPolMeta.Name == policy.Name &&
+							linkedPolMeta.Namespace != nil &&
+							*linkedPolMeta.Namespace == policy.Namespace
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 

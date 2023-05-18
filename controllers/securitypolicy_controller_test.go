@@ -15,6 +15,9 @@ import (
 func TestUpdatePolicyStatus(t *testing.T) {
 	is := is.New(t)
 
+	active := true
+	useStandardAuth := true
+
 	api1 := &tykv1.ApiDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "api1",
@@ -22,8 +25,8 @@ func TestUpdatePolicyStatus(t *testing.T) {
 		Spec: tykv1.APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
 				Name:            "api1",
-				Active:          true,
-				UseStandardAuth: true,
+				Active:          &active,
+				UseStandardAuth: &useStandardAuth,
 			},
 		},
 	}
@@ -35,8 +38,8 @@ func TestUpdatePolicyStatus(t *testing.T) {
 		Spec: tykv1.APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
 				Name:            "api2",
-				Active:          true,
-				UseStandardAuth: true,
+				Active:          &active,
+				UseStandardAuth: &useStandardAuth,
 			},
 		},
 	}
@@ -88,7 +91,9 @@ func TestUpdatePolicyStatus(t *testing.T) {
 			err = r.updatePolicyStatus(context.TODO(), test.Policy, nil)
 			is.NoErr(err)
 
-			is.Equal(test.Policy.Status.LinkedAPIs, test.LinkedAPIs)
+			for t := range test.LinkedAPIs {
+				is.True(test.Policy.Status.LinkedAPIs[t].Equal(test.LinkedAPIs[t]))
+			}
 		})
 	}
 }
