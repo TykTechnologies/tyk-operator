@@ -96,8 +96,8 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			}
 		}
 
-			orgID := env.Org
-			policy.Spec.OrgID = &orgID
+		orgID := env.Org
+		policy.Spec.OrgID = &orgID
 
 		if policy.Status.PolID == "" {
 			return r.create(ctx, policy)
@@ -312,7 +312,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		return nil, err
 	}
 
-	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.MID) //nolint:errcheck
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *policy.Spec.MID) //nolint:errcheck
 
 	r.Log.Info("Successfully updated Policy")
 
@@ -392,7 +392,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, spec.MID) //nolint:errcheck
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *spec.MID) //nolint:errcheck
 
 	policy.Spec.MID = spec.MID
 

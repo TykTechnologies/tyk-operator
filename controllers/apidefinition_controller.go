@@ -418,7 +418,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	apiOnTyk, _ := klient.Universal.Api().Get(ctx, desired.Spec.APIID) //nolint:errcheck
+	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *desired.Spec.APIID) //nolint:errcheck
 
 	namespace := desired.Namespace
 	target := model.Target{Namespace: &namespace, Name: desired.Name}
@@ -492,11 +492,10 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	apiOnTyk, _ := klient.Universal.Api().Get(ctx, desired.Spec.APIID) //nolint:errcheck
+	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *desired.Spec.APIID) //nolint:errcheck
 
 	namespace := desired.Namespace
 	target := model.Target{Namespace: &namespace, Name: desired.Name}
-
 
 	err = r.updateStatus(
 		ctx,
@@ -878,6 +877,7 @@ func (r *ApiDefinitionReconciler) breakSubgraphLink(
 
 	namespace := desired.Namespace
 	target := model.Target{Namespace: &namespace, Name: desired.Name}
+
 	if !pass {
 		err = r.updateStatus(
 			ctx,
@@ -961,6 +961,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 
 	namespace := urs.Namespace
 	target := model.Target{Namespace: &namespace, Name: urs.Name}
+
 	err = r.updateStatus(
 		ctx,
 		urs.ObjectMeta.Namespace,
@@ -968,7 +969,8 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.LinkedToSubgraph = subgraph.ObjectMeta.Name
-		})
+		},
+	)
 	if err != nil {
 		r.Log.Error(err,
 			"failed to update ApiDefinition status after adding Subgraph link",
