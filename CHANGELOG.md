@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
+
+**Fixed**
+- Fixed panic of snapshot tool
+
 **Changed**
 - Changed optional fields of type string and bool to pointers for APIDefinition and Security Policy Custom Resources
 
