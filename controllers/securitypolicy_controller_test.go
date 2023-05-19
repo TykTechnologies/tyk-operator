@@ -88,7 +88,7 @@ func TestUpdatePolicyStatus(t *testing.T) {
 				Log:    log.NullLogger{},
 			}
 
-			err = r.updatePolicyStatus(context.TODO(), test.Policy)
+			err = r.updatePolicyStatus(context.TODO(), test.Policy, nil)
 			is.NoErr(err)
 
 			for t := range test.LinkedAPIs {

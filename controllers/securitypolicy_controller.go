@@ -94,10 +94,10 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			if policy.Spec.OrgID == nil {
 				policy.Spec.OrgID = new(string)
 			}
-
-			orgID := env.Org
-			policy.Spec.OrgID = &orgID
 		}
+
+		orgID := env.Org
+		policy.Spec.OrgID = &orgID
 
 		if policy.Status.PolID == "" {
 			return r.create(ctx, policy)
@@ -259,14 +259,14 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	// Policy on Tyk based on k8s state. So, unintended deletions from Dashboard can be avoided.
 	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
-		if isSameSecurityPolicy(ctx, specTyk, spec) {
+		if isSame(policy.Status.LatestCRDSpecHash, spec) && isSame(policy.Status.LatestTykSpecHash, specTyk) {
 			// TODO(buraksekili): needs refactoring - no need for code duplication.
 			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 			if err != nil {
 				return nil, err
 			}
 
-			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
+			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, nil)
 		}
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
@@ -301,7 +301,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after updating the Policy",
-			"Policy", client.ObjectKeyFromObject(policy),
+			"SecurityPolicy", client.ObjectKeyFromObject(policy),
 		)
 
 		return nil, err
@@ -312,9 +312,14 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		return nil, err
 	}
 
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *policy.Spec.MID) //nolint:errcheck
+
 	r.Log.Info("Successfully updated Policy")
 
-	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy)
+	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
+		status.LatestTykSpecHash = calculateHash(polOnTyk)
+		status.LatestCRDSpecHash = calculateHash(spec)
+	})
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
@@ -361,16 +366,6 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		}
 	}
 
-	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
-	if err != nil {
-		r.Log.Error(err,
-			"failed to update linkedAPI status",
-			"Policy", client.ObjectKeyFromObject(policy),
-		)
-
-		return err
-	}
-
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after creating a Policy",
@@ -388,11 +383,30 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	*policy.Spec.MID = *spec.MID
 
-	return r.updatePolicyStatus(ctx, policy)
+	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
+	if err != nil {
+		r.Log.Error(err,
+			"failed to update linkedAPI status",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return err
+	}
+
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *spec.MID) //nolint:errcheck
+
+	return r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
+		status.LatestTykSpecHash = calculateHash(polOnTyk)
+		status.LatestCRDSpecHash = calculateHash(spec)
+	})
 }
 
 // updatePolicyStatus updates the status of the policy.
-func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+func (r *SecurityPolicyReconciler) updatePolicyStatus(
+	ctx context.Context,
+	policy *tykv1.SecurityPolicy,
+	fn func(status *tykv1.SecurityPolicyStatus),
+) error {
 	r.Log.Info("Updating policy status")
 
 	if policy.Spec.MID != nil {
@@ -410,6 +424,10 @@ func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, polic
 		target := model.Target{Name: v.Name, Namespace: &namespace}
 
 		policy.Status.LinkedAPIs = append(policy.Status.LinkedAPIs, target)
+	}
+
+	if fn != nil {
+		fn(&policy.Status)
 	}
 
 	return r.Status().Update(ctx, policy)

@@ -27,6 +27,11 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+const (
+	errUpdatePolicyCR   = "failed to update SecurityPolicy"
+	errGetPolicyFromTyk = "failed to get SecurityPolicy from Tyk"
+)
+
 func verifyPolicyApiVersion(t *testing.T, tykEnv *environmet.Env) {
 	v, err := version.ParseGeneric(tykEnv.TykVersion)
 	if err != nil {
@@ -175,7 +180,15 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 
 		updatePolicy.Spec.AccessRightsArray = nil
 
-		err = c.Client().Resources().Update(ctx, &updatePolicy)
+		err = wait.For(func() (done bool, err error) {
+			err = c.Client().Resources().Update(ctx, &updatePolicy)
+			if err != nil {
+				t.Logf("%v, err: %v", errUpdatePolicyCR, err)
+				return false, nil
+			}
+
+			return true, nil
+		})
 		eval.NoErr(err)
 
 		var pol v1alpha1.SecurityPolicy
@@ -375,18 +388,25 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				err = c.Client().Resources().Create(ctx, &policyCR)
 				eval.NoErr(err)
 
+				err = waitForTykResourceCreation(c, &policyCR)
+				eval.NoErr(err)
+
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
-						eval.True(len(policyOnK8s.Status.PolID) > 0)
 
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
-						eval.NoErr(err)
+						if err != nil {
+							t.Logf("%v, err: %v", errGetPolicyFromTyk, err)
+							return false
+						}
 
-						eval.True(
-							hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, policyOnTyk, policyOnK8s.Status.PolID),
-						)
+						if !hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, policyOnTyk, policyOnK8s.Status.PolID) {
+							t.Log("failed to migrate, not equal values")
+							return false
+						}
+
 						return true
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -995,7 +1015,15 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				eval.True(ok)
 
 				policy.Spec.Context = nil
-				err := c.Client().Resources(testNs).Update(ctx, policy)
+				err := wait.For(func() (done bool, err error) {
+					err = c.Client().Resources(testNs).Update(ctx, policy)
+					if err != nil {
+						t.Logf("%v, err: %v", errUpdatePolicyCR, err)
+						return false, nil
+					}
+
+					return true, nil
+				})
 				eval.NoErr(err)
 
 				err = wait.For(conditions.New(c.Client().Resources()).

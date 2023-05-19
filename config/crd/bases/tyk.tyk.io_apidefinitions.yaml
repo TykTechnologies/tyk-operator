@@ -2022,6 +2022,10 @@ spec:
             properties:
               api_id:
                 type: string
+              latestCRDSpecHash:
+                type: string
+              latestTykSpecHash:
+                type: string
               linked_by_apis:
                 description: LinkedByAPIs is a list of ApiDefinition namespaced/name
                   that links to this resource

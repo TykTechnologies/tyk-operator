@@ -19,50 +19,21 @@ import (
 
 var hashOptions = hashstructure.HashOptions{ZeroNil: true}
 
-// isSameApiDefinition calculates the hash of two ApiDefinitionSpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameApiDefinition(apiDef1, apiDef2 *model.APIDefinitionSpec) bool {
-	api1Hash, err1 := hashstructure.Hash(apiDef1, hashstructure.FormatV2, &hashOptions)
+// calculateHash calculates hashes of the given interfaces. Returns empty string for hash
+// if any error occurs during calculation.
+func calculateHash(i interface{}) (h string) {
+	h1, err1 := hashstructure.Hash(i, hashstructure.FormatV2, &hashOptions)
 	if err1 == nil {
-		api2Hash, err2 := hashstructure.Hash(apiDef2, hashstructure.FormatV2, &hashOptions)
-		if err2 == nil {
-			return api1Hash == api2Hash
-		}
+		h = strconv.FormatUint(h1, 10)
 	}
 
-	return false
+	return
 }
 
-const (
-	proTagName = "pro"
-	ossTagName = "oss"
-)
-
-func hasherTagName(ctx context.Context) string {
-	r := tykClient.GetContext(ctx)
-	if r.Env.Mode == "pro" {
-		return proTagName
-	}
-
-	return ossTagName
-}
-
-// isSameSecurityPolicy calculates the hash of two SecurityPolicySpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameSecurityPolicy(ctx context.Context, policy1, policy2 *v1alpha1.SecurityPolicySpec) bool {
-	myHashOptions := hashstructure.HashOptions{ZeroNil: true, TagName: hasherTagName(ctx)}
-
-	pol1Hash, err1 := hashstructure.Hash(policy1, hashstructure.FormatV2, &myHashOptions)
-	if err1 == nil {
-		pol2Hash, err2 := hashstructure.Hash(policy2, hashstructure.FormatV2, &myHashOptions)
-		if err2 == nil {
-			return pol1Hash == pol2Hash
-		}
-	}
-
-	return false
+// isSame compares given hash string with the hash of given interface and returns true
+// if these values are same; otherwise, returns false.
+func isSame(latestHash string, i interface{}) bool {
+	return latestHash == calculateHash(i)
 }
 
 // containsString is a helper function to check string exists in a slice of strings.

@@ -27,7 +27,7 @@ type APIDefinitionSpec struct {
 	model.APIDefinitionSpec `json:",inline"`
 	// Context specify namespace/name of the OperatorContext object used for
 	// reconciling this APIDefinition
-	Context *model.Target `json:"contextRef,omitempty" hash:"ignore"`
+	Context *model.Target `json:"contextRef,omitempty"`
 }
 
 // ApiDefinitionStatus defines the observed state of ApiDefinition
@@ -49,6 +49,9 @@ type ApiDefinitionStatus struct {
 	// LinkedToSubgraph corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph.
 	// ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
 	LinkedToSubgraph string `json:"linked_to_subgraph,omitempty"`
+
+	LatestTykSpecHash string `json:"latestTykSpecHash,omitempty"`
+	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
 }
 
 // ApiDefinition is the Schema for the apidefinitions API

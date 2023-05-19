@@ -26,8 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-logr/logr"
-
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -35,6 +33,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -419,8 +418,11 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
+	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *desired.Spec.APIID) //nolint:errcheck
+
 	namespace := desired.Namespace
 	target := model.Target{Namespace: &namespace, Name: desired.Name}
+
 	err = r.updateStatus(
 		ctx,
 		desired.Namespace,
@@ -428,6 +430,8 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.ApiID = *desired.Spec.APIID
+			status.LatestTykSpecHash = calculateHash(apiOnTyk)
+			status.LatestCRDSpecHash = calculateHash(desired.Spec)
 		},
 	)
 	if err != nil {
@@ -462,7 +466,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 	} else {
 		// If we have same ApiDefinition on Tyk, we do not need to send Update and Hot Reload requests
 		// to Tyk. So, we can simply return to main reconciliation logic.
-		if isSameApiDefinition(&desired.Spec.APIDefinitionSpec, apiDefOnTyk) {
+		if isSame(desired.Status.LatestTykSpecHash, apiDefOnTyk) && isSame(desired.Status.LatestCRDSpecHash, desired.Spec) {
 			return nil
 		}
 
@@ -482,6 +486,31 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		r.Log.Error(
 			err,
 			"Failed to hot-reload Tyk after updating the ApiDefinition",
+			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		)
+
+		return err
+	}
+
+	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *desired.Spec.APIID) //nolint:errcheck
+
+	namespace := desired.Namespace
+	target := model.Target{Namespace: &namespace, Name: desired.Name}
+
+	err = r.updateStatus(
+		ctx,
+		desired.Namespace,
+		target,
+		false,
+		func(status *tykv1alpha1.ApiDefinitionStatus) {
+			status.LatestTykSpecHash = calculateHash(apiOnTyk)
+			status.LatestCRDSpecHash = calculateHash(desired.Spec)
+		},
+	)
+	if err != nil {
+		r.Log.Error(
+			err,
+			"Failed to update Status",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
@@ -848,6 +877,7 @@ func (r *ApiDefinitionReconciler) breakSubgraphLink(
 
 	namespace := desired.Namespace
 	target := model.Target{Namespace: &namespace, Name: desired.Name}
+
 	if !pass {
 		err = r.updateStatus(
 			ctx,
@@ -931,6 +961,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 
 	namespace := urs.Namespace
 	target := model.Target{Namespace: &namespace, Name: urs.Name}
+
 	err = r.updateStatus(
 		ctx,
 		urs.ObjectMeta.Namespace,
@@ -938,7 +969,8 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.LinkedToSubgraph = subgraph.ObjectMeta.Name
-		})
+		},
+	)
 	if err != nil {
 		r.Log.Error(err,
 			"failed to update ApiDefinition status after adding Subgraph link",
