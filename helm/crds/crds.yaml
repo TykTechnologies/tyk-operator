@@ -1801,6 +1801,10 @@ spec:
             properties:
               api_id:
                 type: string
+              latestCRDSpecHash:
+                type: string
+              latestTykSpecHash:
+                type: string
               linked_by_apis:
                 description: LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this resource
                 items:
@@ -3243,6 +3247,10 @@ spec:
           status:
             description: SecurityPolicyStatus defines the observed state of SecurityPolicy
             properties:
+              latestCRDSpecHash:
+                type: string
+              latestTykSpecHash:
+                type: string
               linked_apis:
                 items:
                   properties:

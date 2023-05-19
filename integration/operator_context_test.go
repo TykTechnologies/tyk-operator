@@ -199,7 +199,14 @@ func TestOperatorContextDelete(t *testing.T) {
 				apiDef := v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: apiDefName, Namespace: testNS}}
 				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
-				err := client.Resources(testNS).Delete(ctx, &apiDef)
+				err := wait.For(func() (done bool, err error) {
+					err = client.Resources(testNS).Delete(ctx, &apiDef)
+					if err != nil {
+						t.Logf("failed to delete ApiDefinition , err: %v", err)
+						return false, nil
+					}
+					return true, nil
+				})
 				eval.NoErr(err)
 
 				err = wait.For(conditions.New(client.Resources()).ResourceDeleted(&opCtx),

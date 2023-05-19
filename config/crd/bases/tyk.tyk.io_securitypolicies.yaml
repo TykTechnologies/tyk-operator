@@ -390,6 +390,10 @@ spec:
           status:
             description: SecurityPolicyStatus defines the observed state of SecurityPolicy
             properties:
+              latestCRDSpecHash:
+                type: string
+              latestTykSpecHash:
+                type: string
               linked_apis:
                 items:
                   properties:
