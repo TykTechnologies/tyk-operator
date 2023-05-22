@@ -2,7 +2,6 @@
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 
-
 **Fixed**
 - Fixed panic of snapshot tool
 
@@ -14,7 +13,10 @@ resources by using Snapshot tool, sets these values to null since they are not i
 field to accept `null` values to overcome validation issues.
 
 **Added**
-- Added possiblility to set base identity provider
+- Added possibility to set base identity provider
+- Added two new Status fields to ApiDefinition and Security Policy CRDs - `latestTykSpecHash` and `latestCRDSpecHash` 
+to store hash of the lastly reconciled resources. It will be used in comparison to determine sending Update calls
+to Tyk Gateway or Dashboard or not.
 
 ## [v0.14.1](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...HEAD)
