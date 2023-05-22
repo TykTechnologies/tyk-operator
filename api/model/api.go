@@ -1109,7 +1109,9 @@ type GraphQLSubgraphEntity struct {
 	// The internal URL of the subgraph
 	URL string `json:"url"`
 	// the schema definition language of the subgraph
-	SDL     string            `json:"sdl"`
+	SDL string `json:"sdl"`
+
+	// +nullable
 	Headers map[string]string `json:"headers"`
 }
 

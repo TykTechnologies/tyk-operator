@@ -582,6 +582,7 @@ spec:
                             headers:
                               additionalProperties:
                                 type: string
+                              nullable: true
                               type: object
                             name:
                               type: string
