@@ -33,7 +33,7 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 	if in.Context != nil {
 		in, out := &in.Context, &out.Context
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -86,7 +86,7 @@ func (in *APIDescriptionBase) DeepCopyInto(out *APIDescriptionBase) {
 	if in.PolicyRef != nil {
 		in, out := &in.PolicyRef, &out.PolicyRef
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -139,7 +139,7 @@ func (in *APIDescriptionSpec) DeepCopyInto(out *APIDescriptionSpec) {
 	if in.Context != nil {
 		in, out := &in.Context, &out.Context
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -248,17 +248,23 @@ func (in *ApiDefinitionStatus) DeepCopyInto(out *ApiDefinitionStatus) {
 	if in.LinkedByPolicies != nil {
 		in, out := &in.LinkedByPolicies, &out.LinkedByPolicies
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	if in.LinkedByAPIs != nil {
 		in, out := &in.LinkedByAPIs, &out.LinkedByAPIs
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	if in.LinkedToAPIs != nil {
 		in, out := &in.LinkedToAPIs, &out.LinkedToAPIs
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 }
 
@@ -378,7 +384,7 @@ func (in *OperatorContextSpec) DeepCopyInto(out *OperatorContextSpec) {
 	if in.FromSecret != nil {
 		in, out := &in.FromSecret, &out.FromSecret
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Env != nil {
 		in, out := &in.Env, &out.Env
@@ -403,27 +409,37 @@ func (in *OperatorContextStatus) DeepCopyInto(out *OperatorContextStatus) {
 	if in.LinkedApiDefinitions != nil {
 		in, out := &in.LinkedApiDefinitions, &out.LinkedApiDefinitions
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	if in.LinkedApiDescriptions != nil {
 		in, out := &in.LinkedApiDescriptions, &out.LinkedApiDescriptions
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	if in.LinkedPortalAPICatalogues != nil {
 		in, out := &in.LinkedPortalAPICatalogues, &out.LinkedPortalAPICatalogues
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	if in.LinkedSecurityPolicies != nil {
 		in, out := &in.LinkedSecurityPolicies, &out.LinkedSecurityPolicies
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	if in.LinkedPortalConfigs != nil {
 		in, out := &in.LinkedPortalConfigs, &out.LinkedPortalConfigs
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 }
 
@@ -513,7 +529,7 @@ func (in *PortalAPICatalogueSpec) DeepCopyInto(out *PortalAPICatalogueSpec) {
 	if in.Context != nil {
 		in, out := &in.Context, &out.Context
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -549,7 +565,7 @@ func (in *PortalCatalogueDescription) DeepCopyInto(out *PortalCatalogueDescripti
 	if in.APIDescriptionRef != nil {
 		in, out := &in.APIDescriptionRef, &out.APIDescriptionRef
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -629,7 +645,7 @@ func (in *PortalConfigSpec) DeepCopyInto(out *PortalConfigSpec) {
 	if in.Context != nil {
 		in, out := &in.Context, &out.Context
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -724,7 +740,7 @@ func (in *SecurityPolicySpec) DeepCopyInto(out *SecurityPolicySpec) {
 	if in.Context != nil {
 		in, out := &in.Context, &out.Context
 		*out = new(model.Target)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -744,7 +760,9 @@ func (in *SecurityPolicyStatus) DeepCopyInto(out *SecurityPolicyStatus) {
 	if in.LinkedAPIs != nil {
 		in, out := &in.LinkedAPIs, &out.LinkedAPIs
 		*out = make([]model.Target, len(*in))
-		copy(*out, *in)
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 }
 

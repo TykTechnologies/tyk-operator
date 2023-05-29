@@ -1,12 +1,25 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.2...HEAD)
+
+## [0.14.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.2)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.1...v0.14.2)
+
+**Fixed**
+- Fixed panic of snapshot tool
+
+**Changed**
+- Changed optional fields of type string and bool to pointers for APIDefinition and Security Policy Custom Resources
 
 **Added**
-- Added possiblility to set base identity provider
+- Added possibility to set base identity provider
+- Added two new Status fields to ApiDefinition and Security Policy CRDs - `latestTykSpecHash` and `latestCRDSpecHash` 
+to store hash of the lastly reconciled resources. It will be used in comparison to determine sending Update calls
+to Tyk Gateway or Dashboard or not.
 
-## [v0.14.1](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...HEAD)
+## [v0.14.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.1)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...v0.14.1)
 
 **Fixed**:
 - Operator removes `spec.contextRef` from SecurityPolicy CRs.
@@ -19,7 +32,7 @@
 **Removed**:
 - Operator is no longer tested against k8s v1.19.16
 
-## [v0.14.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+## [v0.14.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.13.0...v0.14.0)
 
 **Updated**:

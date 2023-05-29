@@ -139,7 +139,7 @@ func (r *PortalAPICatalogueReconciler) model(
 				return nil, fmt.Errorf("%q missing policy_id", desc.Name)
 			}
 
-			desc.PolicyID = sec.Spec.ID
+			desc.PolicyID = *sec.Spec.ID
 		}
 
 		if desc.PolicyID == "" {

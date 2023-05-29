@@ -32,6 +32,11 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
 
+const (
+	errFailedToGetApiDefCRMsg  = "failed to get ApiDefinition CR"
+	errFailedToGetApiDefTykMsg = "failed to get ApiDefinition from Tyk"
+)
+
 // deleteApiDefinitionFromTyk sends a Tyk API call to delete ApiDefinition with given ID.
 func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	err := wait.For(func() (done bool, err error) {
@@ -329,16 +334,17 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 
 			// Create ApiDefinition with JSON Schema Validation support.
 			apiDef, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useExtendedPaths := true
+
 				apiDef.Name = apiDefWithJSONValidationName
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
+					ListenPath: &apiDefListenPath,
+					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {Name: defaultVersion, UseExtendedPaths: &useExtendedPaths, ExtendedPaths: eps},
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
@@ -414,16 +420,17 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 
 			// Create ApiDefinition with whitelist extended path
 			apiDef, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useExtendedPaths := true
+
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
+					ListenPath: &apiDefListenPath,
+					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {Name: defaultVersion, UseExtendedPaths: &useExtendedPaths, ExtendedPaths: eps},
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
@@ -517,16 +524,17 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 
 			// Create ApiDefinition with whitelist extended path
 			apiDef, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useExtendedPaths := true
+
 				apiDef.Name = apiDefWithBlacklist
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
+					ListenPath: &apiDefListenPath,
+					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {Name: defaultVersion, UseExtendedPaths: &useExtendedPaths, ExtendedPaths: eps},
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
@@ -632,16 +640,17 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 
 			// Create ApiDefinition with whitelist + ignored extended path
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useExtendedPaths := true
+
 				apiDef.Name = apiDefWithWhitelist
 				apiDef.Spec.Proxy = model.Proxy{
-					ListenPath:      apiDefListenPath,
-					TargetURL:       "http://httpbin.org",
-					StripListenPath: true,
+					ListenPath: &apiDefListenPath,
+					TargetURL:  "http://httpbin.org",
 				}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
-					defaultVersion: {Name: defaultVersion, UseExtendedPaths: true, ExtendedPaths: eps},
+					defaultVersion: {Name: defaultVersion, UseExtendedPaths: &useExtendedPaths, ExtendedPaths: eps},
 				}
 			})
 			eval.NoErr(err) // failed to create apiDefinition
@@ -980,8 +989,10 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 			// Create ApiDefinition with Basic Authentication
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useBasicAuth := true
+
 				apiDef.Name = apiDefBasicAuth
-				apiDef.Spec.UseBasicAuth = true
+				apiDef.Spec.UseBasicAuth = &useBasicAuth
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
 				apiDef.Spec.VersionData.Versions = map[string]model.VersionInfo{
@@ -1010,17 +1021,16 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						t.Logf("API %v is not created yet on Tyk", apiDefCRD.Status.ApiID)
+						t.Error("API is not created yet")
 						return false, nil
 					}
-
-					eval.True(apiDef.UseBasicAuth)
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
-				eval.True(apiDef.UseBasicAuth)
+				eval.True(apiDef.UseBasicAuth != nil)
+				eval.True(*apiDef.UseBasicAuth)
 
 				return ctx
 			}).Feature()
@@ -1062,9 +1072,12 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 			// Create ApiDefinition with Basic Authentication and mTLS enabled with BasicAuthUser as base identity provider
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useBasicAuth := true
+				useMutualTLSAuth := true
+
 				apiDef.Name = apiDefBasicAndMTLSAuth
-				apiDef.Spec.UseBasicAuth = true
-				apiDef.Spec.UseMutualTLSAuth = true
+				apiDef.Spec.UseBasicAuth = &useBasicAuth
+				apiDef.Spec.UseMutualTLSAuth = &useMutualTLSAuth
 				apiDef.Spec.BaseIdentityProvidedBy = "basic_auth_user"
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
@@ -1094,19 +1107,21 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						t.Logf("API %v is not created yet on Tyk", apiDefCRD.Status.ApiID)
+						t.Logf("API is not created yet on Tyk")
 						return false, nil
 					}
-
-					eval.True(apiDef.UseBasicAuth)
-					eval.True(apiDef.UseMutualTLSAuth)
-					eval.Equal(apiDef.BaseIdentityProvidedBy, model.AuthTypeEnum("basic_auth_user"))
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
-				eval.True(apiDef.UseBasicAuth)
+				eval.True(apiDef.UseBasicAuth != nil)
+				eval.True(*apiDef.UseBasicAuth)
+
+				eval.True(apiDef.UseMutualTLSAuth != nil)
+				eval.True(*apiDef.UseMutualTLSAuth)
+
+				eval.Equal(apiDef.BaseIdentityProvidedBy, model.AuthTypeEnum("basic_auth_user"))
 
 				return ctx
 			}).Feature()
@@ -1160,8 +1175,10 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 			// Create ApiDefinition with Client certificate
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useMutualTLS := true
+
 				apiDef.Name = apiDefClientMTLSWithCert
-				apiDef.Spec.UseMutualTLSAuth = true
+				apiDef.Spec.UseMutualTLSAuth = &useMutualTLS
 				apiDef.Spec.ClientCertificateRefs = []string{certName}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
@@ -1192,7 +1209,8 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				// validate certificate was created
 				exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 				if !exists {
-					return false, errors.New("certificate is not created yet")
+					t.Log("certificate is not created yet")
+					return false, nil
 				}
 
 				return true, nil
@@ -1247,8 +1265,10 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 			// Create ApiDefinition with Upstream certificate
 			_, err := createTestAPIDef(ctx, envConf, testNS, func(apiDef *v1alpha1.ApiDefinition) {
+				useMutualTLS := true
+
 				apiDef.Name = apiDefClientMTLSWithoutCert
-				apiDef.Spec.UseMutualTLSAuth = true
+				apiDef.Spec.UseMutualTLSAuth = &useMutualTLS
 				apiDef.Spec.ClientCertificateRefs = []string{certName}
 				apiDef.Spec.VersionData.DefaultVersion = defaultVersion
 				apiDef.Spec.VersionData.NotVersioned = true
@@ -1276,12 +1296,14 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 					err = c.Client().Resources().Get(ctx, apiDefClientMTLSWithoutCert, testNS, &apiDefCRD)
 					if err != nil {
-						return false, err
+						t.Logf("%v, err: %v", errFailedToGetApiDefCRMsg, err)
+						return false, nil
 					}
 
 					apiDef, err = klient.Universal.Api().Get(reqCtx, apiDefCRD.Status.ApiID)
 					if err != nil {
-						return false, err
+						t.Logf("%v, err: %v", errFailedToGetApiDefTykMsg, err)
+						return false, nil
 					}
 
 					return true, nil
@@ -1398,8 +1420,10 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 
 				// Generate ApiDefinition CR and create it.
 				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					graphRef := testSubGraphCRMetaName
+
 					definition.Spec.GraphQL = &model.GraphQLConfig{
-						GraphRef:      testSubGraphCRMetaName,
+						GraphRef:      &graphRef,
 						ExecutionMode: model.SubGraphExecutionMode,
 						Version:       "1",
 					}
@@ -1433,9 +1457,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						return apiDefObj.Spec.GraphQL != nil &&
-							apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName &&
-							apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
+						return apiDefObj.Spec.GraphQL != nil && apiDefObj.Spec.GraphQL.GraphRef != nil &&
+							*apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName && apiDefObj.Spec.GraphQL.Schema != nil &&
+							*apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == testSubGraphSDL &&
 							apiDefObj.Status.LinkedToSubgraph == testSubGraphCRMetaName
 					}),
@@ -1468,11 +1492,13 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 
 				// Generate another ApiDefinition CR and create it.
 				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+					graphRef := testSubGraphCRMetaName
+
 					definition.ObjectMeta = metav1.ObjectMeta{
 						Name: "another-api", Namespace: testNs,
 					}
 					definition.Spec.GraphQL = &model.GraphQLConfig{
-						GraphRef:      testSubGraphCRMetaName,
+						GraphRef:      &graphRef,
 						ExecutionMode: model.SubGraphExecutionMode,
 						Version:       "1",
 					}
@@ -1531,7 +1557,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				eval.NoErr(err)
 
 				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
-					api.Spec.GraphQL.GraphRef = newSgName
+					graphRef := newSgName
+
+					api.Spec.GraphQL.GraphRef = &graphRef
 					return nil
 				})
 				eval.NoErr(err)
@@ -1553,9 +1581,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						return apiDefObj.Spec.GraphQL != nil &&
-							apiDefObj.Spec.GraphQL.GraphRef == newSgName &&
-							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+						return apiDefObj.Spec.GraphQL != nil && apiDefObj.Spec.GraphQL.GraphRef != nil &&
+							*apiDefObj.Spec.GraphQL.GraphRef == newSgName && apiDefObj.Spec.GraphQL.Schema != nil &&
+							*apiDefObj.Spec.GraphQL.Schema == newSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
 							apiDefObj.Status.LinkedToSubgraph == newSgName
 					}),
@@ -1598,7 +1626,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				eval.NoErr(err)
 
 				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
-					api.Spec.GraphQL.GraphRef = ""
+					api.Spec.GraphQL.GraphRef = nil
 					return nil
 				})
 				eval.NoErr(err)
@@ -1628,9 +1656,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 							return false
 						}
 
-						return apiDefObj.Spec.GraphQL != nil &&
-							apiDefObj.Spec.GraphQL.GraphRef == "" &&
-							apiDefObj.Spec.GraphQL.Schema == newSchema &&
+						return apiDefObj.Spec.GraphQL != nil && (apiDefObj.Spec.GraphQL.GraphRef == nil ||
+							*apiDefObj.Spec.GraphQL.GraphRef == "") && apiDefObj.Spec.GraphQL.Schema != nil &&
+							*apiDefObj.Spec.GraphQL.Schema == newSchema &&
 							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
 							apiDefObj.Status.LinkedToSubgraph == ""
 					}),

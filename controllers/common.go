@@ -19,50 +19,21 @@ import (
 
 var hashOptions = hashstructure.HashOptions{ZeroNil: true}
 
-// isSameApiDefinition calculates the hash of two ApiDefinitionSpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameApiDefinition(apiDef1, apiDef2 *model.APIDefinitionSpec) bool {
-	api1Hash, err1 := hashstructure.Hash(apiDef1, hashstructure.FormatV2, &hashOptions)
+// calculateHash calculates hashes of the given interfaces. Returns empty string for hash
+// if any error occurs during calculation.
+func calculateHash(i interface{}) (h string) {
+	h1, err1 := hashstructure.Hash(i, hashstructure.FormatV2, &hashOptions)
 	if err1 == nil {
-		api2Hash, err2 := hashstructure.Hash(apiDef2, hashstructure.FormatV2, &hashOptions)
-		if err2 == nil {
-			return api1Hash == api2Hash
-		}
+		h = strconv.FormatUint(h1, 10)
 	}
 
-	return false
+	return
 }
 
-const (
-	proTagName = "pro"
-	ossTagName = "oss"
-)
-
-func hasherTagName(ctx context.Context) string {
-	r := tykClient.GetContext(ctx)
-	if r.Env.Mode == "pro" {
-		return proTagName
-	}
-
-	return ossTagName
-}
-
-// isSameSecurityPolicy calculates the hash of two SecurityPolicySpec structs and returns true
-// if hashes are equal. It is used to prevent calling extra Update requests to Tyk Gateway
-// if there is no changes on resources.
-func isSameSecurityPolicy(ctx context.Context, policy1, policy2 *v1alpha1.SecurityPolicySpec) bool {
-	myHashOptions := hashstructure.HashOptions{ZeroNil: true, TagName: hasherTagName(ctx)}
-
-	pol1Hash, err1 := hashstructure.Hash(policy1, hashstructure.FormatV2, &myHashOptions)
-	if err1 == nil {
-		pol2Hash, err2 := hashstructure.Hash(policy2, hashstructure.FormatV2, &myHashOptions)
-		if err2 == nil {
-			return pol1Hash == pol2Hash
-		}
-	}
-
-	return false
+// isSame compares given hash string with the hash of given interface and returns true
+// if these values are same; otherwise, returns false.
+func isSame(latestHash string, i interface{}) bool {
+	return latestHash == calculateHash(i)
 }
 
 // containsString is a helper function to check string exists in a slice of strings.
@@ -79,7 +50,7 @@ func containsString(slice []string, s string) bool {
 // addTarget adds given target to given slice if the slice does not contain the target.
 func addTarget(slice []model.Target, target model.Target) (result []model.Target) {
 	for _, item := range slice {
-		if item == target {
+		if item.Equal(target) {
 			return slice
 		}
 	}
@@ -125,10 +96,14 @@ func HttpContext(
 		}
 
 		// If namespace is not specified in contextDef, use default namespace
-		if opCtxRef.Namespace == "" {
+		if opCtxRef.Namespace == nil || *opCtxRef.Namespace == "" {
 			log.Info("Context namespace is not specified, using default")
 
-			opCtxRef.Namespace = "default"
+			if opCtxRef.Namespace == nil {
+				opCtxRef.Namespace = new(string)
+			}
+
+			*opCtxRef.Namespace = "default"
 		}
 
 		log.Info("Detected context for resource")
@@ -187,9 +162,10 @@ func updateOperatorContextStatus(
 	log logr.Logger,
 	ctxRef *model.Target,
 ) error {
+	namespace := object.GetNamespace()
 	objectTarget := model.Target{
 		Name:      object.GetName(),
-		Namespace: object.GetNamespace(),
+		Namespace: &namespace,
 	}
 
 	// Remove link from other OperatorContext, if any,
@@ -204,7 +180,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if ApiDefinition is still referring to same context and is not marked for deletion.
 			if ctxRef != nil &&
-				opCtxList.Items[i].Name == ctxRef.Name && opCtxList.Items[i].Namespace == ctxRef.Namespace &&
+				opCtxList.Items[i].Name == ctxRef.Name && ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
@@ -226,7 +202,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if SecurityPolicy is still referring to context and is not marked for deletion.
 			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
-				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -240,8 +216,8 @@ func updateOperatorContextStatus(
 	case *v1alpha1.PortalAPICatalogue:
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if PortalAPICatalogue is still referring to context and is not marked for deletion.
-			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name && opCtxList.Items[i].Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -256,7 +232,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if APIDescription is still referring to context and is not marked for deletion.
 			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
-				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -271,7 +247,7 @@ func updateOperatorContextStatus(
 		for i := 0; i < len(opCtxList.Items); i++ {
 			// do not remove link if PortalConfig is still referring to context and is not marked for deletion.
 			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
-				opCtxList.Items[i].Namespace == ctxRef.Namespace && object.GetDeletionTimestamp().IsZero() {
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
@@ -291,8 +267,13 @@ func updateOperatorContextStatus(
 		log.Info("Adding link to apiContext", "key", ctxRef.String())
 
 		var operatorContext v1alpha1.OperatorContext
+		namespace := "default"
 
-		key := types.NamespacedName{Name: ctxRef.Name, Namespace: ctxRef.Namespace}
+		if ctxRef.Namespace != nil {
+			namespace = *ctxRef.Namespace
+		}
+
+		key := types.NamespacedName{Name: ctxRef.Name, Namespace: namespace}
 
 		if err := client.Get(ctx, key, &operatorContext); err != nil {
 			log.Error(err, "failed to get operator context")
