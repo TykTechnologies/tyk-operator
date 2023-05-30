@@ -13,7 +13,6 @@ testcases:
       method: GET
       url: http://localhost:8080/httpbin/get
       retry: 10
-      delay: 2
       assertions:
       - result.statuscode ShouldEqual 429
       - result.bodyjson.error ShouldContainSubstring API Rate limit exceeded
@@ -21,6 +20,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/httpbin_global_rate_limit.yaml
+      script: kubectl delete -f ../config/samples/httpbin_global_rate_limit.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0

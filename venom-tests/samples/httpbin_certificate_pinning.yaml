@@ -1,0 +1,67 @@
+# Certificate Pinning
+#
+# Certificate pinning is a feature which allows you to whitelist public keys used to generate certificates. For more
+# details, please visit official Tyk Documentation https://tyk.io/docs/security/certificate-pinning/.
+#
+# Public keys can be defined in two ways:
+# 1) Through ApiDefinition object's `pinned_public_keys` field, using the following format:
+#  pinned_public_keys:
+#    "foo.com": "<key_id>",
+#    "*": "<key_id-1>,<key_id-2>"
+#
+# Public keys are stored inside the Tyk certificate storage, so you can use Certificate API to manage them. For key-id
+# you should set the ID returned after you upload the public key using the Certificate API.
+#
+# 2) Through ApiDefinition object's 'pinned_public_keys_refs' field, using the following format:
+#  spec:
+#   pinned_public_keys_refs:
+#    "domain.org": <secret_name> # the name of the Kubernetes Secret Object that holds the public key for the 'domain.org'.
+#
+# In this way, you can refer Kubernetes Secret Objects through 'pinned_public_keys_refs' field.
+#
+# NOTE:
+# - Only kubernetes.io/tls type of Secret Objects are allowed. Also, please use 'tls.crt' field for the public key
+#  (see the below example).
+# - The secret that includes a public key must be in the same namespace as the ApiDefinition.
+#
+# In this example, we have an HTTPS upstream target as `https://httpbin.org`. The public key of httpbin.org is obtained
+# with the following command:
+#   $ openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null | openssl x509 -pubkey -noout
+#
+# Note: Please set tls.crt field of your secret to actual public key of httpbin.org.
+#
+# We are creating a secret called 'httpbin-secret'. In the 'tls.crt' field of the secret, we are specifying the public key of the
+#  httpbin.org obtained through above `openssl` command, in the decoded manner.
+# Now, in the ApiDefinition, we are using this public key for all domains as '*' (wildcard domains are also supported).
+# If you target any other URL than https://httpbin.org (for instance https://github.com/), you will face a 'public key pinning error'
+# for that particular domain because the public key of httpbin.org is used for all domains.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: httpbin-secret
+type: kubernetes.io/tls
+data:
+  tls.crt: <PUBLIC_KEY> # Use tls.crt field for the public key.
+  tls.key: ""
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: httpbin-certificate-pinning
+spec:
+  name: httpbin - Certificate Pinning
+  use_keyless: true
+  protocol: http
+  active: true
+  pinned_public_keys_refs:
+    "*": httpbin-secret
+  proxy:
+    target_url: https://httpbin.org
+    listen_path: /pinning
+    strip_listen_path: true
+  version_data:
+    default_version: Default
+    not_versioned: true
+    versions:
+      Default:
+        name: Default

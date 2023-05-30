@@ -76,6 +76,6 @@ testcases:
 - name: Delete API for Auth middleware hook
   steps:
     - type: exec
-      script: kubectl delete -f samples/httpbin_keyless_grpc-auth.yaml
+      script: kubectl delete -f samples/httpbin_keyless_grpc-auth.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0
