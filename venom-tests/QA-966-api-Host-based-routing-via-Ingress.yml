@@ -44,13 +44,13 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/ingress/ingress-httpbin/ingress.yaml
+      script: kubectl delete -f ../config/samples/ingress/ingress-httpbin/ingress.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0
 
 - name: Delete API template
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/ingress/ingress-httpbin/apidefinition_template.yaml
+      script: kubectl delete -f ../config/samples/ingress/ingress-httpbin/apidefinition_template.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0

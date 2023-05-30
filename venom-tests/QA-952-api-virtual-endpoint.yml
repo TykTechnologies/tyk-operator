@@ -19,6 +19,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/config_data_virtual_endpoint.yaml
+      script: kubectl delete -f ../config/samples/config_data_virtual_endpoint.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0
