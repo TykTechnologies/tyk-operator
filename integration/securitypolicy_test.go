@@ -617,6 +617,16 @@ func TestSecurityPolicy(t *testing.T) {
 							)
 							eval.Equal(policyOnK8s.Status.PolID, *policyOnTyk.MID)
 						} else {
+							if len(policyOnK8s.Spec.AccessRightsArray) == 0 {
+								t.Logf("unexpected length for AccessRightsArray")
+								return false
+							}
+
+							if policyOnK8s.Spec.AccessRightsArray[0] == nil {
+								t.Logf("nil accessDefinition")
+								return false
+							}
+
 							ad, exists := policyOnTyk.AccessRights[*policyOnK8s.Spec.AccessRightsArray[0].APIID]
 							eval.True(exists)
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
