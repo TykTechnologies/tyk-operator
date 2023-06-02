@@ -134,8 +134,10 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			err := c.Client().Resources().Get(ctx, policyName, testNs, &updatePolicy)
 			eval.NoErr(err)
 
-			updatePolicy.Spec.AccessRightsArray = append(updatePolicy.Spec.AccessRightsArray,
-				&model.AccessDefinition{Name: api2Name, Namespace: testNs})
+			updatePolicy.Spec.AccessRightsArray = append(
+				updatePolicy.Spec.AccessRightsArray,
+				&model.AccessDefinition{Name: api2Name, Namespace: testNs},
+			)
 
 			err = c.Client().Resources().Update(ctx, &updatePolicy)
 			eval.NoErr(err)
@@ -197,12 +199,12 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 		pol.Namespace = testNs
 
 		err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&pol, func(object k8s.Object) bool {
-			pol, ok := object.(*v1alpha1.SecurityPolicy)
+			polObj, ok := object.(*v1alpha1.SecurityPolicy)
 			if !ok {
 				return false
 			}
 
-			return pol.Status.LinkedAPIs == nil
+			return polObj.Status.LinkedAPIs == nil
 		}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 		eval.NoErr(err)
 
