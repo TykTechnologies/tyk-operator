@@ -671,7 +671,7 @@ type APIDefinitionSpec struct {
 	EnableCoProcessAuth *bool `json:"enable_coprocess_auth,omitempty"`
 
 	// JWTSigningMethod algorithm used to sign jwt token
-	// +kubebuilder:validation:Enum=rsa;hmac;ecdsa
+	// +kubebuilder:validation:Enum="";rsa;hmac;ecdsa
 	JWTSigningMethod *string `json:"jwt_signing_method,omitempty"`
 
 	// JWTSource Must either be a base64 encoded valid RSA/HMAC key or a url to a
