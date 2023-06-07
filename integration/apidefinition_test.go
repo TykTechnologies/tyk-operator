@@ -56,6 +56,118 @@ func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	return err
 }
 
+func TestTransactionStatusSubresource(t *testing.T) {
+	var (
+		eval     = is.New(t)
+		apiDefCR *v1alpha1.ApiDefinition
+	)
+
+	testTransactionStatus := features.New("Transaction Status must be updated").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			testNS, ok := ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
+
+			err := wait.For(func() (done bool, err error) {
+				apiDefCR, err = createTestAPIDef(ctx, c, testNS, nil)
+				if err != nil {
+					t.Logf("Failed to create APIDefinition in k8s, err: %v", err)
+					return false, nil
+				}
+
+				return true, nil
+			})
+			eval.NoErr(err)
+
+			return ctx
+		}).
+		Assess("Transaction status of ApiDefinition is updated successfully",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				err := wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						if apiDefObj.Status.LatestTransaction.Status != v1alpha1.Successful ||
+							apiDefObj.Status.LatestTransaction.Error != "" {
+							t.Logf("Unexpected Transaction Status: %#v", apiDefObj.Status.LatestTransaction)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Deleting linked APIDefinition must update Transaction Status",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNS, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				_, err := createTestPolicy(ctx, c, testNS, func(policy *v1alpha1.SecurityPolicy) {
+					policy.Spec.AccessRightsArray = []*model.AccessDefinition{
+						{Name: apiDefCR.Name, Namespace: apiDefCR.Namespace},
+					}
+				})
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						if len(apiDefObj.Status.LinkedByPolicies) != 1 {
+							t.Logf("unexpected linked Policy status")
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				err = c.Client().Resources(testNS).Delete(ctx, apiDefCR)
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						if len(apiDefObj.Status.LinkedByPolicies) != 1 {
+							t.Logf("unexpected linked Policy status")
+							return false
+						}
+
+						if apiDefObj.Status.LatestTransaction.Status != v1alpha1.Failed {
+							t.Logf("unexpected Transaction status: %#v", apiDefObj.Status.LatestTransaction)
+							return false
+						}
+
+						if apiDefObj.Status.LatestTransaction.Error == "" {
+							t.Logf("unexpected Transaction Error: %#v", apiDefObj.Status.LatestTransaction)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Test(t, testTransactionStatus)
+}
+
 // TestDeletingNonexistentAPI tests if deleting nonexistent resources cause an error or not on k8s level.
 // Assume that the user deleted ApiDefinition resource from Tyk instead of deleting it via kubectl.
 // This will create a drift between Tyk and K8s. Deleting the same resource from k8s shouldn't cause any

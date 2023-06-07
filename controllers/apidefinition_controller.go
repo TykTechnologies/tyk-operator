@@ -37,6 +37,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -199,10 +200,36 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return r.update(ctx, upstreamRequestStruct)
 	})
 
+	var transactionInfo *tykv1alpha1.TransactionInfo
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
+
+		if desired.Status.LatestTransaction.Status == tykv1alpha1.Failed {
+			transactionInfo = &tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Successful,
+				Error:  "",
+			}
+		}
 	} else {
 		queueA = queueAfter
+		if desired.Status.LatestTransaction.Error != err.Error() {
+			transactionInfo = &tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Failed,
+				Error:  err.Error(),
+			}
+		}
+	}
+
+	if transactionInfo != nil {
+		err = r.updateStatus(
+			ctx,
+			upstreamRequestStruct.Namespace,
+			model.Target{Namespace: &upstreamRequestStruct.Namespace, Name: upstreamRequestStruct.Name},
+			false,
+			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
+		)
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
@@ -432,6 +459,11 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 			status.ApiID = *desired.Spec.APIID
 			status.LatestTykSpecHash = calculateHash(apiOnTyk)
 			status.LatestCRDSpecHash = calculateHash(desired.Spec)
+			status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Successful,
+				Error:  "",
+			}
 		},
 	)
 	if err != nil {
@@ -505,6 +537,11 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.LatestTykSpecHash = calculateHash(apiOnTyk)
 			status.LatestCRDSpecHash = calculateHash(desired.Spec)
+			status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Successful,
+				Error:  "",
+			}
 		},
 	)
 	if err != nil {

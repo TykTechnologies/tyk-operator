@@ -29,6 +29,9 @@ spec:
     - jsonPath: .spec.active
       name: Enabled
       type: boolean
+    - jsonPath: .status.latestTransaction.status
+      name: Status
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -1802,8 +1805,24 @@ spec:
               api_id:
                 type: string
               latestCRDSpecHash:
+                description: LatestCRDSpecHash stores the hash of ApiDefinition CRD created on K8s. This information is updated after creating or updating the ApiDefinition. It is useful for Operator to understand running update operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash, Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
                 type: string
+              latestTransaction:
+                description: TransactionInfo holds information about the status of object's reconciliation.
+                properties:
+                  error:
+                    description: Error corresponds to the error happened on Tyk API level, if any.
+                    type: string
+                  status:
+                    description: Status corresponds to the status of the last transaction.
+                    type: string
+                  time:
+                    description: Time corresponds to the time of last transaction.
+                    format: date-time
+                    type: string
+                type: object
               latestTykSpecHash:
+                description: LatestTykSpecHash stores the hash of ApiDefinition created on Tyk. This information is updated after creating or updating the ApiDefinition. It is useful for Operator to understand running update operation or not. If there is a change in latestTykSpecHash as well as latestCRDSpecHash, Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
                 type: string
               linked_by_apis:
                 description: LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this resource
