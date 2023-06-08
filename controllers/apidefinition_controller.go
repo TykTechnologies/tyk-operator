@@ -55,7 +55,7 @@ import (
 )
 
 const (
-	queueAfter = time.Second * 5
+	queueAfter = time.Second * 3
 	GraphKey   = "graph_ref"
 )
 
@@ -205,6 +205,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
 
+		// TODO it needs update when time changes as well
 		if desired.Status.LatestTransaction.Status != tykv1alpha1.Successful ||
 			desired.Status.LatestTransaction.Error != "" {
 			transactionInfo = &tykv1alpha1.TransactionInfo{
