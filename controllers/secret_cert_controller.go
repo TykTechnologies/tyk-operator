@@ -117,13 +117,13 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	certID := ""
-	isCertAlreadyUploaded := false
+	isCertPreviouslyProcessed := false
 
 	for idx := range apiDefList.Items {
 		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
 				// do not upload cert again if it is already uploaded
-				if !isCertAlreadyUploaded {
+				if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
 					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 					if err != nil {
 						return ctrl.Result{Requeue: true}, err
@@ -131,7 +131,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 					log.Info("uploaded certificate to Tyk", "certID", certID)
 
-					isCertAlreadyUploaded = true
+					isCertPreviouslyProcessed = true
 				}
 
 				if apiDefList.Items[idx].Spec.UpstreamCertificates == nil {
@@ -160,7 +160,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysRefs {
 			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysRefs[domain] {
 				// do not upload cert again if it is already uploaded
-				if !isCertAlreadyUploaded {
+				if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
 					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 					if err != nil {
 						return ctrl.Result{Requeue: true}, err
@@ -168,7 +168,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 					log.Info("uploaded certificate to Tyk", "certID", certID)
 
-					isCertAlreadyUploaded = true
+					isCertPreviouslyProcessed = true
 				}
 
 				if apiDefList.Items[idx].Spec.PinnedPublicKeys == nil {
@@ -195,7 +195,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		if containsString(apiDefList.Items[idx].Spec.CertificateSecretNames, req.Name) {
-			if !isCertAlreadyUploaded {
+			if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
 				certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
 					return ctrl.Result{Requeue: true}, err
@@ -203,7 +203,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 				log.Info("uploaded certificate to Tyk", "certID", certID)
 
-				isCertAlreadyUploaded = true
+				isCertPreviouslyProcessed = true
 			}
 
 			if apiDefList.Items[idx].Spec.Certificates == nil {
@@ -273,6 +273,22 @@ func (r *SecretCertReconciler) delete(ctx context.Context, desired *v1.Secret, l
 	log.Info("secret successfully deleted")
 
 	return nil
+}
+
+// isCertificateAlreadyUploaded checks if certificate already exists in tyk or it was uploaded by the controller
+func isCertificateAlreadyUploaded(ctx context.Context, certPreviouslyUploaded bool, tlsCert []byte, orgID string) bool {
+	if certPreviouslyUploaded {
+		return true
+	}
+
+	fingerPrint, err := cert.CalculateFingerPrint(tlsCert)
+	if err != nil {
+		return false
+	}
+
+	certID := orgID + fingerPrint
+
+	return klient.Universal.Certificate().Exists(ctx, certID)
 }
 
 // https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#resources-watched-by-the-controller
