@@ -42,6 +42,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -204,7 +205,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
 
-		if desired.Status.LatestTransaction.Status == tykv1alpha1.Failed {
+		if desired.Status.LatestTransaction.Status != tykv1alpha1.Successful ||
+			desired.Status.LatestTransaction.Error != "" {
 			transactionInfo = &tykv1alpha1.TransactionInfo{
 				Time:   metav1.Now(),
 				Status: tykv1alpha1.Successful,
@@ -213,7 +215,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	} else {
 		queueA = queueAfter
-		if desired.Status.LatestTransaction.Error != err.Error() {
+		if desired.Status.LatestTransaction.Status != tykv1alpha1.Failed ||
+			desired.Status.LatestTransaction.Error != err.Error() {
 			transactionInfo = &tykv1alpha1.TransactionInfo{
 				Time:   metav1.Now(),
 				Status: tykv1alpha1.Failed,
@@ -223,13 +226,17 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if transactionInfo != nil {
-		err = r.updateStatus(
-			ctx,
-			upstreamRequestStruct.Namespace,
-			model.Target{Namespace: &upstreamRequestStruct.Namespace, Name: upstreamRequestStruct.Name},
-			false,
-			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
-		)
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			err = r.updateStatus(
+				ctx,
+				upstreamRequestStruct.Namespace,
+				model.Target{Namespace: &upstreamRequestStruct.Namespace, Name: upstreamRequestStruct.Name},
+				false,
+				func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
+			)
+
+			return err
+		})
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err

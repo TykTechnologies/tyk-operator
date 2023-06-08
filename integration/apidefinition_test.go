@@ -67,34 +67,35 @@ func TestTransactionStatusSubresource(t *testing.T) {
 			testNS, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			err := wait.For(func() (done bool, err error) {
-				apiDefCR, err = createTestAPIDef(ctx, c, testNS, nil)
-				if err != nil {
-					t.Logf("Failed to create APIDefinition in k8s, err: %v", err)
-					return false, nil
-				}
-
-				return true, nil
-			})
+			var err error
+			apiDefCR, err = createTestAPIDef(ctx, c, testNS, nil)
 			eval.NoErr(err)
 
 			return ctx
 		}).
 		Assess("Transaction status of ApiDefinition is updated successfully",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
-						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
-						eval.True(ok)
+				testNS, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
 
-						if apiDefObj.Status.LatestTransaction.Status != v1alpha1.Successful ||
-							apiDefObj.Status.LatestTransaction.Error != "" {
-							t.Logf("Unexpected Transaction Status: %#v", apiDefObj.Status.LatestTransaction)
-							return false
-						}
+				err := wait.For(func() (done bool, err error) {
+					apiDefObj := v1alpha1.ApiDefinition{}
 
-						return true
-					}),
+					err = c.Client().Resources(testNS).Get(ctx, apiDefCR.Name, apiDefCR.Namespace, &apiDefObj)
+					if err != nil {
+						t.Logf("Failed to get APIDefinition from k8s, err: %v", err)
+						return false, nil
+					}
+
+					if apiDefObj.Status.LatestTransaction.Status != v1alpha1.Successful ||
+						apiDefObj.Status.LatestTransaction.Error != "" {
+						t.Logf("Unexpected Transaction Status: %#v", apiDefObj.Status.LatestTransaction)
+						return false, nil
+					}
+
+					return true, nil
+				},
+
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
 				)
