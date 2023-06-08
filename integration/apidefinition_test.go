@@ -67,7 +67,18 @@ func TestTransactionStatusSubresource(t *testing.T) {
 			testNS, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			var err error
+			opConfSecret := v1.Secret{}
+			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
+			eval.NoErr(err)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(&opConfSecret)
+			eval.NoErr(err)
+
+			// Since SecurityPolicy will be used in the test, let's skip testing Tyk versions
+			// that do not support Policy API in CE mode.
+			verifyPolicyApiVersion(t, &tykEnv)
+
 			apiDefCR, err = createTestAPIDef(ctx, c, testNS, nil)
 			eval.NoErr(err)
 
@@ -315,7 +326,12 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				// on k8s state.
 				err = wait.For(func() (done bool, err error) {
 					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
-					return err == nil, err
+					if err != nil {
+						t.Logf("Failed to reconcile, err: %v", err)
+						return false, nil
+					}
+
+					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -887,7 +903,10 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 						eval.True(ok)
 
 						tykCertID, exists := apiDefObj.Spec.PinnedPublicKeys["*"]
-						eval.True(exists)
+						if !exists {
+							t.Logf("PinnedPublicKeys not updated yet")
+							return false
+						}
 
 						if !klient.Universal.Certificate().Exists(tykCtx, tykCertID) {
 							t.Logf("failed to access certificate with ID %v on Tyk", tykCertID)
@@ -895,7 +914,10 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 						}
 
 						apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefObj.Status.ApiID)
-						eval.NoErr(err)
+						if err != nil {
+							t.Logf("Failed to get APIDefinition from Tyk, err: %v", err)
+							return false
+						}
 
 						certIdOfApi, exists := apiDefOnTyk.PinnedPublicKeys["*"]
 						eval.True(exists)
@@ -907,7 +929,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 								certIdOfApi,
 							)
 
-							eval.True(certIdOfApi != tykCertID)
+							return false
 						}
 
 						return true
