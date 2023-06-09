@@ -25,7 +25,7 @@ import (
 const (
 	namespace      = "bdd"
 	k8sTimeout     = time.Second * 10
-	reconcileDelay = time.Second * 1
+	reconcileDelay = time.Second * 3
 )
 
 var gwNS = fmt.Sprintf("tyk%s-control-plane", os.Getenv("TYK_MODE"))
