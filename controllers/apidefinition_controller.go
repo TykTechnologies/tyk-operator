@@ -237,8 +237,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 			err = r.updateStatus(
 				ctx,
-				upstreamRequestStruct.Namespace,
-				model.Target{Namespace: &upstreamRequestStruct.Namespace, Name: upstreamRequestStruct.Name},
+				desired.Namespace,
+				model.Target{Namespace: &desired.Namespace, Name: desired.Name},
 				false,
 				func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
 			)

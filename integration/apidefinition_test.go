@@ -56,6 +56,7 @@ func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	return err
 }
 
+// TestTransactionStatusSubresource tests whether transaction information is updated on each reconciliation.
 func TestTransactionStatusSubresource(t *testing.T) {
 	var (
 		eval     = is.New(t)
@@ -143,8 +144,9 @@ func TestTransactionStatusSubresource(t *testing.T) {
 				)
 				eval.NoErr(err)
 
-				err = c.Client().Resources(testNS).Delete(ctx, apiDefCR)
-				eval.NoErr(err)
+				// Deleting a resource should cause an error on APIDefinition and this error
+				// must be reflected to CR's Status resource.
+				c.Client().Resources(testNS).Delete(ctx, apiDefCR) //nolint:errcheck
 
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
