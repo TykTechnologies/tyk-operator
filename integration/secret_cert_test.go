@@ -38,7 +38,7 @@ func TestCertificateUpload(t *testing.T) {
 			eval := is.New(t)
 			var err error
 
-			testNS, _ = ctx.Value(ctxNSKey).(string)
+			testNS, _ = ctx.Value(ctxNSKey).(string) // nolint: errcheck
 
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(ctx, envConf)
@@ -62,34 +62,36 @@ func TestCertificateUpload(t *testing.T) {
 			})
 			eval.NoErr(err)
 
-			waitForTykResourceCreation(envConf, apiDef)
+			err = waitForTykResourceCreation(envConf, apiDef)
+			eval.NoErr(err)
 
 			return ctx
-		}).Assess("validate certificate is uploaded", func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-		eval := is.New(t)
+		}).Assess("validate certificate is uploaded",
+		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			eval := is.New(t)
 
-		// Validate the certificate is uploaded
-		err := wait.For(func() (done bool, err error) {
-			tykApi, err := klient.Universal.Api().Get(tykCtx, apiDef.Status.ApiID)
-			if err != nil {
-				return false, err
-			}
+			// Validate the certificate is uploaded
+			err := wait.For(func() (done bool, err error) {
+				tykApi, err := klient.Universal.Api().Get(tykCtx, apiDef.Status.ApiID)
+				if err != nil {
+					return false, err
+				}
 
-			if tykApi.UpstreamCertificates == nil {
-				return false, nil
-			}
+				if tykApi.UpstreamCertificates == nil {
+					return false, nil
+				}
 
-			if len(tykApi.UpstreamCertificates) == 0 {
-				return false, nil
-			}
+				if len(tykApi.UpstreamCertificates) == 0 {
+					return false, nil
+				}
 
-			return true, nil
-		}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				return true, nil
+			}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 
-		eval.NoErr(err)
+			eval.NoErr(err)
 
-		return ctx
-	}).Assess("secret is successfully reconciled on next run",
+			return ctx
+		}).Assess("secret is successfully reconciled on next run",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			eval := is.New(t)
 
@@ -103,7 +105,11 @@ func TestCertificateUpload(t *testing.T) {
 				Env:    tykEnv,
 			}
 
-			_, err = r.Reconcile(tykCtx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tlsSecretName, Namespace: testNS}})
+			_, err = r.Reconcile(tykCtx, ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      tlsSecretName,
+					Namespace: testNS,
+				}})
 			eval.NoErr(err)
 
 			return ctx
