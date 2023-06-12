@@ -74,14 +74,14 @@ func TestCertificateUpload(t *testing.T) {
 			err := wait.For(func() (done bool, err error) {
 				tykApi, err := klient.Universal.Api().Get(tykCtx, apiDef.Status.ApiID)
 				if err != nil {
+					t.Log("Failed to fetch Tyk API", "id", apiDef.Status.ApiID, "error", err)
+
 					return false, err
 				}
 
-				if tykApi.UpstreamCertificates == nil {
-					return false, nil
-				}
+				if tykApi.UpstreamCertificates == nil || len(tykApi.UpstreamCertificates) == 0 {
+					t.Log("Upstream certificate is not uploaded yet. It is still empty/nil")
 
-				if len(tykApi.UpstreamCertificates) == 0 {
 					return false, nil
 				}
 
@@ -105,11 +105,20 @@ func TestCertificateUpload(t *testing.T) {
 				Env:    tykEnv,
 			}
 
-			_, err = r.Reconcile(tykCtx, ctrl.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      tlsSecretName,
-					Namespace: testNS,
-				},
+			err = wait.For(func() (done bool, err error) {
+				_, err = r.Reconcile(tykCtx, ctrl.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      tlsSecretName,
+						Namespace: testNS,
+					},
+				})
+
+				if err != nil {
+					t.Log("Failed to reconcile secret", "name", tlsSecretName, "namespace", testNS, "error", err)
+					return false, nil
+				}
+
+				return true, nil
 			})
 			eval.NoErr(err)
 
