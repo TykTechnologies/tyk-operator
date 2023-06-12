@@ -38,6 +38,8 @@ func TestCertificateUpload(t *testing.T) {
 			eval := is.New(t)
 			var err error
 
+			testNS, _ = ctx.Value(ctxNSKey).(string)
+
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err = generateEnvConfig(ctx, envConf)
 			eval.NoErr(err)
@@ -47,14 +49,13 @@ func TestCertificateUpload(t *testing.T) {
 				Log: log.NullLogger{},
 			})
 
-			// Create a secret
-			testNS, _ = ctx.Value(ctxNSKey).(string)
-
+			// Create TLS secret
 			_, err = createTestTlsSecret(ctx, testNS, envConf, func(s *v1.Secret) {
 				s.Name = tlsSecretName
 			})
 			eval.NoErr(err)
 
+			// Create test api definition
 			apiDef, err = createTestAPIDef(ctx, envConf, testNS, func(api *v1alpha1.ApiDefinition) {
 				api.Name = apiDefName
 				api.Spec.UpstreamCertificateRefs = map[string]string{"*": tlsSecretName}
@@ -88,7 +89,7 @@ func TestCertificateUpload(t *testing.T) {
 		eval.NoErr(err)
 
 		return ctx
-	}).Assess("validate certificate is successfully reconciled on restart of operator",
+	}).Assess("secret is successfully reconciled on next run",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			eval := is.New(t)
 
