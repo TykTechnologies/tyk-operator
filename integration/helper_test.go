@@ -273,7 +273,14 @@ func createTestTlsSecret(ctx context.Context, ns string, c *envconf.Config, fn f
 
 // generateEnvConfig creates a config structure to connect your Tyk installation. It parses k8s secret object
 // and reads required connection credentials from there.
-func generateEnvConfig(operatorConfSecret *v1.Secret) (environmet.Env, error) {
+func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environmet.Env, error) {
+	operatorConfSecret := v1.Secret{}
+
+	err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &operatorConfSecret)
+	if err != nil {
+		return environmet.Env{}, err
+	}
+
 	data, ok := operatorConfSecret.Data["TYK_AUTH"]
 	if !ok {
 		return environmet.Env{}, errors.New("failed to parse TYK_AUTH from operator secret")

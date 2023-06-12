@@ -36,13 +36,10 @@ func TestCertificateUpload(t *testing.T) {
 	f := features.New("test certificate upload").
 		Setup(func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			eval := is.New(t)
-			opConfSecret := v1.Secret{}
-
-			err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, envConf)
 			eval.NoErr(err)
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{

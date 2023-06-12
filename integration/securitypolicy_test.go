@@ -14,7 +14,6 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
 	"github.com/matryer/is"
 
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -55,12 +54,8 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			verifyPolicyApiVersion(t, &tykEnv)
@@ -336,12 +331,8 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 	securityPolicyMigrationFeatures := features.New("Existing Security Policy Migration to K8s").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			verifyPolicyApiVersion(t, &tykEnv)
@@ -541,12 +532,10 @@ func TestSecurityPolicy(t *testing.T) {
 
 	securityPolicyFeatures := features.New("Create Security Policy from scratch").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			verifyPolicyApiVersion(t, &tykEnv)
@@ -705,12 +694,10 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 	securityPolicyForGraphQL := features.New("GraphQL specific Security Policy configurations").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
@@ -863,12 +850,8 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 			testNs, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			verifyPolicyApiVersion(t, &tykEnv)
