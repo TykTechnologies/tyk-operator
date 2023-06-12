@@ -205,7 +205,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
 
-		// TODO it needs update when time changes as well
 		if desired.Status.LatestTransaction.Status != tykv1alpha1.Successful ||
 			desired.Status.LatestTransaction.Error != "" {
 			transactionInfo = &tykv1alpha1.TransactionInfo{
@@ -215,13 +214,21 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			}
 		}
 	} else {
-		queueA = queueAfter
-		if desired.Status.LatestTransaction.Status != tykv1alpha1.Failed ||
-			desired.Status.LatestTransaction.Error != err.Error() {
+		if errors.Is(err, errNoNeedUpdate) {
 			transactionInfo = &tykv1alpha1.TransactionInfo{
 				Time:   metav1.Now(),
-				Status: tykv1alpha1.Failed,
-				Error:  err.Error(),
+				Status: tykv1alpha1.Successful,
+				Error:  "",
+			}
+		} else {
+			queueA = queueAfter
+			if desired.Status.LatestTransaction.Status != tykv1alpha1.Failed ||
+				desired.Status.LatestTransaction.Error != err.Error() {
+				transactionInfo = &tykv1alpha1.TransactionInfo{
+					Time:   metav1.Now(),
+					Status: tykv1alpha1.Failed,
+					Error:  err.Error(),
+				}
 			}
 		}
 	}
@@ -507,7 +514,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		// If we have same ApiDefinition on Tyk, we do not need to send Update and Hot Reload requests
 		// to Tyk. So, we can simply return to main reconciliation logic.
 		if isSame(desired.Status.LatestTykSpecHash, apiDefOnTyk) && isSame(desired.Status.LatestCRDSpecHash, desired.Spec) {
-			return nil
+			return errNoNeedUpdate
 		}
 
 		_, err = klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
