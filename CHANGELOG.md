@@ -3,6 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.2...HEAD)
 
+**Fixed**
+- Check if certificate already exists on tyk before uploading
+
 ## [0.14.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.2)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.1...v0.14.2)
 
