@@ -109,7 +109,8 @@ func TestCertificateUpload(t *testing.T) {
 				NamespacedName: types.NamespacedName{
 					Name:      tlsSecretName,
 					Namespace: testNS,
-				}})
+				},
+			})
 			eval.NoErr(err)
 
 			return ctx
