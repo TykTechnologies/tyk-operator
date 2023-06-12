@@ -58,6 +58,10 @@ func createTestClient(k e2eKlient.Client) (cr.Client, error) {
 		return nil, err
 	}
 
+	if err := v1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
+
 	return cl, v1alpha1.AddToScheme(scheme)
 }
 
