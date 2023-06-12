@@ -219,17 +219,20 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		err = r.updateStatus(
+	// Reconciler must return the error observed by CreateOrUpdate() function since the mutator given to CreateOrUpdate
+	// returns special custom error such as ErrMultipleLinkSubGraph.
+	errK8s := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		return r.updateStatus(
 			ctx,
 			desired.Namespace,
 			model.Target{Namespace: &desired.Namespace, Name: desired.Name},
 			false,
 			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
 		)
-
-		return err
 	})
+	if errK8s != nil && err == nil {
+		err = errK8s
+	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
 }

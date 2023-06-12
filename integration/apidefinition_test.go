@@ -319,7 +319,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 					//		return true, nil
 					//	}
 
-					return false, err
+					return false, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -1649,7 +1649,14 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				// multiple ApiDefinition to one SubGraph CR is forbidden.
 				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
 					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
-					return errors.Is(err, controllers.ErrMultipleLinkSubGraph)
+					if !errors.Is(err, controllers.ErrMultipleLinkSubGraph) {
+						t.Logf("unexpected reconciliation err, expected: %v got: %v",
+							controllers.ErrMultipleLinkSubGraph, err,
+						)
+						return false
+					}
+
+					return true
 				}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
