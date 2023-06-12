@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'xychen/test'
+      - 'master'
 
 env:
   REGISTRY: ghcr.io
@@ -41,7 +42,7 @@ jobs:
         with:
           context: .
 #          platforms: linux/amd64
-          push: ${{ startsWith(github.ref, 'refs/heads/xychen') }}
+          push: ${{ startsWith(github.ref, 'refs/heads') }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:0.13.2
           labels: ${{ steps.metadata.outputs.labels }}
 #          cache-from: type=gha
