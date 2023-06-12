@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -18,16 +17,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var (
-	// hashOptions corresponds to hashing options used to calculate the hash of
-	// currently reconciled CRs.
-	hashOptions = hashstructure.HashOptions{ZeroNil: true}
-
-	// errNoNeedUpdate indicates that the resources are same. Therefore, Operator
-	// will not send any Update calls to Tyk to prevent possible loads on your
-	// Tyk installation.
-	errNoNeedUpdate = errors.New("resources are same; hence, no need to update on Tyk")
-)
+// hashOptions corresponds to hashing options used to calculate the hash of
+// currently reconciled CRs.
+var hashOptions = hashstructure.HashOptions{ZeroNil: true}
 
 // calculateHash calculates hashes of the given interfaces. Returns empty string for hash
 // if any error occurs during calculation.
