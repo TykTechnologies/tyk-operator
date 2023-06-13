@@ -432,9 +432,19 @@ func (r *SecurityPolicyReconciler) updatePolicyStatus(
 
 		policy.Status.LinkedAPIs = append(policy.Status.LinkedAPIs, target)
 
-		apiOnTyk, _ := klient.Universal.Api().Get(ctx, EncodeNS(target.String()))
+		apiOnTyk, err := klient.Universal.Api().Get(ctx, EncodeNS(target.String()))
+		if err != nil {
+			r.Log.Error(
+				err, "Failed to get ApiDefinition on Tyk",
+				"ApiDefinition", target.String(),
+			)
+			return err
+		}
+		if apiOnTyk.JWTDefaultPolicies == nil || len(apiOnTyk.JWTDefaultPolicies) == 0 {
+			apiOnTyk.JWTDefaultPolicies = make([]string, 0)
+		}
 		AddUniqueElement(&apiOnTyk.JWTDefaultPolicies, *policy.Spec.MID)
-		_, err := klient.Universal.Api().Update(ctx, apiOnTyk)
+		_, err = klient.Universal.Api().Update(ctx, apiOnTyk)
 		if err != nil {
 			r.Log.Error(
 				err, "Failed to update ApiDefinition on Tyk",
