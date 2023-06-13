@@ -394,6 +394,7 @@ type MethodTransformMeta struct {
 }
 
 type ValidatePathMeta struct {
+	Disabled *bool `json:"disabled,omitempty"`
 	// Allows override of default 422 Unprocessable Entity response code for validation errors.
 	ErrorResponseCode int        `json:"error_response_code"`
 	Path              string     `json:"path"`

@@ -134,8 +134,10 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 			err := c.Client().Resources().Get(ctx, policyName, testNs, &updatePolicy)
 			eval.NoErr(err)
 
-			updatePolicy.Spec.AccessRightsArray = append(updatePolicy.Spec.AccessRightsArray,
-				&model.AccessDefinition{Name: api2Name, Namespace: testNs})
+			updatePolicy.Spec.AccessRightsArray = append(
+				updatePolicy.Spec.AccessRightsArray,
+				&model.AccessDefinition{Name: api2Name, Namespace: testNs},
+			)
 
 			err = c.Client().Resources().Update(ctx, &updatePolicy)
 			eval.NoErr(err)
@@ -197,12 +199,12 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 		pol.Namespace = testNs
 
 		err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&pol, func(object k8s.Object) bool {
-			pol, ok := object.(*v1alpha1.SecurityPolicy)
+			polObj, ok := object.(*v1alpha1.SecurityPolicy)
 			if !ok {
 				return false
 			}
 
-			return pol.Status.LinkedAPIs == nil
+			return polObj.Status.LinkedAPIs == nil
 		}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 		eval.NoErr(err)
 
@@ -435,7 +437,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 						return true, nil
 					}
 
-					return false, err
+					t.Logf("Unexpected error in API call, err: %v", err)
+
+					return false, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -463,8 +467,14 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 						// Ensure that the Policy is accessible via the previous ID
 						newSpec, err = klient.Universal.Portal().Policy().Get(reqCtx, previousPolicyID)
-						eval.NoErr(err)
-						eval.True(hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID))
+						if err != nil {
+							t.Logf("failed to get SecurityPolicy from Tyk, err: %v", err)
+							return false
+						}
+
+						if !hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newSpec, policyOnK8s.Status.PolID) {
+							return false
+						}
 
 						return true
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
@@ -487,11 +497,18 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					// Ensure that policy is updated accordingly on Tyk Side.
 					newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 					if err != nil {
-						return false, err
+						t.Logf("Failed to get SecurityPolicy from Tyk, err: %v", err)
+						return false, nil
 					}
 
-					eval.True(newCopySpec != nil)
-					eval.Equal(newCopySpec.Name, copySpec.Name)
+					if newCopySpec == nil || copySpec == nil {
+						t.Logf("nil resources")
+						return false, nil
+					}
+
+					if newCopySpec.Name != copySpec.Name {
+						return false, nil
+					}
 
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
@@ -502,7 +519,12 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// and it must create a SecurityPolicy based on the spec stored in k8s.
 				err = wait.For(func() (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
-					return err == nil, err
+					if err != nil {
+						t.Logf("failed to reconcile, err: %v", err)
+						return false, nil
+					}
+
+					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -512,13 +534,17 @@ func TestSecurityPolicyMigration(t *testing.T) {
 						eval.True(ok)
 
 						newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
-						eval.NoErr(err)
+						if err != nil {
+							t.Logf("Failed to get SecurityPolicy from Tyk, err: %v", err)
+							return false
+						}
 
 						// Ensure that the latest Policy of Dashboard is created according to k8s state during
 						// reconciliation.
-						eval.True(
-							hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newCopySpec, policyOnK8s.Status.PolID),
-						)
+						if !hasSameValues(polRec.Env.Mode, &policyOnK8s.Spec, newCopySpec, policyOnK8s.Status.PolID) {
+							return false
+						}
+
 						return true
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
@@ -622,12 +648,13 @@ func TestSecurityPolicy(t *testing.T) {
 								return false
 							}
 
-							if policyOnK8s.Spec.AccessRightsArray[0] == nil {
-								t.Logf("nil accessDefinition")
+							definition := policyOnK8s.Spec.AccessRightsArray[0]
+							if definition == nil || definition.APIID == nil {
+								t.Logf("nil accessDefinition or APIID")
 								return false
 							}
 
-							ad, exists := policyOnTyk.AccessRights[*policyOnK8s.Spec.AccessRightsArray[0].APIID]
+							ad, exists := policyOnTyk.AccessRights[*definition.APIID]
 							eval.True(exists)
 							eval.Equal(policyOnK8s.Spec.AccessRightsArray[0].APIID, ad.APIID)
 							eval.Equal(policyOnK8s.Status.PolID, *policyOnTyk.ID)
