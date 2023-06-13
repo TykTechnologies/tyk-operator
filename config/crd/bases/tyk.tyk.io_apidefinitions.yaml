@@ -651,6 +651,7 @@ spec:
                             headers:
                               additionalProperties:
                                 type: string
+                              nullable: true
                               type: object
                             name:
                               type: string
@@ -835,6 +836,7 @@ spec:
               jwt_signing_method:
                 description: JWTSigningMethod algorithm used to sign jwt token
                 enum:
+                - ""
                 - rsa
                 - hmac
                 - ecdsa

@@ -11,6 +11,10 @@
 
 **Changed**
 - Changed optional fields of type string and bool to pointers for APIDefinition and Security Policy Custom Resources
+- Updated `.spec.graphql.supergraph.subgraphs[].headers` field to allow null values for validation. In the previous
+versions of Tyk such as v4.0 where `.spec.graphql.supergraph.subgraphs[].headers` is not supported, exporting such 
+resources by using Snapshot tool, sets these values to null since they are not introduced in v4.0. Allow `headers`
+field to accept `null` values to overcome validation issues.
 
 **Added**
 - Added possibility to set base identity provider
