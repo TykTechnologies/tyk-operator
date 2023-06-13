@@ -516,7 +516,8 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 				eval.NoErr(err)
 
 				return ctx
-			}).Feature()
+			}).
+		Feature()
 
 	testenv.Test(t, adCreate)
 }

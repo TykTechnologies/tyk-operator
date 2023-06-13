@@ -1858,6 +1858,8 @@ spec:
                             validate_json:
                               items:
                                 properties:
+                                  disabled:
+                                    type: boolean
                                   error_response_code:
                                     description: Allows override of default 422 Unprocessable
                                       Entity response code for validation errors.
