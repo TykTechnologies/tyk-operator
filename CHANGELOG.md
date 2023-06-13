@@ -3,6 +3,11 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.2...HEAD)
 
+**Added**
+- Added `disabled` feature in `validate_json` field of APIDefinition. 
+- Added a new Status resource called `latestTransaction` to the APIDefinition CRD which holds information about 
+last reconciliation. Now, any error can be observed there instead of checking Tyk Operator logs.
+
 ## [0.14.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.2)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.1...v0.14.2)
 
