@@ -25,6 +25,7 @@ spec:
         extended_paths:
           validate_json:
             - error_response_code: 422
+              disabled: false
               path: /get
               method: GET
               schema:
