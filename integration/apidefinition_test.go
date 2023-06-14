@@ -69,13 +69,10 @@ func TestDeletingNonexistentAPI(t *testing.T) {
 
 	testDeletingNonexistentAPIs := features.New("Deleting Nonexistent APIs from k8s").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			var err error
+
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -132,13 +129,9 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 
 	testReconcilingNonexistentAPIs := features.New("Reconciling Nonexistent ApiDefinition CRs").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			var err error
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -230,13 +223,10 @@ func TestApiDefinitionUpdate(t *testing.T) {
 
 	testApiDefinitionUpdate := features.New("Updating ApiDefinition CRs on k8s").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-
-			err := c.Client().Resources(opNs).Get(ctx, "tyk-operator-conf", opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -734,12 +724,9 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 			testNS, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
+			var err error
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			secret, err := createTestTlsSecret(ctx, testNS, c, nil)
@@ -828,12 +815,10 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 			testNS, ok := ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			opConfSecret := v1.Secret{}
-			err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, envConf)
 			eval.NoErr(err)
 
 			_, err = createTestTlsSecret(ctx, testNS, envConf, nil)
@@ -934,12 +919,8 @@ func TestApiCertificates(t *testing.T) {
 			return ctx
 		}).Assess("Certificate is created on Tyk",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-			err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err := generateEnvConfig(ctx, envConf)
 			eval.NoErr(err)
 
 			tykCtx := tykClient.SetContext(context.Background(), tykClient.Context{
@@ -968,13 +949,10 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 	testBasicAuth := features.New("Basic authentication").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -1051,13 +1029,10 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 	testBasicAuth := features.New("Base Identity Provider for Basic Auth and mTLS").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -1147,11 +1122,9 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 	testWithCert := features.New("Client MTLS with certificate").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -1384,13 +1357,10 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 	gqlSubGraph := features.New("GraphQL SubGraph Execution mode").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			eval := is.New(t)
-			opConfSecret := v1.Secret{}
-
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
+			var err error
 
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err = generateEnvConfig(&opConfSecret)
+			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			v, err := version.ParseGeneric(tykEnv.TykVersion)
