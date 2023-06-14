@@ -65,20 +65,16 @@ func TestTransactionStatusSubresource(t *testing.T) {
 
 	testTransactionStatus := features.New("Transaction Status must be updated").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			testNS, ok := ctx.Value(ctxNSKey).(string)
-			eval.True(ok)
-
-			opConfSecret := v1.Secret{}
-			err := c.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &opConfSecret)
-			eval.NoErr(err)
-
 			// Obtain Environment configuration to be able to connect Tyk.
-			tykEnv, err := generateEnvConfig(&opConfSecret)
+			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
 			// Since SecurityPolicy will be used in the test, let's skip testing Tyk versions
 			// that do not support Policy API in CE mode.
 			verifyPolicyApiVersion(t, &tykEnv)
+
+			testNS, ok := ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
 
 			apiDefCR, err = createTestAPIDef(ctx, c, testNS, nil)
 			eval.NoErr(err)
