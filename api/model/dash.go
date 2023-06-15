@@ -10,7 +10,7 @@ type Result struct {
 	// from dashboard api
 	Message string
 	Meta    string
-	Errors  interface{}
+	Errors  []string
 
 	// from tyk api
 	Key     string `json:"key"`
