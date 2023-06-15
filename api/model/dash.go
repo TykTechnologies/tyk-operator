@@ -4,11 +4,13 @@ import "fmt"
 
 // Result is a an object returned by most dashboard api's
 type Result struct {
-	Status string
+	Status     string
+	StatusCode int
 
 	// from dashboard api
 	Message string
 	Meta    string
+	Errors  interface{}
 
 	// from tyk api
 	Key     string `json:"key"`
@@ -17,5 +19,11 @@ type Result struct {
 }
 
 func (r *Result) String() string {
-	return fmt.Sprintf("Status: %v, Message: %v", r.Status, r.Message)
+	msg := fmt.Sprintf("%v Status: %v HTTP %v", r.Message, r.Status, r.StatusCode)
+
+	if r.Errors != nil {
+		msg = fmt.Sprintf("%v: %v", msg, r.Errors)
+	}
+
+	return msg
 }

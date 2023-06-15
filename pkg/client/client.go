@@ -211,6 +211,7 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 
 		err = json.Unmarshal(b, &result)
 		if err == nil {
+			result.StatusCode = res.StatusCode
 			errString = result.String()
 		}
 
