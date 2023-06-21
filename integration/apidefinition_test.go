@@ -56,6 +56,128 @@ func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
 	return err
 }
 
+// TestTransactionStatusSubresource tests whether transaction information is updated on each reconciliation.
+func TestTransactionStatusSubresource(t *testing.T) {
+	var (
+		eval     = is.New(t)
+		apiDefCR *v1alpha1.ApiDefinition
+	)
+
+	testTransactionStatus := features.New("Transaction Status must be updated").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(ctx, c)
+			eval.NoErr(err)
+
+			// Since SecurityPolicy will be used in the test, let's skip testing Tyk versions
+			// that do not support Policy API in CE mode.
+			verifyPolicyApiVersion(t, &tykEnv)
+
+			testNS, ok := ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
+
+			apiDefCR, err = createTestAPIDef(ctx, c, testNS, nil)
+			eval.NoErr(err)
+
+			return ctx
+		}).
+		Assess("Transaction status of ApiDefinition is updated successfully",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNS, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				err := wait.For(func() (done bool, err error) {
+					apiDefObj := v1alpha1.ApiDefinition{}
+
+					err = c.Client().Resources(testNS).Get(ctx, apiDefCR.Name, apiDefCR.Namespace, &apiDefObj)
+					if err != nil {
+						t.Logf("Failed to get APIDefinition from k8s, err: %v", err)
+						return false, nil
+					}
+
+					if apiDefObj.Status.LatestTransaction.Status != v1alpha1.Successful ||
+						apiDefObj.Status.LatestTransaction.Error != "" {
+						t.Logf("Unexpected Transaction Status: %#v", apiDefObj.Status.LatestTransaction)
+						return false, nil
+					}
+
+					return true, nil
+				},
+
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Assess("Deleting linked APIDefinition must update Transaction Status",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNS, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				_, err := createTestPolicy(ctx, c, testNS, func(policy *v1alpha1.SecurityPolicy) {
+					policy.Spec.AccessRightsArray = []*model.AccessDefinition{
+						{Name: apiDefCR.Name, Namespace: apiDefCR.Namespace},
+					}
+				})
+				eval.NoErr(err)
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						if len(apiDefObj.Status.LinkedByPolicies) != 1 {
+							t.Logf("unexpected linked Policy status")
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// Deleting a resource should cause an error on APIDefinition and this error
+				// must be reflected to CR's Status resource.
+				c.Client().Resources(testNS).Delete(ctx, apiDefCR) //nolint:errcheck
+
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						if len(apiDefObj.Status.LinkedByPolicies) != 1 {
+							t.Logf("unexpected linked Policy status")
+							return false
+						}
+
+						if apiDefObj.Status.LatestTransaction.Status != v1alpha1.Failed {
+							t.Logf("unexpected Transaction status: %#v", apiDefObj.Status.LatestTransaction)
+							return false
+						}
+
+						if apiDefObj.Status.LatestTransaction.Error == "" {
+							t.Logf("unexpected Transaction Error: %#v", apiDefObj.Status.LatestTransaction)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				return ctx
+			}).
+		Feature()
+
+	testenv.Test(t, testTransactionStatus)
+}
+
 // TestDeletingNonexistentAPI tests if deleting nonexistent resources cause an error or not on k8s level.
 // Assume that the user deleted ApiDefinition resource from Tyk instead of deleting it via kubectl.
 // This will create a drift between Tyk and K8s. Deleting the same resource from k8s shouldn't cause any
@@ -186,7 +308,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 					//		return true, nil
 					//	}
 
-					return false, err
+					return false, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -195,7 +317,12 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				// on k8s state.
 				err = wait.For(func() (done bool, err error) {
 					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
-					return err == nil, err
+					if err != nil {
+						t.Logf("Failed to reconcile, err: %v", err)
+						return false, nil
+					}
+
+					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
@@ -762,7 +889,10 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 						eval.True(ok)
 
 						tykCertID, exists := apiDefObj.Spec.PinnedPublicKeys["*"]
-						eval.True(exists)
+						if !exists {
+							t.Logf("PinnedPublicKeys not updated yet")
+							return false
+						}
 
 						if !klient.Universal.Certificate().Exists(tykCtx, tykCertID) {
 							t.Logf("failed to access certificate with ID %v on Tyk", tykCertID)
@@ -770,7 +900,10 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 						}
 
 						apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefObj.Status.ApiID)
-						eval.NoErr(err)
+						if err != nil {
+							t.Logf("Failed to get APIDefinition from Tyk, err: %v", err)
+							return false
+						}
 
 						certIdOfApi, exists := apiDefOnTyk.PinnedPublicKeys["*"]
 						eval.True(exists)
@@ -782,7 +915,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 								certIdOfApi,
 							)
 
-							eval.True(certIdOfApi != tykCertID)
+							return false
 						}
 
 						return true
@@ -1483,7 +1616,14 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				// multiple ApiDefinition to one SubGraph CR is forbidden.
 				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
 					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
-					return errors.Is(err, controllers.ErrMultipleLinkSubGraph)
+					if !errors.Is(err, controllers.ErrMultipleLinkSubGraph) {
+						t.Logf("unexpected reconciliation err, expected: %v got: %v",
+							controllers.ErrMultipleLinkSubGraph, err,
+						)
+						return false
+					}
+
+					return true
 				}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),

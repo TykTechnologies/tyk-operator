@@ -206,11 +206,20 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 			rctx.Log.Info(http.StatusText(res.StatusCode), "body", string(b))
 		}
 
+		errString := string(b)
+		result := model.Result{}
+
+		err = json.Unmarshal(b, &result)
+		if err == nil {
+			result.StatusCode = res.StatusCode
+			errString = result.String()
+		}
+
 		switch res.StatusCode {
 		case http.StatusNotFound:
 			return nil, ErrNotFound
 		default:
-			return nil, errors2.Wrap(ErrFailed, string(b))
+			return nil, errors2.Wrap(ErrFailed, errString)
 		}
 	}
 

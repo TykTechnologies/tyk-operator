@@ -17,6 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// hashOptions corresponds to hashing options used to calculate the hash of
+// currently reconciled CRs.
 var hashOptions = hashstructure.HashOptions{ZeroNil: true}
 
 // calculateHash calculates hashes of the given interfaces. Returns empty string for hash

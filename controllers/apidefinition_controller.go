@@ -37,10 +37,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,7 +55,7 @@ import (
 )
 
 const (
-	queueAfter = time.Second * 5
+	queueAfter = time.Second * 3
 	GraphKey   = "graph_ref"
 )
 
@@ -199,10 +201,37 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return r.update(ctx, upstreamRequestStruct)
 	})
 
+	var transactionInfo *tykv1alpha1.TransactionInfo
 	if err == nil {
 		log.Info("Completed reconciling ApiDefinition instance")
+
+		transactionInfo = &tykv1alpha1.TransactionInfo{
+			Time:   metav1.Now(),
+			Status: tykv1alpha1.Successful,
+			Error:  "",
+		}
 	} else {
 		queueA = queueAfter
+		transactionInfo = &tykv1alpha1.TransactionInfo{
+			Time:   metav1.Now(),
+			Status: tykv1alpha1.Failed,
+			Error:  err.Error(),
+		}
+	}
+
+	// Reconciler must return the error observed by CreateOrUpdate() function since the mutator given to CreateOrUpdate
+	// returns special custom error such as ErrMultipleLinkSubGraph.
+	errK8s := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		return r.updateStatus(
+			ctx,
+			desired.Namespace,
+			model.Target{Namespace: &desired.Namespace, Name: desired.Name},
+			false,
+			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
+		)
+	})
+	if errK8s != nil && err == nil {
+		err = errK8s
 	}
 
 	return ctrl.Result{RequeueAfter: queueA}, err
@@ -432,6 +461,11 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 			status.ApiID = *desired.Spec.APIID
 			status.LatestTykSpecHash = calculateHash(apiOnTyk)
 			status.LatestCRDSpecHash = calculateHash(desired.Spec)
+			status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Successful,
+				Error:  "",
+			}
 		},
 	)
 	if err != nil {
@@ -505,6 +539,11 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.LatestTykSpecHash = calculateHash(apiOnTyk)
 			status.LatestCRDSpecHash = calculateHash(desired.Spec)
+			status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Successful,
+				Error:  "",
+			}
 		},
 	)
 	if err != nil {

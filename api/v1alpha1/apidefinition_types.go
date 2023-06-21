@@ -50,8 +50,45 @@ type ApiDefinitionStatus struct {
 	// ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
 	LinkedToSubgraph string `json:"linked_to_subgraph,omitempty"`
 
+	// LatestTykSpecHash stores the hash of ApiDefinition created on Tyk. This information is updated after
+	// creating or updating the ApiDefinition. It is useful for Operator to understand running update
+	// operation or not. If there is a change in latestTykSpecHash as well as latestCRDSpecHash, Operator
+	// runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
 	LatestTykSpecHash string `json:"latestTykSpecHash,omitempty"`
+
+	// LatestCRDSpecHash stores the hash of ApiDefinition CRD created on K8s. This information is updated after
+	// creating or updating the ApiDefinition. It is useful for Operator to understand running update
+	// operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash, Operator
+	// runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
 	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
+
+	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
+}
+
+// TransactionStatus indicates the status of the Tyk API calls for currently reconciled object.
+// Valid values are:
+// - "Successful": showing that Tyk API calls on resource is completed successfully.
+// - "Failed": showing that Tyk API calls on resource is failed.
+type TransactionStatus string
+
+const (
+	// Successful shows that Tyk API calls on currently reconciled object finished successfully.
+	Successful TransactionStatus = "Successful"
+
+	// Failed shows that the operation on resource is failed due to Tyk API errors.
+	Failed TransactionStatus = "Failed"
+)
+
+// TransactionInfo holds information about the status of object's reconciliation.
+type TransactionInfo struct {
+	// Time corresponds to the time of last transaction.
+	Time metav1.Time `json:"time,omitempty"`
+
+	// Status corresponds to the status of the last transaction.
+	Status TransactionStatus `json:"status,omitempty"`
+
+	// Error corresponds to the error happened on Tyk API level, if any.
+	Error string `json:"error,omitempty"`
 }
 
 // ApiDefinition is the Schema for the apidefinitions API
@@ -61,6 +98,7 @@ type ApiDefinitionStatus struct {
 // +kubebuilder:printcolumn:name="ListenPath",type=string,JSONPath=`.spec.proxy.listen_path`
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
 // +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.active`
+// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.latestTransaction.status`
 // +kubebuilder:resource:shortName=tykapis
 type ApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
