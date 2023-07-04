@@ -456,12 +456,12 @@ spec:
 {{- toYaml . | nindent 10 }}
 {{- end }}
         volumeMounts:
-          {{ if .Values.extraVolumeMounts }}
-          {{ toYaml .Values.extraVolumeMounts | nindent 8 }}
-          {{ end }}
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
+          {{ if .Values.extraVolumeMounts }}
+          {{ toYaml .Values.extraVolumeMounts | nindent 8 }}
+          {{ end }}
         - mountPath: /controller_manager_config.yaml
           name: manager-config
           subPath: controller_manager_config.yaml
@@ -490,13 +490,13 @@ spec:
       serviceAccountName: {{ include "tyk-operator-helm.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
-        {{ if .Values.extraVolumes }}
-        {{ toYaml .Values.extraVolumes | nindent 6 }}
-        {{ end }}
       - name: cert
         secret:
           defaultMode: 420
           secretName: webhook-server-cert
+      	{{ if .Values.extraVolumes }}
+        {{ toYaml .Values.extraVolumes | nindent 6 }}
+        {{ end }}
       - configMap:
           name: {{ include "tyk-operator-helm.fullname" . }}-manager-config
         name: manager-config
