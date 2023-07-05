@@ -110,6 +110,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 
 		policy.Spec.SecurityPolicySpec = *newSpec
+
 		return nil
 	})
 
@@ -261,6 +262,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
 		if isSame(policy.Status.LatestCRDSpecHash, spec) && isSame(policy.Status.LatestTykSpecHash, specTyk) {
+			r.Log.Info("SecurityPolicy is already up-to-date", "Policy", client.ObjectKeyFromObject(policy))
 			// TODO(buraksekili): needs refactoring - no need for code duplication.
 			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 			if err != nil {
@@ -447,8 +449,24 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		Namespace: &namespace, Name: policy.Name,
 	}
 
+	oldLinks := map[string]bool{}
+	newLinks := map[string]bool{}
+
+	for _, t := range policy.Status.LinkedAPIs {
+		oldLinks[t.String()] = true
+	}
+
+	for _, t := range policy.Spec.AccessRightsArray {
+		name := types.NamespacedName{Name: t.Name, Namespace: t.Namespace}
+		newLinks[name.String()] = true
+	}
+
 	// Remove links from api definitions
 	for _, t := range policy.Status.LinkedAPIs {
+		if _, ok := newLinks[t.String()]; ok {
+			continue
+		}
+
 		api := &tykv1.ApiDefinition{}
 
 		namespace := ""
@@ -472,6 +490,11 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 	}
 
 	for _, a := range policy.Spec.AccessRightsArray {
+		ok := oldLinks[types.NamespacedName{Name: a.Name, Namespace: a.Namespace}.String()]
+		if ok && !policyDeleted {
+			continue
+		}
+
 		api := &tykv1.ApiDefinition{}
 
 		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
