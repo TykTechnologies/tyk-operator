@@ -17,6 +17,6 @@ require (
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	google.golang.org/grpc v1.33.1
+	google.golang.org/grpc v1.53.0
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 )
