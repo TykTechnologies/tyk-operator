@@ -132,12 +132,12 @@ const nodeSelectorTPL = `{{- if .Values.nodeSelector }}
 
 const extraVolume = `- name: CONTROLLER_MANAGER_EXTRA_VOLUME`
 
-const extraVolumeTPL = `	{{ if .Values.extraVolumes }}
-        {{ toYaml .Values.extraVolumes | nindent 6 }}
+const extraVolumeTPL = `{{ if .Values.extraVolumes }}
+       {{ toYaml .Values.extraVolumes | nindent 6 }}
         {{ end }}`
 
 const extraVolumeMounts = `- mountPath: CONTROLLER_MANAGER_EXTRA_VOLUMEMOUNTS`
 
-const extraVolumeMountsTPL = `  {{ if .Values.extraVolumeMounts }}
-          {{ toYaml .Values.extraVolumeMounts | nindent 8 }}
+const extraVolumeMountsTPL = `{{ if .Values.extraVolumeMounts }}
+            {{ toYaml .Values.extraVolumeMounts | nindent 8}}
           {{ end }}`
