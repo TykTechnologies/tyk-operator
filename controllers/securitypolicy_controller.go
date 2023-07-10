@@ -443,10 +443,9 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 ) error {
 	r.Log.Info("Updating linked api definitions")
 
-	namespace := policy.Namespace
-
+	polNS := policy.Namespace
 	target := model.Target{
-		Namespace: &namespace, Name: policy.Name,
+		Namespace: &polNS, Name: policy.Name,
 	}
 
 	oldLinks := map[string]bool{}
@@ -469,12 +468,12 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 
 		api := &tykv1.ApiDefinition{}
 
-		namespace := ""
+		apiNS := ""
 		if t.Namespace != nil {
-			namespace = *t.Namespace
+			apiNS = *t.Namespace
 		}
 
-		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: namespace}, api); err != nil {
+		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: apiNS}, api); err != nil {
 			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
 
 			return err
