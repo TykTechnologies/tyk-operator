@@ -1090,12 +1090,11 @@ func TestUpdateStatusOfLinkedAPIs(t *testing.T) {
 		testNs  = ""
 		polName = ""
 		pol     *v1alpha1.SecurityPolicy
+		eval    = is.New(t)
 	)
 
 	f := features.New("UpdateStatusOfLinkedAPIs").
 		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			eval := is.New(t)
-
 			var ok bool
 			testNs, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
@@ -1147,7 +1146,6 @@ func TestUpdateStatusOfLinkedAPIs(t *testing.T) {
 		}).Assess("Link to policy is added both apis",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			apiDef := v1alpha1.ApiDefinition{}
-			eval := is.New(t)
 
 			err := c.Client().Resources(testNs).Get(ctx, api1, testNs, &apiDef)
 			eval.NoErr(err)
@@ -1164,8 +1162,6 @@ func TestUpdateStatusOfLinkedAPIs(t *testing.T) {
 			return ctx
 		}).Assess("Link to policy is removed from api2",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			eval := is.New(t)
-
 			pol.Spec.AccessRightsArray = []*model.AccessDefinition{
 				{
 					Name:      "api1",
@@ -1195,8 +1191,6 @@ func TestUpdateStatusOfLinkedAPIs(t *testing.T) {
 			return ctx
 		}).Assess("Link to policy is removed when policy is deleted",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			eval := is.New(t)
-
 			err := c.Client().Resources(testNs).Delete(ctx, pol)
 			eval.NoErr(err)
 
