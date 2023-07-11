@@ -34,6 +34,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const policyFinalizer = "finalizers.tyk.io/securitypolicy"
@@ -109,6 +110,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 
 		policy.Spec.SecurityPolicySpec = *newSpec
+
 		return nil
 	})
 
@@ -260,6 +262,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
 		if isSame(policy.Status.LatestCRDSpecHash, spec) && isSame(policy.Status.LatestTykSpecHash, specTyk) {
+			r.Log.Info("SecurityPolicy is already up-to-date", "Policy", client.ObjectKeyFromObject(policy))
 			// TODO(buraksekili): needs refactoring - no need for code duplication.
 			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 			if err != nil {
@@ -440,22 +443,37 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 ) error {
 	r.Log.Info("Updating linked api definitions")
 
-	namespace := policy.Namespace
-
+	polNS := policy.Namespace
 	target := model.Target{
-		Namespace: &namespace, Name: policy.Name,
+		Namespace: &polNS, Name: policy.Name,
+	}
+
+	oldLinks := map[string]bool{}
+	newLinks := map[string]bool{}
+
+	for _, t := range policy.Status.LinkedAPIs {
+		oldLinks[t.String()] = true
+	}
+
+	for _, t := range policy.Spec.AccessRightsArray {
+		name := types.NamespacedName{Name: t.Name, Namespace: t.Namespace}
+		newLinks[name.String()] = true
 	}
 
 	// Remove links from api definitions
 	for _, t := range policy.Status.LinkedAPIs {
-		api := &tykv1.ApiDefinition{}
-
-		namespace := ""
-		if t.Namespace != nil {
-			namespace = *t.Namespace
+		if _, ok := newLinks[t.String()]; ok {
+			continue
 		}
 
-		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: namespace}, api); err != nil {
+		api := &tykv1.ApiDefinition{}
+
+		apiNS := ""
+		if t.Namespace != nil {
+			apiNS = *t.Namespace
+		}
+
+		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: apiNS}, api); err != nil {
 			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
 
 			return err
@@ -471,6 +489,11 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 	}
 
 	for _, a := range policy.Spec.AccessRightsArray {
+		ok := oldLinks[types.NamespacedName{Name: a.Name, Namespace: a.Namespace}.String()]
+		if ok && !policyDeleted {
+			continue
+		}
+
 		api := &tykv1.ApiDefinition{}
 
 		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
@@ -501,5 +524,6 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 func (r *SecurityPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1.SecurityPolicy{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 }

@@ -1082,3 +1082,136 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 
 	testenv.Test(t, policyAndOperatorCtx)
 }
+
+func TestUpdateStatusOfLinkedAPIs(t *testing.T) {
+	var (
+		api1    = "api1"
+		api2    = "api2"
+		testNs  = ""
+		polName = ""
+		pol     *v1alpha1.SecurityPolicy
+		eval    = is.New(t)
+	)
+
+	f := features.New("UpdateStatusOfLinkedAPIs").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			var ok bool
+			testNs, ok = ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err := generateEnvConfig(ctx, c)
+			eval.NoErr(err)
+
+			verifyPolicyApiVersion(t, &tykEnv)
+
+			apiDef, err := createTestAPIDef(ctx, c, testNs, func(api *v1alpha1.ApiDefinition) {
+				api.Name = api1
+				api.Spec.Name = api1
+			})
+			eval.NoErr(err)
+
+			err = waitForTykResourceCreation(c, apiDef)
+			eval.NoErr(err)
+
+			apiDef, err = createTestAPIDef(ctx, c, testNs, func(api *v1alpha1.ApiDefinition) {
+				api.Name = api2
+				api.Spec.Name = api2
+			})
+			eval.NoErr(err)
+
+			err = waitForTykResourceCreation(c, apiDef)
+			eval.NoErr(err)
+
+			pol, err = createTestPolicy(ctx, c, testNs, func(p *v1alpha1.SecurityPolicy) {
+				p.Spec.AccessRightsArray = []*model.AccessDefinition{
+					{
+						Name:      api1,
+						Namespace: testNs,
+					},
+					{
+						Name:      api2,
+						Namespace: testNs,
+					},
+				}
+			})
+			eval.NoErr(err)
+
+			polName = pol.Name
+
+			err = waitForTykResourceCreation(c, pol)
+			eval.NoErr(err)
+
+			return ctx
+		}).Assess("Link to policy is added both apis",
+		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			apiDef := v1alpha1.ApiDefinition{}
+
+			err := c.Client().Resources(testNs).Get(ctx, api1, testNs, &apiDef)
+			eval.NoErr(err)
+
+			eval.True(len(apiDef.Status.LinkedByPolicies) == 1)
+			eval.True(apiDef.Status.LinkedByPolicies[0].Name == polName)
+
+			err = c.Client().Resources(testNs).Get(ctx, api2, testNs, &apiDef)
+			eval.NoErr(err)
+
+			eval.True(len(apiDef.Status.LinkedByPolicies) == 1)
+			eval.True(apiDef.Status.LinkedByPolicies[0].Name == polName)
+
+			return ctx
+		}).Assess("Link to policy is removed from api2",
+		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			pol.Spec.AccessRightsArray = []*model.AccessDefinition{
+				{
+					Name:      "api1",
+					Namespace: testNs,
+				},
+			}
+
+			err := c.Client().Resources(testNs).Update(ctx, pol)
+			eval.NoErr(err)
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      api2,
+					Namespace: testNs,
+				},
+			}
+
+			err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&apiDef, func(object k8s.Object) bool {
+				if apiDef.Status.LinkedByPolicies == nil || len(apiDef.Status.LinkedByPolicies) == 0 {
+					return true
+				}
+
+				return false
+			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+			eval.NoErr(err)
+
+			return ctx
+		}).Assess("Link to policy is removed when policy is deleted",
+		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			err := c.Client().Resources(testNs).Delete(ctx, pol)
+			eval.NoErr(err)
+
+			apiDef := v1alpha1.ApiDefinition{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      api1,
+					Namespace: testNs,
+				},
+			}
+
+			err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(&apiDef, func(object k8s.Object) bool {
+				if apiDef.Status.LinkedByPolicies == nil || len(apiDef.Status.LinkedByPolicies) == 0 {
+					return true
+				}
+
+				return false
+			}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+			eval.NoErr(err)
+
+			return ctx
+		}).Feature()
+
+	testenv.Test(t, f)
+}
