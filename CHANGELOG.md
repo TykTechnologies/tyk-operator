@@ -10,6 +10,7 @@ last reconciliation. Now, any error can be observed there instead of checking Ty
 
 **Fixed**
 - Check if certificate already exists on tyk before uploading
+- Operator throwing lots of errors "the object has been modified; please apply your changes to the latest version and try again" while reconciling security policy
 
 ## [0.14.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.2)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.1...v0.14.2)
