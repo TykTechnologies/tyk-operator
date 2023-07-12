@@ -36,3 +36,9 @@ rbac:
     pullPolicy: IfNotPresent
     tag: "v0.8.0"
   port: 8443
+
+# serviceMonitor decides deploying ServiceMonitor if Prometheus Operator scrapes /metrics.
+# By default it is set to false and set it to true to enable deploying Service Monitor.
+# Tyk Operator publishes a collection of performance metrics for each controller.
+# These metrics can be scraped by Prometheus Operator, by deploying ServiceMonitor resource.
+serviceMonitor: false
