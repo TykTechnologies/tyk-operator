@@ -204,9 +204,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return err
 		}
 
-		_ = r.Client.Get(ctx, client.ObjectKeyFromObject(desired), desired) // nolint:errcheck
+		latestDesired := &tykv1alpha1.ApiDefinition{}
+		_ = r.Client.Get(ctx, client.ObjectKeyFromObject(desired), latestDesired) // nolint:errcheck
+		desired.ObjectMeta = latestDesired.ObjectMeta
 
-		desired.Spec = upstreamRequestStruct.Spec
 		return nil
 	})
 
