@@ -7,6 +7,7 @@
 - Added `disabled` feature in `validate_json` field of APIDefinition. 
 - Added a new Status resource called `latestTransaction` to the APIDefinition CRD which holds information about 
 last reconciliation. Now, any error can be observed there instead of checking Tyk Operator logs.
+- Added an option to enable `ServiceMonitor` in helm charts, in order Prometheus Operator to scrape `/metrics` endpoint.
 
 **Fixed**
 - Check if certificate already exists on tyk before uploading
