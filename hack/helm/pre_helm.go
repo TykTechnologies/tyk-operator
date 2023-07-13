@@ -22,6 +22,8 @@ func main() {
 		{securityContext, securityContextTPL},
 		{imageRBAC, imageRBACTPL},
 		{nodeSelector, nodeSelectorTPL},
+		{extraVolume, extraVolumeTPL},
+		{extraVolumeMounts, extraVolumeMountsTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -127,3 +129,15 @@ const nodeSelectorTPL = `{{- if .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
 {{- end }}`
+
+const extraVolume = `- name: CONTROLLER_MANAGER_EXTRA_VOLUME`
+
+const extraVolumeTPL = `{{ if .Values.extraVolumes }}
+       {{ toYaml .Values.extraVolumes | nindent 6 }}
+        {{ end }}`
+
+const extraVolumeMounts = `- mountPath: CONTROLLER_MANAGER_EXTRA_VOLUMEMOUNTS`
+
+const extraVolumeMountsTPL = `{{ if .Values.extraVolumeMounts }}
+            {{ toYaml .Values.extraVolumeMounts | nindent 8}}
+          {{ end }}`
