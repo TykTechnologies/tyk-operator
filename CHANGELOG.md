@@ -7,6 +7,7 @@
 - Added `disabled` feature in `validate_json` field of APIDefinition. 
 - Added a new Status resource called `latestTransaction` to the APIDefinition CRD which holds information about 
 last reconciliation. Now, any error can be observed there instead of checking Tyk Operator logs.
+- Added `extraVolume` and `extraVolumeMounts` options to the helm chart. So, extra volumes can be mounted in Tyk Operator's manager pod, e.g., self-signed certificates.
 
 **Fixed**
 - Check if certificate already exists on tyk before uploading
