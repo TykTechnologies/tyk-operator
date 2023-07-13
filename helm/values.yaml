@@ -1,4 +1,5 @@
 replicaCount: 1
+
 # loads environment variables to the operator.
 envFrom:
   - secretRef:
@@ -12,22 +13,46 @@ image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
   tag: "v0.14.2"
-imagePullSecrets: []
+
 nameOverride: ""
 fullnameOverride: ""
+
+# extraVolumes is a list of volumes to be added to the pod
+# extraVolumes:
+#   - name: ca-certs
+#     secret:
+#       secretName: ca-certs
+#   - name: ca-certs
+#     configMap:
+#       name: custom-ca-configmap
+extraVolumes: []
+
+# extraVolumeMounts is a list of volume mounts to be added to the pod
+# extraVolumeMounts:
+#   - name: ca-certs
+#     mountPath: /etc/ssl/certs/your-cert.pem
+#     subPath: your-cert.pem
+#     readOnly: false
+extraVolumeMounts: []
+
 # healthProbePort identifies the port the Controller Manager will listen on. Used by liveness and readiness probes
 healthProbePort: 8081
+
 # metricsPort identifies the port on which Tyk Operator metrics are served
 metricsPort: 8080
+
 # webhookPort identifies the port on which webhooks are handled
 webhookPort: 9443
+
 annotations: {}
 podAnnotations: {}
 podSecurityContext:
   allowPrivilegeEscalation: false
 resources: {}
 nodeSelector: {}
-#specify necessary resources for kube-rbac-proxy container
+hostNetwork: false
+
+# rbac specifies necessary resources for kube-rbac-proxy container
 rbac:
   resources: {}
   # specify custom/internal repo name for kube-rbac-proxy container
