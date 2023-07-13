@@ -194,17 +194,11 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		upstreamRequestStruct.Spec.CollectLoopingTarget()
 
 		//  If this is not set, means it is a new object, set it first
-		switch desired.Status.ApiID {
-		case "":
-			err = r.create(ctx, upstreamRequestStruct)
-		default:
-			err = r.update(ctx, upstreamRequestStruct)
-		}
-		if err != nil {
-			return err
+		if desired.Status.ApiID == "" {
+			return r.create(ctx, upstreamRequestStruct)
 		}
 
-		return nil
+		return r.update(ctx, upstreamRequestStruct)
 	})
 
 	var transactionInfo *tykv1alpha1.TransactionInfo
