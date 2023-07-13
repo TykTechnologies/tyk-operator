@@ -24,6 +24,8 @@ func main() {
 		{nodeSelector, nodeSelectorTPL},
 		{serviceMonitorIfStarts, serviceMonitorIfStartsTPL},
 		{serviceMonitorIfEnds, serviceMonitorIfEndsTPL},
+		{extraVolume, extraVolumeTPL},
+		{extraVolumeMounts, extraVolumeMountsTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -137,3 +139,15 @@ const (
 	serviceMonitorIfEnds      = `status: TYK_OPERATOR_PROMETHEUS_SERVICEMONITOR_IF_ENDS`
 	serviceMonitorIfEndsTPL   = `{{ end }} `
 )
+
+const extraVolume = `- name: CONTROLLER_MANAGER_EXTRA_VOLUME`
+
+const extraVolumeTPL = `{{ if .Values.extraVolumes }}
+       {{ toYaml .Values.extraVolumes | nindent 6 }}
+        {{ end }}`
+
+const extraVolumeMounts = `- mountPath: CONTROLLER_MANAGER_EXTRA_VOLUMEMOUNTS`
+
+const extraVolumeMountsTPL = `{{ if .Values.extraVolumeMounts }}
+            {{ toYaml .Values.extraVolumeMounts | nindent 8}}
+          {{ end }}`
