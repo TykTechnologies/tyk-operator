@@ -204,10 +204,6 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return err
 		}
 
-		latestDesired := &tykv1alpha1.ApiDefinition{}
-		_ = r.Client.Get(ctx, client.ObjectKeyFromObject(desired), latestDesired) // nolint:errcheck
-		desired.ObjectMeta = latestDesired.ObjectMeta
-
 		return nil
 	})
 
@@ -236,7 +232,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			ctx,
 			desired.Namespace,
 			model.Target{Namespace: &desired.Namespace, Name: desired.Name},
-			false,
+			true,
 			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
 		)
 	})
@@ -868,7 +864,7 @@ func (r *ApiDefinitionReconciler) updateStatus(
 
 	fn(&api.Status)
 
-	return r.Status().Update(ctx, &api)
+	return r.Status().Patch(ctx, &api, client.MergeFrom(api.DeepCopy()))
 }
 
 // breakSubgraphLink breaks the link between given ApiDefinition and Subgraph object it refers to. If pass is specified,
