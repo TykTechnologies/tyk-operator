@@ -222,10 +222,35 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// Reconciler must return the error observed by CreateOrUpdate() function since the mutator given to CreateOrUpdate
 	// returns special custom error such as ErrMultipleLinkSubGraph.
 	errK8s := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		namespace := upstreamRequestStruct.Namespace
+		target := model.Target{Namespace: &namespace, Name: upstreamRequestStruct.Name}
+
+		if desired.Status.ApiID == "" {
+			apiId := ""
+			if upstreamRequestStruct.Spec.APIID != nil {
+				apiId = *upstreamRequestStruct.Spec.APIID
+			}
+
+			apiOnTyk, _ := klient.Universal.Api().Get(ctx, apiId) //nolint:errcheck
+
+			return r.updateStatus(
+				ctx,
+				desired.Namespace,
+				target,
+				true,
+				func(status *tykv1alpha1.ApiDefinitionStatus) {
+					status.ApiID = apiId
+					status.LatestTykSpecHash = calculateHash(apiOnTyk)
+					status.LatestCRDSpecHash = calculateHash(upstreamRequestStruct.Spec)
+					status.LatestTransaction = *transactionInfo
+				},
+			)
+		}
+
 		return r.updateStatus(
 			ctx,
 			desired.Namespace,
-			model.Target{Namespace: &desired.Namespace, Name: desired.Name},
+			target,
 			true,
 			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
 		)
@@ -441,32 +466,6 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		r.Log.Error(
 			err,
 			"Failed to hot-reload Tyk after creating the ApiDefinition",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
-
-		return err
-	}
-
-	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *desired.Spec.APIID) //nolint:errcheck
-
-	namespace := desired.Namespace
-	target := model.Target{Namespace: &namespace, Name: desired.Name}
-
-	err = r.updateStatus(
-		ctx,
-		desired.Namespace,
-		target,
-		false,
-		func(status *tykv1alpha1.ApiDefinitionStatus) {
-			status.ApiID = *desired.Spec.APIID
-			status.LatestTykSpecHash = calculateHash(apiOnTyk)
-			status.LatestCRDSpecHash = calculateHash(desired.Spec)
-		},
-	)
-	if err != nil {
-		r.Log.Error(
-			err,
-			"Failed to update Status ID",
 			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
 		)
 
@@ -858,7 +857,7 @@ func (r *ApiDefinitionReconciler) updateStatus(
 
 	fn(&api.Status)
 
-	return r.Status().Patch(ctx, &api, client.MergeFrom(api.DeepCopy()))
+	return r.Status().Update(ctx, &api)
 }
 
 // breakSubgraphLink breaks the link between given ApiDefinition and Subgraph object it refers to. If pass is specified,
