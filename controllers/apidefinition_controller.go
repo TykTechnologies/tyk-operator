@@ -222,11 +222,36 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// Reconciler must return the error observed by CreateOrUpdate() function since the mutator given to CreateOrUpdate
 	// returns special custom error such as ErrMultipleLinkSubGraph.
 	errK8s := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		namespace := upstreamRequestStruct.Namespace
+		target := model.Target{Namespace: &namespace, Name: upstreamRequestStruct.Name}
+
+		if desired.Status.ApiID == "" {
+			apiId := ""
+			if upstreamRequestStruct.Spec.APIID != nil {
+				apiId = *upstreamRequestStruct.Spec.APIID
+			}
+
+			apiOnTyk, _ := klient.Universal.Api().Get(ctx, apiId) //nolint:errcheck
+
+			return r.updateStatus(
+				ctx,
+				desired.Namespace,
+				target,
+				true,
+				func(status *tykv1alpha1.ApiDefinitionStatus) {
+					status.ApiID = apiId
+					status.LatestTykSpecHash = calculateHash(apiOnTyk)
+					status.LatestCRDSpecHash = calculateHash(upstreamRequestStruct.Spec)
+					status.LatestTransaction = *transactionInfo
+				},
+			)
+		}
+
 		return r.updateStatus(
 			ctx,
 			desired.Namespace,
-			model.Target{Namespace: &desired.Namespace, Name: desired.Name},
-			false,
+			target,
+			true,
 			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
 		)
 	})
@@ -447,37 +472,6 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 		return err
 	}
 
-	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *desired.Spec.APIID) //nolint:errcheck
-
-	namespace := desired.Namespace
-	target := model.Target{Namespace: &namespace, Name: desired.Name}
-
-	err = r.updateStatus(
-		ctx,
-		desired.Namespace,
-		target,
-		false,
-		func(status *tykv1alpha1.ApiDefinitionStatus) {
-			status.ApiID = *desired.Spec.APIID
-			status.LatestTykSpecHash = calculateHash(apiOnTyk)
-			status.LatestCRDSpecHash = calculateHash(desired.Spec)
-			status.LatestTransaction = tykv1alpha1.TransactionInfo{
-				Time:   metav1.Now(),
-				Status: tykv1alpha1.Successful,
-				Error:  "",
-			}
-		},
-	)
-	if err != nil {
-		r.Log.Error(
-			err,
-			"Failed to update Status ID",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
-		)
-
-		return err
-	}
-
 	return nil
 }
 
@@ -539,11 +533,6 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.LatestTykSpecHash = calculateHash(apiOnTyk)
 			status.LatestCRDSpecHash = calculateHash(desired.Spec)
-			status.LatestTransaction = tykv1alpha1.TransactionInfo{
-				Time:   metav1.Now(),
-				Status: tykv1alpha1.Successful,
-				Error:  "",
-			}
 		},
 	)
 	if err != nil {
