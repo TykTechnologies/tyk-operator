@@ -22,6 +22,8 @@ func main() {
 		{securityContext, securityContextTPL},
 		{imageRBAC, imageRBACTPL},
 		{nodeSelector, nodeSelectorTPL},
+		{serviceMonitorIfStarts, serviceMonitorIfStartsTPL},
+		{serviceMonitorIfEnds, serviceMonitorIfEndsTPL},
 		{extraVolume, extraVolumeTPL},
 		{extraVolumeMounts, extraVolumeMountsTPL},
 
@@ -129,6 +131,14 @@ const nodeSelectorTPL = `{{- if .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
 {{- end }}`
+
+// Replaces hardcoded values for ServiceMonitor resource with helm templates.
+const (
+	serviceMonitorIfStarts    = `TYK_OPERATOR_PROMETHEUS_SERVICEMONITOR_IF_STARTS: null`
+	serviceMonitorIfStartsTPL = `{{ if .Values.serviceMonitor }}`
+	serviceMonitorIfEnds      = `status: TYK_OPERATOR_PROMETHEUS_SERVICEMONITOR_IF_ENDS`
+	serviceMonitorIfEndsTPL   = `{{ end }} `
+)
 
 const extraVolume = `- name: CONTROLLER_MANAGER_EXTRA_VOLUME`
 
