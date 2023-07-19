@@ -93,7 +93,8 @@ jobs:
         with:
           name: test coverage files
           path: '*_coverage.out'
-          
+
+
   sbom:
     uses: TykTechnologies/github-actions/.github/workflows/sbom.yaml@main
     if: ${{ github.event_name  == 'pull_request' ||  github.event_name == 'push' }}
