@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+## [v0.15.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.2...HEAD)
 
 **Added**
