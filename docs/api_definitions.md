@@ -117,3 +117,7 @@ To check the supported features of the API Definitions CRD version you're curren
 ## APIDefinition - Migrating Existing APIs
 
 Please visit the [API migration page](https://tyk.io/docs/tyk-stack/tyk-operator/migration/#migration-of-existing-api) for more info
+
+## Understanding reconciliation status
+
+Please visit [Latest Transation Status](./api_definitions/latest-transaction.md) page to see how you can check for APIDefinition reconciliation status.
