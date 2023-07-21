@@ -120,4 +120,4 @@ Please visit the [API migration page](https://tyk.io/docs/tyk-stack/tyk-operator
 
 ## Understanding reconciliation status
 
-Please visit [Latest Transation Status](./api_definitions/latest-transaction.md) page to see how you can check for APIDefinition reconciliation status.
+Please visit [Latest Transaction Status](./api_definitions/latest-transaction.md) page to see how you can check latest APIDefinition reconciliation status.
