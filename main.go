@@ -34,7 +34,7 @@ import (
 
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/snapshot"
 	// +kubebuilder:scaffold:imports
 )
@@ -78,7 +78,7 @@ func init() {
 
 func main() {
 	var configFile string
-	var env environmet.Env
+	var env environment.Env
 	var err error
 
 	flag.StringVar(&configFile, "config", "",
@@ -98,7 +98,7 @@ func main() {
 	if runSnapshot {
 		snapshotLog := ctrl.Log.WithName("snapshot").WithName("ApiDefinition")
 
-		_, ctx, err := controllers.HttpContext(context.Background(), nil, env, nil, snapshotLog)
+		_, ctx, err := controllers.HttpContext(context.Background(), nil, &env, nil, snapshotLog)
 		if err != nil {
 			snapshotLog.Error(err, "failed to set HTTP context")
 			os.Exit(1)

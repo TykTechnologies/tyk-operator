@@ -1,4 +1,4 @@
-package environmet
+package environment
 
 import (
 	"os"

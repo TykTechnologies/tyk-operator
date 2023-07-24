@@ -11,7 +11,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/matryer/is"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +31,7 @@ const (
 	errGetPolicyFromTyk = "failed to get SecurityPolicy from Tyk"
 )
 
-func verifyPolicyApiVersion(t *testing.T, tykEnv *environmet.Env) {
+func verifyPolicyApiVersion(t *testing.T, tykEnv *environment.Env) {
 	v, err := version.ParseGeneric(tykEnv.TykVersion)
 	if err != nil {
 		t.Fatal("failed to parse Tyk Version")
@@ -553,7 +553,7 @@ func TestSecurityPolicy(t *testing.T) {
 		reqCtx   context.Context
 		policyCR v1alpha1.SecurityPolicy
 		apiDefCR *v1alpha1.ApiDefinition
-		tykEnv   environmet.Env
+		tykEnv   environment.Env
 	)
 
 	securityPolicyFeatures := features.New("Create Security Policy from scratch").
@@ -720,7 +720,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 	var (
 		reqCtx                    context.Context
-		tykEnv                    environmet.Env
+		tykEnv                    environment.Env
 		apiDefID                  string
 		minGraphQLPolicyGwVersion = version.MustParseGeneric("v4.3.0")
 		policyTarget              model.Target
