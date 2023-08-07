@@ -54,7 +54,7 @@ make create-kind-cluster
 
 This will create a 3 node cluster; 1 control-plane and 2 worker nodes by using `kind`.
 
-> **Note**: Kind cluster we create needs host port 7000 and 7200. Above command will fail if any of those ports isß used by other service.
+> **Note**: Kind cluster we create needs host port 7000 and 7200. Above command will fail if any of those ports is used by other service.
 
 > **Note**: On some versions of MacOS, the airdrop receiver may be running on port 7000. To turn it off you can toggle the switch in
  System Settings -> General -> Airdrop & Handoff -> Airplay receiver
