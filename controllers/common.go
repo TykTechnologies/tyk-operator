@@ -9,7 +9,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 	"github.com/mitchellh/hashstructure/v2"
 	v1 "k8s.io/api/core/v1"
@@ -81,10 +81,11 @@ func EncodeNS(decoded string) string {
 func HttpContext(
 	ctx context.Context,
 	rClient client.Client,
-	e environmet.Env,
+	env *environment.Env,
 	object client.Object,
 	log logr.Logger,
-) (environmet.Env, context.Context, error) {
+) (environment.Env, context.Context, error) {
+	e := *env
 	get := func(opCtxRef *model.Target) error {
 		if opCtxRef == nil {
 			// To handle the case where operator context was used previously
@@ -146,7 +147,7 @@ func HttpContext(
 	}
 
 	if err != nil {
-		return environmet.Env{}, nil, err
+		return environment.Env{}, nil, err
 	}
 
 	return e, tykClient.SetContext(ctx, tykClient.Context{

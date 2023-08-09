@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
 var (
-	e       environmet.Env
+	e       environment.Env
 	testenv env.Environment
 )
 

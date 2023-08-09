@@ -31,7 +31,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
@@ -66,7 +66,7 @@ type ApiDefinitionReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Env      environmet.Env
+	Env      environment.Env
 	Recorder record.EventRecorder
 }
 
@@ -94,7 +94,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	desired.DeepCopyInto(upstreamRequestStruct)
 
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, desired, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -264,7 +264,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 func (r *ApiDefinitionReconciler) processClientCertificateReferences(
 	ctx context.Context,
-	env *environmet.Env,
+	env *environment.Env,
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
@@ -296,7 +296,7 @@ func (r *ApiDefinitionReconciler) processClientCertificateReferences(
 
 func (r *ApiDefinitionReconciler) processCertificateReferences(
 	ctx context.Context,
-	env *environmet.Env,
+	env *environment.Env,
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) error {
@@ -319,7 +319,7 @@ func (r *ApiDefinitionReconciler) processCertificateReferences(
 
 func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 	ctx context.Context,
-	env *environmet.Env,
+	env *environment.Env,
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
@@ -351,7 +351,7 @@ func (r *ApiDefinitionReconciler) processPinnedPublicKeyReferences(
 
 func (r *ApiDefinitionReconciler) processUpstreamCertificateReferences(
 	ctx context.Context,
-	env *environmet.Env,
+	env *environment.Env,
 	log logr.Logger,
 	upstreamRequestStruct *tykv1alpha1.ApiDefinition,
 ) {
@@ -416,7 +416,7 @@ func (r *ApiDefinitionReconciler) checkSecretAndUpload(
 	certName string,
 	ns string,
 	log logr.Logger,
-	env *environmet.Env,
+	env *environment.Env,
 ) (string, error) {
 	secret := v1.Secret{}
 

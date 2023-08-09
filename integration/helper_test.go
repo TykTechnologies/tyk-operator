@@ -24,7 +24,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -273,24 +273,24 @@ func createTestTlsSecret(ctx context.Context, ns string, c *envconf.Config, fn f
 
 // generateEnvConfig creates a config structure to connect your Tyk installation. It parses k8s secret object
 // and reads required connection credentials from there.
-func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environmet.Env, error) {
+func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environment.Env, error) {
 	operatorConfSecret := v1.Secret{}
 
 	err := envConf.Client().Resources(opNs).Get(ctx, operatorSecret, opNs, &operatorConfSecret)
 	if err != nil {
-		return environmet.Env{}, err
+		return environment.Env{}, err
 	}
 
 	data, ok := operatorConfSecret.Data["TYK_AUTH"]
 	if !ok {
-		return environmet.Env{}, errors.New("failed to parse TYK_AUTH from operator secret")
+		return environment.Env{}, errors.New("failed to parse TYK_AUTH from operator secret")
 	}
 
 	tykAuth := string(data)
 
 	data, ok = operatorConfSecret.Data["TYK_ORG"]
 	if !ok {
-		return environmet.Env{}, errors.New("failed to parse TYK_ORG from operator secret")
+		return environment.Env{}, errors.New("failed to parse TYK_ORG from operator secret")
 	}
 
 	tykOrg := string(data)
@@ -311,7 +311,7 @@ func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environmet
 		tykConnectionURL = gatewayLocalhost
 	}
 
-	return environmet.Env{
+	return environment.Env{
 		Environment: v1alpha1.Environment{
 			Auth: tykAuth,
 			Org:  tykOrg,

@@ -10,7 +10,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
@@ -29,7 +29,7 @@ func TestCertificateUpload(t *testing.T) {
 
 		apiDef *v1alpha1.ApiDefinition
 
-		tykEnv environmet.Env
+		tykEnv environment.Env
 		tykCtx context.Context
 	)
 

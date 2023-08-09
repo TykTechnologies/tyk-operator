@@ -11,7 +11,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 )
 
 type (
@@ -20,8 +20,8 @@ type (
 	ResponseKase = client.ResponseKase
 )
 
-func env() environmet.Env {
-	return environmet.Env{
+func env() environment.Env {
+	return environment.Env{
 		Environment: v1alpha1.Environment{
 			Mode: "pro",
 			URL:  "http://localhost:3000",

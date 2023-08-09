@@ -19,7 +19,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 )
 
@@ -88,7 +88,7 @@ func Do(r *http.Request) (*http.Response, error) {
 
 // Context information needed to make a successful http api call.
 type Context struct {
-	Env           environmet.Env
+	Env           environment.Env
 	Log           logr.Logger
 	BeforeRequest func(*http.Request)
 	Do            func(*http.Request) (*http.Response, error)

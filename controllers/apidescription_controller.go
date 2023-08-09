@@ -31,7 +31,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/universal"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 )
 
@@ -41,7 +41,7 @@ type APIDescriptionReconciler struct {
 	Log       logr.Logger
 	Scheme    *runtime.Scheme
 	Universal universal.Client
-	Env       environmet.Env
+	Env       environment.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=apidescriptions,verbs=get;list;watch;create;update;patch;delete
@@ -68,34 +68,29 @@ func (r *APIDescriptionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, r.Env, desired, log)
+	_, ctx, err = HttpContext(ctx, r.Client, &r.Env, desired, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
 		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.delete(ctx, desired, env, log)
+			return r.delete(ctx, desired, log)
 		}
 
 		util.AddFinalizer(desired, keys.PortalAPIDescriptionFinalizerName)
 
-		return r.sync(ctx, desired, env, log)
+		return r.sync(ctx, desired, log)
 	})
 
 	return
 }
 
-func (r *APIDescriptionReconciler) delete(
-	ctx context.Context,
-	desired *v1alpha1.APIDescription,
-	env environmet.Env,
-	log logr.Logger,
-) error {
-	log.Info("Deleting APIDescription resource")
+func (r *APIDescriptionReconciler) delete(ctx context.Context, desired *v1alpha1.APIDescription, l logr.Logger) error {
+	l.Info("Deleting APIDescription resource")
 	// we find all api catalogues referencing this and update it to reflect the
 	// change
-	log.Info("Fetching APICatalogueList ...")
+	l.Info("Fetching APICatalogueList ...")
 
 	var ls v1alpha1.PortalAPICatalogueList
 
@@ -106,7 +101,7 @@ func (r *APIDescriptionReconciler) delete(
 		return client.IgnoreNotFound(err)
 	}
 
-	log.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
+	l.Info("Fetching APICatalogueList ...Ok", "count", len(ls.Items))
 
 	namespace := desired.Namespace
 	target := model.Target{
@@ -131,12 +126,7 @@ func (r *APIDescriptionReconciler) delete(
 	return nil
 }
 
-func (r *APIDescriptionReconciler) sync(
-	ctx context.Context,
-	desired *v1alpha1.APIDescription,
-	env environmet.Env,
-	log logr.Logger,
-) error {
+func (r *APIDescriptionReconciler) sync(ctx context.Context, desired *v1alpha1.APIDescription, log logr.Logger) error {
 	log.Info("Syncing changes to catalogues resource")
 	// we find all api catalogues referencing this and update it to reflect the
 	// change

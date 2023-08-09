@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/matryer/is"
 	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -118,10 +118,10 @@ func TestCreateAPI(t *testing.T) {
 		Client: client,
 		Log:    log.NullLogger{},
 		Scheme: scheme.Scheme,
-		Env:    environmet.Env{},
+		Env:    environment.Env{},
 	}
 
-	err = reconciler.createAPI(context.TODO(), reconciler.Log, &apiTemplate, "default", &ing, reconciler.Env)
+	err = reconciler.createAPI(context.TODO(), reconciler.Log, &apiTemplate, "default", &ing, &reconciler.Env)
 	eval.NoErr(err)
 
 	apiDef := &v1alpha1.ApiDefinition{}

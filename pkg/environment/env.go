@@ -1,4 +1,4 @@
-package environmet
+package environment
 
 import (
 	"os"
@@ -60,7 +60,7 @@ func (e Env) Merge(n Env) Env {
 	return e
 }
 
-// Parse loads env vars into e and validates them, returning an error if validation fails.
+// Parse loads env vars into e.
 func (e *Env) Parse() {
 	e.Namespace = strings.TrimSpace(os.Getenv(v1alpha1.WatchNamespace))
 	e.Mode = v1alpha1.OperatorContextMode(os.Getenv(v1alpha1.TykMode))
