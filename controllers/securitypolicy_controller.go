@@ -25,7 +25,7 @@ import (
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,7 +44,7 @@ type SecurityPolicyReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Env      environmet.Env
+	Env      environment.Env
 	Recorder record.EventRecorder
 }
 
@@ -65,7 +65,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, r.Env, policy, log)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, policy, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

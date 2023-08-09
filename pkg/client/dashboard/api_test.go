@@ -8,7 +8,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 )
 
 const contentJSON = "application/json"
@@ -16,7 +16,7 @@ const contentJSON = "application/json"
 const testAPIID = "ZGVmYXVsdC9odHRwYmlu"
 
 func TestAPI(t *testing.T) {
-	var e environmet.Env
+	var e environment.Env
 
 	h := mockDash(t,
 		&route{
@@ -61,7 +61,7 @@ func TestAPI(t *testing.T) {
 
 	e.URL = svr.URL
 	e = env().Merge(e)
-	requestAPI(t, e, "Create",
+	requestAPI(t, &e, "Create",
 		// TODO:(gernest) This only covers the case when an api already exists.
 		// Add case of creating fresh new api
 		Kase{
@@ -94,7 +94,7 @@ func TestAPI(t *testing.T) {
 		},
 	)
 
-	requestAPI(t, e, "All", Kase{
+	requestAPI(t, &e, "All", Kase{
 		Name: "All",
 		Request: RequestKase{
 			Path:   "/api/apis",
@@ -109,7 +109,7 @@ func TestAPI(t *testing.T) {
 		},
 	})
 
-	requestAPI(t, e, "Get",
+	requestAPI(t, &e, "Get",
 		Kase{
 			Name: "All",
 			Request: RequestKase{
@@ -126,7 +126,7 @@ func TestAPI(t *testing.T) {
 		},
 	)
 
-	requestAPI(t, e, "Update",
+	requestAPI(t, &e, "Update",
 		Kase{
 			Name: "Update",
 			Request: RequestKase{
@@ -142,7 +142,7 @@ func TestAPI(t *testing.T) {
 			},
 		})
 
-	requestAPI(t, e, "Delete",
+	requestAPI(t, &e, "Delete",
 		Kase{
 			Name: "Delete",
 			Request: RequestKase{
@@ -159,7 +159,7 @@ func TestAPI(t *testing.T) {
 		})
 }
 
-func requestAPI(t *testing.T, e environmet.Env, name string, kase ...client.Kase) {
+func requestAPI(t *testing.T, e *environment.Env, name string, kase ...client.Kase) {
 	t.Helper()
 	t.Run(name, func(t *testing.T) {
 		switch name {

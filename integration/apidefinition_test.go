@@ -14,7 +14,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/google/uuid"
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
@@ -186,7 +186,7 @@ func TestDeletingNonexistentAPI(t *testing.T) {
 	var (
 		eval   = is.New(t)
 		tykCtx context.Context
-		tykEnv environmet.Env
+		tykEnv environment.Env
 	)
 
 	testDeletingNonexistentAPIs := features.New("Deleting Nonexistent APIs from k8s").
@@ -245,7 +245,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 	var (
 		eval   = is.New(t)
 		tykCtx context.Context
-		tykEnv environmet.Env
+		tykEnv environment.Env
 		r      controllers.ApiDefinitionReconciler
 	)
 
@@ -344,7 +344,7 @@ func TestApiDefinitionUpdate(t *testing.T) {
 	var (
 		eval        = is.New(t)
 		tykCtx      context.Context
-		tykEnv      environmet.Env
+		tykEnv      environment.Env
 		updatedName = "updatedName"
 	)
 
@@ -939,7 +939,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 		defaultVersion      = "Default"
 		certName            = "test-tls-secret-name"
 
-		tykEnv environmet.Env
+		tykEnv environment.Env
 		reqCtx context.Context
 	)
 
@@ -1077,7 +1077,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 		eval   = is.New(t)
 		reqCtx context.Context
-		tykEnv environmet.Env
+		tykEnv environment.Env
 	)
 
 	testBasicAuth := features.New("Basic authentication").
@@ -1157,7 +1157,7 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 		eval   = is.New(t)
 		reqCtx context.Context
-		tykEnv environmet.Env
+		tykEnv environment.Env
 	)
 
 	testBasicAuth := features.New("Base Identity Provider for Basic Auth and mTLS").
@@ -1248,7 +1248,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 		certName                    = "test-tls-secret-name"
 
 		certIDCtxKey ContextKey = "certID"
-		tykEnv       environmet.Env
+		tykEnv       environment.Env
 		reqCtx       context.Context
 		eval         = is.New(t)
 	)
@@ -1482,7 +1482,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 	const supportedMajorTykVersion = uint(4)
 
 	var (
-		tykEnv          = environmet.Env{}
+		tykEnv          = environment.Env{}
 		majorTykVersion = supportedMajorTykVersion
 		r               = controllers.ApiDefinitionReconciler{}
 	)

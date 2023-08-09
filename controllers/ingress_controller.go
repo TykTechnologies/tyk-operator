@@ -24,7 +24,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
 	netV1 "k8s.io/api/networking/v1"
@@ -47,7 +47,7 @@ type IngressReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Env      environmet.Env
+	Env      environment.Env
 	Recorder record.EventRecorder
 }
 
@@ -65,7 +65,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, r.Env, desired, nsl)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, desired, nsl)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -109,7 +109,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, env)
+	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, &env)
 	if err != nil {
 		nsl.Error(err, "failed to create api's")
 		return ctrl.Result{}, err
@@ -147,7 +147,7 @@ func (r *IngressReconciler) createAPI(
 	template *v1alpha1.ApiDefinition,
 	ns string,
 	desired *netV1.Ingress,
-	env environmet.Env,
+	env *environment.Env,
 ) error {
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
