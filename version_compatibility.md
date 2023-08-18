@@ -11,6 +11,7 @@ See [Release notes](https://github.com/TykTechnologies/tyk-operator/releases) to
  |Tyk Operator v0.14     |  Y  |  Y  |     |     |  Y  |  Y  |
  |Tyk Operator v0.14.1   |  Y  |  Y  |     |     |  Y  |  Y  |
  |Tyk Operator v0.15.0   |  Y  |  Y  |     |     |  Y  |  Y  |
+ |Tyk Operator v0.15.1   |  Y  |  Y  |     |     |  Y  |  Y  |
 
 ## Compatibility with Kubernetes Version
 
@@ -22,3 +23,4 @@ See [Release notes](https://github.com/TykTechnologies/tyk-operator/releases) to
  |Tyk Operator v0.14     |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |       |
  |Tyk Operator v0.14.1   |       |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |  
  |Tyk Operator v0.15.0   |       |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |
+ |Tyk Operator v0.15.1   |       |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |   Y   |
