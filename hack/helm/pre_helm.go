@@ -38,11 +38,11 @@ func main() {
 		{"CONTROLLER_MANAGER_WEBHOOK_PORT", "{{ .Values.manager.webhookPort }}"},
 		{"CONTROLLER_MANAGER_RBAC_PORT", "{{ .Values.rbac.port }}"},
 		{"CONTROLLER_MANAGER_HOST_NETWORK", "{{ .Values.hostNetwork | default false }}"},
-		{"CONTROLLERMANAGER_HEALTHPROBEPORT", "{{ .Values.manager.healthProbePort }}"},
-		{"CONTROLLERMANAGER_METRICSPORT", "{{ .Values.manager.metricsPort }}"},
-		{"CONTROLLERMANAGER_WEBHOOKPORT", "{{ .Values.manager.webhookPort }}"},
-		{"CONTROLLERMANAGER_LEADERELECT", "{{ .Values.manager.leaderElection.leaderElect }}"},
-		{"CONTROLLER_MANAGER_LEADERELECTIONRESOURCENAME", "{{ .Values.manager.leaderElection.resourceName }}"},
+		{"CONTROLLERMANAGER_HEALTHPROBEPORT", "{{ quote .Values.manager.healthProbePort }}"},
+		{"CONTROLLERMANAGER_METRICSPORT", "{{ quote .Values.manager.metricsPort }}"},
+		{"CONTROLLERMANAGER_WEBHOOKPORT", "{{ quote .Values.manager.webhookPort }}"},
+		{"CONTROLLERMANAGER_LEADERELECT", "{{ quote .Values.manager.leaderElection.leaderElect }}"},
+		{"CONTROLLER_MANAGER_LEADERELECTIONRESOURCENAME", "{{ quote .Values.manager.leaderElection.resourceName }}"},
 	}
 
 	for _, v := range m {
@@ -89,7 +89,7 @@ const (
 
 	envVarsTPL = `{{- with .Values.envVars }}
         env:
-{{- toYaml . | nindent 10 }}
+{{- toYaml . | nindent 8 }}
 {{- end }}`
 )
 

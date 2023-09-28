@@ -400,18 +400,18 @@ spec:
         - /manager
 {{- with .Values.envVars }}
         env:
-{{- toYaml . | nindent 10 }}
+{{- toYaml . | nindent 8 }}
 {{- end }}
         - name: TYK_OPERATOR_HEALTHPROBEPORT
-          value: {{ .Values.manager.healthProbePort }}
+          value: {{ quote .Values.manager.healthProbePort }}
         - name: TYK_OPERATOR_METRICSPORT
-          value: {{ .Values.manager.metricsPort }}
+          value: {{ quote .Values.manager.metricsPort }}
         - name: TYK_OPERATOR_WEBHOOKPORT
-          value: {{ .Values.manager.webhookPort }}
+          value: {{ quote .Values.manager.webhookPort }}
         - name: TYK_OPERATOR_LEADERELECT
-          value: {{ .Values.manager.leaderElection.leaderElect }}
+          value: {{ quote .Values.manager.leaderElection.leaderElect }}
         - name: TYK_OPERATOR_LEADERELECTIONRESOURCENAME
-          value: {{ .Values.manager.leaderElection.resourceName }}
+          value: {{ quote .Values.manager.leaderElection.resourceName }}
 {{- with .Values.envFrom }}
         envFrom:
 {{- toYaml . | nindent 10 }}

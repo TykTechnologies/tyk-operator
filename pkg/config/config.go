@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-
 	"github.com/kelseyhightower/envconfig"
-
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 // manager:
@@ -48,6 +46,7 @@ func (o *ManagerOpts) ManagerOptions(scheme *runtime.Scheme) ctrl.Options {
 		Metrics: server.Options{
 			BindAddress: fmt.Sprintf(":%d", o.MetricsPort),
 		},
+		WebhookServer:    webhook.NewServer(webhook.Options{Port: o.WebhookPort}),
 		LeaderElection:   o.LeaderElect,
 		LeaderElectionID: o.LeaderElectionResourceName,
 	}
