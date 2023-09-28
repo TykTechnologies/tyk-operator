@@ -9,6 +9,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/go-logr/logr"
 
 	"github.com/matryer/is"
 
@@ -17,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestUpdatingLoopingTargets(t *testing.T) {
@@ -389,7 +389,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			r := ApiDefinitionReconciler{
 				Client: cl,
 				Scheme: scheme.Scheme,
-				Log:    log.NullLogger{},
+				Log:    logr.Discard(),
 			}
 
 			api := &tykv1alpha1.ApiDefinition{}

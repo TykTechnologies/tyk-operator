@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	"github.com/go-logr/logr"
 )
 
 // Kase a single test case for an API call.
@@ -108,7 +108,7 @@ func RunRequestKase(t *testing.T, e *environment.Env, fn func(context.Context) e
 
 	x := Context{
 		Env: *e,
-		Log: log.NullLogger{},
+		Log: logr.Discard(),
 		Do: func(h *http.Request) (*http.Response, error) {
 			request = append(request, h)
 

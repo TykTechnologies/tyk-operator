@@ -1,4 +1,3 @@
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -349,25 +348,6 @@ subjects:
   namespace: {{ .Release.Namespace }}
 ---
 apiVersion: v1
-data:
-  controller_manager_config.yaml: |
-    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
-    kind: ControllerManagerConfig
-    health:
-      healthProbeBindAddress: :{{ .Values.healthProbePort }}
-    metrics:
-      bindAddress: 127.0.0.1:{{ .Values.metricsPort }}
-    webhook:
-      port: {{ .Values.webhookPort }}
-    leaderElection:
-      leaderElect: true
-      resourceName: 91ad8c6e.tyk.io
-kind: ConfigMap
-metadata:
-  name: {{ include "tyk-operator-helm.fullname" . }}-manager-config
-  namespace: {{ .Release.Namespace }}
----
-apiVersion: v1
 kind: Service
 metadata:
   labels:
@@ -416,14 +396,22 @@ spec:
         control-plane: tyk-operator-controller-manager
     spec:
       containers:
-      - args:
-        - --config=controller_manager_config.yaml
-        command:
+      - command:
         - /manager
 {{- with .Values.envVars }}
         env:
 {{- toYaml . | nindent 10 }}
 {{- end }}
+        - name: TYK_OPERATOR_HEALTHPROBEPORT
+          value: {{ .Values.manager.healthProbePort }}
+        - name: TYK_OPERATOR_METRICSPORT
+          value: {{ .Values.manager.metricsPort }}
+        - name: TYK_OPERATOR_WEBHOOKPORT
+          value: {{ .Values.manager.webhookPort }}
+        - name: TYK_OPERATOR_LEADERELECT
+          value: {{ .Values.manager.leaderElection.leaderElect }}
+        - name: TYK_OPERATOR_LEADERELECTIONRESOURCENAME
+          value: {{ .Values.manager.leaderElection.resourceName }}
 {{- with .Values.envFrom }}
         envFrom:
 {{- toYaml . | nindent 10 }}
@@ -433,18 +421,18 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: {{ .Values.healthProbePort }}
+            port: {{ .Values.manager.healthProbePort }}
           initialDelaySeconds: 15
           periodSeconds: 20
         name: manager
         ports:
-        - containerPort: {{ .Values.webhookPort }}
+        - containerPort: {{ .Values.manager.webhookPort }}
           name: webhook-server
           protocol: TCP
         readinessProbe:
           httpGet:
             path: /readyz
-            port: {{ .Values.healthProbePort }}
+            port: {{ .Values.manager.healthProbePort }}
           initialDelaySeconds: 5
           periodSeconds: 10
 {{- with .Values.resources }}
@@ -462,12 +450,9 @@ spec:
         {{ if .Values.extraVolumeMounts }}
             {{ toYaml .Values.extraVolumeMounts | nindent 8}}
           {{ end }}
-        - mountPath: /controller_manager_config.yaml
-          name: manager-config
-          subPath: controller_manager_config.yaml
       - args:
         - --secure-listen-address=0.0.0.0:{{ .Values.rbac.port }}
-        - --upstream=http://127.0.0.1:{{ .Values.metricsPort }}/
+        - --upstream=http://127.0.0.1:{{ .Values.manager.metricsPort }}/
         - --logtostderr=true
         - --v=10
         image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
@@ -497,9 +482,6 @@ spec:
       {{ if .Values.extraVolumes }}
        {{ toYaml .Values.extraVolumes | nindent 6 }}
         {{ end }}
-      - configMap:
-          name: {{ include "tyk-operator-helm.fullname" . }}-manager-config
-        name: manager-config
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

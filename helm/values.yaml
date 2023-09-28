@@ -30,12 +30,18 @@ extraVolumes: []
 #     subPath: your-cert.pem
 #     readOnly: false
 extraVolumeMounts: []
-# healthProbePort identifies the port the Controller Manager will listen on. Used by liveness and readiness probes
-healthProbePort: 8081
-# metricsPort identifies the port on which Tyk Operator metrics are served
-metricsPort: 8080
-# webhookPort identifies the port on which webhooks are handled
-webhookPort: 9443
+
+manager:
+  # healthProbePort identifies the port the Controller Manager will listen on. Used by liveness and readiness probes
+  healthProbePort: 8081
+  # metricsPort identifies the port on which Tyk Operator metrics are served
+  metricsPort: 8080
+  # webhookPort identifies the port on which webhooks are handled
+  webhookPort: 9443
+  leaderElection:
+    leaderElect: true
+    resourceName: 91ad8c6e.tyk.io
+
 annotations: {}
 podAnnotations: {}
 podSecurityContext:

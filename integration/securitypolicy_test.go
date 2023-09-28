@@ -6,19 +6,17 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
-
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
+	"github.com/go-logr/logr"
 	"github.com/matryer/is"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -344,14 +342,14 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 			polRec = controllers.SecurityPolicyReconciler{
 				Client: testCl,
-				Log:    log.NullLogger{},
+				Log:    logr.Discard(),
 				Scheme: testCl.Scheme(),
 				Env:    tykEnv,
 			}
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: polRec.Env,
-				Log: log.NullLogger{},
+				Log: logr.Discard(),
 			})
 
 			return ctx
@@ -568,7 +566,7 @@ func TestSecurityPolicy(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.Discard(),
 			})
 
 			return ctx
@@ -746,7 +744,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.Discard(),
 			})
 
 			return ctx

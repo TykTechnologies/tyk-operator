@@ -21,6 +21,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -56,25 +57,25 @@ func (r *SecurityPolicy) Default() {
 var _ webhook.Validator = &SecurityPolicy{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *SecurityPolicy) ValidateCreate() error {
+func (r *SecurityPolicy) ValidateCreate() (admission.Warnings, error) {
 	securitypolicylog.Info("validate create", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object creation.
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *SecurityPolicy) ValidateUpdate(old runtime.Object) error {
+func (r *SecurityPolicy) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	securitypolicylog.Info("validate update", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object update.
-	return nil
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *SecurityPolicy) ValidateDelete() error {
+func (r *SecurityPolicy) ValidateDelete() (admission.Warnings, error) {
 	securitypolicylog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }

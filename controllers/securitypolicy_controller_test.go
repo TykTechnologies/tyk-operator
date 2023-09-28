@@ -6,10 +6,10 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/go-logr/logr"
 	"github.com/matryer/is"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestUpdatePolicyStatus(t *testing.T) {
@@ -85,7 +85,7 @@ func TestUpdatePolicyStatus(t *testing.T) {
 
 			r := &SecurityPolicyReconciler{
 				Client: c,
-				Log:    log.NullLogger{},
+				Log:    logr.Discard(),
 			}
 
 			err = r.updatePolicyStatus(context.TODO(), test.Policy, nil)

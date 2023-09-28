@@ -4,18 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/types"
-
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
-
+	"github.com/go-logr/logr"
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
@@ -46,7 +44,7 @@ func TestCertificateUpload(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.Discard(),
 			})
 
 			// Create TLS secret
@@ -100,7 +98,7 @@ func TestCertificateUpload(t *testing.T) {
 
 			r := controllers.SecretCertReconciler{
 				Client: cl,
-				Log:    log.NullLogger{},
+				Log:    logr.Discard(),
 				Scheme: cl.Scheme(),
 				Env:    tykEnv,
 			}

@@ -22,7 +22,6 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -146,7 +145,7 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *SuperGraphReconciler) findObjectsForSupergraph(subGraph client.Object) []reconcile.Request {
+func (r *SuperGraphReconciler) findObjectsForSupergraph(ctx context.Context, subGraph client.Object) []reconcile.Request {
 	attachedSupergraphDeployments := &tykv1alpha1.SuperGraphList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(SubgraphField, subGraph.GetName()),
@@ -195,7 +194,7 @@ func (r *SuperGraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1alpha1.SuperGraph{}).
 		Watches(
-			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
+			&tykv1alpha1.SubGraph{},
 			handler.EnqueueRequestsFromMapFunc(r.findObjectsForSupergraph),
 			builder.WithPredicates(r.ignoreSubGraphCreationEvents()),
 		).

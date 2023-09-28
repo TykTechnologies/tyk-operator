@@ -19,23 +19,20 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
-	"strings"
 
+	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
+	"github.com/TykTechnologies/tyk-operator/pkg/config"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
+	"github.com/TykTechnologies/tyk-operator/pkg/snapshot"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/controllers"
-	"github.com/TykTechnologies/tyk-operator/pkg/environment"
-	"github.com/TykTechnologies/tyk-operator/pkg/snapshot"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -77,14 +74,8 @@ func init() {
 }
 
 func main() {
-	var configFile string
 	var env environment.Env
 	var err error
-
-	flag.StringVar(&configFile, "config", "",
-		"The controller will load its initial configuration from this file. "+
-			"Omit this flag to use the default configuration values. "+
-			"Command-line flags override configuration from this file.")
 
 	opts := zap.Options{
 		Development: true,
@@ -112,27 +103,24 @@ func main() {
 		os.Exit(0)
 	}
 
-	if env.Namespace == "" {
-		setupLog.Info("unable to get WatchNamespace, " +
-			"the manager will watch and manage resources in all Namespaces")
+	managerOpts, err := config.LoadFromEnv()
+	if err != nil {
+		setupLog.Error(err, "failed to process environment variables for manager configuration")
+		os.Exit(1)
 	}
 
-	options := ctrl.Options{Scheme: scheme, Namespace: env.Namespace}
+	options := managerOpts.ManagerOptions(scheme)
 
-	if configFile != "" {
-		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
-		if err != nil {
-			setupLog.Error(err, "unable to load the config file")
-			os.Exit(1)
-		}
-	}
+	// If any number of namespaces is specified, only watch these namespaces for caching. In order
+	// to do that, caching options must be set. Otherwise, if no namespace is specified which means
+	// env.Namespace is empty string (""), no need to set caching options in controller config.
+	if env.Namespace != "" {
+		setupLog.Info("watching resources in namespaces", env.Namespace)
 
-	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
-	if strings.Contains(env.Namespace, ",") {
-		setupLog.Info(fmt.Sprintf("manager will be watching namespace %q", env.Namespace))
-		// configure cluster-scoped with MultiNamespacedCacheBuilder
-		options.Namespace = ""
-		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(env.Namespace, ","))
+		config.SetCacheOptions(env.Namespace, &options)
+	} else {
+		setupLog.Info("unable to get WATCH_NAMESPACE, " +
+			"the manager will watch and manage resources in all namespaces")
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)

@@ -51,7 +51,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
@@ -1085,7 +1084,7 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 	return err
 }
 
-func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(graph client.Object) []reconcile.Request {
+func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(ctx context.Context, graph client.Object) []reconcile.Request {
 	apiDefDeployments := &tykv1alpha1.ApiDefinitionList{}
 	listOps := &client.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(GraphKey, graph.GetName()),
@@ -1141,12 +1140,12 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&tykv1alpha1.ApiDefinition{}).
 		Owns(&v1.Secret{}).
 		Watches(
-			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
+			&tykv1alpha1.SubGraph{},
 			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
 			builder.WithPredicates(r.ignoreGraphCreationEvents()),
 		).
 		Watches(
-			&source.Kind{Type: &tykv1alpha1.SuperGraph{}},
+			&tykv1alpha1.SuperGraph{},
 			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
 			builder.WithPredicates(r.ignoreGraphCreationEvents()),
 		).

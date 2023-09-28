@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+        - name: manager
+          env:
+            - name: TYK_OPERATOR_HEALTHPROBEPORT
+              value: CONTROLLERMANAGER_HEALTHPROBEPORT
+            - name: TYK_OPERATOR_METRICSPORT
+              value: CONTROLLERMANAGER_METRICSPORT
+            - name: TYK_OPERATOR_WEBHOOKPORT
+              value: CONTROLLERMANAGER_WEBHOOKPORT
+            - name: TYK_OPERATOR_LEADERELECT
+              value: CONTROLLERMANAGER_LEADERELECT
+            - name: TYK_OPERATOR_LEADERELECTIONRESOURCENAME
+              value: CONTROLLER_MANAGER_LEADERELECTIONRESOURCENAME
