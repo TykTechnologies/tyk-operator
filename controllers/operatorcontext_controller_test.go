@@ -40,7 +40,7 @@ func TestOperatorContextCreate(t *testing.T) {
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
 		Scheme: scheme.Scheme,
-		Log:    logr.Discard(),
+		Log:    logr.Logger{},
 	}
 
 	req := reconcile.Request{}
@@ -71,7 +71,7 @@ func TestOperatorContextDelete(t *testing.T) {
 	r := controllers.OperatorContextReconciler{
 		Client: cl,
 		Scheme: scheme.Scheme,
-		Log:    logr.Discard(),
+		Log:    logr.Logger{},
 	}
 
 	t.Parallel()

@@ -44,7 +44,7 @@ func TestCertificateUpload(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Discard(),
+				Log: logr.Logger{},
 			})
 
 			// Create TLS secret
@@ -98,7 +98,7 @@ func TestCertificateUpload(t *testing.T) {
 
 			r := controllers.SecretCertReconciler{
 				Client: cl,
-				Log:    logr.Discard(),
+				Log:    logr.Logger{},
 				Scheme: cl.Scheme(),
 				Env:    tykEnv,
 			}

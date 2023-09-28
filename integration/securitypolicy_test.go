@@ -342,14 +342,14 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 			polRec = controllers.SecurityPolicyReconciler{
 				Client: testCl,
-				Log:    logr.Discard(),
+				Log:    logr.Logger{},
 				Scheme: testCl.Scheme(),
 				Env:    tykEnv,
 			}
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: polRec.Env,
-				Log: logr.Discard(),
+				Log: logr.Logger{},
 			})
 
 			return ctx
@@ -566,7 +566,7 @@ func TestSecurityPolicy(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Discard(),
+				Log: logr.Logger{},
 			})
 
 			return ctx
@@ -744,7 +744,7 @@ func TestSecurityPolicyForGraphQL(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Discard(),
+				Log: logr.Logger{},
 			})
 
 			return ctx

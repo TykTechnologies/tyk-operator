@@ -108,7 +108,7 @@ func RunRequestKase(t *testing.T, e *environment.Env, fn func(context.Context) e
 
 	x := Context{
 		Env: *e,
-		Log: logr.Discard(),
+		Log: logr.Logger{},
 		Do: func(h *http.Request) (*http.Response, error) {
 			request = append(request, h)
 

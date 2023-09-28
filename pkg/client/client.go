@@ -106,7 +106,7 @@ func GetContext(ctx context.Context) Context {
 	}
 
 	return Context{
-		Log: logr.Discard(),
+		Log: logr.Logger{},
 	}
 }
 

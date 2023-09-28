@@ -1084,11 +1084,11 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 	return err
 }
 
-func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(ctx context.Context, graph client.Object) []reconcile.Request {
+func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(ctx context.Context, g client.Object) []reconcile.Request {
 	apiDefDeployments := &tykv1alpha1.ApiDefinitionList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(GraphKey, graph.GetName()),
-		Namespace:     graph.GetNamespace(),
+		FieldSelector: fields.OneTermEqualSelector(GraphKey, g.GetName()),
+		Namespace:     g.GetNamespace(),
 	}
 
 	if err := r.List(context.TODO(), apiDefDeployments, listOps); err != nil {

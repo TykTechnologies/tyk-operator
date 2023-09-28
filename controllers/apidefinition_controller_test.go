@@ -389,7 +389,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			r := ApiDefinitionReconciler{
 				Client: cl,
 				Scheme: scheme.Scheme,
-				Log:    logr.Discard(),
+				Log:    logr.Logger{},
 			}
 
 			api := &tykv1alpha1.ApiDefinition{}

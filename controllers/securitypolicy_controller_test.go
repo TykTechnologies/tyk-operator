@@ -85,7 +85,7 @@ func TestUpdatePolicyStatus(t *testing.T) {
 
 			r := &SecurityPolicyReconciler{
 				Client: c,
-				Log:    logr.Discard(),
+				Log:    logr.Logger{},
 			}
 
 			err = r.updatePolicyStatus(context.TODO(), test.Policy, nil)

@@ -116,7 +116,7 @@ func TestCreateAPI(t *testing.T) {
 
 	reconciler := IngressReconciler{
 		Client: client,
-		Log:    logr.Discard(),
+		Log:    logr.Logger{},
 		Scheme: scheme.Scheme,
 		Env:    environment.Env{},
 	}
