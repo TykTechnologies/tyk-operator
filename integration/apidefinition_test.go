@@ -199,7 +199,7 @@ func TestDeletingNonexistentAPI(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -258,7 +258,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			// Create ApiDefinition Reconciler.
@@ -267,7 +267,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 
 			r = controllers.ApiDefinitionReconciler{
 				Client: cl,
-				Log:    logr.Logger{},
+				Log:    logr.FromContextOrDiscard(ctx),
 				Scheme: cl.Scheme(),
 				Env:    tykEnv,
 			}
@@ -358,7 +358,7 @@ func TestApiDefinitionUpdate(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -872,7 +872,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -959,7 +959,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1058,7 +1058,7 @@ func TestApiCertificates(t *testing.T) {
 
 			tykCtx := tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			exists := klient.Universal.Certificate().Exists(tykCtx, apiDef.Spec.Certificates[0])
@@ -1090,7 +1090,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1170,7 +1170,7 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1262,7 +1262,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: logr.Logger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1508,7 +1508,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 			eval.NoErr(err)
 			r = controllers.ApiDefinitionReconciler{
 				Client: cl,
-				Log:    logr.Logger{},
+				Log:    logr.FromContextOrDiscard(ctx),
 				Scheme: cl.Scheme(),
 				Env:    tykEnv,
 			}

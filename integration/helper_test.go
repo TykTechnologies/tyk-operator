@@ -29,7 +29,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	cr "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
 	e2eKlient "sigs.k8s.io/e2e-framework/klient"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
@@ -50,10 +50,10 @@ const (
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
 // Reconciler for CRs such as ApiDefinitionReconciler.
-func createTestClient(k e2eKlient.Client) (cr.Client, error) {
+func createTestClient(k e2eKlient.Client) (ctrl.Client, error) {
 	scheme := runtime.NewScheme()
 
-	cl, err := cr.New(k.RESTConfig(), cr.Options{Scheme: scheme})
+	cl, err := ctrl.New(k.RESTConfig(), ctrl.Options{Scheme: scheme})
 	if err != nil {
 		return nil, err
 	}

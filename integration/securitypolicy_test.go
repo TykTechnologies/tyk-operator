@@ -309,8 +309,9 @@ func TestSecurityPolicyMigration(t *testing.T) {
 
 		hasSameValues = func(m v1alpha1.OperatorContextMode, k8s, tyk *v1alpha1.SecurityPolicySpec, k8sID string) bool {
 			if m == "pro" {
-				return *k8s.MID == *tyk.MID &&
-					tyk.MID != nil &&
+				return k8s != nil && tyk != nil &&
+					k8s.MID != nil && tyk.MID != nil &&
+					*k8s.MID == *tyk.MID &&
 					k8sID == *tyk.MID &&
 					len(k8s.Tags) == len(tyk.Tags) &&
 					len(tyk.Tags) == 1 &&

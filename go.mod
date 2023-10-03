@@ -9,6 +9,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/matryer/is v1.4.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
@@ -17,7 +18,7 @@ require (
 	k8s.io/client-go v0.28.1
 	moul.io/http2curl/v2 v2.2.2
 	sigs.k8s.io/controller-runtime v0.16.2
-	sigs.k8s.io/e2e-framework v0.0.5
+	sigs.k8s.io/e2e-framework v0.1.0
 	sigs.k8s.io/gateway-api v0.8.1
 )
 
@@ -58,7 +59,6 @@ require (
 	github.com/jensneuse/pipeline v0.0.0-20200117120358-9fb4de085cd6 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
