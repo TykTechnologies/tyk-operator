@@ -32,16 +32,11 @@ type ManagerOpts struct {
 	WebhookPort                int    `default:"9443"`
 	LeaderElect                bool   `default:"true"`
 	LeaderElectionResourceName string `default:"91ad8c6e.tyk.io"`
+
+	runningLocally bool
 }
 
-// ManagerOptions returns controller runtime manager Options that is populated by ManagerOpts read via environment
-// variables.
-//
-// The flow is as follows; all environment variables, fields of ManagerOpts, will be declared
-// via environment variable and LoadFromEnv will process environment variables and populate
-// ManagerOpts struct accordingly. Then, ManagerOptions() method will generate controller runtime manager
-// options required to start Tyk Operator manager.
-func (o *ManagerOpts) ManagerOptions(scheme *runtime.Scheme) ctrl.Options {
+func (o *ManagerOpts) checkRunningLocally() {
 	enableWebhooks := false
 
 	enableWebhooksRaw := strings.TrimSpace(os.Getenv("ENABLE_WEBHOOKS"))
@@ -55,10 +50,29 @@ func (o *ManagerOpts) ManagerOptions(scheme *runtime.Scheme) ctrl.Options {
 		}
 	}
 
-	leaderElectionNamespace := ""
-	// if not enabled webhooks, we are running locally. So, specify namespace.
-	if !enableWebhooks {
-		leaderElectionNamespace = "tyk-operator-system"
+	switch enableWebhooks {
+	case true:
+		// If webhooks enabled, the Operator is running in-cluster mode.
+		o.runningLocally = false
+	default:
+		// If webhooks not enabled, the Operator is running locally. So, specify namespace for leader election
+		o.runningLocally = true
+	}
+
+}
+
+// ManagerOptions returns controller runtime manager Options that is populated by ManagerOpts read via environment
+// variables.
+//
+// The flow is as follows; all environment variables, fields of ManagerOpts, will be declared
+// via environment variable and LoadFromEnv will process environment variables and populate
+// ManagerOpts struct accordingly. Then, ManagerOptions() method will generate controller runtime manager
+// options required to start Tyk Operator manager.
+func (o *ManagerOpts) ManagerOptions(scheme *runtime.Scheme) ctrl.Options {
+	o.checkRunningLocally()
+
+	if o.runningLocally {
+		o.LeaderElect = false
 	}
 
 	return ctrl.Options{
@@ -70,9 +84,6 @@ func (o *ManagerOpts) ManagerOptions(scheme *runtime.Scheme) ctrl.Options {
 		WebhookServer:    webhook.NewServer(webhook.Options{Port: o.WebhookPort}),
 		LeaderElection:   o.LeaderElect,
 		LeaderElectionID: o.LeaderElectionResourceName,
-		// If empty, it tries to run in-cluster mode. Otherwise,
-		// it tries to run locally where we need to specify namespace
-		LeaderElectionNamespace: leaderElectionNamespace,
 	}
 }
 

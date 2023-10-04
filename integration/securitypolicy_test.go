@@ -605,6 +605,9 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that policy is created on Tyk
+				err = waitForTykResourceCreation(c, &policyCR)
+				eval.NoErr(err)
+
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(&policyCR, func(object k8s.Object) bool {
 						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
@@ -622,7 +625,7 @@ func TestSecurityPolicy(t *testing.T) {
 							return false
 						}
 
-						if policyCR.Spec.MID == nil {
+						if policyOnK8s.Spec.MID == nil {
 							t.Logf(".spec.MID of Policy CR %v/%v is nil, retrying...", object.GetName(), object.GetNamespace())
 							return false
 						}
