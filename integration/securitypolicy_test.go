@@ -597,9 +597,7 @@ func TestSecurityPolicy(t *testing.T) {
 				}
 
 				// Ensure API is created before creating a policy
-				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
-					return apiDefCR.Status.ApiID != ""
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				err = waitForTykResourceCreation(c, apiDefCR)
 				eval.NoErr(err)
 
 				// Create the SecurityPolicy on k8s after creating the Policy.
@@ -612,10 +610,20 @@ func TestSecurityPolicy(t *testing.T) {
 						policyOnK8s, ok := object.(*v1alpha1.SecurityPolicy)
 						eval.True(ok)
 
+						if policyOnK8s == nil {
+							t.Logf("Object %v/%v is nil, retrying...", object.GetName(), object.GetNamespace())
+							return false
+						}
+
 						// Ensure that policy is created on Tyk
 						policyOnTyk, err := klient.Universal.Portal().Policy().Get(reqCtx, policyOnK8s.Status.PolID)
 						if err != nil {
 							t.Logf("Failed to find Policy '%v' on Tyk, err: %v", policyOnK8s.Status.PolID, err)
+							return false
+						}
+
+						if policyCR.Spec.MID == nil {
+							t.Logf(".spec.MID of Policy CR %v/%v is nil, retrying...", object.GetName(), object.GetNamespace())
 							return false
 						}
 

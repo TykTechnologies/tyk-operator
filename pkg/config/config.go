@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
@@ -40,6 +42,25 @@ type ManagerOpts struct {
 // ManagerOpts struct accordingly. Then, ManagerOptions() method will generate controller runtime manager
 // options required to start Tyk Operator manager.
 func (o *ManagerOpts) ManagerOptions(scheme *runtime.Scheme) ctrl.Options {
+	enableWebhooks := false
+
+	enableWebhooksRaw := strings.TrimSpace(os.Getenv("ENABLE_WEBHOOKS"))
+	if enableWebhooksRaw != "" {
+		var err error
+		enableWebhooks, err = strconv.ParseBool(enableWebhooksRaw)
+		if err != nil {
+			// todo(buraksekili): no need this, only dev purposes
+			fmt.Println("failed to parse enablewebhooks config", err)
+			enableWebhooks = false
+		}
+	}
+
+	leaderElectionNamespace := ""
+	// if not enabled webhooks, we are running locally. So, specify namespace.
+	if !enableWebhooks {
+		leaderElectionNamespace = "tyk-operator-system"
+	}
+
 	return ctrl.Options{
 		Scheme:                 scheme,
 		HealthProbeBindAddress: fmt.Sprintf(":%d", o.HealthProbePort),
@@ -49,6 +70,9 @@ func (o *ManagerOpts) ManagerOptions(scheme *runtime.Scheme) ctrl.Options {
 		WebhookServer:    webhook.NewServer(webhook.Options{Port: o.WebhookPort}),
 		LeaderElection:   o.LeaderElect,
 		LeaderElectionID: o.LeaderElectionResourceName,
+		// If empty, it tries to run in-cluster mode. Otherwise,
+		// it tries to run locally where we need to specify namespace
+		LeaderElectionNamespace: leaderElectionNamespace,
 	}
 }
 
