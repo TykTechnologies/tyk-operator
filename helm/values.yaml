@@ -12,6 +12,8 @@ image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
   tag: "v0.15.1"
+# specify imagePullSecrets for ServiceAccount
+imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 # extraVolumes is a list of volumes to be added to the pod
