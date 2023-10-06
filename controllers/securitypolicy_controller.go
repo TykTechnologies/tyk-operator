@@ -25,7 +25,7 @@ import (
 	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	opclient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,6 +34,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const policyFinalizer = "finalizers.tyk.io/securitypolicy"
@@ -43,7 +44,7 @@ type SecurityPolicyReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Env      environmet.Env
+	Env      environment.Env
 	Recorder record.EventRecorder
 }
 
@@ -62,8 +63,9 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err := r.Get(ctx, req.NamespacedName, policy); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, r.Env, policy, log)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, policy, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -80,13 +82,23 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 		util.AddFinalizer(policy, policyFinalizer)
 
-		if policy.Spec.ID == "" {
-			policy.Spec.ID = EncodeNS(ns)
+		if policy.Spec.ID == nil || *policy.Spec.ID == "" {
+			if policy.Spec.ID == nil {
+				policy.Spec.ID = new(string)
+			}
+
+			polID := EncodeNS(ns)
+			policy.Spec.ID = &polID
 		}
 
-		if policy.Spec.OrgID == "" {
-			policy.Spec.OrgID = env.Org
+		if policy.Spec.OrgID == nil || *policy.Spec.OrgID == "" {
+			if policy.Spec.OrgID == nil {
+				policy.Spec.OrgID = new(string)
+			}
 		}
+
+		orgID := env.Org
+		policy.Spec.OrgID = &orgID
 
 		if policy.Status.PolID == "" {
 			return r.create(ctx, policy)
@@ -97,7 +109,8 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return err
 		}
 
-		policy.Spec = *newSpec
+		policy.Spec.SecurityPolicySpec = *newSpec
+
 		return nil
 	})
 
@@ -127,11 +140,11 @@ func (r *SecurityPolicyReconciler) spec(
 		}
 
 		if spec.AccessRights == nil {
-			spec.AccessRights = map[string]tykv1.AccessDefinition{}
+			spec.AccessRights = map[string]model.AccessDefinition{}
 		}
 
 		// Set AccessRights for Tyk OSS.
-		spec.AccessRights[spec.AccessRightsArray[i].APIID] = *spec.AccessRightsArray[i]
+		spec.AccessRights[*spec.AccessRightsArray[i].APIID] = *spec.AccessRightsArray[i]
 	}
 
 	return spec, nil
@@ -139,7 +152,7 @@ func (r *SecurityPolicyReconciler) spec(
 
 // updateAccess updates given AccessDefinition's APIID and APIName fields based on ApiDefinition CR that is referred
 // in the AccessDefinition. So that, it includes k8s details of the referred ApiDefinitions.
-func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.AccessDefinition) error {
+func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *model.AccessDefinition) error {
 	api := &tykv1.ApiDefinition{}
 	if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
@@ -165,8 +178,16 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *tykv1.A
 		return opclient.ErrNotFound
 	}
 
-	ad.APIID = api.Status.ApiID
-	ad.APIName = api.Spec.Name
+	if ad.APIID == nil {
+		ad.APIID = new(string)
+	}
+
+	if ad.APIName == nil {
+		ad.APIName = new(string)
+	}
+
+	*ad.APIID = api.Status.ApiID
+	*ad.APIName = api.Spec.Name
 
 	return nil
 }
@@ -189,19 +210,22 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 
 	util.RemoveFinalizer(policy, policyFinalizer)
 
-	if err := klient.Universal.Portal().Policy().Delete(ctx, policy.Status.PolID); err != nil {
-		if opclient.IsNotFound(err) {
-			r.Log.Info("Policy not found on Tyk", "Policy ID", policy.Status.PolID)
-			return nil
+	_, errTyk := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
+	if !opclient.IsNotFound(errTyk) {
+		err := klient.Universal.Portal().Policy().Delete(ctx, policy.Status.PolID)
+		if err != nil {
+			r.Log.Error(err, "Failed to delete SecurityPolicy from Tyk",
+				"Policy", client.ObjectKeyFromObject(policy).String(),
+			)
+
+			return err
 		}
 
-		// At the moment, the Policy API returns 500 instead of 404 in cases of deleting non-existent Policies.
-		// So that reconciliation fails since non-existence couldn't be understood by Operator. Until this
-		// issue is fixed on Gateway level, add an ad-hoc API call to verify that policy's existence on Tyk level.
-		// If the Policy does not exist, no need to reconcile again. Otherwise, return err and reconcile.
-		_, errTyk := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
-		if !opclient.IsNotFound(errTyk) {
-			r.Log.Error(err, "Failed to delete resource from Tyk")
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			r.Log.Error(err, "Failed to hot-reload Tyk after deleting a Policy",
+				"Policy", client.ObjectKeyFromObject(policy),
+			)
 
 			return err
 		}
@@ -212,15 +236,6 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	err = klient.Universal.HotReload(ctx)
-	if err != nil {
-		r.Log.Error(err, "Failed to hot-reload Tyk after deleting a Policy",
-			"Policy", client.ObjectKeyFromObject(policy),
-		)
-
-		return err
-	}
-
 	r.Log.Info("Successfully deleted Policy")
 
 	return nil
@@ -228,10 +243,14 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 
 func (r *SecurityPolicyReconciler) update(ctx context.Context,
 	policy *tykv1.SecurityPolicy,
-) (*tykv1.SecurityPolicySpec, error) {
+) (*model.SecurityPolicySpec, error) {
 	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
 
-	policy.Spec.MID = policy.Status.PolID
+	if policy.Spec.MID == nil {
+		policy.Spec.MID = new(string)
+	}
+
+	*policy.Spec.MID = policy.Status.PolID
 
 	spec, err := r.spec(ctx, &policy.Spec)
 	if err != nil {
@@ -240,8 +259,19 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 
 	// If SecurityPolicy does not exist on Tyk Side, Tyk Operator must create a Security
 	// Policy on Tyk based on k8s state. So, unintended deletions from Dashboard can be avoided.
-	_, err = klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
+	specTyk, err := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID)
 	if err == nil {
+		if isSame(policy.Status.LatestCRDSpecHash, spec) && isSame(policy.Status.LatestTykSpecHash, specTyk) {
+			r.Log.Info("SecurityPolicy is already up-to-date", "Policy", client.ObjectKeyFromObject(policy))
+			// TODO(buraksekili): needs refactoring - no need for code duplication.
+			err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
+			if err != nil {
+				return nil, err
+			}
+
+			return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, nil)
+		}
+
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
 			r.Log.Error(err, "Failed to update policy on Tyk")
@@ -258,8 +288,12 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 				return nil, err
 			}
 
-			policy.Spec.MID = spec.MID
-			policy.Status.PolID = spec.MID
+			if policy.Spec.MID == nil {
+				policy.Spec.MID = new(string)
+			}
+
+			*policy.Spec.MID = *spec.MID
+			policy.Status.PolID = *spec.MID
 		} else {
 			r.Log.Error(err, "Failed to get Policy from Tyk", err)
 
@@ -267,24 +301,28 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		}
 	}
 
-	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
-	if err != nil {
-		return nil, err
-	}
-
 	err = klient.Universal.HotReload(ctx)
-
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after updating the Policy",
-			"Policy", client.ObjectKeyFromObject(policy),
+			"SecurityPolicy", client.ObjectKeyFromObject(policy),
 		)
 
 		return nil, err
 	}
 
+	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
+	if err != nil {
+		return nil, err
+	}
+
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *policy.Spec.MID) //nolint:errcheck
+
 	r.Log.Info("Successfully updated Policy")
 
-	return spec, r.updatePolicyStatus(ctx, policy)
+	return &spec.SecurityPolicySpec, r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
+		status.LatestTykSpecHash = calculateHash(polOnTyk)
+		status.LatestCRDSpecHash = calculateHash(spec)
+	})
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
@@ -298,8 +336,8 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 	// Check if policy exists. During migration, policy exists on the Dashboard but not in the k8s environment.
 	// If policy does not exist on Tyk side, create it. Otherwise, update it based on Kubernetes spec because
 	// creating a Policy with duplicated name causes API call errors.
-	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, policy.Spec.ID)
-	if err != nil || existingSpec == nil || existingSpec.MID == "" {
+	existingSpec, err := klient.Universal.Portal().Policy().Get(ctx, *policy.Spec.ID)
+	if err != nil || existingSpec == nil || existingSpec.MID == nil || *existingSpec.MID == "" {
 		r.Log.Info("Creating a new policy")
 
 		err = klient.Universal.Portal().Policy().Create(ctx, spec)
@@ -313,7 +351,11 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 			return err
 		}
 	} else {
-		spec.MID = existingSpec.MID
+		if spec.MID == nil {
+			spec.MID = new(string)
+		}
+
+		*spec.MID = *existingSpec.MID
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
@@ -327,16 +369,6 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		}
 	}
 
-	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
-	if err != nil {
-		r.Log.Error(err,
-			"failed to update linkedAPI status",
-			"Policy", client.ObjectKeyFromObject(policy),
-		)
-
-		return err
-	}
-
 	err = klient.Universal.HotReload(ctx)
 	if err != nil {
 		r.Log.Error(err, "Failed to hot-reload Tyk after creating a Policy",
@@ -348,16 +380,41 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	r.Log.Info("Successfully created Policy")
 
-	policy.Spec.MID = spec.MID
+	if policy.Spec.MID == nil {
+		policy.Spec.MID = new(string)
+	}
 
-	return r.updatePolicyStatus(ctx, policy)
+	*policy.Spec.MID = *spec.MID
+
+	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
+	if err != nil {
+		r.Log.Error(err,
+			"failed to update linkedAPI status",
+			"Policy", client.ObjectKeyFromObject(policy),
+		)
+
+		return err
+	}
+
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *spec.MID) //nolint:errcheck
+
+	return r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
+		status.LatestTykSpecHash = calculateHash(polOnTyk)
+		status.LatestCRDSpecHash = calculateHash(spec)
+	})
 }
 
 // updatePolicyStatus updates the status of the policy.
-func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+func (r *SecurityPolicyReconciler) updatePolicyStatus(
+	ctx context.Context,
+	policy *tykv1.SecurityPolicy,
+	fn func(status *tykv1.SecurityPolicyStatus),
+) error {
 	r.Log.Info("Updating policy status")
 
-	policy.Status.PolID = policy.Spec.MID
+	if policy.Spec.MID != nil {
+		policy.Status.PolID = *policy.Spec.MID
+	}
 
 	if policy.Spec.AccessRightsArray != nil && len(policy.Spec.AccessRightsArray) > 0 {
 		policy.Status.LinkedAPIs = make([]model.Target, 0)
@@ -366,9 +423,14 @@ func (r *SecurityPolicyReconciler) updatePolicyStatus(ctx context.Context, polic
 	}
 
 	for _, v := range policy.Spec.AccessRightsArray {
-		target := model.Target{Name: v.Name, Namespace: v.Namespace}
+		namespace := v.Namespace
+		target := model.Target{Name: v.Name, Namespace: &namespace}
 
 		policy.Status.LinkedAPIs = append(policy.Status.LinkedAPIs, target)
+	}
+
+	if fn != nil {
+		fn(&policy.Status)
 	}
 
 	return r.Status().Update(ctx, policy)
@@ -381,21 +443,43 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 ) error {
 	r.Log.Info("Updating linked api definitions")
 
-	ns := model.Target{
-		Namespace: policy.Namespace, Name: policy.Name,
+	polNS := policy.Namespace
+	target := model.Target{
+		Namespace: &polNS, Name: policy.Name,
+	}
+
+	oldLinks := map[string]bool{}
+	newLinks := map[string]bool{}
+
+	for _, t := range policy.Status.LinkedAPIs {
+		oldLinks[t.String()] = true
+	}
+
+	for _, t := range policy.Spec.AccessRightsArray {
+		name := types.NamespacedName{Name: t.Name, Namespace: t.Namespace}
+		newLinks[name.String()] = true
 	}
 
 	// Remove links from api definitions
 	for _, t := range policy.Status.LinkedAPIs {
+		if _, ok := newLinks[t.String()]; ok {
+			continue
+		}
+
 		api := &tykv1.ApiDefinition{}
 
-		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: t.Namespace}, api); err != nil {
+		apiNS := ""
+		if t.Namespace != nil {
+			apiNS = *t.Namespace
+		}
+
+		if err := r.Get(ctx, types.NamespacedName{Name: t.Name, Namespace: apiNS}, api); err != nil {
 			r.Log.Error(err, "Failed to get the linked API", "api", t.String())
 
 			return err
 		}
 
-		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, target)
 
 		if err := r.Status().Update(ctx, api); err != nil {
 			r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
@@ -405,6 +489,11 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 	}
 
 	for _, a := range policy.Spec.AccessRightsArray {
+		ok := oldLinks[types.NamespacedName{Name: a.Name, Namespace: a.Namespace}.String()]
+		if ok && !policyDeleted {
+			continue
+		}
+
 		api := &tykv1.ApiDefinition{}
 
 		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
@@ -416,9 +505,9 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 		}
 
 		if policyDeleted {
-			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, ns)
+			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, target)
 		} else {
-			api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, ns)
+			api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, target)
 		}
 
 		if err := r.Status().Update(ctx, api); err != nil {
@@ -435,5 +524,6 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 func (r *SecurityPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tykv1.SecurityPolicy{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 }

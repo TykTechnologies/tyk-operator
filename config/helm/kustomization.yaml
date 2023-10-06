@@ -17,6 +17,7 @@ bases:
   - ../manager
   - ../webhook
   - ../certmanager
+  - ../prometheus
 
 patchesStrategicMerge:
   # Protect the /metrics endpoint by putting it behind auth.
@@ -39,6 +40,10 @@ patchesStrategicMerge:
   - manager_env_vars_patch.yaml
   # add custom node selector
   - manager_node_selector_patch.yaml
+  # add extraVolume for manager pod
+  - manager_extra_volume.yaml
+  # add extraVolumeMounts for manager pod
+  - manager_extra_volumemounts.yaml
 
   # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
   # crd/kustomization.yaml

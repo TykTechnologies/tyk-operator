@@ -1,6 +1,8 @@
 package controllers
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestDecodeID(t *testing.T) {
 	tests := []struct {

@@ -22,7 +22,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,7 +43,7 @@ type SecretCertReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-	Env    environmet.Env
+	Env    environment.Env
 }
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update
@@ -58,55 +58,9 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err) // Ignore not-found errors
 	}
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, r.Env, desired, log)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, desired, log)
 	if err != nil {
 		return ctrl.Result{}, err
-	}
-
-	// If object is being deleted
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("secret being deleted")
-		// If our finalizer is present, need to delete from Tyk still
-		if util.ContainsFinalizer(desired, certFinalizerName) {
-			log.Info("running finalizer logic")
-
-			certPemBytes, ok := desired.Data["tls.crt"]
-			if !ok {
-				return ctrl.Result{}, nil
-			}
-
-			orgID := env.Org
-
-			certFingerPrint, err := cert.CalculateFingerPrint(certPemBytes)
-			if err != nil {
-				log.Error(err, "Failed to delete Tyk certificate")
-				return ctrl.Result{}, nil
-			}
-
-			certID := orgID + certFingerPrint
-
-			log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
-
-			if err := klient.Universal.Certificate().Delete(ctx, certID); err != nil {
-				log.Error(err, "unable to delete certificate")
-				return ctrl.Result{RequeueAfter: time.Second * 5}, err
-			}
-
-			if err := klient.Universal.HotReload(ctx); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			log.Info("removing finalizer from secret")
-			util.RemoveFinalizer(desired, certFinalizerName)
-
-			if err := r.Update(ctx, desired); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		log.Info("secret successfully deleted")
-
-		return ctrl.Result{}, nil
 	}
 
 	log.Info("checking secret type is kubernetes.io/tls")
@@ -115,6 +69,18 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// it's not for us
 		return ctrl.Result{}, nil
 	}
+
+	// If object is being deleted
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		err = r.delete(ctx, desired, log, env.Org)
+		if err != nil {
+			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	util.AddFinalizer(desired, certFinalizerName)
 
 	log.Info("ensuring tls.key is present")
 
@@ -134,7 +100,7 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	// all apidefinitions in current namespace
+	// list all apidefinitions in namespace of the secret
 	apiDefList := v1alpha1.ApiDefinitionList{}
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
@@ -150,14 +116,22 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	apiDefUpstreamCertificateHasBeenUpdated := false
+	certID := ""
+	isCertPreviouslyProcessed := false
 
 	for idx := range apiDefList.Items {
 		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
 			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
-				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
-				if err != nil {
-					return ctrl.Result{Requeue: true}, err
+				// do not upload cert again if it is already uploaded
+				if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
+					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+					if err != nil {
+						return ctrl.Result{Requeue: true}, err
+					}
+
+					log.Info("uploaded certificate to Tyk", "certID", certID)
+
+					isCertPreviouslyProcessed = true
 				}
 
 				if apiDefList.Items[idx].Spec.UpstreamCertificates == nil {
@@ -168,33 +142,33 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 				err = r.Update(ctx, &apiDefList.Items[idx])
 
-				if apierrors.IsConflict(err) {
-					// The Pod has been updated since we read it.
-					// Requeue the Pod to try to reconciliate again.
-					return ctrl.Result{Requeue: true}, nil
-				}
-
-				if apierrors.IsNotFound(err) {
-					// The Pod has been deleted since we read it.
-					// Requeue the Pod to try to reconciliate again.
+				// The Pod has been updated/deleted since we read it.
+				// Requeue the Pod to try to reconciliate again.
+				if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
 					return ctrl.Result{Requeue: true}, nil
 				}
 
 				if err != nil {
-					log.Error(err, "unable to update ApiDef")
+					log.Error(err, "Unable to update API Definition with cert id", "apiID", *apiDefList.Items[idx].Spec.APIID)
+					return ctrl.Result{Requeue: true}, nil
 				}
 
 				log.Info("api def updated successfully")
-
-				return ctrl.Result{}, nil
 			}
 		}
 
 		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysRefs {
 			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysRefs[domain] {
-				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
-				if err != nil {
-					return ctrl.Result{Requeue: true}, err
+				// do not upload cert again if it is already uploaded
+				if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
+					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+					if err != nil {
+						return ctrl.Result{Requeue: true}, err
+					}
+
+					log.Info("uploaded certificate to Tyk", "certID", certID)
+
+					isCertPreviouslyProcessed = true
 				}
 
 				if apiDefList.Items[idx].Spec.PinnedPublicKeys == nil {
@@ -205,15 +179,9 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 				err = r.Update(ctx, &apiDefList.Items[idx])
 
-				if apierrors.IsConflict(err) {
-					// The ApiDefinition has been updated since we read it.
-					// Requeue to try to reconciliate again.
-					return ctrl.Result{Requeue: true}, nil
-				}
-
-				if apierrors.IsNotFound(err) {
-					// The ApiDefinition has been deleted since we read it.
-					// Requeue to try to reconciliate again.
+				// The ApiDefinition has been updated/deleted since we read it.
+				// Requeue to try to reconciliate again.
+				if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
 					return ctrl.Result{Requeue: true}, nil
 				}
 
@@ -223,63 +191,104 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 
 				log.Info("ApiDefinition updated successfully")
-
-				apiDefUpstreamCertificateHasBeenUpdated = true
 			}
 		}
-	}
 
-	if apiDefUpstreamCertificateHasBeenUpdated {
-		// we can skip the rest here as the secret was required only for the upstream certificate uploading
-		return ctrl.Result{}, nil
-	}
+		if containsString(apiDefList.Items[idx].Spec.CertificateSecretNames, req.Name) {
+			if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
+				certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+				if err != nil {
+					return ctrl.Result{Requeue: true}, err
+				}
 
-	ret := true
+				log.Info("uploaded certificate to Tyk", "certID", certID)
 
-	for _, apiDef := range apiDefList.Items {
-		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
-			log.Info("apidefinition references this secret", "apiid", apiDef.Status.ApiID)
+				isCertPreviouslyProcessed = true
+			}
 
-			ret = false
-		}
-	}
+			if apiDefList.Items[idx].Spec.Certificates == nil {
+				apiDefList.Items[idx].Spec.Certificates = []string{}
+			}
 
-	if ret {
-		log.Info("no apidefinitions reference this secret")
-		return ctrl.Result{}, nil
-	}
+			apiDefList.Items[idx].Spec.Certificates = []string{certID}
 
-	// If finalizer not present, add it; This is a new object
-	if !util.ContainsFinalizer(desired, certFinalizerName) {
-		log.Info("adding finalizer for cleanup")
+			err = r.Update(ctx, &apiDefList.Items[idx])
 
-		desired.ObjectMeta.Finalizers = append(desired.ObjectMeta.Finalizers, certFinalizerName)
-		err := r.Update(ctx, desired)
+			// The ApiDefinition has been updated/deleted since we read it.
+			// Requeue to try to reconciliate again.
+			if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
+				return ctrl.Result{Requeue: true}, nil
+			}
 
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
+			if err != nil {
+				log.Error(err, "unable to update ApiDef")
+				return ctrl.Result{Requeue: true}, nil
+			}
 
-	certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
-	if err != nil {
-		return ctrl.Result{Requeue: true}, err
-	}
-
-	log.Info("uploaded certificate to Tyk", "certID", certID)
-
-	for _, apiDef := range apiDefList.Items {
-		if containsString(apiDef.Spec.CertificateSecretNames, req.Name) {
-			log.Info("replacing certificate", "apiID", apiDef.Status.ApiID, "certID", certID)
-
-			apiDefObj, _ := klient.Universal.Api().Get(ctx, apiDef.Status.ApiID)
-			apiDefObj.Certificates = []string{certID}
-			klient.Universal.Api().Update(ctx, apiDefObj)
-
-			// TODO: we only care about 1 secret - we don't need to support multiple for mvp
-			break
+			log.Info("ApiDefinition updated successfully")
 		}
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *SecretCertReconciler) delete(ctx context.Context, desired *v1.Secret, log logr.Logger, orgID string) error {
+	log.Info("secret being deleted")
+	// If our finalizer is present, need to delete from Tyk still
+	if util.ContainsFinalizer(desired, certFinalizerName) {
+		log.Info("running finalizer logic")
+
+		certPemBytes, ok := desired.Data["tls.crt"]
+		if !ok {
+			return nil
+		}
+
+		certFingerPrint, err := cert.CalculateFingerPrint(certPemBytes)
+		if err != nil {
+			log.Error(err, "Failed to delete Tyk certificate")
+			return nil
+		}
+
+		certID := orgID + certFingerPrint
+
+		log.Info("deleting certificate from tyk certificate manager", "orgID", orgID, "fingerprint", certFingerPrint)
+
+		if err := klient.Universal.Certificate().Delete(ctx, certID); err != nil {
+			log.Error(err, "unable to delete certificate")
+			return err
+		}
+
+		if err := klient.Universal.HotReload(ctx); err != nil {
+			return err
+		}
+
+		log.Info("removing finalizer from secret")
+		util.RemoveFinalizer(desired, certFinalizerName)
+
+		if err := r.Update(ctx, desired); err != nil {
+			return err
+		}
+	}
+
+	log.Info("secret successfully deleted")
+
+	return nil
+}
+
+// isCertificateAlreadyUploaded checks if certificate already exists in tyk or it was uploaded by the controller
+func isCertificateAlreadyUploaded(ctx context.Context, certPreviouslyUploaded bool, tlsCert []byte, orgID string) bool {
+	if certPreviouslyUploaded {
+		return true
+	}
+
+	fingerPrint, err := cert.CalculateFingerPrint(tlsCert)
+	if err != nil {
+		return false
+	}
+
+	certID := orgID + fingerPrint
+
+	return klient.Universal.Certificate().Exists(ctx, certID)
 }
 
 // https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/#resources-watched-by-the-controller

@@ -8,15 +8,37 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
+	"github.com/mitchellh/hashstructure/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Helper function to check string exists in a slice of strings.
+// hashOptions corresponds to hashing options used to calculate the hash of
+// currently reconciled CRs.
+var hashOptions = hashstructure.HashOptions{ZeroNil: true}
+
+// calculateHash calculates hashes of the given interfaces. Returns empty string for hash
+// if any error occurs during calculation.
+func calculateHash(i interface{}) (h string) {
+	h1, err1 := hashstructure.Hash(i, hashstructure.FormatV2, &hashOptions)
+	if err1 == nil {
+		h = strconv.FormatUint(h1, 10)
+	}
+
+	return
+}
+
+// isSame compares given hash string with the hash of given interface and returns true
+// if these values are same; otherwise, returns false.
+func isSame(latestHash string, i interface{}) bool {
+	return latestHash == calculateHash(i)
+}
+
+// containsString is a helper function to check string exists in a slice of strings.
 func containsString(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
@@ -27,14 +49,15 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
-func addTarget(slice []model.Target, s model.Target) (result []model.Target) {
+// addTarget adds given target to given slice if the slice does not contain the target.
+func addTarget(slice []model.Target, target model.Target) (result []model.Target) {
 	for _, item := range slice {
-		if item == s {
+		if item.Equal(target) {
 			return slice
 		}
 	}
 
-	return append(slice, s)
+	return append(slice, target)
 }
 
 func removeTarget(slice []model.Target, s model.Target) (result []model.Target) {
@@ -49,59 +72,67 @@ func removeTarget(slice []model.Target, s model.Target) (result []model.Target) 
 	return
 }
 
+// EncodeNS encodes given decoded string based on base64.
 func EncodeNS(decoded string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(decoded))
 }
 
+// HttpContext creates a context.Context for Tyk API Client.
 func HttpContext(
 	ctx context.Context,
-	rClient runtimeClient.Client,
-	e environmet.Env,
-	object runtimeClient.Object,
+	rClient client.Client,
+	env *environment.Env,
+	object client.Object,
 	log logr.Logger,
-) (environmet.Env, context.Context, error) {
-	get := func(c *model.Target) error {
-		if c == nil {
+) (environment.Env, context.Context, error) {
+	e := *env
+	get := func(opCtxRef *model.Target) error {
+		if opCtxRef == nil {
 			// To handle the case where operator context was used previously
 			// but was removed in update operation
-			if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+			if err := updateOperatorContextStatus(ctx, rClient, object, log, opCtxRef); err != nil {
 				log.Error(err, "Failed to update status of operator contexts")
+				return err
 			}
 
 			return nil
 		}
 
 		// If namespace is not specified in contextDef, use default namespace
-		if c.Namespace == "" {
+		if opCtxRef.Namespace == nil || *opCtxRef.Namespace == "" {
 			log.Info("Context namespace is not specified, using default")
 
-			c.Namespace = "default"
+			if opCtxRef.Namespace == nil {
+				opCtxRef.Namespace = new(string)
+			}
+
+			*opCtxRef.Namespace = "default"
 		}
 
 		log.Info("Detected context for resource")
 
 		env, err := GetContext(
-			ctx, object.GetNamespace(), rClient, c, log,
+			ctx, object.GetNamespace(), rClient, opCtxRef, log,
 		)
 		if err != nil {
-			log.Error(err, "Failed to get context", "contextRef", c.String())
+			log.Error(err, "Failed to get context", "contextRef", opCtxRef.String())
 
 			return err
 		}
 
-		log.Info("Successful acquired context", "contextRef", c.String())
+		log.Info("Successful acquired context", "contextRef", opCtxRef.String())
 
 		e.Environment = *env.Spec.Env
 
-		if err := updateOperatorContextStatus(ctx, rClient, e, object, log, c); err != nil {
+		if err := updateOperatorContextStatus(ctx, rClient, object, log, opCtxRef); err != nil {
 			log.Error(err, "Failed to update status of operator contexts")
+			return err
 		}
 
 		return nil
 	}
 
 	var err error
-
 	switch o := object.(type) {
 	case *v1alpha1.ApiDefinition:
 		err = get(o.Spec.Context)
@@ -116,143 +147,156 @@ func HttpContext(
 	}
 
 	if err != nil {
-		return environmet.Env{}, nil, err
+		return environment.Env{}, nil, err
 	}
 
-	return e, client.SetContext(ctx, client.Context{
+	return e, tykClient.SetContext(ctx, tykClient.Context{
 		Env: e,
 		Log: log,
 	}), nil
 }
 
+// updateOperatorContextStatus updates links defined in the status of OperatorContext identified by ctxRef
+// and Custom Resource identified by object.
 func updateOperatorContextStatus(
 	ctx context.Context,
-	rClient runtimeClient.Client,
-	e environmet.Env,
-	object runtimeClient.Object,
+	client client.Client,
+	object client.Object,
 	log logr.Logger,
 	ctxRef *model.Target,
 ) error {
-	target := model.Target{
+	namespace := object.GetNamespace()
+	objectTarget := model.Target{
 		Name:      object.GetName(),
-		Namespace: object.GetNamespace(),
+		Namespace: &namespace,
 	}
 
-	// Remove link from other operator context, if any,
-	// as we do not know if object was referencing to different context previously
+	// Remove link from other OperatorContext, if any,
+	// as we do not know if object was referencing to different context previously.
 	var opCtxList v1alpha1.OperatorContextList
-
-	if err := rClient.List(ctx, &opCtxList); err != nil {
+	if err := client.List(ctx, &opCtxList); err != nil {
 		return err
 	}
 
 	switch object.(type) {
 	case *v1alpha1.ApiDefinition:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to same context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
+		for i := 0; i < len(opCtxList.Items); i++ {
+			// do not remove link if ApiDefinition is still referring to same context and is not marked for deletion.
+			if ctxRef != nil &&
+				opCtxList.Items[i].Name == ctxRef.Name && ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) &&
 				object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedAPIDefinition(target)
+			opCtxList.Items[i].Status.RemoveLinkedAPIDefinition(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
-				log.Error(err, "Failed to remove link of APIDefintion from operator context", "operatorContext", opctx.Name, "apidefinition", target.Name)
+				log.Error(
+					err,
+					"Failed to remove link of APIDefinition from operator context",
+					"operatorContext", opCtxList.Items[i].Name, "ApiDefinition", objectTarget.String(),
+				)
+
+				return err
 			}
 		}
 	case *v1alpha1.SecurityPolicy:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+		for i := 0; i < len(opCtxList.Items); i++ {
+			// do not remove link if SecurityPolicy is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedSecurityPolicies(target)
+			opCtxList.Items[i].Status.RemoveLinkedSecurityPolicies(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.PortalAPICatalogue:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+		for i := 0; i < len(opCtxList.Items); i++ {
+			// do not remove link if PortalAPICatalogue is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedPortalAPICatalogues(target)
+			opCtxList.Items[i].Status.RemoveLinkedPortalAPICatalogues(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.APIDescription:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+		for i := 0; i < len(opCtxList.Items); i++ {
+			// do not remove link if APIDescription is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedApiDescriptions(target)
+			opCtxList.Items[i].Status.RemoveLinkedApiDescriptions(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
 		}
 	case *v1alpha1.PortalConfig:
-		for _, opctx := range opCtxList.Items {
-			// do not remove link if apidef is still refering to context and is not marked for deletion
-			if ctxRef != nil && opctx.Name == ctxRef.Name && opctx.Namespace == ctxRef.Namespace &&
-				object.GetDeletionTimestamp().IsZero() {
+		for i := 0; i < len(opCtxList.Items); i++ {
+			// do not remove link if PortalConfig is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
 				continue
 			}
 
-			opctx.Status.RemoveLinkedPortalConfig(target)
+			opCtxList.Items[i].Status.RemoveLinkedPortalConfig(objectTarget)
 
-			err := rClient.Status().Update(ctx, &opctx)
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	// Add reference to the refered operator context
+	// Add reference to the referred operator context
 	// only if object is not marked for deletion
 	if object.GetDeletionTimestamp().IsZero() && ctxRef != nil {
 		// add reference to operator context
 		log.Info("Adding link to apiContext", "key", ctxRef.String())
 
 		var operatorContext v1alpha1.OperatorContext
+		namespace := "default"
 
-		key := types.NamespacedName{Name: ctxRef.Name, Namespace: ctxRef.Namespace}
+		if ctxRef.Namespace != nil {
+			namespace = *ctxRef.Namespace
+		}
 
-		if err := rClient.Get(ctx, key, &operatorContext); err != nil {
+		key := types.NamespacedName{Name: ctxRef.Name, Namespace: namespace}
+
+		if err := client.Get(ctx, key, &operatorContext); err != nil {
 			log.Error(err, "failed to get operator context")
 			return err
 		}
 
 		switch object.(type) {
 		case *v1alpha1.ApiDefinition:
-			operatorContext.Status.AddLinkedAPIDefinition(target)
+			operatorContext.Status.AddLinkedAPIDefinition(objectTarget)
 		case *v1alpha1.SecurityPolicy:
-			operatorContext.Status.AddLinkedSecurityPolicies(target)
+			operatorContext.Status.AddLinkedSecurityPolicies(objectTarget)
 		case *v1alpha1.PortalAPICatalogue:
-			operatorContext.Status.AddLinkedPortalAPICatalogues(target)
+			operatorContext.Status.AddLinkedPortalAPICatalogues(objectTarget)
 		case *v1alpha1.APIDescription:
-			operatorContext.Status.AddLinkedApiDescriptions(target)
+			operatorContext.Status.AddLinkedApiDescriptions(objectTarget)
 		case *v1alpha1.PortalConfig:
-			operatorContext.Status.AddLinkedPortalConfig(target)
+			operatorContext.Status.AddLinkedPortalConfig(objectTarget)
 		}
 
-		return rClient.Status().Update(ctx, &operatorContext)
+		return client.Status().Update(ctx, &operatorContext)
 	}
 
 	return nil
@@ -267,7 +311,7 @@ func updateOperatorContextStatus(
 func GetContext(
 	ctx context.Context,
 	ns string,
-	client runtimeClient.Client,
+	client client.Client,
 	target *model.Target,
 	log logr.Logger,
 ) (*v1alpha1.OperatorContext, error) {

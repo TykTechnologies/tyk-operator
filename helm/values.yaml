@@ -11,19 +11,42 @@ envVars:
 image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
-  tag: "v0.13.0"
+  tag: "v0.15.1"
 # specify the necessary image pull secrets, if any
 imagePullSecrets: []
 # - name: registry_secret
 nameOverride: ""
 fullnameOverride: ""
+# extraVolumes is a list of volumes to be added to the pod
+# extraVolumes:
+#   - name: ca-certs
+#     secret:
+#       secretName: ca-certs
+#   - name: ca-certs
+#     configMap:
+#       name: custom-ca-configmap
+extraVolumes: []
+# extraVolumeMounts is a list of volume mounts to be added to the pod
+# extraVolumeMounts:
+#   - name: ca-certs
+#     mountPath: /etc/ssl/certs/your-cert.pem
+#     subPath: your-cert.pem
+#     readOnly: false
+extraVolumeMounts: []
+# healthProbePort identifies the port the Controller Manager will listen on. Used by liveness and readiness probes
+healthProbePort: 8081
+# metricsPort identifies the port on which Tyk Operator metrics are served
+metricsPort: 8080
+# webhookPort identifies the port on which webhooks are handled
+webhookPort: 9443
 annotations: {}
 podAnnotations: {}
 podSecurityContext:
   allowPrivilegeEscalation: false
 resources: {}
 nodeSelector: {}
-#specify necessary resources for kube-rbac-proxy container
+hostNetwork: false
+# rbac specifies necessary resources for kube-rbac-proxy container
 rbac:
   resources: {}
   # specify custom/internal repo name for kube-rbac-proxy container
@@ -31,3 +54,9 @@ rbac:
     repository: gcr.io/kubebuilder/kube-rbac-proxy
     pullPolicy: IfNotPresent
     tag: "v0.8.0"
+  port: 8443
+# serviceMonitor decides deploying ServiceMonitor if Prometheus Operator scrapes /metrics.
+# By default it is set to false and set it to true to enable deploying Service Monitor.
+# Tyk Operator publishes a collection of performance metrics for each controller.
+# These metrics can be scraped by Prometheus Operator, by deploying ServiceMonitor resource.
+serviceMonitor: false

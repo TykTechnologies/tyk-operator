@@ -1,0 +1,24 @@
+name: Test Virtual Endpoint Plugin
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/config_data_virtual_endpoint.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test Tyk plugs in virtual endpoint with Javascript functions and have them run when the endpoint is called
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/virtual
+      assertions:
+      - result.statuscode ShouldEqual 200
+      - result.body ShouldContainSubstring "THIS IS A VIRTUAL RESPONSE"
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/config_data_virtual_endpoint.yaml && sleep 20
+      assertions:
+      - result.code ShouldEqual 0

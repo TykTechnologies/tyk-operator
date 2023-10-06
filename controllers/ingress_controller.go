@@ -24,7 +24,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
 	netV1 "k8s.io/api/networking/v1"
@@ -47,7 +47,7 @@ type IngressReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Env      environmet.Env
+	Env      environment.Env
 	Recorder record.EventRecorder
 }
 
@@ -65,7 +65,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, r.Env, desired, nsl)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, desired, nsl)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -109,7 +109,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, env)
+	err = r.createAPI(ctx, nsl, template, req.Namespace, desired, &env)
 	if err != nil {
 		nsl.Error(err, "failed to create api's")
 		return ctrl.Result{}, err
@@ -121,13 +121,16 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *IngressReconciler) keyless() *v1alpha1.ApiDefinition {
+	useKeyless := true
+	active := true
+
 	return &v1alpha1.ApiDefinition{
 		Spec: v1alpha1.APIDefinitionSpec{
 			APIDefinitionSpec: model.APIDefinitionSpec{
 				Name:             "default-keyless",
 				Protocol:         "http",
-				UseKeylessAccess: true,
-				Active:           true,
+				UseKeylessAccess: &useKeyless,
+				Active:           &active,
 				Proxy: model.Proxy{
 					TargetURL: "http://example.com",
 				},
@@ -144,7 +147,7 @@ func (r *IngressReconciler) createAPI(
 	template *v1alpha1.ApiDefinition,
 	ns string,
 	desired *netV1.Ingress,
-	env environmet.Env,
+	env *environment.Env,
 ) error {
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
@@ -166,16 +169,28 @@ func (r *IngressReconciler) createAPI(
 				})
 				api.Spec = *template.Spec.DeepCopy()
 				api.Spec.Name = name
-				api.Spec.Proxy.ListenPath = p.Path
+
+				if api.Spec.Proxy.ListenPath == nil {
+					api.Spec.Proxy.ListenPath = new(string)
+				}
+
+				*api.Spec.Proxy.ListenPath = p.Path
 				svc := p.Backend.Service
 				api.Spec.Proxy.TargetURL = fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", svc.Name,
 					ns, svc.Port.Number)
+
 				if rule.Host != "" {
-					api.Spec.Domain = r.translateHost(rule.Host)
+					if api.Spec.Domain == nil {
+						api.Spec.Domain = new(string)
+					}
+
+					*api.Spec.Domain = r.translateHost(rule.Host)
 				}
+
 				if env.Ingress.HTTPPort != 0 {
 					api.Spec.ListenPort = env.Ingress.HTTPPort
 				}
+
 				if !strings.Contains(p.Path, ".well-known/acme-challenge") && !strings.Contains(svc.Name, "cm-acme-http-solver") {
 					for _, tls := range desired.Spec.TLS {
 						for _, host := range tls.Hosts {
@@ -190,8 +205,11 @@ func (r *IngressReconciler) createAPI(
 					}
 				} else {
 					// for the acme challenge
-					api.Spec.Proxy.StripListenPath = false
-					api.Spec.Proxy.PreserveHostHeader = true
+					stripListenPath := false
+					preserveHostHeader := true
+
+					api.Spec.Proxy.StripListenPath = &stripListenPath
+					api.Spec.Proxy.PreserveHostHeader = &preserveHostHeader
 				}
 				return util.SetControllerReference(desired, api, r.Scheme)
 			})

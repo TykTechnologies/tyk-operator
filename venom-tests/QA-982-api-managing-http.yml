@@ -1,0 +1,47 @@
+name: Test user is able to update and delete API resources
+testcases:
+- name: Create keyless API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_keyless_apidefinition.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test API is created
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-auth-test/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Update keyless API to Authentication Token API
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_apikey_apidefinition.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test API is updated on Tyk
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-auth-test/get
+      assertions:
+      - result.statuscode ShouldEqual 401
+      - result.bodyjson.error ShouldContainSubstring Authorization field missing
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete tykapis httpbin-auth-test && sleep 20
+      assertions:
+      - result.code ShouldEqual 0
+
+- name: Test API deleted above is deleted 
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-auth-test/get
+      assertions:
+      - result.statuscode ShouldEqual 404

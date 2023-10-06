@@ -23,6 +23,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Universal Data Graph v1        | ✅       | v0.1           | -                             | [Sample - with GraphQL V1 Engine (Tyk v3.1 or before) ](./../config/samples/udg_1.yaml) |
 | Universal Data Graph v2        | ✅       | v0.12          | -                             | [Sample - with GraphQL V2 Engine (Tyk v3.2 and after) ](./../config/samples/udg2/) |
 | GraphQL - Federation           | ✅       | v0.12          | -                             | [Sample](./../config/samples/federation/README.md)                                         |
+| OAS           | ❌️       | -          | Coming Soon!                             |                                  |
 
 ## Routing
 
@@ -50,6 +51,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
 | HMAC                          | ❌        | -              | Not implemented | |
 | Basic Authentication          | ✅        | v0.12          | Only enabling with default metadata values is supported  | [Sample](./../config/samples/basic-auth/httpbin_basic_authentication.yaml) |
+| Multiple (Chained) Auth       | ✅        | v0.14          | - | [Sample](./../config/samples/multiple-auth/httpbin_basic_authentication_and_mTLS.yaml) |
 | Plugin Auth - Go              | ✅        | v0.11          | - | [Sample](./api_definitions/custom_plugin_goauth.yaml) |
 | Plugin Auth - gRPC            | ✅        | v0.1           | - | [Sample](./../bdd/features/api_http_grpc_plugin.feature) |
 | IP Whitelisting               | ✅        | v0.5           | - | [Sample](./api_definitions/ip.md#whitelisting) |
@@ -71,7 +73,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | API Tagging                          | ✅         | v0.1           | -                                                                      |                                                                 |
 | Config Data                          | ✅         | v0.8.2         | -                                                                      | [Sample](./../config/samples/config_data_virtual_endpoint.yaml) |
 | Context Variables                    | ✅         | v0.1           | -                                                                      |
-| Cross Origin Resource Sharing (CORS) | ⚠️        | v0.2           | [See ISSUE #3396 ](https://github.com/TykTechnologies/tyk/issues/3396) | [Sample](./../config/samples/httpbin_cors.yaml)                 |
+| Cross Origin Resource Sharing (CORS) | ✅        | v0.2           | - | [Sample](./../config/samples/httpbin_cors.yaml)                 |
 | Custom Plugins - Go                  | ⚠️        | v0.1           | Untested                                                               |
 | Custom Plugins - gRPC                | ✅         | v0.1           | -                                                                      | [Sample](./../bdd/features/api_http_grpc_plugin.feature)        |
 | Custom Plugins - Javascript          | ✅         | v0.1           | -                                                                      | [Sample](./api_definitions/custom_plugin.md)                    |
@@ -115,3 +117,7 @@ To check the supported features of the API Definitions CRD version you're curren
 ## APIDefinition - Migrating Existing APIs
 
 Please visit the [API migration page](https://tyk.io/docs/tyk-stack/tyk-operator/migration/#migration-of-existing-api) for more info
+
+## Understanding reconciliation status
+
+Please visit [Latest Transaction Status](./api_definitions/latest-transaction.md) page to see how you can check latest APIDefinition reconciliation status.

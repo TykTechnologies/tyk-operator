@@ -80,12 +80,12 @@ dash:
   adminUser:
     firstName: Tyk
     lastName: Operator
-    email: operator@exmaple.com
+    email: operator@example.com
     # we need to be able to login into the dashboard
     password: "1234testing"
   org:
     name: ACME Corp
-    cname: tyk-portal.local:3000/
+    cname: tyk-portal.local:3000
   image:
     repository: tykio/tyk-dashboard
     tag: v4.0.0
@@ -153,9 +153,11 @@ gateway:
       value: "true"
     - name: TYK_GW_COPROCESSOPTIONS_COPROCESSGRPCSERVER
       value: "tcp://grpc-plugin.tykpro-control-plane.svc.cluster.local:9999"
+    - name: TYK_GW_ENABLEJSVM
+      value: "true"
 
 pump:
-  enabled: false
+  enabled: true
   replicaCount: 1
   image:
     repository: tykio/tyk-pump-docker-pub
@@ -169,3 +171,4 @@ pump:
   extraEnvs: []
 
 rbac: true
+

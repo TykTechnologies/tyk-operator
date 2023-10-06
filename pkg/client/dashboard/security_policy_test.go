@@ -8,13 +8,13 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/client"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 )
 
 const testSecurityPolicyID = "5fd202b669710900018bc19c"
 
 func TestSecurityPolicy(t *testing.T) {
-	var e environmet.Env
+	var e environment.Env
 
 	e = env().Merge(e)
 	h := mockDash(t,
@@ -51,7 +51,7 @@ func TestSecurityPolicy(t *testing.T) {
 
 	e.URL = svr.URL
 
-	requestSecurityPolicy(t, e, Kase{
+	requestSecurityPolicy(t, &e, Kase{
 		Name: "Create",
 		Request: RequestKase{
 			Path:   "/api/portal/policies",
@@ -66,7 +66,7 @@ func TestSecurityPolicy(t *testing.T) {
 		},
 	})
 
-	requestSecurityPolicy(t, e, Kase{
+	requestSecurityPolicy(t, &e, Kase{
 		Name: "All",
 		Request: RequestKase{
 			Path:   "/api/portal/policies",
@@ -81,7 +81,7 @@ func TestSecurityPolicy(t *testing.T) {
 		},
 	})
 
-	requestSecurityPolicy(t, e, Kase{
+	requestSecurityPolicy(t, &e, Kase{
 		Name: "Get",
 		Request: RequestKase{
 			Path:   "/api/portal/policies/5fd202b669710900018bc19c",
@@ -96,7 +96,7 @@ func TestSecurityPolicy(t *testing.T) {
 		},
 	})
 
-	requestSecurityPolicy(t, e, Kase{
+	requestSecurityPolicy(t, &e, Kase{
 		Name: "Update",
 		Request: RequestKase{
 			Path:   "/api/portal/policies/5fd202b669710900018bc19c",
@@ -111,7 +111,7 @@ func TestSecurityPolicy(t *testing.T) {
 		},
 	})
 
-	requestSecurityPolicy(t, e, Kase{
+	requestSecurityPolicy(t, &e, Kase{
 		Name: "Delete",
 		Request: RequestKase{
 			Path:   "/api/portal/policies/5fd202b669710900018bc19c",
@@ -127,7 +127,7 @@ func TestSecurityPolicy(t *testing.T) {
 	})
 }
 
-func requestSecurityPolicy(t *testing.T, e environmet.Env, kase client.Kase) {
+func requestSecurityPolicy(t *testing.T, e *environment.Env, kase client.Kase) {
 	t.Helper()
 
 	switch kase.Name {

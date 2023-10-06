@@ -18,13 +18,9 @@ practices with Custom Resources and Kubernetes-native primitives.
 
 ---
 
-[Project Status](#project-status) | [Introduction](#introduction) | [Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples) | [IDE Integration](#ide-integration) | [Community](#community)
+[Introduction](#introduction) | [Documentation](#documentation) | [Learning with Videos](#learning-with-videos) | [Quickstart Examples](#quickstart-examples) | [IDE Integration](#ide-integration) | [Community](#community)
 
 ---
-
-## Project Status
-Tyk Operator is currently in beta. We follow the [Kubernetes definition of beta](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-stages). We welcome users to try it out and give us feedback [here](https://github.com/TykTechnologies/tyk-operator/discussions) or via support channel for existing Tyk customers.
-
 
 ## Introduction
 
@@ -90,7 +86,6 @@ spec:
   use_keyless: true
   protocol: http
   active: true
-  org_id: acme.com
   proxy:
     target_url: http://httpbin.org
     listen_path: /httpbin
@@ -339,6 +334,7 @@ If you require any features that we have not yet implemented, please take your t
 
 For larger and more in-depth feature requests, please consider [starting an RFC thread](https://github.com/TykTechnologies/tyk-operator/discussions/new) in the [Discussions area](https://github.com/TykTechnologies/tyk-operator/discussions).
 
+- [Contributing to Tyk Operator](./CONTRIBUTING.md)
 - [Configuring your development environment](./docs/development.md)
 - [Request a feature](https://github.com/TykTechnologies/tyk-operator/issues)
 - [Got an Idea or RFC](https://github.com/TykTechnologies/tyk-operator/discussions/categories/ideas)

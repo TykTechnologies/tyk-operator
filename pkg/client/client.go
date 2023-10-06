@@ -19,7 +19,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 )
 
@@ -32,6 +32,10 @@ var (
 
 	// ErrFailed represents errors occurred during API calls to Tyk.
 	ErrFailed = errors.New("Failed api call")
+
+	ErrMissingAPIID = errors.New("Missing API ID")
+
+	ErrMissingPolicyID = errors.New("Missing Policy ID")
 )
 
 func IsTODO(err error) bool {
@@ -84,7 +88,7 @@ func Do(r *http.Request) (*http.Response, error) {
 
 // Context information needed to make a successful http api call.
 type Context struct {
-	Env           environmet.Env
+	Env           environment.Env
 	Log           logr.Logger
 	BeforeRequest func(*http.Request)
 	Do            func(*http.Request) (*http.Response, error)
@@ -202,11 +206,20 @@ func Call(ctx context.Context, method, url string, body io.Reader, fn ...func(*h
 			rctx.Log.Info(http.StatusText(res.StatusCode), "body", string(b))
 		}
 
+		errString := string(b)
+		result := model.Result{}
+
+		err = json.Unmarshal(b, &result)
+		if err == nil {
+			result.StatusCode = res.StatusCode
+			errString = result.String()
+		}
+
 		switch res.StatusCode {
 		case http.StatusNotFound:
 			return nil, ErrNotFound
 		default:
-			return nil, errors2.Wrap(ErrFailed, string(b))
+			return nil, errors2.Wrap(ErrFailed, errString)
 		}
 	}
 

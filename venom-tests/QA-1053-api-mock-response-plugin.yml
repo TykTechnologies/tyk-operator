@@ -1,0 +1,24 @@
+name: Test Mock Response Plugin
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_mock.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test API endpoint with Mock Response Plugin
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/foo
+      assertions:
+      - result.statuscode ShouldEqual 200
+      - result.body ShouldContainKey foo
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_mock.yaml && sleep 20
+      assertions:
+      - result.code ShouldEqual 0

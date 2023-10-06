@@ -22,6 +22,10 @@ func main() {
 		{securityContext, securityContextTPL},
 		{imageRBAC, imageRBACTPL},
 		{nodeSelector, nodeSelectorTPL},
+		{serviceMonitorIfStarts, serviceMonitorIfStartsTPL},
+		{serviceMonitorIfEnds, serviceMonitorIfEndsTPL},
+		{extraVolume, extraVolumeTPL},
+		{extraVolumeMounts, extraVolumeMountsTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -29,6 +33,11 @@ func main() {
 		{"IfNotPresent", "{{ .Values.image.pullPolicy }}"},
 		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
 		{"tykio/tyk-operator:latest", "{{ .Values.image.repository }}:{{ .Values.image.tag }}"},
+		{"CONTROLLER_MANAGER_HEALTH_PROBE_PORT", "{{ .Values.healthProbePort }}"},
+		{"CONTROLLER_MANAGER_METRICS_PORT", "{{ .Values.metricsPort }}"},
+		{"CONTROLLER_MANAGER_WEBHOOK_PORT", "{{ .Values.webhookPort }}"},
+		{"CONTROLLER_MANAGER_RBAC_PORT", "{{ .Values.rbac.port }}"},
+		{"CONTROLLER_MANAGER_HOST_NETWORK", "{{ .Values.hostNetwork | default false }}"},
 	}
 
 	for _, v := range m {
@@ -42,7 +51,7 @@ const namespace = `apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: tyk-operator-controller-manager
   name: RELEASE_NAMESPACE
 ---`
 
@@ -122,3 +131,23 @@ const nodeSelectorTPL = `{{- if .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
 {{- end }}`
+
+// Replaces hardcoded values for ServiceMonitor resource with helm templates.
+const (
+	serviceMonitorIfStarts    = `TYK_OPERATOR_PROMETHEUS_SERVICEMONITOR_IF_STARTS: null`
+	serviceMonitorIfStartsTPL = `{{ if .Values.serviceMonitor }}`
+	serviceMonitorIfEnds      = `status: TYK_OPERATOR_PROMETHEUS_SERVICEMONITOR_IF_ENDS`
+	serviceMonitorIfEndsTPL   = `{{ end }} `
+)
+
+const extraVolume = `- name: CONTROLLER_MANAGER_EXTRA_VOLUME`
+
+const extraVolumeTPL = `{{ if .Values.extraVolumes }}
+       {{ toYaml .Values.extraVolumes | nindent 6 }}
+        {{ end }}`
+
+const extraVolumeMounts = `- mountPath: CONTROLLER_MANAGER_EXTRA_VOLUMEMOUNTS`
+
+const extraVolumeMountsTPL = `{{ if .Values.extraVolumeMounts }}
+            {{ toYaml .Values.extraVolumeMounts | nindent 8}}
+          {{ end }}`

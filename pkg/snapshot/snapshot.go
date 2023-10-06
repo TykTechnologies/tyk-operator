@@ -39,24 +39,47 @@ var (
 )
 
 const (
-	NameKey      = "k8sName"
-	NamespaceKey = "k8sNamespace"
-	DefaultName  = "REPLACE_ME"
-	DefaultNs    = ""
+	SnapshotOutputDir = "./dist"
+	NameKey           = "k8sName"
+	NamespaceKey      = "k8sNamespace"
+	DefaultName       = "REPLACE_ME"
+	DefaultNs         = ""
 
 	ApiDefinitionKind = "ApiDefinition"
 	ApiVersion        = "tyk.tyk.io/v1alpha1"
 )
 
+func changeWorkingDir() error {
+	if _, err := os.Stat(SnapshotOutputDir); errors.Is(err, os.ErrNotExist) {
+		if err := os.Mkdir(SnapshotOutputDir, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create output directory %v, err: %v", SnapshotOutputDir, err)
+		}
+	}
+
+	err := os.Chdir(SnapshotOutputDir)
+	if err != nil {
+		return fmt.Errorf("failed to change the dir to %v, err: %v", SnapshotOutputDir, err)
+	}
+
+	return nil
+}
+
 // PrintSnapshot outputs a snapshot of the Dashboard as a CR.
 func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, category string, separate bool) error {
+	err := changeWorkingDir()
+	if err != nil {
+		return err
+	}
+
 	apiDefSpecList, err := klient.Universal.Api().List(ctx)
 	if err != nil {
 		return err
 	}
 
 	var policiesList []tykv1alpha1.SecurityPolicySpec
-	if policiesFile != "" || separate {
+
+	shouldLoadPolicies := policiesFile != "" || separate
+	if shouldLoadPolicies {
 		policiesList, err = klient.Universal.Portal().Policy().All(ctx)
 		if err != nil {
 			return err
@@ -76,7 +99,8 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		// Parse Config Data of the ApiDefinition created on Dashboard.
 		name, ns, err := parseConfigData(v, fmt.Sprintf("%s_%d", DefaultName, i))
 		if err != nil {
-			fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n", v.APIID, err)
+			fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n", v.Name, err)
+
 			return err
 		}
 
@@ -84,7 +108,11 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		apiDef := createApiDef(name, ns)
 		apiDef.Spec.APIDefinitionSpec = *v
 
-		storeMetadata(apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
+		if apiDef.Spec.APIID == nil {
+			return fmt.Errorf("APIID of %v is empty", v.Name)
+		}
+
+		storeMetadata(*apiDef.Spec.APIID, apiDef.ObjectMeta.Name, apiDef.ObjectMeta.Namespace)
 
 		if err := e.Encode(&apiDef, w); err != nil {
 			return err
@@ -105,12 +133,32 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		return pw.Flush()
 	}
 
+	// Output will contain ApiDefinition based on specified category.
+	if category != "" {
+		category = strings.TrimSpace(category)
+		if !strings.HasPrefix(category, "#") {
+			category = fmt.Sprintf("#%s", category)
+		}
+
+		fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
+
+		var filteredApis []*model.APIDefinitionSpec
+
+		for _, v := range apiDefSpecList.Apis {
+			if strings.Contains(v.Name, category) {
+				filteredApis = append(filteredApis, v)
+			}
+		}
+
+		apiDefSpecList.Apis = filteredApis
+	}
+
 	if separate {
 		for i, apiDefSpec := range apiDefSpecList.Apis {
 			name, ns, err := parseConfigData(apiDefSpec, "")
 			if err != nil {
 				fmt.Printf("WARNING: failed to parse API %v due to malformed ConfigData, err: %v\n",
-					apiDefSpec.APIID,
+					apiDefSpec.Name,
 					err,
 				)
 
@@ -147,7 +195,7 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		}
 
 		for i := 0; i < len(policiesList); i++ {
-			policiesFile = fmt.Sprintf("%s-%s.yaml", "policy", policiesList[i].MID)
+			policiesFile = fmt.Sprintf("%s-%s.yaml", "policy", *policiesList[i].MID)
 
 			policyFile, err := os.Create(policiesFile)
 			if err != nil {
@@ -168,28 +216,17 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 		return nil
 	}
 
-	f, err := os.Create(apiDefinitionsFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	bw := bufio.NewWriter(f)
-
-	// Output file will contain ApiDefinition based on specified category.
-	if category != "" {
-		category = strings.TrimSpace(category)
-		if !strings.HasPrefix(category, "#") {
-			category = fmt.Sprintf("#%s", category)
+	// Output file will contain all ApiDefinitions without checking any category.
+	if apiDefinitionsFile != "" {
+		f, err := os.Create(apiDefinitionsFile)
+		if err != nil {
+			return err
 		}
+		defer f.Close()
 
-		fmt.Printf("Looking for ApiDefinitions in %s category.\n", category)
+		bw := bufio.NewWriter(f)
 
 		for i, v := range apiDefSpecList.Apis {
-			if contains := strings.Contains(v.Name, category); !contains {
-				continue
-			}
-
 			if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
 				return err
 			}
@@ -209,15 +246,6 @@ func PrintSnapshot(ctx context.Context, apiDefinitionsFile, policiesFile, catego
 					return err
 				}
 			}
-		}
-
-		return nil
-	}
-
-	// Output file will contain all ApiDefinitions without checking any category.
-	for i, v := range apiDefSpecList.Apis {
-		if err := exportApiDef(i, bw, v); err != nil && !errors.Is(err, ErrInvalidConfigData) {
-			return err
 		}
 	}
 
@@ -359,7 +387,7 @@ func parseConfigData(apiDefSpec *model.APIDefinitionSpec, defName string) (name,
 		if strings.Contains(v, " ") {
 			fmt.Printf(
 				"WARNING: Please ensure that API identified by %s does not include empty space in its ConfigData[%s].\n",
-				apiDefSpec.APIID,
+				apiDefSpec.Name,
 				NamespaceKey,
 			)
 		}
@@ -379,10 +407,24 @@ func writePolicy(idx int, userPolicy *tykv1alpha1.SecurityPolicySpec, w *bufio.W
 	}
 
 	pol.Spec = *userPolicy
-	pol.Spec.ID = userPolicy.MID
+
+	pol.Spec.ID = new(string)
+	if userPolicy.MID != nil {
+		*pol.Spec.ID = *userPolicy.MID
+	}
+
+	if pol.Spec.OrgID == nil {
+		pol.Spec.OrgID = new(string)
+	}
+
+	*pol.Spec.OrgID = ""
 
 	for i := 0; i < len(pol.Spec.AccessRightsArray); i++ {
-		apiID := pol.Spec.AccessRightsArray[i].APIID
+		if pol.Spec.AccessRightsArray[i].APIID == nil {
+			return errors.New("APIID in AccessRights of Policy is empty")
+		}
+
+		apiID := *pol.Spec.AccessRightsArray[i].APIID
 
 		name, namespace := getMetadata(apiID)
 		if name == "" {

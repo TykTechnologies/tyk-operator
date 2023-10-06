@@ -15,6 +15,7 @@ testcases:
       assertions:
       - result.statuscode ShouldEqual 403
       - result.bodyjson.error ShouldContainSubstring Requested endpoint is forbidden
+      SleepTime: 10
 
 - name: Test request to non-block paths is successful
   steps:
@@ -27,6 +28,6 @@ testcases:
 - name: Delete API
   steps:
     - type: exec
-      script: kubectl delete -f ../config/samples/httpbin_blacklist.yaml
+      script: kubectl delete -f ../config/samples/httpbin_blacklist.yaml && sleep 20
       assertions:
       - result.code ShouldEqual 0

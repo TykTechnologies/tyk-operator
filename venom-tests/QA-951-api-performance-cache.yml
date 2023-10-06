@@ -1,0 +1,31 @@
+name: Test Cache Endpoint Designer
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_cache.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with get Endpoint
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-cache/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Test with anything Endpoint
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin-cache/anything
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_cache.yaml && sleep 20
+      assertions:
+      - result.code ShouldEqual 0

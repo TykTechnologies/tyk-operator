@@ -1,0 +1,88 @@
+name: Test Endpoint Tracking #I am trying to run this venom scripts for web executor, but everytime my chrome driver is automatically closing on its own, and the error is coming as - Unable to resize the page: failed to retrieve window: request unsuccessful: invalid session id
+
+vars:
+  web:
+    driver: chrome
+    width: 1920
+    height: 1080
+    args:
+    - 'browser-test'
+    prefs:
+      profile.default_content_settings.popups: 0
+      profile.default_content_setting_values.notifications: 1
+    timeout: 60
+    debug: true
+    wait: 10
+
+testcases:
+- name: Create API 
+  steps:
+  - type: applyManifests
+    filename: "samples/httpbin_endpoint_tracking.yaml"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Test with get endpoint
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/get
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Test with headers endpoint
+  steps:
+    - type: http
+      method: GET
+      url: http://localhost:8080/httpbin/headers
+      assertions:
+      - result.statuscode ShouldEqual 200
+
+- name: Test with login to Dashboard and check for Endpoint Popularity
+  steps:
+    - type: web
+      action:
+        navigate:
+          url: http://localhost:3000
+      assertions:
+      - result.title ShouldEqual Tyk.io Login
+      - result.url ShouldContainSubstring http://localhost:3000
+    - type: web
+      action:
+        find: input[name="username"]
+      assertions:
+      - result.find ShouldEqual 1
+    - type: web
+      action:
+        fill:
+        - find: input[name="username"]
+          text: "operator@example.com"
+    - type: web
+      action:
+        find: input[name="password"]
+      assertions:
+      - result.find ShouldEqual 1
+    - type: web
+      action:
+        fill:
+        - find: input[name="password"]
+          text: "1234testing"
+    - type: web
+      action:
+        click:
+          find: button[type="submit"]
+          wait: 1
+    - type: web
+      action:
+        click:
+          find: i[class="tyk-icon fa fa-code-branch "]
+          wait: 1
+      screenshot: endpoint-popularity.png
+      
+
+- name: Delete API
+  steps:
+    - type: exec
+      script: kubectl delete -f ../config/samples/httpbin_endpoint_tracking.yaml
+      assertions:
+      - result.code ShouldEqual 0

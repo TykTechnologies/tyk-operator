@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-//Float64 is a work around to allow representing floating points as strings
+// Float64 is a work around to allow representing floating points as strings
 // +kubebuilder:validation:Pattern="^(?:[-+]?(?:[0-9]+))?(?:\\.[0-9]*)?(?:[eE][\\+\\-]?(?:[0-9]+))?$"
 //
 // source for pattern https://github.com/asaskevich/govalidator/blob/7a23bdc65eef5f3783e782b436f3065eae3fc72d/patterns.go#L19
@@ -70,7 +70,7 @@ func Marshal(v interface{}) ([]byte, error) {
 
 // Percent describes a percentage value expressed as a float. This is a positive
 // decimal value that is less than 1
-//+kubebuilder:validation:Pattern="^0\\.\\d+|1\\.0$"
+// +kubebuilder:validation:Pattern="^0\\.\\d+|1\\.0$"
 type Percent string
 
 // MarshalJSON returns a json string for p. This is a string for normal

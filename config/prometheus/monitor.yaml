@@ -1,10 +1,10 @@
-
 # Prometheus Monitor Service (Metrics)
+TYK_OPERATOR_PROMETHEUS_SERVICEMONITOR_IF_STARTS: null # DO NOT CHANGE This will be replaced by `pre_helm.go` script.
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: tyk-operator-controller-manager
   name: controller-manager-metrics-monitor
   namespace: system
 spec:
@@ -17,4 +17,5 @@ spec:
         insecureSkipVerify: true
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: tyk-operator-controller-manager
+status: TYK_OPERATOR_PROMETHEUS_SERVICEMONITOR_IF_ENDS # DO NOT CHANGE This will be replaced by `pre_helm.go` script.

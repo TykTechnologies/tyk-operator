@@ -29,7 +29,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	"github.com/TykTechnologies/tyk-operator/pkg/environmet"
+	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
@@ -53,7 +53,7 @@ type SuperGraphReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-	Env    environmet.Env
+	Env    environment.Env
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=supergraphs,verbs=get;list;watch;create;update;patch;delete
@@ -108,14 +108,18 @@ func (r *SuperGraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// In the subgraph_refs field of the SuperGraph, the namespace for referenced subgraph is optional. If the
 		// namespace is not specified, use req.Namespace.
 		ns := subGraphRef.Namespace
-		if ns == "" {
-			ns = req.Namespace
+		if ns == nil || *ns == "" {
+			if ns == nil {
+				ns = new(string)
+			}
+
+			*ns = req.Namespace
 		}
 
 		subGraph := &tykv1alpha1.SubGraph{}
 		if err := r.Client.Get(ctx, types.NamespacedName{
 			Name:      subGraphRef.Name,
-			Namespace: ns,
+			Namespace: *ns,
 		}, subGraph); err != nil {
 			return ctrl.Result{}, err
 		}

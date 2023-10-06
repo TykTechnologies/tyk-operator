@@ -1,10 +1,100 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...HEAD)
+
+**Added**:
 - Helm: Include the imagePullSecrets in the Kubernetes service account
 
-## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...HEAD)
+## [v0.15.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.15.1)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.0...HEAD)
+
+**Fixed**:
+- Fixed typo in environment package name
+
+**Changed**:
+- Updated golang.org/x/net to v0.13.0
+
+## [v0.15.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.15.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.2...v0.15.0)
+
+**Added**
+- Added `disabled` feature in `validate_json` field of APIDefinition. 
+- Added a new Status resource called `latestTransaction` to the APIDefinition CRD which holds information about 
+last reconciliation. Now, any error can be observed there instead of checking Tyk Operator logs.
+- Added an option to enable `ServiceMonitor` in helm charts, in order Prometheus Operator to scrape `/metrics` endpoint.
+- Added `extraVolume` and `extraVolumeMounts` options to the helm chart. So, extra volumes can be mounted in Tyk Operator's manager pod, e.g., self-signed certificates.
+
+
+**Fixed**
+- Check if certificate already exists on tyk before uploading
+- Operator throwing lots of errors "the object has been modified; please apply your changes to the latest version and try again" while reconciling security policy
+
+## [0.14.2](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.2)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.1...v0.14.2)
+
+**Fixed**
+- Fixed panic of snapshot tool
+
+**Changed**
+- Changed optional fields of type string and bool to pointers for APIDefinition and Security Policy Custom Resources
+- Updated `.spec.graphql.supergraph.subgraphs[].headers` field to allow null values for validation. In the previous
+versions of Tyk such as v4.0 where `.spec.graphql.supergraph.subgraphs[].headers` is not supported, exporting such 
+resources by using Snapshot tool, sets these values to null since they are not introduced in v4.0. Allow `headers`
+field to accept `null` values to overcome validation issues.
+
+**Added**
+- Added possibility to set base identity provider
+- Added two new Status fields to ApiDefinition and Security Policy CRDs - `latestTykSpecHash` and `latestCRDSpecHash` 
+to store hash of the lastly reconciled resources. It will be used in comparison to determine sending Update calls
+to Tyk Gateway or Dashboard or not.
+
+## [v0.14.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.1)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.0...v0.14.1)
+
+**Fixed**:
+- Operator removes `spec.contextRef` from SecurityPolicy CRs.
+- Fixed panic happening when adding an ApiDefinition and Ingress with HTTPS when operator talked to OSS gateway
+
+**Updated**:
+- Run tests against latest k8s(v1.26.3) and tyk versions(v5.0)
+- Updated go version from 1.17 to 1.19
+
+**Removed**:
+- Operator is no longer tested against k8s v1.19.16
+
+## [v0.14.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.14.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.13.0...v0.14.0)
+
+**Updated**:
+- Test each PR against Tyk v4.0 as well.
+- Allow Snapshot tool to filter by category regardless of the flags set
+- Documentation of snapshot tool, in order to explain how to use Snapshot with Docker.
+- Remove hardcoded TLS keys from integration tests to prevent possible CI failures.
+
+**Added**
+
+- Added hostNetwork Support [Issue #532](https://github.com/TykTechnologies/tyk-operator/issues/532)
+- snapshot tool can be used with Docker images. 
+- snapshot tool can now export only SecurityPolicy objects without specifying
+  additional flag for ApiDefinition export.
+- Publish docker image for arm64 too during release.
+
+**Fixed**:
+- Remove ORGID from SecurityPolicy CRs while using Snapshot tool [#577](https://github.com/TykTechnologies/tyk-operator/pull/577).
+- Prevent reading Kubernetes config while using `operator snapshot` as a CLI command
+(this means you don't need to have a running Kubernetes cluster when running `operator snapshot`).
+- Fixed reconciliation failures when ApiDefinition does not exist on Tyk storage.
+- Fixed BDD tests dependency of `curl`. Instead of running `curl` within a container,
+implemented a port-forward mechanism to send raw HTTP requests to pods.
+- Fixed extra Update calls to Tyk GW / Dashboard. If no changes are made to 
+ApiDefinition resource, Operator won't send a request to Tyk GW / Dashboard.
+- Updated `control-plane` labels from `controller-manager` to `tyk-operator-controller-manager`
+to avoid selector issues.
+
+
+## [v0.13.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.13.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.12.0...v0.13.0)
 
 **Updated**
 - Added new field `LinkedAPIs` in status of security policies.
