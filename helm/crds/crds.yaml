@@ -428,6 +428,41 @@ spec:
                 type: boolean
               enable_proxy_protocol:
                 type: boolean
+              env:
+                description: Env is the name of the environment variable you want to set in the pod. It specifies the name of the environment variable that will be injected into the pod.
+                properties:
+                  name:
+                    type: string
+                  valueFrom:
+                    description: ValueFrom defines the source of the environment variable value.
+                    properties:
+                      configMapKeyRef:
+                        description: ConfigMapKeyRef defines the reference to the configmap key.
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                      secretKeyRef:
+                        description: SecretKeyRef defines the reference to the secret key.
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                    type: object
+                required:
+                - name
+                - valueFrom
+                type: object
               global_rate_limit:
                 description: GlobalRateLimit is an API Level Global Rate Limit, which assesses all traffic coming into the API from all sources and ensures that the overall rate limit is not exceeded.
                 properties:

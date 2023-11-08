@@ -841,6 +841,10 @@ type APIDefinitionSpec struct {
 	EnableDetailedRecording *bool `json:"enable_detailed_recording,omitempty"`
 
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
+
+	// Env is the name of the environment variable you want to set in the pod.
+	// It specifies the name of the environment variable that will be injected into the pod.
+	Env *EnvVariable `json:"env,omitempty"`
 }
 
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
@@ -1228,6 +1232,30 @@ type ListAPIOptions struct {
 	Category   *string `json:"category,omitempty"`
 	AuthType   *string `json:"auth_type,omitempty"`
 	Graph      *bool   `json:"graph,omitempty"`
+}
+
+// EnvVariable defines the environment variable settings.
+type EnvVariable struct {
+	Name      *string    `json:"name"`
+	ValueFrom *ValueFrom `json:"valueFrom"`
+}
+
+// ValueFrom defines the source of the environment variable value.
+type ValueFrom struct {
+	SecretKeyRef    SecretKeyRef    `json:"secretKeyRef,omitempty"`
+	ConfigMapKeyRef ConfigMapKeyRef `json:"configMapKeyRef,omitempty"`
+}
+
+// ConfigMapKeyRef defines the reference to the configmap key.
+type ConfigMapKeyRef struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
+}
+
+// SecretKeyRef defines the reference to the secret key.
+type SecretKeyRef struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
 }
 
 // Params returns url.Values that matches what the admin api expects from ls.
