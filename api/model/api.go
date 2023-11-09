@@ -845,7 +845,7 @@ type APIDefinitionSpec struct {
 	// Env is the name of the environment variable you want to set in the pod.
 	// It specifies the name of the environment variable that will be injected into the pod.
 	// +optional
-	Env *Environment `json:"env,omitempty"`
+	Env *EnvVariable `json:"env,omitempty"`
 }
 
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
@@ -1235,8 +1235,8 @@ type ListAPIOptions struct {
 	Graph      *bool   `json:"graph,omitempty"`
 }
 
-// Environment defines the environment variable settings.
-type Environment struct {
+// EnvVariable defines the environment variable settings.
+type EnvVariable struct {
 	Name      *string    `json:"name"`
 	ValueFrom *ValueFrom `json:"valueFrom"`
 }
