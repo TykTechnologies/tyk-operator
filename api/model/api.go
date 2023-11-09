@@ -844,6 +844,7 @@ type APIDefinitionSpec struct {
 
 	// Env is the name of the environment variable you want to set in the pod.
 	// It specifies the name of the environment variable that will be injected into the pod.
+	// +optional
 	Env *EnvVariable `json:"env,omitempty"`
 }
 
