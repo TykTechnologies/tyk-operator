@@ -5,12 +5,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 )
 
 // Env holds values needed to talk to the gateway or the dashboard API
 type Env struct {
 	v1alpha1.Environment
+	model.EnvVariable
 	Namespace    string
 	IngressClass string
 	TykVersion   string
@@ -49,6 +51,26 @@ func (e Env) Merge(n Env) Env {
 		e.Ingress.HTTPPort = n.Ingress.HTTPPort
 	}
 
+	if n.Name != "" {
+		e.Name = n.Name
+	}
+
+	if n.ValueFrom.SecretKeyRef.Name != "" {
+		e.ValueFrom.SecretKeyRef.Name = n.ValueFrom.SecretKeyRef.Name
+	}
+
+	if n.ValueFrom.SecretKeyRef.Key != "" {
+		e.ValueFrom.SecretKeyRef.Key = n.ValueFrom.SecretKeyRef.Key
+	}
+
+	if n.ValueFrom.ConfigMapKeyRef.Name != "" {
+		e.ValueFrom.ConfigMapKeyRef.Name = n.ValueFrom.ConfigMapKeyRef.Name
+	}
+
+	if n.ValueFrom.ConfigMapKeyRef.Key != "" {
+		e.ValueFrom.ConfigMapKeyRef.Key = n.ValueFrom.ConfigMapKeyRef.Key
+	}
+
 	if n.UserOwners != nil {
 		e.UserOwners = append(e.UserOwners, n.UserOwners...)
 	}
@@ -71,6 +93,11 @@ func (e *Env) Parse() {
 	e.Ingress.HTTPSPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressTLSPort))
 	e.Ingress.HTTPPort, _ = strconv.Atoi(os.Getenv(v1alpha1.IngressHTTPPort))
 	e.IngressClass = os.Getenv(v1alpha1.IngressClass)
+	e.Name = strings.TrimSpace(os.Getenv(model.EnvName))
+	e.ValueFrom.SecretKeyRef.Name = strings.TrimSpace(os.Getenv(model.SecretRefName))
+	e.ValueFrom.SecretKeyRef.Key = strings.TrimSpace(os.Getenv(model.SecretRefKey))
+	e.ValueFrom.ConfigMapKeyRef.Name = strings.TrimSpace(os.Getenv(model.ConfigMapRefName))
+	e.ValueFrom.ConfigMapKeyRef.Key = strings.TrimSpace(os.Getenv(model.ConfigMapRefKey))
 
 	for _, user := range strings.Split(os.Getenv(v1alpha1.TykUserOwners), ",") {
 		if o := strings.TrimSpace(user); o != "" {

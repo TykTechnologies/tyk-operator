@@ -31,6 +31,22 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	EnvName = "ENV_NAME"
+
+	// SecretRefName is the constant for the secret name environment variable
+	SecretRefName = "SECRET_REF_NAME"
+
+	// SecretRefKey is the constant for the secret data key environment variable
+	SecretRefKey = "SECRET_REF_KEY"
+
+	// ConfigMapRefName is the constant for the config map name environment variable
+	ConfigMapRefName = "CONFIG_MAP_REF_NAME"
+
+	// ConfigMapRefKey is the constant for the config map key environment variable
+	ConfigMapRefKey = "CONFIG_MAP_REF_KEY"
+)
+
 // MapStringInterfaceType represents a generic struct used as a map[string]interface{}. Since an arbitrary
 // JSON fields defined as map[string]interface{} is not feasible to use as a Kubernetes CRD, unstructured.Unstructured
 // type is used.
@@ -1237,7 +1253,7 @@ type ListAPIOptions struct {
 
 // EnvVariable defines the environment variable settings.
 type EnvVariable struct {
-	Name      *string    `json:"name"`
+	Name      string     `json:"name"`
 	ValueFrom *ValueFrom `json:"valueFrom"`
 }
 
