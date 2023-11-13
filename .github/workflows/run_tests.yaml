@@ -41,8 +41,8 @@ jobs:
         k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
 #        tyk-version: ['v3.2', 'v4.0', 'v4.3','v5.0.0']
         tyk-version: ['v4.3']
-#        mode: ['ce','pro']
-        mode: ['pro']
+        mode: ['ce','pro']
+#        mode: ['pro']
 
     env:
       CLUSTER_NAME: 'chart-testing'
