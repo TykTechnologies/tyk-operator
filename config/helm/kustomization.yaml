@@ -43,6 +43,8 @@ patchesStrategicMerge:
   - manager_extra_volume.yaml
   # add extraVolumeMounts for manager pod
   - manager_extra_volumemounts.yaml
+  # add imagePullSecrets for ServiceAccount object
+  - serviceaccount.yaml
 
   # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
   # crd/kustomization.yaml
