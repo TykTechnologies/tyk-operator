@@ -69,7 +69,7 @@ func TestCertificateUpload(t *testing.T) {
 			eval := is.New(t)
 
 			// Validate the certificate is uploaded
-			err := wait.For(func() (done bool, err error) {
+			err := wait.For(func(_ context.Context) (done bool, err error) {
 				tykApi, err := klient.Universal.Api().Get(tykCtx, apiDef.Status.ApiID)
 				if err != nil {
 					t.Log("Failed to fetch Tyk API", "id", apiDef.Status.ApiID, "error", err)
@@ -103,7 +103,7 @@ func TestCertificateUpload(t *testing.T) {
 				Env:    tykEnv,
 			}
 
-			err = wait.For(func() (done bool, err error) {
+			err = wait.For(func(_ context.Context) (done bool, err error) {
 				_, err = r.Reconcile(tykCtx, ctrl.Request{
 					NamespacedName: types.NamespacedName{
 						Name:      tlsSecretName,

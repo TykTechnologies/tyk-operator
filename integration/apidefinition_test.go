@@ -39,7 +39,7 @@ const (
 
 // deleteApiDefinitionFromTyk sends a Tyk API call to delete ApiDefinition with given ID.
 func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
-	err := wait.For(func() (done bool, err error) {
+	err := wait.For(func(_ context.Context) (done bool, err error) {
 		_, err = klient.Universal.Api().Delete(ctx, id)
 		if err != nil {
 			return false, err
@@ -86,7 +86,7 @@ func TestTransactionStatusSubresource(t *testing.T) {
 				testNS, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					apiDefObj := v1alpha1.ApiDefinition{}
 
 					err = c.Client().Resources(testNS).Get(ctx, apiDefCR.Name, apiDefCR.Namespace, &apiDefObj)
@@ -296,7 +296,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that the resource does not exist on Tyk.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
 					if err != nil {
 						return true, nil
@@ -315,7 +315,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				// Now, send a reconciliation request to Operator. In the next reconciliation request, the operator
 				// must understand the change between Tyk and K8s and create nonexistent ApiDefinition again based
 				// on k8s state.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
 					if err != nil {
 						t.Logf("Failed to reconcile, err: %v", err)
@@ -327,7 +327,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that the resource is recreated after reconciliation.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
 					return err == nil, err
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
@@ -395,7 +395,7 @@ func TestApiDefinitionUpdate(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that Tyk is updated
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
 					if err != nil {
 						return false, err
@@ -473,7 +473,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 		}).
 		Assess("ApiDefinition must verify user requests",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					// invalidJSONBody does not meet the requirements of the Schema because
@@ -560,7 +560,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 		}).
 		Assess("ApiDefinition should allow traffic to whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -584,7 +584,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 			}).
 		Assess("ApiDefinition must not allow traffic to non-whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -664,7 +664,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 		}).
 		Assess("ApiDefinition should forbid traffic to blacklist route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -688,7 +688,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 			}).
 		Assess("ApiDefinition must allow traffic to non-blacklisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -786,7 +786,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 		}).
 		Assess("ApiDefinition should allow traffic to ignored route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -811,7 +811,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			}).
 		Assess("ApiDefinition must not allow traffic to other non whitelisted routes",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -888,7 +888,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						tykCertID, exists := apiDefObj.Spec.PinnedPublicKeys["*"]
+						tykCertID, exists := apiDefObj.Status.References.PinnedPublicKey["*"]
 						if !exists {
 							t.Logf("PinnedPublicKeys not updated yet")
 							return false
@@ -1001,7 +1001,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 				calculatedCertID := tykEnv.Org + certFingerPrint
 
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					// validate certificate was created on Tyk
 					exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 					if !exists {
@@ -1122,7 +1122,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 				var apiDef *model.APIDefinitionSpec
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					// validate basic authentication field was set
 					var apiDefCRD v1alpha1.ApiDefinition
 
@@ -1205,7 +1205,7 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 				var apiDef *model.APIDefinitionSpec
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					// validate base identity provider and all authentication fields
 					var apiDefCRD v1alpha1.ApiDefinition
 
@@ -1312,7 +1312,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			certFingerPrint, _ := cert.CalculateFingerPrint(certPemBytes)
 			calculatedCertID := tykEnv.Org + certFingerPrint
 
-			err = wait.For(func() (done bool, err error) {
+			err = wait.For(func(_ context.Context) (done bool, err error) {
 				// validate certificate was created
 				exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 				if !exists {
@@ -1337,7 +1337,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 				var apiDef *model.APIDefinitionSpec
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					// validate client certificate field was set
 					var apiDefCRD v1alpha1.ApiDefinition
 
@@ -1397,7 +1397,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				eval.NoErr(err)
 
 				var apiDef *model.APIDefinitionSpec
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					// validate api Def was created without certificate
 					var apiDefCRD v1alpha1.ApiDefinition
 

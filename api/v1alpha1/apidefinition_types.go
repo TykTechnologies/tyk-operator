@@ -63,6 +63,14 @@ type ApiDefinitionStatus struct {
 	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
 
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
+
+	References Refs `json:"references,omitempty"`
+}
+
+type Refs struct {
+	ClientCertificate   []string          `json:"clientCertificate,omitempty"`
+	PinnedPublicKey     map[string]string `json:"pinnedPublicKey,omitempty"`
+	UpstreamCertificate map[string]string `json:"upstreamCertificate,omitempty"`
 }
 
 // TransactionStatus indicates the status of the Tyk API calls for currently reconciled object.

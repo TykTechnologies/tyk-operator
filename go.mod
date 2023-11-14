@@ -18,7 +18,7 @@ require (
 	k8s.io/client-go v0.28.1
 	moul.io/http2curl/v2 v2.2.2
 	sigs.k8s.io/controller-runtime v0.16.2
-	sigs.k8s.io/e2e-framework v0.1.0
+	sigs.k8s.io/e2e-framework v0.3.0
 )
 
 require (
@@ -32,7 +32,7 @@ require (
 	github.com/cucumber/messages-go/v10 v10.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.10.2 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/hashicorp/go-memdb v1.3.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/huandu/xstrings v1.2.1 // indirect
-	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/jensneuse/abstractlogger v0.0.4 // indirect
 	github.com/jensneuse/byte-template v0.0.0-20200214152254-4f3cf06e5c68 // indirect
 	github.com/jensneuse/pipeline v0.0.0-20200117120358-9fb4de085cd6 // indirect
@@ -86,6 +86,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
+	github.com/vladimirvivien/gexe v0.2.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/crypto v0.12.0 // indirect

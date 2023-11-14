@@ -142,13 +142,16 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
+	desired.Status.References.UpstreamCertificate = upstreamRequestStruct.Spec.UpstreamCertificates
 
 	// Check Pinned Public keys
 	r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
+	desired.Status.References.PinnedPublicKey = upstreamRequestStruct.Spec.PinnedPublicKeys
 
 	if desired.Spec.UseMutualTLSAuth != nil && *desired.Spec.UseMutualTLSAuth {
 		r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 	}
+	desired.Status.References.ClientCertificate = upstreamRequestStruct.Spec.ClientCertificates
 
 	// Check GraphQL Federation
 	if desired.Spec.GraphQL != nil {
@@ -226,6 +229,8 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			target,
 			true,
 			func(status *tykv1alpha1.ApiDefinitionStatus) {
+				// TODO: change it later on
+				status.References = desired.Status.References
 				status.ApiID = apiId
 				status.LatestTykSpecHash = calculateHash(apiOnTyk)
 				status.LatestCRDSpecHash = calculateHash(desired.Spec)

@@ -339,8 +339,8 @@ func TestProcessSubGraphExecution(t *testing.T) {
 	apiDefLinkedMultiple := &tykv1alpha1.ApiDefinition{}
 	apiDef.DeepCopyInto(apiDefLinkedMultiple)
 	apiDefLinkedMultiple.ObjectMeta.Name = "test-name-multiple-link"
-	multiple_link_apiID := EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
-	apiDefLinkedMultiple.Spec.APIID = &multiple_link_apiID
+	multipleLinkApiId := EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
+	apiDefLinkedMultiple.Spec.APIID = &multipleLinkApiId
 
 	apiDefNewGraphRef := &tykv1alpha1.ApiDefinition{}
 	apiDef.DeepCopyInto(apiDefNewGraphRef)

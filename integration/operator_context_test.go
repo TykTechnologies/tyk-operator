@@ -88,7 +88,7 @@ func TestOperatorContextCreate(t *testing.T) {
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			eval := is.New(t)
 
-			err := wait.For(func() (done bool, err error) {
+			err := wait.For(func(_ context.Context) (done bool, err error) {
 				resp, getErr := http.Get(fmt.Sprintf("%s/%s/get", gatewayLocalhost, listenPath))
 				if getErr != nil {
 					t.Log(getErr)
@@ -109,7 +109,7 @@ func TestOperatorContextCreate(t *testing.T) {
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
 			eval := is.New(t)
 
-			err := wait.For(func() (done bool, err error) {
+			err := wait.For(func(_ context.Context) (done bool, err error) {
 				resp, getErr := http.Get(fmt.Sprintf("%s/empty-ns/get", gatewayLocalhost))
 				if getErr != nil {
 					t.Log(getErr)
@@ -199,7 +199,7 @@ func TestOperatorContextDelete(t *testing.T) {
 				apiDef := v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: apiDefName, Namespace: testNS}}
 				opCtx := v1alpha1.OperatorContext{ObjectMeta: metav1.ObjectMeta{Name: opCtxName, Namespace: testNS}}
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					err = client.Resources(testNS).Delete(ctx, &apiDef)
 					if err != nil {
 						t.Logf("failed to delete ApiDefinition , err: %v", err)

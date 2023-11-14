@@ -175,7 +175,7 @@ func TestSecurityPolicyStatusIsUpdated(t *testing.T) {
 
 		updatePolicy.Spec.AccessRightsArray = nil
 
-		err = wait.For(func() (done bool, err error) {
+		err = wait.For(func(_ context.Context) (done bool, err error) {
 			err = c.Client().Resources().Update(ctx, &updatePolicy)
 			if err != nil {
 				t.Logf("%v, err: %v", errUpdatePolicyCR, err)
@@ -225,7 +225,7 @@ var minPolicyGwVersion = version.MustParseGeneric("v4.1.0")
 // createPolicyOnTyk creates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
 func createPolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
-	err := wait.For(func() (done bool, err error) {
+	err := wait.For(func(_ context.Context) (done bool, err error) {
 		err = klient.Universal.Portal().Policy().Create(ctx, spec)
 		if err != nil {
 			return false, err
@@ -245,7 +245,7 @@ func createPolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) e
 // updatePolicyOnTyk updates given spec and reloads Tyk. Although reloading is not required for Pro,
 // it is needed for CE.
 func updatePolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) error {
-	err := wait.For(func() (done bool, err error) {
+	err := wait.For(func(_ context.Context) (done bool, err error) {
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
 			return false, err
@@ -265,7 +265,7 @@ func updatePolicyOnTyk(ctx context.Context, spec *v1alpha1.SecurityPolicySpec) e
 // deletePolicyOnTyk deletes SecurityPolicy identified by given ID and reloads Tyk.
 // Although reloading is not required for Pro, it is needed for CE.
 func deletePolicyOnTyk(ctx context.Context, id string) error {
-	err := wait.For(func() (done bool, err error) {
+	err := wait.For(func(_ context.Context) (done bool, err error) {
 		err = klient.Universal.Portal().Policy().Delete(ctx, id)
 		if err != nil {
 			return false, err
@@ -421,7 +421,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				previousPolicyID := policyCR.Status.PolID
 
 				// Ensure that policy is deleted from Tyk.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 					if tykClient.IsNotFound(err) {
 						return true, nil
@@ -434,7 +434,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				eval.NoErr(err)
 
 				// After reconciliation, Operator should detect drift and recreate non-existing policy on Tyk side.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
 					if err != nil {
 						t.Logf("Recociliation failed with error %s. Trying again", err.Error())
@@ -483,7 +483,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				err := updatePolicyOnTyk(reqCtx, copySpec)
 				eval.NoErr(err)
 
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					// Ensure that policy is updated accordingly on Tyk Side.
 					newCopySpec, err := klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 					if err != nil {
@@ -507,7 +507,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 				// Ensure that reconciliation brings updated Security Policy back to the k8s state. In the
 				// reconciliation, the operator must realize that the SecurityPolicy CR does not exist on Tyk
 				// and it must create a SecurityPolicy based on the spec stored in k8s.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = polRec.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(&policyCR)})
 					if err != nil {
 						t.Logf("failed to reconcile, err: %v", err)
@@ -686,7 +686,7 @@ func TestSecurityPolicy(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that the policy is deleted successfully from Tyk.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = klient.Universal.Portal().Policy().Get(reqCtx, policyCR.Status.PolID)
 					if tykClient.IsNotFound(err) {
 						return true, nil
@@ -969,7 +969,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				)
 				eval.NoErr(err)
 
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					oc := v1alpha1.OperatorContext{}
 
 					err = c.Client().Resources(testNs).Get(ctx, opCtx.Name, opCtx.Namespace, &oc)
@@ -1045,7 +1045,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 				eval.True(ok)
 
 				policy.Spec.Context = nil
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					err = c.Client().Resources(testNs).Update(ctx, policy)
 					if err != nil {
 						t.Logf("%v, err: %v", errUpdatePolicyCR, err)
@@ -1067,7 +1067,7 @@ func TestSecurityPolicyWithContextRef(t *testing.T) {
 					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					oc := v1alpha1.OperatorContext{}
 
 					err = c.Client().Resources(testNs).Get(ctx, opCtx.Name, opCtx.Namespace, &oc)
