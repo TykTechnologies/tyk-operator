@@ -34,11 +34,16 @@ func main() {
 		{"IfNotPresent", "{{ .Values.image.pullPolicy }}"},
 		{"replicas: 1", "replicas: {{default 1 .Values.replicaCount }}"},
 		{"tykio/tyk-operator:latest", "{{ .Values.image.repository }}:{{ .Values.image.tag }}"},
-		{"CONTROLLER_MANAGER_HEALTH_PROBE_PORT", "{{ .Values.healthProbePort }}"},
-		{"CONTROLLER_MANAGER_METRICS_PORT", "{{ .Values.metricsPort }}"},
-		{"CONTROLLER_MANAGER_WEBHOOK_PORT", "{{ .Values.webhookPort }}"},
+		{"CONTROLLER_MANAGER_HEALTH_PROBE_PORT", "{{ .Values.manager.healthProbePort }}"},
+		{"CONTROLLER_MANAGER_METRICS_PORT", "{{ .Values.manager.metricsPort }}"},
+		{"CONTROLLER_MANAGER_WEBHOOK_PORT", "{{ .Values.manager.webhookPort }}"},
 		{"CONTROLLER_MANAGER_RBAC_PORT", "{{ .Values.rbac.port }}"},
 		{"CONTROLLER_MANAGER_HOST_NETWORK", "{{ .Values.hostNetwork | default false }}"},
+		{"CONTROLLERMANAGER_HEALTHPROBEPORT", "{{ quote .Values.manager.healthProbePort }}"},
+		{"CONTROLLERMANAGER_METRICSPORT", "{{ quote .Values.manager.metricsPort }}"},
+		{"CONTROLLERMANAGER_WEBHOOKPORT", "{{ quote .Values.manager.webhookPort }}"},
+		{"CONTROLLERMANAGER_LEADERELECT", "{{ quote .Values.manager.leaderElection.leaderElect }}"},
+		{"CONTROLLER_MANAGER_LEADERELECTIONRESOURCENAME", "{{ quote .Values.manager.leaderElection.resourceName }}"},
 	}
 
 	for _, v := range m {
@@ -56,35 +61,41 @@ metadata:
   name: RELEASE_NAMESPACE
 ---`
 
-const annotation = `      annotations:
+const (
+	annotation = `      annotations:
         POD-ANNOTATION: POD-ANNOTATION`
 
-const annotationTPL = `{{- with .Values.podAnnotations }}
+	annotationTPL = `{{- with .Values.podAnnotations }}
       annotations:
 {{- toYaml . | nindent 8 }}
 {{- end }}`
+)
 
-const envFrom = `        envFrom:
+const (
+	envFrom = `        envFrom:
         - secretRef:
             name: OPERATOR_ENV_CONFIG`
-
-const envFromTPL = `{{- with .Values.envFrom }}
+	envFromTPL = `{{- with .Values.envFrom }}
         envFrom:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
+)
 
-const envVars = `        env:
+const (
+	envVars = `        env:
         - name: TYK_HTTPS_INGRESS_PORT
           value: PORT_HTTPS_INGRESS
         - name: TYK_HTTP_INGRESS_PORT
           value: PORT_HTTP_INGRESS`
 
-const envVarsTPL = `{{- with .Values.envVars }}
+	envVarsTPL = `{{- with .Values.envVars }}
         env:
-{{- toYaml . | nindent 10 }}
+{{- toYaml . | nindent 8 }}
 {{- end }}`
+)
 
-const resources = `        resources:
+const (
+	resources = `        resources:
           limits:
             cpu: 100m
             memory: 30Mi
@@ -92,12 +103,14 @@ const resources = `        resources:
             cpu: 100m
             memory: 20Mi`
 
-const resourcesTPL = `{{- with .Values.resources }}
+	resourcesTPL = `{{- with .Values.resources }}
         resources:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
+)
 
-const resourcesRBAC = `        resources:
+const (
+	resourcesRBAC = `        resources:
           limits:
             cpu: 50m
             memory: 20Mi
@@ -105,33 +118,40 @@ const resourcesRBAC = `        resources:
             cpu: 50m
             memory: 20Mi`
 
-const resourcesRBACTPL = `{{- with .Values.rbac.resources }}
+	resourcesRBACTPL = `{{- with .Values.rbac.resources }}
         resources:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
+)
 
-const securityContext = `        securityContext:
+const (
+	securityContext = `        securityContext:
           allowPrivilegeEscalation: false`
 
-const securityContextTPL = `{{- with .Values.securityContext }}
+	securityContextTPL = `{{- with .Values.securityContext }}
         securityContext:
 {{- toYaml . | nindent 10 }}
 {{- end }}`
+)
 
-const imageRBAC = `        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+const (
+	imageRBAC = `        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
         name: kube-rbac-proxy`
 
-const imageRBACTPL = `        image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
+	imageRBACTPL = `        image: {{ .Values.rbac.image.repository }}:{{ .Values.rbac.image.tag }}
         imagePullPolicy: {{ .Values.rbac.image.pullPolicy }}
         name: kube-rbac-proxy`
+)
 
-const nodeSelector = `      nodeSelector:
+const (
+	nodeSelector = `      nodeSelector:
         NODE_SELECTOR: NODE_SELECTOR`
 
-const nodeSelectorTPL = `{{- if .Values.nodeSelector }}
+	nodeSelectorTPL = `{{- if .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
 {{- end }}`
+)
 
 // Replaces hardcoded values for ServiceMonitor resource with helm templates.
 const (
@@ -141,17 +161,21 @@ const (
 	serviceMonitorIfEndsTPL   = `{{ end }} `
 )
 
-const extraVolume = `- name: CONTROLLER_MANAGER_EXTRA_VOLUME`
-
-const extraVolumeTPL = `{{ if .Values.extraVolumes }}
+const (
+	extraVolume    = `- name: CONTROLLER_MANAGER_EXTRA_VOLUME`
+	extraVolumeTPL = `{{ if .Values.extraVolumes }}
        {{ toYaml .Values.extraVolumes | nindent 6 }}
         {{ end }}`
+)
 
-const extraVolumeMounts = `- mountPath: CONTROLLER_MANAGER_EXTRA_VOLUMEMOUNTS`
+const (
+	extraVolumeMounts = `- mountPath: CONTROLLER_MANAGER_EXTRA_VOLUMEMOUNTS`
 
-const extraVolumeMountsTPL = `{{ if .Values.extraVolumeMounts }}
+	extraVolumeMountsTPL = `{{ if .Values.extraVolumeMounts }}
             {{ toYaml .Values.extraVolumeMounts | nindent 8}}
           {{ end }}`
+)
+
 
 const imagePullSecretsServiceAccount = `imagePullSecrets:
 - name: TYK_OPERATOR_SERVICEACCOUNT_IMAGEPULLSECRETS
@@ -162,3 +186,4 @@ imagePullSecrets:
   {{- toYaml . | nindent 2 }}
 {{ end }}
 `
+

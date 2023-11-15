@@ -2118,6 +2118,42 @@ spec:
                   CR can only be linked to Subgraph CRs that are created in the same
                   namespace as ApiDefinition CR.
                 type: string
+              references:
+                properties:
+                  certificates:
+                    items:
+                      type: string
+                    type: array
+                  clientCertificate:
+                    items:
+                      type: string
+                    type: array
+                  graphQL:
+                    properties:
+                      subGraphRef:
+                        properties:
+                          schema:
+                            type: string
+                          sdl:
+                            type: string
+                        required:
+                        - schema
+                        - sdl
+                        type: object
+                    required:
+                    - subGraphRef
+                    type: object
+                  pinnedPublicKey:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  upstreamCertificate:
+                    additionalProperties:
+                      type: string
+                    type: object
+                required:
+                - graphQL
+                type: object
             required:
             - api_id
             type: object

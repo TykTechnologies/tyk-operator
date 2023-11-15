@@ -15,6 +15,7 @@ import (
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
+	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"github.com/matryer/is"
 	v1 "k8s.io/api/core/v1"
@@ -24,7 +25,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
 	util "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -39,7 +39,7 @@ const (
 
 // deleteApiDefinitionFromTyk sends a Tyk API call to delete ApiDefinition with given ID.
 func deleteApiDefinitionFromTyk(ctx context.Context, id string) error {
-	err := wait.For(func() (done bool, err error) {
+	err := wait.For(func(_ context.Context) (done bool, err error) {
 		_, err = klient.Universal.Api().Delete(ctx, id)
 		if err != nil {
 			return false, err
@@ -86,7 +86,7 @@ func TestTransactionStatusSubresource(t *testing.T) {
 				testNS, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					apiDefObj := v1alpha1.ApiDefinition{}
 
 					err = c.Client().Resources(testNS).Get(ctx, apiDefCR.Name, apiDefCR.Namespace, &apiDefObj)
@@ -199,7 +199,7 @@ func TestDeletingNonexistentAPI(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -258,7 +258,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			// Create ApiDefinition Reconciler.
@@ -267,7 +267,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 
 			r = controllers.ApiDefinitionReconciler{
 				Client: cl,
-				Log:    log.NullLogger{},
+				Log:    logr.FromContextOrDiscard(ctx),
 				Scheme: cl.Scheme(),
 				Env:    tykEnv,
 			}
@@ -296,7 +296,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that the resource does not exist on Tyk.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
 					if err != nil {
 						return true, nil
@@ -315,7 +315,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				// Now, send a reconciliation request to Operator. In the next reconciliation request, the operator
 				// must understand the change between Tyk and K8s and create nonexistent ApiDefinition again based
 				// on k8s state.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(apiDefCR)})
 					if err != nil {
 						t.Logf("Failed to reconcile, err: %v", err)
@@ -327,7 +327,7 @@ func TestReconcileNonexistentAPI(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that the resource is recreated after reconciliation.
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					_, err = klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
 					return err == nil, err
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
@@ -358,7 +358,7 @@ func TestApiDefinitionUpdate(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -395,7 +395,7 @@ func TestApiDefinitionUpdate(t *testing.T) {
 				eval.NoErr(err)
 
 				// Ensure that Tyk is updated
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
 					if err != nil {
 						return false, err
@@ -473,7 +473,7 @@ func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 		}).
 		Assess("ApiDefinition must verify user requests",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					// invalidJSONBody does not meet the requirements of the Schema because
@@ -560,7 +560,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 		}).
 		Assess("ApiDefinition should allow traffic to whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -584,7 +584,7 @@ func TestApiDefinitionCreateWhitelist(t *testing.T) {
 			}).
 		Assess("ApiDefinition must not allow traffic to non-whitelisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -664,7 +664,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 		}).
 		Assess("ApiDefinition should forbid traffic to blacklist route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -688,7 +688,7 @@ func TestApiDefinitionCreateBlackList(t *testing.T) {
 			}).
 		Assess("ApiDefinition must allow traffic to non-blacklisted route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -786,7 +786,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 		}).
 		Assess("ApiDefinition should allow traffic to ignored route",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -811,7 +811,7 @@ func TestApiDefinitionCreateIgnored(t *testing.T) {
 			}).
 		Assess("ApiDefinition must not allow traffic to other non whitelisted routes",
 			func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					hc := &http.Client{}
 
 					req, err := http.NewRequest(
@@ -872,7 +872,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -888,7 +888,7 @@ func TestApiDefinitionCertificatePinning(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						tykCertID, exists := apiDefObj.Spec.PinnedPublicKeys["*"]
+						tykCertID, exists := apiDefObj.Status.References.PinnedPublicKey["*"]
 						if !exists {
 							t.Logf("PinnedPublicKeys not updated yet")
 							return false
@@ -959,7 +959,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1001,7 +1001,7 @@ func TestApiDefinitionUpstreamCertificates(t *testing.T) {
 
 				calculatedCertID := tykEnv.Org + certFingerPrint
 
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					// validate certificate was created on Tyk
 					exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 					if !exists {
@@ -1040,12 +1040,20 @@ func TestApiCertificates(t *testing.T) {
 			return ctx
 		}).Assess("API Definition has the certificate id",
 		func(ctx context.Context, t *testing.T, envConf *envconf.Config) context.Context {
+			eval.NoErr(waitForTykResourceCreation(envConf, apiDef))
+
 			err := wait.For(conditions.New(envConf.Client().Resources()).ResourceMatch(apiDef, func(object k8s.Object) bool {
-				api, ok := object.(*v1alpha1.ApiDefinition)
+				apiDefOnK8s, ok := object.(*v1alpha1.ApiDefinition)
 				if !ok {
 					return false
 				}
-				return api.Spec.Certificates != nil && len(api.Spec.Certificates) > 0
+
+				if apiDefOnK8s.Status.References.Certificates != nil && len(apiDefOnK8s.Status.References.Certificates) > 0 {
+					return true
+				}
+
+				t.Logf("unexpected status, %v\n", apiDefOnK8s.Status.References)
+				return false
 			}), wait.WithInterval(defaultWaitInterval), wait.WithTimeout(defaultWaitTimeout))
 			eval.NoErr(err)
 
@@ -1058,11 +1066,19 @@ func TestApiCertificates(t *testing.T) {
 
 			tykCtx := tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
-			exists := klient.Universal.Certificate().Exists(tykCtx, apiDef.Spec.Certificates[0])
-			eval.True(exists)
+			eval.Equal(len(apiDef.Status.References.Certificates), 1)
+
+			err = wait.For(func(ctx context.Context) (done bool, err error) {
+				if !klient.Universal.Certificate().Exists(tykCtx, apiDef.Status.References.Certificates[0]) {
+					return false, errors.New("certificate is not created yet")
+				}
+
+				return true, nil
+			})
+			eval.NoErr(err)
 
 			return ctx
 		}).Feature()
@@ -1090,7 +1106,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1122,7 +1138,7 @@ func TestApiDefinitionBasicAuth(t *testing.T) {
 
 				var apiDef *model.APIDefinitionSpec
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					// validate basic authentication field was set
 					var apiDefCRD v1alpha1.ApiDefinition
 
@@ -1170,7 +1186,7 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1205,7 +1221,7 @@ func TestApiDefinitionBaseIdentityProviderWithMultipleAuthTypes(t *testing.T) {
 
 				var apiDef *model.APIDefinitionSpec
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					// validate base identity provider and all authentication fields
 					var apiDefCRD v1alpha1.ApiDefinition
 
@@ -1262,7 +1278,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 			reqCtx = tykClient.SetContext(context.Background(), tykClient.Context{
 				Env: tykEnv,
-				Log: log.NullLogger{},
+				Log: logr.FromContextOrDiscard(ctx),
 			})
 
 			return ctx
@@ -1312,7 +1328,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 			certFingerPrint, _ := cert.CalculateFingerPrint(certPemBytes)
 			calculatedCertID := tykEnv.Org + certFingerPrint
 
-			err = wait.For(func() (done bool, err error) {
+			err = wait.For(func(_ context.Context) (done bool, err error) {
 				// validate certificate was created
 				exists := klient.Universal.Certificate().Exists(reqCtx, calculatedCertID)
 				if !exists {
@@ -1337,7 +1353,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 
 				var apiDef *model.APIDefinitionSpec
 
-				err := wait.For(func() (done bool, err error) {
+				err := wait.For(func(_ context.Context) (done bool, err error) {
 					// validate client certificate field was set
 					var apiDefCRD v1alpha1.ApiDefinition
 
@@ -1397,7 +1413,7 @@ func TestApiDefinitionClientMTLS(t *testing.T) {
 				eval.NoErr(err)
 
 				var apiDef *model.APIDefinitionSpec
-				err = wait.For(func() (done bool, err error) {
+				err = wait.For(func(_ context.Context) (done bool, err error) {
 					// validate api Def was created without certificate
 					var apiDefCRD v1alpha1.ApiDefinition
 
@@ -1508,7 +1524,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 			eval.NoErr(err)
 			r = controllers.ApiDefinitionReconciler{
 				Client: cl,
-				Log:    log.NullLogger{},
+				Log:    logr.FromContextOrDiscard(ctx),
 				Scheme: cl.Scheme(),
 				Env:    tykEnv,
 			}
@@ -1522,8 +1538,15 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				testNs, ok := ctx.Value(ctxNSKey).(string)
 				eval.True(ok)
 
+				// Generate SubGraph CR and create it.
+				sg := generateSubGraphCR(testNs, nil)
+				_, err := util.CreateOrUpdate(ctx, r.Client, sg, func() error {
+					return nil
+				})
+				eval.NoErr(err)
+
 				// Generate ApiDefinition CR and create it.
-				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+				api, err := createTestAPIDef(ctx, c, testNs, func(definition *v1alpha1.ApiDefinition) {
 					graphRef := testSubGraphCRMetaName
 
 					definition.Spec.GraphQL = &model.GraphQLConfig{
@@ -1532,17 +1555,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						Version:       "1",
 					}
 				})
-				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
-					return nil
-				})
 				eval.NoErr(err)
-
-				// Generate SubGraph CR and create it.
-				sg := generateSubGraphCR(testNs, nil)
-				_, err = util.CreateOrUpdate(ctx, r.Client, sg, func() error {
-					return nil
-				})
-				eval.NoErr(err)
+				eval.True(api != nil)
+				eval.NoErr(waitForTykResourceCreation(c, api))
 
 				// Wait for reconciliation; so that, the ApiDefinition is updated according to linked SubGraph CR.
 				err = wait.For(
@@ -1561,11 +1576,15 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						return apiDefObj.Spec.GraphQL != nil && apiDefObj.Spec.GraphQL.GraphRef != nil &&
-							*apiDefObj.Spec.GraphQL.GraphRef == testSubGraphCRMetaName && apiDefObj.Spec.GraphQL.Schema != nil &&
-							*apiDefObj.Spec.GraphQL.Schema == testSubGraphSchema &&
-							apiDefObj.Spec.GraphQL.Subgraph.SDL == testSubGraphSDL &&
-							apiDefObj.Status.LinkedToSubgraph == testSubGraphCRMetaName
+						if apiDefObj.Spec.GraphQL != nil && apiDefObj.Spec.GraphQL.GraphRef != nil &&
+							*apiDefObj.Spec.GraphQL.GraphRef == sg.ObjectMeta.Name &&
+							apiDefObj.Status.References.GraphQL.SubGraphRef.Schema == sg.Spec.Schema &&
+							apiDefObj.Status.References.GraphQL.SubGraphRef.SDL == sg.Spec.SDL &&
+							apiDefObj.Status.LinkedToSubgraph == sg.ObjectMeta.Name {
+							return true
+						}
+
+						return false
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
@@ -1595,7 +1614,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				eval.True(ok)
 
 				// Generate another ApiDefinition CR and create it.
-				api := generateApiDef(testNs, func(definition *v1alpha1.ApiDefinition) {
+				api, err := createTestAPIDef(ctx, c, testNs, func(definition *v1alpha1.ApiDefinition) {
 					graphRef := testSubGraphCRMetaName
 
 					definition.ObjectMeta = metav1.ObjectMeta{
@@ -1606,9 +1625,6 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 						ExecutionMode: model.SubGraphExecutionMode,
 						Version:       "1",
 					}
-				})
-				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
-					return nil
 				})
 				eval.NoErr(err)
 
@@ -1628,6 +1644,9 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 					wait.WithTimeout(defaultWaitTimeout),
 					wait.WithInterval(defaultWaitInterval),
 				)
+				eval.NoErr(err)
+
+				err = c.Client().Resources(testNs).Delete(ctx, api)
 				eval.NoErr(err)
 
 				return ctx
@@ -1658,15 +1677,6 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 
 				// Get ApiDefinition and update it based on the new SubGraph CR information.
 				api := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: testApiDef, Namespace: testNs}}
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
 				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
 					graphRef := newSgName
 
@@ -1675,27 +1685,16 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 				})
 				eval.NoErr(err)
 
-				// Wait for reconciliation; so that, the ApiDefinition is updated according to new SubGraph CR.
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
-						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
-						return err == nil
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
 				// After successful reconciliation, check that ApiDefinition CR is updated properly.
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						return apiDefObj.Spec.GraphQL != nil && apiDefObj.Spec.GraphQL.GraphRef != nil &&
-							*apiDefObj.Spec.GraphQL.GraphRef == newSgName && apiDefObj.Spec.GraphQL.Schema != nil &&
-							*apiDefObj.Spec.GraphQL.Schema == newSchema &&
-							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
+						return apiDefObj.Spec.GraphQL != nil &&
+							apiDefObj.Spec.GraphQL.GraphRef != nil &&
+							apiDefObj.Status.References.GraphQL.SubGraphRef.Schema == newSchema &&
+							apiDefObj.Status.References.GraphQL.SubGraphRef.SDL == newSDL &&
 							apiDefObj.Status.LinkedToSubgraph == newSgName
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -1727,50 +1726,21 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 
 				// Get ApiDefinition and remove GraphRef from it.
 				api := &v1alpha1.ApiDefinition{ObjectMeta: metav1.ObjectMeta{Name: testApiDef, Namespace: testNs}}
-				err := wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
-						return true
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				_, err = util.CreateOrUpdate(ctx, r.Client, api, func() error {
+				_, err := util.CreateOrUpdate(ctx, r.Client, api, func() error {
 					api.Spec.GraphQL.GraphRef = nil
 					return nil
 				})
 				eval.NoErr(err)
 
-				// Wait for reconciliation; so that, the ApiDefinition is updated according to new SubGraph CR.
-				err = wait.For(
-					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
-						_, err = r.Reconcile(ctx, ctrl.Request{NamespacedName: cr.ObjectKeyFromObject(api)})
-						return err == nil
-					}),
-					wait.WithTimeout(defaultWaitTimeout),
-					wait.WithInterval(defaultWaitInterval),
-				)
-				eval.NoErr(err)
-
-				const (
-					newSDL    = "newSDL"
-					newSchema = "newSchema"
-				)
-
 				// After successful reconciliation, check that ApiDefinition CR is updated properly.
 				err = wait.For(
 					conditions.New(c.Client().Resources()).ResourceMatch(api, func(object k8s.Object) bool {
-						apiDefObj := &v1alpha1.ApiDefinition{}
-						err = r.Get(ctx, cr.ObjectKeyFromObject(api), apiDefObj)
-						if err != nil {
-							return false
-						}
+						apiDefObj := object.(*v1alpha1.ApiDefinition) //nolint
 
-						return apiDefObj.Spec.GraphQL != nil && (apiDefObj.Spec.GraphQL.GraphRef == nil ||
-							*apiDefObj.Spec.GraphQL.GraphRef == "") && apiDefObj.Spec.GraphQL.Schema != nil &&
-							*apiDefObj.Spec.GraphQL.Schema == newSchema &&
-							apiDefObj.Spec.GraphQL.Subgraph.SDL == newSDL &&
+						return apiDefObj.Spec.GraphQL != nil &&
+							(apiDefObj.Spec.GraphQL.GraphRef == nil || *apiDefObj.Spec.GraphQL.GraphRef == "") &&
+							apiDefObj.Status.References.GraphQL.SubGraphRef.Schema == "" &&
+							apiDefObj.Status.References.GraphQL.SubGraphRef.SDL == "" &&
 							apiDefObj.Status.LinkedToSubgraph == ""
 					}),
 					wait.WithTimeout(defaultWaitTimeout),
@@ -1787,16 +1757,7 @@ func TestApiDefinitionSubGraphExecutionMode(t *testing.T) {
 			return ctx, nil
 		}
 
-		eval := is.New(t)
-		testNs, ok := ctx.Value(ctxNSKey).(string)
-		eval.True(ok)
-
-		err := r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, cr.InNamespace(testNs))
-		if err != nil {
-			return ctx, err
-		}
-
-		return ctx, r.DeleteAllOf(ctx, &v1alpha1.SubGraph{}, cr.InNamespace(testNs))
+		return ctx, nil
 	})
 
 	testenv.Test(t, gqlSubGraph)

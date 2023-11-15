@@ -34,6 +34,7 @@ import (
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
 	"github.com/go-logr/logr"
+	errors2 "github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -51,7 +52,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
@@ -114,150 +114,163 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	var queueA time.Duration
+	tykFailRequeue := 5 * time.Second
 
-	_, err = util.CreateOrUpdate(ctx, r.Client, desired, func() error {
-		if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-			e, err := r.delete(ctx, desired)
-			queueA = e
-			return err
-		}
-
-		if desired.Spec.APIID == nil || *desired.Spec.APIID == "" {
-			apiID := EncodeNS(req.NamespacedName.String())
-			upstreamRequestStruct.Spec.APIID = &apiID
-		}
-
-		if desired.Spec.OrgID == nil || *desired.Spec.OrgID == "" {
-			orgID := env.Org
-			upstreamRequestStruct.Spec.OrgID = &orgID
-		}
-
-		util.AddFinalizer(desired, keys.ApiDefFinalizerName)
-
-		if err := r.processCertificateReferences(ctx, &env, log, upstreamRequestStruct); err != nil {
-			return err
-		}
-		desired.Spec.Certificates = upstreamRequestStruct.Spec.Certificates
-
-		r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
-		desired.Spec.UpstreamCertificates = upstreamRequestStruct.Spec.UpstreamCertificates
-
-		// Check Pinned Public keys
-		r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
-		desired.Spec.PinnedPublicKeys = upstreamRequestStruct.Spec.PinnedPublicKeys
-
-		if desired.Spec.UseMutualTLSAuth != nil && *desired.Spec.UseMutualTLSAuth {
-			r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
-			desired.Spec.ClientCertificates = upstreamRequestStruct.Spec.ClientCertificates
-		}
-
-		// Check GraphQL Federation
-		if desired.Spec.GraphQL != nil {
-			switch desired.Spec.GraphQL.ExecutionMode {
-			case model.SubGraphExecutionMode:
-				err = r.processSubGraphExec(ctx, upstreamRequestStruct)
-				if err != nil {
-					return err
-				}
-
-				desired.Spec.GraphQL.Schema = new(string)
-
-				*desired.Spec.GraphQL.Schema = *upstreamRequestStruct.Spec.GraphQL.Schema
-				desired.Spec.GraphQL.Subgraph.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
-			case model.SuperGraphExecutionMode:
-				err = r.processSuperGraphExec(ctx, upstreamRequestStruct)
-				if err != nil {
-					return err
-				}
-
-				desired.Spec.GraphQL.Schema = new(string)
-				desired.Spec.GraphQL.Supergraph.MergedSDL = new(string)
-
-				*desired.Spec.GraphQL.Schema = *upstreamRequestStruct.Spec.GraphQL.Schema
-				*desired.Spec.GraphQL.Supergraph.MergedSDL = *upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		if _, err = r.delete(ctx, desired); err != nil {
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Status: tykv1alpha1.Failed, Time: metav1.Now(), Error: err.Error(),
 			}
+
+			return ctrl.Result{}, errors2.Wrap(r.Status().Update(ctx, desired), err.Error())
 		}
 
-		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
+		if err := r.Update(ctx, desired); err != nil {
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Status: tykv1alpha1.Failed, Time: metav1.Now(), Error: err.Error(),
+			}
 
-		targets := upstreamRequestStruct.Spec.CollectLoopingTarget()
-		if err := r.ensureTargets(ctx, upstreamRequestStruct.Namespace, targets); err != nil {
-			return err
+			return ctrl.Result{}, errors2.Wrap(err, "failed to remove finalizer")
 		}
 
-		err := r.updateLoopingTargets(ctx, upstreamRequestStruct, targets)
-		if err != nil {
-			log.Error(err, "Failed to update looping targets")
-			return err
-		}
+		return ctrl.Result{}, err
+	}
 
-		upstreamRequestStruct.Spec.CollectLoopingTarget()
+	if finalizersUpdated := util.AddFinalizer(desired, keys.ApiDefFinalizerName); finalizersUpdated {
+		if err := r.Update(ctx, desired); err != nil {
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Status: tykv1alpha1.Failed, Time: metav1.Now(), Error: err.Error(),
+			}
 
-		//  If this is not set, means it is a new object, set it first
-		if desired.Status.ApiID == "" {
-			return r.create(ctx, upstreamRequestStruct)
-		}
-
-		return r.update(ctx, upstreamRequestStruct)
-	})
-
-	var transactionInfo *tykv1alpha1.TransactionInfo
-	if err == nil {
-		log.Info("Completed reconciling ApiDefinition instance")
-
-		transactionInfo = &tykv1alpha1.TransactionInfo{
-			Time:   metav1.Now(),
-			Status: tykv1alpha1.Successful,
-			Error:  "",
-		}
-	} else {
-		queueA = queueAfter
-		transactionInfo = &tykv1alpha1.TransactionInfo{
-			Time:   metav1.Now(),
-			Status: tykv1alpha1.Failed,
-			Error:  err.Error(),
+			return ctrl.Result{}, errors2.Wrap(err, "failed to update finalizer")
 		}
 	}
 
-	// Reconciler must return the error observed by CreateOrUpdate() function since the mutator given to CreateOrUpdate
-	// returns special custom error such as ErrMultipleLinkSubGraph.
-	errK8s := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		namespace := upstreamRequestStruct.Namespace
-		target := model.Target{Namespace: &namespace, Name: upstreamRequestStruct.Name}
+	if desired.Spec.APIID == nil || *desired.Spec.APIID == "" {
+		apiID := EncodeNS(req.NamespacedName.String())
+		upstreamRequestStruct.Spec.APIID = &apiID
+	}
 
-		if desired.Status.ApiID == "" {
-			apiId := ""
+	if desired.Spec.OrgID == nil || *desired.Spec.OrgID == "" {
+		orgID := env.Org
+		upstreamRequestStruct.Spec.OrgID = &orgID
+	}
+
+	if err = r.processCertificateReferences(ctx, &env, log, upstreamRequestStruct); err != nil {
+		return ctrl.Result{RequeueAfter: tykFailRequeue}, err
+	}
+
+	r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
+
+	// Check Pinned Public keys
+	r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
+
+	if desired.Spec.UseMutualTLSAuth != nil && *desired.Spec.UseMutualTLSAuth {
+		r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
+	}
+
+	desired.Status.References.Certificates = upstreamRequestStruct.Spec.Certificates
+	desired.Status.References.UpstreamCertificate = upstreamRequestStruct.Spec.UpstreamCertificates
+	desired.Status.References.PinnedPublicKey = upstreamRequestStruct.Spec.PinnedPublicKeys
+	desired.Status.References.ClientCertificate = upstreamRequestStruct.Spec.ClientCertificates
+
+	// Check GraphQL Federation
+	if desired.Spec.GraphQL != nil {
+		switch desired.Spec.GraphQL.ExecutionMode {
+		case model.SubGraphExecutionMode:
+			err = r.processSubGraphExec(ctx, upstreamRequestStruct)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: tykFailRequeue}, err
+			}
+
+			desired.Status.References.GraphQL.SubGraphRef.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
+			if upstreamRequestStruct.Spec.GraphQL.Schema != nil {
+				desired.Status.References.GraphQL.SubGraphRef.Schema = *upstreamRequestStruct.Spec.GraphQL.Schema
+			} else {
+				desired.Status.References.GraphQL.SubGraphRef.Schema = ""
+			}
+		case model.SuperGraphExecutionMode:
+			err = r.processSuperGraphExec(ctx, upstreamRequestStruct)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: tykFailRequeue}, err
+			}
+		}
+	}
+
+	r.updateLinkedPolicies(ctx, upstreamRequestStruct)
+
+	targets := upstreamRequestStruct.Spec.CollectLoopingTarget()
+	if err := r.ensureTargets(ctx, upstreamRequestStruct.Namespace, targets); err != nil {
+		// TODO: no need tkyfailreque
+		return ctrl.Result{RequeueAfter: tykFailRequeue}, err
+	}
+
+	err = r.updateLoopingTargets(ctx, upstreamRequestStruct, targets)
+	if err != nil {
+		log.Error(err, "Failed to update looping targets")
+		return ctrl.Result{RequeueAfter: tykFailRequeue}, err
+	}
+
+	upstreamRequestStruct.Spec.CollectLoopingTarget()
+
+	//  If this is not set, means it is a new object, set it first
+	if desired.Status.ApiID == "" {
+		if err = r.create(ctx, upstreamRequestStruct); err != nil {
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Failed,
+				Error:  err.Error(),
+			}
+
+			return ctrl.Result{RequeueAfter: tykFailRequeue}, errors2.Wrap(r.Status().Update(ctx, desired), err.Error())
+		}
+
+		desired.Status.ApiID = *upstreamRequestStruct.Spec.APIID
+	} else {
+		if err = r.update(ctx, upstreamRequestStruct, desired); err != nil {
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: tykv1alpha1.Failed,
+				Error:  err.Error(),
+			}
+
+			return ctrl.Result{RequeueAfter: tykFailRequeue}, errors2.Wrap(r.Status().Update(ctx, desired), err.Error())
+		}
+	}
+
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		namespace := desired.Namespace
+		target := model.Target{Namespace: &namespace, Name: desired.Name}
+
+		apiId := desired.Status.ApiID
+		if apiId == "" {
 			if upstreamRequestStruct.Spec.APIID != nil {
 				apiId = *upstreamRequestStruct.Spec.APIID
 			}
-
-			apiOnTyk, _ := klient.Universal.Api().Get(ctx, apiId) //nolint:errcheck
-
-			return r.updateStatus(
-				ctx,
-				desired.Namespace,
-				target,
-				true,
-				func(status *tykv1alpha1.ApiDefinitionStatus) {
-					status.ApiID = apiId
-					status.LatestTykSpecHash = calculateHash(apiOnTyk)
-					status.LatestCRDSpecHash = calculateHash(upstreamRequestStruct.Spec)
-					status.LatestTransaction = *transactionInfo
-				},
-			)
 		}
+
+		apiOnTyk, _ := klient.Universal.Api().Get(ctx, apiId) //nolint:errcheck
 
 		return r.updateStatus(
 			ctx,
 			desired.Namespace,
 			target,
 			true,
-			func(status *tykv1alpha1.ApiDefinitionStatus) { status.LatestTransaction = *transactionInfo },
+			func(status *tykv1alpha1.ApiDefinitionStatus) {
+				// TODO: change it later on
+				status.References = desired.Status.References
+				status.ApiID = apiId
+				status.LatestTykSpecHash = calculateHash(apiOnTyk)
+				status.LatestCRDSpecHash = calculateHash(desired.Spec)
+				status.LatestTransaction = tykv1alpha1.TransactionInfo{Time: metav1.Now(), Status: tykv1alpha1.Successful}
+			},
 		)
 	})
-	if errK8s != nil && err == nil {
-		err = errK8s
+	if err != nil {
+		fmt.Println("err: ", err)
 	}
+
+	log.Info("Completed reconciling ApiDefinition instance")
 
 	return ctrl.Result{RequeueAfter: queueA}, err
 }
@@ -475,18 +488,18 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 	return nil
 }
 
-func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alpha1.ApiDefinition) error {
+func (r *ApiDefinitionReconciler) update(ctx context.Context, urs, d *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("Updating ApiDefinition",
-		"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+		"ApiDefinition", client.ObjectKeyFromObject(urs).String(),
 	)
 
-	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
+	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, urs.Status.ApiID)
 	if err != nil {
-		_, err = klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
+		_, err = klient.Universal.Api().Create(ctx, &urs.Spec.APIDefinitionSpec)
 		if err != nil {
 			r.Log.Error(
 				err, "Failed to create ApiDefinition on Tyk",
-				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+				"ApiDefinition", client.ObjectKeyFromObject(urs).String(),
 			)
 
 			return err
@@ -494,15 +507,15 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 	} else {
 		// If we have same ApiDefinition on Tyk, we do not need to send Update and Hot Reload requests
 		// to Tyk. So, we can simply return to main reconciliation logic.
-		if isSame(desired.Status.LatestTykSpecHash, apiDefOnTyk) && isSame(desired.Status.LatestCRDSpecHash, desired.Spec) {
+		if isSame(urs.Status.LatestTykSpecHash, apiDefOnTyk) && isSame(d.Status.LatestCRDSpecHash, d.Spec) {
 			return nil
 		}
 
-		_, err = klient.Universal.Api().Update(ctx, &desired.Spec.APIDefinitionSpec)
+		_, err = klient.Universal.Api().Update(ctx, &urs.Spec.APIDefinitionSpec)
 		if err != nil {
 			r.Log.Error(
 				err, "Failed to update ApiDefinition on Tyk",
-				"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+				"ApiDefinition", client.ObjectKeyFromObject(urs).String(),
 			)
 
 			return err
@@ -514,32 +527,32 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 		r.Log.Error(
 			err,
 			"Failed to hot-reload Tyk after updating the ApiDefinition",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			"ApiDefinition", client.ObjectKeyFromObject(urs).String(),
 		)
 
 		return err
 	}
 
-	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *desired.Spec.APIID) //nolint:errcheck
+	apiOnTyk, _ := klient.Universal.Api().Get(ctx, *urs.Spec.APIID) //nolint:errcheck
 
-	namespace := desired.Namespace
-	target := model.Target{Namespace: &namespace, Name: desired.Name}
+	namespace := urs.Namespace
+	target := model.Target{Namespace: &namespace, Name: urs.Name}
 
 	err = r.updateStatus(
 		ctx,
-		desired.Namespace,
+		urs.Namespace,
 		target,
 		false,
 		func(status *tykv1alpha1.ApiDefinitionStatus) {
 			status.LatestTykSpecHash = calculateHash(apiOnTyk)
-			status.LatestCRDSpecHash = calculateHash(desired.Spec)
+			status.LatestCRDSpecHash = calculateHash(urs.Spec)
 		},
 	)
 	if err != nil {
 		r.Log.Error(
 			err,
 			"Failed to update Status",
-			"ApiDefinition", client.ObjectKeyFromObject(desired).String(),
+			"ApiDefinition", client.ObjectKeyFromObject(urs).String(),
 		)
 
 		return err
@@ -738,6 +751,7 @@ func encodeIfNotBase64(s string) string {
 }
 
 // updateLinkedPolicies ensure that all policies needed by this api definition are updated.
+// TODO: update this method name
 func (r *ApiDefinitionReconciler) updateLinkedPolicies(ctx context.Context, a *tykv1alpha1.ApiDefinition) {
 	r.Log.Info("Updating linked policies")
 
@@ -963,8 +977,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 	// SubGraph can only refer to one ApiDefinition. There is one-to-one relationship between ApiDefinition
 	// and SubGraph CRs. If another ApiDefinition tries to refer to the SubGraph that is already referred by
 	// another ApiDefinition, we should return error to indicate that multiple linking is not allowed.
-	if subgraph.Status.LinkedByAPI != "" &&
-		subgraph.Status.LinkedByAPI != *urs.Spec.APIID {
+	if subgraph.Status.LinkedByAPI != "" && subgraph.Status.LinkedByAPI != *urs.Spec.APIID {
 		r.Log.Error(ErrMultipleLinkSubGraph, fmt.Sprintf(
 			"failed to link ApiDefinition CR with SubGraph CR; SubGraph %q is already linked by %s",
 			client.ObjectKeyFromObject(subgraph), subgraph.Status.LinkedByAPI,
@@ -1085,11 +1098,11 @@ func (r *ApiDefinitionReconciler) processSuperGraphExec(ctx context.Context, urs
 	return err
 }
 
-func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(graph client.Object) []reconcile.Request {
+func (r *ApiDefinitionReconciler) findGraphsForApiDefinition(ctx context.Context, g client.Object) []reconcile.Request {
 	apiDefDeployments := &tykv1alpha1.ApiDefinitionList{}
 	listOps := &client.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(GraphKey, graph.GetName()),
-		Namespace:     graph.GetNamespace(),
+		FieldSelector: fields.OneTermEqualSelector(GraphKey, g.GetName()),
+		Namespace:     g.GetNamespace(),
 	}
 
 	if err := r.List(context.TODO(), apiDefDeployments, listOps); err != nil {
@@ -1141,12 +1154,12 @@ func (r *ApiDefinitionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&tykv1alpha1.ApiDefinition{}).
 		Owns(&v1.Secret{}).
 		Watches(
-			&source.Kind{Type: &tykv1alpha1.SubGraph{}},
+			&tykv1alpha1.SubGraph{},
 			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
 			builder.WithPredicates(r.ignoreGraphCreationEvents()),
 		).
 		Watches(
-			&source.Kind{Type: &tykv1alpha1.SuperGraph{}},
+			&tykv1alpha1.SuperGraph{},
 			handler.EnqueueRequestsFromMapFunc(r.findGraphsForApiDefinition),
 			builder.WithPredicates(r.ignoreGraphCreationEvents()),
 		).

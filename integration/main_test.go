@@ -2,13 +2,15 @@ package integration
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
@@ -35,7 +37,8 @@ func TestMain(t *testing.M) {
 	e.Parse()
 
 	if e.Mode == "" {
-		log.Fatal("Missing TYK_MODE")
+		fmt.Println("Missing TYK_MODE")
+		os.Exit(1)
 	}
 
 	testenv = env.New()
@@ -55,6 +58,8 @@ func TestMain(t *testing.M) {
 	).AfterEachTest(
 		deleteNamespace,
 	)
+
+	log.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	os.Exit(testenv.Run(t))
 }

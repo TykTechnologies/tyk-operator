@@ -27,6 +27,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -84,9 +85,9 @@ func (in *ApiDefinition) Default() {
 var _ webhook.Validator = &ApiDefinition{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (in *ApiDefinition) ValidateCreate() error {
+func (in *ApiDefinition) ValidateCreate() (admission.Warnings, error) {
 	apidefinitionlog.Info("validate create", "name", in.Name)
-	return in.validate()
+	return nil, in.validate()
 }
 
 func path(n ...string) *field.Path {
@@ -191,17 +192,17 @@ func (in *ApiDefinition) validate() error {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (in *ApiDefinition) ValidateUpdate(old runtime.Object) error {
+func (in *ApiDefinition) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	apidefinitionlog.Info("validate update", "name", in.Name)
-	return in.validate()
+	return nil, in.validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (in *ApiDefinition) ValidateDelete() error {
+func (in *ApiDefinition) ValidateDelete() (admission.Warnings, error) {
 	apidefinitionlog.Info("validate delete", "name", in.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }
 
 func (in *ApiDefinition) validateTarget() field.ErrorList {

@@ -25,9 +25,8 @@ patchesStrategicMerge:
   # endpoint w/o any authn/z, please comment the following line.
   - manager_auth_proxy_patch.yaml
 
-  # Mount the controller config file for loading manager configurations
-  # through a ComponentConfig type
-  - manager_config_patch.yaml
+  # Add controller manager options (leader election, health probe ports etc.) via environment variables.
+  - manager_options.yaml
 
   # Add environment variables set via secrets
   - manager_env_secrets_patch.yaml

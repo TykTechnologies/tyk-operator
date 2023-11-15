@@ -9,6 +9,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	tykv1alpha1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/go-logr/logr"
 
 	"github.com/matryer/is"
 
@@ -17,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestUpdatingLoopingTargets(t *testing.T) {
@@ -339,8 +339,8 @@ func TestProcessSubGraphExecution(t *testing.T) {
 	apiDefLinkedMultiple := &tykv1alpha1.ApiDefinition{}
 	apiDef.DeepCopyInto(apiDefLinkedMultiple)
 	apiDefLinkedMultiple.ObjectMeta.Name = "test-name-multiple-link"
-	multiple_link_apiID := EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
-	apiDefLinkedMultiple.Spec.APIID = &multiple_link_apiID
+	multipleLinkApiId := EncodeNS(client.ObjectKeyFromObject(apiDefLinkedMultiple).String())
+	apiDefLinkedMultiple.Spec.APIID = &multipleLinkApiId
 
 	apiDefNewGraphRef := &tykv1alpha1.ApiDefinition{}
 	apiDef.DeepCopyInto(apiDefNewGraphRef)
@@ -389,7 +389,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			r := ApiDefinitionReconciler{
 				Client: cl,
 				Scheme: scheme.Scheme,
-				Log:    log.NullLogger{},
+				Log:    logr.Logger{},
 			}
 
 			api := &tykv1alpha1.ApiDefinition{}
@@ -404,8 +404,8 @@ func TestProcessSubGraphExecution(t *testing.T) {
 			eval.Equal(tc.expectedErr, err)
 
 			if tc.expectedErr == nil && tc.apiDef.Spec.GraphQL != nil {
-				eval.Equal(tc.subGraph.Spec.Schema, *api.Spec.GraphQL.Schema)
-				eval.Equal(tc.subGraph.Spec.SDL, api.Spec.GraphQL.Subgraph.SDL)
+				eval.Equal(tc.subGraph.Spec.Schema, api.Status.References.GraphQL.SubGraphRef.Schema)
+				eval.Equal(tc.subGraph.Spec.SDL, api.Status.References.GraphQL.SubGraphRef.SDL)
 
 				ad := &tykv1alpha1.ApiDefinition{}
 				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.apiDef), ad)
@@ -415,7 +415,7 @@ func TestProcessSubGraphExecution(t *testing.T) {
 				sg := &tykv1alpha1.SubGraph{}
 				err = r.Client.Get(context.Background(), client.ObjectKeyFromObject(tc.subGraph), sg)
 				eval.NoErr(client.IgnoreNotFound(err))
-				eval.Equal(sg.Status.LinkedByAPI, *api.Spec.APIID)
+				eval.Equal(sg.Status.LinkedByAPI, api.Status.ApiID)
 			}
 		})
 	}
