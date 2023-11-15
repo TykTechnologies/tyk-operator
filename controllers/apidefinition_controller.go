@@ -114,18 +114,37 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	var queueA time.Duration
-	var tykFailRequeue = 5 * time.Second
+	tykFailRequeue := 5 * time.Second
 
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		queueA, err = r.delete(ctx, desired)
+		if _, err = r.delete(ctx, desired); err != nil {
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Status: tykv1alpha1.Failed, Time: metav1.Now(), Error: err.Error(),
+			}
+
+			return ctrl.Result{}, errors2.Wrap(r.Status().Update(ctx, desired), err.Error())
+		}
+
 		if err := r.Update(ctx, desired); err != nil {
-			return ctrl.Result{}, errors2.Wrap(err, "could not remove finalizer")
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Status: tykv1alpha1.Failed, Time: metav1.Now(), Error: err.Error(),
+			}
+
+			return ctrl.Result{}, errors2.Wrap(err, "failed to remove finalizer")
 		}
 
 		return ctrl.Result{}, err
 	}
 
-	util.AddFinalizer(desired, keys.ApiDefFinalizerName)
+	if finalizersUpdated := util.AddFinalizer(desired, keys.ApiDefFinalizerName); finalizersUpdated {
+		if err := r.Update(ctx, desired); err != nil {
+			desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+				Status: tykv1alpha1.Failed, Time: metav1.Now(), Error: err.Error(),
+			}
+
+			return ctrl.Result{}, errors2.Wrap(err, "failed to update finalizer")
+		}
+	}
 
 	if desired.Spec.APIID == nil || *desired.Spec.APIID == "" {
 		apiID := EncodeNS(req.NamespacedName.String())
@@ -142,15 +161,17 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	r.processUpstreamCertificateReferences(ctx, &env, log, upstreamRequestStruct)
-	desired.Status.References.UpstreamCertificate = upstreamRequestStruct.Spec.UpstreamCertificates
 
 	// Check Pinned Public keys
 	r.processPinnedPublicKeyReferences(ctx, &env, log, upstreamRequestStruct)
-	desired.Status.References.PinnedPublicKey = upstreamRequestStruct.Spec.PinnedPublicKeys
 
 	if desired.Spec.UseMutualTLSAuth != nil && *desired.Spec.UseMutualTLSAuth {
 		r.processClientCertificateReferences(ctx, &env, log, upstreamRequestStruct)
 	}
+
+	desired.Status.References.Certificates = upstreamRequestStruct.Spec.Certificates
+	desired.Status.References.UpstreamCertificate = upstreamRequestStruct.Spec.UpstreamCertificates
+	desired.Status.References.PinnedPublicKey = upstreamRequestStruct.Spec.PinnedPublicKeys
 	desired.Status.References.ClientCertificate = upstreamRequestStruct.Spec.ClientCertificates
 
 	// Check GraphQL Federation
@@ -160,6 +181,13 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			err = r.processSubGraphExec(ctx, upstreamRequestStruct)
 			if err != nil {
 				return ctrl.Result{RequeueAfter: tykFailRequeue}, err
+			}
+
+			desired.Status.References.GraphQL.SubGraphRef.SDL = upstreamRequestStruct.Spec.GraphQL.Subgraph.SDL
+			if upstreamRequestStruct.Spec.GraphQL.Schema != nil {
+				desired.Status.References.GraphQL.SubGraphRef.Schema = *upstreamRequestStruct.Spec.GraphQL.Schema
+			} else {
+				desired.Status.References.GraphQL.SubGraphRef.Schema = ""
 			}
 		case model.SuperGraphExecutionMode:
 			err = r.processSuperGraphExec(ctx, upstreamRequestStruct)
@@ -460,7 +488,7 @@ func (r *ApiDefinitionReconciler) create(ctx context.Context, desired *tykv1alph
 	return nil
 }
 
-func (r *ApiDefinitionReconciler) update(ctx context.Context, urs *tykv1alpha1.ApiDefinition, d *tykv1alpha1.ApiDefinition) error {
+func (r *ApiDefinitionReconciler) update(ctx context.Context, urs, d *tykv1alpha1.ApiDefinition) error {
 	r.Log.Info("Updating ApiDefinition",
 		"ApiDefinition", client.ObjectKeyFromObject(urs).String(),
 	)
@@ -949,8 +977,7 @@ func (r *ApiDefinitionReconciler) processSubGraphExec(ctx context.Context, urs *
 	// SubGraph can only refer to one ApiDefinition. There is one-to-one relationship between ApiDefinition
 	// and SubGraph CRs. If another ApiDefinition tries to refer to the SubGraph that is already referred by
 	// another ApiDefinition, we should return error to indicate that multiple linking is not allowed.
-	if subgraph.Status.LinkedByAPI != "" &&
-		subgraph.Status.LinkedByAPI != *urs.Spec.APIID {
+	if subgraph.Status.LinkedByAPI != "" && subgraph.Status.LinkedByAPI != *urs.Spec.APIID {
 		r.Log.Error(ErrMultipleLinkSubGraph, fmt.Sprintf(
 			"failed to link ApiDefinition CR with SubGraph CR; SubGraph %q is already linked by %s",
 			client.ObjectKeyFromObject(subgraph), subgraph.Status.LinkedByAPI,

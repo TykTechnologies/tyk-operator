@@ -68,9 +68,20 @@ type ApiDefinitionStatus struct {
 }
 
 type Refs struct {
+	Certificates        []string          `json:"certificates,omitempty"`
 	ClientCertificate   []string          `json:"clientCertificate,omitempty"`
 	PinnedPublicKey     map[string]string `json:"pinnedPublicKey,omitempty"`
 	UpstreamCertificate map[string]string `json:"upstreamCertificate,omitempty"`
+	GraphQL             GraphQLRef        `json:"graphQL"`
+}
+
+type GraphQLRef struct {
+	SubGraphRef SubGraphRef `json:"subGraphRef"`
+}
+
+type SubGraphRef struct {
+	Schema string `json:"schema"`
+	SDL    string `json:"sdl"`
 }
 
 // TransactionStatus indicates the status of the Tyk API calls for currently reconciled object.

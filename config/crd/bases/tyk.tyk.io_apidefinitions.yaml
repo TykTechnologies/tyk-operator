@@ -2120,10 +2120,29 @@ spec:
                 type: string
               references:
                 properties:
+                  certificates:
+                    items:
+                      type: string
+                    type: array
                   clientCertificate:
                     items:
                       type: string
                     type: array
+                  graphQL:
+                    properties:
+                      subGraphRef:
+                        properties:
+                          schema:
+                            type: string
+                          sdl:
+                            type: string
+                        required:
+                        - schema
+                        - sdl
+                        type: object
+                    required:
+                    - subGraphRef
+                    type: object
                   pinnedPublicKey:
                     additionalProperties:
                       type: string
@@ -2132,6 +2151,8 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                required:
+                - graphQL
                 type: object
             required:
             - api_id

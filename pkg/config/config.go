@@ -43,9 +43,11 @@ func (o *ManagerOpts) checkRunningLocally() {
 	if enableWebhooksRaw != "" {
 		var err error
 		enableWebhooks, err = strconv.ParseBool(enableWebhooksRaw)
+
 		if err != nil {
 			// todo(buraksekili): no need this, only dev purposes
 			fmt.Println("failed to parse enablewebhooks config", err)
+
 			enableWebhooks = false
 		}
 	}
@@ -58,7 +60,6 @@ func (o *ManagerOpts) checkRunningLocally() {
 		// If webhooks not enabled, the Operator is running locally. So, specify namespace for leader election
 		o.runningLocally = true
 	}
-
 }
 
 // ManagerOptions returns controller runtime manager Options that is populated by ManagerOpts read via environment
