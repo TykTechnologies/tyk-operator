@@ -588,6 +588,15 @@ spec:
                     type: string
                   graph_ref:
                     type: string
+                  introspection:
+                    description: Introspection holds the configuration for GraphQL
+                      Introspection
+                    properties:
+                      disabled:
+                        type: boolean
+                    required:
+                    - disabled
+                    type: object
                   last_schema_update:
                     description: LastSchemaUpdate contains the date and time of the
                       last triggered schema update to the upstream.
@@ -771,6 +780,7 @@ spec:
                 required:
                 - enabled
                 - execution_mode
+                - introspection
                 type: object
               id:
                 description: For server use only, do not use
