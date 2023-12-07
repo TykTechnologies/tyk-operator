@@ -59,60 +59,69 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	log.Info("Reconciling SecurityPolicy instance")
 
 	// Lookup policy object
-	policy := &tykv1.SecurityPolicy{}
-	if err := r.Get(ctx, req.NamespacedName, policy); err != nil {
+	desired := &tykv1.SecurityPolicy{}
+	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	upstreamReqStruct := desired.DeepCopy()
+
 	// set context for all api calls inside this reconciliation loop
-	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, policy, log)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, desired, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	var reqA time.Duration
 
-	_, err = util.CreateOrUpdate(ctx, r.Client, policy, func() error {
-		if !policy.ObjectMeta.DeletionTimestamp.IsZero() {
-			if util.ContainsFinalizer(policy, policyFinalizer) {
-				return r.delete(ctx, policy)
-			}
-			return nil
-		}
-
-		util.AddFinalizer(policy, policyFinalizer)
-
-		if policy.Spec.ID == nil || *policy.Spec.ID == "" {
-			if policy.Spec.ID == nil {
-				policy.Spec.ID = new(string)
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		if util.ContainsFinalizer(desired, policyFinalizer) {
+			if err = r.delete(ctx, desired); err != nil {
+				return ctrl.Result{}, err
 			}
 
-			polID := EncodeNS(ns)
-			policy.Spec.ID = &polID
-		}
-
-		if policy.Spec.OrgID == nil || *policy.Spec.OrgID == "" {
-			if policy.Spec.OrgID == nil {
-				policy.Spec.OrgID = new(string)
+			if err = r.Update(ctx, desired); err != nil {
+				return ctrl.Result{}, err
 			}
 		}
 
-		orgID := env.Org
-		policy.Spec.OrgID = &orgID
+		return ctrl.Result{}, nil
+	}
 
-		if policy.Status.PolID == "" {
-			return r.create(ctx, policy)
+	if finalizersUpdated := util.AddFinalizer(desired, policyFinalizer); finalizersUpdated {
+		if err = r.Update(ctx, desired); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	if desired.Spec.ID == nil || *desired.Spec.ID == "" {
+		if desired.Spec.ID == nil {
+			upstreamReqStruct.Spec.ID = new(string)
 		}
 
-		newSpec, err := r.update(ctx, policy)
-		if err != nil {
-			return err
+		polID := EncodeNS(ns)
+		upstreamReqStruct.Spec.ID = &polID
+	}
+
+	if desired.Spec.OrgID == nil || *desired.Spec.OrgID == "" {
+		if desired.Spec.OrgID == nil {
+			upstreamReqStruct.Spec.OrgID = new(string)
 		}
+	}
 
-		policy.Spec.SecurityPolicySpec = *newSpec
+	orgID := env.Org
+	upstreamReqStruct.Spec.OrgID = &orgID
 
-		return nil
-	})
+	if desired.Status.PolID == "" {
+		err = r.create(ctx, upstreamReqStruct)
+	}
+
+	newSpec, err := r.update(ctx, desired)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	desired.Spec.SecurityPolicySpec = *newSpec
 
 	if err == nil {
 		r.Log.Info("Completed reconciling SecurityPolicy instance")
