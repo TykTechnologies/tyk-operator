@@ -843,6 +843,7 @@ type APIDefinitionSpec struct {
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 
 	// +optional
+	// +nullable
 	DetailedTracing bool `json:"detailed_tracing"`
 }
 
