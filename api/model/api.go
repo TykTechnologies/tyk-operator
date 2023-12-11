@@ -844,7 +844,7 @@ type APIDefinitionSpec struct {
 
 	// +optional
 	// +nullable
-	DetailedTracing bool `json:"detailed_tracing"`
+	DetailedTracing *bool `json:"detailed_tracing,omitempty"`
 }
 
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
