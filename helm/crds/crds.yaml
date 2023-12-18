@@ -531,8 +531,6 @@ spec:
                     properties:
                       disabled:
                         type: boolean
-                    required:
-                    - disabled
                     type: object
                   last_schema_update:
                     description: LastSchemaUpdate contains the date and time of the last triggered schema update to the upstream.

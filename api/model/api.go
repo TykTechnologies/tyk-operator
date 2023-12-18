@@ -1169,7 +1169,7 @@ type GraphQLConfig struct {
 }
 
 type GraphQLIntrospectionConfig struct {
-	Disabled bool `json:"disabled"`
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 type GraphQLProxyConfig struct {
