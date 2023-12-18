@@ -1165,7 +1165,7 @@ type GraphQLConfig struct {
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`
 
 	// Introspection holds the configuration for GraphQL Introspection
-	Introspection GraphQLIntrospectionConfig `json:"introspection"`
+	Introspection GraphQLIntrospectionConfig `json:"introspection,omitempty"`
 }
 
 type GraphQLIntrospectionConfig struct {

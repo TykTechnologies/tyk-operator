@@ -780,7 +780,6 @@ spec:
                 required:
                 - enabled
                 - execution_mode
-                - introspection
                 type: object
               id:
                 description: For server use only, do not use
