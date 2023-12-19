@@ -100,6 +100,7 @@ type OperatorContextStatus struct {
 //+kubebuilder:subresource:status
 
 // OperatorContext is the Schema for the operatorcontexts API
+// +kubebuilder:resource:categories=tyk
 type OperatorContext struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
