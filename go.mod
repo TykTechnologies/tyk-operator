@@ -1,6 +1,6 @@
 module github.com/TykTechnologies/tyk-operator
 
-go 1.19
+go 1.21
 
 require (
 	github.com/TykTechnologies/graphql-go-tools v1.6.2-0.20221207092329-acdd20d63048
