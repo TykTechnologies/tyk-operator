@@ -99,7 +99,7 @@ type TransactionInfo struct {
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
 // +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.active`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.latestTransaction.status`
-// +kubebuilder:resource:shortName=tykapis
+// +kubebuilder:resource:categories="tyk",shortName="tykapis"
 type ApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
