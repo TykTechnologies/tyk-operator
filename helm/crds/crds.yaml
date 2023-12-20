@@ -8,6 +8,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: ApiDefinition
     listKind: ApiDefinitionList
     plural: apidefinitions
@@ -1901,6 +1903,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: APIDescription
     listKind: APIDescriptionList
     plural: apidescriptions
@@ -2207,6 +2211,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: OperatorContext
     listKind: OperatorContextList
     plural: operatorcontexts
@@ -2366,6 +2372,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: PortalAPICatalogue
     listKind: PortalAPICatalogueList
     plural: portalapicatalogues
@@ -2706,6 +2714,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: PortalConfig
     listKind: PortalConfigList
     plural: portalconfigs
@@ -2947,6 +2957,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: SecurityPolicy
     listKind: SecurityPolicyList
     plural: securitypolicies
@@ -3317,6 +3329,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: SubGraph
     listKind: SubGraphList
     plural: subgraphs
@@ -3376,6 +3390,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: SuperGraph
     listKind: SuperGraphList
     plural: supergraphs
