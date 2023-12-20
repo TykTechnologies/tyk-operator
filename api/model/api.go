@@ -841,6 +841,17 @@ type APIDefinitionSpec struct {
 	EnableDetailedRecording *bool `json:"enable_detailed_recording,omitempty"`
 
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
+
+	// AnalyticsPlugin is used to configure analytics plugin which enables editing or removal of all parts of analytics
+	// records, raw request and responses recorded by Tyk at the gateway level
+	// +optional
+	AnalyticsPlugin AnalyticsPluginConfig `bson:"analytics_plugin" json:"analytics_plugin,omitempty"`
+}
+
+type AnalyticsPluginConfig struct {
+	Enabled    bool   `bson:"enable" json:"enable,omitempty"`
+	PluginPath string `bson:"plugin_path" json:"plugin_path,omitempty"`
+	FuncName   string `bson:"func_name" json:"func_name,omitempty"`
 }
 
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
