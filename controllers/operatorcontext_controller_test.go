@@ -125,6 +125,8 @@ func TestOperatorContextDelete(t *testing.T) {
 	}
 
 	for n, tc := range tests {
+		tc := tc
+
 		t.Run(n, func(t *testing.T) {
 			t.Parallel()
 

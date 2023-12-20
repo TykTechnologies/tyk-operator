@@ -26,6 +26,7 @@ func main() {
 		{serviceMonitorIfEnds, serviceMonitorIfEndsTPL},
 		{extraVolume, extraVolumeTPL},
 		{extraVolumeMounts, extraVolumeMountsTPL},
+		{imagePullSecretsServiceAccount, imagePullSecretsServiceAccountTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -151,3 +152,13 @@ const extraVolumeMounts = `- mountPath: CONTROLLER_MANAGER_EXTRA_VOLUMEMOUNTS`
 const extraVolumeMountsTPL = `{{ if .Values.extraVolumeMounts }}
             {{ toYaml .Values.extraVolumeMounts | nindent 8}}
           {{ end }}`
+
+const imagePullSecretsServiceAccount = `imagePullSecrets:
+- name: TYK_OPERATOR_SERVICEACCOUNT_IMAGEPULLSECRETS
+`
+
+const imagePullSecretsServiceAccountTPL = `{{ with  .Values.imagePullSecrets }}
+imagePullSecrets:
+  {{- toYaml . | nindent 2 }}
+{{ end }}
+`

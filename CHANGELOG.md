@@ -1,7 +1,27 @@
 # Changelog
 
-## [v0.15.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.2...HEAD)
+## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...HEAD)
+
+**Added**:
+- Added `imagePullSecrets` configuration for ServiceAccount in Tyk Operator Helm chart 
+- Added `tyk` to `categories` field of CRDs. So, from now on, all CRs related to Tyk Operator is grouped
+into `tyk` category and can be displayed via `kubectl get tyk`.
+
+**Updated**
+- Updated Go version to 1.21
+
+## [v0.15.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.15.1)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.0...v0.15.1)
+
+**Fixed**:
+- Fixed typo in environment package name
+
+**Changed**:
+- Updated golang.org/x/net to v0.13.0
+
+## [v0.15.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.15.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.14.2...v0.15.0)
 
 **Added**
 - Added `disabled` feature in `validate_json` field of APIDefinition. 
