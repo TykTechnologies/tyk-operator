@@ -33,6 +33,7 @@ type SuperGraphStatus struct{}
 //+kubebuilder:subresource:status
 
 // SuperGraph is the Schema for the supergraphs API
+// +kubebuilder:resource:categories=tyk
 type SuperGraph struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
