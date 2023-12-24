@@ -10,6 +10,8 @@ metadata:
 spec:
   group: tyk.tyk.io
   names:
+    categories:
+    - tyk
     kind: PortalAPICatalogue
     listKind: PortalAPICatalogueList
     plural: portalapicatalogues
