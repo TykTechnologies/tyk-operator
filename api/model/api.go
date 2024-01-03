@@ -1163,13 +1163,6 @@ type GraphQLConfig struct {
 
 	// Supergraph holds the configuration for a GraphQL federation supergraph.
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`
-
-	// Introspection holds the configuration for GraphQL Introspection
-	Introspection GraphQLIntrospectionConfig `json:"introspection,omitempty"`
-}
-
-type GraphQLIntrospectionConfig struct {
-	Disabled bool `json:"disabled,omitempty"`
 }
 
 type GraphQLProxyConfig struct {
