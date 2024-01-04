@@ -6,7 +6,7 @@ spec:
   name: gateway-public-api
   protocol: http
   active: true
-  domain: "exmaple.org"
+  domain: "example.org"
   proxy:
     target_url: ""
     listen_path: /api/
