@@ -7,6 +7,7 @@
 - Added `imagePullSecrets` configuration for ServiceAccount in Tyk Operator Helm chart 
 - Added `tyk` to `categories` field of CRDs. So, from now on, all CRs related to Tyk Operator is grouped
 into `tyk` category and can be displayed via `kubectl get tyk`.
+- Added `detailed_tracing` of APIDefinition for OpenTelemetry
 
 **Updated**
 - Updated Go version to 1.21

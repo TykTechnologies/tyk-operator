@@ -399,6 +399,9 @@ spec:
                 - location
                 - strip_path
                 type: object
+              detailed_tracing:
+                nullable: true
+                type: boolean
               disable_quota:
                 description: DisableQuota allows you to disable quota middleware in a given API Definition.
                 type: boolean
