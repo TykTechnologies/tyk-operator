@@ -845,7 +845,7 @@ type APIDefinitionSpec struct {
 	// AnalyticsPlugin is used to configure analytics plugin which enables editing or removal of all parts of analytics
 	// records, raw request and responses recorded by Tyk at the gateway level
 	// +optional
-	AnalyticsPlugin AnalyticsPluginConfig `bson:"analytics_plugin" json:"analytics_plugin,omitempty"`
+	AnalyticsPlugin AnalyticsPluginConfig `json:"analytics_plugin,omitempty"`
 }
 
 type AnalyticsPluginConfig struct {
