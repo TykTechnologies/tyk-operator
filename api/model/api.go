@@ -849,7 +849,7 @@ type APIDefinitionSpec struct {
 }
 
 type AnalyticsPluginConfig struct {
-	Enabled    bool   `json:"enable,omitempty"`
+	Enabled    bool   `json:"enable"`
 	PluginPath string `json:"plugin_path,omitempty"`
 	FuncName   string `json:"func_name,omitempty"`
 }
