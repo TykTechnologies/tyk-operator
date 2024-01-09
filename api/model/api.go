@@ -849,9 +849,9 @@ type APIDefinitionSpec struct {
 }
 
 type AnalyticsPluginConfig struct {
-	Enabled    bool   `bson:"enable" json:"enable,omitempty"`
-	PluginPath string `bson:"plugin_path" json:"plugin_path,omitempty"`
-	FuncName   string `bson:"func_name" json:"func_name,omitempty"`
+	Enabled    bool   `json:"enable,omitempty"`
+	PluginPath string `json:"plugin_path,omitempty"`
+	FuncName   string `json:"func_name,omitempty"`
 }
 
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
