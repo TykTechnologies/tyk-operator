@@ -1,0 +1,454 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: gateway-public-api
+spec:
+  name: gateway-public-api
+  protocol: http
+  active: true
+  domain: "example.org"
+  proxy:
+    target_url: ""
+    listen_path: /api/
+    strip_listen_path: true
+  use_standard_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: api-key
+  enable_detailed_recording: true
+  graphql:
+    enabled: true
+    execution_mode: executionEngine
+    version: "2"
+    schema: |
+      type Query {
+        serviceCases(options: ServiceCaseOptions!): ServiceCaseQueryResult!
+
+        customers(options: CustomerOptions): CustomerQueryResult!
+        assets: AssetQueryResult!
+        tenants(options: TenantOptions!): TenantQueryResult!
+        serviceOrganisations: ServiceOrganisationQueryResult!
+        facilities: FacilityQueryResult!
+        customerMachines: CustomerMachineQueryResult!
+
+        permissionsOfCurrentUser: PermissionsOfCurrentUserQueryResult!
+        machineModels(options: MachineModelOptions): MachineModelQueryResult!
+
+        myTenantUser: TenantUser!
+        customer(id: ID, externalId: String): Customer
+        machineModel(machineModelId: ID, externalId: String, tenantLinkType: TenantLinkType = ALL): MachineModel
+        customerMachine(customerMachineId: ID, externalId: String): CustomerMachine
+
+      }
+      type Mutation {
+        createMachineModel(modelName: String!,technology: String!,brand: String, externalId: String): MachineModel
+        createCustomer(customer: CreateCustomerInput!): Customer
+        updateCustomer(customer: UpdateCustomerInput! ):Customer
+        createCustomerMachine( customer: CustomerInput!, serialNumber: String!, machineModel: MachineModelInput!, externalId: String, edgeDeviceSerialNumber: String, isSp1Migration: Boolean): CustomerMachine
+        updateExternalId(serviceCaseId:ID!, externalId:String!):ServiceCase
+      }
+      scalar ZonedDateTime
+      input CustomerInput {
+        customerId: ID
+        customerExternalId: String
+      }
+      input UpdateCustomerInput {
+        id: ID
+        name: String!
+        externalId: String
+        websiteUrl: String
+        serviceOrganisation: ID!
+        address: UpdateCustomerAddressInput!
+      }
+      input MachineModelInput {
+        machineModelId: ID
+        machineModelExternalId: String
+      }
+      input CreateCustomerInput {
+          name: String!
+          externalId: String
+          serviceOrganisation: ID!
+          address: CreateCustomerAddressInput!
+      }
+      input CreateCustomerAddressInput{
+        country: String!
+        postalCode: String
+        city: String
+        street: String
+        street2: String
+        state: String
+      }
+      input ServiceCaseOptions {
+        view: ServiceCaseView!
+        filter: ServiceCaseFilter
+      }
+      input UpdateCustomerAddressInput{
+        country: String!
+        postalCode: String
+        city: String
+        street: String
+        street2: String
+        state: String
+      }
+      type Asset {
+        id: ID!
+        tenant: Tenant
+        serialNumber: String!
+        displayName: String
+        avatar: String
+        machineModel: MachineModel
+        edgeDevice: EdgeDevice
+        facility: Facility
+        hasConnectedCustomerMachine: Boolean
+      }
+      type EdgeDevice {
+        id: ID!
+        serialNumber: String
+        type: EdgeDeviceType
+        serviceProvider: Tenant
+        operator: Tenant
+        provisioner: Tenant
+        connectedMachine: CustomerMachine
+        iotHubStatus: IotHubStatus
+        connected: Boolean
+      }
+      type EdgeDeviceType {
+        id: ID!
+        model: String
+        articleNumber: String
+        vendor: String
+        avatar: String
+      }
+      enum IotHubStatus {
+        New
+        Enabled
+        Disabled
+      }
+      type Permission {
+        key: String!
+        displayName: String!
+        description: String!
+        applicationId: ID!
+      }
+      type PermissionsOfCurrentUserQueryResult {
+        data: [Permission!]!
+      }
+      type Customer {
+        id: ID!
+        name: String!
+        status: CustomerStatusEnum!
+        externalId: String
+        serviceOrganisation: ServiceOrganisation
+        address: CustomerAddress
+      }
+      type CustomerAddress {
+        country: String
+        postalCode: String
+        city: String
+        street: String
+        street2: String
+        state: String
+      }
+      enum CustomerStatusEnum {
+        NEW
+        INVITED
+        ONBOARDED
+        DEMO
+        CONVERTED
+      }
+      enum ServiceCaseView {
+        OPERATOR
+        SERVICE_PROVIDER
+      }
+      type ServiceCaseQueryResult {
+        data: [ServiceCase!]!
+      }
+      input ServiceCaseFilter {
+        isClosed: Boolean
+      }
+      type ServiceCase {
+        id: ID!
+        displayId: String!
+        state: State
+        title: String!
+        description: String
+        createdAt: ZonedDateTime!
+        updatedAt: ZonedDateTime
+        closedAt: ZonedDateTime
+        creator: TenantUser
+        creatorContactEmail: String
+        assignee: TenantUser
+        customerMachine: CustomerMachine
+        priority: Int
+        severity: Severity
+        externalId: String
+        customFields: [CustomFieldValue]
+        closingReport: ClosingReport
+      }
+      type ClosingReport {
+        id: ID!
+        isSolved: Boolean!
+        notes: String
+      }
+      type CustomFieldValue {
+        key: String!
+        value: String
+      }
+      enum Severity {
+        MACHINE_BREAKDOWN
+        PRODUCTION_IMPAIRED
+        NO_IMPAIRMENT
+      }
+      type State {
+        id: ID!
+        index: Int!
+        name: String!
+        isClosed: Boolean!
+      }
+      type CustomerMachine {
+        id: ID!
+        serialNumber: String!
+        machineModel: MachineModel
+        displayName: String
+        externalId: String
+        avatar: String
+        status: CustomerMachineStatus
+        customer: Customer
+        isSp1Migration: Boolean
+        edgeDeviceSerialNumber: String
+      }
+      enum CustomerMachineStatus {
+        New
+        Proposed
+        Unconnected
+        Connected
+      }
+      type MachineModel {
+        id: ID!
+        modelName: String!
+        technology: String!
+        brand: String
+        externalId: String
+      }
+      enum TenantLinkType {
+        ALL
+        SERVICE_PROVIDER
+        OPERATOR
+        NONE
+      }
+      type Facility {
+        id: ID!
+        tenant: Tenant!
+        name: String!
+        description: String
+      }
+      input PaginationInput {
+        page: Int!,
+        pageSize: Int!
+      }
+      type PageInfo {
+        totalElements: Int
+        totalPages: Int
+        currentPage: Int
+        fromElement: Int
+        untilElement: Int
+      }
+      input CustomerFilter{
+        id: IDExpression
+        name: StringExpression
+        status: CustomerStatusEnumExpression
+        linkedTenantId: StringExpression
+        externalId: StringExpression
+        websiteUrl: StringExpression
+        address: AddressFilter
+        and: [CustomerFilter!]
+        or: [CustomerFilter!]
+        not: CustomerFilter
+      }
+      input AddressFilter {
+        country: StringExpression
+        postalCode: StringExpression
+        city: StringExpression
+        street: StringExpression
+        street2: StringExpression
+        state: StringExpression
+        and: [AddressFilter!]
+        or: [AddressFilter!]
+        not: AddressFilter
+      }
+      input CustomerStatusEnumExpression {
+        is: CustomerStatusEnum
+      }
+      input StringExpression {
+        equals: String
+        contains: String
+        starts: String
+        ends: String
+      }
+      input IDExpression {
+        is: ID
+      }
+      input IntegerExpression {
+        eq: Int
+        ne: Int
+        lt: Int
+        le: Int
+        gt: Int
+        ge: Int
+      }
+      type CustomerQueryResult {
+        data: [Customer]!
+        pageInfo: PageInfo
+      }
+      enum SortDirection {
+        ASC
+        DESC
+      }
+      input CustomerSorter{
+        name: SortDirection
+        status: SortDirection
+        linkedTenantId: SortDirection
+        externalId: SortDirection
+        websiteUrl: SortDirection
+      }
+
+
+      type Address {
+        country: String!
+        state: String
+        city: String
+        postalCode: String
+        street: String
+        street2: String
+      }
+      type Tenant {
+        id: ID!
+        name: String!
+        shortname: String
+        avatar: String
+        status: TenantStatusEnum
+        address: TenantAddress
+        users: [TenantUser!]!
+        helpLink: String
+      }
+      enum TenantStatusEnum {
+        INCOMPLETE
+        ACTIVE
+        DEACTIVATED
+      }
+      type TenantAddress {
+        country: String
+        postalCode: String
+        city: String
+        street: String
+        number: String
+      }
+      type TenantUser {
+        id: ID!
+        name: String!
+        email: String
+        tenant: Tenant!
+        identityId: ID
+        isActive: Boolean!
+        isTechnicalUser: Boolean!
+        externalChatUserId: String
+      }
+      type ServiceOrganisation  {
+          id: ID!
+          tenant: Tenant!
+          name: String!
+          description: String
+      }
+      type AssetQueryResult {
+        data: [Asset!]!
+      }
+      input CustomerOptions {
+        filter: CustomerFilter
+        pagination: PaginationInput
+        sortBy: [CustomerSorter!]
+      }
+      type TenantQueryResult {
+        data: [Tenant!]!
+      }
+      input TenantFilter {
+        status: [TenantStatusEnum]
+      }
+      input TenantOptions {
+        filter: TenantFilter
+      }
+      type FacilityQueryResult {
+          data: [Facility!]!
+      }
+      type ServiceOrganisationQueryResult {
+          data: [ServiceOrganisation!]!
+      }
+      type CustomerMachineQueryResult {
+          data: [CustomerMachine!]!
+      }
+      input MachineModelOptions {
+          filter: MachineModelFilter
+      }
+      input MachineModelFilter {
+          tenantLinkType: TenantLinkType = ALL
+      }
+      type MachineModelQueryResult {
+          data: [MachineModel!]!
+      }
+    engine:
+      data_sources:
+        - config:
+            url: "tyk://example.org/graphql"
+            method: POST
+            headers:
+              Authorization: "{{.request.headers.authorization}}"
+          internal: false
+          kind: GraphQL
+          name: ssh_internal
+          root_fields:
+            - fields:
+                - serviceCases
+                - customer
+                - customerMachine
+                - machineModel
+                - myTenantUser
+              type: Query
+            - fields:
+                - createMachineModel
+                - createCustomer
+                - updateCustomer
+                - createCustomerMachine
+                - updateExternalId
+              type: Mutation
+        - config:
+            has_operation: true
+            url: "tyk://example.org/graphql"
+            method: POST
+            headers:
+              Authorization: "{{.request.headers.authorization}}"
+            operation: |
+              query {
+                publicPermissionsOfCurrentUser{
+                  data {
+                    key
+                    displayName
+                    description
+                    applicationId
+                  }
+                }
+              }
+          internal: false
+          kind: GraphQL
+          name: permissionsOfCurrentUser
+          root_fields:
+            - fields:
+                - permissionsOfCurrentUser
+              type: Query
+      field_configs:
+        - disable_default_mapping: false
+          field_name: permissionsOfCurrentUser
+          path:
+            - data.publicPermissionsOfCurrentUser
+          type_name: Query
+    playground:
+      enabled: false
+      path: /playground

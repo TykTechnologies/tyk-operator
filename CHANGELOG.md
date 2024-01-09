@@ -8,6 +8,10 @@
 - Added `tyk` to `categories` field of CRDs. So, from now on, all CRs related to Tyk Operator is grouped
 into `tyk` category and can be displayed via `kubectl get tyk`.
 - Added support of analytics plugin
+- Added `detailed_tracing` of APIDefinition for OpenTelemetry
+
+**Updated**
+- Updated Go version to 1.21
 
 ## [v0.15.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.15.1)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.0...v0.15.1)

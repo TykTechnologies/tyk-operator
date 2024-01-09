@@ -846,6 +846,10 @@ type APIDefinitionSpec struct {
 	// records, raw request and responses recorded by Tyk at the gateway level
 	// +optional
 	AnalyticsPlugin AnalyticsPluginConfig `json:"analytics_plugin,omitempty"`
+  
+  // +optional
+	// +nullable
+	DetailedTracing *bool `json:"detailed_tracing,omitempty"`
 }
 
 type AnalyticsPluginConfig struct {
