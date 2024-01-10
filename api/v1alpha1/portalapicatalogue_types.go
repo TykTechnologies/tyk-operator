@@ -51,7 +51,7 @@ type PortalAPICatalogueStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=tykcatalogues
+// +kubebuilder:resource:categories="tyk",shortName="tykcatalogues"
 // +kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
 
 // PortalAPICatalogue is the Schema for the portalapicatalogues API

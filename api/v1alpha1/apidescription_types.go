@@ -45,6 +45,7 @@ type APIDescriptionStatus struct{}
 //+kubebuilder:subresource:status
 
 // APIDescription is the Schema for the apidescriptions API
+// +kubebuilder:resource:categories=tyk
 type APIDescription struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -36,6 +36,7 @@ type PortalConfigStatus struct {
 //+kubebuilder:subresource:status
 
 // PortalConfig is the Schema for the portalconfigs API
+// +kubebuilder:resource:categories=tyk
 type PortalConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -35,6 +35,7 @@ type SubGraphStatus struct {
 //+kubebuilder:subresource:status
 
 // SubGraph is the Schema for the subgraphs API
+// +kubebuilder:resource:categories=tyk
 type SubGraph struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -64,6 +64,8 @@ func TestBuildAPIName(t *testing.T) {
 	}
 
 	for n, tc := range tests {
+		tc := tc
+
 		t.Run(n, func(t *testing.T) {
 			t.Parallel()
 			result := reconciler.buildAPIName(tc.Namespace, tc.Name, tc.Hash)
