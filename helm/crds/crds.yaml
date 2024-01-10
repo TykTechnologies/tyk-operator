@@ -116,8 +116,6 @@ spec:
                     type: string
                   plugin_path:
                     type: string
-                required:
-                - enable
                 type: object
               api_id:
                 description: 'Only set this field if you are referring to an existing API def. The Operator will use this APIID to link the CR with the API in Tyk Note: The values in the CR will become the new source of truth, overriding the existing API Definition'

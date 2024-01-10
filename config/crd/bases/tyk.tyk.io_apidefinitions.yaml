@@ -139,8 +139,6 @@ spec:
                     type: string
                   plugin_path:
                     type: string
-                required:
-                - enable
                 type: object
               api_id:
                 description: 'Only set this field if you are referring to an existing
