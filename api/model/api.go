@@ -841,6 +841,10 @@ type APIDefinitionSpec struct {
 	EnableDetailedRecording *bool `json:"enable_detailed_recording,omitempty"`
 
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
+
+	// +optional
+	// +nullable
+	DetailedTracing *bool `json:"detailed_tracing,omitempty"`
 }
 
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
