@@ -85,6 +85,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Webhooks                             | ❌         | -              | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   | 
 | Looping                              | ⚠️        | v0.6           | Untested                                                               | [Sample](./api_definitions/looping.md)                          |
 | Active API                           | ✅         | v0.2           | Only available to Tyk Self Managed (Pro) users                         | [Sample](./api_definitions/fields.md#active)                    |
+| Round Robin Load Balancing           | ✅         | -              | -                                                                     | [Sample](./../config/samples/enable_round_robin_load_balancing.yaml)                    |
 
 ## APIDefinition - Endpoint Middleware
 

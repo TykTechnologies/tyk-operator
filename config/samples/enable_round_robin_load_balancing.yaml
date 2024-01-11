@@ -1,0 +1,17 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: enable-load-balancing-rr
+spec:
+  name: enable-load-balancing-rr
+  use_keyless: true
+  protocol: http
+  active: true
+  proxy:
+    target_url: httpbin.org
+    listen_path: /httpbin
+    strip_listen_path: true
+    enable_load_balancing: true
+    target_list: 
+        - "httpbin.org"
+        - "httpbingo.org"
