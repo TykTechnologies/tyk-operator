@@ -9,7 +9,7 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
-TYK_VERSION ?= v4.3
+TYK_VERSION ?= v5.2
 
 # Image URL to use all building/pushing image targets
 IMG ?= tyk-operator:latest
