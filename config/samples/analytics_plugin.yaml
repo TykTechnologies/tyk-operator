@@ -1,0 +1,19 @@
+# It is assumed that you have already created and uploaded analytics plugin to gateway filesystem.
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: analytics-plugin
+spec:
+  name: httpbin-analytics-plugin
+  active: true
+  protocol: http
+  proxy:
+    listen_path: /httpbin
+    strip_listen_path: true
+    target_url: http://httpbin.org
+  use_keyless: true
+  enable_detailed_recording: true
+  analytics_plugin:
+    enable: true
+    func_name: MaskAnalyticsData # Replace it with function name of your plugin
+    plugin_path: /opt/tyk-gateway/plugins/example-plugin.so  # Replace it with path of your plugin file

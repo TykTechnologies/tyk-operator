@@ -128,6 +128,21 @@ spec:
                 items:
                   type: string
                 type: array
+              analytics_plugin:
+                description: AnalyticsPlugin is used to configure analytics plugin
+                  which enables editing or removal of all parts of analytics records,
+                  raw request and responses recorded by Tyk at the gateway level
+                nullable: true
+                properties:
+                  enable:
+                    type: boolean
+                  func_name:
+                    type: string
+                  plugin_path:
+                    type: string
+                required:
+                - enable
+                type: object
               api_id:
                 description: 'Only set this field if you are referring to an existing
                   API def. The Operator will use this APIID to link the CR with the
