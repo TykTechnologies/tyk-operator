@@ -79,12 +79,14 @@ To check the supported features of the API Definitions CRD version you're curren
 | Custom Plugins - Javascript          | ✅         | v0.1           | -                                                                      | [Sample](./api_definitions/custom_plugin.md)                    |
 | Custom Plugins - Lua                 | ⚠️        | v0.1           | Untested                                                               |
 | Custom Plugins - Python              | ⚠️        | v0.1           | Untested                                                               |
+| Custom Plugins - Analytics Plugin    | ✅        | v0.16.0        | - | [Sample](./../config/samples/analytics_plugin.yaml)|
 | Global Rate Limit                    | ✅         | v0.10          | -                                                                      | [Sample](./../config/samples/httpbin_global_rate_limit.yaml)    |
 | Segment Tags                         | ✅         | v0.1           | -                                                                      | [Sample](./../config/samples/httpbin_tagged.yaml)               |
 | Tag Headers                          | ⚠️         | -              | Untested                                                               |
 | Webhooks                             | ❌         | -              | [WIP #62](https://github.com/TykTechnologies/tyk-operator/issues/62)   | 
 | Looping                              | ⚠️        | v0.6           | Untested                                                               | [Sample](./api_definitions/looping.md)                          |
 | Active API                           | ✅         | v0.2           | Only available to Tyk Self Managed (Pro) users                         | [Sample](./api_definitions/fields.md#active)                    |
+| Round Robin Load Balancing           | ✅         | -              | -                                                                     | [Sample](./../config/samples/enable_round_robin_load_balancing.yaml)                    |
 
 ## APIDefinition - Endpoint Middleware
 

@@ -842,9 +842,21 @@ type APIDefinitionSpec struct {
 
 	GraphQL *GraphQLConfig `json:"graphql,omitempty"`
 
+	// AnalyticsPlugin is used to configure analytics plugin which enables editing or removal of all parts of analytics
+	// records, raw request and responses recorded by Tyk at the gateway level
+	// +optional
+	// +nullable
+	AnalyticsPlugin *AnalyticsPluginConfig `json:"analytics_plugin,omitempty"`
+
 	// +optional
 	// +nullable
 	DetailedTracing *bool `json:"detailed_tracing,omitempty"`
+}
+
+type AnalyticsPluginConfig struct {
+	Enabled    bool   `json:"enable"`
+	PluginPath string `json:"plugin_path,omitempty"`
+	FuncName   string `json:"func_name,omitempty"`
 }
 
 func (a *APIDefinitionSpec) CollectLoopingTarget() (targets []Target) {
@@ -1091,6 +1103,13 @@ type GraphQLEngineDataSource struct {
 	Config     MapStringInterfaceType      `json:"config"`
 }
 
+type GraphQLEngineGlobalHeader struct {
+	// Key is the name of the request header
+	Key string `json:"key"`
+	// Value holds the value of the request header
+	Value string `json:"value"`
+}
+
 type GraphQLTypeFields struct {
 	Type   string   `json:"type"`
 	Fields []string `json:"fields"`
@@ -1101,6 +1120,9 @@ type GraphQLEngineConfig struct {
 	FieldConfigs []GraphQLFieldConfig `json:"field_configs"`
 	// +nullable
 	DataSources []GraphQLEngineDataSource `json:"data_sources"`
+	// GlobalHeaders for managing headers for UDG and all associated data sources
+	// +nullable
+	GlobalHeaders []GraphQLEngineGlobalHeader `json:"global_headers"`
 }
 
 type GraphQLSubgraphConfig struct {
