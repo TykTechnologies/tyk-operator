@@ -321,7 +321,7 @@ func TestSecurityPolicyMigration(t *testing.T) {
 					tyk.State == initialK8sPolicyState
 			}
 
-			return *k8s.MID == *tyk.ID &&
+			return *k8s.ID == *tyk.ID &&
 				tyk.ID != nil &&
 				k8sID == *tyk.ID &&
 				len(k8s.Tags) == len(tyk.Tags) &&
