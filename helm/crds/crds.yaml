@@ -516,9 +516,26 @@ spec:
                           type: object
                         nullable: true
                         type: array
+                      global_headers:
+                        description: GlobalHeaders for managing headers for UDG and all associated data sources
+                        items:
+                          properties:
+                            key:
+                              description: Key is the name of the request header
+                              type: string
+                            value:
+                              description: Value holds the value of the request header
+                              type: string
+                          required:
+                          - key
+                          - value
+                          type: object
+                        nullable: true
+                        type: array
                     required:
                     - data_sources
                     - field_configs
+                    - global_headers
                     type: object
                   execution_mode:
                     description: GraphQLExecutionMode is the mode to define how an api behaves.

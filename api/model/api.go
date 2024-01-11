@@ -1091,6 +1091,13 @@ type GraphQLEngineDataSource struct {
 	Config     MapStringInterfaceType      `json:"config"`
 }
 
+type GraphQLEngineGlobalHeader struct {
+	// Key is the name of the request header
+	Key string `json:"key"`
+	// Value holds the value of the request header
+	Value string `json:"value"`
+}
+
 type GraphQLTypeFields struct {
 	Type   string   `json:"type"`
 	Fields []string `json:"fields"`
@@ -1101,6 +1108,9 @@ type GraphQLEngineConfig struct {
 	FieldConfigs []GraphQLFieldConfig `json:"field_configs"`
 	// +nullable
 	DataSources []GraphQLEngineDataSource `json:"data_sources"`
+	// GlobalHeaders for managing headers for UDG and all associated data sources
+	// +nullable
+	GlobalHeaders []GraphQLEngineGlobalHeader `json:"global_headers"`
 }
 
 type GraphQLSubgraphConfig struct {
