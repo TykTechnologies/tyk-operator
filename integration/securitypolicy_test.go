@@ -620,7 +620,13 @@ func TestSecurityPolicy(t *testing.T) {
 							return false
 						}
 
-						eval.True(policyOnK8s.Status.PolID == *policyCR.Spec.MID)
+						if tykEnv.Mode == "ce" {
+							eval.True(policyCR.Spec.ID != nil)
+							eval.True(policyOnK8s.Status.PolID == *policyCR.Spec.ID)
+						} else {
+							eval.True(policyCR.Spec.MID != nil)
+							eval.True(policyOnK8s.Status.PolID == *policyCR.Spec.MID)
+						}
 						eval.Equal(policyOnK8s.Spec.Name, policyOnTyk.Name)
 						eval.Equal(len(policyOnK8s.Spec.AccessRightsArray), 1)
 
