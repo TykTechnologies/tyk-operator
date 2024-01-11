@@ -3,6 +3,10 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...HEAD)
 
+**Fixed**:
+- Fixed a bug that prevents Tyk Operator to work with SecurityPolicy in CE (OSS) Mode.
+Now, SecurityPolicy controller will not modify `spec.MID` (`_id`) field in SecurityPolicy.
+
 **Added**:
 - Added `imagePullSecrets` configuration for ServiceAccount in Tyk Operator Helm chart 
 - Added `tyk` to `categories` field of CRDs. So, from now on, all CRs related to Tyk Operator is grouped
