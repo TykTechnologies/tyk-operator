@@ -9,7 +9,6 @@
 into `tyk` category and can be displayed via `kubectl get tyk`.
 - Added support of analytics plugin
 - Added `global_headers` support for UDG API Definition
-- Added `introspection` option to disable GraphQL introspection
 - Added `detailed_tracing` of APIDefinition for OpenTelemetry
 
 **Updated**
