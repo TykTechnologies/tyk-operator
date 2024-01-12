@@ -11,7 +11,7 @@ envVars:
 image:
   repository: tykio/tyk-operator
   pullPolicy: IfNotPresent
-  tag: "v0.15.1"
+  tag: "v0.16.0"
 # specify imagePullSecrets for ServiceAccount
 imagePullSecrets: []
 nameOverride: ""
