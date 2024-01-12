@@ -100,6 +100,16 @@ func SetContext(ctx context.Context, rctx Context) context.Context {
 	return context.WithValue(ctx, contextKey{}, rctx)
 }
 
+func GetTykMode(ctx context.Context) environment.Env {
+	if c := ctx.Value(contextKey{}); c != nil {
+		if a, ok := c.(Context); ok {
+			return a.Env
+		}
+	}
+
+	return environment.Env{}
+}
+
 func GetContext(ctx context.Context) Context {
 	if c := ctx.Value(contextKey{}); c != nil {
 		return c.(Context)
