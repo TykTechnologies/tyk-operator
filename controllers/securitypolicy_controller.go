@@ -246,11 +246,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 ) (*model.SecurityPolicySpec, error) {
 	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
 
-	if policy.Spec.MID == nil {
-		policy.Spec.MID = new(string)
-	}
-
-	*policy.Spec.MID = policy.Status.PolID
+	updatePolicyMID(ctx, &policy.Spec, &policy.Status.PolID)
 
 	spec, err := r.spec(ctx, &policy.Spec)
 	if err != nil {
@@ -288,12 +284,8 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 				return nil, err
 			}
 
-			if policy.Spec.MID == nil {
-				policy.Spec.MID = new(string)
-			}
-
-			*policy.Spec.MID = *spec.MID
-			policy.Status.PolID = *spec.MID
+			updatePolicyMID(ctx, &policy.Spec, spec.MID)
+			setPolicyStatusPolID(ctx, policy, spec)
 		} else {
 			r.Log.Error(err, "Failed to get Policy from Tyk", err)
 
@@ -315,7 +307,7 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		return nil, err
 	}
 
-	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *policy.Spec.MID) //nolint:errcheck
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID) //nolint:errcheck
 
 	r.Log.Info("Successfully updated Policy")
 
@@ -323,6 +315,24 @@ func (r *SecurityPolicyReconciler) update(ctx context.Context,
 		status.LatestTykSpecHash = calculateHash(polOnTyk)
 		status.LatestCRDSpecHash = calculateHash(spec)
 	})
+}
+
+func setPolicyStatusPolID(ctx context.Context, policy *tykv1.SecurityPolicy, spec *tykv1.SecurityPolicySpec) {
+	if policy == nil || spec == nil {
+		return
+	}
+
+	if env := opclient.GetTykMode(ctx); env.Mode == "ce" {
+		if spec.ID != nil {
+			policy.Status.PolID = *spec.ID
+		}
+
+		return
+	}
+
+	if spec.MID != nil {
+		policy.Status.PolID = *spec.MID
+	}
 }
 
 func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
@@ -351,11 +361,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 			return err
 		}
 	} else {
-		if spec.MID == nil {
-			spec.MID = new(string)
-		}
-
-		*spec.MID = *existingSpec.MID
+		updatePolicyMID(ctx, spec, existingSpec.MID)
 
 		err = klient.Universal.Portal().Policy().Update(ctx, spec)
 		if err != nil {
@@ -380,11 +386,7 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 
 	r.Log.Info("Successfully created Policy")
 
-	if policy.Spec.MID == nil {
-		policy.Spec.MID = new(string)
-	}
-
-	*policy.Spec.MID = *spec.MID
+	updatePolicyMID(ctx, &policy.Spec, spec.MID)
 
 	err = r.updateStatusOfLinkedAPIs(ctx, policy, false)
 	if err != nil {
@@ -396,12 +398,28 @@ func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.Sec
 		return err
 	}
 
-	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, *spec.MID) //nolint:errcheck
+	polOnTyk, _ := klient.Universal.Portal().Policy().Get(ctx, policy.Status.PolID) //nolint:errcheck
 
 	return r.updatePolicyStatus(ctx, policy, func(status *tykv1.SecurityPolicyStatus) {
 		status.LatestTykSpecHash = calculateHash(polOnTyk)
 		status.LatestCRDSpecHash = calculateHash(spec)
 	})
+}
+
+func updatePolicyMID(ctx context.Context, policy *tykv1.SecurityPolicySpec, mId *string) {
+	if env := opclient.GetTykMode(ctx); env.Mode == "ce" {
+		return
+	}
+
+	if mId == nil {
+		return
+	}
+
+	if policy.MID == nil {
+		policy.MID = new(string)
+	}
+
+	*policy.MID = *mId
 }
 
 // updatePolicyStatus updates the status of the policy.
@@ -412,9 +430,7 @@ func (r *SecurityPolicyReconciler) updatePolicyStatus(
 ) error {
 	r.Log.Info("Updating policy status")
 
-	if policy.Spec.MID != nil {
-		policy.Status.PolID = *policy.Spec.MID
-	}
+	setPolicyStatusPolID(ctx, policy, &policy.Spec)
 
 	if policy.Spec.AccessRightsArray != nil && len(policy.Spec.AccessRightsArray) > 0 {
 		policy.Status.LinkedAPIs = make([]model.Target, 0)
