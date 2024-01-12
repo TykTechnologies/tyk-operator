@@ -1,7 +1,10 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.16.0...HEAD)
+
+## [v0.16.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.16.0)
+[v0.16.0](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...v0.16.0)
 
 **Fixed**:
 - Fixed a bug that prevents Tyk Operator to work with SecurityPolicy in CE (OSS) Mode.
