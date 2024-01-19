@@ -4,7 +4,7 @@ metadata:
   name: httpbin
 spec:
   name: httpbin
-  use_keyless: true
+  use_keyless: false
   protocol: http
   active: true
   proxy:
