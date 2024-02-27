@@ -487,10 +487,6 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 			return err
 		}
 
-		if !tykClient.IsNotFound(err) {
-			return err
-		}
-
 		_, err = klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 		if err != nil {
 			r.Log.Error(
