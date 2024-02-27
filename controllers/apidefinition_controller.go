@@ -24,6 +24,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -482,6 +483,14 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 
 	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
 	if err != nil {
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			return err
+		}
+
+		if !tykClient.IsNotFound(err) {
+			return err
+		}
+
 		_, err = klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 		if err != nil {
 			r.Log.Error(
