@@ -21,10 +21,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
@@ -483,7 +483,8 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 
 	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
 	if err != nil {
-		if errors.Is(err, syscall.ECONNREFUSED) {
+		if t, ok := err.(*url.Error); ok {
+			r.Log.Info(fmt.Sprintf("Connection error: %s %s: %v", t.Op, t.URL, t.Err))
 			return err
 		}
 
