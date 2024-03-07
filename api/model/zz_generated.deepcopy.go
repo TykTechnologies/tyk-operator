@@ -315,8 +315,11 @@ func (in *APIDefinitionSpec) DeepCopyInto(out *APIDefinitionSpec) {
 		*out = new(GraphQLConfig)
 		(*in).DeepCopyInto(*out)
 	}
-	out.AnalyticsPlugin = in.AnalyticsPlugin
-
+	if in.AnalyticsPlugin != nil {
+		in, out := &in.AnalyticsPlugin, &out.AnalyticsPlugin
+		*out = new(AnalyticsPluginConfig)
+		**out = **in
+	}
 	if in.DetailedTracing != nil {
 		in, out := &in.DetailedTracing, &out.DetailedTracing
 		*out = new(bool)
