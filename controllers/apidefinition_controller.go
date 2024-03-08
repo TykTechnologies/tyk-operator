@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -482,6 +483,11 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 
 	apiDefOnTyk, err := klient.Universal.Api().Get(ctx, desired.Status.ApiID)
 	if err != nil {
+		if t, ok := err.(*url.Error); ok {
+			r.Log.Info(fmt.Sprintf("Connection error: %s %s: %v", t.Op, t.URL, t.Err))
+			return err
+		}
+
 		_, err = klient.Universal.Api().Create(ctx, &desired.Spec.APIDefinitionSpec)
 		if err != nil {
 			r.Log.Error(
