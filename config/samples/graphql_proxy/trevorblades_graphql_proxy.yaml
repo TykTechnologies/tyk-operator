@@ -13,6 +13,7 @@ spec:
     strip_listen_path: true
   graphql:
     enabled: true
+    version: "2"
     execution_mode: proxyOnly
     schema: |
       directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE
