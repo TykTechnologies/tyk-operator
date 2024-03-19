@@ -26,7 +26,7 @@ Please visit [one of the examples](./policies/api_access.md) from the Supported 
 | [Rate Limit, Throttling, Quotas](./policies/ratelimit.md) | ✅                                                              |
 | [Meta Data & Tags](./policies/metadata_tags.md)           | ✅                                                              |
 | Path based permissions                                    | [⚠️](# "Requires testing")                                     |
-| Partitions                                                | [⚠️](# "Requires testing")                                     |
+| [Partitions](./policies/partitions.yaml)                  | ✅                                                              |
 | Per API limit                                             | [❌](https://github.com/TykTechnologies/tyk-operator/issues/66) |
 
 
