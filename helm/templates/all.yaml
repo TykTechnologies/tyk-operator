@@ -381,7 +381,7 @@ metadata:
 spec:
   ports:
   - name: https
-    port: 8443
+    port: {{ .Values.rbac.port }}
     targetPort: https
   selector:
     control-plane: tyk-operator-controller-manager
@@ -394,7 +394,7 @@ metadata:
 spec:
   ports:
   - port: 443
-    targetPort: 9443
+    targetPort: {{ .Values.webhookPort }}
   selector:
     control-plane: tyk-operator-controller-manager
 ---
