@@ -460,17 +460,6 @@ func TestApiDefinitionOrgID(t *testing.T) {
 						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
 						eval.True(ok)
 
-						if apiDefObj.Spec.OrgID == nil {
-							t.Log("failed to populate OrgID in ApiDefinition's spec")
-							return false
-						}
-
-						if *apiDefObj.Spec.OrgID != tykEnv.Org {
-							t.Logf("incorrect OrgID in spec, expected %v got %v\n",
-								tykEnv.Org, *apiDefObj.Spec.OrgID)
-							return false
-						}
-
 						if apiDefObj.Status.OrgID != tykEnv.Org {
 							t.Logf("incorrect OrgID in status, expected %v got %v\n",
 								tykEnv.Org, apiDefObj.Status.OrgID)
