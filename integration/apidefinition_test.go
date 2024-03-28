@@ -418,6 +418,91 @@ func TestApiDefinitionUpdate(t *testing.T) {
 	testenv.Test(t, testApiDefinitionUpdate)
 }
 
+func TestApiDefinitionOrgID(t *testing.T) {
+	var (
+		eval        = is.New(t)
+		tykCtx      context.Context
+		tykEnv      environment.Env
+		updatedName = "updatedName"
+	)
+
+	testApiDefinitionOrgID := features.New("ApiDefinition CRs must include OrgID").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			var err error
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(ctx, c)
+			eval.NoErr(err)
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			return ctx
+		}).
+		Assess("Create ApiDefinition and check OrgID field exists in spec and status",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				testNs, ok := ctx.Value(ctxNSKey).(string)
+				eval.True(ok)
+
+				apiDefCR, err := createTestAPIDef(ctx, c, testNs, func(apiDef *v1alpha1.ApiDefinition) {})
+				eval.NoErr(err)
+
+				err = waitForTykResourceCreation(c, apiDefCR)
+				eval.NoErr(err)
+
+				apiDefCR.Spec.Name = updatedName
+
+				// Ensure that k8s state is updated.
+				err = wait.For(
+					conditions.New(c.Client().Resources()).ResourceMatch(apiDefCR, func(object k8s.Object) bool {
+						apiDefObj, ok := object.(*v1alpha1.ApiDefinition)
+						eval.True(ok)
+
+						if apiDefObj.Status.OrgID != tykEnv.Org {
+							t.Logf("incorrect OrgID in status, expected %v got %v\n",
+								tykEnv.Org, apiDefObj.Status.OrgID)
+							return false
+						}
+
+						return true
+					}),
+					wait.WithTimeout(defaultWaitTimeout),
+					wait.WithInterval(defaultWaitInterval),
+				)
+				eval.NoErr(err)
+
+				// Ensure that Tyk is updated
+				err = wait.For(func() (done bool, err error) {
+					apiDefOnTyk, err := klient.Universal.Api().Get(tykCtx, apiDefCR.Status.ApiID)
+					if err != nil {
+						return false, err
+					}
+
+					if apiDefOnTyk.OrgID == nil {
+						t.Logf("OrgID is not set, it is nil")
+						return false, nil
+					}
+
+					if *apiDefOnTyk.OrgID != tykEnv.Org {
+						t.Logf(
+							"ApiDefinition's OrgID is not set properly, expected %v, got %v",
+							tykEnv.Org, apiDefOnTyk.OrgID,
+						)
+						return false, nil
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				return ctx
+			}).Feature()
+
+	testenv.Test(t, testApiDefinitionOrgID)
+}
+
 func TestApiDefinitionJSONSchemaValidation(t *testing.T) {
 	var (
 		eval                         = is.New(t)
