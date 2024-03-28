@@ -170,6 +170,13 @@ func (r *IngressReconciler) createAPI(
 				api.Spec = *template.Spec.DeepCopy()
 				api.Spec.Name = name
 
+				if api.Spec.OrgID == nil {
+					api.Spec.OrgID = new(string)
+					api.Spec.OrgID = &template.Status.OrgID
+				} else if *api.Spec.OrgID == "" {
+					api.Spec.OrgID = &template.Status.OrgID
+				}
+
 				if api.Spec.Proxy.ListenPath == nil {
 					api.Spec.Proxy.ListenPath = new(string)
 				}

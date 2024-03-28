@@ -111,6 +111,13 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		log.Info("Synced template", "template", desired.Name)
 
+		desired.Status.OrgID = env.Org
+
+		if err := r.Status().Update(ctx, desired); err != nil {
+			log.Info("Failed to update template ApiDefinition status")
+			return ctrl.Result{}, err
+		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -241,6 +248,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				true,
 				func(status *tykv1alpha1.ApiDefinitionStatus) {
 					status.ApiID = apiId
+					status.OrgID = env.Org
 					status.LatestTykSpecHash = calculateHash(apiOnTyk)
 					status.LatestCRDSpecHash = calculateHash(upstreamRequestStruct.Spec)
 					status.LatestTransaction = *transactionInfo
@@ -303,14 +311,14 @@ func (r *ApiDefinitionReconciler) processCertificateReferences(
 ) error {
 	// we support only one certificate secret name for mvp
 	if len(upstreamRequestStruct.Spec.CertificateSecretNames) != 0 {
-		certName := upstreamRequestStruct.Spec.CertificateSecretNames[0]
+		if certName := upstreamRequestStruct.Spec.CertificateSecretNames[0]; certName != "" {
+			tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, env)
+			if err != nil {
+				return err
+			}
 
-		tykCertID, err := r.checkSecretAndUpload(ctx, certName, upstreamRequestStruct.Namespace, log, env)
-		if err != nil {
-			return err
+			upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
 		}
-
-		upstreamRequestStruct.Spec.Certificates = []string{tykCertID}
 	}
 	// To prevent API object validation failures, set additional properties to nil.
 	upstreamRequestStruct.Spec.CertificateSecretNames = nil
@@ -582,7 +590,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 
 			if len(refs) > 0 {
 				return ctrl.Result{RequeueAfter: time.Second * 5},
-					fmt.Errorf("Can't delete %s %v depends on it", a.Name, refs)
+					fmt.Errorf("Can't delete %s, Ingress resources %+v depend on it", a.Name, refs)
 			}
 
 			util.RemoveFinalizer(a, keys.ApiDefTemplateFinalizerName)

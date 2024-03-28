@@ -1908,6 +1908,9 @@ spec:
               linked_to_subgraph:
                 description: LinkedToSubgraph corresponds to the name of the Subgraph CR if the ApiDefinition is GraphQL Federation Subgraph. ApiDefinition CR can only be linked to Subgraph CRs that are created in the same namespace as ApiDefinition CR.
                 type: string
+              orgId:
+                description: OrgID corresponds to the Organization ID that this API belongs to.
+                type: string
             required:
             - api_id
             type: object
