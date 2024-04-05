@@ -1,7 +1,10 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.16.0...HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...HEAD)
+
+## [v0.17.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.16.0...v0.17.0)
 
 **Updated**:
 - Updated Kubernetes versions used in CI for testing to ["v1.25.0", "v1.26.0", "v1.27.0", "v1.28.0", "v1.29.0"]
@@ -11,7 +14,7 @@
 APIDefinition, Tyk Operator retries the reconciliation based on the underlying error type [#679](https://github.com/TykTechnologies/tyk-operator/pull/679)
 
 ## [v0.16.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.16.0)
-[v0.16.0](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...v0.16.0)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...v0.16.0)
 
 **Fixed**:
 - Fixed a bug that prevents Tyk Operator to work with SecurityPolicy in CE (OSS) Mode.
