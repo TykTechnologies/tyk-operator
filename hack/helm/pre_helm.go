@@ -27,6 +27,8 @@ func main() {
 		{extraVolume, extraVolumeTPL},
 		{extraVolumeMounts, extraVolumeMountsTPL},
 		{imagePullSecretsServiceAccount, imagePullSecretsServiceAccountTPL},
+		{rbacPort, rbacPortTPL},
+		{webhookPort, webhookPortTPL},
 
 		{"OPERATOR_FULLNAME", `{{ include "tyk-operator-helm.fullname" . }}`},
 		{"RELEASE_NAMESPACE", "{{ .Release.Namespace }}"},
@@ -162,3 +164,11 @@ imagePullSecrets:
   {{- toYaml . | nindent 2 }}
 {{ end }}
 `
+
+const rbacPort = `port: 8443`
+
+const rbacPortTPL = `port: {{ .Values.rbac.port }}`
+
+const webhookPort = `targetPort: 9443`
+
+const webhookPortTPL = `targetPort: {{ .Values.webhookPort }}`
