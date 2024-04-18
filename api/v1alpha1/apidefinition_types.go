@@ -34,6 +34,9 @@ type APIDefinitionSpec struct {
 type ApiDefinitionStatus struct {
 	ApiID string `json:"api_id"`
 
+	// OrgID corresponds to the Organization ID that this API belongs to.
+	OrgID string `json:"orgId,omitempty"`
+
 	// LinkedByPolicies is a list policies that references this api definition
 	//+optional
 	LinkedByPolicies []model.Target `json:"linked_by_policies,omitempty"`
