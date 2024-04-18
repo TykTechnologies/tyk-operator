@@ -13,6 +13,9 @@
 - Fix creating duplicated APIDefinitions on Tyk in case of cluster failures. If network errors happen while updating the 
 APIDefinition, Tyk Operator retries the reconciliation based on the underlying error type [#679](https://github.com/TykTechnologies/tyk-operator/pull/679)
 
+**Fixed**:
+- Fixed missing OrgID field in ApiDefinition CRs created by Ingress Controller.
+
 ## [v0.16.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.16.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...v0.16.0)
 
