@@ -10,6 +10,7 @@ const (
 	endpointCerts = "/api/certs"
 	// endpointReload   = "/tyk/reload/group"
 	endpointPolicies = "/api/portal/policies"
+	endpointOAS      = "api/apis/oas"
 )
 
 var _ universal.Client = (*Client)(nil)
@@ -43,4 +44,8 @@ func (c Client) Api() universal.Api {
 
 func (c Client) HotReload(context.Context) error {
 	return nil
+}
+
+func (c Client) TykOAS() universal.TykOAS {
+	return TykOAS{}
 }

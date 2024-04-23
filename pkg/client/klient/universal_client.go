@@ -43,6 +43,10 @@ func (Client) Certificate() universal.Certificate {
 	return Certificate{}
 }
 
+func (Client) TykOAS() universal.TykOAS {
+	return TykOAS{}
+}
+
 type Api struct{}
 
 func (Api) Create(ctx context.Context, def *model.APIDefinitionSpec) (*model.Result, error) {
@@ -163,4 +167,26 @@ func (Certificate) Delete(ctx context.Context, id string) error {
 
 func (Certificate) Exists(ctx context.Context, id string) bool {
 	return get(ctx).Certificate().Exists(ctx, id)
+}
+
+type TykOAS struct{}
+
+func (TykOAS) Create(ctx context.Context, id, data string) error {
+	return get(ctx).TykOAS().Create(ctx, id, data)
+}
+
+func (TykOAS) Exists(ctx context.Context, id string) bool {
+	return get(ctx).TykOAS().Exists(ctx, id)
+}
+
+func (TykOAS) Update(ctx context.Context, id, data string) error {
+	return get(ctx).TykOAS().Update(ctx, id, data)
+}
+
+func (TykOAS) Delete(ctx context.Context, id string) error {
+	return get(ctx).TykOAS().Delete(ctx, id)
+}
+
+func (TykOAS) Get(ctx context.Context, id string) (string, error) {
+	return get(ctx).TykOAS().Get(ctx, id)
 }

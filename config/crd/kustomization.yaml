@@ -10,6 +10,7 @@ resources:
   - bases/tyk.tyk.io_portalconfigs.yaml
   - bases/tyk.tyk.io_subgraphs.yaml
   - bases/tyk.tyk.io_supergraphs.yaml
+  - bases/tyk.tyk.io_tykoasapidefinitions.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -22,8 +23,9 @@ patchesStrategicMerge:
   # - patches/webhook_in_apicatalogues.yaml
   # - patches/webhook_in_portalapicatalogues.yaml
   #- patches/webhook_in_portalconfigs.yaml
-#- patches/webhook_in_subgraphs.yaml
-#- patches/webhook_in_supergraphs.yaml
+  #- patches/webhook_in_subgraphs.yaml
+  #- patches/webhook_in_supergraphs.yaml
+  #- patches/webhook_in_tykoasapidefinitions.yaml
   #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
   # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
@@ -33,11 +35,12 @@ patchesStrategicMerge:
   #- patches/cainjection_in_operatorcontexts.yaml
   #- patches/cainjection_in_apidescriptions.yaml
   #- patches/cainjection_in_apicatalogues.yaml
-#- patches/cainjection_in_portalapicatalogues.yaml
-#- patches/cainjection_in_portalconfigs.yaml
-#- patches/cainjection_in_subgraphs.yaml
-#- patches/cainjection_in_supergraphs.yaml
-#+kubebuilder:scaffold:crdkustomizecainjectionpatch
+  #- patches/cainjection_in_portalapicatalogues.yaml
+  #- patches/cainjection_in_portalconfigs.yaml
+  #- patches/cainjection_in_subgraphs.yaml
+  #- patches/cainjection_in_supergraphs.yaml
+  #- patches/cainjection_in_tykoasapidefinitions.yaml
+  #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
 configurations:

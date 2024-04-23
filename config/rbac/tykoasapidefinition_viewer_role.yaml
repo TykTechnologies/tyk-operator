@@ -1,0 +1,27 @@
+# permissions for end users to view tykoasapidefinitions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: tykoasapidefinition-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: tyk-operator
+    app.kubernetes.io/part-of: tyk-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: tykoasapidefinition-viewer-role
+rules:
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions/status
+  verbs:
+  - get

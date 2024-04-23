@@ -9,6 +9,14 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - secrets
   verbs:
   - create
@@ -232,6 +240,32 @@ rules:
   - tyk.tyk.io
   resources:
   - supergraphs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tyk.tyk.io
+  resources:
+  - tykoasapidefinitions/status
   verbs:
   - get
   - patch

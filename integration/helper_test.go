@@ -46,7 +46,38 @@ const (
 	operatorSecret         = "tyk-operator-conf"
 	tlsSecretCrtKey        = "tls.crt"
 	tlsSecretKey           = "tls.key"
+
+	testOASCmName      = "test-oas-cm"
+	testOASConfKeyName = "test-oas.json"
+	testOASCrdName     = "test-oas"
 )
+
+const testOASDoc = `{
+	"info": {
+	  "title": "Petstore",
+	  "version": "1.0.0"
+	},
+	"openapi": "3.0.3",
+	"components": {},
+	"paths": {},
+	"x-tyk-api-gateway": {
+	  "info": {
+		"name": "Petstore",
+		"state": {
+		  "active": true
+		}
+	  },
+	  "upstream": {
+		"url": "https://petstore.swagger.io/v2"
+	  },
+	  "server": {
+		"listenPath": {
+		  "value": "/petstore/",
+		  "strip": true
+		}
+	  }
+	}
+  }`
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
 // Reconciler for CRs such as ApiDefinitionReconciler.
@@ -145,6 +176,10 @@ func waitForTykResourceCreation(envConf *envconf.Config, obj k8s.Object) error {
 			}
 		case *v1alpha1.SecurityPolicy:
 			if val.Status.PolID != "" {
+				return true
+			}
+		case *v1alpha1.TykOasApiDefinition:
+			if val.Status.ID != "" {
 				return true
 			}
 		}
@@ -320,4 +355,43 @@ func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environmen
 		},
 		TykVersion: tykVersion,
 	}, nil
+}
+
+func createTestOASApi(ctx context.Context, ns string, c *envconf.Config, tykOASDoc string,
+) (*v1alpha1.TykOasApiDefinition, *v1.ConfigMap, error) {
+	cm := &v1.ConfigMap{}
+	cm.Name = testOASCmName
+	cm.Namespace = ns
+
+	if tykOASDoc == "" {
+		cm.Data = map[string]string{testOASConfKeyName: testOASDoc}
+	} else {
+		cm.Data = map[string]string{testOASConfKeyName: tykOASDoc}
+	}
+
+	if err := c.Client().Resources(ns).Create(ctx, cm); err != nil {
+		return nil, nil, err
+	}
+
+	if err := wait.For(conditions.New(c.Client().Resources(ns)).ResourceMatch(cm, func(object k8s.Object) bool {
+		conf := object.(*v1.ConfigMap) //nolint:errcheck
+
+		return conf.UID != ""
+	})); err != nil {
+		return nil, nil, err
+	}
+
+	tykOAS := &v1alpha1.TykOasApiDefinition{}
+
+	tykOAS.Name = testOASCrdName
+	tykOAS.Namespace = ns
+	tykOAS.Spec.TykOAS.ConfigmapRef = v1alpha1.ConfigMapReference{
+		Name:      cm.Name,
+		Namespace: ns,
+		KeyName:   testOASConfKeyName,
+	}
+
+	err := c.Client().Resources(ns).Create(ctx, tykOAS)
+
+	return tykOAS, cm, err
 }

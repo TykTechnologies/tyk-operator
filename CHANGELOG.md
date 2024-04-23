@@ -16,6 +16,9 @@ APIDefinition, Tyk Operator retries the reconciliation based on the underlying e
 **Fixed**:
 - Fixed missing OrgID field in ApiDefinition CRs created by Ingress Controller.
 
+**Added**:
+- Added new CRD to support Tyk OAS API
+
 ## [v0.16.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.16.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...v0.16.0)
 

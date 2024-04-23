@@ -156,6 +156,10 @@ func PostJSON(ctx context.Context, url string, body interface{}, fn ...func(*htt
 	return CallJSON(ctx, http.MethodPost, url, body, fn...)
 }
 
+func Put(ctx context.Context, url string, body io.Reader, fn ...func(*http.Request)) (*http.Response, error) {
+	return Call(ctx, http.MethodPut, url, body, fn...)
+}
+
 func PutJSON(ctx context.Context, url string, body interface{}, fn ...func(*http.Request)) (*http.Response, error) {
 	return CallJSON(ctx, http.MethodPut, url, body, fn...)
 }
