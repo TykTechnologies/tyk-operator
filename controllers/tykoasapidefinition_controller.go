@@ -140,9 +140,14 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Cont
 ) {
 	var cm v1.ConfigMap
 
+	configMapNs := tykOASCrd.Spec.TykOAS.ConfigmapRef.Namespace
+	if configMapNs == "" {
+		configMapNs = tykOASCrd.Namespace
+	}
+
 	ns := types.NamespacedName{
 		Name:      tykOASCrd.Spec.TykOAS.ConfigmapRef.Name,
-		Namespace: tykOASCrd.Spec.TykOAS.ConfigmapRef.Namespace,
+		Namespace: configMapNs,
 	}
 
 	err := r.Client.Get(ctx, ns, &cm)
@@ -197,9 +202,14 @@ func (r *TykOasApiDefinitionReconciler) updateStatus(ctx context.Context, tykOAS
 		tykOASCrd.Status.ID = apiID
 	}
 
+	configMapNs := tykOASCrd.Spec.TykOAS.ConfigmapRef.Namespace
+	if configMapNs == "" {
+		configMapNs = tykOASCrd.Namespace
+	}
+
 	cmNS := types.NamespacedName{
 		Name:      tykOASCrd.Spec.TykOAS.ConfigmapRef.Name,
-		Namespace: tykOASCrd.Spec.TykOAS.ConfigmapRef.Namespace,
+		Namespace: configMapNs,
 	}
 
 	err := r.Client.Get(ctx, cmNS, &cm)
