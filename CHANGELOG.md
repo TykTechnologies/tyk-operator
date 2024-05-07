@@ -1,7 +1,23 @@
 # Changelog
 
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...HEAD)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.1...HEAD)
+
+**Added**:
+- Added new CRD to support Tyk OAS API
+
+## [v0.17.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.1)
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...v0.17.1)
+
+**Added**:
+- Added new fields in Tyk Operator helm chart to configure RBAC and Webhook ports.
+
+**Fixed**:
+- Fixed CVE-2023-45288
+- Fixed CVE-2024-24786
+- Fixed missing OrgID field in ApiDefinition template CRs created by Ingress Controller.
+- (samples): Patched GraphQL engine version in the GraphQL proxy examples.
+- (samples): update ClusterIssuer samples
 
 ## [v0.17.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.16.0...v0.17.0)
@@ -12,12 +28,6 @@
 **Fixed**:
 - Fix creating duplicated APIDefinitions on Tyk in case of cluster failures. If network errors happen while updating the 
 APIDefinition, Tyk Operator retries the reconciliation based on the underlying error type [#679](https://github.com/TykTechnologies/tyk-operator/pull/679)
-
-**Fixed**:
-- Fixed missing OrgID field in ApiDefinition CRs created by Ingress Controller.
-
-**Added**:
-- Added new CRD to support Tyk OAS API
 
 ## [v0.16.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.16.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.15.1...v0.16.0)

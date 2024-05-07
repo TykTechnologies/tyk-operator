@@ -17,6 +17,7 @@ which version of Tyk it is tested against.
 | Tyk Operator v0.15.1 | Y   | Y   |     |     | Y   | Y   |     |     |
 | Tyk Operator v0.16.0 | Y   | Y   |     |     | Y   | Y   | Y   |     |
 | Tyk Operator v0.17.0 | Y   | Y   |     |     | Y   | Y   | Y   | Y   |
+| Tyk Operator v0.17.1 | Y   | Y   |     |     |     | Y   | Y   | Y   |
 
 ## Compatibility with Kubernetes Version
 
@@ -32,3 +33,4 @@ which version of Kubernetes it is tested against.
 | Tyk Operator v0.15.1 |      | Y    | Y    | Y    | Y    | Y    | Y    | Y    |      |      |      |
 | Tyk Operator v0.16.0 |      | Y    | Y    | Y    | Y    | Y    | Y    | Y    |      |      |      |
 | Tyk Operator v0.17.0 |      |      |      |      |      |      | Y    | Y    | Y    | Y    | Y    |
+| Tyk Operator v0.17.1 |      |      |      |      |      |      | Y    | Y    | Y    | Y    | Y    |
