@@ -38,7 +38,8 @@ type TykOASReference struct {
 type ConfigMapReference struct {
 	// Name is the name of configmap
 	Name string `json:"name"`
-	// Namespace is the namespace of configmap
+	// Namespace is the namespace of configmap.
+	// If Namespace is not provided, we assume that the configmap is in the same namesapce as TykOasApiDefinition resource.
 	Namespace string `json:"namespace,omitempty"`
 	// KeyName is the key of configmap in which Tyk OAS doc is stored
 	KeyName string `json:"keyName"`
