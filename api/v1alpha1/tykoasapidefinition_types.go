@@ -61,6 +61,7 @@ type TykOasApiDefinitionStatus struct {
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
 }
 
+// TykOasApiDefinition is the Schema for the tykoasapidefinitions API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Domain",type=string,JSONPath=`.status.domain`
@@ -68,7 +69,7 @@ type TykOasApiDefinitionStatus struct {
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.status.targetURL`
 // +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.status.enabled`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.latestTransaction.status`
-// TykOasApiDefinition is the Schema for the tykoasapidefinitions API
+// +kubebuilder:resource:categories="tyk",shortName="tykoas"
 type TykOasApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
