@@ -1,0 +1,17 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: partitioned
+spec:
+  name: Partitioned policy
+  state: active
+  active: true
+  access_rights_array:
+    - name: httpbin
+      namespace: tyk    
+      versions:
+        - Default
+  partitions:
+    quota: false # set enforce usage quota, default: false
+    rate_limit: false # set enforce rate limit, default: false
+    acl: true # set enforce access rights, default: false
