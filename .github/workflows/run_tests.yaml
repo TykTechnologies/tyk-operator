@@ -4,12 +4,14 @@ on:
   pull_request:
     branches:
       - master
+      - develop
     paths-ignore:
       - '**.md'
 
   push:
     branches:
       - master
+      - develop
 
   schedule:
     - cron: "0 0 * * *"
@@ -39,7 +41,7 @@ jobs:
       fail-fast: false
       matrix: 
         k8s-version: ${{ fromJSON(needs.matrix-generator.outputs.k8s-matrix) }}
-        tyk-version: ['v3.2','v4.0','v5.0','v5.2']
+        tyk-version: ['v3.2','v4.0','v5.0','v5.2','v5.3']
         mode: ['ce','pro']
 
     env:
