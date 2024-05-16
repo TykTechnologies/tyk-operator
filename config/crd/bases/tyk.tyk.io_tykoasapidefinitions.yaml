@@ -87,7 +87,9 @@ spec:
                         description: Name is the name of configmap
                         type: string
                       namespace:
-                        description: Namespace is the namespace of configmap
+                        description: Namespace is the namespace of configmap. If Namespace
+                          is not provided, we assume that the configmap is in the
+                          same namesapce as TykOasApiDefinition resource.
                         type: string
                     required:
                     - keyName

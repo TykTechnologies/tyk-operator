@@ -65,7 +65,12 @@ func (r *OperatorContextReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if !desired.DeletionTimestamp.IsZero() {
-		if len(desired.Status.LinkedApiDefinitions) != 0 || len(desired.Status.LinkedApiDescriptions) != 0 || len(desired.Status.LinkedPortalAPICatalogues) != 0 || len(desired.Status.LinkedSecurityPolicies) != 0 || len(desired.Status.LinkedPortalConfigs) != 0 {
+		if len(desired.Status.LinkedApiDefinitions) != 0 ||
+			len(desired.Status.LinkedApiDescriptions) != 0 ||
+			len(desired.Status.LinkedPortalAPICatalogues) != 0 ||
+			len(desired.Status.LinkedSecurityPolicies) != 0 ||
+			len(desired.Status.LinkedPortalConfigs) != 0 ||
+			len(desired.Status.LinkedTykOasApiDefinition) != 0 {
 			logger.Error(ErrOperatorContextIsStillInUse, "Cannot delete operator context")
 
 			return ctrl.Result{RequeueAfter: queueAfter}, ErrOperatorContextIsStillInUse

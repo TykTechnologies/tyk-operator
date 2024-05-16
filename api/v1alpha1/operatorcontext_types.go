@@ -94,6 +94,7 @@ type OperatorContextStatus struct {
 	LinkedPortalAPICatalogues []model.Target `json:"linked_portal_catalogues,omitempty"`
 	LinkedSecurityPolicies    []model.Target `json:"linked_security_policies,omitempty"`
 	LinkedPortalConfigs       []model.Target `json:"linked_portal_configs,omitempty"`
+	LinkedTykOasApiDefinition []model.Target `json:"linked_tyk_oas_api_definition,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -156,6 +157,10 @@ func (opStatus *OperatorContextStatus) RemoveLinkedPortalConfig(target model.Tar
 	opStatus.LinkedPortalConfigs = removeLinkedResource(target, opStatus.LinkedPortalConfigs)
 }
 
+func (opStatus *OperatorContextStatus) RemoveLinkedTykOasApiDefinition(target model.Target) {
+	opStatus.LinkedTykOasApiDefinition = removeLinkedResource(target, opStatus.LinkedTykOasApiDefinition)
+}
+
 func (opStatus *OperatorContextStatus) AddLinkedAPIDefinition(target model.Target) {
 	opStatus.RemoveLinkedAPIDefinition(target)
 	opStatus.LinkedApiDefinitions = append(opStatus.LinkedApiDefinitions, target)
@@ -179,4 +184,9 @@ func (opStatus *OperatorContextStatus) AddLinkedPortalAPICatalogues(target model
 func (opStatus *OperatorContextStatus) AddLinkedPortalConfig(target model.Target) {
 	opStatus.RemoveLinkedPortalConfig(target)
 	opStatus.LinkedPortalConfigs = append(opStatus.LinkedPortalConfigs, target)
+}
+
+func (opStatus *OperatorContextStatus) AddLinkedTykOasApiDefinition(target model.Target) {
+	opStatus.RemoveLinkedTykOasApiDefinition(target)
+	opStatus.LinkedTykOasApiDefinition = append(opStatus.LinkedTykOasApiDefinition, target)
 }

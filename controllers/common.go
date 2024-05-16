@@ -144,6 +144,8 @@ func HttpContext(
 		err = get(o.Spec.Context)
 	case *v1alpha1.PortalConfig:
 		err = get(o.Spec.Context)
+	case *v1alpha1.TykOasApiDefinition:
+		err = get(o.Spec.Context)
 	}
 
 	if err != nil {
@@ -261,6 +263,21 @@ func updateOperatorContextStatus(
 				return err
 			}
 		}
+	case *v1alpha1.TykOasApiDefinition:
+		for i := 0; i < len(opCtxList.Items); i++ {
+			// do not remove link if TykOasApiDefinition is still referring to context and is not marked for deletion.
+			if ctxRef != nil && opCtxList.Items[i].Name == ctxRef.Name &&
+				ctxRef.NamespaceMatches(opCtxList.Items[i].Namespace) && object.GetDeletionTimestamp().IsZero() {
+				continue
+			}
+
+			opCtxList.Items[i].Status.RemoveLinkedTykOasApiDefinition(objectTarget)
+
+			err := client.Status().Update(ctx, &opCtxList.Items[i])
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// Add reference to the referred operator context
@@ -294,6 +311,8 @@ func updateOperatorContextStatus(
 			operatorContext.Status.AddLinkedApiDescriptions(objectTarget)
 		case *v1alpha1.PortalConfig:
 			operatorContext.Status.AddLinkedPortalConfig(objectTarget)
+		case *v1alpha1.TykOasApiDefinition:
+			operatorContext.Status.AddLinkedTykOasApiDefinition(objectTarget)
 		}
 
 		return client.Status().Update(ctx, &operatorContext)
