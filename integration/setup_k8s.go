@@ -4,14 +4,19 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+
+	networkingv1 "k8s.io/api/networking/v1"
+
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/e2e-framework/klient"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -90,9 +95,21 @@ func setupk8s(c1 context.Context, c2 *envconf.Config) (context.Context, error) {
 	conf := client.RESTConfig()
 	conf.ContentConfig.GroupVersion = &v1alpha1.GroupVersion
 	conf.APIPath = "/apis"
-	v1alpha1.AddToScheme(scheme.Scheme)
+	sc := scheme.Scheme
 
-	conf.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
+	if err := v1alpha1.AddToScheme(sc); err != nil {
+		return nil, fmt.Errorf("failed to add Tyk CRD scheme, err: %v", err)
+	}
+
+	if err := v1.AddToScheme(sc); err != nil {
+		return nil, fmt.Errorf("failed to add corev1 scheme, err: %v", err)
+	}
+
+	if err := networkingv1.AddToScheme(sc); err != nil {
+		return nil, fmt.Errorf("failed to add Ingress scheme, err: %v", err)
+	}
+
+	conf.NegotiatedSerializer = serializer.NewCodecFactory(sc)
 	conf.UserAgent = rest.DefaultKubernetesUserAgent()
 
 	client, err = klient.New(conf)

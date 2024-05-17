@@ -123,7 +123,14 @@ func TestCreateAPI(t *testing.T) {
 		Env:    environment.Env{},
 	}
 
-	err = reconciler.createAPI(context.TODO(), reconciler.Log, &apiTemplate, "default", &ing, &reconciler.Env)
+	err = reconciler.reconcileClassicApiDefinition(
+		context.TODO(),
+		reconciler.Log,
+		&apiTemplate,
+		"default",
+		&ing,
+		&reconciler.Env,
+	)
 	eval.NoErr(err)
 
 	apiDef := &v1alpha1.ApiDefinition{}

@@ -11,15 +11,18 @@ const (
 	SubGraphFinalizerName             = "finalizers.tyk.io/subgraph"
 	SuperGraphFinalizerName           = "finalizers.tyk.io/supergraph"
 	TykOASFinalizerName               = "finalizers.tyk.io/tykoas"
+	IngressFinalizerName              = "finalizers.tyk.io/ingress"
 )
 
 // Ingress
 const (
+	IngressClassAnnotation             = "kubernetes.io/ingress.class"
 	IngressLabel                       = "tyk.io/ingress"
 	IngressTaintLabel                  = "tyk.io/taint"
 	APIDefLabel                        = "tyk.io/apidefinition"
-	IngressFinalizerName               = "finalizers.tyk.io/ingress"
-	IngressClassAnnotation             = "kubernetes.io/ingress.class"
+	TykOASApiDefinitionLabel           = "tyk.io/tykoasapidefinition"
 	IngressTemplateAnnotation          = "tyk.io/template"
+	IngressTemplateKindAnnotation      = "tyk.io/template-kind"
 	DefaultIngressClassAnnotationValue = "tyk"
+	TykOasApiDefinitionTemplateLabel   = "tyk.io/template"
 )

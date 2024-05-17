@@ -88,8 +88,8 @@ spec:
                         type: string
                       namespace:
                         description: Namespace is the namespace of configmap. If Namespace
-                          is not provided, we assume that the configmap is in the
-                          same namesapce as TykOasApiDefinition resource.
+                          is not provided, we assume that the ConfigMap is in the
+                          same namespace as TykOasApiDefinition resource.
                         type: string
                     required:
                     - keyName

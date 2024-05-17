@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,21 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// objMetaToStr returns string representation of given object's metadata.
+// For example, if the given object is ApiDefinition named as 'httpbin' in 'tyk' namespace,
+// objMetaToStr returns 'tyk/httpbin'. This is useful for logging and debugging.
+func objMetaToStr(obj client.Object) string {
+	return client.ObjectKeyFromObject(obj).String()
+}
+
+// strToJsonStrByte returns []byte array which represents "\"some_str\"" in JSON.
+// Given []byte array represents a JSON object, if you want to update a field value with
+// string value, current jsonparser package sets is as without quoting.
+// strToJsonStrByte takes a string key and returns its quoted string representation in JSON []byte.
+func strToJsonStrByte(key string) []byte {
+	return []byte(fmt.Sprintf(`"%s"`, key))
+}
 
 // hashOptions corresponds to hashing options used to calculate the hash of
 // currently reconciled CRs.
@@ -465,4 +481,47 @@ func GetContext(
 	}
 
 	return &o, nil
+}
+
+func defaultOasIngressTemplate() (*v1alpha1.TykOasApiDefinition, *v1.ConfigMap) {
+	const (
+		key           = "oas-ingress.json"
+		minimalOasTpl = `{
+			"info": {
+			  "title": "Petstore",
+			  "version": "1.0.0"
+			},
+			"openapi": "3.0.3",
+			"components": {},
+			"paths": {},
+			"x-tyk-api-gateway": {
+			  "info": {
+				"name": "Petstore",
+				"state": {
+				  "active": true
+				}
+			  },
+			  "upstream": {
+				"url": "https://petstore.swagger.io/v2"
+			  },
+			  "server": {
+				"listenPath": {
+				  "value": "/petstore/",
+				  "strip": true
+				}
+			  }
+			}
+		  }`
+	)
+	cm := v1.ConfigMap{}
+
+	cm.Data = make(map[string]string)
+	cm.Data[key] = minimalOasTpl
+
+	oasApiCr := v1alpha1.TykOasApiDefinition{}
+	oasApiCr.Spec.TykOAS.ConfigmapRef.Name = cm.Name
+	oasApiCr.Spec.TykOAS.ConfigmapRef.Namespace = cm.Namespace
+	oasApiCr.Spec.TykOAS.ConfigmapRef.KeyName = key
+
+	return &oasApiCr, &cm
 }

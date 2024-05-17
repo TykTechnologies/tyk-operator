@@ -57,7 +57,7 @@ func TestOASCreate(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "")
+			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)
@@ -66,8 +66,15 @@ func TestOASCreate(t *testing.T) {
 			return ctx
 		}).Assess("Ensure OAS definition is created on Tyk",
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			exists := klient.Universal.TykOAS().Exists(tykCtx, tykOAS.Status.ID)
-			eval.True(exists)
+			err := wait.For(
+				conditions.New(c.Client().Resources(testNS)).ResourceMatch(tykOAS, func(object k8s.Object) bool {
+					currTykOas, ok := object.(*v1alpha1.TykOasApiDefinition)
+					eval.True(ok)
+
+					t.Logf("looking for %+v", currTykOas.Status)
+					return klient.Universal.TykOAS().Exists(tykCtx, currTykOas.Status.ID) == true
+				}))
+			eval.NoErr(err)
 
 			return ctx
 		}).Feature()
@@ -102,7 +109,7 @@ func TestInvalidTykOAS(t *testing.T) {
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			invalidOASDoc := "{}"
 
-			tykOAS, _, err := createTestOASApi(ctx, testNS, c, invalidOASDoc)
+			tykOAS, _, err := createTestOASApi(ctx, testNS, c, invalidOASDoc, nil)
 			eval.NoErr(err)
 
 			err = wait.For(conditions.New(c.Client().Resources(testNS)).ResourceMatch(tykOAS, func(object k8s.Object) bool {
@@ -149,7 +156,7 @@ func TestOASDelete(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "")
+			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)
@@ -210,7 +217,7 @@ func TestOASUpdate(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, cm, err = createTestOASApi(ctx, testNS, c, "")
+			tykOAS, cm, err = createTestOASApi(ctx, testNS, c, "", nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)

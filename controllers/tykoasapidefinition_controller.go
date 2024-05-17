@@ -21,6 +21,9 @@ import (
 	"fmt"
 	"time"
 
+	networkingv1 "k8s.io/api/networking/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -47,6 +50,19 @@ import (
 const (
 	TykOASConfigMapKey  = "spec.tykOAS.configmapRef.name"
 	TykOASExtenstionStr = "x-tyk-api-gateway"
+)
+
+var (
+	InfoNameKeys                                 = []string{TykOASExtenstionStr, "info", "name"}
+	UpstreamURLKeys                              = []string{TykOASExtenstionStr, "upstream", "url"}
+	ServerListenpathStripKeys                    = []string{TykOASExtenstionStr, "server", "listenPath", "strip"}
+	ServerListenpathValueKeys                    = []string{TykOASExtenstionStr, "server", "listenPath", "value"}
+	ServerCustomDomainNameKeys                   = []string{TykOASExtenstionStr, "server", "customDomain", "name"}
+	ServerCustomDomainEnabledKeys                = []string{TykOASExtenstionStr, "server", "customDomain", "enabled"}
+	ServerCustomDomainCertsKeys                  = []string{TykOASExtenstionStr, "server", "customDomain", "certificates"}
+	ServerAuthenticationBaseIdentityProviderKeys = []string{
+		TykOASExtenstionStr, "server", "authentication", "baseIdentityProvider",
+	}
 )
 
 // TykOasApiDefinitionReconciler reconciles a TykOasApiDefinition object
@@ -78,6 +94,10 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 	// Lookup Tyk OAS object
 	tykOAS := &v1alpha1.TykOasApiDefinition{}
 	if err := r.Get(ctx, req.NamespacedName, tykOAS); err != nil {
+		if k8serrors.IsNotFound(err) {
+			log.Info("failed to get TykOasApiDefinition CR", "err", err.Error())
+		}
+
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -86,11 +106,35 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
+	if tykOAS.GetLabels()[keys.TykOasApiDefinitionTemplateLabel] == "true" {
+		log.Info("Reconciling TykOasApiDefinition Template for Ingress")
+
+		if !tykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
+			return ctrl.Result{}, r.deleteOasTpl(ctx, log, tykOAS)
+		}
+
+		if !util.ContainsFinalizer(tykOAS, keys.ApiDefTemplateFinalizerName) {
+			util.AddFinalizer(tykOAS, keys.ApiDefTemplateFinalizerName)
+			return ctrl.Result{}, r.Update(ctx, tykOAS)
+		}
+
+		tykOAS.Status.LatestTransaction.Status = v1alpha1.IngressTemplate
+		tykOAS.Status.LatestTransaction.Time = metav1.Now()
+
+		if err = r.Status().Update(ctx, tykOAS); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Successfully reconciled Tyk OasApiDefinition template for Ingress")
+
+		return ctrl.Result{}, nil
+	}
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, tykOAS, func() error {
 		if !tykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
 			markForDeletion = true
 
-			return delete(ctx, tykOAS)
+			return deleteOasApi(ctx, tykOAS)
 		}
 
 		util.AddFinalizer(tykOAS, keys.TykOASFinalizerName)
@@ -100,6 +144,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 			log.Error(err, "Failed to create/update Tyk OAS API")
 			return err
 		}
+
 		return nil
 	})
 
@@ -230,7 +275,7 @@ func (r *TykOasApiDefinitionReconciler) updateStatus(ctx context.Context, tykOAS
 			tykOASCrd.Status.Enabled = state
 		}
 
-		str, err := jsonparser.GetString([]byte(tykOASDoc), TykOASExtenstionStr, "server", "customDomain")
+		str, err := jsonparser.GetString([]byte(tykOASDoc), ServerCustomDomainNameKeys...)
 		// do not throw error if field doesn't exist
 		if err != nil && err != jsonparser.KeyPathNotFoundError {
 			log.Error(err, "Failed to fetch domain information from Tyk OAS document")
@@ -238,7 +283,7 @@ func (r *TykOasApiDefinitionReconciler) updateStatus(ctx context.Context, tykOAS
 			tykOASCrd.Status.Domain = str
 		}
 
-		str, err = jsonparser.GetString([]byte(tykOASDoc), TykOASExtenstionStr, "server", "listenPath", "value")
+		str, err = jsonparser.GetString([]byte(tykOASDoc), ServerListenpathValueKeys...)
 		// do not throw error if field doesn't exist
 		if err != nil && err != jsonparser.KeyPathNotFoundError {
 			log.Error(err, "Failed to fetch listen path information from Tyk OAS document")
@@ -246,7 +291,7 @@ func (r *TykOasApiDefinitionReconciler) updateStatus(ctx context.Context, tykOAS
 			tykOASCrd.Status.ListenPath = str
 		}
 
-		str, err = jsonparser.GetString([]byte(tykOASDoc), TykOASExtenstionStr, "upstream", "url")
+		str, err = jsonparser.GetString([]byte(tykOASDoc), UpstreamURLKeys...)
 		// do not throw error if field doesn't exist
 		if err != nil && err != jsonparser.KeyPathNotFoundError {
 			log.Error(err, "Failed to fetch upstream url  information from Tyk OAS document")
@@ -272,7 +317,11 @@ func getAPIID(tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string) (string
 	return val, nil
 }
 
-func delete(ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition) error {
+func deleteOasApi(ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition) error {
+	if tykOASCrd == nil {
+		return nil
+	}
+
 	if tykOASCrd.Status.ID != "" {
 		if err := klient.Universal.TykOAS().Delete(ctx, tykOASCrd.Status.ID); err != nil {
 			return err
@@ -341,4 +390,43 @@ func (r *TykOasApiDefinitionReconciler) configmapEvents() predicate.Predicate {
 			return true
 		},
 	}
+}
+
+func (r *TykOasApiDefinitionReconciler) deleteOasTpl(
+	ctx context.Context,
+	l logr.Logger,
+	tykOas *v1alpha1.TykOasApiDefinition,
+) error {
+	l.Info("TykOasApiDefinition is being deleted")
+
+	// If there are no finalizers, no need to check for Ingress dependencies.
+	if !util.ContainsFinalizer(tykOas, keys.ApiDefTemplateFinalizerName) {
+		return nil
+	}
+
+	var ingList networkingv1.IngressList
+	if err := r.List(ctx, &ingList, client.InNamespace(tykOas.Namespace)); err != nil {
+		// If there are no ingress in the namespace where this TykOasApiDefinition template lives,
+		// no need to return any errors. Otherwise, there is an error while fetching ingress list.
+		if !k8serrors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	var dependencies []string
+
+	for i := range ingList.Items {
+		if ingList.Items[i].GetAnnotations() != nil &&
+			ingList.Items[i].GetAnnotations()[keys.IngressTemplateAnnotation] == tykOas.Name {
+			dependencies = append(dependencies, ingList.Items[i].Name)
+		}
+	}
+
+	if len(dependencies) > 0 {
+		return fmt.Errorf("failed to delete TykOasApiDefinition as Ingress resources %+v depend on it", dependencies)
+	}
+
+	util.RemoveFinalizer(tykOas, keys.ApiDefTemplateFinalizerName)
+
+	return r.Update(ctx, tykOas)
 }

@@ -112,6 +112,10 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		log.Info("Synced template", "template", desired.Name)
 
 		desired.Status.OrgID = env.Org
+		desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
+			Time:   metav1.Now(),
+			Status: tykv1alpha1.IngressTemplate,
+		}
 
 		if err := r.Status().Update(ctx, desired); err != nil {
 			log.Info("Failed to update template ApiDefinition status")
@@ -562,9 +566,7 @@ func (r *ApiDefinitionReconciler) update(ctx context.Context, desired *tykv1alph
 	return nil
 }
 
-// This triggers an update to all ingress resources that have template
-// annotation matching a.Name.
-//
+// This triggers an update to all ingress resources that have template annotation matching a.Name.
 // We return nil when a is being deleted and do nothing.
 func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a *tykv1alpha1.ApiDefinition) (ctrl.Result, error) {
 	if !a.DeletionTimestamp.IsZero() {
@@ -590,7 +592,7 @@ func (r *ApiDefinitionReconciler) syncTemplate(ctx context.Context, ns string, a
 
 			if len(refs) > 0 {
 				return ctrl.Result{RequeueAfter: time.Second * 5},
-					fmt.Errorf("Can't delete %s, Ingress resources %+v depend on it", a.Name, refs)
+					fmt.Errorf("failed to delete %s, Ingress resources %+v depend on it", a.Name, refs)
 			}
 
 			util.RemoveFinalizer(a, keys.ApiDefTemplateFinalizerName)

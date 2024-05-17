@@ -14,23 +14,24 @@ import (
 	"os"
 	"time"
 
-	rand2 "k8s.io/apimachinery/pkg/util/rand"
-
-	"github.com/google/uuid"
-
-	"sigs.k8s.io/e2e-framework/klient/k8s"
-	"sigs.k8s.io/e2e-framework/klient/wait"
-	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
+	"github.com/buger/jsonparser"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/controllers"
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
-
+	"github.com/TykTechnologies/tyk-operator/pkg/keys"
+	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	rand2 "k8s.io/apimachinery/pkg/util/rand"
 	cr "sigs.k8s.io/controller-runtime/pkg/client"
 	e2eKlient "sigs.k8s.io/e2e-framework/klient"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
@@ -50,9 +51,7 @@ const (
 	testOASCmName      = "test-oas-cm"
 	testOASConfKeyName = "test-oas.json"
 	testOASCrdName     = "test-oas"
-)
-
-const testOASDoc = `{
+	testOASDoc         = `{
 	"info": {
 	  "title": "Petstore",
 	  "version": "1.0.0"
@@ -71,6 +70,10 @@ const testOASDoc = `{
 		"url": "https://petstore.swagger.io/v2"
 	  },
 	  "server": {
+		"authentication": {
+		  "baseIdentityProvider": "auth_token",
+          "enabled": true
+		},
 		"listenPath": {
 		  "value": "/petstore/",
 		  "strip": true
@@ -78,6 +81,7 @@ const testOASDoc = `{
 	  }
 	}
   }`
+)
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
 // Reconciler for CRs such as ApiDefinitionReconciler.
@@ -90,6 +94,10 @@ func createTestClient(k e2eKlient.Client) (cr.Client, error) {
 	}
 
 	if err := v1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
+
+	if err := networkingv1.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
@@ -357,7 +365,7 @@ func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environmen
 	}, nil
 }
 
-func createTestOASApi(ctx context.Context, ns string, c *envconf.Config, tykOASDoc string,
+func createTestOASApi(ctx context.Context, ns string, c *envconf.Config, tykOASDoc string, oasLabels map[string]string,
 ) (*v1alpha1.TykOasApiDefinition, *v1.ConfigMap, error) {
 	cm := &v1.ConfigMap{}
 	cm.Name = testOASCmName
@@ -391,7 +399,217 @@ func createTestOASApi(ctx context.Context, ns string, c *envconf.Config, tykOASD
 		KeyName:   testOASConfKeyName,
 	}
 
+	if oasLabels != nil {
+		tykOAS.ObjectMeta.SetLabels(oasLabels)
+	}
+
 	err := c.Client().Resources(ns).Create(ctx, tykOAS)
 
 	return tykOAS, cm, err
+}
+
+/*
+Helpers for Ingress integration tests
+*/
+
+// expectedOasStatus represents a struct to describe expectations from TykOasApiDefinition CR status
+type expectedOasStatus struct {
+	upstreamURL string
+	status      v1alpha1.TransactionStatus
+	listenPath  string
+}
+
+// checkOasApiStatus checks if the OAS API status satisfies the expected structure
+func checkOasApiStatus(oasApi *v1alpha1.TykOasApiDefinition, expectations expectedOasStatus) error {
+	if len(oasApi.Status.ID) == 0 {
+		return fmt.Errorf("invalid Status ID, status ID must be updated")
+	}
+
+	if oasApi.Status.TargetURL != expectations.upstreamURL {
+		return fmt.Errorf("invalid TargetURL in TykOasApiDefinition status, TykOasApiDefinition Status: %+v", oasApi.Status)
+	}
+
+	if oasApi.Status.LatestTransaction.Status != expectations.status {
+		return fmt.Errorf(
+			"invalid LatestTransaction.Status in TykOasApiDefinition status, TykOasApiDefinition Status: %+v",
+			oasApi.Status,
+		)
+	}
+
+	if oasApi.Status.ListenPath != expectations.listenPath {
+		return fmt.Errorf(
+			"invalid ListenPath in TykOasApiDefinition status, TykOasApiDefinition Status: %+v", oasApi.Status,
+		)
+	}
+
+	return nil
+}
+
+// checkOasApisReferExistingConfigMaps checks if each member of oasApis refers to the existing configMaps.
+func checkOasApisReferExistingConfigMaps(oasApis []v1alpha1.TykOasApiDefinition, configMaps []v1.ConfigMap) bool {
+	type mapKey string
+	key := func(ns, name string) mapKey {
+		return mapKey(ns + "/" + name)
+	}
+
+	configMapSet := make(map[mapKey]bool)
+	for i := range configMaps {
+		configMapSet[key(configMaps[i].Namespace, configMaps[i].Name)] = true
+	}
+
+	for i := range oasApis {
+		k := key(oasApis[i].Spec.TykOAS.ConfigmapRef.Namespace, oasApis[i].Spec.TykOAS.ConfigmapRef.Name)
+		if _, exists := configMapSet[k]; !exists {
+			return false
+		}
+	}
+
+	return true
+}
+
+// validateOasAuthentication checks for if authentication related configurations are inherited from templates.
+// It takes two byte arrays; the first represents OAS API returned from Tyk Client and the second represents
+// template ConfigMap's data.
+func validateOasAuthentication(tykOasApi, tplCmData []byte) error {
+	tykAuthType, err := jsonparser.GetString(tykOasApi, controllers.ServerAuthenticationBaseIdentityProviderKeys...)
+	if err != nil {
+		return fmt.Errorf("failed to parse 'server.authentication' from OasApiDefinition fetched from Tyk, err: %v", err)
+	}
+
+	expectedAuthType, err := jsonparser.GetString(tplCmData, controllers.ServerAuthenticationBaseIdentityProviderKeys...)
+	if err != nil {
+		return fmt.Errorf("failed to parse 'info.name' from  fetched from Tyk, err: %v", err)
+	}
+
+	if tykAuthType != expectedAuthType {
+		return fmt.Errorf("unexpected OAS Auth Type, expected %v got %v", expectedAuthType, tykAuthType)
+	}
+
+	return nil
+}
+
+// validateStrField validates if the given byte array, which represents OAS API from Tyk in JSON format, has
+// expected info field at JSON keys field.
+func validateStrField(tykOasApi []byte, expectedVal string, keys []string) error {
+	v, err := jsonparser.GetString(tykOasApi, keys...)
+	if err != nil {
+		return fmt.Errorf("failed to parse %+v from OasApiDefinition fetched from Tyk, err: %v", keys, err)
+	}
+
+	if v != expectedVal {
+		return fmt.Errorf("unexpected OAS API spec at field: %v, expected %v got %v", keys, expectedVal, v)
+	}
+
+	return nil
+}
+
+// validateDomainName checks if the given domain name is created accordingly in the given tykOasApi string which
+// represents Tyk OAS API definition fetched from Tyk in JSON format.
+func validateDomainName(tykOasApi []byte, statusDomain string) error {
+	if statusDomain == "" {
+		return nil
+	}
+
+	customDomainName, err := jsonparser.GetString(tykOasApi, controllers.ServerCustomDomainNameKeys...)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to parse 'customDomain.name' from OasApiDefinition fetched from Tyk, err: %v",
+			err,
+		)
+	}
+
+	if statusDomain != customDomainName {
+		return fmt.Errorf("unexpected OAS API CustomDomain.name, expected %v got %v",
+			statusDomain, customDomainName,
+		)
+	}
+
+	customDomainEnabled, err := jsonparser.GetBoolean(tykOasApi, controllers.ServerCustomDomainEnabledKeys...)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to parse 'customDomain.enabled' from OasApiDefinition fetched from Tyk, err: %v", err,
+		)
+	}
+
+	if !customDomainEnabled {
+		return fmt.Errorf("unexpected OAS API CustomDomain.enabled, expected %v got %v",
+			true, customDomainEnabled)
+	}
+
+	return nil
+}
+
+// ingTplMeta represents a struct holding metadata information of the template given to Ingress.
+// The name field represents 'tyk.io/template' label,
+// while kind field represents 'tyk.io/template-kind' label.
+type ingTplMeta struct {
+	name string
+	kind string
+}
+
+// newIngress creates a new Ingress object with the specified configurations.
+// Based on the configurations, newIngress creates two rules; one with the host and another one is without host.
+func newIngress(tpl ingTplMeta, ingName, ingNs, host, path, svcName string, svcPort int32) *networkingv1.Ingress {
+	annotations := map[string]string{
+		"kubernetes.io/ingress.class":         "tyk",
+		keys.TykOasApiDefinitionTemplateLabel: tpl.name,
+	}
+	if tpl.kind != "" {
+		annotations[keys.IngressTemplateKindAnnotation] = tpl.kind
+	}
+
+	pathType := networkingv1.PathTypePrefix
+
+	return &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        ingName,
+			Namespace:   ingNs,
+			Annotations: annotations,
+		},
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
+				{
+					Host: host,
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								{
+									Path:     path,
+									PathType: &pathType,
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: svcName,
+											Port: networkingv1.ServiceBackendPort{
+												Number: svcPort,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								{
+									Path:     path,
+									PathType: &pathType,
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: svcName,
+											Port: networkingv1.ServiceBackendPort{
+												Number: svcPort,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
