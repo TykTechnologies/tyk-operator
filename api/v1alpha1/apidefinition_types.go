@@ -65,7 +65,11 @@ type ApiDefinitionStatus struct {
 	// runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
 	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
 
+	// LatestTransaction provides status information about the last reconciliation.
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
+
+	// IngressTemplate shows whether this CR is used as Ingress Template or not.
+	IngressTemplate bool `json:"ingressTemplate,omitempty"`
 }
 
 // ApiDefinition is the Schema for the apidefinitions API
@@ -75,7 +79,8 @@ type ApiDefinitionStatus struct {
 // +kubebuilder:printcolumn:name="ListenPath",type=string,JSONPath=`.spec.proxy.listen_path`
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.spec.proxy.target_url`
 // +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.active`
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.latestTransaction.status`
+// +kubebuilder:printcolumn:name="SyncStatus",type=string,JSONPath=`.status.latestTransaction.status`
+// +kubebuilder:printcolumn:name="IngressTemplate",type=boolean,JSONPath=`.status.ingressTemplate`
 // +kubebuilder:resource:categories="tyk",shortName="tykapis"
 type ApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`

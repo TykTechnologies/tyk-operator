@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -118,8 +119,14 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 			return ctrl.Result{}, r.Update(ctx, tykOAS)
 		}
 
-		tykOAS.Status.LatestTransaction.Status = v1alpha1.IngressTemplate
-		tykOAS.Status.LatestTransaction.Time = metav1.Now()
+		if err = r.reconcileOasTpl(ctx, tykOAS); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		tykOAS.Status.LatestTransaction = v1alpha1.TransactionInfo{
+			Time: metav1.Now(),
+		}
+		tykOAS.Status.IngressTemplate = true
 
 		if err = r.Status().Update(ctx, tykOAS); err != nil {
 			return ctrl.Result{}, err
@@ -164,7 +171,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 		tykOAS.Status.LatestTransaction = transactionInfo
 
-		if err = r.updateStatus(ctx, tykOAS, apiID, log); err != nil {
+		if err = r.updateStatus(ctx, tykOAS, apiID, log, false); err != nil {
 			log.Error(err, "Failed to update status of Tyk OAS CRD")
 			return ctrl.Result{RequeueAfter: reqA}, err
 		}
@@ -236,12 +243,16 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Cont
 	return apiID, nil
 }
 
-func (r *TykOasApiDefinitionReconciler) updateStatus(ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition,
-	apiID string, log logr.Logger,
+func (r *TykOasApiDefinitionReconciler) updateStatus(
+	ctx context.Context,
+	tykOASCrd *v1alpha1.TykOasApiDefinition,
+	apiID string,
+	log logr.Logger,
+	isIngTpl bool,
 ) error {
-	var cm v1.ConfigMap
-
 	log.Info("Updating status of Tyk OAS instance")
+
+	tykOASCrd.Status.IngressTemplate = isIngTpl
 
 	if tykOASCrd.Status.ID == "" {
 		tykOASCrd.Status.ID = apiID
@@ -256,6 +267,8 @@ func (r *TykOasApiDefinitionReconciler) updateStatus(ctx context.Context, tykOAS
 		Name:      tykOASCrd.Spec.TykOAS.ConfigmapRef.Name,
 		Namespace: configMapNs,
 	}
+
+	var cm v1.ConfigMap
 
 	err := r.Client.Get(ctx, cmNS, &cm)
 	if err != nil {
@@ -429,4 +442,36 @@ func (r *TykOasApiDefinitionReconciler) deleteOasTpl(
 	util.RemoveFinalizer(tykOas, keys.ApiDefTemplateFinalizerName)
 
 	return r.Update(ctx, tykOas)
+}
+
+func (r *TykOasApiDefinitionReconciler) reconcileOasTpl(ctx context.Context, tpl *v1alpha1.TykOasApiDefinition) error {
+	ingressList := networkingv1.IngressList{}
+
+	err := r.List(ctx, &ingressList, client.InNamespace(tpl.Namespace))
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+
+	for i := range ingressList.Items {
+		if ingressList.Items[i].GetAnnotations()[keys.IngressTemplateAnnotation] == tpl.Name {
+			key := client.ObjectKey{
+				Namespace: ingressList.Items[i].GetNamespace(),
+				Name:      ingressList.Items[i].GetName(),
+			}
+
+			r.Log.Info("Updating ingress " + key.String())
+
+			if ingressList.Items[i].Labels == nil {
+				ingressList.Items[i].Labels = make(map[string]string)
+			}
+
+			ingressList.Items[i].Labels[keys.IngressTaintLabel] = strconv.FormatInt(time.Now().UnixNano(), 10)
+
+			if err = r.Update(ctx, &ingressList.Items[i]); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

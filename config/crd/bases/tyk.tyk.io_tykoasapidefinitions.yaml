@@ -34,8 +34,11 @@ spec:
       name: Enabled
       type: boolean
     - jsonPath: .status.latestTransaction.status
-      name: Status
+      name: SyncStatus
       type: string
+    - jsonPath: .status.ingressTemplate
+      name: IngressTemplate
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -113,9 +116,13 @@ spec:
               id:
                 description: ID is the unique identifier of the API within Tyk.
                 type: string
+              ingressTemplate:
+                description: IngressTemplate shows whether this CR is used as Ingress
+                  Template or not.
+                type: boolean
               latestTransaction:
                 description: LatestTransaction provides status information about the
-                  last reconcile
+                  last reconciliation.
                 properties:
                   error:
                     description: Error corresponds to the error happened on Tyk API

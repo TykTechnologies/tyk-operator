@@ -113,9 +113,9 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		desired.Status.OrgID = env.Org
 		desired.Status.LatestTransaction = tykv1alpha1.TransactionInfo{
-			Time:   metav1.Now(),
-			Status: tykv1alpha1.IngressTemplate,
+			Time: metav1.Now(),
 		}
+		desired.Status.IngressTemplate = true
 
 		if err := r.Status().Update(ctx, desired); err != nil {
 			log.Info("Failed to update template ApiDefinition status")
@@ -256,6 +256,7 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 					status.LatestTykSpecHash = calculateHash(apiOnTyk)
 					status.LatestCRDSpecHash = calculateHash(upstreamRequestStruct.Spec)
 					status.LatestTransaction = *transactionInfo
+					status.IngressTemplate = false
 				},
 			)
 		}

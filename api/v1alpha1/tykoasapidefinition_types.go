@@ -58,8 +58,10 @@ type TykOasApiDefinitionStatus struct {
 	TargetURL string `json:"targetURL,omitempty"`
 	// Enabled represents if API is enabled or not
 	Enabled bool `json:"enabled,omitempty"`
-	// LatestTransaction provides status information about the last reconcile
+	// LatestTransaction provides status information about the last reconciliation.
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
+	// IngressTemplate shows whether this CR is used as Ingress Template or not.
+	IngressTemplate bool `json:"ingressTemplate,omitempty"`
 }
 
 // TykOasApiDefinition is the Schema for the tykoasapidefinitions API
@@ -69,7 +71,8 @@ type TykOasApiDefinitionStatus struct {
 // +kubebuilder:printcolumn:name="ListenPath",type=string,JSONPath=`.status.listenPath`
 // +kubebuilder:printcolumn:name="Proxy.TargetURL",type=string,JSONPath=`.status.targetURL`
 // +kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.status.enabled`
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.latestTransaction.status`
+// +kubebuilder:printcolumn:name="SyncStatus",type=string,JSONPath=`.status.latestTransaction.status`
+// +kubebuilder:printcolumn:name="IngressTemplate",type=boolean,JSONPath=`.status.ingressTemplate`
 // +kubebuilder:resource:categories="tyk",shortName="tykoas"
 type TykOasApiDefinition struct {
 	metav1.TypeMeta   `json:",inline"`

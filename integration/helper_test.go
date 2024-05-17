@@ -551,9 +551,13 @@ type ingTplMeta struct {
 // Based on the configurations, newIngress creates two rules; one with the host and another one is without host.
 func newIngress(tpl ingTplMeta, ingName, ingNs, host, path, svcName string, svcPort int32) *networkingv1.Ingress {
 	annotations := map[string]string{
-		"kubernetes.io/ingress.class":         "tyk",
-		keys.TykOasApiDefinitionTemplateLabel: tpl.name,
+		"kubernetes.io/ingress.class": "tyk",
 	}
+
+	if tpl.name != "" {
+		annotations[keys.TykOasApiDefinitionTemplateLabel] = tpl.name
+	}
+
 	if tpl.kind != "" {
 		annotations[keys.IngressTemplateKindAnnotation] = tpl.kind
 	}

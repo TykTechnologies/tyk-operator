@@ -56,7 +56,8 @@ type IngressReconciler struct {
 
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;create;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;create;list;watch;delete;deletecollection
+// +kubebuilder:rbac:groups=tyk.tyk.io,resources=tykoasapidefinitions,verbs=get;list;watch;create;update;patch;delete;deletecollection
 
 // Reconcile perform reconciliation logic for Ingress resource that is managed
 // by the operator.
@@ -84,7 +85,6 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		if !util.ContainsFinalizer(desired, keys.IngressFinalizerName) {
 			util.AddFinalizer(desired, keys.IngressFinalizerName)
-			return nil
 		}
 
 		return nil
@@ -113,13 +113,25 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		l.Info("Successfully synced Ingress by using TykOasApiDefinition template")
 
+		if err = r.deleteOrphanAPI(ctx, l, nil, desired); err != nil {
+			l.Info("failed to delete orphan ApiDefinition CRs", "err", err)
+			return ctrl.Result{}, err
+		}
+
 		return ctrl.Result{}, nil
 	}
 
 	// Reconcile ApiDefinition for each Rule and Path defined in Ingress.
 	classicApiTpl := r.keyless()
-	if err = r.Get(ctx, tplMeta, classicApiTpl); err != nil {
-		return ctrl.Result{}, err
+
+	if tplMeta.Name != "" {
+		l.Info("Reconciling ApiDefinition for Ingress", "Template ApiDefinition", tplMeta.String())
+
+		if err = r.Get(ctx, tplMeta, classicApiTpl); err != nil {
+			return ctrl.Result{}, err
+		}
+	} else {
+		l.Info("Reconciling ApiDefinition for Ingress without template")
 	}
 
 	if !desired.DeletionTimestamp.IsZero() {
@@ -133,6 +145,16 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	l.Info("Successfully synced Ingress by using ApiDefinition template")
+
+	if err = r.deleteOrphanOasApis(ctx, l, nil, desired); err != nil {
+		l.Info("failed to delete orphan TykOasApiDefinition CRs", "error", err)
+		return ctrl.Result{}, err
+	}
+
+	if err = r.deleteOrphanOasCMs(ctx, l, nil, desired); err != nil {
+		l.Info("failed to delete orphan ConfigMap templates", "error", err)
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -166,6 +188,8 @@ func (r *IngressReconciler) reconcileClassicApiDefinition(
 	desired *networkingv1.Ingress,
 	env *environment.Env,
 ) error {
+	var existingHashes []string
+
 	for _, rule := range desired.Spec.Rules {
 		for _, p := range rule.HTTP.Paths {
 			hash := shortHash(rule.Host + p.Path)
@@ -244,10 +268,12 @@ func (r *IngressReconciler) reconcileClassicApiDefinition(
 			}
 
 			lg.Info("successful sync api definition", "name", name, "op", op)
+
+			existingHashes = append(existingHashes, hash)
 		}
 	}
 
-	return r.deleteOrphanAPI(ctx, lg, ns, desired)
+	return r.deleteOrphanAPI(ctx, lg, existingHashes, desired)
 }
 
 func (r *IngressReconciler) translateHost(host string) string {
@@ -257,18 +283,9 @@ func (r *IngressReconciler) translateHost(host string) string {
 func (r *IngressReconciler) deleteOrphanAPI(
 	ctx context.Context,
 	l logr.Logger,
-	ns string,
+	existingHashes []string,
 	ing *networkingv1.Ingress,
 ) error {
-	var ids []string
-
-	for _, rule := range ing.Spec.Rules {
-		for _, p := range rule.HTTP.Paths {
-			hash := shortHash(rule.Host + p.Path)
-			ids = append(ids, hash)
-		}
-	}
-
 	s := labels.NewSelector()
 
 	exists, err := labels.NewRequirement(keys.APIDefLabel, selection.Exists, []string{})
@@ -278,9 +295,13 @@ func (r *IngressReconciler) deleteOrphanAPI(
 
 	s = s.Add(*exists)
 
-	notIn, err := labels.NewRequirement(keys.APIDefLabel, selection.NotIn, ids)
-	if err != nil {
-		return err
+	if existingHashes != nil {
+		notIn, err := labels.NewRequirement(keys.APIDefLabel, selection.NotIn, existingHashes)
+		if err != nil {
+			return err
+		}
+
+		s = s.Add(*notIn)
 	}
 
 	name, err := labels.NewRequirement(keys.IngressLabel, selection.DoubleEquals, []string{ing.Name})
@@ -289,14 +310,13 @@ func (r *IngressReconciler) deleteOrphanAPI(
 	}
 
 	s = s.Add(*name)
-	s = s.Add(*notIn)
 
-	l.Info("Deleting orphan ApiDefinitions", "selector", s, "count", len(ids))
+	l.Info("Deleting orphan ApiDefinitions", "selector", s, "count", len(existingHashes))
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.DeleteAllOf(ctx, &v1alpha1.ApiDefinition{}, &client.DeleteAllOfOptions{
 			ListOptions: client.ListOptions{
 				LabelSelector: s,
-				Namespace:     ns,
+				Namespace:     ing.Namespace,
 			},
 			DeleteOptions: client.DeleteOptions{},
 		})
@@ -627,19 +647,22 @@ func (r *IngressReconciler) deleteOrphanOasApis(
 		return err
 	}
 
-	notIn, err := labels.NewRequirement(keys.TykOASApiDefinitionLabel, selection.NotIn, existingHashes)
-	if err != nil {
-		return err
+	if existingHashes != nil {
+		notIn, err := labels.NewRequirement(keys.TykOASApiDefinitionLabel, selection.NotIn, existingHashes)
+		if err != nil {
+			return err
+		}
+
+		s = s.Add(*notIn)
 	}
 
-	ingName, err := labels.NewRequirement(keys.IngressLabel, selection.DoubleEquals, []string{ing.Name})
+	name, err := labels.NewRequirement(keys.IngressLabel, selection.DoubleEquals, []string{ing.Name})
 	if err != nil {
 		return err
 	}
 
 	s = s.Add(*oasApiLabelExists)
-	s = s.Add(*ingName)
-	s = s.Add(*notIn)
+	s = s.Add(*name)
 
 	l.Info("Deleting orphan TykOasApiDefinitions", "selector", s, "count", len(existingHashes))
 
@@ -673,9 +696,13 @@ func (r *IngressReconciler) deleteOrphanOasCMs(
 		return err
 	}
 
-	notIn, err := labels.NewRequirement(keys.TykOASApiDefinitionLabel, selection.NotIn, existingHashes)
-	if err != nil {
-		return err
+	if existingHashes != nil {
+		notIn, err := labels.NewRequirement(keys.TykOASApiDefinitionLabel, selection.NotIn, existingHashes)
+		if err != nil {
+			return err
+		}
+
+		s = s.Add(*notIn)
 	}
 
 	name, err := labels.NewRequirement(keys.IngressLabel, selection.DoubleEquals, []string{ing.Name})
@@ -685,7 +712,6 @@ func (r *IngressReconciler) deleteOrphanOasCMs(
 
 	s = s.Add(*oasApiLabelExists)
 	s = s.Add(*name)
-	s = s.Add(*notIn)
 
 	l.Info("Deleting orphan ConfigMaps", "selector", s, "count", len(existingHashes))
 

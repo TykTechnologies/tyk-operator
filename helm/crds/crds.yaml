@@ -32,8 +32,11 @@ spec:
       name: Enabled
       type: boolean
     - jsonPath: .status.latestTransaction.status
-      name: Status
+      name: SyncStatus
       type: string
+    - jsonPath: .status.ingressTemplate
+      name: IngressTemplate
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -1843,11 +1846,14 @@ spec:
             properties:
               api_id:
                 type: string
+              ingressTemplate:
+                description: IngressTemplate shows whether this CR is used as Ingress Template or not.
+                type: boolean
               latestCRDSpecHash:
                 description: LatestCRDSpecHash stores the hash of ApiDefinition CRD created on K8s. This information is updated after creating or updating the ApiDefinition. It is useful for Operator to understand running update operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash, Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
                 type: string
               latestTransaction:
-                description: TransactionInfo holds information about the status of object's reconciliation.
+                description: LatestTransaction provides status information about the last reconciliation.
                 properties:
                   error:
                     description: Error corresponds to the error happened on Tyk API level, if any.
@@ -2370,6 +2376,19 @@ spec:
                   type: object
                 type: array
               linked_security_policies:
+                items:
+                  properties:
+                    name:
+                      description: k8s resource name
+                      type: string
+                    namespace:
+                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              linked_tyk_oas_api_definition:
                 items:
                   properties:
                     name:
@@ -3516,8 +3535,11 @@ spec:
       name: Enabled
       type: boolean
     - jsonPath: .status.latestTransaction.status
-      name: Status
+      name: SyncStatus
       type: string
+    - jsonPath: .status.ingressTemplate
+      name: IngressTemplate
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -3583,8 +3605,11 @@ spec:
               id:
                 description: ID is the unique identifier of the API within Tyk.
                 type: string
+              ingressTemplate:
+                description: IngressTemplate shows whether this CR is used as Ingress Template or not.
+                type: boolean
               latestTransaction:
-                description: LatestTransaction provides status information about the last reconcile
+                description: LatestTransaction provides status information about the last reconciliation.
                 properties:
                   error:
                     description: Error corresponds to the error happened on Tyk API level, if any.

@@ -59,6 +59,8 @@ rules:
   - configmaps
   verbs:
   - create
+  - delete
+  - deletecollection
   - get
   - list
   - watch
@@ -299,6 +301,7 @@ rules:
   verbs:
   - create
   - delete
+  - deletecollection
   - get
   - list
   - patch
