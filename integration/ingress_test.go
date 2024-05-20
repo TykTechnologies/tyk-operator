@@ -99,7 +99,7 @@ func TestIngressOas(t *testing.T) {
 
 			tplOasApi, tplOasCm, err = createTestOASApi(ctx, testNS, c, "", map[string]string{
 				keys.TykOasApiDefinitionTemplateLabel: "true",
-			})
+			}, nil)
 			eval.NoErr(err)
 			tplOasData = []byte(tplOasCm.Data[tplOasApi.Spec.TykOAS.ConfigmapRef.KeyName])
 
@@ -599,7 +599,7 @@ func TestIngressUpdateTplCm(t *testing.T) {
 
 			tplOasApi, tplOasCm, err = createTestOASApi(ctx, testNS, c, "", map[string]string{
 				keys.TykOasApiDefinitionTemplateLabel: "true",
-			})
+			}, nil)
 			eval.NoErr(err)
 			tplOasData = []byte(tplOasCm.Data[tplOasApi.Spec.TykOAS.ConfigmapRef.KeyName])
 

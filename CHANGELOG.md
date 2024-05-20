@@ -6,6 +6,7 @@
 
 **Added**:
 - Added new CRD to support Tyk OAS API
+- Added support of Client Certificate in Tyk OAS API
 - Added new capabilities to Ingress controller to manage TykOasApiDefinition CRDs
 
 ## [v0.17.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.1)

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/pkg/cert"
@@ -47,6 +48,7 @@ type SecretCertReconciler struct {
 }
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;update
 
 func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("cert", req.NamespacedName)
@@ -100,20 +102,123 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	err = r.processApiDefinitions(ctx, &env, log, req.NamespacedName, tlsCrt, tlsKey)
+	if err != nil {
+		if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
+			return ctrl.Result{Requeue: true}, nil
+		}
+	}
+
+	if err = r.processTykOasApis(ctx, &env, log, req.NamespacedName, tlsCrt, tlsKey); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *SecretCertReconciler) processTykOasApis(ctx context.Context, env *environment.Env, log logr.Logger,
+	secretNS types.NamespacedName, tlsCrt, tlsKey []byte,
+) error {
+	tykOasList := v1alpha1.TykOasApiDefinitionList{}
+
+	opts := []client.ListOption{
+		client.InNamespace(secretNS.Namespace),
+	}
+
+	// list all the Tyk OAS Apis in the namespace of the secret
+	if err := r.List(ctx, &tykOasList, opts...); err != nil {
+		log.Info("failed to list TykOasApiDefinitions", "namespace", secretNS.Namespace)
+		return err
+	}
+
+	if len(tykOasList.Items) == 0 {
+		log.Info("no Tyk OAS APIs found in the namespace of secret")
+		return nil
+	}
+
+	fingerPrint, err := cert.CalculateFingerPrint(tlsCrt)
+	if err != nil {
+		return err
+	}
+
+	certID := env.Org + fingerPrint
+	isCertPreviouslyProcessed := false
+
+	for i := range tykOasList.Items {
+		if tykOasList.Items[i].Spec.ClientCertificate.Enabled &&
+			tykOasList.Items[i].Spec.ClientCertificate.Allowlist != nil {
+			for _, secretName := range tykOasList.Items[i].Spec.ClientCertificate.Allowlist {
+				if secretName == secretNS.Name {
+					var err error
+
+					// do not upload cert again if it is already uploaded
+					if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
+						if certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt); err != nil {
+							return err
+						}
+
+						log.Info("Successfully uploaded certificate to Tyk", "certID", certID)
+
+						isCertPreviouslyProcessed = true
+					}
+
+					configmap := v1.ConfigMap{}
+					configmapNS := types.NamespacedName{
+						Name:      tykOasList.Items[i].Spec.TykOAS.ConfigmapRef.Name,
+						Namespace: tykOasList.Items[i].Spec.TykOAS.ConfigmapRef.Namespace,
+					}
+
+					if configmapNS.Namespace == "" {
+						configmapNS.Namespace = secretNS.Namespace
+					}
+
+					err = r.Get(ctx, configmapNS, &configmap)
+					if err != nil {
+						log.Error(err, "Failed to fetch configmap", "configmap", configmapNS.String())
+						return err
+					}
+
+					cmKey := tykOasList.Items[i].Spec.TykOAS.ConfigmapRef.KeyName
+					oasDoc := configmap.Data[cmKey]
+
+					updatedOASDoc, err := OASSetClientCertificatesAllowlist([]byte(oasDoc), certID)
+					if err != nil {
+						log.Error(err, "Failed to set client certificates in Tyk OAS Document")
+
+						return err
+					}
+
+					configmap.Data[cmKey] = string(updatedOASDoc)
+
+					if err = r.Client.Update(ctx, &configmap); err != nil {
+						log.Error(err, "Failed to update configmap", "configmap", configmapNS.String())
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *SecretCertReconciler) processApiDefinitions(ctx context.Context, env *environment.Env, log logr.Logger,
+	ns types.NamespacedName, tlsCrt, tlsKey []byte,
+) error {
 	// list all apidefinitions in namespace of the secret
 	apiDefList := v1alpha1.ApiDefinitionList{}
 	opts := []client.ListOption{
-		client.InNamespace(req.Namespace),
+		client.InNamespace(ns.Namespace),
 	}
 
 	if err := r.List(ctx, &apiDefList, opts...); err != nil {
 		log.Info("unable to list api definitions")
-		return ctrl.Result{}, err
+		return err
 	}
 
 	if len(apiDefList.Items) == 0 {
-		log.Info("no apidefinitions in namespace")
-		return ctrl.Result{}, nil
+		log.Info("no apidefinitions found in namespace")
+		return nil
 	}
 
 	certID := ""
@@ -121,15 +226,16 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	for idx := range apiDefList.Items {
 		for domain := range apiDefList.Items[idx].Spec.UpstreamCertificateRefs {
-			if req.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
+			if ns.Name == apiDefList.Items[idx].Spec.UpstreamCertificateRefs[domain] {
+				var err error
+
 				// do not upload cert again if it is already uploaded
 				if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
-					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
-					if err != nil {
-						return ctrl.Result{Requeue: true}, err
+					if certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt); err != nil {
+						return err
 					}
 
-					log.Info("uploaded certificate to Tyk", "certID", certID)
+					log.Info("Successfully uploaded certificate to Tyk", "certID", certID)
 
 					isCertPreviouslyProcessed = true
 				}
@@ -141,16 +247,9 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				apiDefList.Items[idx].Spec.UpstreamCertificates[domain] = certID
 
 				err = r.Update(ctx, &apiDefList.Items[idx])
-
-				// The Pod has been updated/deleted since we read it.
-				// Requeue the Pod to try to reconciliate again.
-				if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
-					return ctrl.Result{Requeue: true}, nil
-				}
-
 				if err != nil {
 					log.Error(err, "Unable to update API Definition with cert id", "apiID", *apiDefList.Items[idx].Spec.APIID)
-					return ctrl.Result{Requeue: true}, nil
+					return err
 				}
 
 				log.Info("api def updated successfully")
@@ -158,15 +257,15 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		for domain := range apiDefList.Items[idx].Spec.PinnedPublicKeysRefs {
-			if desired.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysRefs[domain] {
+			if ns.Name == apiDefList.Items[idx].Spec.PinnedPublicKeysRefs[domain] {
 				// do not upload cert again if it is already uploaded
 				if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
-					certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+					certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 					if err != nil {
-						return ctrl.Result{Requeue: true}, err
+						return err
 					}
 
-					log.Info("uploaded certificate to Tyk", "certID", certID)
+					log.Info("Successfully uploaded certificate to Tyk", "certID", certID)
 
 					isCertPreviouslyProcessed = true
 				}
@@ -177,31 +276,24 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 				apiDefList.Items[idx].Spec.PinnedPublicKeys[domain] = certID
 
-				err = r.Update(ctx, &apiDefList.Items[idx])
-
-				// The ApiDefinition has been updated/deleted since we read it.
-				// Requeue to try to reconciliate again.
-				if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
-					return ctrl.Result{Requeue: true}, nil
-				}
-
+				err := r.Update(ctx, &apiDefList.Items[idx])
 				if err != nil {
 					log.Error(err, "unable to update ApiDef")
-					return ctrl.Result{Requeue: true}, nil
+					return nil
 				}
 
 				log.Info("ApiDefinition updated successfully")
 			}
 		}
 
-		if containsString(apiDefList.Items[idx].Spec.CertificateSecretNames, req.Name) {
+		if containsString(apiDefList.Items[idx].Spec.CertificateSecretNames, ns.Name) {
 			if !isCertificateAlreadyUploaded(ctx, isCertPreviouslyProcessed, tlsCrt, env.Org) {
-				certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
+				certID, err := klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt)
 				if err != nil {
-					return ctrl.Result{Requeue: true}, err
+					return err
 				}
 
-				log.Info("uploaded certificate to Tyk", "certID", certID)
+				log.Info("Successfully uploaded certificate to Tyk", "certID", certID)
 
 				isCertPreviouslyProcessed = true
 			}
@@ -212,24 +304,17 @@ func (r *SecretCertReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 			apiDefList.Items[idx].Spec.Certificates = []string{certID}
 
-			err = r.Update(ctx, &apiDefList.Items[idx])
-
-			// The ApiDefinition has been updated/deleted since we read it.
-			// Requeue to try to reconciliate again.
-			if apierrors.IsConflict(err) || apierrors.IsNotFound(err) {
-				return ctrl.Result{Requeue: true}, nil
-			}
-
+			err := r.Update(ctx, &apiDefList.Items[idx])
 			if err != nil {
 				log.Error(err, "unable to update ApiDef")
-				return ctrl.Result{Requeue: true}, nil
+				return nil
 			}
 
 			log.Info("ApiDefinition updated successfully")
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func (r *SecretCertReconciler) delete(ctx context.Context, desired *v1.Secret, log logr.Logger, orgID string) error {

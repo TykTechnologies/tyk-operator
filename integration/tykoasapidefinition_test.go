@@ -42,9 +42,9 @@ func TestOASCreate(t *testing.T) {
 			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
-			res := semver.Compare(tykEnv.TykVersion, "v4.1")
+			res := semver.Compare(tykEnv.TykVersion, "v5.3")
 			if res < 0 {
-				t.Skip("OAS support is added in Tyk in v4.1")
+				t.Skip("OAS support is added in Tyk in v5.3")
 			}
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -57,7 +57,7 @@ func TestOASCreate(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil)
+			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil, nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)
@@ -94,9 +94,9 @@ func TestInvalidTykOAS(t *testing.T) {
 			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
-			res := semver.Compare(tykEnv.TykVersion, "v4.1")
+			res := semver.Compare(tykEnv.TykVersion, "v5.3")
 			if res < 0 {
-				t.Skip("OAS support is added in Tyk in v4.1")
+				t.Skip("OAS support is added in Tyk in v5.3")
 			}
 
 			var ok bool
@@ -109,7 +109,7 @@ func TestInvalidTykOAS(t *testing.T) {
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			invalidOASDoc := "{}"
 
-			tykOAS, _, err := createTestOASApi(ctx, testNS, c, invalidOASDoc, nil)
+			tykOAS, _, err := createTestOASApi(ctx, testNS, c, invalidOASDoc, nil, nil)
 			eval.NoErr(err)
 
 			err = wait.For(conditions.New(c.Client().Resources(testNS)).ResourceMatch(tykOAS, func(object k8s.Object) bool {
@@ -141,9 +141,9 @@ func TestOASDelete(t *testing.T) {
 			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
-			res := semver.Compare(tykEnv.TykVersion, "v4.1")
+			res := semver.Compare(tykEnv.TykVersion, "v5.3")
 			if res < 0 {
-				t.Skip("OAS support is added in Tyk in v4.1")
+				t.Skip("OAS support is added in Tyk in v5.3")
 			}
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -156,7 +156,7 @@ func TestOASDelete(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil)
+			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil, nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)
@@ -202,9 +202,9 @@ func TestOASUpdate(t *testing.T) {
 			tykEnv, err = generateEnvConfig(ctx, c)
 			eval.NoErr(err)
 
-			res := semver.Compare(tykEnv.TykVersion, "v4.1")
+			res := semver.Compare(tykEnv.TykVersion, "v5.3")
 			if res < 0 {
-				t.Skip("OAS support is added in Tyk in v4.1")
+				t.Skip("OAS support is added in Tyk in v5.3")
 			}
 
 			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
@@ -217,7 +217,7 @@ func TestOASUpdate(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, cm, err = createTestOASApi(ctx, testNS, c, "", nil)
+			tykOAS, cm, err = createTestOASApi(ctx, testNS, c, "", nil, nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)

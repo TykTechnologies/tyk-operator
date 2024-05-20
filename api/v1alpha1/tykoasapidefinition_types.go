@@ -28,6 +28,19 @@ type TykOasApiDefinitionSpec struct {
 	Context *model.Target `json:"contextRef,omitempty"`
 	// TykOAS provides storage information about Tyk OAS
 	TykOAS TykOASReference `json:"tykOAS"`
+
+	// ClientCertificate is used to configure client certificates settings needed
+	// for MTLS connection between Tyk and client.
+	// It is used to set `server.clientCertificate` field of Tyk OAS API
+	ClientCertificate ClientCertificateConfig `json:"clientCertificate,omitempty"`
+}
+
+// ClientCertificateConfig specifies configuration for client certificates
+type ClientCertificateConfig struct {
+	// Enabled activates mTLS for the API.
+	Enabled bool `json:"enabled,omitempty"`
+	// Allowlist stores list of k8s secret names storing client certificates
+	Allowlist []string `json:"allowlist,omitempty"`
 }
 
 type TykOASReference struct {

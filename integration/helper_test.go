@@ -366,6 +366,7 @@ func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environmen
 }
 
 func createTestOASApi(ctx context.Context, ns string, c *envconf.Config, tykOASDoc string, oasLabels map[string]string,
+	mutuateFn func(*v1alpha1.TykOasApiDefinition) *v1alpha1.TykOasApiDefinition,
 ) (*v1alpha1.TykOasApiDefinition, *v1.ConfigMap, error) {
 	cm := &v1.ConfigMap{}
 	cm.Name = testOASCmName
@@ -401,6 +402,10 @@ func createTestOASApi(ctx context.Context, ns string, c *envconf.Config, tykOASD
 
 	if oasLabels != nil {
 		tykOAS.ObjectMeta.SetLabels(oasLabels)
+	}
+
+	if mutuateFn != nil {
+		tykOAS = mutuateFn(tykOAS)
 	}
 
 	err := c.Client().Resources(ns).Create(ctx, tykOAS)

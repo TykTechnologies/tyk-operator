@@ -16,6 +16,7 @@ rules:
   - deletecollection
   - get
   - list
+  - update
   - watch
 - apiGroups:
   - ""

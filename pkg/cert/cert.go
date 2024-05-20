@@ -22,3 +22,14 @@ func CalculateFingerPrint(data []byte) (string, error) {
 
 	return "", ErrInvalidCert
 }
+
+func CalculateCertID(orgID string, data []byte) (string, error) {
+	fingerPrint, err := CalculateFingerPrint(data)
+	if err != nil {
+		return "", err
+	}
+
+	certID := orgID + fingerPrint
+
+	return certID, nil
+}

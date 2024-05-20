@@ -60,6 +60,21 @@ spec:
           spec:
             description: TykOasApiDefinitionSpec defines the desired state of TykOasApiDefinition
             properties:
+              clientCertificate:
+                description: ClientCertificate is used to configure client certificates
+                  settings needed for MTLS connection between Tyk and client. It is
+                  used to set `server.clientCertificate` field of Tyk OAS API
+                properties:
+                  allowlist:
+                    description: Allowlist stores list of k8s secret names storing
+                      client certificates
+                    items:
+                      type: string
+                    type: array
+                  enabled:
+                    description: Enabled activates mTLS for the API.
+                    type: boolean
+                type: object
               contextRef:
                 description: Context specify namespace/name of the OperatorContext
                   object used for reconciling this APIDefinition

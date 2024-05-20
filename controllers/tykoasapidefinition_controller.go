@@ -41,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	"github.com/TykTechnologies/tyk-operator/pkg/cert"
 	"github.com/TykTechnologies/tyk-operator/pkg/client/klient"
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/TykTechnologies/tyk-operator/pkg/keys"
@@ -102,7 +103,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	_, ctx, err := HttpContext(ctx, r.Client, &r.Env, tykOAS, log)
+	env, ctx, err := HttpContext(ctx, r.Client, &r.Env, tykOAS, log)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -146,7 +147,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 		util.AddFinalizer(tykOAS, keys.TykOASFinalizerName)
 
-		apiID, err = r.createOrUpdateTykOASAPI(ctx, tykOAS, log)
+		apiID, err = r.createOrUpdateTykOASAPI(ctx, tykOAS, log, &env)
 		if err != nil {
 			log.Error(err, "Failed to create/update Tyk OAS API")
 			return err
@@ -188,7 +189,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 }
 
 func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Context,
-	tykOASCrd *v1alpha1.TykOasApiDefinition, log logr.Logger) (string, error,
+	tykOASCrd *v1alpha1.TykOasApiDefinition, log logr.Logger, env *environment.Env) (string, error,
 ) {
 	var cm v1.ConfigMap
 
@@ -227,20 +228,84 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Cont
 		apiID = EncodeNS(client.ObjectKeyFromObject(tykOASCrd).String())
 	}
 
+	if tykOASDoc, err = r.processClientCertificate(ctx, env, log, tykOASCrd, tykOASDoc); err != nil {
+		log.Error(err, "failed to process client certificate")
+		return "", err
+	}
+
 	exists := klient.Universal.TykOAS().Exists(ctx, apiID)
 	if !exists {
 		if err = klient.Universal.TykOAS().Create(ctx, apiID, tykOASDoc); err != nil {
-			log.Error(err, "Failed to create Tyk OAS API")
+			log.Error(err, "failed to create Tyk OAS API")
 			return "", err
 		}
 	} else {
 		if err = klient.Universal.TykOAS().Update(ctx, apiID, tykOASDoc); err != nil {
-			log.Error(err, "Failed to update Tyk OAS API")
+			log.Error(err, "failed to update Tyk OAS API")
 			return "", err
 		}
 	}
 
 	return apiID, nil
+}
+
+func (r *TykOasApiDefinitionReconciler) processClientCertificate(ctx context.Context,
+	env *environment.Env, log logr.Logger, tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string,
+) (string, error) {
+	log.Info("Processing client certificate reference")
+
+	clientCertEnabled := tykOASCrd.Spec.ClientCertificate.Enabled
+	val := ""
+
+	if clientCertEnabled {
+		val = "true"
+	} else {
+		val = "false"
+	}
+
+	result, err := jsonparser.Set([]byte(tykOASDoc), []byte(val), OASClientCertEnabledPath...)
+	if err != nil {
+		return "", err
+	}
+
+	tykOASDoc = string(result)
+
+	if clientCertEnabled {
+		for _, secretName := range tykOASCrd.Spec.ClientCertificate.Allowlist {
+			var secret v1.Secret
+			secretNS := types.NamespacedName{Name: secretName, Namespace: tykOASCrd.Namespace}
+
+			if err := r.Client.Get(ctx, secretNS, &secret); err != nil {
+				log.Error(err, "failed to fetch secret", "secret", secretNS.String())
+				return "", err
+			}
+
+			tlsCrt := secret.Data["tls.crt"]
+			tlsKey := secret.Data["tls.key"]
+
+			certID, err := cert.CalculateCertID(env.Org, tlsCrt)
+			if err != nil {
+				return "", err
+			}
+
+			if !isCertificateAlreadyUploaded(ctx, false, tlsCrt, env.Org) {
+				if certID, err = klient.Universal.Certificate().Upload(ctx, tlsKey, tlsCrt); err != nil {
+					return "", err
+				}
+
+				log.Info("Successfully uploaded certificate to Tyk", "certID", certID)
+			}
+
+			result, err := OASSetClientCertificatesAllowlist([]byte(tykOASDoc), certID)
+			if err != nil {
+				return "", err
+			}
+
+			tykOASDoc = string(result)
+		}
+	}
+
+	return tykOASDoc, nil
 }
 
 func (r *TykOasApiDefinitionReconciler) updateStatus(
