@@ -63,6 +63,10 @@ type HttpMethod string
 // +kubebuilder:validation:Enum="";proxyOnly;executionEngine;supergraph;subgraph
 type GraphQLExecutionMode string
 
+// SubscriptionType is the subscription protocol to use for graphql subscriptions
+// +kubebuilder:validation:Enum="";graphql-ws;graphql-transport-ws;sse
+type SubscriptionType string
+
 const (
 	SuperGraphExecutionMode GraphQLExecutionMode = "supergraph"
 	SubGraphExecutionMode   GraphQLExecutionMode = "subgraph"
@@ -1191,9 +1195,24 @@ type GraphQLConfig struct {
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`
 }
 
+type GraphQLResponseExtensions struct {
+	OnErrorForwarding bool `bson:"on_error_forwarding" json:"on_error_forwarding"`
+}
+
 type GraphQLProxyConfig struct {
 	// +nullable
-	AuthHeaders map[string]string `json:"auth_headers"`
+	AuthHeaders      map[string]string `json:"auth_headers,omitempty"`
+	SubscriptionType SubscriptionType  `json:"subscription_type,omitempty"`
+	// +nullable
+	RequestHeaders        map[string]string         `json:"request_headers,omitempty"`
+	UseResponseExtensions GraphQLResponseExtensions `json:"use_response_extensions,omitempty"`
+	// +nullable
+	RequestHeadersRewrite map[string]RequestHeadersRewriteConfig `json:"request_headers_rewrite,omitempty"`
+}
+
+type RequestHeadersRewriteConfig struct {
+	Value  string `json:"value"`
+	Remove bool   `json:"remove"`
 }
 
 type TypeFieldConfiguration struct {

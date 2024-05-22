@@ -654,8 +654,40 @@ spec:
                           type: string
                         nullable: true
                         type: object
-                    required:
-                    - auth_headers
+                      request_headers:
+                        additionalProperties:
+                          type: string
+                        nullable: true
+                        type: object
+                      request_headers_rewrite:
+                        additionalProperties:
+                          properties:
+                            remove:
+                              type: boolean
+                            value:
+                              type: string
+                          required:
+                          - remove
+                          - value
+                          type: object
+                        nullable: true
+                        type: object
+                      subscription_type:
+                        description: SubscriptionType is the subscription protocol
+                          to use for graphql subscriptions
+                        enum:
+                        - ""
+                        - graphql-ws
+                        - graphql-transport-ws
+                        - sse
+                        type: string
+                      use_response_extensions:
+                        properties:
+                          on_error_forwarding:
+                            type: boolean
+                        required:
+                        - on_error_forwarding
+                        type: object
                     type: object
                   schema:
                     description: Schema is the GraphQL Schema exposed by the GraphQL
