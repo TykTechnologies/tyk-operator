@@ -3,6 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.1...HEAD)
 
+**Added**:
+- Added sample config for Advance Cache Middleware
+
 ## [v0.17.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.1)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...v0.17.1)
 
