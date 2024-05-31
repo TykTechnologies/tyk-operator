@@ -100,6 +100,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Headers - Global Response Add     | ✅        | v0.1           | -                                              | [Sample](../config/samples/httpbin_global-headers.yaml) |
 | Headers - Global Response Remove  | ✅        | v0.1           | -                                              | [Sample](../config/samples/httpbin_global-headers.yaml) |
 | Performance - Cache               | ✅        | v0.1           | -                                              | [Sample](./../config/samples/httpbin_cache.yaml) |
+| Performance - Advance Cache       | ✅        | v0.1           | -                                              | [Sample](./../config/samples/httpbin_advance_cache.yaml) |
 | Plugin - Virtual Endpoint         | ✅        | v0.1           | -                                              | [Sample](./../config/samples/config_data_virtual_endpoint.yaml) |
 | Security - Allow list             | ✅️        | v0.8.2         | -                                              | [Sample](./../config/samples/httpbin_whitelist.yaml) |
 | Security - Block list             | ✅️        | v0.8.2         | -                                              | [Sample](./../config/samples/httpbin_blacklist.yaml) |
