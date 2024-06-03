@@ -1201,7 +1201,7 @@ type GraphQLResponseExtensions struct {
 
 type GraphQLProxyConfig struct {
 	// +nullable
-	Features GraphQLProxyFeaturesConfig `json:"features"`
+	Features GraphQLProxyFeaturesConfig `json:"features,omitempty"`
 	// +nullable
 	AuthHeaders      map[string]string `json:"auth_headers,omitempty"`
 	SubscriptionType SubscriptionType  `json:"subscription_type,omitempty"`
@@ -1213,7 +1213,7 @@ type GraphQLProxyConfig struct {
 }
 
 type GraphQLProxyFeaturesConfig struct {
-	UseImmutableHeaders bool `json:"use_immutable_headers"`
+	UseImmutableHeaders bool `json:"use_immutable_headers,omitempty"`
 }
 
 type RequestHeadersRewriteConfig struct {

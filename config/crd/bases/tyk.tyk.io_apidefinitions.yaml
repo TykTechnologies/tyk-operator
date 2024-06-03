@@ -659,8 +659,6 @@ spec:
                         properties:
                           use_immutable_headers:
                             type: boolean
-                        required:
-                        - use_immutable_headers
                         type: object
                       request_headers:
                         additionalProperties:
@@ -696,8 +694,6 @@ spec:
                         required:
                         - on_error_forwarding
                         type: object
-                    required:
-                    - features
                     type: object
                   schema:
                     description: Schema is the GraphQL Schema exposed by the GraphQL
