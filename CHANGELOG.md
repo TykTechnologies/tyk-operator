@@ -1,8 +1,14 @@
 # Changelog
-
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
-[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.1...HEAD)
 
+**Fixed**:
+
+**Changed**:
+
+**Added**:
+- Added `introspection` option to disable/disable GraphQL introspection
+
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.1...HEAD)
 ## [v0.17.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.1)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...v0.17.1)
 
@@ -16,6 +22,7 @@
 - (samples): Patched GraphQL engine version in the GraphQL proxy examples.
 - (samples): update ClusterIssuer samples
 
+[Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...HEAD)
 ## [v0.17.0](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.0)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.16.0...v0.17.0)
 
