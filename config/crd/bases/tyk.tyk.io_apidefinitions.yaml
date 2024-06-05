@@ -654,6 +654,12 @@ spec:
                           type: string
                         nullable: true
                         type: object
+                      features:
+                        nullable: true
+                        properties:
+                          use_immutable_headers:
+                            type: boolean
+                        type: object
                       request_headers:
                         additionalProperties:
                           type: string
