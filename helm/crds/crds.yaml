@@ -548,7 +548,6 @@ spec:
                     required:
                     - data_sources
                     - field_configs
-                    - global_headers
                     type: object
                   execution_mode:
                     description: GraphQLExecutionMode is the mode to define how an api behaves.
