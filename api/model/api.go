@@ -1193,6 +1193,13 @@ type GraphQLConfig struct {
 
 	// Supergraph holds the configuration for a GraphQL federation supergraph.
 	Supergraph GraphQLSupergraphConfig `json:"supergraph,omitempty"`
+
+	// Introspection holds the configuration for GraphQL Introspection
+	Introspection GraphQLIntrospectionConfig `json:"introspection,omitempty"`
+}
+
+type GraphQLIntrospectionConfig struct {
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 type GraphQLResponseExtensions struct {
@@ -1201,6 +1208,8 @@ type GraphQLResponseExtensions struct {
 
 type GraphQLProxyConfig struct {
 	// +nullable
+	Features GraphQLProxyFeaturesConfig `json:"features,omitempty"`
+	// +nullable
 	AuthHeaders      map[string]string `json:"auth_headers,omitempty"`
 	SubscriptionType SubscriptionType  `json:"subscription_type,omitempty"`
 	// +nullable
@@ -1208,6 +1217,10 @@ type GraphQLProxyConfig struct {
 	UseResponseExtensions GraphQLResponseExtensions `json:"use_response_extensions,omitempty"`
 	// +nullable
 	RequestHeadersRewrite map[string]RequestHeadersRewriteConfig `json:"request_headers_rewrite,omitempty"`
+}
+
+type GraphQLProxyFeaturesConfig struct {
+	UseImmutableHeaders bool `json:"use_immutable_headers,omitempty"`
 }
 
 type RequestHeadersRewriteConfig struct {

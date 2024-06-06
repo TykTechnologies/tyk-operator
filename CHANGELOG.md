@@ -4,6 +4,7 @@
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.1...HEAD)
 
 **Added**:
+- Added `introspection` option to enable/disable GraphQL introspection
 - Added sample for advance cache middleware
 
 ## [v0.17.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.1)
