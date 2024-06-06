@@ -3,12 +3,9 @@
 ## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.1...HEAD)
 
-**Fixed**:
-
-**Changed**:
-
 **Added**:
 - Added `introspection` option to enable/disable GraphQL introspection
+- Added sample for advance cache middleware
 
 ## [v0.17.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.1)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...v0.17.1)
