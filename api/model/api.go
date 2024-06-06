@@ -1126,7 +1126,7 @@ type GraphQLEngineConfig struct {
 	DataSources []GraphQLEngineDataSource `json:"data_sources"`
 	// GlobalHeaders for managing headers for UDG and all associated data sources
 	// +nullable
-	GlobalHeaders []GraphQLEngineGlobalHeader `json:"global_headers"`
+	GlobalHeaders []GraphQLEngineGlobalHeader `json:"global_headers,omitempty"`
 }
 
 type GraphQLSubgraphConfig struct {
