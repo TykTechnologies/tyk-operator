@@ -1316,7 +1316,8 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 					}
 
 					eval.True(polSpecTyk.Name == currPolicy.Spec.Name)
-					eval.True(len(polSpecTyk.AccessRightsArray) == len(currPolicy.Spec.AccessRightsArray))
+					eval.True(polSpecTyk.AccessRightsArray == nil)
+					eval.True(currPolicy.Spec.AccessRightsArray == nil)
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
