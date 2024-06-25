@@ -45,11 +45,19 @@ spec:
               subgraph_refs:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of
+                        the API Definition resource that is being target by current
+                        resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
+                      description: The k8s namespace of the resource being targeted.
                         When omitted this will be set to the namespace of the object
                         that is being reconciled.
                       type: string

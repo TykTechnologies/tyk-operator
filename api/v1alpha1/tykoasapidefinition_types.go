@@ -63,6 +63,8 @@ type ConfigMapReference struct {
 type TykOasApiDefinitionStatus struct {
 	// ID is the unique identifier of the API within Tyk.
 	ID string `json:"id,omitempty"`
+	// Name is the name of the OAS API within Tyk.
+	Name string `json:"name,omitempty"`
 	// Domain is the custom domain used by the API
 	Domain string `json:"domain,omitempty"`
 	// ListenPath is the base path on Tyk to which requests for this API will be sent.
@@ -75,6 +77,9 @@ type TykOasApiDefinitionStatus struct {
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
 	// IngressTemplate shows whether this CR is used as Ingress Template or not.
 	IngressTemplate bool `json:"ingressTemplate,omitempty"`
+	// LinkedByPolicies is a list policies that references this OAS API Definition.
+	//+optional
+	LinkedByPolicies []model.Target `json:"linkedByPolicies,omitempty"`
 }
 
 // TykOasApiDefinition is the Schema for the tykoasapidefinitions API
@@ -93,6 +98,22 @@ type TykOasApiDefinition struct {
 
 	Spec   TykOasApiDefinitionSpec   `json:"spec,omitempty"`
 	Status TykOasApiDefinitionStatus `json:"status,omitempty"`
+}
+
+func (in *TykOasApiDefinition) GetLinkedPolicies() []model.Target {
+	return in.Status.LinkedByPolicies
+}
+
+func (in *TykOasApiDefinition) SetLinkedPolicies(result []model.Target) {
+	in.Status.LinkedByPolicies = result
+}
+
+func (in *TykOasApiDefinition) ApiName() string {
+	return in.Status.Name
+}
+
+func (in *TykOasApiDefinition) StatusApiID() string {
+	return in.Status.ID
 }
 
 //+kubebuilder:object:root=true

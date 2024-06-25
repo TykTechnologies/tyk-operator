@@ -90,6 +90,22 @@ type ApiDefinition struct {
 	Status ApiDefinitionStatus `json:"status,omitempty"`
 }
 
+func (in *ApiDefinition) GetLinkedPolicies() []model.Target {
+	return in.Status.LinkedByPolicies
+}
+
+func (in *ApiDefinition) SetLinkedPolicies(result []model.Target) {
+	in.Status.LinkedByPolicies = result
+}
+
+func (in *ApiDefinition) ApiName() string {
+	return in.Spec.Name
+}
+
+func (in *ApiDefinition) StatusApiID() string {
+	return in.Status.ApiID
+}
+
 // ApiDefinitionList contains a list of ApiDefinition
 // +kubebuilder:object:root=true
 type ApiDefinitionList struct {

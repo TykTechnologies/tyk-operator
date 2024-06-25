@@ -87,11 +87,11 @@ spec:
                       type: array
                     api_id:
                       description: 'TODO: APIID should not really be needed, as is
-                        auto-set from the APIDefnition Resource'
+                        auto-set from the APIDefinition Resource'
                       type: string
                     api_name:
                       description: 'TODO: APIName should not really be needed, as
-                        is auto-set from the APIDefnition Resource'
+                        is auto-set from the APIDefinition Resource'
                       type: string
                     disable_introspection:
                       description: DisableIntrospection disables GraphQL introspection
@@ -127,6 +127,15 @@ spec:
                             type: string
                         type: object
                       type: array
+                    kind:
+                      default: ApiDefinition
+                      description: Kind represents the kind of the linked API Definition
+                        resource. It can be either "ApiDefinition" or "TykOasApiDefinition"
+                        (case sensitive way). By default, Kind is set to "ApiDefinition".
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: Name of the ApiDefinition resource to target
                       type: string
@@ -203,11 +212,11 @@ spec:
                       type: array
                     api_id:
                       description: 'TODO: APIID should not really be needed, as is
-                        auto-set from the APIDefnition Resource'
+                        auto-set from the APIDefinition Resource'
                       type: string
                     api_name:
                       description: 'TODO: APIName should not really be needed, as
-                        is auto-set from the APIDefnition Resource'
+                        is auto-set from the APIDefinition Resource'
                       type: string
                     disable_introspection:
                       description: DisableIntrospection disables GraphQL introspection
@@ -243,6 +252,15 @@ spec:
                             type: string
                         type: object
                       type: array
+                    kind:
+                      default: ApiDefinition
+                      description: Kind represents the kind of the linked API Definition
+                        resource. It can be either "ApiDefinition" or "TykOasApiDefinition"
+                        (case sensitive way). By default, Kind is set to "ApiDefinition".
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: Name of the ApiDefinition resource to target
                       type: string
@@ -284,11 +302,18 @@ spec:
                 description: Context specify namespace/name of the OperatorContext
                   object used for reconciling this APIDefinition
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the
+                      API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted.
+                    description: The k8s namespace of the resource being targeted.
                       When omitted this will be set to the namespace of the object
                       that is being reconciled.
                     type: string
@@ -399,11 +424,19 @@ spec:
               linked_apis:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of
+                        the API Definition resource that is being target by current
+                        resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted.
+                      description: The k8s namespace of the resource being targeted.
                         When omitted this will be set to the namespace of the object
                         that is being reconciled.
                       type: string
