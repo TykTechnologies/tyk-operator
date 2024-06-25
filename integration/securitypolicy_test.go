@@ -1250,8 +1250,10 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 			eval.NoErr(err)
 
 			pol, err = createTestPolicy(ctx, c, testNs, func(policy *v1alpha1.SecurityPolicy) {
-				policy.Spec.AccessRightsArray = []*model.AccessDefinition{{
-					Name: tykOAS.Name, Namespace: tykOAS.Namespace, Kind: v1alpha1.KindTykOasApiDefinition},
+				policy.Spec.AccessRightsArray = []*model.AccessDefinition{
+					{
+						Name: tykOAS.Name, Namespace: tykOAS.Namespace, Kind: v1alpha1.KindTykOasApiDefinition,
+					},
 				}
 			})
 			eval.NoErr(err)
