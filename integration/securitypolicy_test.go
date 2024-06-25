@@ -1270,9 +1270,14 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 			err = waitForTykResourceCreation(c, pol)
 			eval.NoErr(err)
 
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
 			return ctx
 		}).
-		Assess("Validate links are created properly on k8s side",
+		Assess("Validate links are created properly on k8s",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 				var currPol v1alpha1.SecurityPolicy
 
@@ -1291,14 +1296,42 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 						return false, nil
 					}
 
-					eval.Equal(currPol.Status.LinkedAPIs[0].Name, tykOAS.Name)
-					eval.Equal(*currPol.Status.LinkedAPIs[0].Namespace, tykOAS.Namespace)
 					if currPol.Status.LinkedAPIs[0].LinkedApiKind != v1alpha1.KindTykOasApiDefinition {
+						t.Logf("unexpected LinkedApi kind %v", currPol.Status.LinkedAPIs[0].LinkedApiKind)
 						return false, nil
 					}
 
+					eval.Equal(currPol.Status.LinkedAPIs[0].Name, tykOAS.Name)
+					eval.True(currPol.Status.LinkedAPIs[0].Namespace != nil)
+					eval.Equal(*currPol.Status.LinkedAPIs[0].Namespace, tykOAS.Namespace)
+					eval.Equal(*currPol.Status.LinkedAPIs[0].Namespace, tykOAS.Namespace)
+
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+				eval.NoErr(err)
+
+				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(tykOAS,
+					func(object k8s.Object) bool {
+						api, ok := object.(*v1alpha1.TykOasApiDefinition)
+						if !ok {
+							return false
+						}
+
+						if len(api.Status.LinkedByPolicies) != 1 {
+							t.Logf(
+								"unexpected number of LinkedByPolicies exist, got %v expected 1",
+								len(api.Status.LinkedByPolicies),
+							)
+
+							return false
+						}
+
+						eval.Equal(api.Status.LinkedByPolicies[0].Name, pol.Name)
+						eval.True(api.Status.LinkedByPolicies[0].Namespace != nil)
+						eval.Equal(*api.Status.LinkedByPolicies[0].Namespace, pol.Namespace)
+
+						return true
+					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				return ctx
@@ -1316,8 +1349,9 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 					}
 
 					eval.True(polSpecTyk.Name == currPolicy.Spec.Name)
-					eval.True(polSpecTyk.AccessRightsArray == nil)
-					eval.True(currPolicy.Spec.AccessRightsArray == nil)
+					eval.True(len(polSpecTyk.AccessRightsArray) == 1)
+					eval.True(len(currPolicy.Spec.AccessRightsArray) == 1)
+					eval.Equal(polSpecTyk.AccessRightsArray[0].APIID, currPolicy.Spec.AccessRightsArray[0].APIID)
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
@@ -1344,25 +1378,36 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 				})
 				eval.NoErr(err)
 
-				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(pol, func(object k8s.Object) bool {
-					polObj, ok := object.(*v1alpha1.SecurityPolicy)
-					if !ok {
-						return false
+				err = wait.For(func() (done bool, err error) {
+					var updatedPol v1alpha1.SecurityPolicy
+					if err = c.Client().Resources(testNs).Get(ctx, pol.Name, testNs, &updatedPol); err != nil {
+						t.Logf("failed to fetch Policy from Kubernetes, %v", err)
+						return false, nil
 					}
 
-					return polObj.Status.LinkedAPIs == nil
-				}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+					if updatedPol.Status.LinkedAPIs != nil {
+						t.Logf("unexpected LinkedAPIs: %v", updatedPol.Status.LinkedAPIs)
+						return false, nil
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
-				err = wait.For(conditions.New(c.Client().Resources()).ResourceMatch(tykOAS,
-					func(object k8s.Object) bool {
-						api, ok := object.(*v1alpha1.TykOasApiDefinition)
-						if !ok {
-							return false
-						}
+				err = wait.For(func() (done bool, err error) {
+					var updatedApi v1alpha1.TykOasApiDefinition
+					if err = c.Client().Resources(testNs).Get(ctx, tykOAS.Name, testNs, &updatedApi); err != nil {
+						t.Logf("failed to fetch TykOasApiDefinition from Kubernetes, %v", err)
+						return false, nil
+					}
 
-						return api.Status.LinkedByPolicies == nil
-					}), wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+					if updatedApi.Status.LinkedByPolicies != nil {
+						t.Logf("unexpected LinkedByPolicies: %v", updatedApi.Status.LinkedByPolicies)
+						return false, nil
+					}
+
+					return true, nil
+				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
 
 				return ctx
