@@ -77,16 +77,30 @@ type GraphQLType graphql.Type
 // GraphQLTypeList represents a list of GraphQLType.
 type GraphQLTypeList []GraphQLType
 
+// LinkedAPIDefinitionKind represents the Kubernetes Kind of the API Definition resource
+// being targeted in the current SecurityPolicy.
+// LinkedAPIDefinitionKind can take two values;
+// - ApiDefinition: To target Tyk classic API Definitions
+// - TykOasApiDefinition: To target Tyk OAS API Definitions
+// +kubebuilder:validation:Enum=ApiDefinition;TykOasApiDefinition
+type LinkedAPIDefinitionKind string
+
 // AccessDefinition defines which versions of an API a key has access to
 type AccessDefinition struct {
 	// Namespace of the ApiDefinition resource to target
 	Namespace string `json:"namespace"`
 	// Name of the ApiDefinition resource to target
 	Name string `json:"name"`
+	// Kind represents the kind of the linked API Definition resource.
+	// It can be either "ApiDefinition" or "TykOasApiDefinition" (case sensitive way).
+	// By default, Kind is set to "ApiDefinition".
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=ApiDefinition
+	Kind LinkedAPIDefinitionKind `json:"kind,omitempty"`
 
-	// TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource
+	// TODO: APIName should not really be needed, as is auto-set from the APIDefinition Resource
 	APIName *string `json:"api_name,omitempty"`
-	// TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource
+	// TODO: APIID should not really be needed, as is auto-set from the APIDefinition Resource
 	APIID    *string  `json:"api_id,omitempty"`
 	Versions []string `json:"versions,omitempty"`
 
