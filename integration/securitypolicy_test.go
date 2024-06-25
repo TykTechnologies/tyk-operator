@@ -1237,6 +1237,7 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 		pol    *v1alpha1.SecurityPolicy
 		eval   = is.New(t)
 		tykCtx context.Context
+		mode   string
 	)
 
 	policyLinkedToOAS := features.New("SecurityPolicy with TykOasApiDefinition").
@@ -1248,6 +1249,7 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 			// Obtain Environment configuration to be able to connect Tyk.
 			tykEnv, err := generateEnvConfig(ctx, c)
 			eval.NoErr(err)
+			mode = string(tykEnv.Mode)
 
 			verifyPolicyApiVersion(t, &tykEnv)
 			verifyTykOasVersion(t, &tykEnv)
@@ -1349,9 +1351,23 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 					}
 
 					eval.True(polSpecTyk.Name == currPolicy.Spec.Name)
-					eval.True(len(polSpecTyk.AccessRightsArray) == 1)
 					eval.True(len(currPolicy.Spec.AccessRightsArray) == 1)
-					eval.Equal(polSpecTyk.AccessRightsArray[0].APIID, currPolicy.Spec.AccessRightsArray[0].APIID)
+					if mode == "pro" {
+						eval.True(len(polSpecTyk.AccessRightsArray) == 1)
+						eval.Equal(polSpecTyk.AccessRightsArray[0].APIID, currPolicy.Spec.AccessRightsArray[0].APIID)
+					} else {
+						eval.True(len(polSpecTyk.AccessRights) == 1)
+						definition := currPolicy.Spec.AccessRightsArray[0]
+						if definition == nil {
+							t.Logf("invalid access right definition")
+							return false, nil
+						}
+
+						ad, exists := polSpecTyk.AccessRights[*definition.APIID]
+						eval.True(exists)
+						eval.Equal(*currPolicy.Spec.AccessRightsArray[0].APIID, *ad.APIID)
+						eval.Equal(currPolicy.Status.PolID, *polSpecTyk.ID)
+					}
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
 				eval.NoErr(err)
