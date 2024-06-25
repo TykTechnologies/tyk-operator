@@ -1283,7 +1283,7 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 					}
 
 					eval.Equal(currPol.Status.LinkedAPIs[0].Name, tykOAS.Name)
-					eval.Equal(currPol.Status.LinkedAPIs[0].Namespace, tykOAS.Namespace)
+					eval.Equal(*currPol.Status.LinkedAPIs[0].Namespace, tykOAS.Namespace)
 					eval.Equal(currPol.Status.LinkedAPIs[0].LinkedApiKind, v1alpha1.KindTykOasApiDefinition)
 					return true, nil
 				}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
