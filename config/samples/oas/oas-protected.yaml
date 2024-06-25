@@ -60,7 +60,7 @@ spec:
 apiVersion: tyk.tyk.io/v1alpha1
 kind: SecurityPolicy
 metadata:
-  name: httpbin
+  name: petstore-oas-policy
 spec:
   name: OAS-Petstore-Security-Policy
   state: active
