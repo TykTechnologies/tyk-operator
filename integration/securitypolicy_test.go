@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
+	"golang.org/x/mod/semver"
 
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
@@ -30,6 +31,13 @@ const (
 	errUpdatePolicyCR   = "failed to update SecurityPolicy"
 	errGetPolicyFromTyk = "failed to get SecurityPolicy from Tyk"
 )
+
+func verifyTykOasVersion(t *testing.T, tykEnv *environment.Env) {
+	res := semver.Compare(tykEnv.TykVersion, "v5.3")
+	if res < 0 {
+		t.Skip("OAS support is added in Tyk in v5.3")
+	}
+}
 
 func verifyPolicyApiVersion(t *testing.T, tykEnv *environment.Env) {
 	v, err := version.ParseGeneric(tykEnv.TykVersion)
@@ -1242,6 +1250,7 @@ func TestSecurityPolicyWithOas(t *testing.T) {
 			eval.NoErr(err)
 
 			verifyPolicyApiVersion(t, &tykEnv)
+			verifyTykOasVersion(t, &tykEnv)
 
 			tykOAS, _, err = createTestOASApi(ctx, testNs, c, "", nil, nil)
 			eval.NoErr(err)
