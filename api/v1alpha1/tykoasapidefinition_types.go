@@ -75,6 +75,18 @@ type TykOasApiDefinitionStatus struct {
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
 	// IngressTemplate shows whether this CR is used as Ingress Template or not.
 	IngressTemplate bool `json:"ingressTemplate,omitempty"`
+
+	// LatestTykSpecHash stores the hash of OAS API Definition created on Tyk. This information is updated after
+	// creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for
+	// running update operation or not. If there is a change in latestTykSpecHash as well as latestCRDSpecHash,
+	// Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+	LatestTykSpecHash string `json:"latestTykSpecHash,omitempty"`
+
+	// LatestCRDSpecHash stores the hash of TykOasApiDefinition CR created on K8s. This information is updated after
+	// creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for
+	// running update operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash,
+	// Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
 }
 
 // TykOasApiDefinition is the Schema for the tykoasapidefinitions API

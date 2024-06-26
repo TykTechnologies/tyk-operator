@@ -3620,6 +3620,9 @@ spec:
               ingressTemplate:
                 description: IngressTemplate shows whether this CR is used as Ingress Template or not.
                 type: boolean
+              latestCRDSpecHash:
+                description: LatestCRDSpecHash stores the hash of TykOasApiDefinition CR created on K8s. This information is updated after creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for running update operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash, Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+                type: string
               latestTransaction:
                 description: LatestTransaction provides status information about the last reconciliation.
                 properties:
@@ -3634,6 +3637,9 @@ spec:
                     format: date-time
                     type: string
                 type: object
+              latestTykSpecHash:
+                description: LatestTykSpecHash stores the hash of OAS API Definition created on Tyk. This information is updated after creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for running update operation or not. If there is a change in latestTykSpecHash as well as latestCRDSpecHash, Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+                type: string
               listenPath:
                 description: ListenPath is the base path on Tyk to which requests for this API will be sent.
                 type: string

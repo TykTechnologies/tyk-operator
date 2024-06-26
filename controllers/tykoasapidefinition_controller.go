@@ -22,10 +22,10 @@ import (
 	"strconv"
 	"time"
 
+	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
+	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -142,7 +142,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		if !tykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
 			markForDeletion = true
 
-			return deleteOasApi(ctx, tykOAS)
+			return deleteOasApi(ctx, log, tykOAS)
 		}
 
 		util.AddFinalizer(tykOAS, keys.TykOASFinalizerName)
@@ -159,18 +159,21 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 	if !markForDeletion {
 		var transactionInfo v1alpha1.TransactionInfo
 
+		transactionInfo.Time = metav1.Now()
 		if err == nil {
 			transactionInfo.Status = v1alpha1.Successful
-			transactionInfo.Time = metav1.Now()
 		} else {
 			reqA = queueAfter
 
 			transactionInfo.Status = v1alpha1.Failed
-			transactionInfo.Time = metav1.Now()
 			transactionInfo.Error = err.Error()
 		}
 
 		tykOAS.Status.LatestTransaction = transactionInfo
+
+		oasOnTyk, _ := klient.Universal.TykOAS().Get(ctx, apiID) //nolint
+		tykOAS.Status.LatestTykSpecHash = calculateHash(oasOnTyk)
+		tykOAS.Status.LatestCRDSpecHash = calculateHash(tykOAS.Spec)
 
 		if err = r.updateStatus(ctx, tykOAS, apiID, log, false); err != nil {
 			log.Error(err, "Failed to update status of Tyk OAS CRD")
@@ -188,9 +191,9 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{RequeueAfter: reqA}, err
 }
 
-func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Context,
-	tykOASCrd *v1alpha1.TykOasApiDefinition, log logr.Logger, env *environment.Env) (string, error,
-) {
+func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
+	ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition, log logr.Logger, env *environment.Env,
+) (string, error) {
 	var cm v1.ConfigMap
 
 	configMapNs := tykOASCrd.Spec.TykOAS.ConfigmapRef.Namespace
@@ -240,6 +243,15 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Cont
 			return "", err
 		}
 	} else {
+		oasApiDefOnTyk, _ := klient.Universal.TykOAS().Get(ctx, apiID) //nolint
+		// If we have same OAS API Definition on Tyk, we do not need to send Update to Tyk.
+		// So, we can simply return to main reconciliation logic.
+		if isSame(tykOASCrd.Status.LatestTykSpecHash, oasApiDefOnTyk) &&
+			isSame(tykOASCrd.Status.LatestCRDSpecHash, tykOASCrd.Spec) {
+			log.Info("No need to update the resource on Tyk side")
+			return apiID, nil
+		}
+
 		if err = klient.Universal.TykOAS().Update(ctx, apiID, tykOASDoc); err != nil {
 			log.Error(err, "failed to update Tyk OAS API")
 			return "", err
@@ -395,14 +407,18 @@ func getAPIID(tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string) (string
 	return val, nil
 }
 
-func deleteOasApi(ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition) error {
+func deleteOasApi(ctx context.Context, l logr.Logger, tykOASCrd *v1alpha1.TykOasApiDefinition) error {
 	if tykOASCrd == nil {
 		return nil
 	}
 
 	if tykOASCrd.Status.ID != "" {
 		if err := klient.Universal.TykOAS().Delete(ctx, tykOASCrd.Status.ID); err != nil {
-			return err
+			if !tykClient.IsNotFound(err) {
+				return err
+			}
+
+			l.Info("TykOasApiDefinition CR already deleted from Tyk", "ID", tykOASCrd.Status.ID)
 		}
 	}
 
