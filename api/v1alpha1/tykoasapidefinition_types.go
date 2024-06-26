@@ -87,6 +87,9 @@ type TykOasApiDefinitionStatus struct {
 	// running update operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash,
 	// Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
 	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
+
+	// LatestConfigMapHash stores the hash of ConfigMap that is being used by TykOasApiDefinition.
+	LatestConfigMapHash string `json:"latestConfigMapHash,omitempty"`
 }
 
 // TykOasApiDefinition is the Schema for the tykoasapidefinitions API

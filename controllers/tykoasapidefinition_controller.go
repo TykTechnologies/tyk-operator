@@ -138,6 +138,8 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
+	var cmHash string
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, tykOAS, func() error {
 		if !tykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
 			markForDeletion = true
@@ -147,7 +149,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 		util.AddFinalizer(tykOAS, keys.TykOASFinalizerName)
 
-		apiID, err = r.createOrUpdateTykOASAPI(ctx, tykOAS, log, &env)
+		apiID, cmHash, err = r.createOrUpdateTykOASAPI(ctx, tykOAS, log, &env)
 		if err != nil {
 			log.Error(err, "Failed to create/update Tyk OAS API")
 			return err
@@ -174,6 +176,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		oasOnTyk, _ := klient.Universal.TykOAS().Get(ctx, apiID) //nolint
 		tykOAS.Status.LatestTykSpecHash = calculateHash(oasOnTyk)
 		tykOAS.Status.LatestCRDSpecHash = calculateHash(tykOAS.Spec)
+		tykOAS.Status.LatestConfigMapHash = cmHash
 
 		if err = r.updateStatus(ctx, tykOAS, apiID, log, false); err != nil {
 			log.Error(err, "Failed to update status of Tyk OAS CRD")
@@ -193,7 +196,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 	ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition, log logr.Logger, env *environment.Env,
-) (string, error) {
+) (string, string, error) {
 	var cm v1.ConfigMap
 
 	configMapNs := tykOASCrd.Spec.TykOAS.ConfigmapRef.Namespace
@@ -209,7 +212,7 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 	err := r.Client.Get(ctx, ns, &cm)
 	if err != nil {
 		log.Error(err, "Failed to fetch config map")
-		return "", err
+		return "", "", err
 	}
 
 	tykOASDoc := cm.Data[tykOASCrd.Spec.TykOAS.ConfigmapRef.KeyName]
@@ -219,12 +222,12 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 		errMsg := "invalid Tyk OAS APIDefinition. Failed to fetch value of `x-tyk-api-gateway` "
 		log.Error(err, errMsg)
 
-		return "", fmt.Errorf("%s: %s", errMsg, err.Error())
+		return "", "", fmt.Errorf("%s: %s", errMsg, err.Error())
 	}
 
 	apiID, err := getAPIID(tykOASCrd, tykOASDoc)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if apiID == "" {
@@ -233,32 +236,35 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 
 	if tykOASDoc, err = r.processClientCertificate(ctx, env, log, tykOASCrd, tykOASDoc); err != nil {
 		log.Error(err, "failed to process client certificate")
-		return "", err
+		return "", "", err
 	}
+
+	cmHash := calculateHash(tykOASDoc)
 
 	exists := klient.Universal.TykOAS().Exists(ctx, apiID)
 	if !exists {
 		if err = klient.Universal.TykOAS().Create(ctx, apiID, tykOASDoc); err != nil {
 			log.Error(err, "failed to create Tyk OAS API")
-			return "", err
+			return "", "", err
 		}
 	} else {
 		oasApiDefOnTyk, _ := klient.Universal.TykOAS().Get(ctx, apiID) //nolint
 		// If we have same OAS API Definition on Tyk, we do not need to send Update to Tyk.
 		// So, we can simply return to main reconciliation logic.
 		if isSame(tykOASCrd.Status.LatestTykSpecHash, oasApiDefOnTyk) &&
-			isSame(tykOASCrd.Status.LatestCRDSpecHash, tykOASCrd.Spec) {
+			isSame(tykOASCrd.Status.LatestCRDSpecHash, tykOASCrd.Spec) &&
+			cmHash == tykOASCrd.Status.LatestConfigMapHash {
 			log.Info("No need to update the resource on Tyk side")
-			return apiID, nil
+			return apiID, cmHash, nil
 		}
 
 		if err = klient.Universal.TykOAS().Update(ctx, apiID, tykOASDoc); err != nil {
 			log.Error(err, "failed to update Tyk OAS API")
-			return "", err
+			return "", "", err
 		}
 	}
 
-	return apiID, nil
+	return apiID, cmHash, nil
 }
 
 func (r *TykOasApiDefinitionReconciler) processClientCertificate(ctx context.Context,

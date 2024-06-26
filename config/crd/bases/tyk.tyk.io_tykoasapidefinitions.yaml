@@ -143,6 +143,10 @@ spec:
                   in latestCRDSpecHash as well as latestTykSpecHash, Operator runs
                   update logic and updates resources on Tyk Gateway or Tyk Dashboard.
                 type: string
+              latestConfigMapHash:
+                description: LatestConfigMapHash stores the hash of ConfigMap that
+                  is being used by TykOasApiDefinition.
+                type: string
               latestTransaction:
                 description: LatestTransaction provides status information about the
                   last reconciliation.
