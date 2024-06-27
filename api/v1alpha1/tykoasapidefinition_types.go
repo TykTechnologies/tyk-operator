@@ -26,8 +26,12 @@ type TykOasApiDefinitionSpec struct {
 	// Context specify namespace/name of the OperatorContext object used for
 	// reconciling this APIDefinition
 	Context *model.Target `json:"contextRef,omitempty"`
+
 	// TykOAS provides storage information about Tyk OAS
 	TykOAS TykOASReference `json:"tykOAS"`
+
+	// Versioning provides versioing information about this OAS API
+	Versioning TykOASVersioning `json:"versioning,omitempty"`
 
 	// ClientCertificate is used to configure client certificates settings needed
 	// for MTLS connection between Tyk and client.
@@ -46,6 +50,38 @@ type ClientCertificateConfig struct {
 type TykOASReference struct {
 	// ConfigmapRef provides information of configmap in which Tyk OAS is stored
 	ConfigmapRef ConfigMapReference `json:"configmapRef"`
+}
+
+type TykOASVersioning struct {
+	// Default contains the default version name if a request is issued without a version.
+	Default string `json:"default"`
+
+	// Enabled is a boolean flag, if set to true it will enable versioning of the API.
+	Enabled bool `json:"enabled"`
+
+	// Key contains the name of the key to check for versioning information.
+	Key string `json:"key"`
+
+	// Location contains versioning location information. It can be one of the following:
+	// header, url-param, url.
+	Location string `json:"location"`
+
+	// Name contains the name of the version.
+	Name string `json:"name"`
+
+	// Versions contains a list of versions that map to individual API IDs.
+	Versions []TykOASVersions `json:"versions,omitempty"`
+}
+
+type TykOASVersions struct {
+	// Name contains the name of the refrenced OasApiDefinition.
+	Name string `json:"name"`
+
+	// OasApiDefinitionRef refrences an OasApiDefinition.
+	OasApiDefinitionRef string `json:"oasApiDefinitionRef"`
+
+	// Namespace contains the namespace where the version was installed.
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type ConfigMapReference struct {
@@ -75,6 +111,14 @@ type TykOasApiDefinitionStatus struct {
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
 	// IngressTemplate shows whether this CR is used as Ingress Template or not.
 	IngressTemplate bool `json:"ingressTemplate,omitempty"`
+	// IsVersionedAPI indicates if the API is a version or not.
+	IsVersionedAPI bool `json:"isVersionedAPI,omitempty"`
+	// BaseVersionName specifies the name of the Base OAS API when it is IsVersionedAPI is true.
+	BaseVersionName string `json:"baseVersionName,omitempty"`
+	// BaseVersionNamespace specifies the namespace of the Base OAS API.
+	BaseVersionNamespace string `json:"baseVersionNamespace,omitempty"`
+	// IsDefaultVersion specifies if the OAS API is the default  Version.
+	IsDefaultVersion bool `json:"isDefaultVersion,omitempty"`
 }
 
 // TykOasApiDefinition is the Schema for the tykoasapidefinitions API

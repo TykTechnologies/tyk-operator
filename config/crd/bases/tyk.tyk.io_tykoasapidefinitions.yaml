@@ -116,12 +116,70 @@ spec:
                 required:
                 - configmapRef
                 type: object
+              versioning:
+                description: Versioning provides versioing information about this
+                  OAS API
+                properties:
+                  default:
+                    description: Default contains the default version name if a request
+                      is issued without a version.
+                    type: string
+                  enabled:
+                    description: Enabled is a boolean flag, if set to true it will
+                      enable versioning of the API.
+                    type: boolean
+                  key:
+                    description: Key contains the name of the key to check for versioning
+                      information.
+                    type: string
+                  location:
+                    description: 'Location contains versioning location information.
+                      It can be one of the following: header, url-param, url.'
+                    type: string
+                  name:
+                    description: Name contains the name of the version.
+                    type: string
+                  versions:
+                    description: Versions contains a list of versions that map to
+                      individual API IDs.
+                    items:
+                      properties:
+                        name:
+                          description: Name contains the name of the refrenced OasApiDefinition.
+                          type: string
+                        namespace:
+                          description: Namespace contains the namespace where the
+                            version was installed.
+                          type: string
+                        oasApiDefinitionRef:
+                          description: OasApiDefinitionRef refrences an OasApiDefinition.
+                          type: string
+                      required:
+                      - name
+                      - oasApiDefinitionRef
+                      type: object
+                    type: array
+                required:
+                - default
+                - enabled
+                - key
+                - location
+                - name
+                type: object
             required:
             - tykOAS
             type: object
           status:
             description: TykOasApiDefinitionStatus defines the observed state of TykOasApiDefinition
             properties:
+              baseVersionName:
+                description: BaseVersionName specifies the name of the Base OAS API
+                  when it is IsVersionedAPI is true.
+                type: string
+              baseVersionNamespace:
+                description: BaseVersionNamespace specifies the namespace of the Base
+                  OAS API.
+                type: string
               domain:
                 description: Domain is the custom domain used by the API
                 type: string
@@ -134,6 +192,12 @@ spec:
               ingressTemplate:
                 description: IngressTemplate shows whether this CR is used as Ingress
                   Template or not.
+                type: boolean
+              isDefaultVersion:
+                description: IsDefaultVersion specifies if the OAS API is the default  Version.
+                type: boolean
+              isVersionedAPI:
+                description: IsVersionedAPI indicates if the API is a version or not.
                 type: boolean
               latestTransaction:
                 description: LatestTransaction provides status information about the
