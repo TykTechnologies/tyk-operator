@@ -174,7 +174,7 @@ spec:
             properties:
               baseVersionName:
                 description: BaseVersionName specifies the name of the Base OAS API
-                  when it is IsVersionedAPI is true.
+                  if IsVersionedAPI is set to true.
                 type: string
               baseVersionNamespace:
                 description: BaseVersionNamespace specifies the namespace of the Base

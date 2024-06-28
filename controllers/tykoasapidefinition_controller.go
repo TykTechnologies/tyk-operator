@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -170,7 +169,11 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		if !tykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
 			markForDeletion = true
 
-			return r.deleteOasApi(ctx, log, tykOAS)
+			if err := r.updateBaseOasAPIVersionsStatus(ctx, log, tykOAS); err != nil {
+				return err
+			}
+
+			return deleteOasApi(ctx, tykOAS)
 		}
 
 		util.AddFinalizer(tykOAS, keys.TykOASFinalizerName)
@@ -224,11 +227,11 @@ func (r *TykOasApiDefinitionReconciler) handleVersionedTykOASAPI(
 ) error {
 	if !versionedTykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
 		if versionedTykOAS.Status.IsDefaultVersion {
-			err := errors.New("cannot delete default API version. Remove it from base API's default first")
+			errMsg := "Cannot delete default API version. Remove it from base API's default first"
 
 			versionedTykOAS.Status.LatestTransaction = v1alpha1.TransactionInfo{
 				Time:   metav1.Now(),
-				Status: v1alpha1.TransactionStatus(err.Error()),
+				Status: v1alpha1.TransactionStatus(errMsg),
 			}
 
 			if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
@@ -251,16 +254,63 @@ func (r *TykOasApiDefinitionReconciler) handleVersionedTykOASAPI(
 			return err
 		}
 
-		err := errors.New("cannot delete API. update the Base OasAPI to delete")
+		errMsg := "Cannot delete API. update the Base OasAPI to delete"
 
 		versionedTykOAS.Status.LatestTransaction = v1alpha1.TransactionInfo{
 			Time:   metav1.Now(),
-			Status: v1alpha1.TransactionStatus(err.Error()),
+			Status: v1alpha1.TransactionStatus(errMsg),
 		}
 
 		if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
 			return err
 		}
+	}
+
+	// this cleans up dangling versioned OAS APIs
+	if len(versionedTykOAS.Status.BaseVersionName) > 0 {
+		var baseOasAPI v1alpha1.TykOasApiDefinition
+
+		ns := versionedTykOAS.Status.BaseVersionNamespace
+		if ns == "" {
+			ns = "default"
+		}
+
+		if err := r.Get(ctx, types.NamespacedName{
+			Name:      versionedTykOAS.Status.BaseVersionName,
+			Namespace: ns,
+		}, &baseOasAPI); err != nil {
+			if k8serrors.IsNotFound(err) {
+				log.Info("base oas version not found, detaching version from the base OAS API.")
+
+				versionedTykOAS.RemoveOASVersionStatus()
+
+				if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
+			return err
+		}
+
+		var oasAPIPresent bool
+
+		for _, v := range baseOasAPI.Spec.Versioning.Versions {
+			if v.OasApiDefinitionRef == versionedTykOAS.Name {
+				oasAPIPresent = true
+			}
+		}
+
+		if !oasAPIPresent {
+			versionedTykOAS.RemoveOASVersionStatus()
+
+			if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 
 	return nil
@@ -553,7 +603,26 @@ func getAPIID(tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string) (string
 	return val, nil
 }
 
-func (r *TykOasApiDefinitionReconciler) deleteOasApi(
+func deleteOasApi(
+	ctx context.Context,
+	tykOASCrd *v1alpha1.TykOasApiDefinition,
+) error {
+	if tykOASCrd == nil {
+		return nil
+	}
+
+	if tykOASCrd.Status.ID != "" {
+		if err := klient.Universal.TykOAS().Delete(ctx, tykOASCrd.Status.ID); err != nil {
+			return err
+		}
+	}
+
+	util.RemoveFinalizer(tykOASCrd, keys.TykOASFinalizerName)
+
+	return nil
+}
+
+func (r *TykOasApiDefinitionReconciler) updateBaseOasAPIVersionsStatus(
 	ctx context.Context,
 	log logr.Logger,
 	tykOASCrd *v1alpha1.TykOasApiDefinition,
@@ -577,24 +646,13 @@ func (r *TykOasApiDefinitionReconciler) deleteOasApi(
 				return err
 			}
 
-			versionOasAPI.Status.IsDefaultVersion = false
-			versionOasAPI.Status.IsVersionedAPI = false
-			versionOasAPI.Status.BaseVersionName = ""
-			versionOasAPI.Status.BaseVersionNamespace = ""
+			versionOasAPI.RemoveOASVersionStatus()
 
 			if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
 				return err
 			}
 		}
 	}
-
-	if tykOASCrd.Status.ID != "" {
-		if err := klient.Universal.TykOAS().Delete(ctx, tykOASCrd.Status.ID); err != nil {
-			return err
-		}
-	}
-
-	util.RemoveFinalizer(tykOASCrd, keys.TykOASFinalizerName)
 
 	return nil
 }

@@ -113,7 +113,7 @@ type TykOasApiDefinitionStatus struct {
 	IngressTemplate bool `json:"ingressTemplate,omitempty"`
 	// IsVersionedAPI indicates if the API is a version or not.
 	IsVersionedAPI bool `json:"isVersionedAPI,omitempty"`
-	// BaseVersionName specifies the name of the Base OAS API when it is IsVersionedAPI is true.
+	// BaseVersionName specifies the name of the Base OAS API if IsVersionedAPI is set to true.
 	BaseVersionName string `json:"baseVersionName,omitempty"`
 	// BaseVersionNamespace specifies the namespace of the Base OAS API.
 	BaseVersionNamespace string `json:"baseVersionNamespace,omitempty"`
@@ -137,6 +137,13 @@ type TykOasApiDefinition struct {
 
 	Spec   TykOasApiDefinitionSpec   `json:"spec,omitempty"`
 	Status TykOasApiDefinitionStatus `json:"status,omitempty"`
+}
+
+func (t *TykOasApiDefinition) RemoveOASVersionStatus() {
+	t.Status.IsDefaultVersion = false
+	t.Status.IsVersionedAPI = false
+	t.Status.BaseVersionName = ""
+	t.Status.BaseVersionNamespace = ""
 }
 
 //+kubebuilder:object:root=true
