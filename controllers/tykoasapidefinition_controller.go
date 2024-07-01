@@ -216,6 +216,7 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 	}
 
 	tykOASDoc := cm.Data[tykOASCrd.Spec.TykOAS.ConfigmapRef.KeyName]
+	cmHash := calculateHash(tykOASDoc)
 
 	_, _, _, err = jsonparser.Get([]byte(tykOASDoc), TykOASExtenstionStr)
 	if err != nil {
@@ -239,8 +240,6 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 		return "", "", err
 	}
 
-	cmHash := calculateHash(tykOASDoc)
-
 	exists := klient.Universal.TykOAS().Exists(ctx, apiID)
 	if !exists {
 		if err = klient.Universal.TykOAS().Create(ctx, apiID, tykOASDoc); err != nil {
@@ -248,23 +247,50 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 			return "", "", err
 		}
 	} else {
-		oasApiDefOnTyk, _ := klient.Universal.TykOAS().Get(ctx, apiID) //nolint
-		// If we have same OAS API Definition on Tyk, we do not need to send Update to Tyk.
-		// So, we can simply return to main reconciliation logic.
-		if isSame(tykOASCrd.Status.LatestTykSpecHash, oasApiDefOnTyk) &&
-			isSame(tykOASCrd.Status.LatestCRDSpecHash, tykOASCrd.Spec) &&
-			cmHash == tykOASCrd.Status.LatestConfigMapHash {
-			log.Info("No need to update the resource on Tyk side")
-			return apiID, cmHash, nil
-		}
-
-		if err = klient.Universal.TykOAS().Update(ctx, apiID, tykOASDoc); err != nil {
-			log.Error(err, "failed to update Tyk OAS API")
+		err = r.tykUpdate(ctx, log, &updateReq{
+			tykOasDoc:      tykOASDoc,
+			apiID:          apiID,
+			crd:            tykOASCrd,
+			existingCmHash: cmHash,
+		})
+		if err != nil {
+			log.Error(err, "failed to update Tyk OAS API on Tyk")
 			return "", "", err
 		}
 	}
 
 	return apiID, cmHash, nil
+}
+
+type updateReq struct {
+	crd            *v1alpha1.TykOasApiDefinition
+	tykOasDoc      string
+	apiID          string
+	existingCmHash string
+}
+
+func (r *TykOasApiDefinitionReconciler) tykUpdate(ctx context.Context, l logr.Logger, req *updateReq) error {
+	if req == nil || req.crd == nil {
+		return fmt.Errorf("invalid Tyk update request")
+	}
+
+	oasApiDefOnTyk, _ := klient.Universal.TykOAS().Get(ctx, req.apiID) //nolint
+	// If we have same OAS API Definition on Tyk, we do not need to send Update to Tyk.
+	// So, we can simply return to main reconciliation logic.
+	if isSame(req.crd.Status.LatestTykSpecHash, oasApiDefOnTyk) &&
+		isSame(req.crd.Status.LatestCRDSpecHash, req.crd.Spec) &&
+		req.existingCmHash == req.crd.Status.LatestConfigMapHash {
+		l.Info("No need to update the resource on Tyk side")
+
+		return nil
+	}
+
+	if err := klient.Universal.TykOAS().Update(ctx, req.apiID, req.tykOasDoc); err != nil {
+		l.Error(err, "failed to update Tyk OAS API")
+		return err
+	}
+
+	return nil
 }
 
 func (r *TykOasApiDefinitionReconciler) processClientCertificate(ctx context.Context,
