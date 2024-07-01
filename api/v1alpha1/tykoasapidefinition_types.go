@@ -30,8 +30,8 @@ type TykOasApiDefinitionSpec struct {
 	// TykOAS provides storage information about Tyk OAS
 	TykOAS TykOASReference `json:"tykOAS"`
 
-	// Versioning provides versioing information about this OAS API
-	Versioning TykOASVersioning `json:"versioning,omitempty"`
+	// Versioning provides versioning information about this OAS API
+	Versioning *TykOASVersioning `json:"versioning,omitempty"`
 
 	// ClientCertificate is used to configure client certificates settings needed
 	// for MTLS connection between Tyk and client.
@@ -52,6 +52,17 @@ type TykOASReference struct {
 	ConfigmapRef ConfigMapReference `json:"configmapRef"`
 }
 
+// LocationType defines the type for the location enum
+type LocationType string
+
+// Define the allowed values for LocationType
+const (
+	LocationHeader   LocationType = "header"
+	LocationURLParam LocationType = "url-param"
+	LocationURL      LocationType = "url"
+)
+
+// TykOASVersioning contains verisoning information for an TykOASAPIDefinition.
 type TykOASVersioning struct {
 	// Default contains the default version name if a request is issued without a version.
 	Default string `json:"default"`
@@ -64,24 +75,14 @@ type TykOASVersioning struct {
 
 	// Location contains versioning location information. It can be one of the following:
 	// header, url-param, url.
-	Location string `json:"location"`
+	// +kubebuilder:validation:Enum=header;url-param;url
+	Location *LocationType `json:"location"`
 
 	// Name contains the name of the version.
 	Name string `json:"name"`
 
 	// Versions contains a list of versions that map to individual API IDs.
 	Versions []TykOASVersions `json:"versions,omitempty"`
-}
-
-type TykOASVersions struct {
-	// Name contains the name of the refrenced OasApiDefinition.
-	Name string `json:"name"`
-
-	// OasApiDefinitionRef refrences an OasApiDefinition.
-	OasApiDefinitionRef string `json:"oasApiDefinitionRef"`
-
-	// Namespace contains the namespace where the version was installed.
-	Namespace string `json:"namespace,omitempty"`
 }
 
 type ConfigMapReference struct {
@@ -111,12 +112,29 @@ type TykOasApiDefinitionStatus struct {
 	LatestTransaction TransactionInfo `json:"latestTransaction,omitempty"`
 	// IngressTemplate shows whether this CR is used as Ingress Template or not.
 	IngressTemplate bool `json:"ingressTemplate,omitempty"`
-	// IsVersionedAPI indicates if the API is a version or not.
+	// VersioningStatus shows the status of a Versioned TykOasAPIDefinition.
+	VersioningStatus *VersioningStatus `json:"versioningStatus,omitempty"`
+}
+
+// TykOASVersion represents each OAS API Definition used as a version.
+type TykOASVersions struct {
+	// Name contains the name of the refrenced TykOasApiDefinition.
+	Name string `json:"name"`
+
+	// TykOasApiDefinitionRef references a TykOasApiDefinition.
+	TykOasApiDefinitionRef string `json:"tykOasApiDefinitionRef"`
+
+	// Namespace contains the namespace where the version was installed.
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// VersioningStatus contains the status of a versioned TykOasAPI.
+type VersioningStatus struct {
+	// IsVersionedAPI indicates if the API is versioned.
 	IsVersionedAPI bool `json:"isVersionedAPI,omitempty"`
-	// BaseVersionName specifies the name of the Base OAS API if IsVersionedAPI is set to true.
-	BaseVersionName string `json:"baseVersionName,omitempty"`
-	// BaseVersionNamespace specifies the namespace of the Base OAS API.
-	BaseVersionNamespace string `json:"baseVersionNamespace,omitempty"`
+	// BaseAPIVersionContextRef specifies the namespace and name of the
+	// Base API a versioned API is linked to.
+	BaseAPIVersionContextRef *model.Target `json:"baseAPIVersionContextRef,omitempty"`
 	// IsDefaultVersion specifies if the OAS API is the default  Version.
 	IsDefaultVersion bool `json:"isDefaultVersion,omitempty"`
 }
@@ -140,10 +158,59 @@ type TykOasApiDefinition struct {
 }
 
 func (t *TykOasApiDefinition) RemoveOASVersionStatus() {
-	t.Status.IsDefaultVersion = false
-	t.Status.IsVersionedAPI = false
-	t.Status.BaseVersionName = ""
-	t.Status.BaseVersionNamespace = ""
+	t.Status.VersioningStatus = nil
+}
+
+func (status *TykOasApiDefinitionStatus) GetIsVersionedAPI() bool {
+	if status.VersioningStatus == nil {
+		return false
+	}
+
+	return status.VersioningStatus.IsVersionedAPI
+}
+
+func (status *TykOasApiDefinitionStatus) GetIsDefaultVersion() bool {
+	if status.VersioningStatus == nil {
+		return false
+	}
+
+	return status.VersioningStatus.IsDefaultVersion
+}
+
+func (status *TykOasApiDefinitionStatus) GetBaseVersionName() string {
+	if status.VersioningStatus == nil {
+		return ""
+	}
+
+	return status.VersioningStatus.BaseAPIVersionContextRef.Name
+}
+
+func (status *TykOasApiDefinitionStatus) GetBaseVersionNamespace() string {
+	if status.VersioningStatus == nil {
+		return ""
+	}
+
+	return *status.VersioningStatus.BaseAPIVersionContextRef.Namespace
+}
+
+func (status *TykOasApiDefinitionStatus) SetBaseVersionName(name string) {
+	status.VersioningStatus.BaseAPIVersionContextRef.Name = name
+}
+
+func (status *TykOasApiDefinitionStatus) SetBaseVersionNamespace(name *string) {
+	status.VersioningStatus.BaseAPIVersionContextRef.Namespace = name
+}
+
+func (status *TykOasApiDefinitionStatus) SetIsVersionedAPI(versioned bool) {
+	status.VersioningStatus.IsVersionedAPI = versioned
+}
+
+func (status *TykOasApiDefinitionStatus) NewVersioningStatus() {
+	versioningStatus := VersioningStatus{
+		BaseAPIVersionContextRef: &model.Target{},
+	}
+
+	status.VersioningStatus = &versioningStatus
 }
 
 //+kubebuilder:object:root=true
