@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -62,6 +63,7 @@ var (
 	ServerCustomDomainNameKeys                   = []string{TykOASExtenstionStr, "server", "customDomain", "name"}
 	ServerCustomDomainEnabledKeys                = []string{TykOASExtenstionStr, "server", "customDomain", "enabled"}
 	ServerCustomDomainCertsKeys                  = []string{TykOASExtenstionStr, "server", "customDomain", "certificates"}
+	InfoVersioningKeys                           = []string{TykOASExtenstionStr, "info", "versioning"}
 	ServerAuthenticationBaseIdentityProviderKeys = []string{
 		TykOASExtenstionStr, "server", "authentication", "baseIdentityProvider",
 	}
@@ -73,6 +75,22 @@ type TykOasApiDefinitionReconciler struct {
 	Log    logr.Logger
 	Env    environment.Env
 	Scheme *runtime.Scheme
+}
+
+// TykOasApiDefinitionVersion refrences a version of the Base TykOasAPI.
+type TykOasApiDefinitionVersion struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// TykOasApiDefinitionVersioning represents the version information for a base TykOasApiDefinition object
+type TykOasApiDefinitionVersioning struct {
+	Default  string                        `json:"default"`
+	Enabled  bool                          `json:"enabled"`
+	Key      string                        `json:"key"`
+	Location v1alpha1.LocationType         `json:"location"`
+	Name     string                        `json:"name"`
+	Versions []*TykOasApiDefinitionVersion `json:"versions"`
 }
 
 //+kubebuilder:rbac:groups=tyk.tyk.io,resources=tykoasapidefinitions,verbs=get;list;watch;create;update;patch;delete
@@ -138,9 +156,24 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
+	if tykOAS.Status.GetIsVersionedAPI() {
+		err := r.reconcileVersionedOasApi(ctx, log, tykOAS)
+		if err != nil {
+			log.Error(err, "failed to handle versioned Tyk OAS API")
+
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, nil
+	}
+
 	_, err = util.CreateOrUpdate(ctx, r.Client, tykOAS, func() error {
 		if !tykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
 			markForDeletion = true
+
+			if err := r.reconcileDeletingBaseOasAPIVersions(ctx, log, tykOAS); err != nil {
+				return err
+			}
 
 			return deleteOasApi(ctx, tykOAS)
 		}
@@ -150,6 +183,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		apiID, err = r.createOrUpdateTykOASAPI(ctx, tykOAS, log, &env)
 		if err != nil {
 			log.Error(err, "Failed to create/update Tyk OAS API")
+
 			return err
 		}
 
@@ -168,6 +202,8 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 			transactionInfo.Status = v1alpha1.Failed
 			transactionInfo.Time = metav1.Now()
 			transactionInfo.Error = err.Error()
+
+			log.Error(err, "Error from create update")
 		}
 
 		tykOAS.Status.LatestTransaction = transactionInfo
@@ -186,6 +222,187 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 	log.Info("Completed reconciling Tyk OAS instance")
 
 	return ctrl.Result{RequeueAfter: reqA}, err
+}
+
+// reconcileVersionedOasApi checks if a versioned API can be deleted and isn't a dangling Versioned API
+// i.e an API that was previously part of the version list of a Base API.
+func (r *TykOasApiDefinitionReconciler) reconcileVersionedOasApi(
+	ctx context.Context,
+	log logr.Logger,
+	versionedTykOAS *v1alpha1.TykOasApiDefinition,
+) error {
+	if err := r.cleanUpDanglingVersionedOasAPIs(ctx, versionedTykOAS, log); err != nil {
+		return err
+	}
+
+	if !versionedTykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
+		if versionedTykOAS.Status.GetIsDefaultVersion() {
+			errMsg := "Cannot delete default API version. Remove it from base API's default first"
+
+			versionedTykOAS.Status.LatestTransaction = v1alpha1.TransactionInfo{
+				Time:   metav1.Now(),
+				Status: v1alpha1.TransactionStatus(errMsg),
+			}
+
+			log.Info("error deleting versioned TykOasAPI", errMsg)
+
+			if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		var baseOasAPI v1alpha1.TykOasApiDefinition
+
+		if err := r.Get(ctx, types.NamespacedName{
+			Name:      versionedTykOAS.Status.GetBaseVersionName(),
+			Namespace: versionedTykOAS.Status.GetBaseVersionNamespace(),
+		}, &baseOasAPI); err != nil {
+			if k8serrors.IsNotFound(err) {
+				log.Info("failed to get TykOasApiDefinition CR", "err", err.Error())
+			}
+
+			return err
+		}
+
+		errMsg := "Cannot delete API. It is referenced as version in another Tyk OAS API. Please remove it before deleting."
+
+		versionedTykOAS.Status.LatestTransaction = v1alpha1.TransactionInfo{
+			Time:   metav1.Now(),
+			Status: v1alpha1.TransactionStatus(errMsg),
+		}
+
+		log.Info("error deleting versioned TykOasAPI", errMsg)
+
+		if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *TykOasApiDefinitionReconciler) cleanUpDanglingVersionedOasAPIs(
+	ctx context.Context,
+	versionedTykOAS *v1alpha1.TykOasApiDefinition,
+	log logr.Logger,
+) error {
+	if versionedTykOAS.Status.GetBaseVersionName() == "" {
+		return nil
+	}
+
+	var baseOasAPI v1alpha1.TykOasApiDefinition
+
+	if err := r.Get(ctx, types.NamespacedName{
+		Name:      versionedTykOAS.Status.GetBaseVersionName(),
+		Namespace: versionedTykOAS.Status.GetBaseVersionNamespace(),
+	}, &baseOasAPI); err != nil {
+		if k8serrors.IsNotFound(err) {
+			log.Info("base oas version not found, detaching version from the base OAS API.")
+
+			versionedTykOAS.RemoveOASVersionStatus()
+
+			if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		return err
+	}
+
+	var oasAPIPresent bool
+
+	for _, v := range baseOasAPI.Spec.Versioning.Versions {
+		if v.TykOasApiDefinitionRef == versionedTykOAS.Name {
+			oasAPIPresent = true
+			break
+		}
+	}
+
+	if !oasAPIPresent {
+		versionedTykOAS.RemoveOASVersionStatus()
+
+		if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// handleVersioningTykOASAPI versions a Base TykOasAPI using refrenced TykOasAPIs.
+func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPI(
+	ctx context.Context,
+	tykBaseOASCrd *v1alpha1.TykOasApiDefinition,
+	log logr.Logger,
+	tykBaseOASDoc *string,
+) error {
+	var versions []*TykOasApiDefinitionVersion
+
+	for _, v := range tykBaseOASCrd.Spec.Versioning.Versions {
+		var versionOasAPI v1alpha1.TykOasApiDefinition
+
+		if err := r.Get(ctx, types.NamespacedName{
+			Name:      v.TykOasApiDefinitionRef,
+			Namespace: v.Namespace,
+		}, &versionOasAPI); err != nil {
+			if k8serrors.IsNotFound(err) {
+				log.Info("failed to get versioned TykOasApiDefinition CR", "err", err.Error())
+			}
+
+			return err
+		}
+
+		if versionOasAPI.Status.VersioningStatus == nil {
+			versionOasAPI.Status.NewVersioningStatus()
+		}
+
+		if tykBaseOASCrd.Spec.Versioning.Default == v.Name {
+			versionOasAPI.Status.VersioningStatus.IsDefaultVersion = true
+		}
+
+		versionOasAPI.Status.SetBaseVersionName(tykBaseOASCrd.Name)
+		versionOasAPI.Status.SetBaseVersionNamespace(&tykBaseOASCrd.Namespace)
+		versionOasAPI.Status.SetIsVersionedAPI(true)
+
+		version := TykOasApiDefinitionVersion{
+			ID:   versionOasAPI.Status.ID,
+			Name: v.Name,
+		}
+
+		versions = append(versions, &version)
+
+		if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
+			return err
+		}
+	}
+
+	versioning := TykOasApiDefinitionVersioning{
+		Default:  tykBaseOASCrd.Spec.Versioning.Default,
+		Enabled:  tykBaseOASCrd.Spec.Versioning.Enabled,
+		Key:      tykBaseOASCrd.Spec.Versioning.Key,
+		Location: *tykBaseOASCrd.Spec.Versioning.Location,
+		Name:     tykBaseOASCrd.Spec.Versioning.Name,
+		Versions: versions,
+	}
+
+	byteVersioning, err := json.Marshal(versioning)
+	if err != nil {
+		return err
+	}
+
+	byteData := []byte(*tykBaseOASDoc)
+
+	if byteData, err = jsonparser.Set(byteData, byteVersioning, InfoVersioningKeys...); err != nil {
+		return err
+	}
+
+	*tykBaseOASDoc = string(byteData)
+
+	return nil
 }
 
 func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Context,
@@ -231,6 +448,15 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(ctx context.Cont
 	if tykOASDoc, err = r.processClientCertificate(ctx, env, log, tykOASCrd, tykOASDoc); err != nil {
 		log.Error(err, "failed to process client certificate")
 		return "", err
+	}
+
+	if tykOASCrd.Spec.Versioning != nil && tykOASCrd.Spec.Versioning.Enabled {
+		err := r.handleVersioningTykOASAPI(ctx, tykOASCrd, log, &tykOASDoc)
+		if err != nil {
+			log.Error(err, "Failed to version Tyk OAS API")
+
+			return "", err
+		}
 	}
 
 	exists := klient.Universal.TykOAS().Exists(ctx, apiID)
@@ -395,7 +621,10 @@ func getAPIID(tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string) (string
 	return val, nil
 }
 
-func deleteOasApi(ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition) error {
+func deleteOasApi(
+	ctx context.Context,
+	tykOASCrd *v1alpha1.TykOasApiDefinition,
+) error {
 	if tykOASCrd == nil {
 		return nil
 	}
@@ -407,6 +636,43 @@ func deleteOasApi(ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition) 
 	}
 
 	util.RemoveFinalizer(tykOASCrd, keys.TykOASFinalizerName)
+
+	return nil
+}
+
+func (r *TykOasApiDefinitionReconciler) reconcileDeletingBaseOasAPIVersions(
+	ctx context.Context,
+	log logr.Logger,
+	tykOASCrd *v1alpha1.TykOasApiDefinition,
+) error {
+	if tykOASCrd == nil {
+		return nil
+	}
+
+	if tykOASCrd.Spec.Versioning != nil && tykOASCrd.Spec.Versioning.Enabled {
+		for _, v := range tykOASCrd.Spec.Versioning.Versions {
+			var versionOasAPI v1alpha1.TykOasApiDefinition
+
+			if err := r.Get(ctx, types.NamespacedName{
+				Name:      v.TykOasApiDefinitionRef,
+				Namespace: v.Namespace,
+			}, &versionOasAPI); err != nil {
+				if k8serrors.IsNotFound(err) {
+					log.Info("failed to get versioned TykOasApiDefinition CR", "err", err.Error())
+
+					return nil
+				}
+
+				return err
+			}
+
+			versionOasAPI.RemoveOASVersionStatus()
+
+			if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }

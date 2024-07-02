@@ -3602,6 +3602,54 @@ spec:
                 required:
                 - configmapRef
                 type: object
+              versioning:
+                description: Versioning provides versioning information about this OAS API
+                properties:
+                  default:
+                    description: Default contains the default version name if a request is issued without a version.
+                    type: string
+                  enabled:
+                    description: Enabled is a boolean flag, if set to true it will enable versioning of the API.
+                    type: boolean
+                  key:
+                    description: Key contains the name of the key to check for versioning information.
+                    type: string
+                  location:
+                    description: 'Location contains versioning location information. It can be one of the following: header, url-param, url.'
+                    enum:
+                    - header
+                    - url-param
+                    - url
+                    type: string
+                  name:
+                    description: Name contains the name of the version.
+                    type: string
+                  versions:
+                    description: Versions contains a list of versions that map to individual API IDs.
+                    items:
+                      description: TykOASVersion represents each OAS API Definition used as a version.
+                      properties:
+                        name:
+                          description: Name contains the name of the refrenced TykOasApiDefinition.
+                          type: string
+                        namespace:
+                          description: Namespace contains the namespace where the version was installed.
+                          type: string
+                        tykOasApiDefinitionRef:
+                          description: TykOasApiDefinitionRef references a TykOasApiDefinition.
+                          type: string
+                      required:
+                      - name
+                      - tykOasApiDefinitionRef
+                      type: object
+                    type: array
+                required:
+                - default
+                - enabled
+                - key
+                - location
+                - name
+                type: object
             required:
             - tykOAS
             type: object
@@ -3640,6 +3688,28 @@ spec:
               targetURL:
                 description: TargetURL is the upstream address to which requests will be proxied.
                 type: string
+              versioningStatus:
+                description: VersioningStatus shows the status of a Versioned TykOasAPIDefinition.
+                properties:
+                  baseAPIVersionContextRef:
+                    description: BaseAPIVersionContextRef specifies the namespace and name of the Base API a versioned API is linked to.
+                    properties:
+                      name:
+                        description: k8s resource name
+                        type: string
+                      namespace:
+                        description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  isDefaultVersion:
+                    description: IsDefaultVersion specifies if the OAS API is the default  Version.
+                    type: boolean
+                  isVersionedAPI:
+                    description: IsVersionedAPI indicates if the API is versioned.
+                    type: boolean
+                type: object
             type: object
         type: object
     served: true
