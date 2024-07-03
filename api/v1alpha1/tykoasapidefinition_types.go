@@ -82,7 +82,7 @@ type TykOASVersioning struct {
 	Name string `json:"name"`
 
 	// Versions contains a list of versions that map to individual API IDs.
-	Versions []TykOASVersions `json:"versions,omitempty"`
+	Versions []TykOASVersion `json:"versions,omitempty"`
 }
 
 type ConfigMapReference struct {
@@ -117,7 +117,7 @@ type TykOasApiDefinitionStatus struct {
 }
 
 // TykOASVersion represents each OAS API Definition used as a version.
-type TykOASVersions struct {
+type TykOASVersion struct {
 	// Name contains the name of the refrenced TykOasApiDefinition.
 	Name string `json:"name"`
 

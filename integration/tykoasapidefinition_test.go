@@ -57,7 +57,7 @@ func TestOASCreate(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil, nil)
+			tykOAS, _, err = createTestOASApi(ctx, testNS, testOASCmName, c, "", nil, nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)
@@ -109,7 +109,7 @@ func TestInvalidTykOAS(t *testing.T) {
 		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			invalidOASDoc := "{}"
 
-			tykOAS, _, err := createTestOASApi(ctx, testNS, c, invalidOASDoc, nil, nil)
+			tykOAS, _, err := createTestOASApi(ctx, testNS, testOASCmName, c, invalidOASDoc, nil, nil)
 			eval.NoErr(err)
 
 			err = wait.For(conditions.New(c.Client().Resources(testNS)).ResourceMatch(tykOAS, func(object k8s.Object) bool {
@@ -156,7 +156,7 @@ func TestOASDelete(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil, nil)
+			tykOAS, _, err = createTestOASApi(ctx, testNS, testOASCmName, c, "", nil, nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)
@@ -217,7 +217,7 @@ func TestOASUpdate(t *testing.T) {
 			testNS, ok = ctx.Value(ctxNSKey).(string)
 			eval.True(ok)
 
-			tykOAS, cm, err = createTestOASApi(ctx, testNS, c, "", nil, nil)
+			tykOAS, cm, err = createTestOASApi(ctx, testNS, testOASCmName, c, "", nil, nil)
 			eval.NoErr(err)
 
 			err = waitForTykResourceCreation(c, tykOAS)
@@ -270,6 +270,122 @@ func TestOASUpdate(t *testing.T) {
 
 			eval.NoErr(err)
 			eval.Equal(targetURL, newListenPath)
+
+			return ctx
+		}).Feature()
+
+	testenv.Test(t, f)
+}
+
+func TestOASCreateAPIVersion(t *testing.T) {
+	var (
+		testNS     string
+		tykOAS     *v1alpha1.TykOasApiDefinition
+		baseTykOAS *v1alpha1.TykOasApiDefinition
+		tykCtx     context.Context
+		eval       = is.New(t)
+		tykEnv     environment.Env
+	)
+
+	f := features.New("Test Version Tyk OAS API").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			var err error
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(ctx, c)
+			eval.NoErr(err)
+
+			res := semver.Compare(tykEnv.TykVersion, "v5.3")
+			if res < 0 {
+				t.Skip("OAS support is added in Tyk in v5.3")
+			}
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			var ok bool
+
+			testNS, ok = ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
+
+			tykOAS, _, err = createTestOASApi(ctx, testNS, testOASCmName, c, "", nil, nil)
+			eval.NoErr(err)
+
+			err = waitForTykResourceCreation(c, tykOAS)
+			eval.NoErr(err)
+
+			// creating and versioning base API
+			baseTykOAS, _, err = createTestOASApi(ctx, testNS, testOASBaseAPICmName, c, "", nil,
+				func(oas *v1alpha1.TykOasApiDefinition) *v1alpha1.TykOasApiDefinition {
+					oas.Name = testOASBaseAPICrdName
+					locationHeader := v1alpha1.LocationHeader
+					versions := make([]v1alpha1.TykOASVersion, 0)
+
+					oasVersion := v1alpha1.TykOASVersion{
+						Name:                   tykOAS.Name,
+						TykOasApiDefinitionRef: tykOAS.Name,
+						Namespace:              tykOAS.Namespace,
+					}
+					versions = append(versions, oasVersion)
+
+					versioning := v1alpha1.TykOASVersioning{
+						Versions: versions,
+					}
+					versioning.Default = "true"
+					versioning.Enabled = true
+					versioning.Location = &locationHeader
+					versioning.Name = "v1"
+					versioning.Default = tykOAS.Name
+					versioning.Key = "x-api-version"
+
+					oas.Spec.Versioning = &versioning
+
+					return oas
+				})
+			eval.NoErr(err)
+
+			err = waitForTykResourceCreation(c, baseTykOAS)
+			eval.NoErr(err)
+
+			return ctx
+		}).Assess("Test Versioning a Tyk OAS API",
+		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			err := wait.For(
+				conditions.New(c.Client().Resources(testNS)).ResourceMatch(tykOAS, func(object k8s.Object) bool {
+					currTykOas, ok := object.(*v1alpha1.TykOasApiDefinition)
+					eval.True(ok)
+
+					t.Logf("looking for %+v", currTykOas.Status)
+					return klient.Universal.TykOAS().Exists(tykCtx, currTykOas.Status.ID) == true
+				}))
+			eval.NoErr(err)
+
+			err = wait.For(
+				conditions.New(c.Client().Resources(testNS)).ResourceMatch(baseTykOAS, func(object k8s.Object) bool {
+					currTykOas, ok := object.(*v1alpha1.TykOasApiDefinition)
+					eval.True(ok)
+
+					t.Logf("looking for %+v", currTykOas.Status)
+					return klient.Universal.TykOAS().Exists(tykCtx, currTykOas.Status.ID) == true &&
+						currTykOas.Spec.Versioning.Enabled
+				}))
+			eval.NoErr(err)
+
+			return ctx
+		}).Assess("Test versioned API is default version",
+		func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			err := wait.For(
+				conditions.New(c.Client().Resources(testNS)).ResourceMatch(baseTykOAS, func(object k8s.Object) bool {
+					currTykOas, ok := object.(*v1alpha1.TykOasApiDefinition)
+					eval.True(ok)
+
+					t.Logf("looking for %+v", currTykOas.Status)
+					return baseTykOAS.Spec.Versioning.Default == tykOAS.Name &&
+						baseTykOAS.Spec.Versioning.Versions[0].TykOasApiDefinitionRef == tykOAS.Name
+				}))
+			eval.NoErr(err)
 
 			return ctx
 		}).Feature()

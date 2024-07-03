@@ -197,7 +197,7 @@ func TestCertificateUploadForOAS(t *testing.T) {
 			  }`
 
 			// Create test TykOasApiDefinition
-			tykOas, _, err = createTestOASApi(ctx, testNS, envConf, tykOASDoc, nil,
+			tykOas, _, err = createTestOASApi(ctx, testNS, testOASCmName, envConf, tykOASDoc, nil,
 				func(oas *v1alpha1.TykOasApiDefinition) *v1alpha1.TykOasApiDefinition {
 					oas.Spec.ClientCertificate.Enabled = true
 					oas.Spec.ClientCertificate.Allowlist = []string{tlsSecretName}

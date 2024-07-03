@@ -81,6 +81,8 @@ const (
 	  }
 	}
   }`
+	testOASBaseAPICrdName = "test-base-api-oas"
+	testOASBaseAPICmName  = "test-base-api-oas-cm"
 )
 
 // createTestClient creates controller-runtime client by wrapping given e2e test client. It can be used to create
@@ -365,11 +367,17 @@ func generateEnvConfig(ctx context.Context, envConf *envconf.Config) (environmen
 	}, nil
 }
 
-func createTestOASApi(ctx context.Context, ns string, c *envconf.Config, tykOASDoc string, oasLabels map[string]string,
+func createTestOASApi(
+	ctx context.Context,
+	ns string,
+	cmName string,
+	c *envconf.Config,
+	tykOASDoc string,
+	oasLabels map[string]string,
 	mutuateFn func(*v1alpha1.TykOasApiDefinition) *v1alpha1.TykOasApiDefinition,
 ) (*v1alpha1.TykOasApiDefinition, *v1.ConfigMap, error) {
 	cm := &v1.ConfigMap{}
-	cm.Name = testOASCmName
+	cm.Name = cmName
 	cm.Namespace = ns
 
 	if tykOASDoc == "" {
