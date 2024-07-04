@@ -314,9 +314,14 @@ func (i RewriteToInternal) String() string {
 type Target struct {
 	// k8s resource name
 	Name string `json:"name"`
-	// The k8s namespace of the resource being targetted. When omitted this will be
+	// The k8s namespace of the resource being targeted. When omitted this will be
 	// set to the namespace of the object that is being reconciled.
 	Namespace *string `json:"namespace,omitempty"`
+
+	// LinkedApiKind represents the Kubernetes kind of the API Definition resource that
+	// is being target by current resource.
+	// +kubebuilder:validation:Optional
+	LinkedApiKind LinkedAPIDefinitionKind `json:"kind,omitempty"`
 }
 
 func (t *Target) Parse(v string) {

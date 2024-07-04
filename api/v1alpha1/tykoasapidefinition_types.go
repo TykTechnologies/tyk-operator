@@ -100,6 +100,8 @@ type ConfigMapReference struct {
 type TykOasApiDefinitionStatus struct {
 	// ID is the unique identifier of the API within Tyk.
 	ID string `json:"id,omitempty"`
+	// Name is the name of the OAS API within Tyk.
+	Name string `json:"name,omitempty"`
 	// Domain is the custom domain used by the API
 	Domain string `json:"domain,omitempty"`
 	// ListenPath is the base path on Tyk to which requests for this API will be sent.
@@ -114,6 +116,23 @@ type TykOasApiDefinitionStatus struct {
 	IngressTemplate bool `json:"ingressTemplate,omitempty"`
 	// VersioningStatus shows the status of a Versioned TykOasAPIDefinition.
 	VersioningStatus *VersioningStatus `json:"versioningStatus,omitempty"`
+	// LinkedByPolicies is a list policies that references this OAS API Definition.
+	//+optional
+	LinkedByPolicies []model.Target `json:"linkedByPolicies,omitempty"`
+	// LatestTykSpecHash stores the hash of OAS API Definition created on Tyk. This information is updated after
+	// creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for
+	// running update operation or not. If there is a change in latestTykSpecHash as well as latestCRDSpecHash,
+	// Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+	LatestTykSpecHash string `json:"latestTykSpecHash,omitempty"`
+
+	// LatestCRDSpecHash stores the hash of TykOasApiDefinition CR created on K8s. This information is updated after
+	// creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for
+	// running update operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash,
+	// Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+	LatestCRDSpecHash string `json:"latestCRDSpecHash,omitempty"`
+
+	// LatestConfigMapHash stores the hash of ConfigMap that is being used by TykOasApiDefinition.
+	LatestConfigMapHash string `json:"latestConfigMapHash,omitempty"`
 }
 
 // TykOASVersion represents each OAS API Definition used as a version.
@@ -211,6 +230,22 @@ func (status *TykOasApiDefinitionStatus) NewVersioningStatus() {
 	}
 
 	status.VersioningStatus = &versioningStatus
+}
+
+func (in *TykOasApiDefinition) GetLinkedPolicies() []model.Target {
+	return in.Status.LinkedByPolicies
+}
+
+func (in *TykOasApiDefinition) SetLinkedPolicies(result []model.Target) {
+	in.Status.LinkedByPolicies = result
+}
+
+func (in *TykOasApiDefinition) ApiName() string {
+	return in.Status.Name
+}
+
+func (in *TykOasApiDefinition) StatusApiID() string {
+	return in.Status.ID
 }
 
 //+kubebuilder:object:root=true

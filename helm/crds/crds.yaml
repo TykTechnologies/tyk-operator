@@ -284,11 +284,17 @@ spec:
               contextRef:
                 description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -909,11 +915,17 @@ spec:
                       target:
                         description: API a namespaced/name to the api definition resource that you are targetting
                         properties:
+                          kind:
+                            description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                            enum:
+                            - ApiDefinition
+                            - TykOasApiDefinition
+                            type: string
                           name:
                             description: k8s resource name
                             type: string
                           namespace:
-                            description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                            description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                             type: string
                         required:
                         - name
@@ -1563,11 +1575,17 @@ spec:
                                       target:
                                         description: API a namespaced/name to the api definition resource that you are targetting
                                         properties:
+                                          kind:
+                                            description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                                            enum:
+                                            - ApiDefinition
+                                            - TykOasApiDefinition
+                                            type: string
                                           name:
                                             description: k8s resource name
                                             type: string
                                           namespace:
-                                            description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                                            description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                                             type: string
                                         required:
                                         - name
@@ -1659,11 +1677,17 @@ spec:
                                             target:
                                               description: API a namespaced/name to the api definition resource that you are targetting
                                               properties:
+                                                kind:
+                                                  description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                                                  enum:
+                                                  - ApiDefinition
+                                                  - TykOasApiDefinition
+                                                  type: string
                                                 name:
                                                   description: k8s resource name
                                                   type: string
                                                 namespace:
-                                                  description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                                                  description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                                                   type: string
                                               required:
                                               - name
@@ -1873,11 +1897,17 @@ spec:
                 description: LinkedByAPIs is a list of ApiDefinition namespaced/name that links to this resource
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -1887,11 +1917,17 @@ spec:
                 description: LinkedByPolicies is a list policies that references this api definition
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -1901,11 +1937,17 @@ spec:
                 description: LinkedToAPIs is a list of ApiDefinition namespaced/name that this resource links to.
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2159,11 +2201,17 @@ spec:
                 type: object
               contextRef:
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -2203,11 +2251,17 @@ spec:
                 type: string
               policyRef:
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -2310,11 +2364,17 @@ spec:
               secretRef:
                 description: Reference to k8s secret resource that we load environment from.
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -2326,11 +2386,17 @@ spec:
               linked_api_definitions:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2339,11 +2405,17 @@ spec:
               linked_api_descriptions:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2352,11 +2424,17 @@ spec:
               linked_portal_catalogues:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2365,11 +2443,17 @@ spec:
               linked_portal_configs:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2378,11 +2462,17 @@ spec:
               linked_security_policies:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2391,11 +2481,17 @@ spec:
               linked_tyk_oas_api_definition:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -2460,11 +2556,17 @@ spec:
                   properties:
                     apiDescriptionRef:
                       properties:
+                        kind:
+                          description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                          enum:
+                          - ApiDefinition
+                          - TykOasApiDefinition
+                          type: string
                         name:
                           description: k8s resource name
                           type: string
                         namespace:
-                          description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                          description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                           type: string
                       required:
                       - name
@@ -2695,11 +2797,17 @@ spec:
                       type: string
                     policyRef:
                       properties:
+                        kind:
+                          description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                          enum:
+                          - ApiDefinition
+                          - TykOasApiDefinition
+                          type: string
                         name:
                           description: k8s resource name
                           type: string
                         namespace:
-                          description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                          description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                           type: string
                       required:
                       - name
@@ -2721,11 +2829,17 @@ spec:
               contextRef:
                 description: Context is reference to OperatorContext resource. Set this if you want to target a specific OperatorContext. When omitted default OperatorContext is used.
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -2795,11 +2909,17 @@ spec:
                 type: boolean
               contextRef:
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -3076,10 +3196,10 @@ spec:
                         type: object
                       type: array
                     api_id:
-                      description: 'TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIID should not really be needed, as is auto-set from the APIDefinition Resource'
                       type: string
                     api_name:
-                      description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefinition Resource'
                       type: string
                     disable_introspection:
                       description: DisableIntrospection disables GraphQL introspection if it is set to True.
@@ -3107,6 +3227,13 @@ spec:
                             type: string
                         type: object
                       type: array
+                    kind:
+                      default: ApiDefinition
+                      description: Kind represents the kind of the linked API Definition resource. It can be either "ApiDefinition" or "TykOasApiDefinition" (case sensitive way). By default, Kind is set to "ApiDefinition".
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: Name of the ApiDefinition resource to target
                       type: string
@@ -3176,10 +3303,10 @@ spec:
                         type: object
                       type: array
                     api_id:
-                      description: 'TODO: APIID should not really be needed, as is auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIID should not really be needed, as is auto-set from the APIDefinition Resource'
                       type: string
                     api_name:
-                      description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefnition Resource'
+                      description: 'TODO: APIName should not really be needed, as is auto-set from the APIDefinition Resource'
                       type: string
                     disable_introspection:
                       description: DisableIntrospection disables GraphQL introspection if it is set to True.
@@ -3207,6 +3334,13 @@ spec:
                             type: string
                         type: object
                       type: array
+                    kind:
+                      default: ApiDefinition
+                      description: Kind represents the kind of the linked API Definition resource. It can be either "ApiDefinition" or "TykOasApiDefinition" (case sensitive way). By default, Kind is set to "ApiDefinition".
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: Name of the ApiDefinition resource to target
                       type: string
@@ -3244,11 +3378,17 @@ spec:
               contextRef:
                 description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -3344,11 +3484,17 @@ spec:
               linked_apis:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -3473,11 +3619,17 @@ spec:
               subgraph_refs:
                 items:
                   properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
                     name:
                       description: k8s resource name
                       type: string
                     namespace:
-                      description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                       type: string
                   required:
                   - name
@@ -3571,11 +3723,17 @@ spec:
               contextRef:
                 description: Context specify namespace/name of the OperatorContext object used for reconciling this APIDefinition
                 properties:
+                  kind:
+                    description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                    enum:
+                    - ApiDefinition
+                    - TykOasApiDefinition
+                    type: string
                   name:
                     description: k8s resource name
                     type: string
                   namespace:
-                    description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                    description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                     type: string
                 required:
                 - name
@@ -3668,6 +3826,12 @@ spec:
               ingressTemplate:
                 description: IngressTemplate shows whether this CR is used as Ingress Template or not.
                 type: boolean
+              latestCRDSpecHash:
+                description: LatestCRDSpecHash stores the hash of TykOasApiDefinition CR created on K8s. This information is updated after creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for running update operation or not. If there is a change in latestCRDSpecHash as well as latestTykSpecHash, Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+                type: string
+              latestConfigMapHash:
+                description: LatestConfigMapHash stores the hash of ConfigMap that is being used by TykOasApiDefinition.
+                type: string
               latestTransaction:
                 description: LatestTransaction provides status information about the last reconciliation.
                 properties:
@@ -3682,8 +3846,34 @@ spec:
                     format: date-time
                     type: string
                 type: object
+              latestTykSpecHash:
+                description: LatestTykSpecHash stores the hash of OAS API Definition created on Tyk. This information is updated after creating or updating the TykOasApiDefinition. It is useful for Operator to understand the need for running update operation or not. If there is a change in latestTykSpecHash as well as latestCRDSpecHash, Operator runs update logic and updates resources on Tyk Gateway or Tyk Dashboard.
+                type: string
+              linkedByPolicies:
+                description: LinkedByPolicies is a list policies that references this OAS API Definition.
+                items:
+                  properties:
+                    kind:
+                      description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                      enum:
+                      - ApiDefinition
+                      - TykOasApiDefinition
+                      type: string
+                    name:
+                      description: k8s resource name
+                      type: string
+                    namespace:
+                      description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               listenPath:
                 description: ListenPath is the base path on Tyk to which requests for this API will be sent.
+                type: string
+              name:
+                description: Name is the name of the OAS API within Tyk.
                 type: string
               targetURL:
                 description: TargetURL is the upstream address to which requests will be proxied.
@@ -3694,11 +3884,17 @@ spec:
                   baseAPIVersionContextRef:
                     description: BaseAPIVersionContextRef specifies the namespace and name of the Base API a versioned API is linked to.
                     properties:
+                      kind:
+                        description: LinkedApiKind represents the Kubernetes kind of the API Definition resource that is being target by current resource.
+                        enum:
+                        - ApiDefinition
+                        - TykOasApiDefinition
+                        type: string
                       name:
                         description: k8s resource name
                         type: string
                       namespace:
-                        description: The k8s namespace of the resource being targetted. When omitted this will be set to the namespace of the object that is being reconciled.
+                        description: The k8s namespace of the resource being targeted. When omitted this will be set to the namespace of the object that is being reconciled.
                         type: string
                     required:
                     - name
