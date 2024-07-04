@@ -1,11 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
+## [v0.18.0](https://github.com/TykTechnologies/tyk-operator/tree/HEAD)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.1...HEAD)
 
 **Added**:
 - Added `introspection` option to enable/disable GraphQL introspection
 - Added sample for advance cache middleware
+- Added following fields for graphql proxy `graphql.proxy.auth_headers`, `graphql.proxy.subscription_type`, `graphql.proxy.request_headers`, `graphql.proxy.use_response_extensions`, `graphql.proxy.request_headers_rewrite`, `graphql.proxy.features`
 
 ## [v0.17.1](https://github.com/TykTechnologies/tyk-operator/tree/v0.17.1)
 [Full Changelog](https://github.com/TykTechnologies/tyk-operator/compare/v0.17.0...v0.17.1)
