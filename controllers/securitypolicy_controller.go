@@ -101,10 +101,10 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		policy.Spec.OrgID = &orgID
 
 		if policy.Status.PolID == "" {
-			return r.create(ctx, policy)
+			return r.create(ctx, log, policy)
 		}
 
-		newSpec, err := r.update(ctx, policy)
+		newSpec, err := r.update(ctx, log, policy)
 		if err != nil {
 			return err
 		}
@@ -128,13 +128,14 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // in the K8s environment.
 func (r *SecurityPolicyReconciler) spec(
 	ctx context.Context,
+	l logr.Logger,
 	s *tykv1.SecurityPolicySpec,
 ) (*tykv1.SecurityPolicySpec, error) {
 	spec := s.DeepCopy()
 	spec.Context = nil
 
 	for i := 0; i < len(spec.AccessRightsArray); i++ {
-		err := r.updateAccess(ctx, spec.AccessRightsArray[i])
+		err := r.updateAccess(ctx, l, spec.AccessRightsArray[i])
 		if err != nil {
 			return nil, err
 		}
@@ -152,27 +153,40 @@ func (r *SecurityPolicyReconciler) spec(
 
 // updateAccess updates given AccessDefinition's APIID and APIName fields based on ApiDefinition CR that is referred
 // in the AccessDefinition. So that, it includes k8s details of the referred ApiDefinitions.
-func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *model.AccessDefinition) error {
-	api := &tykv1.ApiDefinition{}
+func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, l logr.Logger, ad *model.AccessDefinition) error {
+	api, err := newTykApi(ad.Kind)
+	if err != nil {
+		l.Error(err, "invalid kind specified in policy access_rights_array field")
+		return err
+	}
+
 	if err := r.Get(ctx, types.NamespacedName{Name: ad.Name, Namespace: ad.Namespace}, api); err != nil {
 		if errors.IsNotFound(err) {
-			r.Log.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue",
-				"Name", ad.Name,
-				"Namespace", ad.Namespace,
+			l.Info("ApiDefinition resource not found. Unable to attach to SecurityPolicy. ReQueue",
+				"ApiDefinition Name", ad.Name,
+				"ApiDefinition Namespace", ad.Namespace,
+				"ApiDefinition Kind", ad.Kind,
 			)
 
 			return err
 		}
 
-		r.Log.Error(err, "Failed to get APIDefinition to attach to SecurityPolicy")
+		l.Error(err,
+			"Failed to get ApiDefinition to attach to SecurityPolicy",
+			"ApiDefinition Name", ad.Name,
+			"ApiDefinition Namespace", ad.Namespace,
+			"ApiDefinition Kind", ad.Kind,
+		)
 
 		return err
 	}
 
-	if api.Status.ApiID == "" {
-		r.Log.Error(
+	if api.StatusApiID() == "" {
+		l.Error(
 			opclient.ErrNotFound,
-			"Failed to find ApiDefinition on Tyk", "ApiDefinition", client.ObjectKeyFromObject(api),
+			"Failed to find ApiDefinition on Tyk",
+			"ApiDefinition", objMetaToStr(api),
+			"Kind", ad.Kind,
 		)
 
 		return opclient.ErrNotFound
@@ -186,8 +200,8 @@ func (r *SecurityPolicyReconciler) updateAccess(ctx context.Context, ad *model.A
 		ad.APIName = new(string)
 	}
 
-	*ad.APIID = api.Status.ApiID
-	*ad.APIName = api.Spec.Name
+	*ad.APIID = api.StatusApiID()
+	*ad.APIName = api.ApiName()
 
 	return nil
 }
@@ -241,14 +255,16 @@ func (r *SecurityPolicyReconciler) delete(ctx context.Context, policy *tykv1.Sec
 	return nil
 }
 
-func (r *SecurityPolicyReconciler) update(ctx context.Context,
+func (r *SecurityPolicyReconciler) update(
+	ctx context.Context,
+	l logr.Logger,
 	policy *tykv1.SecurityPolicy,
 ) (*model.SecurityPolicySpec, error) {
 	r.Log.Info("Updating SecurityPolicy", "Policy ID", policy.Status.PolID)
 
 	updatePolicyMID(ctx, &policy.Spec, &policy.Status.PolID)
 
-	spec, err := r.spec(ctx, &policy.Spec)
+	spec, err := r.spec(ctx, l, &policy.Spec)
 	if err != nil {
 		return nil, err
 	}
@@ -335,10 +351,10 @@ func setPolicyStatusPolID(ctx context.Context, policy *tykv1.SecurityPolicy, spe
 	}
 }
 
-func (r *SecurityPolicyReconciler) create(ctx context.Context, policy *tykv1.SecurityPolicy) error {
+func (r *SecurityPolicyReconciler) create(ctx context.Context, l logr.Logger, policy *tykv1.SecurityPolicy) error {
 	r.Log.Info("Creating a policy")
 
-	spec, err := r.spec(ctx, &policy.Spec)
+	spec, err := r.spec(ctx, l, &policy.Spec)
 	if err != nil {
 		return err
 	}
@@ -440,7 +456,7 @@ func (r *SecurityPolicyReconciler) updatePolicyStatus(
 
 	for _, v := range policy.Spec.AccessRightsArray {
 		namespace := v.Namespace
-		target := model.Target{Name: v.Name, Namespace: &namespace}
+		target := model.Target{Name: v.Name, Namespace: &namespace, LinkedApiKind: v.Kind}
 
 		policy.Status.LinkedAPIs = append(policy.Status.LinkedAPIs, target)
 	}
@@ -467,22 +483,29 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 	oldLinks := map[string]bool{}
 	newLinks := map[string]bool{}
 
+	key := func(metaStr string, kind model.LinkedAPIDefinitionKind) string {
+		return fmt.Sprintf("%s/%s", metaStr, kind)
+	}
+
 	for _, t := range policy.Status.LinkedAPIs {
-		oldLinks[t.String()] = true
+		oldLinks[key(t.String(), t.LinkedApiKind)] = true
 	}
 
 	for _, t := range policy.Spec.AccessRightsArray {
 		name := types.NamespacedName{Name: t.Name, Namespace: t.Namespace}
-		newLinks[name.String()] = true
+		newLinks[key(name.String(), t.Kind)] = true
 	}
 
-	// Remove links from api definitions
+	// Remove old links from api definitions
 	for _, t := range policy.Status.LinkedAPIs {
-		if _, ok := newLinks[t.String()]; ok {
+		if _, ok := newLinks[key(t.String(), t.LinkedApiKind)]; ok {
 			continue
 		}
 
-		api := &tykv1.ApiDefinition{}
+		api, err := newTykApi(t.LinkedApiKind)
+		if err != nil {
+			return err
+		}
 
 		apiNS := ""
 		if t.Namespace != nil {
@@ -495,39 +518,46 @@ func (r *SecurityPolicyReconciler) updateStatusOfLinkedAPIs(ctx context.Context,
 			return err
 		}
 
-		api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, target)
-
+		api.SetLinkedPolicies(removeTarget(api.GetLinkedPolicies(), target))
 		if err := r.Status().Update(ctx, api); err != nil {
-			r.Log.Error(err, "Failed to update status of linked api definition", "api", t.String())
+			r.Log.Error(
+				err,
+				"Failed to update status of linked api definition",
+				"Api", t.String(),
+				"Kind", t.LinkedApiKind,
+			)
 
 			return err
 		}
 	}
 
 	for _, a := range policy.Spec.AccessRightsArray {
-		ok := oldLinks[types.NamespacedName{Name: a.Name, Namespace: a.Namespace}.String()]
+		ok := oldLinks[key(types.NamespacedName{Name: a.Name, Namespace: a.Namespace}.String(), a.Kind)]
 		if ok && !policyDeleted {
 			continue
 		}
 
-		api := &tykv1.ApiDefinition{}
+		api, err := newTykApi(a.Kind)
+		if err != nil {
+			return err
+		}
 
 		name := types.NamespacedName{Name: a.Name, Namespace: a.Namespace}
 
 		if err := r.Get(ctx, types.NamespacedName{Name: a.Name, Namespace: a.Namespace}, api); err != nil {
-			r.Log.Error(err, "Failed to get linked api definition", "api", name)
+			r.Log.Error(err, "Failed to get linked api definition", "api", name, "Kind", a.Kind)
 
 			return err
 		}
 
 		if policyDeleted {
-			api.Status.LinkedByPolicies = removeTarget(api.Status.LinkedByPolicies, target)
+			api.SetLinkedPolicies(removeTarget(api.GetLinkedPolicies(), target))
 		} else {
-			api.Status.LinkedByPolicies = addTarget(api.Status.LinkedByPolicies, target)
+			api.SetLinkedPolicies(addTarget(api.GetLinkedPolicies(), target))
 		}
 
 		if err := r.Status().Update(ctx, api); err != nil {
-			r.Log.Error(err, "Failed to update status of linked api definition", "api", name)
+			r.Log.Error(err, "Failed to update status of linked api definition", "api", name, "kind", a.Kind)
 
 			return err
 		}

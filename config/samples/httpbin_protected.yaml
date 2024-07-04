@@ -14,3 +14,9 @@ spec:
   auth_configs:
     authToken:
       auth_header_name: Authorization
+  version_data:
+    default_version: Default
+    not_versioned: false
+    versions:
+      Default:
+        name: Default

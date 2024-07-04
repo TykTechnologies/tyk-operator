@@ -1,6 +1,23 @@
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"github.com/TykTechnologies/tyk-operator/api/model"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// TykApi represents an interface that can provide common methods for TykOasApiDefinition and ApiDefinition CRs.
+//
+// No need to generate manifest for the interface, so mark it as `generate:=false` to prevent running controller
+// tools for the interface.
+// +kubebuilder:object:generate:=false
+type TykApi interface {
+	client.Object
+	ApiName() string
+	StatusApiID() string
+	GetLinkedPolicies() []model.Target
+	SetLinkedPolicies(result []model.Target)
+}
 
 // TransactionStatus indicates the status of the Tyk API calls for currently reconciled object.
 // Valid values are:
