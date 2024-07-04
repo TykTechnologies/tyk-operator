@@ -9,6 +9,7 @@ import (
 
 	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
+	tykv1 "github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
 	"github.com/TykTechnologies/tyk-operator/pkg/environment"
 	"github.com/go-logr/logr"
@@ -17,6 +18,22 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// newTykApi returns a struct that implements v1alpha1.TykApi interface which is used
+// to perform common operations in TykOasApiDefinition and ApiDefinition CRDs through
+// an interface. If the kind does not match "ApiDefinition" or "TykOasApiDefinition",
+// the function returns an error along with nil v1alpha1.TykApi.
+func newTykApi(kind model.LinkedAPIDefinitionKind) (v1alpha1.TykApi, error) {
+	if kind == v1alpha1.KindApiDefinition {
+		return &v1alpha1.ApiDefinition{}, nil
+	} else if kind == tykv1.KindTykOasApiDefinition {
+		return &v1alpha1.TykOasApiDefinition{}, nil
+	}
+
+	return nil, fmt.Errorf(
+		"unexpected kind %v, expected either %v or %v", kind, tykv1.KindApiDefinition, tykv1.KindTykOasApiDefinition,
+	)
+}
 
 // objMetaToStr returns string representation of given object's metadata.
 // For example, if the given object is ApiDefinition named as 'httpbin' in 'tyk' namespace,

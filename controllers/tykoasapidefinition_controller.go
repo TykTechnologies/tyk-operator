@@ -23,6 +23,7 @@ import (
 	"time"
 
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
+
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -56,6 +57,7 @@ const (
 
 var (
 	InfoNameKeys                                 = []string{TykOASExtenstionStr, "info", "name"}
+	InfoStateActiveKeys                          = []string{TykOASExtenstionStr, "info", "state", "active"}
 	UpstreamURLKeys                              = []string{TykOASExtenstionStr, "upstream", "url"}
 	ServerListenpathStripKeys                    = []string{TykOASExtenstionStr, "server", "listenPath", "strip"}
 	ServerListenpathValueKeys                    = []string{TykOASExtenstionStr, "server", "listenPath", "value"}
@@ -144,7 +146,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		if !tykOAS.ObjectMeta.DeletionTimestamp.IsZero() {
 			markForDeletion = true
 
-			return deleteOasApi(ctx, log, tykOAS)
+			return reconcileDelete(ctx, log, tykOAS)
 		}
 
 		util.AddFinalizer(tykOAS, keys.TykOASFinalizerName)
@@ -389,7 +391,15 @@ func (r *TykOasApiDefinitionReconciler) updateStatus(
 	} else {
 		tykOASDoc := cm.Data[tykOASCrd.Spec.TykOAS.ConfigmapRef.KeyName]
 
-		state, err := jsonparser.GetBoolean([]byte(tykOASDoc), TykOASExtenstionStr, "info", "state", "active")
+		name, err := jsonparser.GetString([]byte(tykOASDoc), InfoNameKeys...)
+		// do not throw error if field doesn't exist
+		if err != nil && err != jsonparser.KeyPathNotFoundError {
+			log.Error(err, "Failed to fetch name information from Tyk OAS document")
+		} else {
+			tykOASCrd.Status.Name = name
+		}
+
+		state, err := jsonparser.GetBoolean([]byte(tykOASDoc), InfoStateActiveKeys...)
 		// do not throw error if field doesn't exist
 		if err != nil && err != jsonparser.KeyPathNotFoundError {
 			log.Error(err, "Failed to fetch state information from Tyk OAS document")
@@ -437,26 +447,6 @@ func getAPIID(tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string) (string
 	}
 
 	return val, nil
-}
-
-func deleteOasApi(ctx context.Context, l logr.Logger, tykOASCrd *v1alpha1.TykOasApiDefinition) error {
-	if tykOASCrd == nil {
-		return nil
-	}
-
-	if tykOASCrd.Status.ID != "" {
-		if err := klient.Universal.TykOAS().Delete(ctx, tykOASCrd.Status.ID); err != nil {
-			if !tykClient.IsNotFound(err) {
-				return err
-			}
-
-			l.Info("TykOasApiDefinition CR already deleted from Tyk", "ID", tykOASCrd.Status.ID)
-		}
-	}
-
-	util.RemoveFinalizer(tykOASCrd, keys.TykOASFinalizerName)
-
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -584,6 +574,40 @@ func (r *TykOasApiDefinitionReconciler) reconcileOasTpl(ctx context.Context, tpl
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func reconcileDelete(ctx context.Context, l logr.Logger, oas *v1alpha1.TykOasApiDefinition) error {
+	if oas == nil {
+		return nil
+	}
+
+	if util.ContainsFinalizer(oas, keys.TykOASFinalizerName) {
+		if len(oas.GetLinkedPolicies()) > 0 {
+			err := fmt.Errorf(
+				"failed to delete OAS API Definition %v due to SecurityPolicy dependency",
+				objMetaToStr(oas),
+			)
+			l.Error(err, "Break the link between SecurityPolicy and TykOasApiDefinition "+
+				"in order to delete TykOasApiDefinition resource",
+			)
+
+			return err
+		}
+
+		if oas.Status.ID != "" {
+			if err := klient.Universal.TykOAS().Delete(ctx, oas.Status.ID); err != nil {
+				if !tykClient.IsNotFound(err) {
+					return err
+				}
+
+				l.Info("TykOasApiDefinition CR already deleted from Tyk", "ID", oas.Status.ID)
+			}
+		}
+
+		util.RemoveFinalizer(oas, keys.TykOASFinalizerName)
 	}
 
 	return nil
