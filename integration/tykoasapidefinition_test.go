@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -25,6 +27,24 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
+
+// deleteOASApiDefinitionFromTyk sends a Tyk API call to delete OAS ApiDefinition with given ID.
+func deleteOASApiDefinitionFromTyk(ctx context.Context, id string) error {
+	err := wait.For(func() (done bool, err error) {
+		if err = klient.Universal.TykOAS().Delete(ctx, id); err != nil {
+			return false, err
+		}
+
+		err = klient.Universal.HotReload(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}, wait.WithTimeout(defaultWaitTimeout), wait.WithInterval(defaultWaitInterval))
+
+	return err
+}
 
 func TestOASCreate(t *testing.T) {
 	var (
@@ -273,6 +293,76 @@ func TestOASUpdate(t *testing.T) {
 
 			return ctx
 		}).Feature()
+
+	testenv.Test(t, f)
+}
+
+func TestOASDeleteNonexisting(t *testing.T) {
+	var (
+		testNS string
+		tykOAS *v1alpha1.TykOasApiDefinition
+		tykCtx context.Context
+		tykEnv environment.Env
+	)
+
+	eval := is.New(t)
+
+	f := features.New("Test Deleting Nonexistent OAS API from k8s").
+		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			var err error
+
+			// Obtain Environment configuration to be able to connect Tyk.
+			tykEnv, err = generateEnvConfig(ctx, c)
+			eval.NoErr(err)
+
+			res := semver.Compare(tykEnv.TykVersion, "v5.3")
+			if res < 0 {
+				t.Skip("OAS support is added in Tyk in v5.3")
+			}
+
+			tykCtx = tykClient.SetContext(context.Background(), tykClient.Context{
+				Env: tykEnv,
+				Log: log.NullLogger{},
+			})
+
+			var ok bool
+
+			testNS, ok = ctx.Value(ctxNSKey).(string)
+			eval.True(ok)
+
+			tykOAS, _, err = createTestOASApi(ctx, testNS, c, "", nil, nil)
+			eval.NoErr(err)
+
+			err = waitForTykResourceCreation(c, tykOAS)
+			eval.NoErr(err)
+
+			return ctx
+		}).
+		Assess("Delete Tyk OAS API from Tyk",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval.NoErr(deleteOASApiDefinitionFromTyk(tykCtx, tykOAS.Status.ID))
+				eval.True(!klient.Universal.TykOAS().Exists(ctx, tykOAS.Status.ID))
+
+				return ctx
+			}).
+		Assess("Delete Tyk OAS API from Kubernetes",
+			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				eval.NoErr(c.Client().Resources(testNS).Delete(ctx, tykOAS))
+				eval.NoErr(
+					wait.For(func() (done bool, err error) {
+						var oas v1alpha1.TykOasApiDefinition
+						err = c.Client().Resources(testNS).Get(ctx, tykOAS.Name, testNS, &oas)
+						if !k8serrors.IsNotFound(err) {
+							t.Logf("unexpected error occurred, err: %v", err)
+							return false, nil
+						}
+
+						return true, nil
+					}),
+				)
+				return ctx
+			}).
+		Feature()
 
 	testenv.Test(t, f)
 }
