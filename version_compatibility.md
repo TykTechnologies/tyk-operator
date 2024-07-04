@@ -8,16 +8,17 @@ However, if you're using a feature that was not yet available on an earlier vers
 See [Release notes](https://github.com/TykTechnologies/tyk-operator/releases) to check for each Tyk Operator release,
 which version of Tyk it is tested against.
 
-| Tyk Version          | 3.2 | 4.0 | 4.1 | 4.2 | 4.3 | 5.0 | 5.2 | 5.3 |
-| -------------------- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Tyk Operator v0.13   | Y   |     |     |     | Y   |     |     |     |
-| Tyk Operator v0.14   | Y   | Y   |     |     | Y   | Y   |     |     |
-| Tyk Operator v0.14.1 | Y   | Y   |     |     | Y   | Y   |     |     |
-| Tyk Operator v0.15.0 | Y   | Y   |     |     | Y   | Y   |     |     |
-| Tyk Operator v0.15.1 | Y   | Y   |     |     | Y   | Y   |     |     |
-| Tyk Operator v0.16.0 | Y   | Y   |     |     | Y   | Y   | Y   |     |
-| Tyk Operator v0.17.0 | Y   | Y   |     |     | Y   | Y   | Y   | Y   |
-| Tyk Operator v0.17.1 | Y   | Y   |     |     |     | Y   | Y   | Y   |
+| Tyk Version          | 3.2 | 4.0 | 4.1 | 4.2 | 4.3 | 5.0 | 5.2 | 5.3 | 5.4 |
+| -------------------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Tyk Operator v0.13   | Y   |     |     |     | Y   |     |     |     |     |
+| Tyk Operator v0.14   | Y   | Y   |     |     | Y   | Y   |     |     |     |
+| Tyk Operator v0.14.1 | Y   | Y   |     |     | Y   | Y   |     |     |     |
+| Tyk Operator v0.15.0 | Y   | Y   |     |     | Y   | Y   |     |     |     |
+| Tyk Operator v0.15.1 | Y   | Y   |     |     | Y   | Y   |     |     |     |
+| Tyk Operator v0.16.0 | Y   | Y   |     |     | Y   | Y   | Y   |     |     |
+| Tyk Operator v0.17.0 | Y   | Y   |     |     | Y   | Y   | Y   | Y   |     |
+| Tyk Operator v0.17.1 | Y   | Y   |     |     |     | Y   | Y   | Y   |     |
+| Tyk Operator v0.18.0 | Y   | Y   |     |     |     | Y   | Y   | Y   |  Y  |
 
 ## Compatibility with Kubernetes Version
 
