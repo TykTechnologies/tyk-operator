@@ -417,9 +417,10 @@ func TestOASCreateAPIVersion(t *testing.T) {
 					eval.True(ok)
 
 					t.Logf("looking for %+v", currTykOas.Status)
+					ns := baseTykOAS.Namespace
 					return tykOAS.Status.VersioningStatus.IsVersionedAPI &&
 						tykOAS.Status.VersioningStatus.BaseAPIVersionContextRef.Name == baseTykOAS.Name &&
-						tykOAS.Status.VersioningStatus.BaseAPIVersionContextRef.Namespace == &baseTykOAS.Namespace
+						*tykOAS.Status.VersioningStatus.BaseAPIVersionContextRef.Namespace == ns
 				}))
 			eval.NoErr(err)
 
