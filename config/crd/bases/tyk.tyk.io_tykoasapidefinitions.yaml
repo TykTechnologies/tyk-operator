@@ -158,7 +158,7 @@ spec:
                         used as a version.
                       properties:
                         name:
-                          description: Name contains the name of the refrenced TykOasApiDefinition.
+                          description: Name contains the name of the referenced TykOasApiDefinition.
                           type: string
                         namespace:
                           description: Namespace contains the namespace where the
@@ -173,11 +173,7 @@ spec:
                       type: object
                     type: array
                 required:
-                - default
                 - enabled
-                - key
-                - location
-                - name
                 type: object
             required:
             - tykOAS

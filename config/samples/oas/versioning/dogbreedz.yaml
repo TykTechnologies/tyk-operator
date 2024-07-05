@@ -1,0 +1,47 @@
+# installs dog-breeds and dogz-breeds
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dogz-breeds
+  namespace: randomz
+data:
+  test_oas.json: |-
+    {
+      "info": {
+        "title": "dogz-breeds",
+        "version": "1.0.0"
+      },
+      "openapi": "3.0.3",
+      "components": {},
+      "paths": {},
+      "x-tyk-api-gateway": {
+        "info": {
+          "name": "dogz-breeds",
+          "state": {
+            "active": true
+          }
+        },
+        "server": {
+          "listenPath": {
+            "strip": true,
+            "value": "/breeds/"
+          }
+        },
+        "upstream": {
+          "url": "https://dog.ceo/api/breeds/image/randomz"
+        }
+      }
+    }
+
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: TykOasApiDefinition
+metadata:
+  name: dogz-breeds
+  namespace: randomz
+spec:
+  tykOAS:
+    configmapRef:
+      namespace: randomz
+      name: dogz-breeds
+      keyName: test_oas.json

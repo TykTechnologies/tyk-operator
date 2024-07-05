@@ -1,0 +1,47 @@
+# installs httpbin as bin
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bin
+  namespace: randomz
+data:
+  test_oas.json: |-
+    {
+      "info": {
+        "title": "bin",
+        "version": "1.0.0"
+      },
+      "openapi": "3.0.3",
+      "components": {},
+      "paths": {},
+      "x-tyk-api-gateway": {
+        "info": {
+          "name": "bin",
+          "state": {
+            "active": true
+          }
+        },
+        "server": {
+          "listenPath": {
+            "strip": true,
+            "value": "/bin/"
+          }
+        },
+        "upstream": {
+          "url": "http://httpbin.org/"
+        }
+      }
+    }
+
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: TykOasApiDefinition
+metadata:
+  name: bin
+  namespace: randomz
+spec:
+  tykOAS:
+    configmapRef:
+      namespace: randomz
+      name: bin
+      keyName: test_oas.json

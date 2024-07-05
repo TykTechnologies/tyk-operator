@@ -65,21 +65,21 @@ const (
 // TykOASVersioning contains verisoning information for an TykOASAPIDefinition.
 type TykOASVersioning struct {
 	// Default contains the default version name if a request is issued without a version.
-	Default string `json:"default"`
+	Default string `json:"default,omitempty"`
 
 	// Enabled is a boolean flag, if set to true it will enable versioning of the API.
 	Enabled bool `json:"enabled"`
 
 	// Key contains the name of the key to check for versioning information.
-	Key string `json:"key"`
+	Key string `json:"key,omitempty"`
 
 	// Location contains versioning location information. It can be one of the following:
 	// header, url-param, url.
 	// +kubebuilder:validation:Enum=header;url-param;url
-	Location *LocationType `json:"location"`
+	Location *LocationType `json:"location,omitempty"`
 
 	// Name contains the name of the version.
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// Versions contains a list of versions that map to individual API IDs.
 	Versions []TykOASVersion `json:"versions,omitempty"`
@@ -137,7 +137,7 @@ type TykOasApiDefinitionStatus struct {
 
 // TykOASVersion represents each OAS API Definition used as a version.
 type TykOASVersion struct {
-	// Name contains the name of the refrenced TykOasApiDefinition.
+	// Name contains the name of the referenced TykOasApiDefinition.
 	Name string `json:"name"`
 
 	// TykOasApiDefinitionRef references a TykOasApiDefinition.

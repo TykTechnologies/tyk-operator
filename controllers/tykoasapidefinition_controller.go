@@ -79,7 +79,7 @@ type TykOasApiDefinitionReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// TykOasApiDefinitionVersion refrences a version of the Base TykOasAPI.
+// TykOasApiDefinitionVersion references a version of the Base TykOasAPI.
 type TykOasApiDefinitionVersion struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -176,6 +176,8 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 			markForDeletion = true
 
 			if err := r.reconcileDeletingBaseOasAPIVersions(ctx, log, tykOAS); err != nil {
+				log.Error(err, "Failed to reconcile Base OAS API")
+
 				return err
 			}
 
@@ -249,10 +251,9 @@ func (r *TykOasApiDefinitionReconciler) reconcileVersionedOasApi(
 
 			versionedTykOAS.Status.LatestTransaction = v1alpha1.TransactionInfo{
 				Time:   metav1.Now(),
-				Status: v1alpha1.TransactionStatus(errMsg),
+				Status: v1alpha1.Failed,
+				Error:  errMsg,
 			}
-
-			log.Info("error deleting versioned TykOasAPI", errMsg)
 
 			if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
 				return err
@@ -278,10 +279,9 @@ func (r *TykOasApiDefinitionReconciler) reconcileVersionedOasApi(
 
 		versionedTykOAS.Status.LatestTransaction = v1alpha1.TransactionInfo{
 			Time:   metav1.Now(),
-			Status: v1alpha1.TransactionStatus(errMsg),
+			Status: v1alpha1.Failed,
+			Error:  errMsg,
 		}
-
-		log.Info("error deleting versioned TykOasAPI", errMsg)
 
 		if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
 			return err
@@ -381,6 +381,10 @@ func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPI(
 		if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
 			return err
 		}
+	}
+
+	if len(versions) == 0 {
+		return nil
 	}
 
 	versioning := TykOasApiDefinitionVersioning{
@@ -670,25 +674,6 @@ func getAPIID(tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string) (string
 	return val, nil
 }
 
-func deleteOasApi(
-	ctx context.Context,
-	tykOASCrd *v1alpha1.TykOasApiDefinition,
-) error {
-	if tykOASCrd == nil {
-		return nil
-	}
-
-	if tykOASCrd.Status.ID != "" {
-		if err := klient.Universal.TykOAS().Delete(ctx, tykOASCrd.Status.ID); err != nil {
-			return err
-		}
-	}
-
-	util.RemoveFinalizer(tykOASCrd, keys.TykOASFinalizerName)
-
-	return nil
-}
-
 func (r *TykOasApiDefinitionReconciler) reconcileDeletingBaseOasAPIVersions(
 	ctx context.Context,
 	log logr.Logger,
@@ -708,11 +693,9 @@ func (r *TykOasApiDefinitionReconciler) reconcileDeletingBaseOasAPIVersions(
 			}, &versionOasAPI); err != nil {
 				if k8serrors.IsNotFound(err) {
 					log.Info("failed to get versioned TykOasApiDefinition CR", "err", err.Error())
-
-					return nil
 				}
 
-				return err
+				continue
 			}
 
 			versionOasAPI.RemoveOASVersionStatus()

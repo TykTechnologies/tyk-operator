@@ -1,0 +1,60 @@
+# installs base API and also versions it with existing OAS APIs
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pets
+  namespace: randomz
+data:
+  test_oas.json: |-
+    {
+      "info": {
+        "title": "pets",
+        "version": "1.0.0"
+      },
+      "openapi": "3.0.3",
+      "components": {},
+      "paths": {},
+      "x-tyk-api-gateway": {
+        "info": {
+          "name": "pets",
+          "state": {
+            "active": true
+          }
+        },
+        "server": {
+          "listenPath": {
+            "strip": true,
+            "value": "/pets/"
+          }
+        },
+        "upstream": {
+          "url": "https://dog.ceo/api/breeds/image/random"
+        }
+      }
+    }
+
+---
+apiVersion: tyk.tyk.io/v1alpha1
+kind: TykOasApiDefinition
+metadata:
+  name: pets
+  namespace: randomz
+spec:
+  tykOAS:
+    configmapRef:
+      namespace: randomz
+      name: pets
+      keyName: test_oas.json
+  versioning:
+    enabled: true
+    key: x-api-version
+    location: header
+    name: v1
+    default: dogz-breeds
+    versions:
+    - name: dogz-breeds
+      tykOasApiDefinitionRef: dogz-breeds
+      namespace: randomz
+    - name: bin
+      tykOasApiDefinitionRef: bin
+      namespace: randomz
