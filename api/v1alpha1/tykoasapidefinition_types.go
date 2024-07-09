@@ -176,6 +176,14 @@ type TykOasApiDefinition struct {
 	Status TykOasApiDefinitionStatus `json:"status,omitempty"`
 }
 
+func (spec *TykOasApiDefinitionSpec) GetIsVersionedEnabled() bool {
+	if spec.Versioning == nil {
+		return false
+	}
+
+	return spec.Versioning.Enabled
+}
+
 func (t *TykOasApiDefinition) RemoveOASVersionStatus() {
 	t.Status.VersioningStatus = nil
 }
@@ -218,6 +226,10 @@ func (status *TykOasApiDefinitionStatus) SetBaseVersionName(name string) {
 
 func (status *TykOasApiDefinitionStatus) SetBaseVersionNamespace(name *string) {
 	status.VersioningStatus.BaseAPIVersionContextRef.Namespace = name
+}
+
+func (status *TykOasApiDefinitionStatus) SetIsDefaultVersion(isDefault bool) {
+	status.VersioningStatus.IsDefaultVersion = isDefault
 }
 
 func (status *TykOasApiDefinitionStatus) SetIsVersionedAPI(versioned bool) {

@@ -341,9 +341,25 @@ func (r *TykOasApiDefinitionReconciler) cleanUpDanglingVersionedOasAPIs(
 	return nil
 }
 
-// handleVersioningTykOASAPI versions a Base TykOasAPI using refrenced TykOasAPIs.
+// handleVersioningTykOASAPI routes the request to the appropriate method for versioning the
+// Base API.
 func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPI(
 	ctx context.Context,
+	log logr.Logger,
+	tykBaseOASCrd *v1alpha1.TykOasApiDefinition,
+	tykBaseOASDoc *string,
+) error {
+	if tykBaseOASCrd.Spec.Versioning.Enabled {
+		return r.handleVersioningTykOASAPIEnabled(ctx, log, tykBaseOASCrd, tykBaseOASDoc)
+	}
+
+	return r.handleVersioningTykOASAPINotEnabled(ctx, log, tykBaseOASCrd)
+}
+
+// handleVersioningTykOASAPI versions a Base TykOasAPI using referenced TykOasAPIs.
+func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPIEnabled(
+	ctx context.Context,
+	log logr.Logger,
 	tykBaseOASCrd *v1alpha1.TykOasApiDefinition,
 	tykBaseOASDoc *string,
 ) error {
@@ -363,10 +379,7 @@ func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPI(
 			versionOasAPI.Status.NewVersioningStatus()
 		}
 
-		if tykBaseOASCrd.Spec.Versioning.Default == v.Name {
-			versionOasAPI.Status.VersioningStatus.IsDefaultVersion = true
-		}
-
+		versionOasAPI.Status.SetIsDefaultVersion(tykBaseOASCrd.Spec.Versioning.Default == v.Name)
 		versionOasAPI.Status.SetBaseVersionName(tykBaseOASCrd.Name)
 		versionOasAPI.Status.SetBaseVersionNamespace(&tykBaseOASCrd.Namespace)
 		versionOasAPI.Status.SetIsVersionedAPI(true)
@@ -379,6 +392,8 @@ func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPI(
 		versions = append(versions, &version)
 
 		if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
+			log.Error(err, "error updating OAS API Version")
+
 			return err
 		}
 	}
@@ -412,8 +427,39 @@ func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPI(
 	return nil
 }
 
+// handleVersioningTykOASAPINotEnabled dereferences all versions from Base API.
+func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPINotEnabled(
+	ctx context.Context,
+	log logr.Logger,
+	tykBaseOASCrd *v1alpha1.TykOasApiDefinition,
+) error {
+	for _, v := range tykBaseOASCrd.Spec.Versioning.Versions {
+		var versionOasAPI v1alpha1.TykOasApiDefinition
+
+		if err := r.Get(ctx, types.NamespacedName{
+			Name:      v.TykOasApiDefinitionRef,
+			Namespace: v.Namespace,
+		}, &versionOasAPI); err != nil {
+			continue
+		}
+
+		versionOasAPI.RemoveOASVersionStatus()
+
+		if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
+			log.Error(err, "error dereferencing OAS api")
+
+			continue
+		}
+	}
+
+	return nil
+}
+
 func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
-	ctx context.Context, tykOASCrd *v1alpha1.TykOasApiDefinition, log logr.Logger, env *environment.Env,
+	ctx context.Context,
+	tykOASCrd *v1alpha1.TykOasApiDefinition,
+	log logr.Logger,
+	env *environment.Env,
 ) (string, string, error) {
 	var cm v1.ConfigMap
 
@@ -458,8 +504,8 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 		return "", "", err
 	}
 
-	if tykOASCrd.Spec.Versioning != nil && tykOASCrd.Spec.Versioning.Enabled {
-		err := r.handleVersioningTykOASAPI(ctx, tykOASCrd, &tykOASDoc)
+	if tykOASCrd.Spec.Versioning != nil {
+		err := r.handleVersioningTykOASAPI(ctx, log, tykOASCrd, &tykOASDoc)
 		if err != nil {
 			log.Error(err, "Failed to version Tyk OAS API")
 
@@ -484,6 +530,13 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 			log.Error(err, "failed to update Tyk OAS API on Tyk")
 			return "", "", err
 		}
+	}
+
+	err = r.reconcileMarkedForDeletionOASAPIVersions(ctx, log)
+	if err != nil {
+		log.Error(err, "Failed to reconcile deleted Tyk OAS API")
+
+		return "", "", err
 	}
 
 	return apiID, cmHash, nil
@@ -677,14 +730,14 @@ func getAPIID(tykOASCrd *v1alpha1.TykOasApiDefinition, tykOASDoc string) (string
 func (r *TykOasApiDefinitionReconciler) reconcileDeletingBaseOasAPIVersions(
 	ctx context.Context,
 	log logr.Logger,
-	tykOASCrd *v1alpha1.TykOasApiDefinition,
+	tykOASCr *v1alpha1.TykOasApiDefinition,
 ) error {
-	if tykOASCrd == nil {
+	if tykOASCr == nil {
 		return nil
 	}
 
-	if tykOASCrd.Spec.Versioning != nil && tykOASCrd.Spec.Versioning.Enabled {
-		for _, v := range tykOASCrd.Spec.Versioning.Versions {
+	if tykOASCr.Spec.Versioning != nil && tykOASCr.Spec.Versioning.Enabled {
+		for _, v := range tykOASCr.Spec.Versioning.Versions {
 			var versionOasAPI v1alpha1.TykOasApiDefinition
 
 			if err := r.Get(ctx, types.NamespacedName{
@@ -702,6 +755,30 @@ func (r *TykOasApiDefinitionReconciler) reconcileDeletingBaseOasAPIVersions(
 
 			if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
 				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *TykOasApiDefinitionReconciler) reconcileMarkedForDeletionOASAPIVersions(
+	ctx context.Context,
+	log logr.Logger,
+) error {
+	var tykOas v1alpha1.TykOasApiDefinitionList
+	if err := r.List(ctx, &tykOas); err != nil {
+		return err
+	}
+
+	for i := range tykOas.Items {
+		v := &tykOas.Items[i]
+		if v.GetDeletionTimestamp() != nil {
+			v.RemoveOASVersionStatus()
+
+			if err := r.Status().Update(ctx, v); err != nil {
+				log.Error(err, "error updating marked for deleted OAS api")
+				continue
 			}
 		}
 	}
