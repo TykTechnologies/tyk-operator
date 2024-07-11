@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -163,7 +164,7 @@ func (r *TykOasApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.
 		if err != nil {
 			log.Error(err, "failed to handle versioned Tyk OAS API")
 
-			return ctrl.Result{}, err
+			return ctrl.Result{RequeueAfter: reqA}, err
 		}
 
 		return ctrl.Result{}, nil
@@ -259,7 +260,7 @@ func (r *TykOasApiDefinitionReconciler) reconcileVersionedOasApi(
 				return err
 			}
 
-			return nil
+			return errors.New(errMsg)
 		}
 
 		var baseOasAPI v1alpha1.TykOasApiDefinition
@@ -286,6 +287,8 @@ func (r *TykOasApiDefinitionReconciler) reconcileVersionedOasApi(
 		if err := r.Status().Update(ctx, versionedTykOAS); err != nil {
 			return err
 		}
+
+		return errors.New(errMsg)
 	}
 
 	return nil
@@ -532,13 +535,6 @@ func (r *TykOasApiDefinitionReconciler) createOrUpdateTykOASAPI(
 		}
 	}
 
-	err = r.reconcileMarkedForDeletionOASAPIVersions(ctx, log)
-	if err != nil {
-		log.Error(err, "Failed to reconcile deleted Tyk OAS API")
-
-		return "", "", err
-	}
-
 	return apiID, cmHash, nil
 }
 
@@ -755,30 +751,6 @@ func (r *TykOasApiDefinitionReconciler) reconcileDeletingBaseOasAPIVersions(
 
 			if err := r.Status().Update(ctx, &versionOasAPI); err != nil {
 				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (r *TykOasApiDefinitionReconciler) reconcileMarkedForDeletionOASAPIVersions(
-	ctx context.Context,
-	log logr.Logger,
-) error {
-	var tykOas v1alpha1.TykOasApiDefinitionList
-	if err := r.List(ctx, &tykOas); err != nil {
-		return err
-	}
-
-	for i := range tykOas.Items {
-		v := &tykOas.Items[i]
-		if v.GetDeletionTimestamp() != nil {
-			v.RemoveOASVersionStatus()
-
-			if err := r.Status().Update(ctx, v); err != nil {
-				log.Error(err, "error updating marked for deleted OAS api")
-				continue
 			}
 		}
 	}
