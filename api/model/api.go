@@ -1013,9 +1013,16 @@ func (v *VersionData) collectLoopingTarget(fn func(Target)) {
 }
 
 type VersionDefinition struct {
-	Location  string `json:"location"`
-	Key       string `json:"key"`
-	StripPath bool   `json:"strip_path"`
+	Enabled              bool              `json:"enabled"`
+	Name                 string            `json:"name"`
+	Default              string            `json:"default"`
+	Location             string            `json:"location"`
+	Key                  string            `json:"key"`
+	StripPath            bool              `json:"strip_path"` // Deprecated. Use StripVersioningData instead.
+	StripVersioningData  bool              `json:"strip_versioning_data"`
+	UrlVersioningPattern string            `json:"url_versioning_pattern"`
+	FallbackToDefault    bool              `json:"fallback_to_default"`
+	Versions             map[string]string `json:"versions"`
 }
 
 type BasicAuthMeta struct {
