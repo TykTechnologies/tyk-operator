@@ -447,16 +447,39 @@ spec:
                 type: string
               definition:
                 properties:
+                  default:
+                    type: string
+                  enabled:
+                    type: boolean
+                  fallback_to_default:
+                    type: boolean
                   key:
                     type: string
                   location:
                     type: string
+                  name:
+                    type: string
                   strip_path:
                     type: boolean
+                  strip_versioning_data:
+                    type: boolean
+                  url_versioning_pattern:
+                    type: string
+                  versions:
+                    additionalProperties:
+                      type: string
+                    type: object
                 required:
+                - default
+                - enabled
+                - fallback_to_default
                 - key
                 - location
+                - name
                 - strip_path
+                - strip_versioning_data
+                - url_versioning_pattern
+                - versions
                 type: object
               detailed_tracing:
                 nullable: true
