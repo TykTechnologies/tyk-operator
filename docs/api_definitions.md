@@ -42,7 +42,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Keyless (Open)                | ✅        | v0.1           | -        | [Sample](./../config/samples/httpbin.yaml) |
 | Static Bearer Token           | ✅        | v0.1           | -        | [Sample](./../config/samples/httpbin_protected.yaml) |
 | JWT                           | ✅️        | v0.5           | -        | [Sample](./../config/samples/jwt-auth) |
-| OAuth2    | -        | -           | -        | JWT Auth is recommended. See details [here](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/openid-connect/) | |
+| OAuth2                        | -        | -           | JWT Auth is recommended. See details [here](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/openid-connect/) | |
 | OpenID Connect                | -        | -              | JWT Auth is recommended. See details [here](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/openid-connect/) | |
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
 | HMAC                          | ❌        | -              | Not implemented | |
