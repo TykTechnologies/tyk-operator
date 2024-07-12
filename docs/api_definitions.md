@@ -43,6 +43,7 @@ To check the supported features of the API Definitions CRD version you're curren
 | Static Bearer Token           | ✅        | v0.1           | -        | [Sample](./../config/samples/httpbin_protected.yaml) |
 | JWT                           | ✅️        | v0.5           | -        | [Sample](./../config/samples/jwt-auth) |
 | [Tyk OAuth2 Provider](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/oauth-2-0/#option-2---use-the-tyk-oauth-flow) - Client Credentials   | ✅️        | v0.6           | -        | [Sample](./../config/samples/oauth2/client_credentials.yaml) |
+| [Tyk OAuth2 Provider](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/oauth-2-0/#option-2---use-the-tyk-oauth-flow) - Client Credentials   | ✅️        | v0.6           | -        | [Sample](./../config/samples/oauth2/client_credentials.yaml) |
 | OAuth2                        | -        | -           | JWT Auth is recommended. See details [here](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/openid-connect/) | |
 | OpenID Connect                | -        | -              | JWT Auth is recommended. See details [here](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/openid-connect/) | |
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
