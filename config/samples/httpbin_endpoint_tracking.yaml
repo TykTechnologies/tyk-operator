@@ -31,5 +31,6 @@ spec:
           track_endpoints:
             - method: GET
               path: "/get"
+          do_not_track_endpoints:
             - method: GET
               path: "/headers"
