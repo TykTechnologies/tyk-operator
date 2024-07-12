@@ -140,11 +140,8 @@ type TykOASVersion struct {
 	// Name contains the name of the referenced TykOasApiDefinition.
 	Name string `json:"name"`
 
-	// TykOasApiDefinitionRef references a TykOasApiDefinition.
-	TykOasApiDefinitionRef string `json:"tykOasApiDefinitionRef"`
-
-	// Namespace contains the namespace where the version was installed.
-	Namespace string `json:"namespace,omitempty"`
+	// TykOasApiDefinitionRef references a TykOasApiDefinition Name and Namespace.
+	TykOasApiDefinitionRef model.Target `json:"tykOasApiDefinitionRef"`
 }
 
 // VersioningStatus contains the status of a versioned TykOasAPI.

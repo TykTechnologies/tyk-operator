@@ -327,7 +327,7 @@ func (r *TykOasApiDefinitionReconciler) cleanUpDanglingVersionedOasAPIs(
 	var oasAPIPresent bool
 
 	for _, v := range baseOasAPI.Spec.Versioning.Versions {
-		if v.TykOasApiDefinitionRef == versionedTykOAS.Name {
+		if v.TykOasApiDefinitionRef.Name == versionedTykOAS.Name {
 			oasAPIPresent = true
 			break
 		}
@@ -372,8 +372,8 @@ func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPIEnabled(
 		var versionOasAPI v1alpha1.TykOasApiDefinition
 
 		if err := r.Get(ctx, types.NamespacedName{
-			Name:      v.TykOasApiDefinitionRef,
-			Namespace: v.Namespace,
+			Name:      v.TykOasApiDefinitionRef.Name,
+			Namespace: *v.TykOasApiDefinitionRef.Namespace,
 		}, &versionOasAPI); err != nil {
 			return err
 		}
@@ -440,8 +440,8 @@ func (r *TykOasApiDefinitionReconciler) handleVersioningTykOASAPINotEnabled(
 		var versionOasAPI v1alpha1.TykOasApiDefinition
 
 		if err := r.Get(ctx, types.NamespacedName{
-			Name:      v.TykOasApiDefinitionRef,
-			Namespace: v.Namespace,
+			Name:      v.TykOasApiDefinitionRef.Name,
+			Namespace: *v.TykOasApiDefinitionRef.Namespace,
 		}, &versionOasAPI); err != nil {
 			continue
 		}
@@ -737,8 +737,8 @@ func (r *TykOasApiDefinitionReconciler) reconcileDeletingBaseOasAPIVersions(
 			var versionOasAPI v1alpha1.TykOasApiDefinition
 
 			if err := r.Get(ctx, types.NamespacedName{
-				Name:      v.TykOasApiDefinitionRef,
-				Namespace: v.Namespace,
+				Name:      v.TykOasApiDefinitionRef.Name,
+				Namespace: *v.TykOasApiDefinitionRef.Namespace,
 			}, &versionOasAPI); err != nil {
 				if k8serrors.IsNotFound(err) {
 					log.Info("failed to get versioned TykOasApiDefinition CR", "err", err.Error())

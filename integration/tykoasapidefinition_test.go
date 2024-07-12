@@ -7,6 +7,7 @@ import (
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/TykTechnologies/tyk-operator/api/model"
 	"github.com/TykTechnologies/tyk-operator/api/v1alpha1"
 	"github.com/TykTechnologies/tyk-operator/controllers"
 	tykClient "github.com/TykTechnologies/tyk-operator/pkg/client"
@@ -344,9 +345,11 @@ func TestOASCreateAPIVersion(t *testing.T) {
 					versions := make([]v1alpha1.TykOASVersion, 0)
 
 					oasVersion := v1alpha1.TykOASVersion{
-						Name:                   tykOAS.Name,
-						TykOasApiDefinitionRef: tykOAS.Name,
-						Namespace:              tykOAS.Namespace,
+						Name: tykOAS.Name,
+						TykOasApiDefinitionRef: model.Target{
+							Name:      tykOAS.Name,
+							Namespace: &tykOAS.Namespace,
+						},
 					}
 					versions = append(versions, oasVersion)
 
@@ -403,7 +406,7 @@ func TestOASCreateAPIVersion(t *testing.T) {
 
 					t.Logf("looking for %+v", currTykOas.Status)
 					return baseTykOAS.Spec.Versioning.Enabled && baseTykOAS.Spec.Versioning.Default == tykOAS.Name &&
-						baseTykOAS.Spec.Versioning.Versions[0].TykOasApiDefinitionRef == tykOAS.Name &&
+						baseTykOAS.Spec.Versioning.Versions[0].TykOasApiDefinitionRef.Name == tykOAS.Name &&
 						tykOAS.Status.LatestTransaction.Status == v1alpha1.Successful
 				}))
 			eval.NoErr(err)

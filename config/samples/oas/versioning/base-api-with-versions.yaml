@@ -52,9 +52,11 @@ spec:
     name: v1
     default: dogz-breeds
     versions:
-    - name: dogz-breeds
-      tykOasApiDefinitionRef: dogz-breeds
-      namespace: randomz
-    - name: bin
-      tykOasApiDefinitionRef: bin
-      namespace: randomz
+      - name: dogz-breeds
+        tykOasApiDefinitionRef:
+          name: dogz-breeds
+          namespace: randomz
+      - name: bin
+        tykOasApiDefinitionRef:
+          name: bin
+          namespace: randomz
