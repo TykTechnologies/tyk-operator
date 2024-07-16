@@ -56,8 +56,9 @@ import (
 )
 
 const (
-	queueAfter = time.Second * 3
-	GraphKey   = "graph_ref"
+	queueAfter  = time.Second * 5
+	GraphKey    = "graph_ref"
+	TykProtocol = "tyk://"
 )
 
 var ErrMultipleLinkSubGraph = errors.New("linking one SubGraph to multiple ApiDefinition is forbidden")
@@ -184,6 +185,14 @@ func (r *ApiDefinitionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				*desired.Spec.GraphQL.Schema = *upstreamRequestStruct.Spec.GraphQL.Schema
 				*desired.Spec.GraphQL.Supergraph.MergedSDL = *upstreamRequestStruct.Spec.GraphQL.Supergraph.MergedSDL
 			}
+		}
+
+		if strings.HasPrefix(desired.Spec.Proxy.TargetURL, TykProtocol) {
+			desired.Spec.Proxy.TargetURL = TykProtocol + encodeIfNotBase64(strings.TrimPrefix(desired.Spec.Proxy.TargetURL, TykProtocol))
+		}
+
+		for i, url := range desired.Spec.Proxy.Targets {
+			desired.Spec.Proxy.Targets[i] = TykProtocol + encodeIfNotBase64(strings.TrimPrefix(url, TykProtocol))
 		}
 
 		r.updateLinkedPolicies(ctx, upstreamRequestStruct)
