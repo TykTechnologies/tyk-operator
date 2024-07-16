@@ -42,12 +42,9 @@ To check the supported features of the API Definitions CRD version you're curren
 | Keyless (Open)                | ✅        | v0.1           | -        | [Sample](./../config/samples/httpbin.yaml) |
 | Static Bearer Token           | ✅        | v0.1           | -        | [Sample](./../config/samples/httpbin_protected.yaml) |
 | JWT                           | ✅️        | v0.5           | -        | [Sample](./../config/samples/jwt-auth) |
-| OAuth2 - Client Credentials   | ✅️        | v0.6           | -        | [Sample](./../config/samples/oauth2/client_credentials.yaml) |
-| OAuth2 - Authorization Code                 | ⚠️        | v0.6           | Untested | |
-| OAuth2 - Authorization Code + Refresh Token | ⚠️        | v0.6           | Untested | |
-| OAuth2 - Implicit             | ⚠️        | v0.6           | Untested | |
-| OAuth2 - Password             | ⚠️        | v0.6           | Untested | |
-| OpenID Connect                | ❌        | -              | Not implemented | |
+| Tyk OAuth2 Provider           | ✅️        | v0.6           | Tyk is the [OAuth2 authorization provider](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/oauth-2-0/#option-2---use-the-tyk-oauth-flow) | [Client Credentials flow sample](./../config/samples/oauth2/client_credentials.yaml) |
+| OAuth2                        | -        | -           | JWT Auth is recommended. See the [JWT Auth documentation](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/openid-connect/) for details. |
+| OpenID Connect                | -        | -              | JWT Auth is recommended. See the [JWT Auth documentation](https://tyk.io/docs/basic-config-and-security/security/authentication-authorization/openid-connect/) for details. | |
 | mTLS                          | ✅      | v0.11              | Only static client mTLS is supported | [Sample](./../config/samples/mtls/client/) |
 | HMAC                          | ❌        | -              | Not implemented | |
 | Basic Authentication          | ✅        | v0.12          | Only enabling with default metadata values is supported  | [Sample](./../config/samples/basic-auth/httpbin_basic_authentication.yaml) |
