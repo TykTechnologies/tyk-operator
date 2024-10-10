@@ -2,6 +2,13 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/TykTechnologies/tyk-operator)](https://goreportcard.com/report/github.com/TykTechnologies/tyk-operator)
 
+>[!NOTE] 
+>From October 2024, the latest release of Tyk Operator will be closed source. They will only be available to paying customers under [EULA license](https://github.com/TykTechnologies/tyk-operator/blob/deprecated/LICENSE.pdf), as will all future releases. The repository will be archived and no longer maintained.
+>
+>Prospects can obtain a license by using our [contact form](https://tyk.io/contact/). For existing customers, please reach out to your account manager directly. If you’re unsure who to contact, you can also use the contact form and our team will guide you accordingly.
+>
+>If you are looking for documentation, please go to the [Tyk Operator Official Documentation](https://tyk.io/docs/tyk-operator/).
+
 <p>
 <a href="https://github.com/TykTechnologies/tyk" target="_blank">
 Tyk Gateway</a> is a modern, ultra-performant, purpose-built, and open source API
@@ -29,11 +36,6 @@ practices with Custom Resources and Kubernetes-native primitives.
 Tyk Operator can configure Tyk Gateway as a drop-in replacement for standard [Kubernetes Ingress](./docs/ingress.md). You can manage your API definitions and security policies with it. It also works with the Classic Portal so you can manage your Classic Portal declaratively.
 
 Custom Tyk Objects are available as [CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and documentation for each of these custom resources are available [here](#documentation).
-
-### Tyk Licensing
-Tyk Operator and Tyk Gateway are both 100% Open Source. Tyk Operator will operate on a single gateway.
-
-Feel free to reach to our commercial team (or your account manager for existing customers) if you need advice about architecture, licensing, or just to discuss your requirements for runnning in HA, scaling across clusters, nodes & namespaces.
 
 ### What benefits Tyk Operator has?
 
