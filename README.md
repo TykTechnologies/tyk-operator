@@ -6,4 +6,4 @@ Prospects can obtain a license by using our [contact form](https://tyk.io/contac
 
 If you are looking for documentation, please go to the [Tyk Operator Official Documentation](https://tyk.io/docs/tyk-operator/).
 
-If you want to access the source code prior to close-sourcing, please visit the ["master"](https://github.com/TykTechnologies/tyk-operator/tree/master) branch.
+If you want to access the source code prior to close-sourcing, please visit the ["legacy"](https://github.com/TykTechnologies/tyk-operator/tree/legacy) branch.
